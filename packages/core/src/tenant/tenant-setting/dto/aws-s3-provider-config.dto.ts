@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsBoolean, IsString, ValidateIf } from 'class-validator';
 import { FileStorageProviderEnum, IS3FileStorageProviderConfig } from '@gauzy/contracts';
-import { IsSecret } from './../../../core/decorators';
-import { Trimmed } from './trim.decorator';
+import { IsSecret } from '../../../core/decorators';
+import { Trimmed } from '../../../shared/decorators/trim.decorator';
 
 /**
  * Aws S3 FileStorage Provider Configuration DTO validation

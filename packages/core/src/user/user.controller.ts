@@ -18,14 +18,13 @@ import {
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
-import { IEmployee, IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { IPagination, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { UUIDValidationPipe, ParseJsonPipe, UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { User } from './user.entity';
 import { UserService } from './user.service';
-import { EmployeeService } from './../employee/employee.service';
 import { UserCreateCommand, UserDeleteCommand } from './commands';
 import { FactoryResetService } from './factory-reset/factory-reset.service';
 import {
@@ -41,12 +40,11 @@ import {
 @Controller()
 export class UserController extends CrudController<User> {
 	constructor(
-		private readonly userService: UserService,
-		private readonly employeeService: EmployeeService,
-		private readonly factoryResetService: FactoryResetService,
-		private readonly commandBus: CommandBus
+		private readonly _userService: UserService,
+		private readonly _factoryResetService: FactoryResetService,
+		private readonly _commandBus: CommandBus
 	) {
-		super(userService);
+		super(_userService);
 	}
 
 	/**
@@ -61,38 +59,7 @@ export class UserController extends CrudController<User> {
 	@Get('/me')
 	@UseValidationPipe({ whitelist: true })
 	async findMe(@Query() options: FindMeQueryDTO): Promise<IUser> {
-		let employee: IEmployee;
-
-		// Check if there are relations to include and remove 'employee' from them if present.
-		if (options.relations && options.relations.length > 0) {
-			const index = options.relations.indexOf('employee');
-			if (index > -1) {
-				options.relations.splice(index, 1); // Removing 'employee' to handle it separately
-			}
-		}
-
-		// Fetch the user along with requested relations (excluding employee).
-		const user = await this.userService.findMe(options.relations);
-
-		console.log('findMe found User with Id:', user.id);
-
-		// If 'includeEmployee' is set to true, fetch employee details associated with the user.
-		if (options.includeEmployee) {
-			const relations: any = {};
-
-			// Include organization relation if 'includeOrganization' is true
-			if (options.includeOrganization) {
-				relations.organization = true;
-			}
-
-			employee = await this.employeeService.findOneByUserId(user.id, { relations });
-		}
-
-		// Return user data combined with employee data, if it exists.
-		return {
-			...user,
-			...(employee && { employee }) // Conditionally add employee info to the response
-		};
+		return await this._userService.findMeUser(options);
 	}
 
 	/**
@@ -113,7 +80,7 @@ export class UserController extends CrudController<User> {
 	})
 	@Get('/email/:email')
 	async findByEmail(@Param('email') email: string): Promise<IUser | null> {
-		return await this.userService.getUserByEmail(email);
+		return await this._userService.getUserByEmail(email);
 	}
 
 	/**
@@ -127,7 +94,9 @@ export class UserController extends CrudController<User> {
 	@Put('/preferred-language')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async updatePreferredLanguage(@Body() entity: UpdatePreferredLanguageDTO): Promise<IUser | UpdateResult> {
-		return await this.userService.updatePreferredLanguage(entity.preferredLanguage);
+		return await this._userService.updatePreferredLanguage(
+			entity.preferredLanguage
+		);
 	}
 
 	/**
@@ -143,7 +112,9 @@ export class UserController extends CrudController<User> {
 	async updatePreferredComponentLayout(
 		@Body() entity: UpdatePreferredComponentLayoutDTO
 	): Promise<IUser | UpdateResult> {
-		return await this.userService.updatePreferredComponentLayout(entity.preferredComponentLayout);
+		return await this._userService.updatePreferredComponentLayout(
+			entity.preferredComponentLayout
+		);
 	}
 
 	/**
@@ -155,7 +126,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('count')
 	async getCount(@Query() options: FindOptionsWhere<User>): Promise<number> {
-		return await this.userService.countBy(options);
+		return await this._userService.countBy(options);
 	}
 
 	/**
@@ -168,7 +139,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get('pagination')
 	async pagination(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
-		return await this.userService.paginate(options);
+		return await this._userService.paginate(options);
 	}
 
 	/**
@@ -191,7 +162,7 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_VIEW)
 	@Get()
 	async findAll(@Query() options: PaginationParams<User>): Promise<IPagination<IUser>> {
-		return await this.userService.findAll(options);
+		return await this._userService.findAll(options);
 	}
 
 	/**
@@ -217,7 +188,7 @@ export class UserController extends CrudController<User> {
 		@Query('data', ParseJsonPipe) data?: any
 	): Promise<IUser> {
 		const { relations } = data;
-		return await this.userService.findOneByIdString(id, { relations });
+		return await this._userService.findOneByIdString(id, { relations });
 	}
 
 	/**
@@ -240,8 +211,12 @@ export class UserController extends CrudController<User> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe()
-	async create(@Body() entity: CreateUserDTO): Promise<IUser> {
-		return await this.commandBus.execute(new UserCreateCommand(entity));
+	async create(
+		@Body() entity: CreateUserDTO
+	): Promise<IUser> {
+		return await this._commandBus.execute(
+			new UserCreateCommand(entity)
+		);
 	}
 
 	/**
@@ -256,8 +231,11 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ORG_USERS_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put(':id')
 	@UseValidationPipe({ transform: true })
-	async update(@Param('id', UUIDValidationPipe) id: IUser['id'], @Body() entity: UpdateUserDTO): Promise<IUser> {
-		return await this.userService.updateProfile(id, {
+	async update(
+		@Param('id', UUIDValidationPipe) id: IUser['id'],
+		@Body() entity: UpdateUserDTO
+	): Promise<IUser> {
+		return await this._userService.updateProfile(id, {
 			id,
 			...entity
 		});
@@ -283,8 +261,12 @@ export class UserController extends CrudController<User> {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ACCESS_DELETE_ACCOUNT)
 	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: IUser['id']): Promise<DeleteResult> {
-		return await this.commandBus.execute(new UserDeleteCommand(id));
+	async delete(
+		@Param('id', UUIDValidationPipe) id: IUser['id']
+	): Promise<DeleteResult> {
+		return await this._commandBus.execute(
+			new UserDeleteCommand(id)
+		);
 	}
 
 	/**
@@ -306,6 +288,6 @@ export class UserController extends CrudController<User> {
 	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
 	@Delete('/reset')
 	async factoryReset() {
-		return await this.factoryResetService.reset();
+		return await this._factoryResetService.reset();
 	}
 }
