@@ -563,7 +563,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					// Determine the appropriate filter for MikroORM
+					// Determine the appropriate filter for MikroORM based on the criteria type
 					let filter: MikroFilterQuery<T>;
 					if (typeof criteria === 'object') {
 						filter = criteria as MikroFilterQuery<T>;
@@ -571,7 +571,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 						filter = { id: criteria } as MikroFilterQuery<T>;
 					}
 
-					// Convert TypeORM options to MikroORM equivalent
+					// Convert the filter to MikroORM-specific where and options
 					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
 
 					// Execute delete operation with MikroORM
@@ -596,25 +596,31 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options - Additional options for the operation.
 	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
 	 */
-	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
+	public async softDelete(
+		criteria: string | number | FindOptionsWhere<T>
+	): Promise<UpdateResult | T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
+					// Determine the appropriate filter for MikroORM based on the criteria type
 					let filter: MikroFilterQuery<T>;
-					if (typeof criteria === 'string' || typeof criteria === 'number') {
-						filter = { id: criteria } as any;
-					} else if (typeof criteria === 'object') {
+					if (typeof criteria === 'object') {
 						filter = criteria as MikroFilterQuery<T>;
 					} else {
-						throw new Error(`Unsupported criteria type for MikroORM: ${typeof criteria}`);
+						filter = { id: criteria } as MikroFilterQuery<T>;
 					}
 
+					// Convert the filter to MikroORM-specific where and options
 					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+
+					// Find the entity and perform soft delete
 					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
 					await this.mikroOrmRepository.removeAndFlush(entity);
 
+					// Return the serialized version of the soft-deleted entity
 					return this.serialize(entity);
 				case MultiORMEnum.TypeORM:
+					// Perform soft delete using TypeORM
 					return await this.typeOrmRepository.softDelete(criteria);
 				default:
 					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
