@@ -129,17 +129,19 @@ export class RoleController extends CrudController<Role> {
 	}
 
 	/**
-	 * DELETE role by id
+	 * Deletes a role by its ID.
+	 * This endpoint handles HTTP DELETE requests to delete a role identified by the given ID.
 	 *
-	 * @param id
-	 * @returns
+	 * @param id - The UUID of the role to delete.
+	 * @returns {Promise<DeleteResult>} - The result of the delete operation.
 	 */
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: IRole['id']): Promise<DeleteResult> {
 		try {
 			return await this.roleService.delete(id);
 		} catch (error) {
-			throw new ForbiddenException();
+			console.error('Error while deleting role:', error);
+			throw new ForbiddenException(`Deletion of role with ID ${id} is forbidden`);
 		}
 	}
 

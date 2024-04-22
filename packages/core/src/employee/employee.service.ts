@@ -440,7 +440,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	async softDeletedById(
 		employeeId: IEmployee['id'],
 		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<UpdateResult | void> {
+	): Promise<UpdateResult | Employee> {
 		try {
 			const { organizationId } = options;
 

@@ -550,25 +550,33 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Deletes entities by a given criteria.
-	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
-	 * Executes fast and efficient DELETE query.
-	 * Does not check if entity exist in the database.
+	 * Deletes a record based on the given criteria.
+	 * Criteria can be an ID (string or number) or a complex object with conditions.
+	 * Supports multiple ORM types, and throws if the ORM type is unsupported.
 	 *
-	 * @param criteria
-	 * @param options
-	 * @returns
+	 * @param criteria - Identifier or condition to delete specific record(s).
+	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
 	 */
-	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any): Promise<DeleteResult> {
+	public async delete(
+		criteria: string | number | FindOptionsWhere<T>
+	): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					let where: MikroFilterQuery<T>;
-					if (typeof criteria === 'string' || typeof criteria === 'number') {
-						where = { id: criteria } as any;
+					// Determine the appropriate filter for MikroORM
+					let filter: MikroFilterQuery<T>;
+					if (typeof criteria === 'object') {
+						filter = criteria as MikroFilterQuery<T>;
+					} else {
+						filter = { id: criteria } as MikroFilterQuery<T>;
 					}
-					const result = await this.mikroOrmRepository.nativeDelete(where);
-					return { affected: result } as DeleteResult;
+
+					// Convert TypeORM options to MikroORM equivalent
+					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+
+					// Execute delete operation with MikroORM
+					const affected = await this.mikroOrmRepository.nativeDelete(where, mikroOptions);
+					return { affected } as DeleteResult;
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.delete(criteria);
 				default:
@@ -588,20 +596,24 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options - Additional options for the operation.
 	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
 	 */
-	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | void> {
+	public async softDelete(criteria: string | number | FindOptionsWhere<T>): Promise<UpdateResult | T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					let where: MikroFilterQuery<T>;
+					let filter: MikroFilterQuery<T>;
 					if (typeof criteria === 'string' || typeof criteria === 'number') {
-						where = { id: criteria } as any;
+						filter = { id: criteria } as any;
 					} else if (typeof criteria === 'object') {
-						where = criteria as MikroFilterQuery<T>;
+						filter = criteria as MikroFilterQuery<T>;
 					} else {
 						throw new Error(`Unsupported criteria type for MikroORM: ${typeof criteria}`);
 					}
-					const entity = await this.mikroOrmRepository.findOneOrFail(where);
-					return await this.mikroOrmRepository.removeAndFlush(entity);
+
+					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
+					await this.mikroOrmRepository.removeAndFlush(entity);
+
+					return this.serialize(entity);
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.softDelete(criteria);
 				default:

@@ -397,23 +397,37 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	/**
 	 * DELETE source related to tenant
 	 *
-	 * @param criteria
-	 * @param options
-	 * @returns
+	 * @param criteria - A string ID or a set of conditions to identify which record to delete.
+	 * @param options - Additional options for querying, such as extra conditions or query parameters.
+	 * @returns {Promise<DeleteResult>} - The result of the delete operation.
 	 */
-	public async delete(criteria: string | FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<DeleteResult> {
+	public async delete(
+		criteria: string | FindOptionsWhere<T>,
+		options?: FindOneOptions<T>
+	): Promise<DeleteResult> {
 		try {
-			let record: T;
-			if (typeof criteria === 'string') {
-				record = await this.findOneByIdString(criteria, options);
-			} else {
-				record = await this.findOneByWhereOptions(criteria as FindOptionsWhere<T>);
+			// Merge additional where conditions from options into criteria if needed
+			let where: FindOptionsWhere<T> = typeof criteria === 'string' ? { id: criteria } as FindOptionsWhere<T> : { ...criteria };
+
+			if (options?.where) {
+				where = { ...where, ...options.where };
 			}
+
+			// Try to find the record with the given criteria
+			const record = await this.findOneByWhereOptions(where);
+
 			if (!record) {
 				throw new NotFoundException(`The requested record was not found`);
 			}
-			return await super.delete(criteria);
+
+			const user = RequestContext.currentUser();
+			// Proceed with the delete operation using the merged criteria
+			return await super.delete({
+				...where,
+				...this.findConditionsWithTenantByUser(user)
+			});
 		} catch (err) {
+			console.error('Error during delete operation:', err);
 			throw new NotFoundException(`The record was not found`, err);
 		}
 	}
@@ -430,7 +444,7 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 	public async softDelete(
 		criteria: string | number | FindOptionsWhere<T>,
 		options?: FindOneOptions<T>
-	): Promise<UpdateResult | void> {
+	): Promise<UpdateResult | T> {
 		try {
 			let record: T | null;
 

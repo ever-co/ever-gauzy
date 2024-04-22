@@ -430,7 +430,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async delete(
 		@Param('id', UUIDValidationPipe) employeeId: string,
 		@Query() params: TenantOrganizationBaseDTO
-	): Promise<UpdateResult | void> {
+	): Promise<UpdateResult | Employee> {
 		return await this.employeeService.softDeletedById(employeeId, params);
 	}
 }

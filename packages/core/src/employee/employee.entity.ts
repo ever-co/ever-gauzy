@@ -77,8 +77,9 @@ import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
-@SoftDeletable(() => Employee, "deletedAt", () => new Date())
+
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
+@SoftDeletable(() => Employee, 'deletedAt', () => new Date())
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 

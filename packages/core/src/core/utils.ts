@@ -581,12 +581,11 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 			return { $eq: null };
 		}
 		case 'not': {
-			const nested = operator.value || null;
 			// If the nested value is also a FindOperator, process it recursively
-			if (nested instanceof FindOperator) {
-				return { $ne: processFindOperator(nested) };
+			if (operator.child && operator.child instanceof FindOperator) {
+				return { $ne: processFindOperator(operator.child) };
 			} else {
-				return { $ne: nested };
+				return { $ne: operator.value };
 			}
 		}
 		case 'in': {

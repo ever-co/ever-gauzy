@@ -1,8 +1,4 @@
-import {
-	IPagination,
-	IRolePermission,
-	PermissionsEnum
-} from '@gauzy/contracts';
+
 import {
 	Body,
 	Controller,
@@ -14,15 +10,15 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards,
-	ValidationPipe
+	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
+import { IPagination, IRolePermission, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { CreateRolePermissionDTO, UpdateRolePermissionDTO } from './dto';
 import { RolePermission } from './role-permission.entity';
 import { RolePermissionService } from './role-permission.service';
@@ -117,11 +113,9 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: CreateRolePermissionDTO
+		@Body() entity: CreateRolePermissionDTO
 	): Promise<IRolePermission> {
 		return this.rolePermissionService.createPermission(entity);
 	}
@@ -149,12 +143,10 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
+	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Body(new ValidationPipe({
-			transform: true,
-			whitelist: true
-		})) entity: UpdateRolePermissionDTO
+		@Body() entity: UpdateRolePermissionDTO
 	): Promise<UpdateResult | IRolePermission> {
 		return await this.rolePermissionService.updatePermission(id, entity);
 	}
