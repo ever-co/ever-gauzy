@@ -326,8 +326,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Tables joins with relations
-			query.innerJoin(`${query.alias}.user`, 'user');
-			query.innerJoin(`user.organizations`, 'organizations');
+			query.leftJoin(`${query.alias}.user`, 'user');
 			query.leftJoin(`${query.alias}.tags`, 'tags');
 
 			// Set pagination options and selected table properties/fields
@@ -351,7 +350,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					isArchived: true
 				},
 				...(options && options.relations ? { relations: options.relations } : {}),
-				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {})
+				...(options && 'withDeleted' in options ? { withDeleted: options.withDeleted } : {}) // Include soft-deleted parent entities
 			});
 
 			// Build WHERE clause using QueryBuilder
@@ -365,7 +364,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						if (isNotEmpty(where?.organizationId)) {
 							const organizationId = where.organizationId;
 							web.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
-							web.andWhere(p(`"organizations"."organizationId" = :organizationId`), { organizationId });
 						}
 					})
 				);
@@ -443,12 +441,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	): Promise<UpdateResult | Employee> {
 		try {
 			const { organizationId } = options;
+			// Obtain tenant ID from the current request context
+			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
 			// Ensure the employee exists before attempting soft deletion
-			await this.findOneByIdString(employeeId, { where: { organizationId } });
-
-			// Obtain tenant ID from the current request context
-			const tenantId = RequestContext.currentTenantId();
+			await this.findOneByIdString(employeeId, { where: { organizationId, tenantId } });
 
 			// Perform the soft delete operation
 			return await super.softDelete({ id: employeeId, organizationId, tenantId });
