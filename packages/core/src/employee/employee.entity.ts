@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
+import { SoftDeletable } from "mikro-orm-soft-delete";
 import { IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
@@ -76,7 +77,9 @@ import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
+
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
+@SoftDeletable(() => Employee, 'deletedAt', () => new Date())
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
@@ -346,9 +349,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	 */
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, {
-		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
-		cascade: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 

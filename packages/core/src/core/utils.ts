@@ -578,14 +578,14 @@ export function parseOrderOptions(order: FindOptionsOrder<any>) {
 export function processFindOperator<T>(operator: FindOperator<T>) {
 	switch (operator.type) {
 		case 'isNull': {
-			return { $eq: null };
+			return null;
 		}
 		case 'not': {
-			const nested = operator.value || null;
 			// If the nested value is also a FindOperator, process it recursively
-			if (nested instanceof FindOperator) {
-				return { $ne: processFindOperator(nested) };
+			if (operator.child && operator.child instanceof FindOperator) {
+				return { $ne: processFindOperator(operator.child) };
 			} else {
+				const nested = operator.value || null;
 				return { $ne: nested };
 			}
 		}

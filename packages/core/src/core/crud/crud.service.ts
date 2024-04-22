@@ -550,25 +550,33 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
-	 * Deletes entities by a given criteria.
-	 * Unlike save method executes a primitive operation without cascades, relations and other operations included.
-	 * Executes fast and efficient DELETE query.
-	 * Does not check if entity exist in the database.
+	 * Deletes a record based on the given criteria.
+	 * Criteria can be an ID (string or number) or a complex object with conditions.
+	 * Supports multiple ORM types, and throws if the ORM type is unsupported.
 	 *
-	 * @param criteria
-	 * @param options
-	 * @returns
+	 * @param criteria - Identifier or condition to delete specific record(s).
+	 * @returns {Promise<DeleteResult>} - Result indicating the number of affected records.
 	 */
-	public async delete(criteria: string | number | FindOptionsWhere<T>, ...options: any): Promise<DeleteResult> {
+	public async delete(
+		criteria: string | number | FindOptionsWhere<T>
+	): Promise<DeleteResult> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
-					let where: MikroFilterQuery<T>;
-					if (typeof criteria === 'string' || typeof criteria === 'number') {
-						where = { id: criteria } as any;
+					// Determine the appropriate filter for MikroORM based on the criteria type
+					let filter: MikroFilterQuery<T>;
+					if (typeof criteria === 'object') {
+						filter = criteria as MikroFilterQuery<T>;
+					} else {
+						filter = { id: criteria } as MikroFilterQuery<T>;
 					}
-					const result = await this.mikroOrmRepository.nativeDelete(where);
-					return { affected: result } as DeleteResult;
+
+					// Convert the filter to MikroORM-specific where and options
+					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+
+					// Execute delete operation with MikroORM
+					const affected = await this.mikroOrmRepository.nativeDelete(where, mikroOptions);
+					return { affected } as DeleteResult;
 				case MultiORMEnum.TypeORM:
 					return await this.typeOrmRepository.delete(criteria);
 				default:
@@ -576,6 +584,49 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			throw new NotFoundException(`The record was not found`, error);
+		}
+	}
+
+	/**
+	 * Softly deletes entities by a given criteria.
+	 * This method sets a flag or timestamp indicating the entity is considered deleted.
+	 * It does not actually remove the entity from the database, allowing for recovery or audit purposes.
+	 *
+	 * @param criteria - Entity ID or condition to identify which entities to soft-delete.
+	 * @param options - Additional options for the operation.
+	 * @returns {Promise<UpdateResult | DeleteResult>} - Result indicating success or failure.
+	 */
+	public async softDelete(
+		criteria: string | number | FindOptionsWhere<T>
+	): Promise<UpdateResult | T> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					// Determine the appropriate filter for MikroORM based on the criteria type
+					let filter: MikroFilterQuery<T>;
+					if (typeof criteria === 'object') {
+						filter = criteria as MikroFilterQuery<T>;
+					} else {
+						filter = { id: criteria } as MikroFilterQuery<T>;
+					}
+
+					// Convert the filter to MikroORM-specific where and options
+					let { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: filter } as FindManyOptions);
+
+					// Find the entity and perform soft delete
+					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
+					await this.mikroOrmRepository.removeAndFlush(entity);
+
+					// Return the serialized version of the soft-deleted entity
+					return this.serialize(entity);
+				case MultiORMEnum.TypeORM:
+					// Perform soft delete using TypeORM
+					return await this.typeOrmRepository.softDelete(criteria);
+				default:
+					throw new Error(`Soft delete not implemented for ORM type: ${this.ormType}`);
+			}
+		} catch (error) {
+			throw new NotFoundException(`The record was not found or could not be soft-deleted`, error);
 		}
 	}
 

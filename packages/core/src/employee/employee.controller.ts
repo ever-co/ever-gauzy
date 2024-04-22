@@ -1,4 +1,3 @@
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee } from '@gauzy/contracts';
 import {
 	BadRequestException,
 	Body,
@@ -19,6 +18,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import { UpdateResult } from 'typeorm';
+import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee } from '@gauzy/contracts';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,
@@ -50,7 +50,10 @@ import { TenantOrganizationBaseDTO } from './../core/dto';
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
-	constructor(private readonly employeeService: EmployeeService, private readonly commandBus: CommandBus) {
+	constructor(
+		private readonly employeeService: EmployeeService,
+		private readonly commandBus: CommandBus
+	) {
 		super(employeeService);
 	}
 
@@ -427,7 +430,7 @@ export class EmployeeController extends CrudController<Employee> {
 	async delete(
 		@Param('id', UUIDValidationPipe) employeeId: string,
 		@Query() params: TenantOrganizationBaseDTO
-	): Promise<UpdateResult> {
-		return await this.employeeService.softDelete(employeeId, params);
+	): Promise<UpdateResult | Employee> {
+		return await this.employeeService.softDeletedById(employeeId, params);
 	}
 }
