@@ -50,8 +50,8 @@ const ormType = getORMType();
  * A map of the core TypeORM / MikroORM Subscribers.
  */
 export const coreSubscribers = [
-	// Conditionally add TenantOrganizationBaseEntityEventSubscriber if ORM is MikroORM
-	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []), // Add the subscriber only if the ORM type is MikroORM
+	// Add the subscriber only if the ORM type is MikroORM
+	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
 	ActivitySubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
