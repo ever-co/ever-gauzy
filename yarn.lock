@@ -20706,7 +20706,7 @@ formidable@^2.1.2:
     once "^1.4.0"
     qs "^6.11.0"
 
-formidable@^3.2.4:
+formidable@^3.5.1:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/formidable/-/formidable-3.5.1.tgz#9360a23a656f261207868b1484624c4c8d06ee1a"
   integrity sha512-WJWKelbRHN41m5dumb0/k8TeAx7Id/y3a+Z7QfhxP/htI9Js5zYaEDtG8uMgG0vM0lOlqnmjE99/kfpOYi/0Og==
