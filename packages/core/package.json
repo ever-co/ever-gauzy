@@ -122,7 +122,7 @@
 		"app-root-path": "^3.0.0",
 		"archiver": "^5.3.0",
 		"atlassian-connect-express": "^8.5.0",
-		"axios": "^1.6.5",
+		"axios": "^1.6.8",
 		"bcrypt": "^5.1.0",
 		"better-sqlite3": "^9.4.3",
 		"cache-manager": "^5.3.2",
