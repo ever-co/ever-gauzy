@@ -1,23 +1,45 @@
+import { RelationOptions as TypeOrmRelationOptions, JoinTableOptions } from 'typeorm';
+
+export type TypeORMInverseSide<T> = string | ((object: T) => any);
+export type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'> & {
+    /** Indicates whether the relation should be eagerly loaded. Default is false. */
+    eager?: boolean;
+    /** Specifies the cascade options for the relation (e.g., ['insert', 'update', 'remove', 'soft-remove', 'recover']). */
+    cascade?: Array<'insert' | 'update' | 'remove' | 'soft-remove' | 'recover'>;
+    /** Determines whether the relation is nullable. Default is false. */
+    nullable?: boolean;
+    /** Indicates if the relation should have a unique constraint. Default is false. */
+    unique?: boolean;
+    /** Specifies the default value for the relation (for primitive types). */
+    default?: any;
+    /** Specifies if the relation should be persisted automatically. Default is true. */
+    persist?: boolean;
+    /** Additional arbitrary options for the relation (such as indices, etc.). */
+    [key: string]: any;
+};
+
 /**
  * Configuration for a custom embedded field within a relation.
  */
 export type RelationCustomEmbeddedFieldConfig<T = any> = {
     /** Name of the custom field. */
     propertyPath: string;
-    /** Target entity for the relation. */
-    entity: T;
     /** Type of the relation field. */
     type: string;
     /** Name of the relation. */
     relationType: string;
-    /** Indicates if the relation should be eagerly loaded. */
-    eager?: boolean;
-    /** Indicates if the relation is nullable. */
-    nullable?: boolean;
-    /** Indicates if the relation should have a unique constraint. */
-    unique?: boolean;
+    /** Target entity for the relation. */
+    entity: T;
+    /** A pivot table is an intermediate table that connects two entities in a Many-to-Many relationship. */
+    pivotTable?: string;
+    /** */
+    joinColumn?: string;
+    /** */
+    inverseJoinColumn?: string;
     /** Specifies the inverse side of the relation. */
-    inverseSide?: string | ((object: T) => any);
+    inverseSide?: TypeORMInverseSide<T>;
+    /** Options for the relation */
+    options?: TypeORMRelationOptions;
 };
 
 /**

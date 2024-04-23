@@ -1,4 +1,4 @@
-import { EmbeddedOptions as MikroOrmColumnEmbeddedOptions } from '@mikro-orm/core';
+import { Embedded, EmbeddedOptions as MikroOrmColumnEmbeddedOptions } from '@mikro-orm/core';
 import { Column, ObjectType } from 'typeorm';
 import { ColumnEmbeddedOptions as TypeOrmColumnEmbeddedOptions } from 'typeorm/decorator/options/ColumnEmbeddedOptions';
 

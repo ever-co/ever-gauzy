@@ -29,7 +29,7 @@ export const registerColumn = async (
             JoinColumn()(instance, name);
         }
     } else {
-        const { nullable, unique } = customField;
+        const { nullable, unique } = customField.options;
         const options: ColumnDataType | ColumnOptions<any> = {
             name,
             nullable: nullable === false ? false : true,
