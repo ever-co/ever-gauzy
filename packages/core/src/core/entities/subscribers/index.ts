@@ -1,4 +1,5 @@
 export * from './base-entity-event.subscriber';
+export * from './tenant-organization-base-entity.subscriber';
 
 import {
 	ActivitySubscriber,
@@ -40,11 +41,14 @@ import {
 	TimeSlotSubscriber,
 	UserSubscriber
 } from '../internal';
+import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
 
 /**
  * A map of the core TypeORM Subscribers.
  */
 export const coreSubscribers = [
+	// Tenant Organization Base Entity Subscriber
+	TenantOrganizationBaseEntityEventSubscriber,
 	ActivitySubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,
