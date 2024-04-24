@@ -22,6 +22,7 @@ import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { PaginationParams } from './pagination-params';
 import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
+import { TenantOrganizationBaseDTO } from 'core/dto';
 
 @ApiResponse({
 	status: HttpStatus.UNAUTHORIZED,
@@ -226,10 +227,9 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UsePipes(new AbstractValidationPipe({ whitelist: true }, {}))
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(
 		@Param('id', UUIDValidationPipe) id: T['id'],
-
 		...options: any[]
 	): Promise<T> {
 		// Find the record by ID
@@ -258,7 +258,7 @@ export abstract class CrudController<T extends BaseEntity> {
 	})
 	@Put(':id/recover')
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UsePipes(new AbstractValidationPipe({ whitelist: true }, {}))
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(
 		@Param('id', UUIDValidationPipe) id: T['id'],
 		...options: any[]
