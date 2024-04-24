@@ -63,7 +63,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	 * Employee
 	 */
 	@ApiProperty({ type: () => Employee })
-	@MultiORMManyToOne(() => Employee, (employee) => employee.teams, {
+	@MultiORMManyToOne(() => Employee, (it) => it.teams, {
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})

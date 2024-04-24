@@ -37,6 +37,8 @@ export interface ICrudService<T> {
 	update(id: IUpdateCriteria<T>, entity: QueryDeepPartialEntity<T>, ...options: any[]): Promise<UpdateResult | T>;
 	delete(id: IDeleteCriteria<T>, ...options: any[]): Promise<DeleteResult>;
 	softDelete(id: IDeleteCriteria<T>, ...options: any[]): Promise<UpdateResult | T>;
+	softRemove(entity: IPartialEntity<T>, ...options: any[]): Promise<T>;
+	softRecover(entity: IPartialEntity<T>, ...options: any[]): Promise<T>;
 }
 
 export type IMikroOptions<T> = { where?: MikroFilterQuery<T> } & MikroFindOptions<T>
