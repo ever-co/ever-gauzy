@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { SoftDeletable } from "mikro-orm-soft-delete";
 import { IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
@@ -79,7 +78,6 @@ import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repo
 
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
-@SoftDeletable(() => Employee, 'deletedAt', () => new Date())
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 

@@ -5,7 +5,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { SoftDeletable } from 'mikro-orm-soft-delete';
 import { Exclude } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
@@ -31,7 +30,6 @@ import {
 import { MikroOrmUserRepository } from './repository/mikro-orm-user.repository';
 
 @MultiORMEntity('user', { mikroOrmRepository: () => MikroOrmUserRepository })
-@SoftDeletable(() => User, 'deletedAt', () => new Date())
 export class User extends TenantBaseEntity implements IUser {
 	[EntityRepositoryType]?: MikroOrmUserRepository;
 
