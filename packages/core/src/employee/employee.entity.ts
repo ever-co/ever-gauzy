@@ -429,11 +429,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	*/
 
 	// Employee Teams
-	@ApiPropertyOptional({
-		type: () => OrganizationTeamEmployee,
-		isArray: true
+	@MultiORMOneToMany(() => OrganizationTeamEmployee, (it) => it.employee, {
+		cascade: true
 	})
-	@MultiORMOneToMany(() => OrganizationTeamEmployee, (it) => it.employee)
 	teams?: IOrganizationTeam[];
 
 	/**

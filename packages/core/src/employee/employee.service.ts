@@ -1,13 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
 	Brackets,
-	DeleteResult,
 	FindManyOptions,
 	FindOneOptions,
-	FindOptionsWhere,
 	In,
 	SelectQueryBuilder,
-	UpdateResult,
 	WhereExpressionBuilder
 } from 'typeorm';
 import * as moment from 'moment';
@@ -97,8 +94,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			return null;
 		}
 	}
-
-
 
 	/**
 	 * Finds an employee by user ID.
@@ -449,7 +444,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Ensure the employee exists before attempting soft deletion
 			const employee = await this.findOneByIdString(employeeId, {
 				where: { organizationId, tenantId },
-				relations: { user: true }
+				relations: { user: true, teams: true }
 			});
 
 			// Perform the soft delete operation
@@ -483,7 +478,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Find the soft-deleted employee using the ID, organization ID, and tenant ID
 			const employee = await this.findOneByIdString(employeeId, {
 				where: { organizationId, tenantId },
-				relations: { user: true }, // Optionally fetch related entities, like user
+				relations: { user: true, teams: true }, // Optionally fetch related entities, like user
 				withDeleted: true
 			});
 
