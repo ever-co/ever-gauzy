@@ -349,6 +349,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	 */
 	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, {
+		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
+		cascade: true,
+
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE',
 

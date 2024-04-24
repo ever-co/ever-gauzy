@@ -10,6 +10,7 @@ import {
 	FindOneOptions,
 	FindOptionsWhere,
 	Repository,
+	SaveOptions,
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -363,7 +364,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 					},
 					...(options && options.select ? { select: options.select } : {}),
 					...(options && options.relations ? { relations: options.relations } : []),
-					...(options && options.order ? { order: options.order } : {})
+					...(options && options.order ? { order: options.order } : {}),
+					...(options && options.withDeleted ? { withDeleted: options.withDeleted } : {}),
 				} as FindOneOptions<T>);
 				break;
 			default:
@@ -615,7 +617,10 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 					// Find the entity and perform soft delete
 					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
-					await this.mikroOrmRepository.removeAndFlush(entity);
+
+					// Use "em.remove" for MikroORM with a transactional approach to ensure changes are persisted properly
+					this.mikroOrmRepository.remove(entity);
+					await this.mikroOrmRepository.flush();
 
 					// Return the serialized version of the soft-deleted entity
 					return this.serialize(entity);
@@ -627,6 +632,75 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			}
 		} catch (error) {
 			throw new NotFoundException(`The record was not found or could not be soft-deleted`, error);
+		}
+	}
+
+	/**
+	 * Softly removes an entity from the database.
+	 *
+	 * This method handles soft removal of a given entity using different ORM strategies, based on the configured ORM type.
+	 * For MikroORM, it uses the `remove` method followed by a `flush` to persist changes.
+	 * For TypeORM, it utilizes the `softRemove` method to perform a soft deletion.
+	 * If the ORM type is not supported, an error is thrown.
+	 *
+	 * @param entity - The entity to be softly removed.
+	 * @param options - Optional parameters for the removal operation (applicable to TypeORM).
+	 * @returns A promise that resolves to the removed entity.
+	 * @throws NotFoundException if any error occurs during the soft removal process.
+	 */
+	public async softRemove(entity: T, options?: SaveOptions): Promise<T> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					// Use "em.remove" for MikroORM with a transactional approach to ensure changes are persisted properly
+					this.mikroOrmRepository.remove(entity);
+					await this.mikroOrmRepository.flush();
+					// Return the serialized version of the soft-deleted entity
+					return this.serialize(entity);
+				}
+				case MultiORMEnum.TypeORM: {
+					// TypeORM soft removes entities via its repository
+					return await this.typeOrmRepository.softRemove<T>(entity, options);
+				}
+				default:
+					throw new Error(`Unsupported database type: ${this.ormType}`);
+			}
+		} catch (error) {
+			// If any error occurs, rethrow it as a NotFoundException with additional context.
+			throw new NotFoundException(`An error occurred during soft removal: ${error.message}`, error);
+		}
+	}
+
+	/**
+	 * Soft-recover a previously soft-deleted entity.
+	 *
+	 * Depending on the ORM, this method restores a soft-deleted entity by resetting its deletion indicator.
+	 *
+	 * @param entity - The soft-deleted entity to recover.
+	 * @param options - Optional settings for database save operations.
+	 * @returns A promise that resolves with the recovered entity.
+	 */
+	public async softRecover(entity: T, options?: SaveOptions): Promise<T> {
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM: {
+					// Reset the soft-deleted flag and persist changes
+					entity['deletedAt'] = null;
+					await this.mikroOrmRepository.persistAndFlush(entity);
+
+					// Return the restored entity, serialized if needed
+					return this.serialize(entity);
+				}
+				case MultiORMEnum.TypeORM: {
+					// Use TypeORM's recover method to restore the entity
+					return await this.typeOrmRepository.recover(entity, options);
+				}
+				default:
+					throw new Error(`Unsupported database type: ${this.ormType}`);
+			}
+		} catch (error) {
+			// If any error occurs, rethrow it as a NotFoundException with additional context.
+			throw new NotFoundException(`An error occurred during restoring entity: ${error.message}`);
 		}
 	}
 

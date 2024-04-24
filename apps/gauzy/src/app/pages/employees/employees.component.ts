@@ -297,10 +297,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType:
-						this.selectedEmployee.fullName +
-						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
+					recordType: this.selectedEmployee.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
@@ -310,10 +307,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						if (!this.organization) {
 							return;
 						}
-						const { id: organizationId } = this.organization;
-						await this.employeesService.delete(this.selectedEmployee.id, {
-							organizationId
-						});
+						const { id: organizationId, tenantId } = this.organization;
+						await this.employeesService.softRemove(this.selectedEmployee.id, { organizationId, tenantId });
 
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
@@ -426,10 +421,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			});
 		}
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-
-			await this.employeesService.resort(this.selectedEmployee.id, {
+			const { id: organizationId, tenantId } = this.organization;
+			await this.employeesService.softRecover(this.selectedEmployee.id, {
 				organizationId,
 				tenantId
 			});
