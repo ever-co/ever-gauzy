@@ -232,10 +232,8 @@ export abstract class CrudController<T extends BaseEntity> {
 		@Param('id', UUIDValidationPipe) id: T['id'],
 		...options: any[]
 	): Promise<T> {
-		// Find the record by ID
-		const entity = await this.crudService.findOneByIdString(id);
 		// Soft delete the record
-		return await this.crudService.softRemove(entity, options);
+		return await this.crudService.softRemove(id, options);
 	}
 
 	/**
@@ -263,9 +261,7 @@ export abstract class CrudController<T extends BaseEntity> {
 		@Param('id', UUIDValidationPipe) id: T['id'],
 		...options: any[]
 	): Promise<T> {
-		// Find the soft-deleted record by ID
-		const entity = await this.crudService.findOneByIdString(id);
 		// Restore the soft-deleted record
-		return await this.crudService.softRecover(entity, options);
+		return await this.crudService.softRecover(id, options);
 	}
 }

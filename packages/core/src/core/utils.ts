@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
 import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition, wrap } from '@mikro-orm/core';
+import { SOFT_DELETABLE_FILTER } from "mikro-orm-soft-delete";
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -518,6 +519,7 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 } {
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
 		disableIdentityMap: true,
+		populate: []
 	};
 	let where: MikroFilterQuery<T> = {};
 
@@ -549,6 +551,11 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 	// Parses TypeORM `take` option to MikroORM `limit` option
 	if (options && options.take) {
 		mikroOptions.limit = options.take;
+	}
+
+	// If options contain 'withDeleted', add the SOFT_DELETABLE_FILTER to existing filters
+	if (options && options.withDeleted) {
+		mikroOptions.filters = { [SOFT_DELETABLE_FILTER]: false }
 	}
 
 	return { where, mikroOptions };
