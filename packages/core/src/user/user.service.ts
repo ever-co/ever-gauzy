@@ -27,6 +27,7 @@ import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
 import { EmployeeService } from '../employee/employee.service';
+import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
 import { User } from './user.entity';
 
@@ -36,7 +37,8 @@ export class UserService extends TenantAwareCrudService<User> {
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		private readonly _configService: ConfigService,
-		private readonly _employeeService: EmployeeService
+		private readonly _employeeService: EmployeeService,
+		private readonly _taskService: TaskService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
 	}
@@ -397,9 +399,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(p(`"${query.alias}"."id" = :id`), { id });
-						web.andWhere(p(`"${query.alias}"."email" = :email`), {
-							email
-						});
+						web.andWhere(p(`"${query.alias}"."email" = :email`), { email });
 					})
 				);
 				query.andWhere(
@@ -466,9 +466,9 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		try {
 			// TODO: Unassign all the task assigned to this user
-
 			// Best to raise some event and handle it in the subscriber that remove tasks!
-			//	await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
+			const employee = await this._employeeService.findOneByUserId(user.id);
+			if (employee) { await this._taskService.unassignEmployeeFromTeamTasks(employee.id); }
 
 			return await super.delete(userId);
 		} catch (error) {
