@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, OneToMany, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
@@ -29,7 +29,8 @@ import {
 	ICandidate,
 	IEmployeeAward,
 	IEquipmentSharing,
-	IEmployeePhone
+	IEmployeePhone,
+	IDailyPlan
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -45,6 +46,7 @@ import {
 import {
 	Candidate,
 	Contact,
+	DailyPlan,
 	EmployeeAward,
 	EmployeePhone,
 	EmployeeSetting,
@@ -75,7 +77,6 @@ import { CustomEmployeeFields, HasCustomFields } from '../core/entities/custom-e
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
@@ -644,4 +645,10 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	*/
 	@EmbeddedColumn(() => CustomEmployeeFields, { prefix: false })
 	customFields?: CustomEmployeeFields;
+
+	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
+	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
+		onDelete: 'SET NULL'
+	})
+	dailyPlans?: IDailyPlan[];
 }
