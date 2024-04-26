@@ -3,9 +3,15 @@ import { JoinColumn, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DailyPlanStatusEnum, IDailyPlan, IEmployee } from '@gauzy/contracts';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
-import { Employee, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { DailyPlanStatusEnum, IDailyPlan, IDailyPlanTask, IEmployee } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from '../../core/decorators/entity';
+import { DailyPlanTask, Employee, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository';
 
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
@@ -47,4 +53,10 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: IEmployee['id'];
+
+	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
+	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlan) => dailyPlan.dailyPlan, {
+		onDelete: 'SET NULL'
+	})
+	dailyPlanTasks?: IDailyPlanTask[];
 }

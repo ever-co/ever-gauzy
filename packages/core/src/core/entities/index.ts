@@ -21,6 +21,7 @@ import {
 	Currency,
 	CustomSmtp,
 	DailyPlan,
+	DailyPlanTask,
 	Deal,
 	EmailHistory,
 	EmailReset,
@@ -134,7 +135,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -160,6 +161,7 @@ export const coreEntities = [
 	Currency,
 	CustomSmtp,
 	DailyPlan,
+	DailyPlanTask,
 	Deal,
 	EmailHistory,
 	EmailReset,

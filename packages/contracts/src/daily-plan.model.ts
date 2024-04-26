@@ -1,6 +1,7 @@
-import { IEmployee } from 'employee.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployee } from './employee.model';
 
-export interface IDailyPlan extends IEmployee {
+export interface IDailyPlan extends IBasePerTenantAndOrganizationEntityModel {
 	date: Date;
 	workTimePlanned: Date;
 	status: DailyPlanStatusEnum;
