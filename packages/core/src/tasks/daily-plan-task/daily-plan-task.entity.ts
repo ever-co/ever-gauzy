@@ -11,6 +11,15 @@ import { IDailyPlan, IDailyPlanTask, ITask } from '@gauzy/contracts';
 export class DailyPlanTask extends TenantOrganizationBaseEntity implements IDailyPlanTask {
 	[EntityRepositoryType]?: MikroOrmDailyPlanTaskRepository;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Daily plan
+	 */
 	@ApiProperty({ type: () => DailyPlan })
 	@MultiORMManyToOne(() => DailyPlan, {
 		nullable: true,
@@ -28,6 +37,9 @@ export class DailyPlanTask extends TenantOrganizationBaseEntity implements IDail
 	@MultiORMColumn({ nullable: true, relationId: true })
 	dailyPlanId: IDailyPlan['id'];
 
+	/**
+	 * Task planned
+	 */
 	@ApiProperty({ type: () => Task })
 	@MultiORMManyToOne(() => Task, {
 		nullable: true,

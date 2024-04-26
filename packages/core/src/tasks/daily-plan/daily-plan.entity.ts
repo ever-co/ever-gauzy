@@ -38,6 +38,15 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@MultiORMColumn()
 	status: DailyPlanStatusEnum;
 
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Employee
+	 */
 	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToOne(() => Employee, {
 		nullable: true,
@@ -54,6 +63,15 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@MultiORMColumn({ nullable: true, relationId: true })
 	employeeId?: IEmployee['id'];
 
+	/*
+	|--------------------------------------------------------------------------
+	| @OneToMany
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * daily planned tasks
+	 */
 	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
 	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlanTask) => dailyPlanTask.dailyPlan, {
 		onDelete: 'SET NULL'
