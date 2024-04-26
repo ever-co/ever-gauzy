@@ -14,9 +14,8 @@ import { ITryRequest } from './try-request';
  * This abstract class adds tenantId to all query filters if a user is available in the current RequestContext
  * If a user is not available in RequestContext, then it behaves exactly the same as CrudService
  */
-export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
-	extends CrudService<T>
-	implements ICrudService<T> {
+export abstract class TenantAwareCrudService<T extends TenantBaseEntity> extends CrudService<T> implements ICrudService<T> {
+
 	constructor(typeOrmRepository: Repository<T>, mikroOrmRepository: MikroOrmBaseEntityRepository<T>) {
 		super(typeOrmRepository, mikroOrmRepository);
 	}
@@ -413,14 +412,8 @@ export abstract class TenantAwareCrudService<T extends TenantBaseEntity>
 				where = { ...where, ...options.where };
 			}
 
-			// Try to find the record with the given criteria
-			const record = await this.findOneByWhereOptions(where);
-
-			if (!record) {
-				throw new NotFoundException(`The requested record was not found`);
-			}
-
 			const user = RequestContext.currentUser();
+
 			// Proceed with the delete operation using the merged criteria
 			return await super.delete({
 				...where,

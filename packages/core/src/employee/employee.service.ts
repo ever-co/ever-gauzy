@@ -5,7 +5,6 @@ import {
 	FindOneOptions,
 	In,
 	SelectQueryBuilder,
-	UpdateResult,
 	WhereExpressionBuilder
 } from 'typeorm';
 import * as moment from 'moment';
@@ -95,8 +94,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			return null;
 		}
 	}
-
-
 
 	/**
 	 * Finds an employee by user ID.
@@ -435,20 +432,20 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @param options - Contains organizationId and possibly other per-tenant information.
 	 * @returns - UpdateResult or DeleteResult depending on the ORM type.
 	 */
-	async softDeletedById(
+	async softRemovedById(
 		employeeId: IEmployee['id'],
 		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<UpdateResult | Employee> {
+	): Promise<Employee> {
 		try {
 			const { organizationId } = options;
 			// Obtain tenant ID from the current request context
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-			// Ensure the employee exists before attempting soft deletion
-			await this.findOneByIdString(employeeId, { where: { organizationId, tenantId } });
-
 			// Perform the soft delete operation
-			return await super.softDelete({ id: employeeId, organizationId, tenantId });
+			return await super.softRemove(employeeId, {
+				where: { organizationId, tenantId },
+				relations: { user: true, teams: true }
+			});
 		} catch (error) {
 			console.error('Error during soft delete for employee', error);
 			throw new BadRequestException(error.message || 'Soft delete failed');
@@ -456,26 +453,35 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Restores a previously soft-deleted employee, based on their ID, with constraints for organization and tenant.
-	 * This effectively reverses a soft-delete operation, making the employee record active again.
+	 * Restores a soft-deleted employee by ID.
 	 *
-	 * @param employeeId - ID of the employee to restore.
-	 * @param options - Contains the organizationId and potentially other context for per-tenant operations.
-	 * @returns {Promise<UpdateResult>} - The result of the restore operation.
+	 * This method restores an employee who was previously soft-deleted. It uses the organization ID
+	 * and tenant ID to ensure that the correct employee is restored.
+	 *
+	 * @param employeeId The ID of the employee to restore.
+	 * @param options Additional context parameters, including organization ID and tenant ID.
+	 * @returns The restored Employee entity.
+	 * @throws BadRequestException if the employee cannot be restored or if an error occurs.
 	 */
-	async restoreSoftDelete(
+	async softRecoverById(
 		employeeId: IEmployee['id'],
 		options: IBasePerTenantAndOrganizationEntityModel
-	): Promise<UpdateResult> {
+	): Promise<Employee> {
 		try {
 			const { organizationId } = options;
-			// Obtain tenant ID from the current request context
+			// Obtain the tenant ID from the current request context or the provided options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
-			// Restore the soft-deleted employee
-			return await this.typeOrmRepository.restore({ id: employeeId, organizationId, tenantId });
+
+			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
+			return await super.softRecover(employeeId, {
+				where: { organizationId, tenantId },
+				relations: { user: true, teams: true },
+				withDeleted: true
+			});
 		} catch (error) {
-			console.error('Error during restore operation for employee:', error);
-			throw new BadRequestException(error.message || 'Failed to restore soft-deleted employee');
+			console.error('Error during soft recovery operation for employee:', error);
+			// Throw a BadRequestException if any error occurs during soft recovery
+			throw new BadRequestException(error.message || 'Failed to recover soft-deleted employee');
 		}
 	}
 }

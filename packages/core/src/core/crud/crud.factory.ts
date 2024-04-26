@@ -5,6 +5,7 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { IPagination } from '@gauzy/contracts';
 import { Type } from '@gauzy/common';
 import { BaseEntity } from './../../core/entities/base.entity';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
 import { ICrudController } from './icrud.controller';
 import { ICrudService } from './icrud.service';
@@ -171,6 +172,64 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@Delete(':id')
 		async delete(@Param('id', UUIDValidationPipe) id: BaseType['id']): Promise<DeleteResult> {
 			return await this.crudService.delete(id);
+		}
+
+		/**
+		 * Soft deletes a record by ID.
+		 *
+		 * This endpoint marks a record as deleted without physically removing it from the database.
+		 * The soft-deleted record can be restored later.
+		 *
+		 * @param id The ID of the record to soft delete.
+		 * @returns The soft-deleted record.
+		 */
+		@ApiOperation({ summary: 'Soft delete a record by ID' })
+		@ApiResponse({
+			status: HttpStatus.ACCEPTED,
+			description: 'Record soft deleted successfully',
+		})
+		@ApiResponse({
+			status: HttpStatus.NOT_FOUND,
+			description: 'Record not found',
+		})
+		@Delete(':id/soft')
+		@HttpCode(HttpStatus.ACCEPTED)
+		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+		async softRemove(
+			@Param('id', UUIDValidationPipe) id: BaseType['id'],
+			...options: any[]
+		): Promise<BaseType> {
+			// Soft delete the record
+			return await this.crudService.softRemove(id, options);
+		}
+
+		/**
+		 * Restores a soft-deleted record by ID.
+		 *
+		 * This endpoint restores a record that was previously soft-deleted,
+		 * allowing it to be used again in the application.
+		 *
+		 * @param id The ID of the record to restore.
+		 * @returns The restored record.
+		 */
+		@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+		@ApiResponse({
+			status: HttpStatus.ACCEPTED,
+			description: 'Record restored successfully',
+		})
+		@ApiResponse({
+			status: HttpStatus.NOT_FOUND,
+			description: 'Record not found or not in a soft-deleted state',
+		})
+		@Put(':id/recover')
+		@HttpCode(HttpStatus.ACCEPTED)
+		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+		async softRecover(
+			@Param('id', UUIDValidationPipe) id: BaseType['id'],
+			...options: any[]
+		): Promise<BaseType> {
+			// Restore the soft-deleted record
+			return await this.crudService.softRecover(id, options);
 		}
 	}
 	return BaseCrudController;
