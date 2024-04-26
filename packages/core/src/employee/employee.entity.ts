@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, JoinTable, OneToMany, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
@@ -510,6 +510,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMOneToMany(() => EmployeePhone, (it) => it.employee)
 	phoneNumbers?: IEmployeePhone[];
 
+	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
+	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
+		cascade: true
+	})
+	dailyPlans?: IDailyPlan[];
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
@@ -645,10 +651,4 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	*/
 	@EmbeddedColumn(() => CustomEmployeeFields, { prefix: false })
 	customFields?: CustomEmployeeFields;
-
-	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
-	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
-		onDelete: 'SET NULL'
-	})
-	dailyPlans?: IDailyPlan[];
 }
