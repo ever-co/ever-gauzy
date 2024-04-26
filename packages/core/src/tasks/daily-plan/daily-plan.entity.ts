@@ -55,7 +55,7 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	employeeId?: IEmployee['id'];
 
 	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
-	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlan) => dailyPlan.dailyPlan, {
+	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlanTask) => dailyPlanTask.dailyPlan, {
 		onDelete: 'SET NULL'
 	})
 	dailyPlanTasks?: IDailyPlanTask[];

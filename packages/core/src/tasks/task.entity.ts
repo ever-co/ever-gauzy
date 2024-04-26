@@ -348,7 +348,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 * Daily planned Tasks
 	 */
 	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
-	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlan) => dailyPlan.dailyPlan, {
+	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlanTask) => dailyPlanTask.task, {
 		onDelete: 'SET NULL'
 	})
 	dailyPlanTasks?: IDailyPlanTask[];

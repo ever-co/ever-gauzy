@@ -14,7 +14,8 @@ export class DailyPlanTask extends TenantOrganizationBaseEntity implements IDail
 	@ApiProperty({ type: () => DailyPlan })
 	@MultiORMManyToOne(() => DailyPlan, {
 		nullable: true,
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		onUpdate: 'CASCADE'
 	})
 	@JoinColumn()
 	dailyPlan: IDailyPlan;
