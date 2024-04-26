@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {  JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
