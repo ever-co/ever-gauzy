@@ -38,7 +38,7 @@ export function EmbeddedColumn<T>(
     // Return a property decorator function
     return (target: any, propertyKey: string) => {
         // Apply the @Embedded decorator with mapped Mikro ORM options
-        // Embedded(parseEmbeddableColumnMikroORMOptions({ typeFunctionOrTarget, options }))(target, propertyKey);
+        Embedded(parseEmbeddableColumnMikroORMOptions({ typeFunctionOrTarget, options }))(target, propertyKey);
 
         // Apply the @Column decorator from TypeORM
         Column(typeFunctionOrTarget as TargetEntity<T>, options)(target, propertyKey);

@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { CustomEmbeddedFields } from '@gauzy/common';
 import {
 	ICandidate,
 	IEmployee,
@@ -59,7 +58,7 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { CustomTagFields } from '../core/entities/custom-entity-fields/custom-entity-fields';
+import { CustomTagEntityFields } from '../core/entities/custom-entity-fields';
 import { ColumnIndex, EmbeddedColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
@@ -366,6 +365,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@EmbeddedColumn(() => CustomTagFields, { prefix: false })
-	customFields?: CustomEmbeddedFields;
+	@EmbeddedColumn(() => CustomTagEntityFields, { prefix: false })
+	customFields?: CustomTagEntityFields;
 }
