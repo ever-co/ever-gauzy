@@ -100,7 +100,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	/**
 	 * Tags
 	 */
-	@MultiORMManyToMany(() => Tag, (it: Tag) => it.customFields['proposals'], {
+	@MultiORMManyToMany(() => Tag, {
 		/**  Database cascade action on update. */
 		onUpdate: 'CASCADE',
 		/** Database cascade action on delete. */
@@ -114,8 +114,6 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 		/** Column in pivot table referencing 'tag' primary key. */
 		inverseJoinColumn: 'tagId'
 	})
-	@JoinTable({
-		name: 'tag_proposal'
-	})
+	@JoinTable({ name: 'tag_proposal' })
 	tags?: Tag[];
 }
