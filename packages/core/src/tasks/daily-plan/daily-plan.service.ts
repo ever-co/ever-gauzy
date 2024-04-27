@@ -1,11 +1,11 @@
 import { InjectConnection } from 'nest-knexjs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
 import { DailyPlan } from './daily-plan.entity';
-import { IEmployee, IPagination } from '@gauzy/contracts';
+import { IEmployee } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
 import { isNotEmpty } from '@gauzy/common';
 import { RequestContext } from '../../core/context';
