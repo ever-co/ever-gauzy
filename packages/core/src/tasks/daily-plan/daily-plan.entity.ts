@@ -9,8 +9,7 @@ import {
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
-	MultiORMManyToOne,
-	MultiORMOneToMany
+	MultiORMManyToOne
 } from '../../core/decorators/entity';
 import { Employee, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository';
@@ -31,7 +30,7 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@IsNotEmpty()
 	@IsDate()
 	@MultiORMColumn()
-	workTimePlanned: Date;
+	workTimePlanned: number;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()

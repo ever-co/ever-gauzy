@@ -3,7 +3,7 @@ import { IEmployee } from './employee.model';
 
 export interface IDailyPlan extends IBasePerTenantAndOrganizationEntityModel {
 	date: Date;
-	workTimePlanned: Date;
+	workTimePlanned: number;
 	status: DailyPlanStatusEnum;
 	employee?: IEmployee;
 	employeeId?: IEmployee['id'];
