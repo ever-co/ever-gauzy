@@ -1,19 +1,33 @@
 import { CustomEmbeddedFields } from "@gauzy/common";
-import { CustomTagEntityFields } from "./custom-tag-entity-fields";
-import { CustomEmployeeEntityFields } from "./custom-employee-entity-fields";
+import { MikroOrmEmployeeEntityCustomField, TypeOrmEmployeeEntityCustomField } from "./employee";
+import { MikroOrmTagEntityCustomField, TypeOrmTagEntityCustomField } from "./tag";
 
 /**
  * Defines the structure for entity field registration configuration.
  */
-type EntityFieldRegistrationConfig = {
+export type EntityFieldRegistrationConfig = {
     entityName: keyof CustomEmbeddedFields; // Entity name from CustomEmbeddedFields
     customFields: any; // Custom fields associated with the entity
 };
 
 /**
- * A list of custom entity field registrations, mapping entity names to their custom field configurations.
+ * Registrations for TypeORM custom entity fields.
+ *
+ * This array contains configurations for custom fields in TypeORM entities.
+ * Each entry specifies the name of the entity and the associated custom fields.
  */
-export const customEntityFieldRegistrations: EntityFieldRegistrationConfig[] = [
-    { entityName: 'Employee', customFields: CustomEmployeeEntityFields },
-    { entityName: 'Tag', customFields: CustomTagEntityFields },
+export const typeOrmCustomEntityFieldRegistrations: EntityFieldRegistrationConfig[] = [
+    { entityName: 'Employee', customFields: TypeOrmEmployeeEntityCustomField },
+    { entityName: 'Tag', customFields: TypeOrmTagEntityCustomField },
+];
+
+/**
+ * Registrations for MikroORM custom entity fields.
+ *
+ * This array contains the configurations for custom fields in MikroORM entities.
+ * Each entry specifies the entity name and the corresponding custom fields.
+ */
+export const mikroOrmCustomEntityFieldRegistrations: EntityFieldRegistrationConfig[] = [
+    { entityName: 'Employee', customFields: MikroOrmEmployeeEntityCustomField },
+    { entityName: 'Tag', customFields: MikroOrmTagEntityCustomField },
 ];

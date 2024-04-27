@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
-import { Embedded, EntityRepositoryType } from '@mikro-orm/core';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
+import { EntityRepositoryType } from '@mikro-orm/core';
 import { IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
@@ -71,11 +71,11 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { CustomEmployeeEntityFields, HasCustomFields } from '../core/entities/custom-entity-fields';
+import { HasCustomFields } from '../core/entities/custom-entity-fields';
+import { EmployeeEntityCustomFields, MikroOrmEmployeeEntityCustomField, TypeOrmEmployeeEntityCustomField } from '../core/entities/custom-entity-fields/employee';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
-
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
 export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
@@ -642,6 +642,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@EmbeddedColumn(() => CustomEmployeeEntityFields, { prefix: false })
-	customFields?: CustomEmployeeEntityFields;
+	@EmbeddedColumn({
+		mikroOrmEmbeddableEntity: () => MikroOrmEmployeeEntityCustomField,
+		typeOrmEmbeddableEntity: () => TypeOrmEmployeeEntityCustomField
+	})
+	customFields?: EmployeeEntityCustomFields;
 }

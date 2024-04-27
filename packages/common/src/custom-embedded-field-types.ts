@@ -1,4 +1,4 @@
-import { RelationOptions as TypeOrmRelationOptions, JoinTableOptions } from 'typeorm';
+import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 
 export type TypeORMInverseSide<T> = string | ((object: T) => any);
 export type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'> & {
@@ -32,9 +32,9 @@ export type RelationCustomEmbeddedFieldConfig<T = any> = {
     entity: T;
     /** A pivot table is an intermediate table that connects two entities in a Many-to-Many relationship. */
     pivotTable?: string;
-    /** */
+    /** The name of the column in the current entity's table  */
     joinColumn?: string;
-    /** */
+    /** The name of the column in a Many-to-Many relationship */
     inverseJoinColumn?: string;
     /** Specifies the inverse side of the relation. */
     inverseSide?: TypeORMInverseSide<T>;
@@ -51,8 +51,14 @@ export type CustomEmbeddedFieldConfig = RelationCustomEmbeddedFieldConfig;
  * Defines custom embedded fields for different entities.
  */
 export interface CustomEmbeddedFields {
-    /** Custom fields for the Tag entity. */
-    Tag?: CustomEmbeddedFieldConfig[];
+    /** Custom fields for the Tenant entity. */
+    Tenant?: CustomEmbeddedFieldConfig[];
+    /** Custom fields for the Organization entity. */
+    Organization?: CustomEmbeddedFieldConfig[];
+    /** Custom fields for the User entity. */
+    User?: CustomEmbeddedFieldConfig[];
     /** Custom fields for the Employee entity. */
     Employee?: CustomEmbeddedFieldConfig[];
+    /** Custom fields for the Tag entity. */
+    Tag?: CustomEmbeddedFieldConfig[];
 }
