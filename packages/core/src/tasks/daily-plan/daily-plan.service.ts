@@ -1,14 +1,15 @@
 import { InjectConnection } from 'nest-knexjs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull } from 'typeorm';
+import { Brackets, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
 import { DailyPlan } from './daily-plan.entity';
-import { IPagination } from '@gauzy/contracts';
+import { IEmployee, IPagination } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
-// import { MultiORMEnum } from '../../core/utils';
-// import { isPostgres } from '@gauzy/config';
+import { isNotEmpty } from '@gauzy/common';
+import { RequestContext } from '../../core/context';
+import { prepareSQLQuery as p } from '../../database/database.helper';
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
@@ -27,27 +28,52 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	/**
 	 * GET daily plans for a given employee
 	 *
+	 * @param employeeId
 	 * @param options
 	 * @returns
 	 */
-	async getEmployeeDailyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<DailyPlan>> {
+	async getDailyPlansByEmployee(employeeId: IEmployee['id'], options: PaginationParams<DailyPlan>) {
 		try {
-			if ('where' in options) {
-				const { where } = options;
-				if (where.employeeId === 'null') {
-					options.where.employeeId = IsNull();
-				}
-				return await super.findAll(options);
-			}
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+			query.leftJoin(`${query.alias}.employee`, 'employee');
+			query.leftJoin(`${query.alias}.dailyPlanTasks`, 'tasks');
+			// query.leftJoin('task', 'taskList', 'daily_plan_task.taskId = task.id');
+
+			query.setFindOptions({
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.where) && {
+						where: options.where
+					}),
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.relations) && {
+						relations: options.relations
+					})
+			});
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
+						tenantId
+					});
+				})
+			);
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+				})
+			);
+			return await query.getMany();
 		} catch (error) {
-			console.log(
-				'Failed to retrieve employee daily plans. Ensure that the provided parameters are valid and complete.',
-				error
-			);
-			throw new BadRequestException(
-				'Failed to retrieve employee daily plans. Ensure that the provided parameters are valid and complete.',
-				error
-			);
+			throw new BadRequestException(error);
 		}
 	}
+
+	/**
+	 * GET my plans
+	 *
+	 * @param options
+	 * @returns
+	 */
+
+	async getMyPlans(options: PaginationParams<DailyPlan>) {}
 }
