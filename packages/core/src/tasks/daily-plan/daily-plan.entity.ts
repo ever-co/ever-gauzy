@@ -1,17 +1,18 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, RelationId } from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
-import { IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DailyPlanStatusEnum, IDailyPlan, IDailyPlanTask, IEmployee } from '@gauzy/contracts';
+import { DailyPlanStatusEnum, IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
 	MultiORMEntity,
+	MultiORMManyToMany,
 	MultiORMManyToOne,
 	MultiORMOneToMany
 } from '../../core/decorators/entity';
-import { DailyPlanTask, Employee, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { Employee, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository';
 
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
@@ -65,16 +66,26 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 
 	/*
 	|--------------------------------------------------------------------------
-	| @OneToMany
+	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
 
 	/**
 	 * daily planned tasks
 	 */
-	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
-	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlanTask) => dailyPlanTask.dailyPlan, {
-		onDelete: 'SET NULL'
+	@ApiPropertyOptional({ type: () => Array, isArray: true })
+	@IsOptional()
+	@IsArray()
+	@MultiORMManyToMany(() => Task, (dailyPlan) => dailyPlan.dailyPlans, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE',
+		pivotTable: 'daily_plan_task',
+		owner: true,
+		joinColumn: 'taskId',
+		inverseJoinColumn: 'dailyPlanId'
 	})
-	dailyPlanTasks?: IDailyPlanTask[];
+	@JoinTable({
+		name: 'daily_plan_task'
+	})
+	tasks?: ITask[];
 }

@@ -4,7 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
-	IDailyPlanTask,
+	IDailyPlan,
 	IEmployee,
 	IInvoiceItem,
 	IOrganizationProject,
@@ -24,7 +24,7 @@ import {
 import { isMySQL } from '@gauzy/config';
 import {
 	Activity,
-	DailyPlanTask,
+	DailyPlan,
 	Employee,
 	InvoiceItem,
 	OrganizationProject,
@@ -344,19 +344,19 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@JoinColumn()
 	linkedIssues?: TaskLinkedIssue[];
 
-	/**
-	 * Daily planned Tasks
-	 */
-	@ApiPropertyOptional({ type: () => DailyPlanTask, isArray: true })
-	@MultiORMOneToMany(() => DailyPlanTask, (dailyPlanTask) => dailyPlanTask.task, {
-		onDelete: 'SET NULL'
-	})
-	dailyPlanTasks?: IDailyPlanTask[];
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Daily planned Tasks
+	 */
+	@MultiORMManyToMany(() => DailyPlan, (dailyPlan) => dailyPlan.tasks, {
+		onDelete: 'CASCADE'
+	})
+	dailyPlans?: IDailyPlan[];
 
 	/**
 	 * Tags

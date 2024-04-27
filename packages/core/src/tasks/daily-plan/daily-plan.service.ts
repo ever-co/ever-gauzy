@@ -36,7 +36,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		try {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.leftJoin(`${query.alias}.employee`, 'employee');
-			query.leftJoin(`${query.alias}.dailyPlanTasks`, 'tasks');
+			query.leftJoin(`${query.alias}.tasks`, 'tasks');
 			// query.leftJoin('task', 'taskList', 'daily_plan_task.taskId = task.id');
 
 			query.setFindOptions({

@@ -142,7 +142,6 @@ import { OrganizationTaskSettingModule } from './organization-task-setting/organ
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { RequestContext } from 'core/context/request-context';
-import { DailyPlanTaskModule } from 'tasks/daily-plan-task/daily-plan-task.module';
 import { DailyPlanModule } from 'tasks/daily-plan/daily-plan.module';
 
 const { unleashConfig, github, jira } = environment;
@@ -424,7 +423,6 @@ if (environment.THROTTLE_ENABLED) {
 		TaskSizeModule,
 		TaskStatusModule,
 		TaskVersionModule,
-		DailyPlanTaskModule,
 		DailyPlanModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
