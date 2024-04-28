@@ -519,7 +519,7 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 } {
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
 		disableIdentityMap: true,
-		// populate: []
+		populate: []
 	};
 	let where: MikroFilterQuery<T> = {};
 

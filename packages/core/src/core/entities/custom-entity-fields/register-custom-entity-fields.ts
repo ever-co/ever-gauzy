@@ -3,8 +3,7 @@ import { ApplicationPluginConfig, CustomEmbeddedFields, RelationCustomEmbeddedFi
 import { MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
 import { ColumnDataType, ColumnOptions } from '../../../core/decorators/entity/column-options.types';
 import { mikroOrmCustomEntityFieldRegistrations, typeOrmCustomEntityFieldRegistrations } from './custom-entity-fields';
-
-const __FIX_RELATIONAL_CUSTOM_FIELDS__ = '__fix_relational_custom_fields__';
+import { __FIX_RELATIONAL_CUSTOM_FIELDS__ } from './mikro-orm-base-custom-entity-field';
 
 /**
  * Registers a custom field for an entity based on the custom field configuration.
@@ -73,9 +72,9 @@ async function registerCustomFieldsForEntity<T>(
     );
 
     /**
-     * If there are only relations are defined for an Entity for customFields, then TypeORM not saving realtions for entity ("Cannot set properties of undefined (<fieldName>)").
-     * So we have to add a "fake" column to the customFields embedded type to prevent this error from occurring.
-     */
+    * If there are only relations are defined for an Entity for customFields, then TypeORM not saving realtions for entity ("Cannot set properties of undefined (<fieldName>)").
+    * So we have to add a "fake" column to the customFields embedded type to prevent this error from occurring.
+    */
     if (customFields.length > 0) {
         MultiORMColumn({
             type: 'boolean',
