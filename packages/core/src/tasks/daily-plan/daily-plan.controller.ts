@@ -10,7 +10,7 @@ import { CreateDailyPlanDTO } from './dto';
 import { GetTaskByIdDTO } from '../dto';
 
 @ApiTags('Daily Plan')
-// @UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {
