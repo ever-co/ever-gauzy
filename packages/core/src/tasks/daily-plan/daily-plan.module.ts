@@ -9,6 +9,7 @@ import { RolePermissionModule } from 'role-permission';
 import { DailyPlan } from './daily-plan.entity';
 import { EmployeeModule } from '../../employee/employee.module';
 import { Employee } from '../../core/entities/internal';
+import { TaskModule } from '../task.module';
 
 @Module({
 	imports: [
@@ -17,6 +18,7 @@ import { Employee } from '../../core/entities/internal';
 		RouterModule.register([{ path: '/daily-plan', module: DailyPlanModule }]),
 		RolePermissionModule,
 		EmployeeModule,
+		TaskModule,
 		CqrsModule
 	],
 	providers: [DailyPlanService],

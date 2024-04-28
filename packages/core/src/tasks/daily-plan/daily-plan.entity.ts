@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
-import { IsArray, IsDate, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DailyPlanStatusEnum, IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
 import {
@@ -25,10 +25,9 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@MultiORMColumn()
 	date: Date;
 
-	@ApiProperty({ type: () => Date })
-	@Type(() => Date)
+	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
-	@IsDate()
+	@IsNumber()
 	@MultiORMColumn()
 	workTimePlanned: number;
 
