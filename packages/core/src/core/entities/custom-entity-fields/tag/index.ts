@@ -1,8 +1,8 @@
-import { MikroOrmTagEntityCustomField } from './mikro-orm-tag-entity-custom-field';
-import { TypeOrmTagEntityCustomField } from './type-orm-tag-entity-custom-field';
+import { MikroOrmTagEntityCustomFields } from './mikro-orm-tag-entity-custom-fields';
+import { TypeOrmTagEntityCustomFields } from './type-orm-tag-entity-custom-fields';
 
-export * from './mikro-orm-tag-entity-custom-field';
-export * from './type-orm-tag-entity-custom-field';
+export * from './mikro-orm-tag-entity-custom-fields';
+export * from './type-orm-tag-entity-custom-fields';
 
 // Union type representing either TypeORM or MikroORM field
-export type TagEntityCustomFields = TypeOrmTagEntityCustomField | MikroOrmTagEntityCustomField;
+export type TagEntityCustomFields = TypeOrmTagEntityCustomFields | MikroOrmTagEntityCustomFields;

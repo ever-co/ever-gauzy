@@ -72,7 +72,7 @@ import {
 	User
 } from '../core/entities/internal';
 import { HasCustomFields } from '../core/entities/custom-entity-fields';
-import { EmployeeEntityCustomFields, MikroOrmEmployeeEntityCustomField, TypeOrmEmployeeEntityCustomField } from '../core/entities/custom-entity-fields/employee';
+import { EmployeeEntityCustomFields, MikroOrmEmployeeEntityCustomFields, TypeOrmEmployeeEntityCustomFields } from '../core/entities/custom-entity-fields/employee';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
@@ -643,8 +643,8 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	|--------------------------------------------------------------------------
 	*/
 	@EmbeddedColumn({
-		mikroOrmEmbeddableEntity: () => MikroOrmEmployeeEntityCustomField,
-		typeOrmEmbeddableEntity: () => TypeOrmEmployeeEntityCustomField
+		mikroOrmEmbeddableEntity: () => MikroOrmEmployeeEntityCustomFields,
+		typeOrmEmbeddableEntity: () => TypeOrmEmployeeEntityCustomFields
 	})
 	customFields?: EmployeeEntityCustomFields;
 }

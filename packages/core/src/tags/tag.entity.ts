@@ -59,7 +59,7 @@ import {
 	Warehouse
 } from '../core/entities/internal';
 import { ColumnIndex, EmbeddedColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
-import { MikroOrmTagEntityCustomField, TagEntityCustomFields, TypeOrmTagEntityCustomField } from '../core/entities/custom-entity-fields/tag';
+import { MikroOrmTagEntityCustomFields, TagEntityCustomFields, TypeOrmTagEntityCustomFields } from '../core/entities/custom-entity-fields/tag';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
@@ -374,8 +374,8 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	|--------------------------------------------------------------------------
 	*/
 	@EmbeddedColumn({
-		mikroOrmEmbeddableEntity: () => MikroOrmTagEntityCustomField,
-		typeOrmEmbeddableEntity: () => TypeOrmTagEntityCustomField
+		mikroOrmEmbeddableEntity: () => MikroOrmTagEntityCustomFields,
+		typeOrmEmbeddableEntity: () => TypeOrmTagEntityCustomFields
 	})
 	customFields?: TagEntityCustomFields;
 }
