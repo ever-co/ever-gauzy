@@ -182,12 +182,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where
-				}),
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+						relations: options.relations
+					})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {

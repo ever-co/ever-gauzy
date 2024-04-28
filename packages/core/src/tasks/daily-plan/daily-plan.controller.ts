@@ -19,6 +19,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 
 	/**
 	 * CREATE Daily Plan
+	 * @param entity
+	 * @param params
+	 * @param options
 	 */
 
 	@ApiOperation({ summary: 'Create new Daily Plan' })
@@ -42,9 +45,33 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET my daily plans
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find my daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get('me')
+	async getMyPlans(@Query() params: PaginationParams<DailyPlan>) {
+		return await this.dailyPlanService.getMyPlans(params);
+	}
+
+	/**
 	 * GET daily plans for a given employee
 	 *
 	 * @param options
+	 * @param employeeId
 	 * @returns
 	 */
 	@ApiOperation({

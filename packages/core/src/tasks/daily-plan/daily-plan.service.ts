@@ -34,6 +34,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 	/**
 	 * Create daily plan
+	 * @param entity
+	 * @param params
+	 * @param options
 	 */
 
 	async createDailyPlan(
@@ -76,6 +79,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					qb.andWhere(p(`"${query.alias}"."date" ${likeOperator} :incomingDate`), {
 						incomingDate: `${new Date(partialEntity.date as Date).toISOString().split('T')[0]}%`
 					});
+				})
+			);
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const currentEmployeeId = RequestContext.currentEmployeeId();
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
 				})
 			);
 
@@ -152,5 +162,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns
 	 */
 
-	async getMyPlans(options: PaginationParams<DailyPlan>) {}
+	async getMyPlans(options: PaginationParams<DailyPlan>) {
+		const currentEmployeeId = RequestContext.currentEmployeeId();
+		return await this.getDailyPlansByEmployee(currentEmployeeId, options);
+	}
 }
