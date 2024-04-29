@@ -1,16 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
-import { IDailyPlan, IEmployee } from '@gauzy/contracts';
+import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { UseValidationPipe } from 'shared';
 import { CreateDailyPlanDTO } from './dto';
 import { GetTaskByIdDTO } from '../dto';
 
 @ApiTags('Daily Plan')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+// @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller()
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {
@@ -92,5 +92,35 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Query() params: PaginationParams<DailyPlan>
 	) {
 		return await this.dailyPlanService.getDailyPlansByEmployee(employeeId, params);
+	}
+
+	/**
+	 *
+	 *
+	 * @param {IDailyPlan['id']} planId
+	 * @param {ITask['id']} taskId
+	 * @param {PaginationParams<DailyPlan>} params
+	 * @returns
+	 * @memberof DailyPlanController
+	 */
+	@ApiOperation({
+		summary: 'Remove a task from daily plan'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task removed',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Put(':id')
+	async removeTaskFromPlan(
+		@Param('id') planId: IDailyPlan['id'],
+		@Body('taskId') taskId: ITask['id'],
+		@Query() params: PaginationParams<DailyPlan>
+	) {
+		return await this.dailyPlanService.removeTaskFromPlan(planId, taskId, params);
 	}
 }

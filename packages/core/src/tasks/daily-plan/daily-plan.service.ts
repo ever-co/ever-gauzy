@@ -120,6 +120,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param options
 	 * @returns
 	 */
+
 	async getDailyPlansByEmployee(employeeId: IEmployee['id'], options: PaginationParams<DailyPlan>) {
 		try {
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -165,5 +166,53 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async getMyPlans(options: PaginationParams<DailyPlan>) {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
 		return await this.getDailyPlansByEmployee(currentEmployeeId, options);
+	}
+
+	/**
+	 *Delete task from a given daily plan
+	 *
+	 * @param {IDailyPlan['id']} planId
+	 * @param {string} taskId
+	 * @param {PaginationParams<DailyPlan>} options
+	 * @memberof DailyPlanService
+	 * @returns
+	 */
+	async removeTaskFromPlan(planId: IDailyPlan['id'], taskId: ITask['id'], options: PaginationParams<DailyPlan>) {
+		try {
+			const currentEmployeeId = RequestContext.currentEmployeeId();
+
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			query.setFindOptions({
+				...(isNotEmpty(options) && isNotEmpty(options.where) && { where: options.where }),
+				...(isNotEmpty(options) && isNotEmpty(options.relations) && { relations: options.relations })
+			});
+
+			query.where(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
+				})
+			);
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."id" = :planId`), {
+						planId
+					});
+				})
+			);
+			const dailyPlan = await query.getOne();
+
+			if (!dailyPlan) {
+				throw new BadRequestException('Daily plan not found');
+			}
+
+			const { tasks } = dailyPlan;
+			dailyPlan.tasks = tasks.filter((task) => task.id !== taskId);
+
+			return await this.save(dailyPlan);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
 	}
 }
