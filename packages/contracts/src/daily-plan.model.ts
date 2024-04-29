@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { ITask } from './task.model';
 
@@ -17,7 +17,7 @@ export enum DailyPlanStatusEnum {
 	COMPLETED = 'completed'
 }
 
-export interface IDailyPlanCreateInput extends IBasePerTenantEntityModel {
+export interface IDailyPlanCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	date: Date;
 	workTimePlanned: number;
 	status: DailyPlanStatusEnum;
