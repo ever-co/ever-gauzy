@@ -1,22 +1,20 @@
 import * as multer from 'multer';
 import { join, resolve } from 'path';
-import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
+import { FileStorageOption, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 
 const config = getConfig();
+const apiPublicPath = resolve(process.cwd(), 'apps', 'api', 'public');
 
 /**
  *
  */
 export class DebugProvider extends Provider<DebugProvider> {
 	public instance: DebugProvider;
-	public readonly name = FileStorageProviderEnum.DEBUG;
+	public readonly name = 'DEBUG';
 	public config = {
-		rootPath:
-			(environment.isElectron
-				? resolve(environment.gauzyUserPath, 'public')
-				: config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
+		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || apiPublicPath,
 		baseUrl: environment.baseUrl
 	};
 

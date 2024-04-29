@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId, JoinColumn } from 'typeorm';
 import { IsString, IsOptional, IsDateString, IsUUID, IsNotEmpty, IsEnum, IsBoolean } from 'class-validator';
 import { Exclude } from 'class-transformer';
-import { FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
+import { FileStorageProvider, FileStorageProviderEnum, IScreenshot, ITimeSlot, IUser } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
 import { TenantOrganizationBaseEntity, TimeSlot, User } from './../../core/entities/internal';
@@ -34,12 +34,8 @@ export class Screenshot extends TenantOrganizationBaseEntity implements IScreens
 	@IsEnum(FileStorageProviderEnum)
 	@Exclude({ toPlainOnly: true })
 	@ColumnIndex()
-	@MultiORMColumn({
-		type: 'simple-enum',
-		nullable: true,
-		enum: FileStorageProviderEnum
-	})
-	storageProvider?: FileStorageProviderEnum;
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
+	storageProvider?: FileStorageProvider;
 
 	/*
 	|--------------------------------------------------------------------------

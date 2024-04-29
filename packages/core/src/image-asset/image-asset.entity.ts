@@ -1,4 +1,4 @@
-import { FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@gauzy/contracts';
+import { FileStorageProvider, FileStorageProviderEnum, IEquipment, IImageAsset, IWarehouse } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
@@ -68,12 +68,8 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 
 	@ApiPropertyOptional({ type: () => String, enum: FileStorageProviderEnum })
 	@Exclude({ toPlainOnly: true })
-	@MultiORMColumn({
-		type: 'simple-enum',
-		nullable: true,
-		enum: FileStorageProviderEnum
-	})
-	storageProvider?: FileStorageProviderEnum;
+	@MultiORMColumn({ type: 'simple-enum', nullable: true, enum: FileStorageProviderEnum })
+	storageProvider?: FileStorageProvider;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()

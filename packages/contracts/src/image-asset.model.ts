@@ -1,4 +1,4 @@
-import { FileStorageProviderEnum } from "./file-provider";
+import { FileStorageProvider } from "./file-provider";
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
 
 export interface IRelationalImageAsset {
@@ -24,5 +24,5 @@ export interface IImageAssetCreateInput extends IBasePerTenantAndOrganizationEnt
 	size?: number;
 	isFeatured?: boolean;
 	externalProviderId?: string;
-	storageProvider?: FileStorageProviderEnum;
+	storageProvider?: FileStorageProvider;
 }

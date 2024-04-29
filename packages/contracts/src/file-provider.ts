@@ -1,6 +1,6 @@
 export interface FileStorageOption {
 	dest: string | CallableFunction;
-	provider?: FileStorageProviderEnum;
+	provider?: FileStorageProvider;
 	prefix?: string;
 	filename?: string | CallableFunction;
 }
@@ -10,14 +10,17 @@ export interface FileSystem {
 	baseUrl?: string;
 }
 
+// Enum representing different file storage providers
 export enum FileStorageProviderEnum {
-	DEBUG = 'DEBUG',
 	LOCAL = 'LOCAL',
 	S3 = 'S3',
 	WASABI = 'WASABI',
 	CLOUDINARY = 'CLOUDINARY',
 	DIGITALOCEAN = 'DIGITALOCEAN'
 }
+
+// Union type derived from the FileStorageProviderEnum
+export type FileStorageProvider = keyof typeof FileStorageProviderEnum | 'DEBUG';
 
 export interface UploadedFile {
 	fieldname: string;
