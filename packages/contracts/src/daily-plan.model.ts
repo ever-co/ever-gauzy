@@ -21,3 +21,9 @@ export interface IDailyPlanCreateInput extends IBasePerTenantAndOrganizationEnti
 	status: DailyPlanStatusEnum;
 	taskId?: ITask['id'];
 }
+
+export interface IDailyPlanUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
+	date?: Date;
+	workTimePlanned?: number;
+	status?: DailyPlanStatusEnum;
+}

@@ -9,11 +9,10 @@ import { EmployeeFeatureDTO } from '../../../employee/dto';
  * Create Daily Plan DTO validation
  */
 
-export class CreateDailyPlanDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	EmployeeFeatureDTO
-) implements IDailyPlanCreateInput {
-
+export class CreateDailyPlanDTO
+	extends IntersectionType(TenantOrganizationBaseDTO, EmployeeFeatureDTO)
+	implements IDailyPlanCreateInput
+{
 	@ApiProperty({ type: () => Date })
 	@Type(() => Date)
 	@IsNotEmpty()

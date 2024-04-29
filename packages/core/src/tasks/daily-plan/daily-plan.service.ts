@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, DeepPartial, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DeepPartial, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -57,12 +57,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where
-				}),
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+						relations: options.relations
+					})
 			});
 
 			query.where(
@@ -120,12 +120,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-					where: options.where
-				}),
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+						relations: options.relations
+					})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
@@ -203,6 +203,37 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			dailyPlan.tasks = tasks.filter((task) => task.id !== taskId);
 
 			return await this.save(dailyPlan);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description UPDATE Daily plan
+	 *
+	 * @param {IDailyPlan['id']} id
+	 * @param {DeepPartial<IDailyPlan>} partialEntity
+	 * @returns
+	 * @memberof DailyPlanService
+	 */
+	async updateDailyPlan(
+		id: IDailyPlan['id'],
+		partialEntity: DeepPartial<IDailyPlan>
+	): Promise<IDailyPlan | UpdateResult> {
+		try {
+			const currentEmployeeId = RequestContext.currentEmployeeId();
+			const currentTenantId = RequestContext.currentTenantId();
+
+			const dailyPlan = await this.findOneByWhereOptions({
+				id,
+				employeeId: currentEmployeeId,
+				tenantId: currentTenantId
+			});
+
+			if (!dailyPlan) {
+				throw new BadRequestException('Daily plan not found');
+			}
+			return await this.update(id, partialEntity);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
