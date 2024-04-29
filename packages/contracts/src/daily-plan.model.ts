@@ -1,13 +1,11 @@
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee } from './employee.model';
+import { IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
 
-export interface IDailyPlan extends IBasePerTenantAndOrganizationEntityModel {
+export interface IDailyPlan extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	date: Date;
 	workTimePlanned: number;
 	status: DailyPlanStatusEnum;
-	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
 	tasks?: ITask[];
 }
 
@@ -17,11 +15,9 @@ export enum DailyPlanStatusEnum {
 	COMPLETED = 'completed'
 }
 
-export interface IDailyPlanCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IDailyPlanCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	date: Date;
 	workTimePlanned: number;
 	status: DailyPlanStatusEnum;
-	employee?: IEmployee;
-	employeeId: IEmployee['id'];
 	taskId?: ITask['id'];
 }

@@ -1,6 +1,5 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
-import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DailyPlanService } from './daily-plan.service';
@@ -13,16 +12,17 @@ import { TypeOrmDailyPlanRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/daily-plan', module: DailyPlanModule }]),
-		forwardRef(() => TypeOrmModule.forFeature([DailyPlan])),
-		forwardRef(() => MikroOrmModule.forFeature([DailyPlan])),
+		RouterModule.register([
+			{ path: '/daily-plan', module: DailyPlanModule }
+		]),
+		TypeOrmModule.forFeature([DailyPlan]),
+		MikroOrmModule.forFeature([DailyPlan]),
 		RolePermissionModule,
 		EmployeeModule,
-		TaskModule,
-		CqrsModule
+		TaskModule
 	],
 	controllers: [DailyPlanController],
 	providers: [DailyPlanService, TypeOrmDailyPlanRepository],
-	exports: [DailyPlanService, TypeOrmModule, MikroOrmModule]
+	exports: [TypeOrmModule, MikroOrmModule, DailyPlanService]
 })
-export class DailyPlanModule {}
+export class DailyPlanModule { }

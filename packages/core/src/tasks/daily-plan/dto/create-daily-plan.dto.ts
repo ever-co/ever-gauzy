@@ -1,14 +1,19 @@
-import { DailyPlanStatusEnum, IDailyPlanCreateInput, IEmployee } from '@gauzy/contracts';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-import { TenantBaseDTO } from '../../../core/dto';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { DailyPlanStatusEnum, IDailyPlanCreateInput, ITask } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '../../../core/dto';
+import { EmployeeFeatureDTO } from '../../../employee/dto';
 
 /**
  * Create Daily Plan DTO validation
  */
 
-export class CreateDailyPlanDTO extends TenantBaseDTO implements IDailyPlanCreateInput {
+export class CreateDailyPlanDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	EmployeeFeatureDTO
+) implements IDailyPlanCreateInput {
+
 	@ApiProperty({ type: () => Date })
 	@Type(() => Date)
 	@IsNotEmpty()
@@ -22,18 +27,11 @@ export class CreateDailyPlanDTO extends TenantBaseDTO implements IDailyPlanCreat
 
 	@ApiProperty({ type: () => String, enum: DailyPlanStatusEnum })
 	@IsNotEmpty()
-	@IsEnum(DailyPlanStatusEnum, {
-		message: 'status `$value` must be a valid enum value'
-	})
+	@IsEnum(DailyPlanStatusEnum, { message: 'status `$value` must be a valid enum value' })
 	readonly status: DailyPlanStatusEnum;
 
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
-	@IsString()
-	employeeId: IEmployee['id'];
-
-	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsOptional()
-	taskId?: string;
+	@IsUUID()
+	readonly taskId?: ITask['id'];
 }

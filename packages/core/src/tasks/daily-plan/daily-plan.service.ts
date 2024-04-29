@@ -1,25 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DeepPartial, WhereExpressionBuilder } from 'typeorm';
-import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
-import { DailyPlan } from './daily-plan.entity';
 import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
 import { isNotEmpty } from '@gauzy/common';
-import { RequestContext } from '../../core/context';
+import { isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
+import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
+import { RequestContext } from '../../core/context';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
-import { isPostgres } from '@gauzy/config';
+import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
+import { DailyPlan } from './daily-plan.entity';
 
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
-		@InjectRepository(DailyPlan)
-		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
-
+		@InjectRepository(DailyPlan) readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
 		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
-
 		private readonly employeeService: EmployeeService,
 		private readonly taskService: TaskService
 	) {
@@ -50,6 +47,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			if (!employee) {
 				throw new BadRequestException('Cannot found employee');
 			}
+
 			let wantCreatePlan: DailyPlan;
 
 			const likeOperator = isPostgres() ? '::text LIKE' : ' LIKE';
@@ -59,12 +57,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where
-					}),
+					where: options.where
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+					relations: options.relations
+				})
 			});
 
 			query.where(
@@ -122,19 +120,17 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.where) && {
-						where: options.where
-					}),
+					where: options.where
+				}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+					relations: options.relations
+				})
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), {
-						tenantId
-					});
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			query.andWhere(
@@ -149,15 +145,20 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * GET my plans
+	 * Retrieves daily plans for the current employee based on given pagination options.
 	 *
-	 * @param options
-	 * @returns
+	 * @param options Pagination options for fetching daily plans.
+	 * @returns A promise resolving to daily plans for the current employee.
 	 */
-
-	async getMyPlans(options: PaginationParams<DailyPlan>) {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
-		return await this.getDailyPlansByEmployee(currentEmployeeId, options);
+	async getMyPlans(options: PaginationParams<DailyPlan>): Promise<any> {
+		try {
+			// Get the current employee ID from the request context
+			const currentEmployeeId = RequestContext.currentEmployeeId();
+			// Fetch daily plans for the current employee
+			return this.getDailyPlansByEmployee(currentEmployeeId, options);
+		} catch (error) {
+			console.error('Error fetching daily plans for me:', error); // Log the error for debugging
+		}
 	}
 
 	/**
@@ -172,7 +173,6 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async removeTaskFromPlan(planId: IDailyPlan['id'], taskId: ITask['id'], options: PaginationParams<DailyPlan>) {
 		try {
 			const currentEmployeeId = RequestContext.currentEmployeeId();
-
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			query.setFindOptions({

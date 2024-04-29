@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
-import { IsArray, IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DailyPlanStatusEnum, IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
 import {
@@ -42,13 +42,14 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToOne(() => Employee, {
+		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
+
+		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
@@ -69,11 +70,8 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	*/
 
 	/**
-	 * daily planned tasks
+	 * Daily Planned Tasks
 	 */
-	@ApiPropertyOptional({ type: () => Array, isArray: true })
-	@IsOptional()
-	@IsArray()
 	@MultiORMManyToMany(() => Task, (dailyPlan) => dailyPlan.dailyPlans, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',
@@ -82,8 +80,6 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 		joinColumn: 'taskId',
 		inverseJoinColumn: 'dailyPlanId'
 	})
-	@JoinTable({
-		name: 'daily_plan_task'
-	})
+	@JoinTable({ name: 'daily_plan_task' })
 	tasks?: ITask[];
 }
