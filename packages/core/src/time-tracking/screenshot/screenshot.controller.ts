@@ -140,7 +140,7 @@ export class ScreenshotController {
 				userId: RequestContext.currentUserId(),
 				file: file.key,
 				thumb: thumb.key,
-				storageProvider: provider.name.toUpperCase() as FileStorageProviderEnum,
+				storageProvider: provider.name.toUpperCase(),
 				timeSlotId: isUUID(input.timeSlotId) ? input.timeSlotId : null,
 				recordedAt: input.recordedAt ? input.recordedAt : new Date()
 			});
