@@ -19,6 +19,11 @@ import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 
+export interface IEmployeeEntityMutationInput {
+	employeeId?: IEmployee['id'];
+	employee?: Pick<IEmployee, 'id'>;
+}
+
 export interface IRelationalEmployee {
 	readonly employee?: IEmployee;
 	readonly employeeId?: IEmployee['id'];

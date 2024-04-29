@@ -64,7 +64,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	employee: IEmployee;
+	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@IsUUID()
