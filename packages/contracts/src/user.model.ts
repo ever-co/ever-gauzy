@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { IRole } from './role.model';
-import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
@@ -11,6 +11,12 @@ import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
+
+// Interface for options to be passed to the findMeUser method.
+export interface IFindMeUser extends IBaseRelationsEntityModel {
+	readonly includeEmployee?: boolean;
+	readonly includeOrganization?: boolean;
+}
 
 export interface IRelationalUser {
 	user?: IUser;

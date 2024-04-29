@@ -59,6 +59,6 @@ export class RoleShouldExistConstraint implements ValidatorConstraintInterface {
 	 */
 	defaultMessage(validationArguments?: ValidationArguments): string {
 		const { value } = validationArguments;
-		return `Please provide a valid value for the role. The value '${value}' is not recognized as a valid role identifier.`;
+		return `Please provide a valid value for the role. The value '${JSON.stringify(value)}' is not recognized as a valid role identifier.`;
 	}
 }

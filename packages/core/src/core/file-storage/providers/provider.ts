@@ -1,10 +1,10 @@
 import { StorageEngine } from 'multer';
-import { FileStorageOption, FileStorageProviderEnum, FileSystem, UploadedFile } from '@gauzy/contracts';
+import { FileStorageOption, FileStorageProvider, FileSystem, UploadedFile } from '@gauzy/contracts';
 
 export abstract class Provider<T> {
 
 	public abstract instance: any | undefined;
-	public abstract readonly name: FileStorageProviderEnum;
+	public abstract readonly name: FileStorageProvider;
 	public abstract config: FileSystem;
 
 	constructor() { }

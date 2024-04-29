@@ -23,12 +23,6 @@ export function MultiORMEntity<T>(name?: string, options?: TypeOrmEntityOptions 
  * @param maybeOptions Options for the entity (if nameOrOptions is a string).
  * @returns Class decorator.
  */
-/**
- * Decorator for creating entities with both MikroORM and TypeORM decorators.
- * @param nameOrOptions Name of the entity table or options for the entity.
- * @param maybeOptions Options for the entity (if nameOrOptions is a string).
- * @returns Class decorator.
- */
 export function MultiORMEntity<T>(
     nameOrOptions?: string | TypeOrmEntityOptions | MikroOrmEntityOptions<T>,
     maybeOptions?: TypeOrmEntityOptions

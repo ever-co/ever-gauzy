@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
-import { FileStorageProviderEnum } from "./file-provider";
+import { FileStorageProvider } from "./file-provider";
 import { ITimeSlot } from "./timesheet.model";
 import { IRelationalUser } from "./user.model";
 
@@ -11,7 +11,7 @@ export interface IScreenshot extends IBasePerTenantAndOrganizationEntityModel, I
     thumbUrl?: string;
     fullUrl?: string;
     recordedAt?: Date;
-    storageProvider?: FileStorageProviderEnum;
+    storageProvider?: FileStorageProvider;
     /** Image/Screenshot Analysis Through Gauzy AI */
     isWorkRelated?: boolean;
     description?: string;

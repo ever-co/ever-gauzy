@@ -49,21 +49,33 @@ import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
 import { AuthGuard } from '../shared/guards';
 import { SharedModule } from '../shared/shared.module';
-import { registerCustomEntityFields } from '../core/entities/custom-entity-fields/register-custom-entity-fields';
+import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AppService } from '../app.service';
 import { AppModule } from '../app.module';
 
-
+/**
+ * Bootstrap the NestJS application, configuring various settings and initializing the server.
+ *
+ * @param pluginConfig - Optional plugin configuration.
+ * @returns A promise that resolves to the initialized NestJS application.
+ */
 export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>): Promise<INestApplication> {
-	console.time('Application Bootstrap Time');
+	console.time('Application Bootstrap Time'); // Timing the bootstrap process
 
-	const config = await registerPluginConfig(pluginConfig);
+	// Pre-bootstrap the application configuration
+	const config = await preBootstrapApplicationConfig(pluginConfig);
+
+	// Import the BootstrapModule dynamically
 	const { BootstrapModule } = await import('./bootstrap.module');
 
+	// Create the NestJS application
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
-		logger: ['log', 'error', 'warn', 'debug', 'verbose'],
-		bufferLogs: true
+		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
+		bufferLogs: true, // Buffer logs to avoid loss during startup
 	});
+
+	// Register custom entity fields for Mikro ORM
+	await registerMikroOrmCustomFields(config);
 
 	// Enable Express behind proxies (https://expressjs.com/en/guide/behind-proxies.html)
 	app.set('trust proxy', true);
@@ -75,27 +87,26 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	const reflector = app.get(Reflector);
 	app.useGlobalGuards(new AuthGuard(reflector));
 
-	// Assuming `env` contains the environment configuration, including Sentry DSN
+	// Configure Sentry for error tracking, if applicable
 	const { sentry } = env;
-
-	// Initialize Sentry if the DSN is available and if it's production environment
 	if (sentry && sentry.dsn && config.logger) {
-		// Attach the Sentry logger to the app
-		app.useLogger(config.logger);
+		app.useLogger(config.logger); // Use Sentry logger
 	} else {
+		// Handle uncaught exceptions and unhandled rejections
 		process.on('uncaughtException', handleUncaughtException);
 		process.on('unhandledRejection', handleUnhandledRejection);
 	}
 
+	// Set JSON and URL-encoded body parsers with a size limit
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ extended: true, limit: '50mb' }));
 
+	// Enable CORS with specific settings
 	app.enableCors({
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders:
-			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.
@@ -108,6 +119,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// For production we use RedisStore
 	// https://github.com/tj/connect-redis
 
+	// Manage sessions with Redis or in-memory fallback
 	let redisWorked = false;
 	console.log('REDIS_ENABLED: ', process.env.REDIS_ENABLED);
 
@@ -221,53 +233,47 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		app.use(helmet());
 	}
 
+	// Set the global prefix for routes
 	const globalPrefix = 'api';
 	app.setGlobalPrefix(globalPrefix);
 
 	const service = app.select(AppModule).get(AppService);
 	await service.seedDBIfEmpty();
 
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
-
-	const document = SwaggerModule.createDocument(app, options);
-	SwaggerModule.setup('swg', app, document);
-
-	let { port, host } = config.apiConfigOptions;
-	if (!port) {
-		port = 3000;
-	}
-	if (!host) {
-		host = '0.0.0.0';
-	}
-
-	console.log(chalk.green(`Configured Host: ${host}`));
-	console.log(chalk.green(`Configured Port: ${port}`));
-
-	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
-
 	/**
 	 * Dependency injection with class-validator
 	 */
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
+
+	// Start the server
+	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
+	console.log(chalk.green(`Configured Host: ${host}`));
+	console.log(chalk.green(`Configured Port: ${port}`));
+
+	// Configure Swagger for API documentation
+	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
+	const document = SwaggerModule.createDocument(app, options);
+	SwaggerModule.setup('swg', app, document);
+	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));
 
 	// Configure Atlassian Connect Express
 	// const addon = ac(express());
 	// app.use(addon.middleware());
 
 	await app.listen(port, host, () => {
-		const message = `Listening at http://${host}:${port}/${globalPrefix}`;
-		console.log(chalk.magenta(message));
+		console.timeEnd('Application Bootstrap Time'); // End timing
+		console.log(chalk.magenta(`Server listening at http://${host}:${port}/${globalPrefix}`));
+
 		// Send message to parent process (desktop app)
 		if (process.send) {
-			process.send(message);
+			process.send(`Server started at http://${host}:${port}/${globalPrefix}`);
 		}
-		// Execute Seed For Demo Server
+
 		if (env.demo) {
-			service.executeDemoSeed();
+			service.executeDemoSeed(); // Seed demo data if in demo mode
 		}
 	});
 
-	console.timeEnd('Application Bootstrap Time');
 	return app;
 }
 
@@ -292,142 +298,198 @@ function handleUnhandledRejection(reason: any, promise: Promise<any>) {
 }
 
 /**
- * Setting the global config must be done prior to loading the Bootstrap Module.
+ * Registers a plugin configuration, applying pre-bootstrap operations to ensure it's ready for use.
+ *
+ * @param config - The partial application configuration to be pre-bootstrapped.
+ * @returns A promise that resolves to the pre-bootstrapped application configuration.
  */
-export async function registerPluginConfig(pluginConfig: Partial<ApplicationPluginConfig>) {
-	if (Object.keys(pluginConfig).length > 0) {
-		setConfig(pluginConfig);
+export async function registerPluginConfig(
+	config: Partial<ApplicationPluginConfig>
+): Promise<ApplicationPluginConfig> {
+	// Apply pre-bootstrap operations and return the updated configuration
+	return await preBootstrapApplicationConfig(config);
+}
+
+/**
+ * Prepares the application configuration before initializing plugins.
+ * Configures migration settings, registers entities and subscribers,
+ * and applies additional plugin configurations.
+ *
+ * @param applicationConfig - The initial application configuration.
+ * @returns A promise that resolves to the final application configuration after pre-bootstrap operations.
+ */
+export async function preBootstrapApplicationConfig(
+	applicationConfig: Partial<ApplicationPluginConfig>
+) {
+	if (Object.keys(applicationConfig).length > 0) {
+		// Set initial configuration if any properties are provided
+		setConfig(applicationConfig);
 	}
 
-	/**
-	 * Configure migration settings
-	 */
+	// Configure migration settings
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting()
-		}
+			...getMigrationsSetting(),
+		},
 	});
 
+	// Log the current database configuration (for debugging or informational purposes)
 	console.log(chalk.green(`DB Config: ${JSON.stringify(getConfig().dbConnectionOptions)}`));
 
-	/**
-	 * Registered core & plugins entities
-	 */
-	const entities = await registerEntities(pluginConfig);
-	const subscribers = await registerSubscribers(pluginConfig);
+	// Register core and plugin entities and subscribers
+	const entities = await preBootstrapRegisterEntities(applicationConfig);
+	const subscribers = await preBootstrapRegisterSubscribers(applicationConfig);
 
-	/**
-	 *
-	 */
+	// Update configuration with registered entities and subscribers
 	setConfig({
 		dbConnectionOptions: {
-			entities: entities as Array<Type<any>>,
-			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>
+			entities: entities as Array<Type<any>>, // Core and plugin entities
+			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>, // Core and plugin subscribers
 		},
 		dbMikroOrmConnectionOptions: {
-			entities: entities as Array<Type<any>>,
-			subscribers: subscribers as Array<EventSubscriber>
-		}
+			entities: entities as Array<Type<any>>, // MikroORM entities
+			subscribers: subscribers as Array<EventSubscriber>, // MikroORM subscribers
+		},
 	});
 
-	let config = getConfig();
-	config = await bootstrapPluginConfigurations(config);
+	// Apply additional plugin configurations
+	const config = await preBootstrapPluginConfigurations(getConfig());
 
-	await registerCustomEntityFields(config);
+	// Register custom entity fields for Type ORM
+	await registerTypeOrmCustomFields(config);
+
+	// Return the final configuration after all pre-bootstrap operations
 	return config;
 }
 
 /**
+ * Asynchronously applies configurations from plugin configuration functions
+ * to the given application configuration, in parallel.
  *
- * @param config
- * @returns
+ * @param config - The initial application configuration to be modified.
+ * @returns A promise that resolves to the updated application configuration.
  */
-async function bootstrapPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
+async function preBootstrapPluginConfigurations(
+	config: ApplicationPluginConfig
+): Promise<ApplicationPluginConfig> {
+	// Retrieve a list of plugin configuration functions based on the provided config
 	const pluginConfigurations = getPluginConfigurations(config.plugins);
 
+	// Iterate over each plugin configuration function
 	for await (const pluginConfigurationFn of pluginConfigurations) {
+		// Check if the item is a function, and apply it to the current configuration
 		if (typeof pluginConfigurationFn === 'function') {
+			// Update the config by applying the function and awaiting its result
 			config = await pluginConfigurationFn(config);
 		}
 	}
 
+	// Return the modified configuration
 	return config;
 }
 
 /**
  * Register entities from core and plugin configurations.
- * @param pluginConfig The plugin configuration.
- * @returns An array of registered entity types.
+ * Ensures no conflicts between core entities and plugin entities.
+ *
+ * @param config - Plugin configuration containing plugin entities.
+ * @returns A promise that resolves to an array of registered entity types.
  */
-async function registerEntities(pluginConfig: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
+async function preBootstrapRegisterEntities(
+	config: Partial<ApplicationPluginConfig>
+): Promise<Array<Type<any>>> {
 	try {
+		// Retrieve the list of core entities
 		const coreEntitiesList = coreEntities as Array<Type<any>>;
-		const pluginEntitiesList = getEntitiesFromPlugins(pluginConfig.plugins);
 
+		// Get the list of entities from the plugin configuration
+		const pluginEntitiesList = getEntitiesFromPlugins(config.plugins);
+
+		// Check for conflicts and register plugin entities
 		for (const pluginEntity of pluginEntitiesList) {
 			const entityName = pluginEntity.name;
 
+			// If a core entity has the same name as a plugin entity, throw a conflict exception
 			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
-				throw new ConflictException({ message: `Error: ${entityName} conflicts with default entities.` });
-			} else {
-				coreEntitiesList.push(pluginEntity);
+				throw new ConflictException({
+					message: `Error: ${entityName} conflicts with default entities.`,
+				});
 			}
+
+			// If no conflict, add the plugin entity to the core entity list
+			coreEntitiesList.push(pluginEntity);
 		}
 
+		// Return the updated list of registered entities
 		return coreEntitiesList;
 	} catch (error) {
+		// Log any errors and re-throw for further handling
 		console.error('Error registering entities:', error);
 		throw error;
 	}
 }
 
 /**
- * Register subscribers from core and plugin configurations.
- * @param pluginConfig The plugin configuration.
- * @returns A promise that resolves to an array of registered subscriber types.
+ * Registers subscriber entities from core and plugin configurations, ensuring no conflicts.
+ *
+ * @param config - The application configuration that might contain plugin subscribers.
+ * @returns A promise that resolves to an array of registered subscriber entity types.
  */
-async function registerSubscribers(
-	pluginConfig: Partial<ApplicationPluginConfig>
+async function preBootstrapRegisterSubscribers(
+	config: Partial<ApplicationPluginConfig>
 ): Promise<Array<Type<EntitySubscriberInterface>>> {
 	try {
+		// List of core subscribers
 		const subscribers = coreSubscribers as Array<Type<EntitySubscriberInterface>>;
-		const pluginSubscribersList = getSubscribersFromPlugins(pluginConfig.plugins);
 
+		// Get plugin subscribers from the application configuration
+		const pluginSubscribersList = getSubscribersFromPlugins(config.plugins);
+
+		// Check for conflicts and add new plugin subscribers
 		for (const pluginSubscriber of pluginSubscribersList) {
 			const subscriberName = pluginSubscriber.name;
 
+			// Check for name conflicts with core subscribers
 			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
+				// Throw an exception if there's a conflict
 				throw new ConflictException({
-					message: `Error: ${subscriberName} conflicts with default subscribers.`
+					message: `Error: ${subscriberName} conflicts with default subscribers.`,
 				});
 			} else {
+				// Add the new plugin subscriber to the list if no conflict
 				subscribers.push(pluginSubscriber);
 			}
 		}
 
+		// Return the updated list of subscribers
 		return subscribers;
 	} catch (error) {
+		// Handle errors and log to console
 		console.error('Error registering subscribers:', error.message);
 	}
 }
 
+
 /**
- * GET migrations directory & CLI paths.
+ * Gets the migrations directory and CLI migration paths.
  *
- * @returns Object containing migrations and CLI paths.
+ * @returns An object containing paths for migrations and CLI migrations directory.
  */
 export function getMigrationsSetting() {
-	// Consider removing this debug statement in the final implementation
+	// Log the current directory for debugging purposes (consider removing in production)
 	console.log(`Reporting __dirname: ${__dirname}`);
 
-	// Define dynamic paths for migrations and CLI
+	// Define the path for migration files, allowing for both TypeScript (.ts) and JavaScript (.js) files
 	const migrationsPath = join(__dirname, '../database/migrations/*{.ts,.js}');
+
+	// Define the directory for CLI migrations, typically where new migration files are created
 	const cliMigrationsDir = join(__dirname, '../../src/database/migrations');
 
+	// Return the paths for migrations and CLI migration directory
 	return {
-		migrations: [migrationsPath],
+		migrations: [migrationsPath], // An array of migration file paths
 		cli: {
-			migrationsDir: cliMigrationsDir
-		}
+			migrationsDir: cliMigrationsDir, // Directory for CLI migrations
+		},
 	};
 }

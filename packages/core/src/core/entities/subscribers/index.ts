@@ -1,5 +1,7 @@
 export * from './base-entity-event.subscriber';
+export * from './tenant-organization-base-entity.subscriber';
 
+import { MultiORMEnum, getORMType } from '../../utils';
 import {
 	ActivitySubscriber,
 	CandidateSubscriber,
@@ -40,11 +42,16 @@ import {
 	TimeSlotSubscriber,
 	UserSubscriber
 } from '../internal';
+import { TenantOrganizationBaseEntityEventSubscriber } from './tenant-organization-base-entity.subscriber';
+
+const ormType = getORMType();
 
 /**
- * A map of the core TypeORM Subscribers.
+ * A map of the core TypeORM / MikroORM Subscribers.
  */
 export const coreSubscribers = [
+	// Add the subscriber only if the ORM type is MikroORM
+	...(ormType === MultiORMEnum.MikroORM ? [TenantOrganizationBaseEntityEventSubscriber] : []),
 	ActivitySubscriber,
 	CandidateSubscriber,
 	CustomSmtpSubscriber,

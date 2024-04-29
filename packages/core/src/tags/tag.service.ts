@@ -42,11 +42,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 		 * Defines a special criteria to find specific relations.
 		 */
 		query.setFindOptions({
-			...(relations
-				? {
-					relations: relations
-				}
-				: {})
+			...(relations ? { relations: relations } : {})
 		});
 		/**
 		 * Additionally you can add parameters used in where expression.

@@ -135,43 +135,70 @@ export class EmployeesService {
 	}
 
 	/**
-	 * Delete employee
+	 * Permanently delete an employee by ID.
 	 *
-	 * @param id
-	 * @returns
+	 * Sends an HTTP DELETE request to permanently remove the employee record from the database.
+	 *
+	 * @param id - The ID of the employee to delete.
+	 * @param options - Additional context for the operation, including tenant and organization information.
+	 * @returns A promise resolving to the result of the DELETE operation or an error message.
 	 */
 	delete(
-		id: IEmployee['id'],
+		id: string,
 		options: IBasePerTenantAndOrganizationEntityModel
-	) {
+	): Promise<any> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/employee/${id}`, {
-				params: toParams({ ...options })
+				params: toParams({ ...options }),
 			})
 		);
 	}
 
 	/**
-	 * Resort deleted employee
+	 * Soft delete an employee by ID, marking it as deleted without physically removing the record.
 	 *
-	 * @param id
-	 * @returns
+	 * @param id - The ID of the employee to soft delete.
+	 * @param options - Additional options for specifying tenant and organization context.
+	 * @returns A promise resolving to the deleted employee or a success indicator.
 	 */
-	resort(
-		id: IEmployee['id'],
-		options: IBasePerTenantAndOrganizationEntityModel
-	) {
+	softRemove(id: string, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
 		return firstValueFrom(
-			this.http.put(`${API_PREFIX}/employee/${id}/restore`, options)
+			this.http.delete(`${API_PREFIX}/employee/${id}/soft`, {
+				params: toParams({ ...options }),
+			})
 		);
 	}
 
+	/**
+	 * Restore a soft-deleted employee by ID, effectively undoing the soft delete.
+	 *
+	 * @param id - The ID of the employee to restore.
+	 * @param options - Additional context, typically to specify tenant and organization information.
+	 * @returns A promise resolving to the restored employee or a success indicator.
+	 */
+	softRecover(id: string, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
+		return firstValueFrom(
+			this.http.put(`${API_PREFIX}/employee/${id}/recover`, { ...options })
+		);
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param payload
+	 * @returns
+	 */
 	updateProfile(id: string, payload: IEmployeeUpdateInput): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload)
 		);
 	}
 
+	/**
+	 *
+	 * @param request
+	 * @returns
+	 */
 	getEmployeeJobsStatistics(request): Promise<any> {
 		return firstValueFrom(
 			this.http.get(`${API_PREFIX}/employee/job-statistics`, {
@@ -180,6 +207,12 @@ export class EmployeesService {
 		);
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param statistics
+	 * @returns
+	 */
 	updateJobSearchStatus(
 		id: IEmployee['id'],
 		statistics: UpdateEmployeeJobsStatistics

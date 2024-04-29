@@ -2,8 +2,8 @@ import { environment } from '@gauzy/config';
 import { ChangelogPlugin } from '@gauzy/changelog-plugin';
 import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
 import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
-import { JobSearchPlugin } from '@gauzy/job-search-plugin';
 import { JobProposalPlugin } from '@gauzy/job-proposal-plugin';
+import { JobSearchPlugin } from '@gauzy/job-search-plugin';
 import { SentryTracing as SentryPlugin } from './sentry';
 
 const { jitsu, sentry } = environment;

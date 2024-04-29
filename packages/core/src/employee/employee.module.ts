@@ -9,6 +9,7 @@ import { Employee } from './employee.entity';
 import { UserModule } from './../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeeController } from './employee.controller';
+import { EmployeeJobController } from './employee-job.controller';
 import { EmployeeService } from './employee.service';
 import { AuthModule } from './../auth/auth.module';
 import { EmailSendModule } from './../email-send/email-send.module';
@@ -33,7 +34,7 @@ import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.reposi
 		GauzyAIModule.forRoot(),
 		CqrsModule
 	],
-	controllers: [EmployeeController],
+	controllers: [EmployeeJobController, EmployeeController],
 	providers: [EmployeeService, TypeOrmEmployeeRepository, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, EmployeeService, TypeOrmEmployeeRepository]
 })
