@@ -239,7 +239,14 @@ export class AlterCustomFieldsDefaultColumn1714319484155 implements MigrationInt
      * @param queryRunner
      */
     public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_68e75e49f06409fd385b4f87746\``);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``);
+        await queryRunner.query(`ALTER TABLE \`tag_proposal\` DROP FOREIGN KEY \`FK_451853704de278eef61a37fa7a6\``);
+        await queryRunner.query(`ALTER TABLE \`employee\` CHANGE \`__fix_relational_custom_fields__\` \`fix_relational_custom_fields\` tinyint NULL`);
+        await queryRunner.query(`ALTER TABLE \`tag\` CHANGE \`__fix_relational_custom_fields__\` \`fix_relational_custom_fields\` tinyint NULL`);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_68e75e49f06409fd385b4f87746\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`tag_proposal\` ADD CONSTRAINT \`FK_451853704de278eef61a37fa7a6\` FOREIGN KEY (\`tagId\`) REFERENCES \`tag\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
     }
 
     /**
@@ -248,6 +255,13 @@ export class AlterCustomFieldsDefaultColumn1714319484155 implements MigrationInt
      * @param queryRunner
      */
     public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-
+        await queryRunner.query(`ALTER TABLE \`tag_proposal\` DROP FOREIGN KEY \`FK_451853704de278eef61a37fa7a6\``);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_68e75e49f06409fd385b4f87746\``);
+        await queryRunner.query(`ALTER TABLE \`tag\` CHANGE \`fix_relational_custom_fields\` \`__fix_relational_custom_fields__\` tinyint NULL`);
+        await queryRunner.query(`ALTER TABLE \`employee\` CHANGE \`fix_relational_custom_fields\` \`__fix_relational_custom_fields__\` tinyint NULL`);
+        await queryRunner.query(`ALTER TABLE \`tag_proposal\` ADD CONSTRAINT \`FK_451853704de278eef61a37fa7a6\` FOREIGN KEY (\`tagId\`) REFERENCES \`tag\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_68e75e49f06409fd385b4f87746\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 }
