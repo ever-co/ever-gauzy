@@ -169,7 +169,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 *Delete task from a given daily plan
+	 * Delete task from a given daily plan
 	 *
 	 * @param {IDailyPlan['id']} planId
 	 * @param {string} taskId
@@ -211,6 +211,43 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			dailyPlan.tasks = tasks.filter((task) => task.id !== taskId);
 
 			return await this.save(dailyPlan);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * DELETE daily plan
+	 *
+	 * @param {IDailyPlan['id']} planId
+	 * @returns
+	 * @memberof DailyPlanService
+	 */
+	async deletePlan(planId: IDailyPlan['id']) {
+		try {
+			const currentEmployeeId = RequestContext.currentEmployeeId();
+
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			query.where(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
+				})
+			);
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					qb.andWhere(p(`"${query.alias}"."id" = :planId`), { planId });
+				})
+			);
+
+			const dailyPlan = await query.getOne();
+
+			if (!dailyPlan) {
+				throw new BadRequestException('Daily plan not found');
+			}
+
+			return await this.softDelete(planId);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

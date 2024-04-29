@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Put,
+	Query,
+	UseGuards
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { DailyPlan } from './daily-plan.entity';
@@ -95,7 +107,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
-	 *
+	 * Delete task from a given daily plan
 	 *
 	 * @param {IDailyPlan['id']} planId
 	 * @param {ITask['id']} taskId
@@ -122,5 +134,28 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Query() params: PaginationParams<DailyPlan>
 	) {
 		return await this.dailyPlanService.removeTaskFromPlan(planId, taskId, params);
+	}
+	/**
+	 * DELETE plan
+	 *
+	 * @param {IDailyPlan['id']} planId
+	 * @returns
+	 * @memberof DailyPlanController
+	 */
+	@ApiOperation({
+		summary: 'Delete Daily plan'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Plan deleted',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Delete(':id')
+	async deletePlan(@Param('id') planId: IDailyPlan['id']) {
+		return await this.dailyPlanService.deletePlan(planId);
 	}
 }
