@@ -71,7 +71,7 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	// Create the NestJS application
 	const app = await NestFactory.create<NestExpressApplication>(BootstrapModule, {
 		logger: ['log', 'error', 'warn', 'debug', 'verbose'], // Set logging levels
-		bufferLogs: true, // Buffer logs to avoid loss during startup
+		bufferLogs: true // Buffer logs to avoid loss during startup
 	});
 
 	// Register custom entity fields for Mikro ORM
@@ -106,7 +106,8 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 		origin: '*',
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
 		credentials: true,
-		allowedHeaders: 'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
+		allowedHeaders:
+			'Authorization, Language, Tenant-Id, Organization-Id, X-Requested-With, X-Auth-Token, X-HTTP-Method-Override, Content-Type, Content-Language, Accept, Accept-Language, Observe'
 	});
 
 	// TODO: enable csurf is not good idea because it was deprecated.
@@ -262,11 +263,16 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 
 	await app.listen(port, host, () => {
 		console.timeEnd('Application Bootstrap Time'); // End timing
-		console.log(chalk.magenta(`Server listening at http://${host}:${port}/${globalPrefix}`));
+
+		// Note: do not change this prefix because we may use it to detect the success message from the running server!
+		const successMessagePrefix = 'Listening at http';
+
+		const message = `${successMessagePrefix}://${host}:${port}/${globalPrefix}`;
+		console.log(chalk.magenta(message));
 
 		// Send message to parent process (desktop app)
 		if (process.send) {
-			process.send(`Server started at http://${host}:${port}/${globalPrefix}`);
+			process.send(message);
 		}
 
 		if (env.demo) {
@@ -303,9 +309,7 @@ function handleUnhandledRejection(reason: any, promise: Promise<any>) {
  * @param config - The partial application configuration to be pre-bootstrapped.
  * @returns A promise that resolves to the pre-bootstrapped application configuration.
  */
-export async function registerPluginConfig(
-	config: Partial<ApplicationPluginConfig>
-): Promise<ApplicationPluginConfig> {
+export async function registerPluginConfig(config: Partial<ApplicationPluginConfig>): Promise<ApplicationPluginConfig> {
 	// Apply pre-bootstrap operations and return the updated configuration
 	return await preBootstrapApplicationConfig(config);
 }
@@ -318,9 +322,7 @@ export async function registerPluginConfig(
  * @param applicationConfig - The initial application configuration.
  * @returns A promise that resolves to the final application configuration after pre-bootstrap operations.
  */
-export async function preBootstrapApplicationConfig(
-	applicationConfig: Partial<ApplicationPluginConfig>
-) {
+export async function preBootstrapApplicationConfig(applicationConfig: Partial<ApplicationPluginConfig>) {
 	if (Object.keys(applicationConfig).length > 0) {
 		// Set initial configuration if any properties are provided
 		setConfig(applicationConfig);
@@ -329,8 +331,8 @@ export async function preBootstrapApplicationConfig(
 	// Configure migration settings
 	setConfig({
 		dbConnectionOptions: {
-			...getMigrationsSetting(),
-		},
+			...getMigrationsSetting()
+		}
 	});
 
 	// Log the current database configuration (for debugging or informational purposes)
@@ -344,12 +346,12 @@ export async function preBootstrapApplicationConfig(
 	setConfig({
 		dbConnectionOptions: {
 			entities: entities as Array<Type<any>>, // Core and plugin entities
-			subscribers: subscribers as Array<Type<EntitySubscriberInterface>>, // Core and plugin subscribers
+			subscribers: subscribers as Array<Type<EntitySubscriberInterface>> // Core and plugin subscribers
 		},
 		dbMikroOrmConnectionOptions: {
 			entities: entities as Array<Type<any>>, // MikroORM entities
-			subscribers: subscribers as Array<EventSubscriber>, // MikroORM subscribers
-		},
+			subscribers: subscribers as Array<EventSubscriber> // MikroORM subscribers
+		}
 	});
 
 	// Apply additional plugin configurations
@@ -369,9 +371,7 @@ export async function preBootstrapApplicationConfig(
  * @param config - The initial application configuration to be modified.
  * @returns A promise that resolves to the updated application configuration.
  */
-async function preBootstrapPluginConfigurations(
-	config: ApplicationPluginConfig
-): Promise<ApplicationPluginConfig> {
+async function preBootstrapPluginConfigurations(config: ApplicationPluginConfig): Promise<ApplicationPluginConfig> {
 	// Retrieve a list of plugin configuration functions based on the provided config
 	const pluginConfigurations = getPluginConfigurations(config.plugins);
 
@@ -395,9 +395,7 @@ async function preBootstrapPluginConfigurations(
  * @param config - Plugin configuration containing plugin entities.
  * @returns A promise that resolves to an array of registered entity types.
  */
-async function preBootstrapRegisterEntities(
-	config: Partial<ApplicationPluginConfig>
-): Promise<Array<Type<any>>> {
+async function preBootstrapRegisterEntities(config: Partial<ApplicationPluginConfig>): Promise<Array<Type<any>>> {
 	try {
 		// Retrieve the list of core entities
 		const coreEntitiesList = coreEntities as Array<Type<any>>;
@@ -412,7 +410,7 @@ async function preBootstrapRegisterEntities(
 			// If a core entity has the same name as a plugin entity, throw a conflict exception
 			if (coreEntitiesList.some((entity) => entity.name === entityName)) {
 				throw new ConflictException({
-					message: `Error: ${entityName} conflicts with default entities.`,
+					message: `Error: ${entityName} conflicts with default entities.`
 				});
 			}
 
@@ -453,7 +451,7 @@ async function preBootstrapRegisterSubscribers(
 			if (subscribers.some((subscriber) => subscriber.name === subscriberName)) {
 				// Throw an exception if there's a conflict
 				throw new ConflictException({
-					message: `Error: ${subscriberName} conflicts with default subscribers.`,
+					message: `Error: ${subscriberName} conflicts with default subscribers.`
 				});
 			} else {
 				// Add the new plugin subscriber to the list if no conflict
@@ -468,7 +466,6 @@ async function preBootstrapRegisterSubscribers(
 		console.error('Error registering subscribers:', error.message);
 	}
 }
-
 
 /**
  * Gets the migrations directory and CLI migration paths.
@@ -489,7 +486,7 @@ export function getMigrationsSetting() {
 	return {
 		migrations: [migrationsPath], // An array of migration file paths
 		cli: {
-			migrationsDir: cliMigrationsDir, // Directory for CLI migrations
-		},
+			migrationsDir: cliMigrationsDir // Directory for CLI migrations
+		}
 	};
 }
