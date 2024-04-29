@@ -14,10 +14,10 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
+import { Collection, CreateOptions, FilterQuery as MikroFilterQuery, RequiredEntityData, wrap } from '@mikro-orm/core';
 import { AssignOptions } from '@mikro-orm/knex';
 import { IPagination } from '@gauzy/contracts';
-import { BaseEntity } from '../entities/internal';
+import { BaseEntity, SoftDeletableBaseEntity } from '../entities/internal';
 import { multiORMCreateQueryBuilder } from '../../core/orm/query-builder/query-builder.factory';
 import { IQueryBuilder } from '../../core/orm/query-builder/iquery-builder';
 import { MikroOrmBaseEntityRepository } from '../../core/repository/mikro-orm-base-entity.repository';
@@ -617,10 +617,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 
 					// Find the entity and perform soft delete
 					const entity = await this.mikroOrmRepository.findOne(where, mikroOptions) as any;
-
-					// Use "em.remove" for MikroORM with a transactional approach to ensure changes are persisted properly
-					this.mikroOrmRepository.remove(entity);
-					await this.mikroOrmRepository.flush();
+					await this.mikroOrmRepository.removeAndFlush(entity);
 
 					// Return the serialized version of the soft-deleted entity
 					return this.serialize(entity);
@@ -639,28 +636,32 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * Softly removes an entity from the database.
 	 *
 	 * This method handles soft removal of a given entity using different ORM strategies, based on the configured ORM type.
-	 * For MikroORM, it uses the `remove` method followed by a `flush` to persist changes.
-	 * For TypeORM, it utilizes the `softRemove` method to perform a soft deletion.
+	 * - For MikroORM, it uses the `removeAndFlush` method to ensure that the soft deletion is properly persisted.
+	 * - For TypeORM, it utilizes the `softRemove` method to perform a soft deletion.
 	 * If the ORM type is not supported, an error is thrown.
 	 *
-	 * @param entity - The entity to be softly removed.
-	 * @param options - Optional parameters for the removal operation (applicable to TypeORM).
-	 * @returns A promise that resolves to the removed entity.
-	 * @throws NotFoundException if any error occurs during the soft removal process.
+	 * @param id - The unique identifier of the entity to be softly removed.
+	 * @param options - Optional parameters for finding the entity (commonly used with TypeORM).
+	 * @param saveOptions - Additional save options for the ORM operation (specific to TypeORM).
+	 * @returns A promise that resolves to the softly removed entity.
 	 */
-	public async softRemove(entity: T, options?: SaveOptions): Promise<T> {
+	public async softRemove(id: T['id'], options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
+					// Convert the filter to MikroORM-specific where and options
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					const entity = await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as any;
 					// Use "em.remove" for MikroORM with a transactional approach to ensure changes are persisted properly
-					this.mikroOrmRepository.remove(entity);
-					await this.mikroOrmRepository.flush();
+					await this.mikroOrmRepository.removeAndFlush(entity);
 					// Return the serialized version of the soft-deleted entity
 					return this.serialize(entity);
 				}
 				case MultiORMEnum.TypeORM: {
+					// Ensure the employee exists before attempting soft deletion
+					const entity = await this.findOneByIdString(id, options);
 					// TypeORM soft removes entities via its repository
-					return await this.typeOrmRepository.softRemove<T>(entity, options);
+					return await this.typeOrmRepository.softRemove<T>(entity, saveOptions);
 				}
 				default:
 					throw new Error(`Unsupported database type: ${this.ormType}`);
@@ -680,20 +681,35 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @param options - Optional settings for database save operations.
 	 * @returns A promise that resolves with the recovered entity.
 	 */
-	public async softRecover(entity: T, options?: SaveOptions): Promise<T> {
+	public async softRecover(id: T['id'], options?: IFindOneOptions<T>, saveOptions?: SaveOptions): Promise<T> {
 		try {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					// Reset the soft-deleted flag and persist changes
-					entity['deletedAt'] = null;
-					await this.mikroOrmRepository.persistAndFlush(entity);
+					// Convert the filter to MikroORM-specific where and options
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
+					// Find the soft-deleted entity with relations
+					const entity = await this.mikroOrmRepository.findOne(concatIdToWhere<T>(id, where), mikroOptions) as T;
 
+					// Reset the soft-delete flag to "recover" the entity
+					wrap(entity as BaseEntity).assign({ deletedAt: null });
+
+					// Ensure related entities are recovered based on the input object
+					await this.ensureRelatedEntitiesRecovered(
+						entity,
+						mikroOptions.populate as string[],
+						this.mikroOrmRepository
+					);
+
+					// Persist all changes to ensure recovery is complete
+					await this.mikroOrmRepository.persistAndFlush(entity);
 					// Return the restored entity, serialized if needed
 					return this.serialize(entity);
 				}
 				case MultiORMEnum.TypeORM: {
+					// Ensure the entity exists before attempting soft recover
+					const entity = await this.findOneByIdString(id, options);
 					// Use TypeORM's recover method to restore the entity
-					return await this.typeOrmRepository.recover(entity, options);
+					return await this.typeOrmRepository.recover(entity, saveOptions);
 				}
 				default:
 					throw new Error(`Unsupported database type: ${this.ormType}`);
@@ -702,6 +718,70 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 			// If any error occurs, rethrow it as a NotFoundException with additional context.
 			throw new NotFoundException(`An error occurred during restoring entity: ${error.message}`);
 		}
+	}
+
+	/**
+	 * Ensure related entities are recovered based on the input object and populate options.
+	 *
+	 * @param entity - The main entity to which the relations belong.
+	 * @param mikroOptionsPopulate - Array of relation names to populate and recover.
+	 * @param repository - The repository used for persistence.
+	 */
+	private async ensureRelatedEntitiesRecovered<T extends BaseEntity>(
+		entity: T,
+		mikroOptionsPopulate: string[],
+		repository: MikroOrmBaseEntityRepository<T>
+	): Promise<void> {
+		// Loop through the relations to ensure soft-deleted entities are recovered
+		await Promise.all(
+			mikroOptionsPopulate.map(async (populate) => {
+				const relation = entity[populate];
+
+				if (relation) {
+					if (relation instanceof Collection) {
+						// If it's a collection, recover soft-deleted entities within it
+						await this.recoverCollections(relation, repository);
+					} else {
+						// If it's a single relation, recover it directly
+						wrap(relation).assign({ deletedAt: null });
+					}
+				}
+			})
+		);
+
+		// Persist the changes to ensure recovery is saved to the database
+		await repository.persistAndFlush(entity);
+	}
+
+	/**
+	 * Recovers soft-deleted entities within a given MikroORM collection
+	 * and persists the changes to the database.
+	 *
+	 * @param collection - The MikroORM collection to process.
+	 * @param repository - The repository used to persist changes to the database.
+	 * @returns The original collection with soft-deleted entities recovered, or undefined if the collection is not initialized.
+	 */
+	private async recoverCollections<T extends BaseEntity>(
+		collection: Collection<T>,
+		repository: MikroOrmBaseEntityRepository<T>
+	): Promise<Collection<T> | undefined> {
+		// Return early if the collection is not initialized
+		if (!collection.isInitialized()) {
+			return;
+		}
+		// Loop through the collection and recover soft-deleted entities
+		collection.map((item) => {
+			if (item instanceof SoftDeletableBaseEntity) {
+				// If the entity is soft-deleted, reset the 'deletedAt' field to recover it
+				wrap(item as BaseEntity).assign({ deletedAt: null });
+			}
+		});
+		// Persist the changes to the database
+		if (repository) {
+			await repository.persistAndFlush(collection);
+		}
+		// Return the collection with recovered entities
+		return collection;
 	}
 
 	/**

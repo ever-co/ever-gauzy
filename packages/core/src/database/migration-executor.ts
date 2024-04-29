@@ -3,11 +3,11 @@ import { camelCase } from 'typeorm/util/StringUtils';
 import * as chalk from 'chalk';
 import * as path from 'path';
 import { ApplicationPluginConfig, isNotEmpty } from '@gauzy/common';
+import { DatabaseTypeEnum } from '@gauzy/config';
 import { registerPluginConfig } from '../bootstrap';
 import { IMigrationOptions } from './migration-interface';
 import { MigrationUtils } from './migration-utils';
 import { isDatabaseType, isSqliteDB } from './../core/utils';
-import { DatabaseTypeEnum } from '@gauzy/config';
 
 /**
  * @description

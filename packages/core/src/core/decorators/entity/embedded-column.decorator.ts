@@ -1,26 +1,39 @@
-import { EmbeddedOptions as MikroOrmColumnEmbeddedOptions } from '@mikro-orm/core';
-import { Column, ObjectType } from 'typeorm';
-import { ColumnEmbeddedOptions as TypeOrmColumnEmbeddedOptions } from 'typeorm/decorator/options/ColumnEmbeddedOptions';
-
-// Represents combined options for mapping an embeddable column in both TypeORM and Mikro ORM.
-type CombineColumnEmbeddedOptions = TypeOrmColumnEmbeddedOptions & MikroOrmColumnEmbeddedOptions;
-// Represents a function that can be used to obtain the type of an entity
-type TargetEntity<T> = (type?: any) => ObjectType<T>;
+import { Column } from 'typeorm';
+import { ColumnEmbeddedOptions as TypeOrmEmbeddedOptions } from 'typeorm/decorator/options/ColumnEmbeddedOptions';
+import { Embedded, EmbeddedOptions as MikroOrmEmbeddedOptions } from '@mikro-orm/core';
+import { Type } from '@gauzy/common';
+import { filterOptions } from './entity.helper';
 
 /**
- * Represents the options for mapping an embeddable column in Mikro ORM.
+ * ColumnEmbeddedOptions combines options from TypeORM and MikroORM embedded columns.
+ * It merges all properties from TypeOrmEmbeddedOptions and MikroOrmEmbeddedOptions.
  */
-interface EmbeddableColumnMikroORMOptions<T> {
-    /**
-     * Represents the type, function, or target entity for the Mikro ORM column.
-     */
-    typeFunctionOrTarget: TargetEntity<T>;
+export type ColumnEmbeddedOptions = TypeOrmEmbeddedOptions & MikroOrmEmbeddedOptions;
 
+/**
+ * Options for embedding columns in entities.
+ */
+export type EntityColumnEmbeddedOptions = {
     /**
-     * (Optional) Additional options for the Mikro ORM and Type ORM column.
+     * Function returning the Type of the MikroORM embeddable entity.
+     * Allows dynamic referencing of the embedded class in MikroORM.
      */
-    options?: CombineColumnEmbeddedOptions;
-}
+    mikroOrmEmbeddableEntity?: () => Type;
+    /**
+     * Function returning the Type of the TypeORM embeddable entity.
+     * Used to reference the embedded class in TypeORM.
+     */
+    typeOrmEmbeddableEntity?: () => Type;
+};
+
+/**
+ * Decorator for creating entities with both MikroORM and TypeORM decorators.
+ * @param options Options for the entity.
+ */
+export function EmbeddedColumn(
+    typeOrTarget?: EntityColumnEmbeddedOptions,
+    options?: ColumnEmbeddedOptions
+): PropertyDecorator;
 
 /**
  * A decorator factory for mapping an embeddable column in Mikro ORM.
@@ -29,37 +42,59 @@ interface EmbeddableColumnMikroORMOptions<T> {
  * @returns A property decorator.
  */
 export function EmbeddedColumn<T>(
-    typeFunctionOrTarget?: (type?: any) => ObjectType<T>,
-    options?: CombineColumnEmbeddedOptions
+    typeOrTarget?: EntityColumnEmbeddedOptions,
+    options?: ColumnEmbeddedOptions
 ): PropertyDecorator {
     // If options are not provided, initialize an empty object
-    if (!options) options = {} as CombineColumnEmbeddedOptions;
+    if (!options) options = { prefix: false } as ColumnEmbeddedOptions;
 
     // Return a property decorator function
     return (target: any, propertyKey: string) => {
         // Apply the @Embedded decorator with mapped Mikro ORM options
-        // Embedded(parseEmbeddableColumnMikroORMOptions({ typeFunctionOrTarget, options }))(target, propertyKey);
+        const mikroOrmOptions = parseMikroOrmEmbeddableColumnOptions(typeOrTarget, options);
+        Embedded(mikroOrmOptions)(target, propertyKey);
 
-        // Apply the @Column decorator from TypeORM
-        Column(typeFunctionOrTarget as TargetEntity<T>, options)(target, propertyKey);
+        // Apply the @Column decorator with mapped Type ORM options
+        const typeOrmOptions = parseTypeOrmEmbeddableColumnOptions(options);
+        Column(typeOrTarget.typeOrmEmbeddableEntity, typeOrmOptions)(target, propertyKey);
     };
 }
 
 /**
- * Maps EmbeddableColumnMikroORMOptions to MikroOrmColumnEmbeddedOptions.
+ * Parses and processes MikroORM embeddable column options.
  *
- * @param param0 The EmbeddableColumnMikroORMOptions to map.
- * @returns The mapped MikroOrmColumnEmbeddedOptions.
+ * @param param0 Contains the `mikroOrmEmbeddableEntity` property.
+ * @param restOptions Additional MikroOrmEmbeddedOptions to be filtered and processed.
+ * @returns A new object with only key-value pairs where the value is defined.
  */
-export function parseEmbeddableColumnMikroORMOptions<T>({ typeFunctionOrTarget, options }: EmbeddableColumnMikroORMOptions<T>): MikroOrmColumnEmbeddedOptions {
-    // Create a partial MikroOrmColumnEmbeddedOptions object to store the mapped options.
-    const mikroOrmColumnEmbeddedOptions: Partial<MikroOrmColumnEmbeddedOptions> = {
-        // Map the typeFunctionOrTarget to the 'entity' property.
-        entity: typeFunctionOrTarget as string | (() => T | T[]),
-        // Assign the 'prefix' option from EmbeddableColumnMikroORMOptions, if provided.
-        prefix: options?.prefix
-    };
+export const parseMikroOrmEmbeddableColumnOptions = (
+    { mikroOrmEmbeddableEntity }: EntityColumnEmbeddedOptions,
+    restOptions: MikroOrmEmbeddedOptions
+): Record<string, any> => {
+    // Create a new object with entity and other options, filtering out undefined values
+    const filteredOptions = filterOptions({
+        entity: mikroOrmEmbeddableEntity,
+        ...restOptions
+    });
 
-    // Return the mapped MikroOrmColumnEmbeddedOptions.
-    return mikroOrmColumnEmbeddedOptions as MikroOrmColumnEmbeddedOptions;
-}
+    // Return the new object with only defined properties
+    return filteredOptions;
+};
+
+/**
+ * Parses and processes TypeORM embeddable column options.
+ *
+ * @param restOptions The TypeORM embedded column options to be filtered and processed.
+ * @returns A new object with only key-value pairs where the value is defined.
+ */
+export const parseTypeOrmEmbeddableColumnOptions = (
+    restOptions: TypeOrmEmbeddedOptions
+): Record<string, any> => {
+    // Filter out undefined options from the given object
+    const filteredOptions = filterOptions({
+        ...restOptions
+    });
+
+    // Return the filtered object with only defined properties
+    return filteredOptions;
+};

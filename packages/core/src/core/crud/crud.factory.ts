@@ -199,10 +199,8 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 			@Param('id', UUIDValidationPipe) id: BaseType['id'],
 			...options: any[]
 		): Promise<BaseType> {
-			// Find the record by ID
-			const entity = await this.crudService.findOneByIdString(id);
 			// Soft delete the record
-			return await this.crudService.softRemove(entity, options);
+			return await this.crudService.softRemove(id, options);
 		}
 
 		/**
@@ -230,10 +228,8 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 			@Param('id', UUIDValidationPipe) id: BaseType['id'],
 			...options: any[]
 		): Promise<BaseType> {
-			// Find the soft-deleted record by ID
-			const entity = await this.crudService.findOneByIdString(id);
 			// Restore the soft-deleted record
-			return await this.crudService.softRecover(entity, options);
+			return await this.crudService.softRecover(id, options);
 		}
 	}
 	return BaseCrudController;

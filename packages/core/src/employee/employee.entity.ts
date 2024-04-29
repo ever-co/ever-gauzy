@@ -73,13 +73,14 @@ import {
 	TimeSlot,
 	User
 } from '../core/entities/internal';
-import { CustomEmployeeFields, HasCustomFields } from '../core/entities/custom-entity-fields';
+import { HasCustomFields } from '../core/entities/custom-entity-fields';
+import { EmployeeEntityCustomFields, MikroOrmEmployeeEntityCustomFields, TypeOrmEmployeeEntityCustomFields } from '../core/entities/custom-entity-fields/employee';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 
 @MultiORMEntity('employee', { mikroOrmRepository: () => MikroOrmEmployeeRepository })
-export class Employee extends TenantOrganizationBaseEntity implements IEmployee, HasCustomFields, Taggable {
+export class Employee extends TenantOrganizationBaseEntity implements IEmployee, Taggable, HasCustomFields {
 	[EntityRepositoryType]?: MikroOrmEmployeeRepository;
 
 	@ApiPropertyOptional({ type: () => Date })
@@ -552,7 +553,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@JoinTable({
 		name: 'tag_employee'
 	})
-	tags: Tag[];
+	tags?: Tag[];
 
 	/**
 	 * Employee Skills
@@ -562,7 +563,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	skills: ISkill[];
+	skills?: ISkill[];
 
 	/**
 	 * Organization Departments
@@ -649,6 +650,9 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	| Embeddable Columns
 	|--------------------------------------------------------------------------
 	*/
-	@EmbeddedColumn(() => CustomEmployeeFields, { prefix: false })
-	customFields?: CustomEmployeeFields;
+	@EmbeddedColumn({
+		mikroOrmEmbeddableEntity: () => MikroOrmEmployeeEntityCustomFields,
+		typeOrmEmbeddableEntity: () => TypeOrmEmployeeEntityCustomFields
+	})
+	customFields?: EmployeeEntityCustomFields;
 }

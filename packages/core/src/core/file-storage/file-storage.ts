@@ -1,4 +1,4 @@
-import { FileStorageOption, FileStorageProviderEnum } from '@gauzy/contracts';
+import { FileStorageOption, FileStorageProvider, FileStorageProviderEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import * as Providers from './providers';
@@ -28,9 +28,7 @@ export class FileStorage {
 	constructor(option?: FileStorageOption) {
 		if (!isDebug) {
 			if (!this._fileStorageProviderDefault) {
-				this._fileStorageProviderDefault =
-					(environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) ||
-					FileStorageProviderEnum.LOCAL;
+				this._fileStorageProviderDefault = (environment.fileSystem.name.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL;
 			}
 
 			this.initProvider();
@@ -64,7 +62,7 @@ export class FileStorage {
 	 * @param providerName - The name of the file storage provider.
 	 * @returns Current instance of FileStorage.
 	 */
-	setProvider(providerName: FileStorageProviderEnum) {
+	setProvider(providerName: FileStorageProvider) {
 		if (!isDebug) {
 			const providers = Object.values(FileStorageProviderEnum);
 
@@ -81,7 +79,7 @@ export class FileStorage {
 					this.config.provider = this._fileStorageProviderDefault;
 				}
 			} else {
-				if (providers.includes(providerName)) {
+				if (providers.includes(providerName as FileStorageProviderEnum)) {
 					this.config.provider = providerName.toUpperCase() as FileStorageProviderEnum;
 				} else {
 					this.config.provider = FileStorageProviderEnum.LOCAL;
@@ -99,7 +97,7 @@ export class FileStorage {
 	 * @param providerName - The name of the file storage provider.
 	 * @returns The file storage provider instance.
 	 */
-	getProvider(providerName?: FileStorageProviderEnum) {
+	getProvider(providerName?: FileStorageProvider) {
 		this.setProvider(providerName);
 		return this.getProviderInstance();
 	}

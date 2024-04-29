@@ -36,7 +36,7 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 		if (includeEmployee) {
 			try {
 				// Extract user IDs from the items array
-				const userIds = items.map(organization => organization.user.id);
+				const userIds = items.map((organization: IUserOrganization) => organization.user.id);
 
 				// Fetch all employee details in bulk for the extracted user IDs
 				const employees = await this.employeeService.findEmployeesByUserIds(userIds);

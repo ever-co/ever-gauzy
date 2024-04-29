@@ -6,6 +6,7 @@ import {
 	IUserUpdateInput,
 	LanguagesEnum,
 } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/common-angular';
 import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
 import { LanguageService } from './language.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -21,7 +22,6 @@ import {
 import { Store } from '../services';
 import { LanguageSelectorService } from './language-selector.service';
 import { ElectronService } from '../electron/services';
-import { distinctUntilChange } from '@gauzy/common-angular';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

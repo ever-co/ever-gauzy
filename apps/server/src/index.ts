@@ -582,40 +582,62 @@ ipcMain.on('loading_state', (event, arg) => {
 ipcMain.on('expand_window', (event, arg) => {
 	console.log('expand_window');
 
-	const display = screen.getPrimaryDisplay();
-	const { height, width } = display.workAreaSize;
-	console.log('width ', width);
-	console.log('height ', height);
-	const wx = 640;
-	const hx = 480;
+	try {
+		const display = screen.getPrimaryDisplay();
 
-	switch (process.platform) {
-		case 'linux':
-			{
-				serverWindow.setMinimumSize(wx, hx);
-				serverWindow.setSize(wx, hx, true);
-				serverWindow.setResizable(false);
-			}
-			break;
-		case 'darwin':
-			{
-				serverWindow.setSize(wx, hx, true);
-				if (serverWindow) serverWindow.center();
-			}
-			break;
-		default:
-			{
-				serverWindow.setBounds(
-					{
-						width: wx,
-						height: hx,
-						x: (width - wx) * 0.5,
-						y: (height - hx) * 0.5
-					},
-					true
-				);
-			}
-			break;
+		const { height, width } = display.workAreaSize; // e.g. { 768, 1429 }
+
+		console.log('workAreaSize', { height, width });
+
+		// Set the max height and width for default window
+		const maxHeight = 480;
+		const maxWidth = 640;
+
+		switch (process.platform) {
+			case 'linux':
+				{
+					serverWindow.setMinimumSize(maxWidth, maxHeight);
+					serverWindow.setSize(maxWidth, maxHeight, true);
+					serverWindow.setResizable(false);
+				}
+				break;
+
+			case 'darwin':
+				{
+					serverWindow.setSize(maxWidth, maxHeight, true);
+					if (serverWindow) serverWindow.center();
+				}
+				break;
+
+			default:
+				{
+					let calculatedX = (width - maxWidth) * 0.5;
+					let calculatedY = (height - maxHeight) * 0.5;
+
+					// Ensure x and y are not negative
+					calculatedX = Math.max(0, calculatedX);
+					calculatedY = Math.max(0, calculatedY);
+
+					// Ensure window does not exceed screen bounds
+					calculatedX = Math.min(calculatedX, width - maxWidth);
+					calculatedY = Math.min(calculatedY, height - maxHeight);
+
+					const bounds = {
+						width: maxWidth,
+						height: maxHeight,
+						x: Math.round(calculatedX), // e.g. 1429 - 640 = 789 / 2 = 394.5
+						y: Math.round(calculatedY) // e.g. 768 - 480 = 288 / 2 = 144
+					};
+
+					console.log('Bounds', JSON.stringify(bounds));
+
+					serverWindow.setBounds(bounds, true);
+				}
+
+				break;
+		}
+	} catch (err) {
+		console.error('Error in expand_window', err);
 	}
 });
 

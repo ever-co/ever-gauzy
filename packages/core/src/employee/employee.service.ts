@@ -441,14 +441,11 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Obtain tenant ID from the current request context
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-			// Ensure the employee exists before attempting soft deletion
-			const employee = await this.findOneByIdString(employeeId, {
+			// Perform the soft delete operation
+			return await super.softRemove(employeeId, {
 				where: { organizationId, tenantId },
 				relations: { user: true, teams: true }
 			});
-
-			// Perform the soft delete operation
-			return await super.softRemove(employee);
 		} catch (error) {
 			console.error('Error during soft delete for employee', error);
 			throw new BadRequestException(error.message || 'Soft delete failed');
@@ -475,15 +472,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Obtain the tenant ID from the current request context or the provided options
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-			// Find the soft-deleted employee using the ID, organization ID, and tenant ID
-			const employee = await this.findOneByIdString(employeeId, {
+			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
+			return await super.softRecover(employeeId, {
 				where: { organizationId, tenantId },
-				relations: { user: true, teams: true }, // Optionally fetch related entities, like user
+				relations: { user: true, teams: true },
 				withDeleted: true
 			});
-
-			// Perform the soft recovery operation
-			return await super.softRecover(employee);
 		} catch (error) {
 			console.error('Error during soft recovery operation for employee:', error);
 			// Throw a BadRequestException if any error occurs during soft recovery

@@ -19,6 +19,11 @@ import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 
+export interface IEmployeeEntityMutationInput {
+	employeeId?: IEmployee['id'];
+	employee?: Pick<IEmployee, 'id'>;
+}
+
 export interface IRelationalEmployee {
 	readonly employee?: IEmployee;
 	readonly employeeId?: IEmployee['id'];
@@ -43,8 +48,8 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContacts?: IOrganizationContact[];
 	projects?: IOrganizationProject[];
 	organizationPosition?: IOrganizationPosition;
-	tags: ITag[];
-	skills: ISkill[];
+	tags?: ITag[];
+	skills?: ISkill[];
 	awards?: IEmployeeAward[];
 	offerDate?: Date;
 	acceptDate?: Date;
