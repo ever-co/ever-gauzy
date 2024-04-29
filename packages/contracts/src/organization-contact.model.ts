@@ -9,6 +9,11 @@ import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantAndOrganization
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
+export interface IOrganizationContactEntityMutationInput {
+	organizationContactId?: IOrganizationContact['id'];
+	organizationContact?: Pick<IOrganizationContact, 'id'>;
+}
+
 export interface IRelationalOrganizationContact {
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];

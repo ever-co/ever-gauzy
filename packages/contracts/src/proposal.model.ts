@@ -1,35 +1,29 @@
-import { IOrganizationContact } from './organization-contact.model';
+import { IOrganizationContactEntityMutationInput, IRelationalOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee, IEmployeeFindInput } from './employee.model';
+import { IEmployee, IEmployeeEntityMutationInput, IEmployeeFindInput } from './employee.model';
 import { ITag } from './tag.model';
 
-export interface IProposal extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposal extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationContact {
 	employeeId?: string;
-	employee: IEmployee;
+	employee?: IEmployee;
 	jobPostUrl: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: ProposalStatusEnum;
 	tags?: ITag[];
-	organizationContact?: IOrganizationContact;
-	organizationContactId?: string;
 }
 
-export interface IProposalCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
+export interface IProposalCreateInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityMutationInput, IOrganizationContactEntityMutationInput {
 	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: ProposalStatusEnum;
 	tags?: ITag[];
-	organizationContactId?: string;
 }
 
-export interface IProposalFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposalFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: string;
 	employee?: IEmployeeFindInput;
 	jobPostUrl?: string;
@@ -44,8 +38,7 @@ export enum ProposalStatusEnum {
 	SENT = 'SENT',
 	ACCEPTED = 'ACCEPTED'
 }
-export interface IProposalViewModel
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IProposalViewModel extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationContact {
 	tags?: ITag[];
 	valueDate: Date;
 	id: string;
@@ -57,5 +50,4 @@ export interface IProposalViewModel
 	proposalContent?: string;
 	status?: ProposalStatusEnum;
 	author?: string;
-	organizationContact?: IOrganizationContact;
 }

@@ -27,11 +27,11 @@ export const parseTypeOrmEntityOptions = ({ typeOrmRepository, ...restOptions }:
 );
 
 /**
- * Parse options and filter out properties with undefined values.
+ * Filters out undefined values from an object and returns a new object with only defined values.
  *
- * @param {MikroOrmEntityOptions<any>} options - Options to parse.
+ * @param options The source object to be filtered. This can be of any type.
  * @returns {Record<string, any>} - Parsed options without undefined values.
  */
-export const filterOptions = (options: MikroOrmEntityOptions<any>): Record<string, any> => Object.fromEntries(
+export const filterOptions = <T>(options: T): Record<string, any> => Object.fromEntries(
     Object.entries(options).filter(([_, value]) => value !== undefined)
 );

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, Raw } from 'typeorm';
 import * as moment from 'moment';
-import { IProposal, IPagination } from '@gauzy/contracts';
+import { IPagination } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { TenantAwareCrudService } from '@gauzy/core';
 import { Proposal } from './proposal.entity';
@@ -17,31 +17,13 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 	}
 
 	/**
+	 * Retrieves a paginated list of proposals based on optional filtering.
 	 *
-	 * @param filter
-	 * @param filterDate
-	 * @returns
+	 * @param filter Optional filtering criteria for retrieving proposals.
+	 * @returns A paginated list of proposals.
 	 */
-	async getAllProposals(
-		filter?: FindManyOptions<IProposal>, filterDate?: string
-	): Promise<IPagination<IProposal>> {
-		const total = await this.typeOrmRepository.count(filter);
-		let items = await this.typeOrmRepository.find(filter);
-
-		if (filterDate) {
-			const dateObject = new Date(filterDate);
-
-			const month = dateObject.getMonth() + 1;
-			const year = dateObject.getFullYear();
-
-			items = items.filter((i) => {
-				const currentItemMonth = i.valueDate.getMonth() + 1;
-				const currentItemYear = i.valueDate.getFullYear();
-				return currentItemMonth === month && currentItemYear === year;
-			});
-		}
-
-		return { items, total };
+	async findAll(filter?: FindManyOptions<Proposal>): Promise<IPagination<Proposal>> {
+		return await this.pagination(filter);
 	}
 
 	/**

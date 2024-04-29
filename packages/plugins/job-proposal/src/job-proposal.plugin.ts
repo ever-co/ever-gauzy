@@ -15,6 +15,9 @@ import { ProposalSeederService } from './proposal/proposal-seeder.service';
 			propertyPath: 'proposals',
 			type: 'relation',
 			relationType: 'many-to-many',
+			pivotTable: 'tag_proposal',
+			joinColumn: 'proposalId',
+			inverseJoinColumn: 'tagId',
 			entity: Proposal,
 			inverseSide: (it: Proposal) => it.tags
 		});
