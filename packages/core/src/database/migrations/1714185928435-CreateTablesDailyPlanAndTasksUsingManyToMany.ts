@@ -85,6 +85,8 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(
 			`ALTER TABLE "daily_plan_task" ADD CONSTRAINT "FK_791067c0a03b37ab50578e60d4d" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
+		await queryRunner.query(`ALTER TABLE "daily_plan" DROP COLUMN "workTimePlanned"`);
+		await queryRunner.query(`ALTER TABLE "daily_plan" ADD "workTimePlanned" integer NOT NULL`);
 	}
 
 	/**
@@ -107,6 +109,8 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(`DROP INDEX "public"."IDX_ce5e588780497b05cd6267e20e"`);
 		await queryRunner.query(`DROP INDEX "public"."IDX_903b08cd4c8025e73316342452"`);
 		await queryRunner.query(`DROP TABLE "daily_plan"`);
+		await queryRunner.query(`ALTER TABLE "daily_plan" DROP COLUMN "workTimePlanned"`);
+		await queryRunner.query(`ALTER TABLE "daily_plan" ADD "workTimePlanned" TIMESTAMP NOT NULL`);
 	}
 
 	/**
@@ -158,6 +162,42 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(`ALTER TABLE "temporary_daily_plan_task" RENAME TO "daily_plan_task"`);
 		await queryRunner.query(`CREATE INDEX "IDX_44d86eb47db0ffbf7e79bf7ff0" ON "daily_plan_task" ("dailyPlanId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_791067c0a03b37ab50578e60d4" ON "daily_plan_task" ("taskId") `);
+		await queryRunner.query(`DROP INDEX "IDX_f2cf366f3f08e31784b056df88"`);
+		await queryRunner.query(`DROP INDEX "IDX_9779a35ef1338bafb7b90714f1"`);
+		await queryRunner.query(`DROP INDEX "IDX_ecb357a3764a7344c633a257d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_ce5e588780497b05cd6267e20e"`);
+		await queryRunner.query(`DROP INDEX "IDX_903b08cd4c8025e73316342452"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_daily_plan" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "date" datetime NOT NULL, "workTimePlanned" datetime NOT NULL, "status" varchar NOT NULL, "employeeId" varchar, CONSTRAINT "FK_f2cf366f3f08e31784b056df880" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9779a35ef1338bafb7b90714f16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_ecb357a3764a7344c633a257d76" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_daily_plan"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId" FROM "daily_plan"`
+		);
+		await queryRunner.query(`DROP TABLE "daily_plan"`);
+		await queryRunner.query(`ALTER TABLE "temporary_daily_plan" RENAME TO "daily_plan"`);
+		await queryRunner.query(`CREATE INDEX "IDX_f2cf366f3f08e31784b056df88" ON "daily_plan" ("employeeId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9779a35ef1338bafb7b90714f1" ON "daily_plan" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ecb357a3764a7344c633a257d7" ON "daily_plan" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ce5e588780497b05cd6267e20e" ON "daily_plan" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_903b08cd4c8025e73316342452" ON "daily_plan" ("isActive") `);
+		await queryRunner.query(`DROP INDEX "IDX_f2cf366f3f08e31784b056df88"`);
+		await queryRunner.query(`DROP INDEX "IDX_9779a35ef1338bafb7b90714f1"`);
+		await queryRunner.query(`DROP INDEX "IDX_ecb357a3764a7344c633a257d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_ce5e588780497b05cd6267e20e"`);
+		await queryRunner.query(`DROP INDEX "IDX_903b08cd4c8025e73316342452"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_daily_plan" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "date" datetime NOT NULL, "workTimePlanned" integer NOT NULL, "status" varchar NOT NULL, "employeeId" varchar, CONSTRAINT "FK_f2cf366f3f08e31784b056df880" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9779a35ef1338bafb7b90714f16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_ecb357a3764a7344c633a257d76" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_daily_plan"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId" FROM "daily_plan"`
+		);
+		await queryRunner.query(`DROP TABLE "daily_plan"`);
+		await queryRunner.query(`ALTER TABLE "temporary_daily_plan" RENAME TO "daily_plan"`);
+		await queryRunner.query(`CREATE INDEX "IDX_f2cf366f3f08e31784b056df88" ON "daily_plan" ("employeeId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9779a35ef1338bafb7b90714f1" ON "daily_plan" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ecb357a3764a7344c633a257d7" ON "daily_plan" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ce5e588780497b05cd6267e20e" ON "daily_plan" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_903b08cd4c8025e73316342452" ON "daily_plan" ("isActive") `);
 	}
 
 	/**
@@ -205,6 +245,42 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(`DROP INDEX "IDX_ce5e588780497b05cd6267e20e"`);
 		await queryRunner.query(`DROP INDEX "IDX_903b08cd4c8025e73316342452"`);
 		await queryRunner.query(`DROP TABLE "daily_plan"`);
+		await queryRunner.query(`DROP INDEX "IDX_903b08cd4c8025e73316342452"`);
+		await queryRunner.query(`DROP INDEX "IDX_ce5e588780497b05cd6267e20e"`);
+		await queryRunner.query(`DROP INDEX "IDX_ecb357a3764a7344c633a257d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_9779a35ef1338bafb7b90714f1"`);
+		await queryRunner.query(`DROP INDEX "IDX_f2cf366f3f08e31784b056df88"`);
+		await queryRunner.query(`ALTER TABLE "daily_plan" RENAME TO "temporary_daily_plan"`);
+		await queryRunner.query(
+			`CREATE TABLE "daily_plan" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "date" datetime NOT NULL, "workTimePlanned" datetime NOT NULL, "status" varchar NOT NULL, "employeeId" varchar, CONSTRAINT "FK_f2cf366f3f08e31784b056df880" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9779a35ef1338bafb7b90714f16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_ecb357a3764a7344c633a257d76" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "daily_plan"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId" FROM "temporary_daily_plan"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_daily_plan"`);
+		await queryRunner.query(`CREATE INDEX "IDX_903b08cd4c8025e73316342452" ON "daily_plan" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ce5e588780497b05cd6267e20e" ON "daily_plan" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ecb357a3764a7344c633a257d7" ON "daily_plan" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9779a35ef1338bafb7b90714f1" ON "daily_plan" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f2cf366f3f08e31784b056df88" ON "daily_plan" ("employeeId") `);
+		await queryRunner.query(`DROP INDEX "IDX_903b08cd4c8025e73316342452"`);
+		await queryRunner.query(`DROP INDEX "IDX_ce5e588780497b05cd6267e20e"`);
+		await queryRunner.query(`DROP INDEX "IDX_ecb357a3764a7344c633a257d7"`);
+		await queryRunner.query(`DROP INDEX "IDX_9779a35ef1338bafb7b90714f1"`);
+		await queryRunner.query(`DROP INDEX "IDX_f2cf366f3f08e31784b056df88"`);
+		await queryRunner.query(`ALTER TABLE "daily_plan" RENAME TO "temporary_daily_plan"`);
+		await queryRunner.query(
+			`CREATE TABLE "daily_plan" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "date" datetime NOT NULL, "workTimePlanned" datetime NOT NULL, "status" varchar NOT NULL, "employeeId" varchar, CONSTRAINT "FK_f2cf366f3f08e31784b056df880" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_9779a35ef1338bafb7b90714f16" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_ecb357a3764a7344c633a257d76" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "daily_plan"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "date", "workTimePlanned", "status", "employeeId" FROM "temporary_daily_plan"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_daily_plan"`);
+		await queryRunner.query(`CREATE INDEX "IDX_903b08cd4c8025e73316342452" ON "daily_plan" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ce5e588780497b05cd6267e20e" ON "daily_plan" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_ecb357a3764a7344c633a257d7" ON "daily_plan" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9779a35ef1338bafb7b90714f1" ON "daily_plan" ("organizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f2cf366f3f08e31784b056df88" ON "daily_plan" ("employeeId") `);
 	}
 
 	/**
@@ -234,6 +310,8 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(
 			`ALTER TABLE \`daily_plan_task\` ADD CONSTRAINT \`FK_791067c0a03b37ab50578e60d4d\` FOREIGN KEY (\`taskId\`) REFERENCES \`task\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
 		);
+		await queryRunner.query(`ALTER TABLE \`daily_plan\` DROP COLUMN \`workTimePlanned\``);
+		await queryRunner.query(`ALTER TABLE \`daily_plan\` ADD \`workTimePlanned\` int NOT NULL`);
 	}
 
 	/**
@@ -256,5 +334,7 @@ export class CreateTablesDailyPlanAndTasksUsingManyToMany1714185928435 implement
 		await queryRunner.query(`DROP INDEX \`IDX_ce5e588780497b05cd6267e20e\` ON \`daily_plan\``);
 		await queryRunner.query(`DROP INDEX \`IDX_903b08cd4c8025e73316342452\` ON \`daily_plan\``);
 		await queryRunner.query(`DROP TABLE \`daily_plan\``);
+		await queryRunner.query(`ALTER TABLE \`daily_plan\` DROP COLUMN \`workTimePlanned\``);
+		await queryRunner.query(`ALTER TABLE \`daily_plan\` ADD \`workTimePlanned\` datetime NOT NULL`);
 	}
 }
