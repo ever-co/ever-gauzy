@@ -1,7 +1,7 @@
 import { DailyPlanStatusEnum, IDailyPlanCreateInput, IEmployee } from '@gauzy/contracts';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { TenantBaseDTO } from '../../../core/dto';
 
 /**

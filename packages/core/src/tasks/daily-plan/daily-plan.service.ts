@@ -16,7 +16,9 @@ import { isPostgres } from '@gauzy/config';
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
+		@InjectRepository(DailyPlan)
 		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
+
 		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 
 		private readonly employeeService: EmployeeService,

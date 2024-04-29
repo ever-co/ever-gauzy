@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -13,15 +13,16 @@ import { TypeOrmDailyPlanRepository } from './repository';
 
 @Module({
 	imports: [
-		TypeOrmModule.forFeature([DailyPlan]),
-		MikroOrmModule.forFeature([DailyPlan]),
 		RouterModule.register([{ path: '/daily-plan', module: DailyPlanModule }]),
+		forwardRef(() => TypeOrmModule.forFeature([DailyPlan])),
+		forwardRef(() => MikroOrmModule.forFeature([DailyPlan])),
 		RolePermissionModule,
 		EmployeeModule,
 		TaskModule,
 		CqrsModule
 	],
+	controllers: [DailyPlanController],
 	providers: [DailyPlanService, TypeOrmDailyPlanRepository],
-	controllers: [DailyPlanController]
+	exports: [DailyPlanService, TypeOrmModule, MikroOrmModule]
 })
 export class DailyPlanModule {}
