@@ -17,7 +17,7 @@ import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
 import * as Jimp from 'jimp';
 import { ImageAnalysisResult } from '@gauzy/integration-ai';
-import { FileStorageProviderEnum, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
+import { IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
 import { RequestContext } from './../../core/context';
