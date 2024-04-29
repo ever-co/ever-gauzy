@@ -58,7 +58,7 @@ export class RequestContext {
 
 	static currentRequestContext(): RequestContext {
 		console.log('RequestContext: getting context ...');
-		const context = RequestContext.clsService.get(RequestContext.name);
+		const context = RequestContext?.clsService?.get(RequestContext.name);
 		console.log('RequestContext: got context with Id:', context?._id);
 		return context;
 	}
