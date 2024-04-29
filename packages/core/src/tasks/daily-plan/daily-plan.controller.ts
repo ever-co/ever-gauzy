@@ -72,11 +72,8 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(
-		@Body() entity: CreateDailyPlanDTO,
-		@Query() options: PaginationParams<DailyPlan>
-	): Promise<IDailyPlan> {
-		return await this.dailyPlanService.createDailyPlan(entity, options, entity.taskId);
+	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
+		return await this.dailyPlanService.createDailyPlan(entity, entity.taskId);
 	}
 
 	/**

@@ -30,11 +30,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param options
 	 */
 
-	async createDailyPlan(
-		partialEntity: DeepPartial<IDailyPlan>,
-		options: PaginationParams<DailyPlan>,
-		taskId?: ITask['id']
-	): Promise<IDailyPlan> {
+	async createDailyPlan(partialEntity: DeepPartial<IDailyPlan>, taskId?: ITask['id']): Promise<IDailyPlan> {
 		try {
 			const { employeeId } = partialEntity;
 			const currentTenantId = RequestContext.currentTenantId();
@@ -53,17 +49,6 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const likeOperator = isPostgres() ? '::text LIKE' : ' LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-
-			query.setFindOptions({
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
-			});
 
 			query.where(
 				new Brackets((qb: WhereExpressionBuilder) => {
