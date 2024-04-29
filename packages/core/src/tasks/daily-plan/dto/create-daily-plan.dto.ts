@@ -28,13 +28,12 @@ export class CreateDailyPlanDTO extends TenantBaseDTO implements IDailyPlanCreat
 	readonly status: DailyPlanStatusEnum;
 
 	@ApiProperty({ type: () => String })
-	@ValidateIf((it) => !it.employee)
 	@IsNotEmpty()
 	@IsString()
 	employeeId: IEmployee['id'];
 
 	@ApiProperty({ type: () => String })
-	@ValidateIf((it) => it.task)
+	@IsString()
 	@IsOptional()
 	taskId?: string;
 }
