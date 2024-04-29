@@ -4,8 +4,6 @@
 
 import {
 	ForbiddenException,
-	forwardRef,
-	Inject,
 	Injectable,
 	NotFoundException,
 	UnauthorizedException
@@ -21,29 +19,87 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import { ComponentLayoutStyleEnum, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IEmployee, IFindMeUser, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, MultiORMEnum } from './../core/utils';
-import { TaskService } from './../tasks/task.service';
+import { EmployeeService } from '../employee/employee.service';
+import { TaskService } from '../tasks/task.service';
 import { MikroOrmUserRepository, TypeOrmUserRepository } from './repository';
 import { User } from './user.entity';
 
 @Injectable()
 export class UserService extends TenantAwareCrudService<User> {
 	constructor(
-		private readonly _configService: ConfigService,
-
-		@Inject(forwardRef(() => TaskService)) private readonly _taskService: TaskService,
-
 		readonly typeOrmUserRepository: TypeOrmUserRepository,
-
-		readonly mikroOrmUserRepository: MikroOrmUserRepository
+		readonly mikroOrmUserRepository: MikroOrmUserRepository,
+		private readonly _configService: ConfigService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _taskService: TaskService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
+	}
+
+	/**
+	 * Fetches the logged-in user's details along with associated employee details if requested.
+	 *
+	 * @param options Options for the findMeUser method.
+	 * @returns A promise resolving to the user details.
+	 */
+	public async findMeUser(options: IFindMeUser): Promise<IUser> {
+		let employee: IEmployee;
+
+		// Check if there are relations to include and remove 'employee' from them if present.
+		if (options.relations && options.relations.length > 0) {
+			const index = options.relations.indexOf('employee');
+			if (index > -1) {
+				options.relations.splice(index, 1); // Removing 'employee' to handle it separately
+			}
+		}
+
+		// Fetch the user along with requested relations (excluding employee).
+		const user = await this.findMe(options.relations);
+
+		console.log('findMe found User with Id:', user.id);
+
+		// If 'includeEmployee' is set to true, fetch employee details associated with the user.
+		if (options.includeEmployee) {
+			const relations: any = {};
+
+			// Include organization relation if 'includeOrganization' is true
+			if (options.includeOrganization) {
+				relations.organization = true;
+			}
+
+			employee = await this._employeeService.findOneByUserId(user.id, { relations });
+		}
+
+		// Return user data combined with employee data, if it exists.
+		return {
+			...user,
+			...(employee && { employee }) // Conditionally add employee info to the response
+		};
+	}
+
+	/**
+	 * Retrieves details of the currently logged-in user, including specified relations.
+	 *
+	 * @param relations An array of strings indicating which relations of the user to include.
+	 * @returns A Promise resolving to the IUser object with the desired relations.
+	 */
+	private async findMe(relations: string[]): Promise<IUser> {
+		try {
+			// Get the current user's ID from the RequestContext
+			const userId = RequestContext.currentUserId();
+			// Fetch and return the user's details based on the provided relations
+			return await this.findOneByIdString(userId, { relations });
+		} catch (error) {
+			// Log the error for debugging purposes
+			console.error('Error in findMe:', error);
+		}
 	}
 
 	/**
@@ -55,17 +111,19 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async markEmailAsVerified(id: IUser['id']) {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				throw new Error(`Not implemented for ${this.ormType}`);
+				return await this.mikroOrmRepository.nativeUpdate({ id }, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				})
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.update(
-					{ id },
-					{
-						emailVerifiedAt: freshTimestamp(),
-						emailToken: null,
-						code: null,
-						codeExpireAt: null
-					}
-				);
+				return await this.typeOrmRepository.update({ id }, {
+					emailVerifiedAt: freshTimestamp(),
+					emailToken: null,
+					code: null,
+					codeExpireAt: null
+				});
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -217,7 +275,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch {}
+			} catch { }
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -341,9 +399,7 @@ export class UserService extends TenantAwareCrudService<User> {
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
 						web.andWhere(p(`"${query.alias}"."id" = :id`), { id });
-						web.andWhere(p(`"${query.alias}"."email" = :email`), {
-							email
-						});
+						web.andWhere(p(`"${query.alias}"."email" = :email`), { email });
 					})
 				);
 				query.andWhere(
@@ -370,26 +426,13 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 	}
 
+	/**
+	 *
+	 * @param password
+	 * @returns
+	 */
 	private async getPasswordHash(password: string): Promise<string> {
 		return bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
-	}
-
-	/**
-	 * Retrieves details of the currently logged-in user, including specified relations.
-	 *
-	 * @param relations An array of strings indicating which relations of the user to include.
-	 * @returns A Promise resolving to the IUser object with the desired relations.
-	 */
-	public async findMe(relations: string[]): Promise<IUser> {
-		try {
-			// Get the current user's ID from the RequestContext
-			const userId = RequestContext.currentUserId();
-			// Fetch and return the user's details based on the provided relations
-			return await this.findOneByIdString(userId, { relations });
-		} catch (error) {
-			// Log the error for debugging purposes
-			console.error('Error in findMe:', error);
-		}
 	}
 
 	/**
@@ -423,9 +466,9 @@ export class UserService extends TenantAwareCrudService<User> {
 
 		try {
 			// TODO: Unassign all the task assigned to this user
-
 			// Best to raise some event and handle it in the subscriber that remove tasks!
-			//	await this._taskService.unassignEmployeeFromTeamTasks(user.employeeId, undefined);
+			const employee = await this._employeeService.findOneByUserId(user.id);
+			if (employee) { await this._taskService.unassignEmployeeFromTeamTasks(employee.id); }
 
 			return await super.delete(userId);
 		} catch (error) {

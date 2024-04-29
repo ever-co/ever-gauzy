@@ -8,6 +8,7 @@ import { environment, getConfig } from '@gauzy/config';
 import { Provider } from './provider';
 
 const config = getConfig();
+const apiPublicPath = resolve(process.cwd(), 'apps', 'api', 'public');
 
 /**
  *
@@ -16,10 +17,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 	public instance: LocalProvider;
 	public readonly name = FileStorageProviderEnum.LOCAL;
 	public config = {
-		rootPath:
-			(environment.isElectron
-				? resolve(environment.gauzyUserPath, 'public')
-				: config.assetOptions.assetPublicPath) || resolve(process.cwd(), 'apps', 'api', 'public'),
+		rootPath: (environment.isElectron ? resolve(environment.gauzyUserPath, 'public') : config.assetOptions.assetPublicPath) || apiPublicPath,
 		baseUrl: environment.baseUrl
 	};
 

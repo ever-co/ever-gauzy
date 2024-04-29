@@ -6,16 +6,14 @@ import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
 
 @CommandHandler(EmployeeUpdateCommand)
-export class EmployeeUpdateHandler
-	implements ICommandHandler<EmployeeUpdateCommand> {
+export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
+
 	constructor(
-		private readonly employeeService: EmployeeService,
+		private readonly _employeeService: EmployeeService,
 	) { }
 
 	public async execute(command: EmployeeUpdateCommand): Promise<IEmployee> {
-		const { input } = command;
-		const { id } = input;
-
+		const { id, input } = command;
 		/**
 		 * If user/employee has only own profile edit permission
 		 */
@@ -32,7 +30,7 @@ export class EmployeeUpdateHandler
 		try {
 			//We are using create here because create calls the method save()
 			//We need save() to save ManyToMany relations
-			return await this.employeeService.create({
+			return await this._employeeService.create({
 				...input,
 				upworkId: input.upworkId || null,
 				linkedInId: input.linkedInId || null,

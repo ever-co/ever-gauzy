@@ -101,49 +101,88 @@ export class ProposalEditComponent extends TranslationBaseComponent
 		this.cdRef.detectChanges();
 	}
 
-	private _patchFormValue() {
-		if (this.proposal) {
-			this.form.patchValue({
-				jobPostUrl: this.proposal.jobPostUrl,
-				valueDate: this.proposal.valueDate,
-				jobPostContent: this.proposal.jobPostContent,
-				proposalContent: this.proposal.proposalContent,
-				organizationContact: this.proposal.organizationContact,
-				tags: this.proposal.tags,
-				employee: this.proposal.employee
+	/**
+	 * Patches the form values based on the current proposal data.
+	 *
+	 * This method checks if a proposal exists and, if so, populates the form fields with
+	 * the relevant data from the proposal. This can be useful for initializing or editing a form.
+	 */
+	private _patchFormValue(): void {
+		// Check if the proposal object exists
+		if (!this.proposal) {
+			console.warn('No proposal found to patch the form.');
+			return; // Exit early if there's no proposal
+		}
+
+		// Patch the form with values from the existing proposal
+		this.form.patchValue({
+			jobPostUrl: this.proposal.jobPostUrl,
+			valueDate: this.proposal.valueDate,
+			jobPostContent: this.proposal.jobPostContent,
+			proposalContent: this.proposal.proposalContent,
+			organizationContact: this.proposal.organizationContact,
+			tags: this.proposal.tags,
+			employee: this.proposal.employee,
+		});
+
+		// Optional: Trigger form validation to ensure the form's state is consistent
+		this.form.updateValueAndValidity();
+	}
+
+	/**
+	 * Edits an existing proposal if the form is valid and a proposal is specified.
+	 *
+	 * This function updates a proposal based on the form's input values. It validates the form,
+	 * extracts necessary information, and uses the `proposalsService` to perform the update.
+	 * Success or error messages are displayed based on the outcome.
+	 *
+	 * @returns A promise that resolves upon successful editing or rejects with an error.
+	 */
+	async editProposal(): Promise<void> {
+		// Check if the form is valid and the proposal exists
+		if (!this.form.valid || !this.proposal) {
+			return; // Return early if preconditions are not met
+		}
+
+		try {
+			const { organizationId, tenantId } = this.proposal; // Extract the tenant ID & organization ID from the existing proposal
+
+			// Get the necessary data from the form
+			const {
+				jobPostContent,
+				jobPostUrl,
+				proposalContent,
+				tags,
+				organizationContact
+			} = this.form.value;
+
+			// Update the proposal with new values
+			await this.proposalsService.update(this.proposal.id, {
+				tenantId,
+				organizationId,
+				jobPostContent,
+				jobPostUrl,
+				proposalContent,
+				tags,
+				organizationContact,
 			});
+
+			// Show success message upon successful update
+			this.toastrService.success('NOTES.PROPOSALS.EDIT_PROPOSAL');
+
+			// Navigate to the proposals page after editing
+			this.router.navigate(['/pages/sales/proposals']);
+		} catch (error) {
+			// Handle errors that occur during the update
+			this.toastrService.danger(error); // Display error message
 		}
 	}
 
-	async editProposal() {
-		if (this.form.valid && this.proposal) {
-			try {
-				const { tenantId } = this.store.user;
-				const { organizationId } = this.proposal;
-
-				const { jobPostContent, jobPostUrl, proposalContent, tags } = this.form.getRawValue();
-				const { organizationContact } = this.form.getRawValue();
-
-				try {
-					await this.proposalsService.update(this.proposal.id, {
-						tenantId,
-						organizationId,
-						jobPostContent: jobPostContent,
-						jobPostUrl: jobPostUrl,
-						proposalContent: proposalContent,
-						tags: tags,
-						organizationContactId: organizationContact ? organizationContact.id : null
-					});
-					this.toastrService.success('NOTES.PROPOSALS.EDIT_PROPOSAL');
-				} finally {
-					this.router.navigate([`/pages/sales/proposals`]);
-				}
-			} catch (error) {
-				this.toastrService.danger(error);
-			}
-		}
-	}
-
+	/**
+	 * Updates the 'tags' field in the form based on the selected tags.
+	 *
+	 * @param tags An array of selected tags to be set in the form.
+	 */
 	selectedTagsEvent(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();

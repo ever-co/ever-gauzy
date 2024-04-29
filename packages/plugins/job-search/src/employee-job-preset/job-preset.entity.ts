@@ -34,7 +34,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Employee Job Criterions
 	 */
-	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it: EmployeeUpworkJobsSearchCriterion) => it.jobPreset, {
+	@MultiORMOneToMany(() => EmployeeUpworkJobsSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	employeeCriterions?: IEmployeeUpworkJobsSearchCriterion[];
@@ -42,7 +42,7 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Criterions
 	 */
-	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it: JobPresetUpworkJobSearchCriterion) => it.jobPreset, {
+	@MultiORMOneToMany(() => JobPresetUpworkJobSearchCriterion, (it) => it.jobPreset, {
 		onDelete: 'CASCADE'
 	})
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
@@ -56,15 +56,15 @@ export class JobPreset extends TenantOrganizationBaseEntity implements IJobPrese
 	/**
 	 * Job Preset Employees
 	 */
-	@MultiORMManyToMany(() => Employee, (it: Employee) => it.customFields['jobPresets'], {
+	@MultiORMManyToMany(() => Employee, {
 		cascade: true,
 		/** This column is a boolean flag indicating whether the current entity is the 'owning' side of a relationship.  */
 		owner: true,
 		/** Pivot table for many-to-many relationship. */
 		pivotTable: 'employee_job_preset',
-		/** Column in pivot table referencing 'time_slot' primary key. */
+		/** Column in pivot table referencing 'job_preset' primary key. */
 		joinColumn: 'jobPresetId',
-		/** Column in pivot table referencing 'time_logs' primary key. */
+		/** Column in pivot table referencing 'employee' primary key. */
 		inverseJoinColumn: 'employeeId',
 	})
 	@JoinTable({ name: 'employee_job_preset' })

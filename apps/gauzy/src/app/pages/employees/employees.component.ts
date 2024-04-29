@@ -297,10 +297,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType:
-						this.selectedEmployee.fullName +
-						' ' +
-						this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
+					recordType: this.selectedEmployee.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
@@ -310,10 +307,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 						if (!this.organization) {
 							return;
 						}
-						const { id: organizationId } = this.organization;
-						await this.employeesService.delete(this.selectedEmployee.id, {
-							organizationId
-						});
+						const { id: organizationId, tenantId } = this.organization;
+						await this.employeesService.softRemove(this.selectedEmployee.id, { organizationId, tenantId });
 
 						this._employeeStore.employeeAction = {
 							action: CrudActionEnum.DELETED,
@@ -426,10 +421,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			});
 		}
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-
-			await this.employeesService.resort(this.selectedEmployee.id, {
+			const { id: organizationId, tenantId } = this.organization;
+			await this.employeesService.softRecover(this.selectedEmployee.id, {
 				organizationId,
 				tenantId
 			});
@@ -498,9 +491,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	 */
 	setSmartTableSource() {
 		if (!this.organization) {
-			return;
+			return; // Early exit if organization is undefined
 		}
-		this.loading = true;
+
+		this.loading = true; // Indicate loading state
 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -508,26 +502,33 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.smartTableSource = new ServerDataSource(this.http, {
 			endPoint: `${API_PREFIX}/employee/pagination`,
 			relations: ['user', 'tags'],
-			withDeleted: this.includeDeleted,
+			withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
 			where: {
 				organizationId,
 				tenantId,
-				...(this.filters.where ? this.filters.where : {})
+				...(this.filters.where || {}), // Include additional filter conditions
 			},
 			resultMap: (employee: IEmployee) => {
-				return Object.assign(
-					{},
-					employee,
-					this.employeeMapper(employee)
-				);
+				return {
+					...employee, // Spread employee properties
+					...this.employeeMapper(employee), // Map additional properties
+				};
 			},
 			finalize: () => {
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-				this.loading = false;
+				this.updatePagination(this.smartTableSource.count());
+				this.loading = false; // Update loading state
 			}
+		});
+	}
+
+	/**
+	 * Update pagination information
+	 * @param totalItems - Total items returned from the server
+	 */
+	updatePagination(totalItems: number) {
+		this.setPagination({
+			...this.getPagination(),
+			totalItems,
 		});
 	}
 

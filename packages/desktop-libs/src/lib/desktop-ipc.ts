@@ -901,10 +901,13 @@ export function ipcTimer(
 	function resizeWindow(window: BrowserWindow, isExpanded: boolean): void {
 		const display = screen.getPrimaryDisplay();
 		const { height, width } = display.workAreaSize;
+
 		log.info('workAreaSize', { height, width });
+
 		const maxHeight = height <= 768 ? height - 20 : 768;
 		const maxWidth = height < 768 ? 360 - 50 : 360;
 		const widthLarge = height < 768 ? 1280 - 50 : 1280;
+
 		switch (process.platform) {
 			case 'linux':
 				{
@@ -923,15 +926,29 @@ export function ipcTimer(
 				break;
 			default:
 				{
+					let calculatedX = (width - (isExpanded ? widthLarge : maxWidth)) * 0.5;
+					let calculatedY = (height - maxHeight) * 0.5;
+
+					// Ensure x and y are not negative
+					calculatedX = Math.max(0, calculatedX);
+					calculatedY = Math.max(0, calculatedY);
+
+					// Ensure window does not exceed screen bounds
+					calculatedX = Math.min(calculatedX, width - (isExpanded ? widthLarge : maxWidth));
+					calculatedY = Math.min(calculatedY, height - maxHeight);
+
 					const bounds = {
 						width: isExpanded ? widthLarge : maxWidth,
 						height: maxHeight,
-						x: (width - (isExpanded ? widthLarge : maxWidth)) * 0.5,
-						y: (height - maxHeight) * 0.5
+						x: Math.round(calculatedX),
+						y: Math.round(calculatedY)
 					};
+
 					log.info('Bounds', JSON.stringify(bounds));
+
 					window.setBounds(bounds, true);
 				}
+
 				break;
 		}
 	}

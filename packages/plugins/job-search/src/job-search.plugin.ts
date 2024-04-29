@@ -17,6 +17,9 @@ import { JobSeederService } from './employee-job-preset/job-seeder.service';
 			propertyPath: 'jobPresets',
 			type: 'relation',
 			relationType: 'many-to-many',
+			pivotTable: 'employee_job_preset',
+			joinColumn: 'jobPresetId',
+			inverseJoinColumn: 'employeeId',
 			entity: JobPreset,
 			inverseSide: (it: JobPreset) => it.employees
 		});

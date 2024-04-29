@@ -1,13 +1,13 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { Transform, TransformFnParams } from "class-transformer";
 import { IsOptional, IsUrl } from "class-validator";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { TenantOrganizationBaseDTO } from "../../core/dto";
+import { Trimmed } from "../../shared/decorators/trim.decorator";
 
 export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
-    
+
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "LinkedIn must be an URL address"
     })
@@ -15,7 +15,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Facebook must be an URL address"
     })
@@ -23,7 +23,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Instagram must be an URL address"
     })
@@ -31,7 +31,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Twitter must be an URL address"
     })
@@ -39,7 +39,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Github must be an URL address"
     })
@@ -47,7 +47,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Gitlab must be an URL address"
     })
@@ -55,7 +55,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Upwork must be an URL address"
     })
@@ -63,7 +63,7 @@ export class SocialNetworksDTO extends TenantOrganizationBaseDTO {
 
     @ApiPropertyOptional({ type: () => String })
     @IsOptional()
-    @Transform((params: TransformFnParams) => (params.value ? params.value.trim() : null))
+    @Trimmed()
     @IsUrl({}, {
         message: "Stackoverflow must be an URL address"
     })

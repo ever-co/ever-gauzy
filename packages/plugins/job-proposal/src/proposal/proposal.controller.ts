@@ -11,17 +11,24 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { IProposal, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
-	CrudController,
+	IProposal,
+	IPagination,
+	PermissionsEnum,
+	IPaginationParam,
+	IProposalCreateInput,
+	IProposalFindInput
+} from '@gauzy/contracts';
+import {
 	Permissions,
 	PermissionGuard,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	PaginationParams,
-	ParseJsonPipe,
 	UUIDValidationPipe,
-	OptionParams
+	OptionParams,
+	CrudFactory,
+	CountQueryDTO
 } from '@gauzy/core';
 import { ProposalCreateCommand, ProposalUpdateCommand } from './commands';
 import { ProposalService } from './proposal.service';
@@ -32,8 +39,13 @@ import { CreateProposalDTO, UpdateProposalDTO } from './dto';
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_PROPOSALS_EDIT)
 @Controller('/proposal')
-export class ProposalController extends CrudController<Proposal> {
-
+export class ProposalController extends CrudFactory<
+	Proposal,
+	IPaginationParam,
+	IProposalCreateInput,
+	IProposalCreateInput,
+	IProposalFindInput
+>(PaginationParams, CreateProposalDTO, UpdateProposalDTO, CountQueryDTO) {
 	constructor(
 		private readonly _proposalService: ProposalService,
 		private readonly _commandBus: CommandBus
@@ -42,12 +54,39 @@ export class ProposalController extends CrudController<Proposal> {
 	}
 
 	/**
-	 * Get proposals using pagination.
+	 * Get the count of proposals in the same tenant based on the provided query options.
 	 *
-	 * @param params The pagination parameters.
-	 * @returns The paginated list of proposals.
+	 * @param options Query options to filter proposal counts.
+	 * @returns The count of proposals meeting the criteria.
 	 */
+	@ApiOperation({ summary: 'Get proposal count in the same tenant' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Successfully retrieved the proposal count.',
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid query parameters. Please check your input.',
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred while retrieving the proposal count.',
+	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
+	@Get('count')
+	@UseValidationPipe()
+	async getCount(
+		@Query() options: CountQueryDTO<Proposal>
+	): Promise<number> {
+		return await this._proposalService.countBy(options);
+	}
+
+	/**
+	 * Get proposals by pagination.
+	 *
+	 * @param params Pagination parameters including page number and limit.
+	 * @returns Paginated list of proposals.
+	 */
 	@ApiOperation({ summary: 'Get proposals by pagination' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -58,9 +97,12 @@ export class ProposalController extends CrudController<Proposal> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid pagination parameters provided',
 	})
+	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(@Query() params: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
+	async pagination(
+		@Query() params: PaginationParams<Proposal>
+	): Promise<IPagination<IProposal>> {
 		return await this._proposalService.pagination(params);
 	}
 
@@ -82,9 +124,11 @@ export class ProposalController extends CrudController<Proposal> {
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
-	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IProposal>> {
-		const { relations, findInput, filterDate } = data;
-		return await this._proposalService.getAllProposals({ where: findInput, relations }, filterDate);
+	@UseValidationPipe()
+	async findAll(
+		@Query() options: PaginationParams<Proposal>
+	): Promise<IPagination<IProposal>> {
+		return await this._proposalService.findAll(options);
 	}
 
 	/**
@@ -131,7 +175,9 @@ export class ProposalController extends CrudController<Proposal> {
 	})
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateProposalDTO): Promise<IProposal> {
+	async create(
+		@Body() entity: CreateProposalDTO
+	): Promise<IProposal> {
 		return await this._commandBus.execute(
 			new ProposalCreateCommand(entity),
 		);
