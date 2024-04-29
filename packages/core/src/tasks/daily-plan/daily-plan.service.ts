@@ -1,8 +1,6 @@
-import { InjectConnection } from 'nest-knexjs';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DeepPartial, WhereExpressionBuilder } from 'typeorm';
-import { Knex as KnexConnection } from 'knex';
 import { MikroOrmDailyPlanRepository, TypeOrmDailyPlanRepository } from './repository';
 import { DailyPlan } from './daily-plan.entity';
 import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
@@ -18,16 +16,11 @@ import { isPostgres } from '@gauzy/config';
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
-		@InjectRepository(DailyPlan)
 		readonly typeOrmDailyPlanRepository: TypeOrmDailyPlanRepository,
-
 		readonly mikroOrmDailyPlanRepository: MikroOrmDailyPlanRepository,
 
 		private readonly employeeService: EmployeeService,
-		private readonly taskService: TaskService,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		private readonly taskService: TaskService
 	) {
 		super(typeOrmDailyPlanRepository, mikroOrmDailyPlanRepository);
 	}
