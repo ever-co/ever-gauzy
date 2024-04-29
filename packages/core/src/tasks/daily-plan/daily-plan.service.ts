@@ -10,7 +10,6 @@ import { RequestContext } from '../../core/context';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
 import { TaskService } from '../task.service';
-import { GetTaskByIdDTO } from '../dto';
 import { isPostgres } from '@gauzy/config';
 
 @Injectable()
@@ -36,7 +35,6 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 	async createDailyPlan(
 		partialEntity: DeepPartial<IDailyPlan>,
-		params: GetTaskByIdDTO,
 		options: PaginationParams<DailyPlan>,
 		taskId?: ITask['id']
 	): Promise<IDailyPlan> {
@@ -93,8 +91,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			if (taskId) {
-				const { relations, ...rest } = params;
-				const wantCreatePlannedTask = await this.taskService.findById(taskId, rest);
+				const wantCreatePlannedTask = await this.taskService.findOneByIdString(taskId);
 				if (!wantCreatePlannedTask) {
 					throw new BadRequestException('Cannot found the plan requested to plan');
 				}

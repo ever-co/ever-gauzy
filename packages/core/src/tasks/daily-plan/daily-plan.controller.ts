@@ -1,25 +1,11 @@
-import {
-	Body,
-	Controller,
-	Delete,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
-import { UseValidationPipe } from 'shared';
+import { UseValidationPipe } from '../../shared/pipes';
 import { CreateDailyPlanDTO } from './dto';
-import { GetTaskByIdDTO } from '../dto';
 
 @ApiTags('Daily Plan')
 // @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -50,10 +36,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(
 		@Body() entity: CreateDailyPlanDTO,
-		@Query() params: GetTaskByIdDTO,
 		@Query() options: PaginationParams<DailyPlan>
 	): Promise<IDailyPlan> {
-		return await this.dailyPlanService.createDailyPlan(entity, params, options, entity.taskId);
+		return await this.dailyPlanService.createDailyPlan(entity, options, entity.taskId);
 	}
 
 	/**
