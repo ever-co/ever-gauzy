@@ -15,11 +15,10 @@
 					<nb-card-body class="timer-body">
 						<div class="row mb-3">
 							<div class="col-12">
-								<ga-organization-selector
+								<ngx-desktop-timer-organization-selector
 									(organizationChange)="selectOrganization($event)"
 									[disabled]="start$ | async"
-								>
-								</ga-organization-selector>
+								></ngx-desktop-timer-organization-selector>
 							</div>
 						</div>
 						<div class="row d-flex justify-content-between">
