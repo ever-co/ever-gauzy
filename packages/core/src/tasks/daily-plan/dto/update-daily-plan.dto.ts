@@ -1,27 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNumber, IsOptional } from 'class-validator';
-import { DailyPlanStatusEnum, IDailyPlanUpdateInput } from '@gauzy/contracts';
-import { TenantBaseDTO } from '../../../core/dto';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
+import { IDailyPlanUpdateInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from '../../../core/dto';
+import { CreateDailyPlanDTO } from './create-daily-plan.dto';
 
 /**
  * Update Daily Plan DTO validation
  */
 
-export class UpdateDailyPlanDTO extends TenantBaseDTO implements IDailyPlanUpdateInput {
-	@ApiProperty({ type: () => Date })
-	@Type(() => Date)
-	@IsOptional()
-	@IsDate()
-	readonly date?: Date;
-
-	@ApiProperty({ type: () => Number })
-	@IsOptional()
-	@IsNumber()
-	readonly workTimePlanned?: number;
-
-	@ApiProperty({ type: () => String, enum: DailyPlanStatusEnum })
-	@IsOptional()
-	@IsEnum(DailyPlanStatusEnum, { message: 'status `$value` must be a valid enum value' })
-	readonly status?: DailyPlanStatusEnum;
-}
+export class UpdateDailyPlanDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	PartialType(PickType(CreateDailyPlanDTO, ['date', 'workTimePlanned', 'status']))
+) implements IDailyPlanUpdateInput { }
