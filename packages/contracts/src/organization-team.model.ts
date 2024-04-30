@@ -53,7 +53,7 @@ export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamC
 }
 
 export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
-	withLaskWorkedTask: boolean;
+	withLastWorkedTask: boolean;
 }
 
 export interface IRelationalOrganizationTeam {
