@@ -43,8 +43,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Get the tenant ID from the current request context
 			const tenantId = RequestContext.currentTenantId();
 
-			// Construct the where clause based on whether tenantId is available
-			const whereClause = tenantId ? { tenantId, userId: In(userIds) } : { userId: In(userIds) };
+			// Construct the base where clause for querying employees by user IDs
+			const whereClause = {
+				userId: In(userIds), // Find employees with matching user IDs
+				isActive: true, // Only active employees
+				isArchived: false, // Exclude archived employees
+				...(tenantId && { tenantId }), // Include tenant ID if available
+			};
 
 			// Execute the query based on the ORM type
 			switch (this.ormType) {
@@ -75,7 +80,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			// Construct the where clause based on whether tenantId is available
-			const whereClause = tenantId ? { tenantId, userId } : { userId };
+			const whereClause = {
+				userId,
+				isActive: true,
+				isArchived: false,
+				...(tenantId && { tenantId }) // Include tenantId if available
+			};
 
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
@@ -106,7 +116,12 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId();
 
 			// Construct the where clause based on whether tenantId is available
-			const whereClause = tenantId ? { tenantId, userId } : { userId };
+			const whereClause = {
+				userId,
+				isActive: true,
+				isArchived: false,
+				...(tenantId && { tenantId }) // Include tenantId if available
+			};
 			const queryOptions = options ? { ...options } : {};
 
 			switch (this.ormType) {
@@ -138,14 +153,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	public async findAllActive(): Promise<Employee[]> {
 		try {
 			return await super.find({
-				where: {
-					isActive: true,
-					isArchived: false,
-				},
-				relations: {
-					user: true,
-					organization: true
-				},
+				where: { isActive: true, isArchived: false, },
+				relations: { user: true, organization: true },
 			});
 		} catch (error) {
 			// Handle any potential errors, log, and optionally rethrow or return a default value.
