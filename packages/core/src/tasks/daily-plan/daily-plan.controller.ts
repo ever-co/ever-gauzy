@@ -21,6 +21,7 @@ import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
+import { IPagination } from '@gauzy/contracts';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -50,30 +51,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		description: 'No Record found'
 	})
 	@Get('me')
+	@UseValidationPipe()
 	async getMyPlans(@Query() params: PaginationParams<DailyPlan>) {
 		return await this.dailyPlanService.getMyPlans(params);
-	}
-
-	/**
-	 * CREATE Daily Plan
-	 * @param entity
-	 * @param options
-	 */
-
-	@ApiOperation({ summary: 'Create new Daily Plan' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Daily Plan has been successfully created.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The request body must contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.CREATED)
-	@Post()
-	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
-		return await this.dailyPlanService.createDailyPlan(entity, entity.taskId);
 	}
 
 	/**
@@ -95,11 +75,11 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
-	@Get(':id')
+	@Get('employee/:id')
 	async getEmployeeDailyPlans(
 		@Param('id') employeeId: IEmployee['id'],
 		@Query() params: PaginationParams<DailyPlan>
-	) {
+	): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getDailyPlansByEmployee(employeeId, params);
 	}
 
@@ -134,6 +114,28 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * CREATE Daily Plan
+	 * @param entity
+	 * @param options
+	 */
+
+	@ApiOperation({ summary: 'Create new Daily Plan' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Daily Plan has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The request body must contain clues as to what went wrong'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
+		return await this.dailyPlanService.createDailyPlan(entity, entity.taskId);
+	}
+
+	/**
 	 * UPDATE Daily Plan
 	 * @param {UpdateDailyPlanDTO} entity
 	 * @param {IDailyPlan['id']} id
@@ -154,9 +156,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	})
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async updateDailyPlan(
+	async update(
+		@Query('id') id: IDailyPlan['id'],
 		@Body() entity: UpdateDailyPlanDTO,
-		@Query('id') id: IDailyPlan['id']
 	): Promise<IDailyPlan | UpdateResult> {
 		return await this.dailyPlanService.updateDailyPlan(id, entity);
 	}

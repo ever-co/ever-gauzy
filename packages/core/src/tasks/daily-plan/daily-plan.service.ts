@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, DeepPartial, UpdateResult, WhereExpressionBuilder } from 'typeorm';
-import { IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
+import { IDailyPlan, IEmployee, IPagination, ITask } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
@@ -29,48 +29,46 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param params
 	 * @param options
 	 */
-
 	async createDailyPlan(partialEntity: DeepPartial<IDailyPlan>, taskId?: ITask['id']): Promise<IDailyPlan> {
 		try {
-			const { employeeId } = partialEntity;
-			const currentTenantId = RequestContext.currentTenantId();
+			const { employeeId, organizationId } = partialEntity;
+			const tenantId = RequestContext.currentTenantId();
 
-			const employee = await this.employeeService.findOneByWhereOptions({
-				id: employeeId,
-				tenantId: currentTenantId
-			});
-
+			const employee = await this.employeeService.findOneByIdString(employeeId);
 			if (!employee) {
-				throw new BadRequestException('Cannot found employee');
+				throw new NotFoundException('Cannot found employee');
 			}
 
 			let wantCreatePlan: DailyPlan;
-
 			const likeOperator = isPostgres() ? '::text LIKE' : ' LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-			query.where(
+			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}".organizationId = :organizationId`), { organizationId });
+			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${query.alias}"."date" ${likeOperator} :incomingDate`), {
 						incomingDate: `${new Date(partialEntity.date as Date).toISOString().split('T')[0]}%`
 					});
 				})
 			);
-
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					const currentEmployeeId = RequestContext.currentEmployeeId();
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
+					const employeeId = RequestContext.currentEmployeeId();
+					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 				})
 			);
-
 			const result = await query.getOne();
 
 			if (result) {
 				wantCreatePlan = result;
 			} else {
-				wantCreatePlan = new DailyPlan({ ...partialEntity, employeeId: employee.id, tasks: [] });
+				wantCreatePlan = new DailyPlan({
+					...partialEntity,
+					employeeId: employee.id,
+					tasks: []
+				});
 			}
 
 			if (taskId) {
@@ -89,41 +87,47 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * GET daily plans for a given employee
+	 * Retrieves daily plans for a specific employee with pagination and additional query options.
 	 *
-	 * @param employeeId
-	 * @param options
-	 * @returns
+	 * @param employeeId - The ID of the employee for whom to retrieve daily plans.
+	 * @param options - Pagination and additional query options for filtering and retrieving daily plans.
+	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
+	 * @throws BadRequestException - If there's an error during the query.
 	 */
-
-	async getDailyPlansByEmployee(employeeId: IEmployee['id'], options: PaginationParams<DailyPlan>) {
+	async getDailyPlansByEmployee(
+		employeeId: IEmployee['id'],
+		options: PaginationParams<DailyPlan>
+	): Promise<IPagination<IDailyPlan>> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
+			// Create the initial query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Join related entities
 			query.leftJoin(`${query.alias}.employee`, 'employee');
 			query.leftJoin(`${query.alias}.tasks`, 'tasks');
 
+			// Apply optional find options if provided
 			query.setFindOptions({
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+				...(isNotEmpty(options) && isNotEmpty(options.where) && {
+					where: options.where
+				}),
+				...(isNotEmpty(options) && isNotEmpty(options.relations) && {
+					relations: options.relations
+				})
 			});
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-				})
-			);
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-				})
-			);
-			return await query.getMany();
+
+			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+
+			if (employeeId) {
+				query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+			}
+
+			// Retrieve results and total count
+			const [items, total] = await query.getManyAndCount();
+
+			// Return the pagination result
+			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -135,12 +139,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param options Pagination options for fetching daily plans.
 	 * @returns A promise resolving to daily plans for the current employee.
 	 */
-	async getMyPlans(options: PaginationParams<DailyPlan>): Promise<any> {
+	async getMyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		try {
 			// Get the current employee ID from the request context
 			const currentEmployeeId = RequestContext.currentEmployeeId();
+
 			// Fetch daily plans for the current employee
-			return this.getDailyPlansByEmployee(currentEmployeeId, options);
+			return await this.getDailyPlansByEmployee(currentEmployeeId, options);
 		} catch (error) {
 			console.error('Error fetching daily plans for me:', error); // Log the error for debugging
 		}
@@ -155,9 +160,15 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @memberof DailyPlanService
 	 * @returns
 	 */
-	async removeTaskFromPlan(planId: IDailyPlan['id'], taskId: ITask['id'], options: PaginationParams<DailyPlan>) {
+	async removeTaskFromPlan(
+		planId: IDailyPlan['id'],
+		taskId: ITask['id'],
+		options: PaginationParams<DailyPlan>
+	): Promise<IDailyPlan> {
 		try {
+			const tenantId = RequestContext.currentTenantId();
 			const currentEmployeeId = RequestContext.currentEmployeeId();
+
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			query.setFindOptions({
@@ -165,19 +176,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				...(isNotEmpty(options) && isNotEmpty(options.relations) && { relations: options.relations })
 			});
 
-			query.where(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
-				})
-			);
+			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
+			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."id" = :planId`), { planId });
 
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."id" = :planId`), {
-						planId
-					});
-				})
-			);
 			const dailyPlan = await query.getOne();
 
 			if (!dailyPlan) {
@@ -218,6 +220,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			if (!dailyPlan) {
 				throw new BadRequestException('Daily plan not found');
 			}
+
 			return await this.update(id, partialEntity);
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -233,22 +236,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 */
 	async deletePlan(planId: IDailyPlan['id']) {
 		try {
+			const tenantId = RequestContext.currentTenantId();
 			const currentEmployeeId = RequestContext.currentEmployeeId();
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-
-			query.where(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
-				})
-			);
-
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."id" = :planId`), { planId });
-				})
-			);
-
+			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
+			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}".id = :planId`), { planId });
 			const dailyPlan = await query.getOne();
 
 			if (!dailyPlan) {
