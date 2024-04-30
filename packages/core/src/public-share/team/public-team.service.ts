@@ -1,3 +1,6 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	IDateRangePicker,
 	IOrganizationTeam,
@@ -5,10 +8,7 @@ import {
 	IOrganizationTeamStatisticInput,
 	ITimerStatus,
 } from '@gauzy/contracts';
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { parseToBoolean } from '@gauzy/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere } from 'typeorm';
 import { OrganizationTeam } from './../../core/entities/internal';
 import { StatisticService } from './../../time-tracking/statistic';
 import { TimerService } from './../../time-tracking/timer/timer.service';
@@ -93,7 +93,7 @@ export class PublicTeamService {
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
 			const { id: organizationTeamId, organizationId, tenantId } = organizationTeam;
-			const { startDate, endDate, withLaskWorkedTask, source } = input;
+			const { startDate, endDate, withLastWorkedTask, source } = input;
 
 			const employeeIds = members.map(({ employeeId }) => employeeId);
 
@@ -104,7 +104,7 @@ export class PublicTeamService {
 				organizationId,
 				tenantId,
 				organizationTeamId,
-				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {}),
+				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {}),
 			});
 
 			return await Promise.all(
@@ -133,7 +133,7 @@ export class PublicTeamService {
 					]);
 					return {
 						...member,
-						lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+						lastWorkedTask: parseToBoolean(withLastWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
 						timerStatus: timerWorkedStatus?.timerStatus,
 						totalWorkedTasks,
 						totalTodayTasks,
