@@ -249,7 +249,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				throw new BadRequestException('Daily plan not found');
 			}
 
-			return await this.softDelete(planId);
+			return await super.delete(planId);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

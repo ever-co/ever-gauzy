@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IDailyPlan, IEmployee, ITask, PermissionsEnum } from '@gauzy/contracts';
+import { IDailyPlan, IEmployee, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
@@ -21,7 +21,6 @@ import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
-import { IPagination } from '@gauzy/contracts';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
