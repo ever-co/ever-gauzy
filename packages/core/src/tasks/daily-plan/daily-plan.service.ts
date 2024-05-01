@@ -44,8 +44,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}".organizationId = :organizationId`), { organizationId });
+			query.setFindOptions({
+				relations: ['tasks']
+			});
+
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${query.alias}"."date" ${likeOperator} :incomingDate`), {
@@ -59,6 +63,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 				})
 			);
+
 			const result = await query.getOne();
 
 			if (result) {
@@ -109,12 +114,14 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			// Apply optional find options if provided
 			query.setFindOptions({
-				...(isNotEmpty(options) && isNotEmpty(options.where) && {
-					where: options.where
-				}),
-				...(isNotEmpty(options) && isNotEmpty(options.relations) && {
-					relations: options.relations
-				})
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.where) && {
+						where: options.where
+					}),
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.relations) && {
+						relations: options.relations
+					})
 			});
 
 			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
