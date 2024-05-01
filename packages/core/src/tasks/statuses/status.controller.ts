@@ -1,5 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -17,6 +17,7 @@ import { TaskStatusService } from './status.service';
 import { TaskStatus } from './status.entity';
 import { FindStatusesQuery } from './queries';
 import { CreateStatusDTO, StatusQueryDTO, UpdatesStatusDTO } from './dto';
+import { ReorderRequestDTO } from './dto/reorder.dto';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Task Status')
@@ -28,7 +29,10 @@ export class TaskStatusController extends CrudFactory<
 	ITaskStatusUpdateInput,
 	ITaskStatusFindInput
 >(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
-	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
+	constructor(
+		private readonly queryBus: QueryBus,
+		protected readonly taskStatusService: TaskStatusService
+	) {
 		super(taskStatusService);
 	}
 
@@ -48,6 +52,32 @@ export class TaskStatusController extends CrudFactory<
 	@Get()
 	@UseValidationPipe({ whitelist: true })
 	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
-		return await this.queryBus.execute(new FindStatusesQuery(params));
+		return await this.queryBus.execute(
+			new FindStatusesQuery(params)
+		);
+	}
+
+	/**
+	 * Reorder records based on the given input.
+	 * @param request - ReorderRequestDTO containing the reorder instructions.
+	 * @returns A success message indicating that the reordering operation completed successfully.
+	 */
+	@ApiOperation({ summary: 'Reorder records based on given input' }) // Corrects the summary
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Reordering was successful.', // Description for successful response
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. Check your request body.', // Description for bad request
+	})
+	@ApiResponse({
+		status: HttpStatus.INTERNAL_SERVER_ERROR,
+		description: 'An error occurred during reordering.', // Description for internal server error
+	})
+	@Patch('reorder')
+	@UseValidationPipe({ whitelist: true })
+	async reorder(@Body() { reorder }: ReorderRequestDTO) {
+		return await this.taskStatusService.reorder(reorder);
 	}
 }
