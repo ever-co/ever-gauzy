@@ -153,7 +153,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		employeeId?: IEmployee['id']
 	): Promise<IPagination<IDailyPlan>> {
 		try {
-			// Fetch all daily plans
+			// Fetch all daily plans for specific employee
 			return await this.getAllPlans(options, employeeId);
 		} catch (error) {
 			console.log('Error fetching all daily plans');
