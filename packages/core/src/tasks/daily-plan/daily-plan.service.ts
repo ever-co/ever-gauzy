@@ -92,19 +92,21 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * Retrieves daily plans for a specific employee with pagination and additional query options.
+	 * Retrieves daily plans with pagination and additional query options.
 	 *
-	 * @param employeeId - The ID of the employee for whom to retrieve daily plans.
 	 * @param options - Pagination and additional query options for filtering and retrieving daily plans.
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getDailyPlansByEmployee(
-		employeeId: IEmployee['id'],
-		options: PaginationParams<DailyPlan>
+
+	async getAllPlans(
+		options: PaginationParams<DailyPlan>,
+		employeeId?: IEmployee['id']
 	): Promise<IPagination<IDailyPlan>> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const { where } = options;
+			const { organizationId, tenantId } = where;
+
 			// Create the initial query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
@@ -115,16 +117,13 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Apply optional find options if provided
 			query.setFindOptions({
 				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
 						relations: options.relations
 					})
 			});
 
-			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 			if (employeeId) {
 				query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
@@ -141,6 +140,27 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
+	 * Retrieves daily plans for a specific employee with pagination and additional query options.
+	 *
+	 * @param employeeId - The ID of the employee for whom to retrieve daily plans.
+	 * @param options - Pagination and additional query options for filtering and retrieving daily plans.
+	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
+	 * @throws BadRequestException - If there's an error during the query.
+	 */
+
+	async getDailyPlansByEmployee(
+		options: PaginationParams,
+		employeeId?: IEmployee['id']
+	): Promise<IPagination<IDailyPlan>> {
+		try {
+			// Fetch all daily plans
+			return await this.getAllPlans(options, employeeId);
+		} catch (error) {
+			console.log('Error fetching all daily plans');
+		}
+	}
+
+	/**
 	 * Retrieves daily plans for the current employee based on given pagination options.
 	 *
 	 * @param options Pagination options for fetching daily plans.
@@ -152,7 +172,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			const currentEmployeeId = RequestContext.currentEmployeeId();
 
 			// Fetch daily plans for the current employee
-			return await this.getDailyPlansByEmployee(currentEmployeeId, options);
+			return await this.getAllPlans(options, currentEmployeeId);
 		} catch (error) {
 			console.error('Error fetching daily plans for me:', error); // Log the error for debugging
 		}

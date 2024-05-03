@@ -15,12 +15,12 @@ import { UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IDailyPlan, IEmployee, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../../core/crud';
-import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
+import { Permissions } from './../../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -29,6 +29,30 @@ import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {
 		super(dailyPlanService);
+	}
+
+	/**
+	 * GET daily plans
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get()
+	@UseValidationPipe()
+	async get(@Query() params: PaginationParams<DailyPlan>) {
+		return await this.dailyPlanService.getAllPlans(params);
 	}
 
 	/**
@@ -79,7 +103,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Param('id') employeeId: IEmployee['id'],
 		@Query() params: PaginationParams<DailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getDailyPlansByEmployee(employeeId, params);
+		return await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId);
 	}
 
 	/**
@@ -157,7 +181,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Query('id') id: IDailyPlan['id'],
-		@Body() entity: UpdateDailyPlanDTO,
+		@Body() entity: UpdateDailyPlanDTO
 	): Promise<IDailyPlan | UpdateResult> {
 		return await this.dailyPlanService.updateDailyPlan(id, entity);
 	}
