@@ -27,7 +27,8 @@
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
-			"swiper_angular": ["./node_modules/swiper/angular"]
+			"swiper_angular": ["./node_modules/swiper/angular"],
+			"@gauzy/job-search-ui-plugin": ["./node_modules/@gauzy/job-search-ui-plugin/dist/job-search-ui"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

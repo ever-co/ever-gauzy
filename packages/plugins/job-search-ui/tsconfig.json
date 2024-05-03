@@ -1,0 +1,13 @@
+{
+	"extends": "../../../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": "./",
+		"typeRoots": [
+			"node_modules/@types"
+		],
+		"types": ["node", "jest"],
+		"paths": {
+			"@gauzy/job-search-ui-plugin": ["./dist/job-search-ui"]
+		}
+	}
+}
