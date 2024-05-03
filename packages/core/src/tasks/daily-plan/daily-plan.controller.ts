@@ -19,8 +19,8 @@ import { UseValidationPipe } from '../../shared/pipes';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
-import { Permissions } from './../../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
