@@ -107,6 +107,33 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET daily plans for a given task
+	 *
+	 * @param options
+	 * @param taskId
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find task daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get('task/:id')
+	async getTaskDailyPlans(
+		@Param('id') taskId: ITask['id'],
+		@Query() params: PaginationParams<IDailyPlan>
+	): Promise<IPagination<IDailyPlan>> {
+		return await this.dailyPlanService.getPlansByTaskId(params, taskId);
+	}
+
+	/**
 	 * Delete task from a given daily plan
 	 *
 	 * @param {IDailyPlan['id']} planId

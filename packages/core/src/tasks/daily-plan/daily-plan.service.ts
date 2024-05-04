@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, DeepPartial, UpdateResult, WhereExpressionBuilder } from 'typeorm';
+import { Brackets, DeepPartial, SelectQueryBuilder, UpdateResult, WhereExpressionBuilder } from 'typeorm';
 import { IDailyPlan, IEmployee, IPagination, ITask } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -277,6 +277,47 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			}
 
 			return await super.delete(planId);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	// SELECT * FROM daily_plan_task dpt INNER JOIN task t ON dpt."taskId" = t.id INNER JOIN daily_plan dp ON dpt."dailyPlanId" = dp.id INNER JOIN employee e ON dp."employeeId" = e.id INNER JOIN public.user u ON e."userId" = u.id
+	/**
+	 * Retrieves daily plans for a specific task including employee
+	 * @param options pagination and additionnal query options
+	 * @param taskId - The ID of the task for whom to retrieve daily plans.
+	 * @returns A promise that resolves to an object containing the list of plans and total count
+	 */
+	async getPlansByTaskId(options: PaginationParams, taskId: ITask['id']): Promise<IPagination<IDailyPlan>> {
+		try {
+			const { where } = options;
+			const { organizationId, tenantId } = where;
+
+			// Initial query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Joins
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+			// query.leftJoinAndSelect(`${query.alias}.employee.user`, 'user');
+
+			// Conditions
+			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
+			query.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+
+			query.andWhere((qb: SelectQueryBuilder<any>) => {
+				const subQuery = qb.subQuery();
+				subQuery.select(p('"daily_plan_task"."dailyPlanId"')).from(p('daily_plan_task'), p('daily_plan_task'));
+				subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+
+				return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
+			});
+
+			// Retrive results and total count
+			const [items, total] = await query.getManyAndCount();
+
+			return { items, total };
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
