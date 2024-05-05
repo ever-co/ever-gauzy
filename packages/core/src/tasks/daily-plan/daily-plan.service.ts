@@ -300,7 +300,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Joins
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
 			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-			// query.leftJoinAndSelect(`${query.alias}.employee.user`, 'user');
+			query.leftJoinAndSelect('employee.user', 'user');
 
 			// Conditions
 			query.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
