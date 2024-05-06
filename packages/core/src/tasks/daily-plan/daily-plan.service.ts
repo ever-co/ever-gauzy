@@ -287,7 +287,6 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		}
 	}
 
-	// SELECT * FROM daily_plan_task dpt INNER JOIN task t ON dpt."taskId" = t.id INNER JOIN daily_plan dp ON dpt."dailyPlanId" = dp.id INNER JOIN employee e ON dp."employeeId" = e.id INNER JOIN public.user u ON e."userId" = u.id
 	/**
 	 * Retrieves daily plans for a specific task including employee
 	 * @param options pagination and additionnal query options
