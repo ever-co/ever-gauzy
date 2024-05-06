@@ -24230,7 +24230,7 @@ jmespath@^0.15.0:
   resolved "https://registry.yarnpkg.com/jmespath/-/jmespath-0.15.0.tgz#a3f222a9aae9f966f5d27c796510e28091764217"
   integrity sha512-+kHj8HXArPfpPEKGLZ+kB5ONRTCiGQXo8RQYL0hH8t6pWXUBBK5KkkQmTNOwKK4LEsd0yTsgtjJVm4UBSZea4w==
 
-"job-search-ui-plugin@file:./dist/plugins/job-search-ui":
+"job-search-ui-plugin@file:./dist/plugins/job-search-ui", "job-search-ui-plugin@file:dist/plugins/job-search-ui":
   version "0.0.1"
   dependencies:
     tslib "^2.3.0"
