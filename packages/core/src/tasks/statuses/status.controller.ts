@@ -37,27 +37,6 @@ export class TaskStatusController extends CrudFactory<
 	}
 
 	/**
-	 * GET statuses by filters
-	 * If parameters not match, retrieve global statuses
-	 *
-	 * @param params
-	 * @returns
-	 */
-	@ApiOperation({ summary: 'Find task statuses by filters.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found task statuses by filters.'
-	})
-	@HttpCode(HttpStatus.OK)
-	@Get()
-	@UseValidationPipe({ whitelist: true })
-	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
-		return await this.queryBus.execute(
-			new FindStatusesQuery(params)
-		);
-	}
-
-	/**
 	 * Reorder records based on the given input.
 	 * @param request - ReorderRequestDTO containing the reorder instructions.
 	 * @returns A success message indicating that the reordering operation completed successfully.
@@ -79,5 +58,26 @@ export class TaskStatusController extends CrudFactory<
 	@UseValidationPipe({ whitelist: true })
 	async reorder(@Body() { reorder }: ReorderRequestDTO) {
 		return await this.taskStatusService.reorder(reorder);
+	}
+
+	/**
+	 * GET statuses by filters
+	 * If parameters not match, retrieve global statuses
+	 *
+	 * @param params
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Find task statuses by filters.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found task statuses by filters.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Get()
+	@UseValidationPipe({ whitelist: true })
+	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
+		return await this.queryBus.execute(
+			new FindStatusesQuery(params)
+		);
 	}
 }
