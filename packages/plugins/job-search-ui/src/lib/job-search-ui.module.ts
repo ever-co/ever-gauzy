@@ -1,13 +1,14 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-
 import { JobSearchUiComponent } from './job-search-ui.component';
-import { JobSearchUiService } from './job-search-ui.service';
 
 @NgModule({
-  imports: [CommonModule],
-  declarations: [JobSearchUiComponent],
-  exports: [JobSearchUiComponent],
-  providers: [JobSearchUiService]
+	declarations: [
+		JobSearchUiComponent
+	],
+	imports: [
+	],
+	exports: [
+		JobSearchUiComponent
+	]
 })
-export class JobSearchUiModule {}
+export class JobSearchUiModule { }

@@ -6,12 +6,10 @@ describe('JobSearchUiComponent', () => {
 	let component: JobSearchUiComponent;
 	let fixture: ComponentFixture<JobSearchUiComponent>;
 
-	beforeEach(async () => {
-		await TestBed.configureTestingModule({
-			imports: [JobSearchUiComponent]
-		})
-		.compileComponents();
-
+	beforeEach(() => {
+		TestBed.configureTestingModule({
+			declarations: [JobSearchUiComponent]
+		});
 		fixture = TestBed.createComponent(JobSearchUiComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
