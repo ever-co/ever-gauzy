@@ -297,7 +297,6 @@
 		"dotenv": "^16.0.3",
 		"ffi-napi": "^4.0.3",
 		"iconv": "^3.0.1",
-		"job-search-ui-plugin": "file:./dist/plugins/job-search-ui",
 		"jsdom": "^23.0.1",
 		"lodash-es": "^4.17.21",
 		"parse5": "^7.1.2",

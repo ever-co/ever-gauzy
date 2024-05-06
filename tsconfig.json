@@ -55,8 +55,8 @@
             "swiper_angular": [
                 "./node_modules/swiper/angular"
             ],
-            "@job-search-ui-plugin": [
-                "dist/plugins/job-search-ui"
+            "@gauzy/job-search-ui-plugin": [
+                "packages/plugins/job-search-ui/src/index.ts"
             ]
         },
         "preserveConstEnums": true,

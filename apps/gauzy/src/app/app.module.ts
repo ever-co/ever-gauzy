@@ -55,7 +55,6 @@ import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
-import { JobSearchUiModule } from '@job-search-ui-plugin';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { GAUZY_ENV } from './@core/constants';
@@ -110,8 +109,7 @@ if (environment.SENTRY_DSN) {
 		NgxPermissionsModule.forRoot(),
 		NgxDaterangepickerMd.forRoot({
 			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-		}),
-		JobSearchUiModule
+		})
 	],
 	bootstrap: [AppComponent],
 	providers: [

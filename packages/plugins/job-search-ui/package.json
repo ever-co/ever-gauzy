@@ -1,5 +1,5 @@
 {
-	"name": "job-search-ui-plugin",
+	"name": "@gauzy/job-search-ui-plugin",
 	"version": "0.0.1",
 	"description": "UI plugin for job search in Gauzy",
 	"author": {
@@ -9,12 +9,22 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"keywords": [
-		"angular",
-		"plugin",
-		"ui",
-		"job-search"
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
 	],
+	"directories": {
+		"lib": "dist",
+		"test": "__test__"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
+	"scripts": {
+		"build": "rimraf dist && yarn run compile",
+		"compile": "tsc -p tsconfig.lib.json"
+	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
 		"@angular/core": "^16.2.12"
