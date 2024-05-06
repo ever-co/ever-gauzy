@@ -105,7 +105,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
-			const { organizationId, tenantId } = where;
+			const { organizationId } = where;
+			const tenantId = RequestContext.currentTenantId();
 
 			// Create the initial query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -116,6 +117,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			// Apply optional find options if provided
 			query.setFindOptions({
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.where) && {
+						where: options.where
+					}),
 				...(isNotEmpty(options) &&
 					isNotEmpty(options.relations) && {
 						relations: options.relations
@@ -292,7 +297,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async getPlansByTaskId(options: PaginationParams, taskId: ITask['id']): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
-			const { organizationId, tenantId } = where;
+			const { organizationId } = where;
+			const tenantId = RequestContext.currentTenantId();
 
 			// Initial query
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
