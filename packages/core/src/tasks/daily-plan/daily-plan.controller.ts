@@ -15,12 +15,12 @@ import { UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { IDailyPlan, IEmployee, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../../core/crud';
-import { Permissions } from './../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
+import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
+import { Permissions } from '../../shared/decorators';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -79,7 +79,34 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Param('id') employeeId: IEmployee['id'],
 		@Query() params: PaginationParams<DailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getDailyPlansByEmployee(employeeId, params);
+		return await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId);
+	}
+
+	/**
+	 * GET daily plans for a given task
+	 *
+	 * @param options
+	 * @param taskId
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find task daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get('task/:id')
+	async getTaskDailyPlans(
+		@Param('id') taskId: ITask['id'],
+		@Query() params: PaginationParams<IDailyPlan>
+	): Promise<IPagination<IDailyPlan>> {
+		return await this.dailyPlanService.getPlansByTaskId(params, taskId);
 	}
 
 	/**
@@ -113,6 +140,30 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET daily plans
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get()
+	@UseValidationPipe()
+	async get(@Query() params: PaginationParams<DailyPlan>) {
+		return await this.dailyPlanService.getAllPlans(params);
+	}
+
+	/**
 	 * CREATE Daily Plan
 	 * @param entity
 	 * @param options
@@ -130,8 +181,10 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
-		return await this.dailyPlanService.createDailyPlan(entity, entity.taskId);
+	async create(
+		@Body() entity: CreateDailyPlanDTO
+	): Promise<IDailyPlan> {
+		return await this.dailyPlanService.createDailyPlan(entity);
 	}
 
 	/**
@@ -157,7 +210,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
 		@Query('id') id: IDailyPlan['id'],
-		@Body() entity: UpdateDailyPlanDTO,
+		@Body() entity: UpdateDailyPlanDTO
 	): Promise<IDailyPlan | UpdateResult> {
 		return await this.dailyPlanService.updateDailyPlan(id, entity);
 	}
@@ -173,7 +226,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		summary: 'Delete Daily plan'
 	})
 	@ApiResponse({
-		status: HttpStatus.OK,
+			status: HttpStatus.OK,
 		description: 'Plan deleted',
 		type: DailyPlan
 	})

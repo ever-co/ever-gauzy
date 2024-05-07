@@ -28,7 +28,7 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@ApiProperty({ type: () => Number })
 	@IsNotEmpty()
 	@IsNumber()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'decimal' })
 	workTimePlanned: number;
 
 	@ApiProperty({ type: () => String })
