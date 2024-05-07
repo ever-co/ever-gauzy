@@ -1,40 +1,75 @@
 {
-	"compileOnSave": false,
-	"compilerOptions": {
-		"rootDir": ".",
-		"sourceMap": true,
-		"declaration": false,
-		"moduleResolution": "node",
-		"outDir": "./dist/out-tsc",
-		"resolveJsonModule": true,
-		"emitDecoratorMetadata": true,
-		"experimentalDecorators": true,
-		"importHelpers": true,
-		"target": "ES2022",
-		"module": "commonjs",
-		"typeRoots": ["node_modules/@types"],
-		"lib": ["es2020", "dom", "es2018", "esnext.array"],
-		"skipLibCheck": true,
-		"skipDefaultLibCheck": true,
-		"baseUrl": ".",
-		"paths": {
-			"@angular/*": ["./node_modules/@angular/*"],
-			"@env-desktop/environment": ["apps/desktop/src/environments/environment.ts"],
-			"@env/*": ["apps/gauzy/src/environments/*"],
-			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],
-			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
-			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
-			"@nebular/*": ["./node_modules/@nebular/*"],
-			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
-			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
-			"swiper_angular": ["./node_modules/swiper/angular"]
-		},
-		"preserveConstEnums": true,
-		"allowSyntheticDefaultImports": true,
-		"noUnusedLocals": false,
-		"noImplicitAny": false,
-		"esModuleInterop": false,
-		"useDefineForClassFields": false
-	},
-	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
+    "compileOnSave": false,
+    "compilerOptions": {
+        "rootDir": ".",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "outDir": "./dist/out-tsc",
+        "resolveJsonModule": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "importHelpers": true,
+        "target": "ES2022",
+        "module": "commonjs",
+        "typeRoots": [
+            "node_modules/@types"
+        ],
+        "lib": [
+            "es2020",
+            "dom",
+            "es2018",
+            "esnext.array"
+        ],
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@angular/*": [
+                "./node_modules/@angular/*"
+            ],
+            "@env-desktop/environment": [
+                "apps/desktop/src/environments/environment.ts"
+            ],
+            "@env/*": [
+                "apps/gauzy/src/environments/*"
+            ],
+            "@gauzy/desktop-timer": [
+                "packages/desktop-timer/src/index.ts"
+            ],
+            "@gauzy/desktop-ui-lib": [
+                "packages/desktop-ui-lib/src/index.ts"
+            ],
+            "@gauzy/desktop-window": [
+                "packages/desktop-window/src/index.ts"
+            ],
+            "@nebular/*": [
+                "./node_modules/@nebular/*"
+            ],
+            "ng2-completer": [
+                "node_modules/@akveo/ng2-completer"
+            ],
+            "ngx-daterangepicker-material/*": [
+                "./node_modules/ngx-daterangepicker-material/*"
+            ],
+            "swiper_angular": [
+                "./node_modules/swiper/angular"
+            ],
+            "@gauzy/plugins/job-search-ui": [
+                "packages/plugins/job-search-ui/src/index.ts"
+            ]
+        },
+        "preserveConstEnums": true,
+        "allowSyntheticDefaultImports": true,
+        "noUnusedLocals": false,
+        "noImplicitAny": false,
+        "esModuleInterop": false,
+        "useDefineForClassFields": false
+    },
+    "exclude": [
+        "coverage/**/*",
+        "dist/**/*",
+        "node_modules",
+        "tmp"
+    ]
 }

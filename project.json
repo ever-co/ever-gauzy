@@ -38,6 +38,9 @@
 		},
 		"gauzy-server-api": {
 			"tags": []
+		},
+		"job-search-ui-plugin": {
+			"tags": []
 		}
 	}
 }
