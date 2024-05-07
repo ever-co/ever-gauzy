@@ -32,30 +32,6 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
-	 * GET daily plans
-	 *
-	 * @param options
-	 * @returns
-	 */
-	@ApiOperation({
-		summary: 'Find daily plans.'
-	})
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found plans',
-		type: DailyPlan
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'No Record found'
-	})
-	@Get()
-	@UseValidationPipe()
-	async get(@Query() params: PaginationParams<DailyPlan>) {
-		return await this.dailyPlanService.getAllPlans(params);
-	}
-
-	/**
 	 * GET my daily plans
 	 *
 	 * @param options
@@ -164,6 +140,30 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET daily plans
+	 *
+	 * @param options
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get()
+	@UseValidationPipe()
+	async get(@Query() params: PaginationParams<DailyPlan>) {
+		return await this.dailyPlanService.getAllPlans(params);
+	}
+
+	/**
 	 * CREATE Daily Plan
 	 * @param entity
 	 * @param options
@@ -224,7 +224,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		summary: 'Delete Daily plan'
 	})
 	@ApiResponse({
-		status: HttpStatus.OK,
+			status: HttpStatus.OK,
 		description: 'Plan deleted',
 		type: DailyPlan
 	})
