@@ -28,7 +28,7 @@
                 "build": {
                     "builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
                     "options": {
-						"preserveSymlinks": true,
+                        "preserveSymlinks": true,
                         "verbose": true,
                         "aot": true,
                         "customWebpackConfig": {
@@ -1097,6 +1097,12 @@
                             "zone.js/testing"
                         ]
                     }
+                }
+            },
+            "schematics": {
+                "@nrwl/angular:component": {
+                    "prefix": "ngx",
+                    "style": "scss"
                 }
             }
         }
