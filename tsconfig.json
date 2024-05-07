@@ -55,7 +55,7 @@
             "swiper_angular": [
                 "./node_modules/swiper/angular"
             ],
-            "@gauzy/job-search-ui-plugin": [
+            "@gauzy/plugins/job-search-ui": [
                 "packages/plugins/job-search-ui/src/index.ts"
             ]
         },
