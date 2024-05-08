@@ -50,16 +50,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere(p(`DATE("${query.alias}"."date") = :incomingDate`), {
+				incomingDate: new Date(partialEntity.date as Date).toISOString().split('T')[0]
+			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					qb.andWhere(p(`"${query.alias}"."date" ${likeOperator} :incomingDate`), {
-						incomingDate: `${new Date(partialEntity.date as Date).toISOString().split('T')[0]}%`
-					});
-				})
-			);
-			query.andWhere(
-				new Brackets((qb: WhereExpressionBuilder) => {
-					const employeeId = RequestContext.currentEmployeeId();
+					// const employeeId = RequestContext.currentEmployeeId();
 					qb.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
 				})
 			);
