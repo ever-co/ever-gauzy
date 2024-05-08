@@ -111,7 +111,6 @@ export class PublicTeamService {
 				organizationTeamId,
 				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {}),
 			});
-			console.log({ statistics });
 
 			// Map the timer statistics by employee ID for easier lookup
 			const timerStatusMap = new Map<string, ITimerStatus>();
