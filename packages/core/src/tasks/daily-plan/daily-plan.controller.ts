@@ -211,9 +211,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(
-		@Body() entity: CreateDailyPlanDTO
-	): Promise<IDailyPlan> {
+	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
 		return await this.dailyPlanService.createDailyPlan(entity);
 	}
 
@@ -256,7 +254,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		summary: 'Delete Daily plan'
 	})
 	@ApiResponse({
-			status: HttpStatus.OK,
+		status: HttpStatus.OK,
 		description: 'Plan deleted',
 		type: DailyPlan
 	})

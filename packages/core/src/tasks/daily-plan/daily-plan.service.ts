@@ -195,7 +195,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			query.setFindOptions({
-				relations: ['tasks']
+				relations: { tasks: true }
 			});
 
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
@@ -254,6 +254,11 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						relations: options.relations
 					})
 			});
+
+			query.setFindOptions({
+				relations: { tasks: true }
+			});
+
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
 			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
@@ -320,7 +325,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
-			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}".id = :planId`), { planId });
 			const dailyPlan = await query.getOne();
 
@@ -355,8 +360,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.leftJoinAndSelect('employee.user', 'user');
 
 			// Conditions
-			query.andWhere(p(`"${query.alias}".tenantId = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}".organizationId = :organizationId`), { organizationId });
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 			query.andWhere((qb: SelectQueryBuilder<any>) => {
 				const subQuery = qb.subQuery();
