@@ -2,6 +2,6 @@
     "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
 	"dest": "./dist",
     "lib": {
-        "entryFile": "./src/lib/index.ts"
+        "entryFile": "./src/lib/public_api.ts"
     }
 }

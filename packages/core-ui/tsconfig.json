@@ -6,7 +6,12 @@
 		"baseUrl": "./src",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "jest"]
+		"types": ["node", "jest"],
+		"paths": {
+			"@gauzy/core-ui/core": [
+				"./src/lib/core/src/public_api"
+			]
+		}
 	},
 	"include": ["./src/**/*.ts"],
 	"exclude": ["node_modules", "dist"]

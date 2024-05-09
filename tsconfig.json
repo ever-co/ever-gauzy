@@ -56,10 +56,7 @@
                 "./node_modules/swiper/angular"
             ],
             "@gauzy/core-ui": [
-                "packages/core-ui/src/lib/index.ts"
-            ],
-            "@gauzy/plugins/job-search-ui": [
-                "packages/plugins/job-search-ui/src/index.ts"
+                "packages/core-ui/src/lib/public_api"
             ]
         },
         "preserveConstEnums": true,
