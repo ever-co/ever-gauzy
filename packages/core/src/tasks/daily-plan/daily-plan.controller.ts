@@ -134,6 +134,36 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * Add task to a given daily plan
+	 *
+	 * @param {IDailyPlan['id']} planId
+	 * @param {ITask['id']} taskId
+	 * @param {PaginationParams<DailyPlan>} params
+	 * @returns
+	 * @memberof DailyPlanController
+	 */
+	@ApiOperation({
+		summary: 'Add a task to daily plan'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task added',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Put('add-task/:id')
+	async addTaskToPlan(
+		@Param('id') planId: IDailyPlan['id'],
+		@Body() body: { employeeId: IEmployee['id']; taskId: ITask['id'] },
+		@Query() params: PaginationParams<DailyPlan>
+	) {
+		return await this.dailyPlanService.addTaskToPlan(planId, body, params);
+	}
+
+	/**
 	 * Delete task from a given daily plan
 	 *
 	 * @param {IDailyPlan['id']} planId
