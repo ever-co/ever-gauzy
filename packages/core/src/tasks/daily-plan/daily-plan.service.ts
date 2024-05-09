@@ -51,6 +51,16 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.andWhere('"dailyPlan"."employeeId" = :employeeId', { employeeId });
 			let dailyPlan = await query.getOne();
 
+			// Create or update DailyPlan
+			if (!dailyPlan) {
+				dailyPlan = new DailyPlan({
+					...partialEntity,
+					employeeId: employee.id,
+					employee: { id: employee.id },
+					tasks: []
+				});
+			}
+
 			// If a taskId is provided, add the task to the DailyPlan
 			if (taskId) {
 				const task = await this.taskService.findOneByIdString(taskId);
