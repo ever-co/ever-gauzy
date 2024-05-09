@@ -1,0 +1,13 @@
+.npmignore
+.travis.yml
+CHANGELOG.md
+demo
+test
+coverage
+typings
+typings.json
+tsd.json
+lib/*.spec.*
+src/node_modules
+debug.log
+config/**
