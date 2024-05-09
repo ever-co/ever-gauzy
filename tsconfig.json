@@ -58,7 +58,7 @@
             "@gauzy/core-ui": [
                 "packages/core-ui/src/lib/public_api"
             ],
-			"@gauzy/plugins/job-search-ui": [
+            "@gauzy/plugins/job-search-ui": [
                 "packages/plugins/job-search-ui/src/public_api"
             ]
         },
