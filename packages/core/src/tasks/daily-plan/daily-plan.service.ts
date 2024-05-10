@@ -1,7 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial, SelectQueryBuilder, UpdateResult } from 'typeorm';
-import { IDailyPlan, IDailyPlanCreateInput, IEmployee, IPagination, ITask } from '@gauzy/contracts';
+import {
+	IDailyPlan,
+	IDailyPlanCreateInput,
+	IDailyPlanTasksUpdateInput,
+	IEmployee,
+	IPagination,
+	ITask
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { PaginationParams, TenantAwareCrudService } from '../../core/crud';
@@ -168,54 +175,36 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * add task to a given daily plan
+	 * Add a task to a specified daily plan.
 	 *
-	 * @param {IDailyPlan['id']} planId
-	 * @param {string} taskId
-	 * @param {PaginationParams<DailyPlan>} options
-	 * @memberof DailyPlanService
-	 * @returns
+	 * @param planId - The unique identifier of the daily plan to which the task will be added.
+	 * @param input - An object containing details about the task to add, including task ID, employee ID, and organization ID.
+	 * @returns The updated daily plan with the newly added task.
 	 */
-	async addTaskToPlan(
-		planId: IDailyPlan['id'],
-		{ employeeId, taskId }: { employeeId: IEmployee['id']; taskId: ITask['id'] },
-		options: PaginationParams<DailyPlan>
-	): Promise<IDailyPlan> {
+	async addTaskToPlan(planId: IDailyPlan['id'], input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
 		try {
-			const { where } = options;
-			const { organizationId } = where;
-
 			const tenantId = RequestContext.currentTenantId();
+			const { employeeId, taskId, organizationId } = input;
 
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-
-			query.setFindOptions({
-				...(isNotEmpty(options) && isNotEmpty(options.where) && { where: options.where }),
-				...(isNotEmpty(options) && isNotEmpty(options.relations) && { relations: options.relations })
+			// Fetch the daily plan with the given conditions
+			const dailyPlan = await this.findOneByIdString(planId, {
+				where: {
+					employeeId,
+					tenantId,
+					organizationId
+				},
+				relations: { tasks: true } // Ensure we get the existing tasks
 			});
 
-			query.setFindOptions({
-				relations: { tasks: true }
+			// Fetch the task to be added
+			const taskToAdd = await this.taskService.findOneByIdString(taskId, {
+				where: { organizationId, tenantId }
 			});
 
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."id" = :planId`), { planId });
+			// Add the new task to the daily plan's tasks array
+			dailyPlan.tasks.push(taskToAdd);
 
-			const dailyPlan = await query.getOne();
-
-			if (!dailyPlan) {
-				throw new BadRequestException('Daily plan not found');
-			}
-
-			const taskWantedToPlan = await this.taskService.findOneByIdString(taskId);
-			if (!taskWantedToPlan) {
-				throw new BadRequestException('Cannot found the task requested to plan');
-			}
-
-			dailyPlan.tasks = [...dailyPlan.tasks, taskWantedToPlan];
-
+			// Save the updated daily plan
 			return await this.save(dailyPlan);
 		} catch (error) {
 			throw new BadRequestException(error.message);

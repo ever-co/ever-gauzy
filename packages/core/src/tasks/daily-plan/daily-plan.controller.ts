@@ -13,7 +13,14 @@ import {
 } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IDailyPlan, IEmployee, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IDailyPlan,
+	IDailyPlanTasksUpdateInput,
+	IEmployee,
+	IPagination,
+	ITask,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
 import { DailyPlan } from './daily-plan.entity';
@@ -102,7 +109,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		description: 'No Record found'
 	})
 	@Get('task/:id')
-	async getTaskDailyPlans(
+	async getDailyPlansForTaskId(
 		@Param('id') taskId: ITask['id'],
 		@Query() params: PaginationParams<IDailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
@@ -110,62 +117,61 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
-	 * Add task to a given daily plan
+	 * Add a task to a specified daily plan.
 	 *
-	 * @param {IDailyPlan['id']} planId
-	 * @param {ITask['id']} taskId
-	 * @param {PaginationParams<DailyPlan>} params
-	 * @returns
-	 * @memberof DailyPlanController
+	 * @param planId - The unique identifier of the daily plan to which the task will be added.
+	 * @param input - An object containing details about the task to add, including task ID, employee ID, and organization ID.
+	 * @returns The updated daily plan with the newly added task.
 	 */
 	@ApiOperation({
 		summary: 'Add a task to daily plan'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Task added',
+		description: 'Task added successfully.',
 		type: DailyPlan
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No Record found'
+		description: 'No record found with the given ID.'
 	})
-	@Put('add-task/:id')
-	async addTaskToPlan(
-		@Param('id') planId: IDailyPlan['id'],
-		@Body() body: { employeeId: IEmployee['id']; taskId: ITask['id'] },
-		@Query() params: PaginationParams<DailyPlan>
-	) {
-		return await this.dailyPlanService.addTaskToPlan(planId, body, params);
+	@Post(':id/task') // Route for adding a task to a daily plan
+	async addTaskToDailyPlan(
+		@Param('id') planId: IDailyPlan['id'], // Extract the plan ID from the URL parameter
+		@Body() input: IDailyPlanTasksUpdateInput // Data for updating the daily plan
+	): Promise<IDailyPlan> {
+		// Call the service method to add a task to the daily plan
+		return await this.dailyPlanService.addTaskToPlan(planId, input);
 	}
 
 	/**
-	 * Delete task from a given daily plan
+	 * Remove a task from a specified daily plan.
 	 *
-	 * @param {IDailyPlan['id']} planId
-	 * @param {ITask['id']} taskId
-	 * @param {PaginationParams<DailyPlan>} params
-	 * @returns
-	 * @memberof DailyPlanController
+	 * @param planId - The ID of the daily plan from which a task will be removed.
+	 * @param taskId - The ID of the task to be removed from the daily plan.
+	 * @param params - Additional query parameters for pagination or filtering.
+	 * @returns The updated daily plan after the task is removed.
 	 */
 	@ApiOperation({
 		summary: 'Remove a task from daily plan'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Task removed',
+		description: 'Task successfully removed from the daily plan.',
 		type: DailyPlan
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No Record found'
+		description: 'No record found with the given ID.'
 	})
-	@Put('task/:id')
-	async removeTaskFromPlan(
-		@Param('id') planId: IDailyPlan['id'],
-		@Body('taskId') taskId: ITask['id'],
-		@Query() params: PaginationParams<DailyPlan>
-	) {
+	@Put(':id/task') // Endpoint for removing a task from a daily plan
+	async removeTaskFromDailyPlan(
+		@Param('id') planId: IDailyPlan['id'], // Extract the daily plan ID from the URL parameter
+		@Body('taskId') taskId: ITask['id'], // Get the task ID from the request body
+		@Query() params: PaginationParams<DailyPlan> // Additional query parameters
+	): Promise<DailyPlan> {
+		// Return the updated daily plan
+		// Call the service to remove the task from the daily plan
 		return await this.dailyPlanService.removeTaskFromPlan(planId, taskId, params);
 	}
 
