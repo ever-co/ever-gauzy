@@ -1,9 +1,4 @@
-import {
-	ModuleWithProviders,
-	NgModule,
-	Optional,
-	SkipSelf
-} from '@angular/core';
+import { ModuleWithProviders, NgModule, Optional, SkipSelf } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
 import { NbAuthModule } from '@nebular/auth';
@@ -11,10 +6,8 @@ import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { Observable, of as observableOf } from 'rxjs';
 
 import { throwIfAlreadyLoaded } from './module-import-guard';
-import { AnalyticsService, LayoutService, SeoService } from './utils';
+import { AnalyticsService, JitsuService, LayoutService, RippleService, SeoService } from './services';
 import { AuthModule } from './auth/auth.module';
-import { RippleService } from './utils/ripple.service';
-import { JitsuService } from './services/analytics/jitsu.service';
 
 const DATA_SERVICES = [];
 
@@ -41,7 +34,6 @@ export const NB_CORE_PROVIDERS = [
 			}
 		}
 	}).providers,
-
 	{
 		provide: NbRoleProvider,
 		useClass: NbSimpleRoleProvider
