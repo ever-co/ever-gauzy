@@ -113,7 +113,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Param('id') taskId: ITask['id'],
 		@Query() params: PaginationParams<IDailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
-		return await this.dailyPlanService.getPlansByTaskId(params, taskId);
+		return await this.dailyPlanService.getDailyPlansByTask(params, taskId);
 	}
 
 	/**
@@ -169,7 +169,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		@Param('id') planId: IDailyPlan['id'], // Extract the daily plan ID from the URL parameter
 		@Body('taskId') taskId: ITask['id'], // Get the task ID from the request body
 		@Query() params: PaginationParams<DailyPlan> // Additional query parameters
-	): Promise<DailyPlan> {
+	): Promise<IDailyPlan> {
 		// Return the updated daily plan
 		// Call the service to remove the task from the daily plan
 		return await this.dailyPlanService.removeTaskFromPlan(planId, taskId, params);

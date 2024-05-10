@@ -334,7 +334,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param taskId - The ID of the task for whom to retrieve daily plans.
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
-	async getPlansByTaskId(options: PaginationParams, taskId: ITask['id']): Promise<IPagination<IDailyPlan>> {
+	async getDailyPlansByTask(options: PaginationParams, taskId: ITask['id']): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
 			const { organizationId } = where;
