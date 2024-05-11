@@ -10,15 +10,10 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	Subject,
-	firstValueFrom,
-	debounceTime,
-	tap,
-	combineLatest
-} from 'rxjs';
+import { Subject, firstValueFrom, debounceTime, tap, combineLatest } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { monthNames } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../@shared/language-base';
 import {
@@ -27,25 +22,15 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { monthNames } from '../../@core/utils/date';
-import {
-	RecurringExpenseDeleteConfirmationComponent,
-	RecurringExpenseMutationComponent
-} from '../../@shared/expenses';
+import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '../../@shared/expenses';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-expense-recurring',
 	templateUrl: './expense-recurring.component.html',
-	styleUrls: [
-		'./expense-recurring.component.scss',
-		'../dashboard/dashboard.component.scss'
-	]
+	styleUrls: ['./expense-recurring.component.scss', '../dashboard/dashboard.component.scss']
 })
-export class ExpenseRecurringComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class ExpenseRecurringComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedDateRange: IDateRangePicker;
 	expenses: IOrganizationRecurringExpense[] = [];
 	fetchedHistories: any = {};
@@ -115,9 +100,7 @@ export class ExpenseRecurringComponent
 
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
-			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+			? this.getTranslation(`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`)
 			: categoryName;
 	}
 
@@ -125,25 +108,16 @@ export class ExpenseRecurringComponent
 		const startDate = new Date(this.selectedDateRange.startDate);
 		const selectedExpense = this.selectedRecurringExpense.data;
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
-			this.dialogService.open(
-				RecurringExpenseDeleteConfirmationComponent,
-				{
-					context: {
-						recordType: 'Organization recurring expense',
-						start: `${this.getMonthString(
-							selectedExpense.startMonth
-						)}, ${selectedExpense.startYear}`,
-						current: `${this.getMonthString(
-							startDate.getMonth()
-						)}, ${startDate.getFullYear()}`,
-						end: selectedExpense.endMonth
-							? `${this.getMonthString(
-									selectedExpense.endMonth
-							  )}, ${selectedExpense.endYear}`
-							: 'end'
-					}
+			this.dialogService.open(RecurringExpenseDeleteConfirmationComponent, {
+				context: {
+					recordType: 'Organization recurring expense',
+					start: `${this.getMonthString(selectedExpense.startMonth)}, ${selectedExpense.startYear}`,
+					current: `${this.getMonthString(startDate.getMonth())}, ${startDate.getFullYear()}`,
+					end: selectedExpense.endMonth
+						? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear}`
+						: 'end'
 				}
-			).onClose
+			}).onClose
 		);
 
 		if (result) {
@@ -163,10 +137,7 @@ export class ExpenseRecurringComponent
 				);
 				this.expenses$.next(true);
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.toastrService.danger(error.error.message || error.message, 'Error');
 			}
 		}
 	}
@@ -195,10 +166,7 @@ export class ExpenseRecurringComponent
 				);
 				this.expenses$.next(true);
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.toastrService.danger(error.error.message || error.message, 'Error');
 			}
 		}
 	}
@@ -215,10 +183,7 @@ export class ExpenseRecurringComponent
 		if (result) {
 			try {
 				const id = this.selectedRecurringExpense.data.id;
-				await this.organizationRecurringExpenseService.update(
-					id,
-					result
-				);
+				await this.organizationRecurringExpenseService.update(id, result);
 				this.expenses$.next(true);
 
 				this.toastrService.success(
@@ -228,10 +193,7 @@ export class ExpenseRecurringComponent
 					}
 				);
 			} catch (error) {
-				this.toastrService.danger(
-					error.error.message || error.message,
-					'Error'
-				);
+				this.toastrService.danger(error.error.message || error.message, 'Error');
 			}
 		}
 	}
@@ -258,10 +220,7 @@ export class ExpenseRecurringComponent
 				})
 			).items;
 		} catch (error) {
-			console.log(
-				'Error while retrieving organization recurring expenses',
-				error
-			);
+			console.log('Error while retrieving organization recurring expenses', error);
 		} finally {
 			this.loading = false;
 		}
@@ -273,9 +232,7 @@ export class ExpenseRecurringComponent
 			await this.organizationRecurringExpenseService.getAll(
 				[],
 				{
-					parentRecurringExpenseId:
-						this.selectedRecurringExpense.data
-							.parentRecurringExpenseId
+					parentRecurringExpenseId: this.selectedRecurringExpense.data.parentRecurringExpenseId
 				},
 				{
 					startDate: 'ASC'
@@ -284,14 +241,10 @@ export class ExpenseRecurringComponent
 		).items;
 	}
 
-	selectRecurringExpense(
-		recurringExpense: IOrganizationRecurringExpense,
-		i: number
-	) {
+	selectRecurringExpense(recurringExpense: IOrganizationRecurringExpense, i: number) {
 		this.showHistory = false;
 		this.selectedRecurringExpense =
-			this.selectedRecurringExpense.data &&
-			recurringExpense.id === this.selectedRecurringExpense.data.id
+			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id
 				? {
 						isSelected: !this.selectedRecurringExpense.isSelected,
 						data: null,

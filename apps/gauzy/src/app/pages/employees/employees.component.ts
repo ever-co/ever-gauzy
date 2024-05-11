@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnDestroy,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -13,6 +7,7 @@ import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -32,26 +27,14 @@ import {
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	PictureNameTagsComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
-import {
-	InputFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import {
-	EmployeesService,
-	EmployeeStore,
-	ErrorHandlingService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,
@@ -59,8 +42,7 @@ import {
 	EmployeeTimeTrackingStatusComponent,
 	EmployeeWorkStatusComponent
 } from './table-components';
-import { ServerDataSource } from '../../@core/utils/smart-table';
-import { ToggleFilterComponent } from "../../@shared/table-filters";
+import { ToggleFilterComponent } from '../../@shared/table-filters';
 import { DateFormatPipe } from '../../@shared/pipes';
 import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
 import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
@@ -70,9 +52,7 @@ import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss']
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
 	smartTableSource: ServerDataSource;
 	selectedEmployee: EmployeeViewModel;
@@ -146,10 +126,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(
-					({ invitesAllowed }) =>
-						(this.organizationInvitesAllowed = invitesAllowed)
-				),
+				tap(({ invitesAllowed }) => (this.organizationInvitesAllowed = invitesAllowed)),
 				tap(() => this._additionalColumns()),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
@@ -159,9 +136,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				filter((params: ParamMap) => !!params),
-				filter(
-					(params: ParamMap) => params.get('openAddDialog') === 'true'
-				),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.add()),
 				untilDestroyed(this)
@@ -169,11 +144,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.employees = [])),
 				untilDestroyed(this)
@@ -191,15 +162,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.employees = [])),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
@@ -210,21 +175,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	selectEmployee({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedEmployee = isSelected ? data : null;
-		if (
-			this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID &&
-			this._grid
-		) {
-			if (
-				this._grid?.customComponentInstance()?.constructor ===
-				AllowScreenshotCaptureComponent
-			) {
+		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID && this._grid) {
+			if (this._grid?.customComponentInstance()?.constructor === AllowScreenshotCaptureComponent) {
 				this.disableButton = true;
 				const instance: AllowScreenshotCaptureComponent =
 					this._grid.customComponentInstance<AllowScreenshotCaptureComponent>();
-				this._updateAllowScreenshotCapture(
-					instance.rowData,
-					!instance.allowed
-				);
+				this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
 				this._grid.clearCustomViewComponent();
 				this.clearItem();
 			}
@@ -267,10 +223,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			'/pages/employees/edit/',
-			this.selectedEmployee.id
-		]);
+		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
 
 	async invite() {
@@ -297,7 +250,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: this.selectedEmployee.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
+					recordType:
+						this.selectedEmployee.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
@@ -346,14 +300,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			});
 			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
-				await this.employeesService.setEmployeeEndWork(
-					this.selectedEmployee.id,
-					data,
-					{
-						organizationId,
-						tenantId
-					}
-				);
+				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data, {
+					organizationId,
+					tenantId
+				});
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
 					name: this.selectedEmployee.fullName.trim()
 				});
@@ -385,14 +335,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			});
 			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
-				await this.employeesService.setEmployeeEndWork(
-					this.selectedEmployee.id,
-					null,
-					{
-						organizationId,
-						tenantId
-					}
-				);
+				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null, {
+					organizationId,
+					tenantId
+				});
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
 					name: this.selectedEmployee.fullName.trim()
 				});
@@ -454,29 +400,19 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			const { tenantId } = this.store.user;
 
 			const { isTrackingEnabled } = this.selectedEmployee;
-			await this.employeesService.setEmployeeTimeTrackingStatus(
-				this.selectedEmployee.id,
-				!isTrackingEnabled,
-				{
-					organizationId,
-					tenantId
-				}
-			);
+			await this.employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
+				organizationId,
+				tenantId
+			});
 
 			if (isTrackingEnabled) {
-				this.toastrService.success(
-					'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED',
-					{
-						name: this.selectedEmployee.fullName.trim()
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED', {
+					name: this.selectedEmployee.fullName.trim()
+				});
 			} else {
-				this.toastrService.success(
-					'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED',
-					{
-						name: this.selectedEmployee.fullName.trim()
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED', {
+					name: this.selectedEmployee.fullName.trim()
+				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -506,12 +442,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			where: {
 				organizationId,
 				tenantId,
-				...(this.filters.where || {}), // Include additional filter conditions
+				...(this.filters.where || {}) // Include additional filter conditions
 			},
 			resultMap: (employee: IEmployee) => {
 				return {
 					...employee, // Spread employee properties
-					...this.employeeMapper(employee), // Map additional properties
+					...this.employeeMapper(employee) // Map additional properties
 				};
 			},
 			finalize: () => {
@@ -528,7 +464,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 	updatePagination(totalItems: number) {
 		this.setPagination({
 			...this.getPagination(),
-			totalItems,
+			totalItems
 		});
 	}
 
@@ -542,9 +478,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
-				this.employees.push(
-					...this.smartTableSource.getData()
-				);
+				this.employees.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
 			this.toastrService.danger(error);
@@ -646,7 +580,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					renderComponent: EmployeeAverageIncomeComponent,
 					componentInitFunction: (instance: EmployeeAverageIncomeComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				averageExpenses: {
 					title: this.getTranslation('SM_TABLE.EXPENSES'),
@@ -657,7 +591,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					renderComponent: EmployeeAverageExpensesComponent,
 					componentInitFunction: (instance: EmployeeAverageExpensesComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				averageBonus: {
 					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
@@ -668,7 +602,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 					renderComponent: EmployeeAverageBonusComponent,
 					componentInitFunction: (instance: EmployeeAverageBonusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				isTrackingEnabled: {
 					title: this.getTranslation('SM_TABLE.TIME_TRACKING'),
@@ -796,16 +730,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 				allowScreenshotCapture: isAllowed,
 				organizationId,
 				tenantId
-			}
+			};
 			this.employeesService.update(employee.id, payload);
-			this.toastrService.success(
-				'TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED',
-				{
-					name: employee.fullName.trim()
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED', {
+				name: employee.fullName.trim()
+			});
 		} catch (error) {
-			this.errorHandler.handleError(error)
+			this.errorHandler.handleError(error);
 		}
 	}
 
@@ -847,20 +778,18 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 			});
 			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
-				await this.employeesService.setEmployeeStartWork(
-					this.selectedEmployee.id,
-					data,
+				await this.employeesService.setEmployeeStartWork(this.selectedEmployee.id, data, {
+					organizationId,
+					tenantId
+				});
+				this.toastrService.success(
+					this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
+						name: this.selectedEmployee.fullName.trim()
+					}),
 					{
-						organizationId,
-						tenantId
+						name: this.selectedEmployee.fullName.trim()
 					}
 				);
-				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
-					name: this.selectedEmployee.fullName.trim()
-				}
-				), {
-					name: this.selectedEmployee.fullName.trim()
-				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -870,5 +799,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

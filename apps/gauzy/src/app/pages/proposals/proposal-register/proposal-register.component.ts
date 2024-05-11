@@ -6,8 +6,8 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
-import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import * as moment from 'moment';
+import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import {
 	ITag,
 	IOrganization,

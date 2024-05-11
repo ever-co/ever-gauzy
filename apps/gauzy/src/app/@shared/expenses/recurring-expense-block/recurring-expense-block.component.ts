@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
+import { defaultDateFormat } from '@gauzy/ui-sdk/core';
 import {
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
 	IRecurringExpenseModel,
 	IEmployee
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { defaultDateFormat } from '../../../@core/utils/date';
 import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @Component({
@@ -15,9 +15,7 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 	templateUrl: './recurring-expense-block.component.html',
 	styleUrls: ['./recurring-expense-block.component.scss']
 })
-export class RecurringExpenseBlockComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class RecurringExpenseBlockComponent extends TranslationBaseComponent implements OnInit {
 	@Input()
 	recurringExpense: IRecurringExpenseModel;
 
@@ -46,7 +44,7 @@ export class RecurringExpenseBlockComponent
 	fetchRecurringExpenseHistory = new EventEmitter<void>();
 
 	showMenu = false;
-	
+
 	@Input()
 	showHistory = false;
 	currentEmployee: IEmployee;
@@ -80,17 +78,13 @@ export class RecurringExpenseBlockComponent
 
 	getStartDate() {
 		return this.recurringExpense && this.selectedOrganization
-			? moment(this.recurringExpense.startDate).format(
-					this.selectedOrganization.dateFormat || defaultDateFormat
-			  )
+			? moment(this.recurringExpense.startDate).format(this.selectedOrganization.dateFormat || defaultDateFormat)
 			: '';
 	}
 
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
-			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+			? this.getTranslation(`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`)
 			: categoryName;
 	}
 }

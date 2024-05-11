@@ -18,7 +18,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
-import { ServerDataSource } from '../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -26,20 +26,14 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import {
-	InvoiceEstimateTotalValueComponent,
-	InvoicePaidComponent
-} from '../table-components';
+import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
 	NotesWithTagsComponent,
 	TagsOnlyComponent
 } from '../../../@shared/table-components';
-import {
-	InputFilterComponent,
-	TagsColorFilterComponent
-} from '../../../@shared/table-filters';
+import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import {
 	IPaginationBase,
@@ -55,7 +49,6 @@ import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/head
 	styleUrls: ['./invoices-received.component.scss']
 })
 export class InvoicesReceivedComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	public loading: boolean = false;
 	public disableButton: boolean = true;
 	public settingsSmartTable: object;
@@ -196,7 +189,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					tags: 'invoice.tags',
 					toContact: 'invoice.toContact'
 				},
-				...(this.filters.join) ? this.filters.join : {}
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				sentTo: organizationId,
@@ -261,7 +254,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			});
 
 			const { id } = this.selectedInvoice;
-			const routePath = this.isEstimate ? '/pages/accounting/invoices/estimates/view' : '/pages/accounting/invoices/view';
+			const routePath = this.isEstimate
+				? '/pages/accounting/invoices/estimates/view'
+				: '/pages/accounting/invoices/view';
 
 			this.router.navigate([routePath, id]);
 		}
@@ -340,7 +335,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.RECEIVE_ESTIMATE'),
 			columns: {
 				invoiceNumber: {
-					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER') : this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
+					title: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_NUMBER')
+						: this.getTranslation('INVOICES_PAGE.INVOICE_NUMBER'),
 					type: this.isEstimate ? 'string' : 'custom',
 					renderComponent: this.isEstimate ? null : NotesWithTagsComponent,
 					sortDirection: 'asc',
@@ -355,10 +352,12 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				invoiceDate: {
-					title: this.isEstimate ? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE') : this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
+					title: this.isEstimate
+						? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
+						: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 					type: 'custom',
 					filter: false,
 					width: '10%',
@@ -366,7 +365,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				dueDate: {
 					title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
@@ -377,7 +376,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
@@ -394,7 +393,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -408,7 +407,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getRawValue();
-				},
+				}
 			};
 		}
 		if (!this.isEstimate) {
@@ -420,7 +419,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				renderComponent: InvoicePaidComponent,
 				componentInitFunction: (instance: InvoicePaidComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
-				},
+				}
 			};
 		}
 		if (this.isEstimate) {
@@ -445,7 +444,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();
-				},
+				}
 			};
 		}
 		if (this.columns.includes(InvoiceColumnsEnum.STATUS)) {
@@ -460,7 +459,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				},
 				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 					instance.value = cell.getRawValue();
-				},
+				}
 			};
 		}
 	}
@@ -498,7 +497,6 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		this.selectInvoice({ isSelected: false, data: null });
 	}
 
-
 	/**
 	 * Gets the column values based on the type (estimate or invoice).
 	 *
@@ -507,7 +505,6 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 	getColumns(): string[] {
 		return this.isEstimate ? Object.values(EstimateColumnsEnum) : Object.values(InvoiceColumnsEnum);
 	}
-
 
 	/**
 	 * Maps invoice statuses to badge classes, texts, and original values.
@@ -536,7 +533,6 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			class: badgeClass
 		};
 	};
-
 
 	/**
 	 * Navigates to the payments page for the selected invoice.
@@ -573,7 +569,9 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		}
 
 		const { id } = this.selectedInvoice;
-		const routePath = this.isEstimate ? `/pages/accounting/invoices/estimates/edit` : `/pages/accounting/invoices/edit`;
+		const routePath = this.isEstimate
+			? `/pages/accounting/invoices/estimates/edit`
+			: `/pages/accounting/invoices/edit`;
 
 		// Navigate to the edit page
 		this.router.navigate([routePath, id]);
@@ -602,5 +600,5 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

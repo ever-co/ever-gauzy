@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -18,7 +19,10 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
@@ -29,7 +33,6 @@ import {
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -53,9 +56,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './payments.component.html',
 	styleUrls: ['./payments.component.scss']
 })
-export class PaymentsComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class PaymentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public settingsSmartTable: object;
 	public smartTableSource: ServerDataSource;
 	public selectedPayment: IPayment;
@@ -150,7 +151,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		this.route.queryParamMap
 			.pipe(
 				// Filter out invalid or null parameters, and only proceed if 'openAddDialog' is 'true'.
-				filter(params => !!params && params.get('openAddDialog') === 'true'),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				// Debounce the emissions to avoid rapid consecutive calls.
 				debounceTime(1000),
 				// Perform a side effect by calling the recordPayment method.
@@ -167,7 +168,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				// Perform a side effect by calling the refreshPagination method.
 				tap(() => this.refreshPagination()),
 				// Perform another side effect by resetting the 'payments' array to an empty array.
-				tap(() => this.payments = []),
+				tap(() => (this.payments = [])),
 				// Unsubscribe when the component is destroyed to avoid memory leaks.
 				untilDestroyed(this)
 			)
@@ -219,14 +220,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/payments/pagination`,
-			relations: [
-				'invoice',
-				'invoice.toContact',
-				'recordedBy',
-				'organizationContact',
-				'project',
-				'tags'
-			],
+			relations: ['invoice', 'invoice.toContact', 'recordedBy', 'organizationContact', 'project', 'tags'],
 			join: {
 				alias: 'payment',
 				leftJoin: {
@@ -256,7 +250,9 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 						invoiceNumber: invoice?.invoiceNumber || null,
 						projectName: project?.name || null,
 						recordedByName: recordedBy?.name || null,
-						paymentMethodEnum: paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`) : null,
+						paymentMethodEnum: paymentMethod
+							? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${paymentMethod}`)
+							: null,
 						organizationContact
 					};
 				} catch (error) {
@@ -301,7 +297,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				// Set pagination details based on Smart Table source
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
+					totalItems: this.smartTableSource.count()
 				});
 			}
 		} catch (error) {
@@ -414,7 +410,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 				this._refresh$.next(true);
 				this.payments$.next(true);
 			}
-		})
+		});
 	}
 
 	/**
@@ -489,7 +485,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		// Return an object with text and class properties
 		return {
 			text: value,
-			class: badgeClass,
+			class: badgeClass
 		};
 	};
 
@@ -522,7 +518,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				amount: {
 					title: this.getTranslation('PAYMENTS_PAGE.AMOUNT'),
@@ -533,7 +529,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				paymentMethodEnum: {
 					title: this.getTranslation('PAYMENTS_PAGE.PAYMENT_METHOD'),
@@ -597,7 +593,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				tags: {
 					title: this.getTranslation('PAYMENTS_PAGE.TAGS'),
@@ -638,7 +634,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 	 * @param data - An object of type `IPayment` representing the payment details.
 	 * @returns void
 	 */
-	selectPayment({ isSelected, data }: { isSelected: boolean, data: IPayment }): void {
+	selectPayment({ isSelected, data }: { isSelected: boolean; data: IPayment }): void {
 		// Update the disableButton property based on the isSelected value
 		this.disableButton = !isSelected;
 		// Update the selectedPayment property based on the isSelected value
@@ -693,5 +689,5 @@ export class PaymentsComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

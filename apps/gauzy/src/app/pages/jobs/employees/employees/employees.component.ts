@@ -17,7 +17,7 @@ import {
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { API_PREFIX } from './../../../../@core/constants';
 import { NumberEditorComponent } from 'apps/gauzy/src/app/@shared/table-components/editors/number-editor.component';
 
@@ -35,7 +35,6 @@ export enum JobSearchTabsEnum {
 	providers: [CurrencyPipe]
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	public jobSearchTabsEnum = JobSearchTabsEnum;
 	public loading: boolean = false;
 	public settingsSmartTable: any;
@@ -212,7 +211,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					sort: false,
 					editable: false,
 					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (_: any, cell: Cell): { name: string | null; imageUrl: string | null; id: string | null } => {
+					valuePrepareFunction: (
+						_: any,
+						cell: Cell
+					): { name: string | null; imageUrl: string | null; id: string | null } => {
 						const employee: IEmployee | undefined = cell.getRow().getData();
 						if (employee) {
 							const { user, id } = employee;
@@ -226,7 +228,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				availableJobs: {
 					title: this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
@@ -289,7 +291,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					},
 					componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -389,7 +391,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 *
 	 * @param tab - The NbTabComponent representing the selected tab.
 	 */
-	onTabChange(tab: NbTabComponent) { }
+	onTabChange(tab: NbTabComponent) {}
 
 	/**
 	 * Handles the selection or deselection of an employee.
@@ -422,5 +424,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

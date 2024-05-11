@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbCalendarMonthPickerComponent } from '@nebular/theme';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { monthNames } from '../../../../../@core/utils/date';
 import { min, addYears, subYears } from 'date-fns';
+import { monthNames } from '@gauzy/ui-sdk/core';
+import { Store } from './../../../../../@core/services/store.service';
+
 @Component({
 	selector: 'ga-date-selector',
 	templateUrl: './date.component.html',
@@ -60,31 +61,25 @@ export class DateSelectorComponent implements OnInit {
 		 * set max to 10 years after current Date, otherwise max allowed date is current Date
 		 */
 		this.max =
-			this.store.selectedOrganization &&
-			this.store.selectedOrganization.futureDateAllowed
+			this.store.selectedOrganization && this.store.selectedOrganization.futureDateAllowed
 				? addYears(currentDate.setMonth(11), 10)
 				: currentDate;
 
 		this.min =
-			this.store.selectedOrganization &&
-			this.store.selectedOrganization.registrationDate
+			this.store.selectedOrganization && this.store.selectedOrganization.registrationDate
 				? new Date(this.store.selectedOrganization.registrationDate)
 				: subYears(new Date().setMonth(11), 15);
 
 		this.loadCalendar = true;
 	}
-	
+
 	clear() {
 		this.dateInputValue = '';
 		this.date = new Date();
 	}
 
 	clickOutside(event) {
-		if (
-			!document
-				.getElementById('dashboard-calendar')
-				.contains(event.target)
-		) {
+		if (!document.getElementById('dashboard-calendar').contains(event.target)) {
 			this.loadCalendar = false;
 		}
 	}

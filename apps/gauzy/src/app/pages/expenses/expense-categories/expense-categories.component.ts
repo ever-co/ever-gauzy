@@ -25,7 +25,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -34,9 +34,7 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
 	templateUrl: './expense-categories.component.html',
 	styleUrls: ['expense-categories.component.scss']
 })
-export class ExpenseCategoriesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
 	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
@@ -87,17 +85,12 @@ export class ExpenseCategoriesComponent
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		const componentLayout$ = this.store.componentLayout$(
-			this.viewComponentName
-		);
+		const componentLayout$ = this.store.componentLayout$(this.viewComponentName);
 		combineLatest([storeOrganization$, componentLayout$])
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(
-					([organization, componentLayout]) =>
-						!!organization && !!componentLayout
-				),
+				filter(([organization, componentLayout]) => !!organization && !!componentLayout),
 				tap(([organization, componentLayout]) => {
 					this.organization = organization;
 					this.dataLayoutStyle = componentLayout;
@@ -130,13 +123,9 @@ export class ExpenseCategoriesComponent
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.EXPENSE_CATEGORY'
-			),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EXPENSE_CATEGORY'),
 			columns: {
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
@@ -260,9 +249,7 @@ export class ExpenseCategoriesComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense-categories/pagination`,
-			relations: [
-				'tags'
-			],
+			relations: ['tags'],
 			join: {
 				alias: 'expense_category',
 				leftJoin: {
@@ -304,15 +291,12 @@ export class ExpenseCategoriesComponent
 		if (expenseCategory.data) expenseCategory = expenseCategory.data;
 
 		const res =
-			this.selected.expenseCategory &&
-				expenseCategory === this.selected.expenseCategory
+			this.selected.expenseCategory && expenseCategory === this.selected.expenseCategory
 				? { state: !this.selected.state }
 				: { state: true };
 		this.selected.state = res.state;
 		this.disableButton = !res.state;
-		this.selected.expenseCategory = this.selected.state
-			? expenseCategory
-			: null;
+		this.selected.expenseCategory = this.selected.state ? expenseCategory : null;
 	}
 
 	/**
@@ -344,13 +328,11 @@ export class ExpenseCategoriesComponent
 			})
 			.onClose.pipe(
 				filter((category: IExpenseCategory) => !!category),
-				tap((category: IExpenseCategory) =>
-					this.editCategory(category)
-				),
+				tap((category: IExpenseCategory) => this.editCategory(category)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

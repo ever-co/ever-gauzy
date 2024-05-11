@@ -1,12 +1,15 @@
 import { Color, rgbString } from '@kurkle/color';
 
+/**
+ * A utility class for color operations.
+ */
 export class ColorAdapter {
 	/**
-	 *
-	 * @param hex
-	 * @returns
+	 * Converts a hexadecimal color value to RGB string format.
+	 * @param hex The hexadecimal color value to convert.
+	 * @returns The RGB string representation of the color.
 	 */
-	public static hex2Rgb(hex: string) {
+	public static hex2Rgb(hex: string): string {
 		hex = this.normalize(hex);
 		return rgbString({
 			r: parseInt(hex.slice(1, 3), 16),
@@ -17,9 +20,9 @@ export class ColorAdapter {
 	}
 
 	/**
-	 *
-	 * @param hex
-	 * @returns
+	 * Normalizes a hexadecimal color value by ensuring it starts with '#'.
+	 * @param hex The hexadecimal color value to normalize.
+	 * @returns The normalized hexadecimal color value.
 	 */
 	public static normalize(hex: string): string {
 		const regex = /^#[0-9A-F]{6}$/i;
@@ -32,11 +35,11 @@ export class ColorAdapter {
 	}
 
 	/**
-	 *
-	 * @param bgColor
-	 * @returns
+	 * Determines the contrast color for a given background color.
+	 * @param bgColor The background color to determine the contrast color for.
+	 * @returns The contrast color (either '#ffffff' or '#000000').
 	 */
-	public static contrast(bgColor: string) {
+	public static contrast(bgColor: string): string {
 		let color = new Color(bgColor);
 		color = color.valid ? color : new Color(this.hex2Rgb(bgColor));
 		const MIN_THRESHOLD = 128;
@@ -50,19 +53,19 @@ export class ColorAdapter {
 	}
 
 	/**
-	 *
-	 * @param bgColor
-	 * @returns
+	 * Gets the background color, ensuring it's in a valid format.
+	 * @param bgColor The background color to validate and return.
+	 * @returns The valid background color.
 	 */
-	public static background(bgColor: string) {
+	public static background(bgColor: string): string {
 		const color = new Color(bgColor);
 		return color.valid ? bgColor : this.normalize(bgColor);
 	}
 
 	/**
-	 *
-	 * @param hexColor
-	 * @returns
+	 * Converts a hexadecimal color value to HSL string format.
+	 * @param hexColor The hexadecimal color value to convert.
+	 * @returns The HSL string representation of the color.
 	 */
 	public static hexToHsl(hexColor: string): string {
 		let color = new Color(hexColor);

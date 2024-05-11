@@ -1,34 +1,21 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IApprovalPolicy,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import {
-	ApprovalPolicyService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -37,9 +24,7 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	templateUrl: './approval-policy.component.html',
 	styleUrls: ['./approval-policy.component.scss']
 })
-export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ApprovalPolicyComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public settingsSmartTable: object;
 
 	public loading: boolean = false;
@@ -96,10 +81,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
@@ -121,10 +103,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				filter(() => this._isGridLayout),
 				tap(() => (this.approvalPolicies = [])),
@@ -231,24 +210,16 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 					data: selectedItem
 				});
 			}
-			const dialog = this.dialogService.open(
-				ApprovalPolicyMutationComponent,
-				{
-					context: {
-						approvalPolicy: this.selectedApprovalPolicy
-					}
+			const dialog = this.dialogService.open(ApprovalPolicyMutationComponent, {
+				context: {
+					approvalPolicy: this.selectedApprovalPolicy
 				}
-			);
-			const result: IApprovalPolicy = await firstValueFrom(
-				dialog.onClose
-			);
+			});
+			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
 			if (result) {
-				this.toastrService.success(
-					'TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED',
-					{
-						name: result.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_UPDATED', {
+					name: result.name
+				});
 				this._refresh$.next(true);
 				this.policies$.next(true);
 			}
@@ -259,19 +230,12 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 
 	async add() {
 		try {
-			const dialog = this.dialogService.open(
-				ApprovalPolicyMutationComponent
-			);
-			const result: IApprovalPolicy = await firstValueFrom(
-				dialog.onClose
-			);
+			const dialog = this.dialogService.open(ApprovalPolicyMutationComponent);
+			const result: IApprovalPolicy = await firstValueFrom(dialog.onClose);
 			if (result) {
-				this.toastrService.success(
-					'TOASTR.MESSAGE.APPROVAL_POLICY_CREATED',
-					{
-						name: result.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_CREATED', {
+					name: result.name
+				});
 				this._refresh$.next(true);
 				this.policies$.next(true);
 			}
@@ -292,21 +256,14 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
-			await this.approvalPolicyService.delete(
-				this.selectedApprovalPolicy.id
-			);
+			await this.approvalPolicyService.delete(this.selectedApprovalPolicy.id);
 			const { name } = this.selectedApprovalPolicy;
-			this.toastrService.success(
-				'TOASTR.MESSAGE.APPROVAL_POLICY_DELETED',
-				{
-					name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.APPROVAL_POLICY_DELETED', {
+				name
+			});
 		}
 		this._refresh$.next(true);
 		this.policies$.next(true);
@@ -326,5 +283,5 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent
 		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

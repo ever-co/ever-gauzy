@@ -1,19 +1,16 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
-import { NbThemeService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { monthNames } from 'apps/gauzy/src/app/@core/utils/date';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { NbThemeService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { monthNames } from '@gauzy/ui-sdk/core';
+import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
 
 @Component({
 	selector: 'ga-employee-stacked-bar-chart',
 	template: `
-		<div
-			*ngIf="noData"
-			style="display: flex; flex-direction: column; align-items: center;"
-		>
+		<div *ngIf="noData" style="display: flex; flex-direction: column; align-items: center;">
 			<nb-icon icon="info-outline"></nb-icon>
 			<div>
 				{{ 'DASHBOARD_PAGE.CHARTS.NO_MONTH_DATA' | translate }}
@@ -29,9 +26,7 @@ import { takeUntil } from 'rxjs/operators';
 		></canvas>
 	`
 })
-export class EmployeeStackedBarChartComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, OnChanges {
+export class EmployeeStackedBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
 	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
@@ -47,10 +42,7 @@ export class EmployeeStackedBarChartComponent
 	@Input()
 	employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
-	constructor(
-		private themeService: NbThemeService,
-		translateService: TranslateService
-	) {
+	constructor(private themeService: NbThemeService, translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -70,60 +62,35 @@ export class EmployeeStackedBarChartComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((config) => {
 				const chartjs: any = config.variables.chartjs;
-				const bonusColors = this.bonusStatistics.map((val) =>
-					val < 0 ? 'red' : '#0091ff'
-				);
-				const profitColors = this.profitStatistics.map((val) =>
-					val < 0 ? '#ff7b00' : '#66de0b'
-				);
+				const bonusColors = this.bonusStatistics.map((val) => (val < 0 ? 'red' : '#0091ff'));
+				const profitColors = this.profitStatistics.map((val) => (val < 0 ? '#ff7b00' : '#66de0b'));
 				this.data = {
 					labels: this.labels,
 					datasets: [
 						{
 							label: this.selectedDate
-								? `${this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								)}: ${Math.round(
-									+this.expenseStatistics *
-									this.proportion *
-									100
-								) / 100
-								}`
-								: this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.EXPENSES'
-								),
+								? `${this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES')}: ${
+										Math.round(+this.expenseStatistics * this.proportion * 100) / 100
+								  }`
+								: this.getTranslation('DASHBOARD_PAGE.CHARTS.EXPENSES'),
 							backgroundColor: '#dbc300',
 							data: this.expenseStatistics
 						},
 						{
 							label: this.selectedDate
-								? `${this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.BONUS'
-								)}: ${Math.round(
-									+this.bonusStatistics *
-									this.proportion *
-									100
-								) / 100
-								}`
-								: this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.BONUS'
-								),
+								? `${this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS')}: ${
+										Math.round(+this.bonusStatistics * this.proportion * 100) / 100
+								  }`
+								: this.getTranslation('DASHBOARD_PAGE.CHARTS.BONUS'),
 							backgroundColor: bonusColors,
 							data: this.bonusStatistics
 						},
 						{
 							label: this.selectedDate
-								? `${this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.PROFIT'
-								)}: ${Math.round(
-									+this.profitStatistics *
-									this.proportion *
-									100
-								) / 100
-								}`
-								: this.getTranslation(
-									'DASHBOARD_PAGE.CHARTS.PROFIT'
-								),
+								? `${this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT')}: ${
+										Math.round(+this.profitStatistics * this.proportion * 100) / 100
+								  }`
+								: this.getTranslation('DASHBOARD_PAGE.CHARTS.PROFIT'),
 							backgroundColor: profitColors,
 							data: this.profitStatistics
 						}
@@ -140,7 +107,7 @@ export class EmployeeStackedBarChartComponent
 					},
 					scales: {
 						x: {
-							stacked: true,
+							stacked: true
 						},
 						y: {
 							stacked: true
@@ -155,21 +122,18 @@ export class EmployeeStackedBarChartComponent
 					},
 					tooltips: this.selectedDate
 						? {
-							enabled: true,
-							mode: 'dataset',
-							callbacks: {
-								label: function (tooltipItem, data) {
-									const label =
-										data.datasets[
-											tooltipItem.datasetIndex
-										].label || '';
-									return label;
+								enabled: true,
+								mode: 'dataset',
+								callbacks: {
+									label: function (tooltipItem, data) {
+										const label = data.datasets[tooltipItem.datasetIndex].label || '';
+										return label;
+									}
 								}
-							}
-						}
+						  }
 						: {
-							enabled: true
-						}
+								enabled: true
+						  }
 				};
 			});
 	}
@@ -187,21 +151,12 @@ export class EmployeeStackedBarChartComponent
 		this.noData = !(this.employeeStatistics || []).length;
 
 		(this.employeeStatistics || []).forEach((stat) => {
-			const labelValue = `${monthNames[stat.month]} '${stat.year
-				.toString(10)
-				.substring(2)}`;
+			const labelValue = `${monthNames[stat.month]} '${stat.year.toString(10).substring(2)}`;
 			this.labels.push(labelValue);
-			this.proportion =
-				(stat.expense + stat.profit + stat.bonus) / stat.income || 1;
-			this.expenseStatistics.push(
-				Math.round((stat.expense / this.proportion) * 100) / 100
-			);
-			this.bonusStatistics.push(
-				Math.round((stat.bonus / this.proportion) * 100) / 100
-			);
-			this.profitStatistics.push(
-				Math.round((stat.profit / this.proportion) * 100) / 100
-			);
+			this.proportion = (stat.expense + stat.profit + stat.bonus) / stat.income || 1;
+			this.expenseStatistics.push(Math.round((stat.expense / this.proportion) * 100) / 100);
+			this.bonusStatistics.push(Math.round((stat.bonus / this.proportion) * 100) / 100);
+			this.profitStatistics.push(Math.round((stat.profit / this.proportion) * 100) / 100);
 		});
 	}
 

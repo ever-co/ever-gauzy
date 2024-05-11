@@ -35,7 +35,7 @@ import {
 } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';

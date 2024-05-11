@@ -8,15 +8,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { AtLeastOneFieldValidator, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isNotEmpty, isNotNullOrUndefined } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AtLeastOneFieldValidator } from '@gauzy/ui-sdk/core';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 import {
 	IPaginationBase,

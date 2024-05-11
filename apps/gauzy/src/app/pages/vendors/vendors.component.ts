@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -14,32 +8,18 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
-import {
-	IOrganizationVendor,
-	ITag,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from './../../@core/constants';
-import {
-	EmailComponent,
-	TagsOnlyComponent,
-	CompanyLogoComponent
-} from './../../@shared/table-components';
+import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import {
-	ErrorHandlingService,
-	OrganizationVendorsService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,7 +28,6 @@ import { ServerDataSource } from '../../@core/utils/smart-table';
 	styleUrls: ['vendors.component.scss']
 })
 export class VendorsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	public addEditDialogRef: NbDialogRef<any>;
 	public organization: IOrganization;
 	public vendors: IOrganizationVendor[] = [];
@@ -69,8 +48,8 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 	private _refresh$: Subject<any> = new Subject();
 
 	/*
-	* Vendor Mutation Form
-	*/
+	 * Vendor Mutation Form
+	 */
 	public form: UntypedFormGroup = VendorsComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -168,7 +147,8 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		this.viewComponentName = ComponentEnum.VENDORS;
 
 		// Subscribe to changes in the component layout
-		this.store.componentLayout$(this.viewComponentName)
+		this.store
+			.componentLayout$(this.viewComponentName)
 			.pipe(
 				// Ensure distinct consecutive values to avoid redundant processing
 				distinctUntilChange(),
@@ -304,7 +284,10 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 				const toastrTitle = this.getTranslation('TOASTR.MESSAGE.NEW_ORGANIZATION_VENDOR_INVALID_NAME');
 
 				// Display an error toast message for an invalid form
-				this.toastrService.danger('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME', toastrTitle);
+				this.toastrService.danger(
+					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_VENDOR.INVALID_VENDOR_NAME',
+					toastrTitle
+				);
 			}
 		} catch (error) {
 			// Handle errors using the errorHandlingService
@@ -432,7 +415,6 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		}
 	}
 
-
 	setSmartTableSource() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -499,5 +481,5 @@ export class VendorsComponent extends PaginationFilterBaseComponent implements O
 		this.selectedVendor = this.selected.vendor;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

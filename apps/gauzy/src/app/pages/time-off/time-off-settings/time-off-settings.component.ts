@@ -1,21 +1,13 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ErrorHandler
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ErrorHandler } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-	ComponentLayoutStyleEnum,
-	IOrganization,
-	ITimeOffPolicy
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
@@ -26,7 +18,6 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '../../../@core/utils/smart-table';
 import { EmployeeWithLinksComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,7 +27,6 @@ import { EmployeeWithLinksComponent } from '../../../@shared/table-components';
 	styleUrls: ['./time-off-settings.component.scss']
 })
 export class TimeOffSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	smartTableSettings: object;
 	selectedPolicy: ITimeOffPolicy;
 	smartTableSource: ServerDataSource;
@@ -85,15 +75,16 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 			)
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
-		storeOrganization$.pipe(
-			debounceTime(100),
-			filter((organization) => !!organization),
-			distinctUntilChange(),
-			tap((organization) => (this.organization = organization)),
-			tap(() => this._refresh$.next(true)),
-			tap(() => this.timeOffPolicies$.next(true)),
-			untilDestroyed(this)
-		)
+		storeOrganization$
+			.pipe(
+				debounceTime(100),
+				filter((organization) => !!organization),
+				distinctUntilChange(),
+				tap((organization) => (this.organization = organization)),
+				tap(() => this._refresh$.next(true)),
+				tap(() => this.timeOffPolicies$.next(true)),
+				untilDestroyed(this)
+			)
 			.subscribe();
 		this._refresh$
 			.pipe(
@@ -106,9 +97,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	setView() {
@@ -117,16 +106,10 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => this.timeOffPolicies = []),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => (this.timeOffPolicies = [])),
 				tap(() => this.timeOffPolicies$.next(true)),
 				untilDestroyed(this)
 			)
@@ -214,7 +197,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 		// Check if a valid policy is provided
 		if (policy) {
 			// Add the policy using timeOffService
-			this.timeOffService.createPolicy(policy)
+			this.timeOffService
+				.createPolicy(policy)
 				.pipe(
 					// Take the first emitted value and automatically unsubscribe when the component is destroyed
 					first(),
@@ -282,7 +266,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 		const selectedPolicyId = this.selectedPolicy.id;
 
 		// Update the policy using timeOffService
-		this.timeOffService.updatePolicy(selectedPolicyId, policy)
+		this.timeOffService
+			.updatePolicy(selectedPolicyId, policy)
 			.pipe(
 				// Take the first emitted value and automatically unsubscribe when the component is destroyed
 				first(),
@@ -307,7 +292,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	 * Opens a confirmation dialog for deleting a time-off policy.
 	 * If a specific policy is provided, it selects the policy.
 	 * After the dialog is closed, it checks the result and proceeds to delete the policy if confirmed.
-	*/
+	 */
 	openDeletePolicyDialog(selectedItem?: ITimeOffPolicy): void {
 		// If a specific policy is provided, select the policy
 		if (selectedItem) {
@@ -347,7 +332,8 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 		}
 
 		// Delete the policy using timeOffService
-		this.timeOffService.deletePolicy(this.selectedPolicy.id)
+		this.timeOffService
+			.deletePolicy(this.selectedPolicy.id)
 			.pipe(
 				// Take the first emitted value and automatically unsubscribe when the component is destroyed
 				first(),
@@ -367,7 +353,6 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 				error: (error) => this.errorHandler.handleError(error)
 			});
 	}
-
 
 	/**
 	 * Handles the selection of a time-off policy.
@@ -508,5 +493,5 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }
