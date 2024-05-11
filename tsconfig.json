@@ -28,10 +28,9 @@
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
 			"swiper_angular": ["./node_modules/swiper/angular"],
-			"@gauzy/core-ui": ["packages/core-ui/src/lib/public_api"],
-			"@gauzy/plugins/job-search-ui": ["packages/plugins/job-search-ui/src/public_api"],
 			"@gauzy/ui-sdk": ["./packages/ui-sdk"],
-			"@gauzy/ui-sdk/*": ["./packages/ui-sdk/*"]
+			"@gauzy/ui-sdk/*": ["./packages/ui-sdk/*"],
+			"@gauzy/plugins/job-search-ui": ["packages/plugins/job-search-ui/src/public_api"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,
