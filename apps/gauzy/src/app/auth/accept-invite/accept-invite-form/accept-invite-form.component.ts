@@ -1,24 +1,8 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnDestroy,
-	OnInit,
-	Output
-} from '@angular/core';
-import {
-	UntypedFormBuilder,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
-import {
-	IInvite,
-	IUserRegistrationInput,
-	ITag,
-	ITenant
-} from '@gauzy/contracts';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { MatchValidator } from '../../../@core/validators';
+import { MatchValidator } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../../@shared/forms';
 import { TranslationBaseComponent } from '../../../@shared/language-base';
 
@@ -27,9 +11,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 	templateUrl: 'accept-invite-form.component.html',
 	styleUrls: ['accept-invite-form.component.scss']
 })
-export class AcceptInviteFormComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class AcceptInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	@Input()
@@ -43,29 +25,20 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 
 	public readonly form: UntypedFormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): UntypedFormGroup {
-		return fb.group({
-			fullName: [self?.invitation?.fullName, Validators.required],
-			password: ['', Validators.compose([
-				Validators.required,
-				Validators.minLength(4)
-			])
-			],
-			repeatPassword: ['', Validators.required],
-			agreeTerms: [false, Validators.requiredTrue]
-		}, {
-			validators: [
-				MatchValidator.mustMatch(
-					'password',
-					'repeatPassword'
-				)
-			]
-		});
+		return fb.group(
+			{
+				fullName: [self?.invitation?.fullName, Validators.required],
+				password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
+				repeatPassword: ['', Validators.required],
+				agreeTerms: [false, Validators.requiredTrue]
+			},
+			{
+				validators: [MatchValidator.mustMatch('password', 'repeatPassword')]
+			}
+		);
 	}
 
-	constructor(
-		private readonly fb: UntypedFormBuilder,
-		public readonly translateService: TranslateService
-	) {
+	constructor(private readonly fb: UntypedFormBuilder, public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -81,12 +54,8 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 			const { fullName, password } = this.form.value;
 			this.submitForm.emit({
 				user: {
-					firstName: fullName
-						? fullName.split(' ').slice(0, -1).join(' ')
-						: null,
-					lastName: fullName
-						? fullName.split(' ').slice(-1).join(' ')
-						: null,
+					firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
+					lastName: fullName ? fullName.split(' ').slice(-1).join(' ') : null,
 					email: this.invitation.email,
 					role: this.invitation.role,
 					tenant: this.tenant,
@@ -97,5 +66,5 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

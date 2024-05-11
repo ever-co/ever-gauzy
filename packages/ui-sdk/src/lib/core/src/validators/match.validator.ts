@@ -22,6 +22,7 @@ export class MatchValidator {
 			} else {
 				matchingControl.setErrors(null);
 			}
+
 			return null;
 		};
 	}

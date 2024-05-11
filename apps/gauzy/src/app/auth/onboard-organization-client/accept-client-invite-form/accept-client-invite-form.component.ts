@@ -1,16 +1,5 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnDestroy,
-	OnInit,
-	Output
-} from '@angular/core';
-import {
-	UntypedFormBuilder,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IInvite,
 	IOrganizationContactRegistrationInput,
@@ -21,7 +10,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { MatchValidator } from '../../../@core/validators';
+import { MatchValidator } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../../@shared/forms';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
 import { OrganizationsMutationComponent } from '../../../@shared/organizations/organizations-mutation/organizations-mutation.component';
@@ -31,10 +20,7 @@ import { OrganizationsMutationComponent } from '../../../@shared/organizations/o
 	templateUrl: 'accept-client-invite-form.component.html',
 	styleUrls: ['accept-client-invite-form.component.scss']
 })
-export class AcceptClientInviteFormComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class AcceptClientInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	@Input()
@@ -51,23 +37,17 @@ export class AcceptClientInviteFormComponent
 
 	public readonly form: UntypedFormGroup = AcceptClientInviteFormComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		return fb.group({
-			fullName: ['', Validators.required],
-			password: ['', Validators.compose([
-				Validators.required,
-				Validators.minLength(4)
-			])
-			],
-			repeatPassword: ['', Validators.required],
-			agreeTerms: [false, Validators.requiredTrue]
-		}, {
-			validators: [
-				MatchValidator.mustMatch(
-					'password',
-					'repeatPassword'
-				)
-			]
-		});
+		return fb.group(
+			{
+				fullName: ['', Validators.required],
+				password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
+				repeatPassword: ['', Validators.required],
+				agreeTerms: [false, Validators.requiredTrue]
+			},
+			{
+				validators: [MatchValidator.mustMatch('password', 'repeatPassword')]
+			}
+		);
 	}
 
 	constructor(
@@ -78,15 +58,13 @@ export class AcceptClientInviteFormComponent
 		super(translateService);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	async addClientOrganization() {
 		this.organizationCreateInput = await firstValueFrom(
-			this.dialogService
-				.open(OrganizationsMutationComponent, {
-					closeOnBackdropClick: false
-				})
-				.onClose
+			this.dialogService.open(OrganizationsMutationComponent, {
+				closeOnBackdropClick: false
+			}).onClose
 		);
 		this.addedOrganization = !!this.organizationCreateInput;
 	}
@@ -99,12 +77,8 @@ export class AcceptClientInviteFormComponent
 			const { fullName, password } = this.form.getRawValue();
 			this.submitForm.emit({
 				user: {
-					firstName: fullName
-						? fullName.split(' ').slice(0, -1).join(' ')
-						: null,
-					lastName: fullName
-						? fullName.split(' ').slice(-1).join(' ')
-						: null,
+					firstName: fullName ? fullName.split(' ').slice(0, -1).join(' ') : null,
+					lastName: fullName ? fullName.split(' ').slice(-1).join(' ') : null,
 					email: this.invitation.email,
 					role: this.invitation.role,
 					tenant: this.tenant,
@@ -116,5 +90,5 @@ export class AcceptClientInviteFormComponent
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

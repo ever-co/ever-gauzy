@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	AfterViewInit,
-	ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +6,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
+import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import * as moment from 'moment';
 import {
 	ITag,
@@ -23,9 +18,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ckEditorConfig } from "../../../@shared/ckeditor.config";
+import { ckEditorConfig } from '../../../@shared/ckeditor.config';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
-import { UrlPatternValidator } from '../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,9 +27,7 @@ import { UrlPatternValidator } from '../../../@core/validators';
 	templateUrl: './proposal-register.component.html',
 	styleUrls: ['././proposal-register.component.scss']
 })
-export class ProposalRegisterComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class ProposalRegisterComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	proposalTemplate: IEmployeeProposalTemplate;
 	proposalTemplateId: IEmployeeProposalTemplate['id'];
 	organization: IOrganization;
@@ -44,29 +36,24 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 	selectedEmployee: IEmployee;
 
 	/*
-	* Payment Mutation Form
-	*/
+	 * Payment Mutation Form
+	 */
 	public form: UntypedFormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: ProposalRegisterComponent
-	): UntypedFormGroup {
-		return fb.group({
-			jobPostUrl: [],
-			valueDate: [
-				self.store.getDateFromOrganizationSettings(),
-				Validators.required
-			],
-			jobPostContent: ['', Validators.required],
-			proposalContent: ['', Validators.required],
-			tags: [],
-			organizationContact: [],
-			employee: []
-		}, {
-			validators: [
-				UrlPatternValidator.websiteUrlValidator('jobPostUrl'),
-			]
-		});
+	static buildForm(fb: UntypedFormBuilder, self: ProposalRegisterComponent): UntypedFormGroup {
+		return fb.group(
+			{
+				jobPostUrl: [],
+				valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+				jobPostContent: ['', Validators.required],
+				proposalContent: ['', Validators.required],
+				tags: [],
+				organizationContact: [],
+				employee: []
+			},
+			{
+				validators: [UrlPatternValidator.websiteUrlValidator('jobPostUrl')]
+			}
+		);
 	}
 
 	constructor(
@@ -88,7 +75,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -152,7 +139,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 			proposalContent,
 			organizationContact,
 			tags = [],
-			employee,
+			employee
 		} = this.form.value; // Extract form values
 
 		if (!employee) {
@@ -187,8 +174,8 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 			this.toastrService.success('NOTES.PROPOSALS.REGISTER_PROPOSAL');
 			this.router.navigate(['/pages/sales/proposals'], {
 				queryParams: {
-					date: moment(valueDate).format('MM-DD-YYYY'),
-				},
+					date: moment(valueDate).format('MM-DD-YYYY')
+				}
 			});
 		} catch (error) {
 			// Handle error cases, show an appropriate message
@@ -216,5 +203,5 @@ export class ProposalRegisterComponent extends TranslationBaseComponent
 		this.form.get('tags').updateValueAndValidity();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
