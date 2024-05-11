@@ -167,12 +167,10 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Put(':id/task') // Endpoint for removing a task from a daily plan
 	async removeTaskFromDailyPlan(
 		@Param('id') planId: IDailyPlan['id'], // Extract the daily plan ID from the URL parameter
-		@Body('taskId') taskId: ITask['id'], // Get the task ID from the request body
-		@Query() params: PaginationParams<DailyPlan> // Additional query parameters
+		@Body() input: IDailyPlanTasksUpdateInput // Data for updating the daily plan
 	): Promise<IDailyPlan> {
-		// Return the updated daily plan
 		// Call the service to remove the task from the daily plan
-		return await this.dailyPlanService.removeTaskFromPlan(planId, taskId, params);
+		return await this.dailyPlanService.removeTaskFromPlan(planId, input);
 	}
 
 	/**

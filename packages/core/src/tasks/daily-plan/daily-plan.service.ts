@@ -196,6 +196,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 				relations: { tasks: true } // Ensure we get the existing tasks
 			});
 
+			if (!dailyPlan) {
+				throw new BadRequestException('Daily plan not found');
+			}
+
 			// Fetch the task to be added
 			const taskToAdd = await this.taskService.findOneByIdString(taskId, {
 				where: { organizationId, tenantId }
@@ -214,54 +218,41 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	/**
 	 * Delete task from a given daily plan
 	 *
-	 * @param {IDailyPlan['id']} planId
-	 * @param {string} taskId
-	 * @param {PaginationParams<DailyPlan>} options
-	 * @memberof DailyPlanService
-	 * @returns
+	 * @param  planId The unique identifier of the daily plan to which the task will be removed.
+	 * @param input - An object containing details about the task to remove, including task ID, employee ID, and organization ID.
+	 * @returns The updated daily plan without the deleted task.
 	 */
-	async removeTaskFromPlan(
-		planId: IDailyPlan['id'],
-		taskId: ITask['id'],
-		options: PaginationParams<DailyPlan>
-	): Promise<IDailyPlan> {
+	async removeTaskFromPlan(planId: IDailyPlan['id'], input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
 		try {
-			const { where } = options;
-			const { organizationId } = where;
-
 			const tenantId = RequestContext.currentTenantId();
-			const currentEmployeeId = RequestContext.currentEmployeeId();
+			const { employeeId, taskId, organizationId } = input;
 
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.setFindOptions({
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+			const dailyPlan = await this.findOneByIdString(planId, {
+				where: {
+					employeeId,
+					tenantId,
+					organizationId
+				},
+				relations: { tasks: true } // Include the existings tasks for the daily plan
 			});
-
-			query.setFindOptions({
-				relations: { tasks: true }
-			});
-
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."id" = :planId`), { planId });
-
-			const dailyPlan = await query.getOne();
 
 			if (!dailyPlan) {
 				throw new BadRequestException('Daily plan not found');
 			}
 
+			// Get task to be removed
+			const taskToRemove = await this.taskService.findOneByIdString(taskId, {
+				where: { organizationId, tenantId }
+			});
+
+			if (!taskToRemove) {
+				throw new BadRequestException('The task to remove not found');
+			}
+			// Remove the task form the daily plan's tasks array
 			const { tasks } = dailyPlan;
 			dailyPlan.tasks = tasks.filter((task) => task.id !== taskId);
 
+			// Save and return the updated daily plan
 			return await this.save(dailyPlan);
 		} catch (error) {
 			throw new BadRequestException(error);
