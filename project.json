@@ -6,6 +6,9 @@
 			"tags": [],
 			"implicitDependencies": ["gauzy"]
 		},
+		"@gauzy/ui-sdk": {
+			"tags": []
+		},
 		"gauzy": {
 			"tags": []
 		},

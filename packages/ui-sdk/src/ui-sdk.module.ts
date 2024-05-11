@@ -9,4 +9,8 @@ import { UiSdkComponent } from './ui-sdk.component';
 	exports: [UiSdkComponent],
 	providers: []
 })
-export class UiSdkModule {}
+export class UiSdkModule {
+	constructor() {
+		alert('Import Ui Sdk module in the AppModule only');
+	}
+}
