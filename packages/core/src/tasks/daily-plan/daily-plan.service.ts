@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, SelectQueryBuilder, UpdateResult } from 'typeorm';
+import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	IDailyPlan,
 	IDailyPlanCreateInput,
 	IDailyPlanTasksUpdateInput,
+	IDailyPlanUpdateInput,
 	IEmployee,
 	IPagination,
 	ITask
@@ -260,32 +261,43 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * @description UPDATE Daily plan
+	 * UPDATE Daily plan
 	 *
-	 * @param {IDailyPlan['id']} id
-	 * @param {DeepPartial<IDailyPlan>} partialEntity
-	 * @returns
+	 * @param id - The unique identifier of the daily plan to be updated.
+	 * @param partialEntity - An object with data to update, including organization ID and employee ID.
+	 * @returns The updated daily plan including related tasks.
 	 * @memberof DailyPlanService
 	 */
 	async updateDailyPlan(
 		id: IDailyPlan['id'],
-		partialEntity: DeepPartial<IDailyPlan>
+		partialEntity: IDailyPlanUpdateInput
 	): Promise<IDailyPlan | UpdateResult> {
 		try {
-			const currentEmployeeId = RequestContext.currentEmployeeId();
+			const { employeeId, organizationId } = partialEntity;
+
+			// Get the tenant ID from the current Request
 			const currentTenantId = RequestContext.currentTenantId();
 
-			const dailyPlan = await this.findOneByWhereOptions({
-				id,
-				employeeId: currentEmployeeId,
-				tenantId: currentTenantId
+			// Fetch the daily plan to update
+			const dailyPlan = await this.findOneByIdString(id, {
+				where: {
+					employeeId,
+					tenantId: currentTenantId,
+					organizationId
+				},
+				relations: { tasks: true }
 			});
 
 			if (!dailyPlan) {
 				throw new BadRequestException('Daily plan not found');
 			}
-
-			return await this.update(id, partialEntity);
+			// Return the updated daily plan
+			const updatedDailyPlan = await this.typeOrmRepository.preload({
+				id,
+				...partialEntity,
+				tasks: dailyPlan.tasks
+			});
+			return await this.save(updatedDailyPlan);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
@@ -299,24 +311,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @memberof DailyPlanService
 	 */
 	async deletePlan(planId: IDailyPlan['id']) {
-		try {
-			const tenantId = RequestContext.currentTenantId();
-			const currentEmployeeId = RequestContext.currentEmployeeId();
-
-			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId: currentEmployeeId });
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-			query.andWhere(p(`"${query.alias}".id = :planId`), { planId });
-			const dailyPlan = await query.getOne();
-
-			if (!dailyPlan) {
-				throw new BadRequestException('Daily plan not found');
-			}
-
-			return await super.delete(planId);
-		} catch (error) {
-			throw new BadRequestException(error);
-		}
+		return await super.delete(planId);
 	}
 
 	/**

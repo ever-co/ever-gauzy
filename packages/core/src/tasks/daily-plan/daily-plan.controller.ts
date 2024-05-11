@@ -199,8 +199,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 
 	/**
 	 * CREATE Daily Plan
-	 * @param entity
-	 * @param options
+	 * @param entity Data to create or update the DailyPlan
 	 */
 
 	@ApiOperation({ summary: 'Create new Daily Plan' })
@@ -221,9 +220,9 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 
 	/**
 	 * UPDATE Daily Plan
-	 * @param {UpdateDailyPlanDTO} entity
-	 * @param {IDailyPlan['id']} id
-	 * @return {*}  {(Promise<IDailyPlan | UpdateResult>)}
+	 * @param entity - An object with data to update.
+	 * @param id - The ID of the daily plan from which a task will be removed.
+	 * @returns the updated daily plan or the update result from typeorm
 	 * @memberof DailyPlanController
 	 */
 	@ApiOperation({
