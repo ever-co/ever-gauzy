@@ -181,7 +181,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:ng-packagr",
 					"options": {
-						"project": "packages/ui-sdk/ng-package.json"
+						"project": "packages/ui-sdk/src/lib/ng-package.json"
 					},
 					"configurations": {
 						"production": {
