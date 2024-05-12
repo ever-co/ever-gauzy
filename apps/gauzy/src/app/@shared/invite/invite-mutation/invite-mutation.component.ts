@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmailInviteFormComponent } from '../forms';
-import { TranslationBaseComponent } from '../../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	OrganizationContactService,
 	OrganizationDepartmentsService,
@@ -29,12 +29,10 @@ import {
 	templateUrl: './invite-mutation.component.html',
 	styleUrls: ['./invite-mutation.component.scss']
 })
-export class InviteMutationComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class InviteMutationComponent extends TranslationBaseComponent implements OnInit {
 	/*
-	* Getter & Setter for InvitationTypeEnum
-	*/
+	 * Getter & Setter for InvitationTypeEnum
+	 */
 	_invitationType: InvitationTypeEnum;
 	get invitationType(): InvitationTypeEnum {
 		return this._invitationType;
@@ -70,7 +68,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.loadOrganizationData()),
 				untilDestroyed(this)
 			)
@@ -85,7 +83,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 			await this.loadProjects();
 			await this.loadOrganizationContacts();
 			await this.loadDepartments();
-			await this.getOrganizationTeams()
+			await this.getOrganizationTeams();
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
@@ -95,10 +93,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationProjectsService.getAll(
-			[],
-			{ organizationId, tenantId }
-		);
+		const { items = [] } = await this.organizationProjectsService.getAll([], { organizationId, tenantId });
 		this.organizationProjects = items;
 	}
 
@@ -106,10 +101,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationContactService.getAll(
-			[],
-			{ organizationId, tenantId }
-		);
+		const { items = [] } = await this.organizationContactService.getAll([], { organizationId, tenantId });
 		this.organizationContacts = items;
 	}
 
@@ -117,10 +109,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationDepartmentsService.getAll(
-			[],
-			{ organizationId, tenantId }
-		);
+		const { items = [] } = await this.organizationDepartmentsService.getAll([], { organizationId, tenantId });
 		this.organizationDepartments = items;
 	}
 
@@ -131,10 +120,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationTeamsService.getAll(
-			[],
-			{ organizationId, tenantId }
-		);
+		const { items = [] } = await this.organizationTeamsService.getAll([], { organizationId, tenantId });
 		this.organizationTeams = items;
 	}
 
@@ -144,11 +130,7 @@ export class InviteMutationComponent extends TranslationBaseComponent
 
 	async add() {
 		try {
-			const {
-				items,
-				total,
-				ignored
-			} = await this.emailInviteForm.saveInvites();
+			const { items, total, ignored } = await this.emailInviteForm.saveInvites();
 
 			if (ignored > 0) {
 				this.toastrService.warning('INVITE_PAGE.IGNORED', {

@@ -8,6 +8,7 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
 import * as moment from 'moment';
 import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	ITag,
 	IOrganization,
@@ -17,8 +18,7 @@ import {
 	ISelectedEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import { ckEditorConfig } from '../../../@shared/ckeditor.config';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

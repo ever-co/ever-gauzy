@@ -26,7 +26,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 

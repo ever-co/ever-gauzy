@@ -1,12 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	EventEmitter,
-	Input,
-	OnDestroy,
-	OnInit,
-	Output,
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -14,12 +6,12 @@ import {
 	ITask,
 	ITaskStatus,
 	ITaskStatusFindInput,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { NbMenuService } from '@nebular/theme';
 import { filter, map, takeUntil, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, Subject } from 'rxjs';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, TaskStatusesService } from '../../../../../../../@core';
@@ -30,12 +22,9 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 @Component({
 	selector: 'ga-sprint-task',
 	templateUrl: './task.component.html',
-	styleUrls: ['./task.component.scss'],
+	styleUrls: ['./task.component.scss']
 })
-export class SprintTaskComponent
-	extends TranslationBaseComponent
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class SprintTaskComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, OnDestroy {
 	private onDestroy$ = new Subject<void>();
 	private subject$: Subject<boolean> = new Subject();
 	private organization: IOrganization;
@@ -46,8 +35,7 @@ export class SprintTaskComponent
 		action: string;
 		task: ITask;
 	}> = new EventEmitter();
-	@Output() changeStatusEvent: EventEmitter<Partial<ITask>> =
-		new EventEmitter();
+	@Output() changeStatusEvent: EventEmitter<Partial<ITask>> = new EventEmitter();
 	taskStatusList: any;
 	taskActions: any;
 	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
@@ -72,12 +60,12 @@ export class SprintTaskComponent
 		this.taskActions = [
 			{
 				title: this.getTranslation('TASKS_PAGE.EDIT_TASK'),
-				action: 'EDIT_TASK',
+				action: 'EDIT_TASK'
 			},
 			{
 				title: this.getTranslation('TASKS_PAGE.DELETE_TASK'),
-				action: 'DELETE_TASK',
-			},
+				action: 'DELETE_TASK'
+			}
 		];
 
 		this.taskStatusList = this.getStatusList(this.task.status);
@@ -95,13 +83,13 @@ export class SprintTaskComponent
 							this.changeStatusEvent.emit({
 								status: item.title,
 								id: this.task.id,
-								title: this.task.title,
+								title: this.task.title
 							});
 							break;
 						case 'updateTask':
 							this.taskActionEvent.emit({
 								action: item.action,
-								task: this.task,
+								task: this.task
 							});
 					}
 				}),
@@ -155,14 +143,12 @@ export class SprintTaskComponent
 				organizationId,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			})
 			.pipe(
-				map(({ items, total }: IPagination<ITaskStatus>) =>
-					total > 0 ? items : this.taskStatusList
-				),
+				map(({ items, total }: IPagination<ITaskStatus>) => (total > 0 ? items : this.taskStatusList)),
 				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
 				untilDestroyed(this)
 			)
@@ -174,12 +160,12 @@ export class SprintTaskComponent
 			status: taskStatus.name as TaskStatusEnum,
 			id: this.task.id,
 			title: this.task.title,
-			taskStatus,
+			taskStatus
 		});
 		this.task = {
 			...this.task,
 			taskStatus,
-			status: taskStatus.name as TaskStatusEnum,
+			status: taskStatus.name as TaskStatusEnum
 		};
 	}
 

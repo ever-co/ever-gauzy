@@ -8,19 +8,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './edit-organization.component.html',
-	styleUrls: [
-		'./edit-organization.component.scss',
-		'../../dashboard/dashboard.component.scss'
-	]
+	styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss']
 })
-export class EditOrganizationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	employeesCount: number;
 	public organization: IOrganization;
 
@@ -41,15 +36,9 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
-				tap(
-					({ employeesCount }) =>
-						(this.employeesCount = employeesCount)
-				),
+				tap(({ employeesCount }) => (this.employeesCount = employeesCount)),
 				map(({ organization }) => organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -62,7 +51,8 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 				debounceTime(200),
 				distinctUntilChange(),
 				tap((organization: IOrganization) => {
-					this.router.navigate(['/pages/organizations/edit',
+					this.router.navigate([
+						'/pages/organizations/edit',
 						organization.id,
 						this.route.firstChild.snapshot.routeConfig.path
 					]);
@@ -91,5 +81,5 @@ export class EditOrganizationComponent extends TranslationBaseComponent
 		window.open(externalUrl, '_blank');
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

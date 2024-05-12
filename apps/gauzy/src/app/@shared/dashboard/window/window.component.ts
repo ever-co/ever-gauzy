@@ -1,17 +1,9 @@
-import {
-	AfterViewInit,
-	Component,
-	ElementRef,
-	Input,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { filter, tap } from 'rxjs/operators';
-import { GuiDrag } from '../interfaces/gui-drag.abstract';
+import { GuiDrag } from '@gauzy/ui-sdk/shared';
 import { WindowService } from './window.service';
 
 @UntilDestroy({ checkProperties: true })
@@ -20,10 +12,7 @@ import { WindowService } from './window.service';
 	templateUrl: './window.component.html',
 	styleUrls: ['./window.component.scss']
 })
-export class WindowComponent
-	extends GuiDrag
-	implements OnInit, AfterViewInit, OnDestroy
-{
+export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
 	private _windowDragEnded: Observable<any>;
 	@ViewChild(NbPopoverDirective)
 	private _windowPopover: NbPopoverDirective;

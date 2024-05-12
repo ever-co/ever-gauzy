@@ -5,7 +5,7 @@ import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { monthNames } from '@gauzy/ui-sdk/core';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-employee-stacked-bar-chart',

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'issue-title-description',
@@ -8,13 +8,10 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	styleUrls: ['./issue-title-description.component.scss']
 })
 export class GithubIssueTitleDescriptionComponent extends TranslationBaseComponent {
-
 	@Input() rowData: any;
 	@Input() value: string | number;
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 

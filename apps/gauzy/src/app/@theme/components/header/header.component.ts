@@ -37,7 +37,7 @@ import {
 } from '../../../@core/services';
 import { DEFAULT_SELECTOR_VISIBILITY, ISelectorVisibility, SelectorBuilderService } from '../../../@core/services';
 import { LayoutService } from '../../../@core/services/layout.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
 

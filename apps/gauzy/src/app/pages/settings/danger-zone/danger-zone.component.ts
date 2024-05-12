@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
 import { environment } from '../../../../environments/environment';
 import { Environment } from '../../../../environments/model';
@@ -16,10 +16,7 @@ import { Store, ToastrService, UsersService } from '../../../@core/services';
 	selector: 'ga-danger-zone',
 	templateUrl: './danger-zone.component.html'
 })
-export class DangerZoneComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-
+export class DangerZoneComponent extends TranslationBaseComponent implements OnInit {
 	environment: Environment = environment;
 	user: IUser;
 	loading: boolean;
@@ -40,37 +37,23 @@ export class DangerZoneComponent
 		this.dialogService
 			.open(DangerZoneMutationComponent, {
 				context: {
-					recordType: this.getTranslation(
-						'NOTES.DANGER_ZONE.TITLES.ACCOUNT'
-					),
-					title: this.getTranslation(
-						'FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT'
-					)
+					recordType: this.getTranslation('NOTES.DANGER_ZONE.TITLES.ACCOUNT'),
+					title: this.getTranslation('FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT')
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					try {
 						await this.userService
 							.getUserById(this.store.userId)
 							.then((user) => {
-								this.userService.delete(
-									this.store.userId,
-									data.user
-								);
+								this.userService.delete(this.store.userId, data.user);
 
 								this.toastrService.success(
-									this.getTranslation(
-										'NOTES.DANGER_ZONE.ACCOUNT_DELETED',
-										{
-											username:
-												user.firstName +
-												' ' +
-												user.lastName
-										}
-									)
+									this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
+										username: user.firstName + ' ' + user.lastName
+									})
 								);
 							})
 							.then(() => {
@@ -80,10 +63,9 @@ export class DangerZoneComponent
 							});
 					} catch (error) {
 						this.toastrService.danger(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.DATA_ERROR',
-								{ error: error.error.message || error.message }
-							)
+							this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
+								error: error.error.message || error.message
+							})
 						);
 					}
 				}
@@ -103,23 +85,22 @@ export class DangerZoneComponent
 		this.dialogService
 			.open(DangerZoneMutationComponent, {
 				context: {
-					recordType: this.getTranslation(
-						'NOTES.DANGER_ZONE.TITLES.ALL_DATA'
-					),
-					title: this.getTranslation(
-						'FORM.DELETE_CONFIRMATION.REMOVE_ALL_DATA'
-					)
+					recordType: this.getTranslation('NOTES.DANGER_ZONE.TITLES.ALL_DATA'),
+					title: this.getTranslation('FORM.DELETE_CONFIRMATION.REMOVE_ALL_DATA')
 				}
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					try {
 						this.loading = true;
 						this.process = 0;
-						setTimeout(() => { this.process = 20; }, 200);
-						setTimeout(() => { this.process = 50; }, 200);
+						setTimeout(() => {
+							this.process = 20;
+						}, 200);
+						setTimeout(() => {
+							this.process = 50;
+						}, 200);
 
 						this.userService
 							.deleteAllData()
@@ -130,27 +111,27 @@ export class DangerZoneComponent
 									this.store.selectedEmployee = null;
 
 									this.toastrService.success(
-										this.getTranslation(
-											'NOTES.DANGER_ZONE.ALL_DATA_DELETED',
-										)
+										this.getTranslation('NOTES.DANGER_ZONE.ALL_DATA_DELETED')
 									);
 								}
-								this.process = 80
-								setTimeout(() => { this.process = 100 }, 200);
-							}).finally(() => {
+								this.process = 80;
+								setTimeout(() => {
+									this.process = 100;
+								}, 200);
+							})
+							.finally(() => {
 								this.loading = false;
 							});
 					} catch (error) {
 						this.toastrService.danger(
-							this.getTranslation(
-								'NOTES.ORGANIZATIONS.DATA_ERROR',
-								{ error: error.error.message || error.message }
-							)
+							this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
+								error: error.error.message || error.message
+							})
 						);
 					}
 				}
 			});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

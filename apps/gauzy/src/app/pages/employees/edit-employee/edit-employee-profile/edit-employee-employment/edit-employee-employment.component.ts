@@ -15,6 +15,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeLevelService,
 	EmployeeStore,
@@ -24,7 +25,6 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { ckEditorConfig } from "../../../../../@shared/ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +33,6 @@ import { ckEditorConfig } from "../../../../../@shared/ckeditor.config";
 	styleUrls: ['./edit-employee-employment.component.scss']
 })
 export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
-
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 	employmentTypes: IOrganizationEmploymentType[] = [];
@@ -42,9 +41,8 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 	positions: IOrganizationPosition[] = [];
 	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
-		height: "200"
+		height: '200'
 	};
-
 
 	public form: UntypedFormGroup = EditEmployeeEmploymentComponent.buildForm(this.fb);
 	/**
@@ -57,15 +55,15 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		// Create a new form group with a collection of form controls, all initialized to empty arrays.
 		const form = fb.group({
 			organizationEmploymentTypes: [], // Employment types within an organization.
-			employeeLevel: [],              // Levels of employees.
-			anonymousBonus: [],             // Anonymous bonuses for employees.
-			organizationDepartments: [],    // Organization's departments.
-			organizationPosition: [],       // Positions within an organization.
-			tags: [],                       // Tags for categorization.
-			skills: [],                     // Skills required or obtained.
-			short_description: [],          // A brief description.
-			description: [],                // A detailed description.
-			startedWorkOn: []               // Date when work started.
+			employeeLevel: [], // Levels of employees.
+			anonymousBonus: [], // Anonymous bonuses for employees.
+			organizationDepartments: [], // Organization's departments.
+			organizationPosition: [], // Positions within an organization.
+			tags: [], // Tags for categorization.
+			skills: [], // Skills required or obtained.
+			short_description: [], // A brief description.
+			description: [], // A detailed description.
+			startedWorkOn: [] // Date when work started.
 		});
 		// Return the constructed form group.
 		return form;
@@ -80,7 +78,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		private readonly organizationDepartmentsService: OrganizationDepartmentsService,
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypesService
-	) { }
+	) {}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -119,7 +117,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		// Fetch departments using the organizationDepartmentsService with provided tenant and organization IDs
 		const { items } = await this.organizationDepartmentsService.getAll([], {
 			tenantId,
-			organizationId,
+			organizationId
 		});
 
 		// Store the fetched list of departments in the class-level property
@@ -137,7 +135,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		// Fetch positions from the organizationPositionsService with the given tenant and organization IDs
 		const { items } = await this.organizationPositionsService.getAll({
 			tenantId,
-			organizationId,
+			organizationId
 		});
 
 		// Store the retrieved positions in the class-level property
@@ -155,7 +153,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		this.organizationEmploymentTypeService
 			.getAll([], {
 				tenantId,
-				organizationId,
+				organizationId
 			})
 			.pipe(untilDestroyed(this)) // Ensure the subscription is destroyed when the component is destroyed
 			.subscribe((types) => {
@@ -175,7 +173,7 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 		// Fetch employee levels using the employeeLevelService with provided tenant and organization IDs
 		const { items } = await this.employeeLevelService.getAll([], {
 			tenantId,
-			organizationId,
+			organizationId
 		});
 
 		// Store the fetched employee levels in the class-level property
@@ -237,9 +235,9 @@ export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {
 			skills: employee?.skills || [], // Default to empty array
 			short_description: employee?.short_description, // Could be undefined or null
 			description: employee?.description, // Could be undefined or null
-			startedWorkOn: employee?.startedWorkOn ? new Date(employee.startedWorkOn) : null, // Converts to Date or null
+			startedWorkOn: employee?.startedWorkOn ? new Date(employee.startedWorkOn) : null // Converts to Date or null
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

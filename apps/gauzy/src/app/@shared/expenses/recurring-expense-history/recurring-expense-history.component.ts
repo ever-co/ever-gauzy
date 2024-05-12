@@ -6,7 +6,7 @@ import { monthNames } from '@gauzy/ui-sdk/core';
 import { IOrganization, IRecurringExpenseModel } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { Store } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

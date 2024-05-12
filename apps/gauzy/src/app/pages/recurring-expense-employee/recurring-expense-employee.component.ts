@@ -16,7 +16,7 @@ import {
 	ComponentType
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	DateRangePickerBuilderService,
 	EmployeeRecurringExpenseService,

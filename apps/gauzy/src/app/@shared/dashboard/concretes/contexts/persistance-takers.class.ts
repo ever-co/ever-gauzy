@@ -1,4 +1,4 @@
-import { IPersistance } from '../../interfaces/persistance.interface';
+import { IPersistance } from '@gauzy/ui-sdk/shared';
 import { LayoutPersistance } from './layout-persistance.class';
 
 export class PersistanceTakers {

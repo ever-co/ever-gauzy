@@ -2,19 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	switchMap,
-	tap,
-	catchError,
-	finalize,
-	map
-} from 'rxjs/operators';
+import { switchMap, tap, catchError, finalize, map } from 'rxjs/operators';
 import { IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { Observable, of, firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, HubstaffService, Store, ToastrService } from './../../../../@core/services';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
@@ -26,7 +20,6 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
 	providers: [TitleCasePipe]
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
 	settingsSmartTable: object;
 	organizations$: Observable<IHubstaffOrganization[]>;
 	projects$: Observable<IHubstaffProject[]>;
@@ -62,7 +55,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -79,38 +72,29 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _setTokenAndLoadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
-		this._hubstaffService
-			.getIntegration(this.integrationId)
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this._hubstaffService.getIntegration(this.integrationId).pipe(untilDestroyed(this)).subscribe();
 
-		this.organizations$ = this._hubstaffService
-			.getToken(this.integrationId)
-			.pipe(
-				tap(() => (this.loading = true)),
-				switchMap(() =>
-					this._hubstaffService.getOrganizations(this.integrationId)
-				),
-				tap((organizations) => (this.organizations = organizations)),
-				catchError((error) => {
-					this._errorHandlingService.handleError(error);
-					return of([]);
-				}),
-				finalize(() => (this.loading = false))
-			);
+		this.organizations$ = this._hubstaffService.getToken(this.integrationId).pipe(
+			tap(() => (this.loading = true)),
+			switchMap(() => this._hubstaffService.getOrganizations(this.integrationId)),
+			tap((organizations) => (this.organizations = organizations)),
+			catchError((error) => {
+				this._errorHandlingService.handleError(error);
+				return of([]);
+			}),
+			finalize(() => (this.loading = false))
+		);
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._loadSettingsSmartTable();
-				this._loadActions();
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadSettingsSmartTable();
+			this._loadActions();
+		});
 	}
 
 	private _loadSettingsSmartTable() {
@@ -144,23 +128,19 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	selectOrganization(organization) {
-		this.projects$ = organization
-			? this._fetchProjects(organization)
-			: of([]);
+		this.projects$ = organization ? this._fetchProjects(organization) : of([]);
 	}
 
 	private _fetchProjects(organization) {
 		this.loading = true;
-		return this._hubstaffService
-			.getProjects(organization.id, this.integrationId)
-			.pipe(
-				tap((projects) => (this.projects = projects)),
-				catchError((error) => {
-					this._errorHandlingService.handleError(error);
-					return of([]);
-				}),
-				finalize(() => (this.loading = false))
-			);
+		return this._hubstaffService.getProjects(organization.id, this.integrationId).pipe(
+			tap((projects) => (this.projects = projects)),
+			catchError((error) => {
+				this._errorHandlingService.handleError(error);
+				return of([]);
+			}),
+			finalize(() => (this.loading = false))
+		);
 	}
 
 	selectProject({ selected }) {
@@ -173,17 +153,11 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		}
 		const { id: organizationId } = this.organization;
 		this._hubstaffService
-			.syncProjects(
-				this.selectedProjects,
-				this.integrationId,
-				organizationId
-			)
+			.syncProjects(this.selectedProjects, this.integrationId, organizationId)
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						this.getTranslation(
-							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'
-						),
+						this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_PROJECTS'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
@@ -211,9 +185,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			.pipe(
 				tap((res) => {
 					this._toastrService.success(
-						this.getTranslation(
-							'INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_ENTITIES'
-						),
+						this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_ENTITIES'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
@@ -243,9 +215,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
-						this.getTranslation(
-							'INTEGRATIONS.HUBSTAFF_PAGE.SETTINGS_UPDATED'
-						),
+						this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.SETTINGS_UPDATED'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),

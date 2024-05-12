@@ -4,8 +4,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../language-base';
 import { ImageAssetService, Store } from '../../@core/services';
 
 export interface SelectAssetSettings {
@@ -20,9 +20,7 @@ export interface SelectAssetSettings {
 	templateUrl: './select-asset.component.html',
 	styleUrls: ['./select-asset.component.scss']
 })
-export class SelectAssetComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class SelectAssetComponent extends TranslationBaseComponent implements OnInit {
 	activeImage: IImageAsset;
 	selectedImages: IImageAsset[] = [];
 	loading: boolean = true;
@@ -53,7 +51,7 @@ export class SelectAssetComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getAvailableImages()),
 				untilDestroyed(this)
 			)
@@ -71,7 +69,8 @@ export class SelectAssetComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		await this.imageAssetService.getAll({ tenantId, organizationId })
+		await this.imageAssetService
+			.getAll({ tenantId, organizationId })
 			.then(({ items }) => {
 				this.gallery = items;
 			})
@@ -85,14 +84,10 @@ export class SelectAssetComponent
 
 		switch (this.settings.selectMultiple) {
 			case true:
-				let find = this.selectedImages.find(
-					(el) => el.id === selectedImage.id
-				);
+				let find = this.selectedImages.find((el) => el.id === selectedImage.id);
 
 				if (find) {
-					this.selectedImages = this.selectedImages.filter(
-						(image) => image.id !== selectedImage.id
-					);
+					this.selectedImages = this.selectedImages.filter((image) => image.id !== selectedImage.id);
 				} else {
 					this.selectedImages.push(selectedImage);
 				}
@@ -116,9 +111,7 @@ export class SelectAssetComponent
 	}
 
 	onImageAssetDeleted(imageDeleted: IImageAsset) {
-		this.gallery = this.gallery.filter(
-			(image) => image.id != imageDeleted.id
-		);
+		this.gallery = this.gallery.filter((image) => image.id != imageDeleted.id);
 	}
 
 	setImageStoredEvent() {

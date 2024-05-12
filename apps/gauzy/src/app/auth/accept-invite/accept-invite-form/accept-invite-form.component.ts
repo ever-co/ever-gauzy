@@ -4,7 +4,7 @@ import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts
 import { TranslateService } from '@ngx-translate/core';
 import { MatchValidator } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../../@shared/forms';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-accept-invite-form',

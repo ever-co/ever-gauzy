@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -16,9 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './sync-data-selection.component.html',
 	styleUrls: ['./sync-data-selection.component.scss']
 })
-export class SyncDataSelectionComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class SyncDataSelectionComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	contractsSettings$: Observable<any> = this._us.contractsSettings$;
 	contracts: IEngagement[];
 
@@ -39,11 +37,7 @@ export class SyncDataSelectionComponent
 			.syncDataWithContractRelated(this.contracts)
 			.pipe(
 				tap(() => {
-					this.toastrService.success(
-						this.getTranslation(
-							'INTEGRATIONS.UPWORK_PAGE.CONTRACTS_RELATED_DATA'
-						)
-					);
+					this.toastrService.success(this.getTranslation('INTEGRATIONS.UPWORK_PAGE.CONTRACTS_RELATED_DATA'));
 					this.dialogRef.close();
 				}),
 				catchError((err) => {

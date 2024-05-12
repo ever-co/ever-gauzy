@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { environment } from '@env/environment';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployee,
 	IOrganization,
@@ -33,7 +34,7 @@ import {
 	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
 	ErrorHandlingService,
@@ -46,8 +47,6 @@ import {
 } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 import { FormHelpers } from '../../forms/helpers';
-import { ckEditorConfig } from '../../ckeditor.config';
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-mutation',

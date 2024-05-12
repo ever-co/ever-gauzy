@@ -1,9 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-	IOrganization,
-	IUserOrganizationCreateInput,
-	RolesEnum
-} from '@gauzy/contracts';
+import { IOrganization, IUserOrganizationCreateInput, RolesEnum } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +13,7 @@ import {
 	UsersOrganizationsService,
 	UsersService
 } from '../../../../@core/services';
-import { TranslationBaseComponent } from '../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -26,10 +22,7 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 	templateUrl: './edit-user-organizations.component.html',
 	styleUrls: ['./edit-user-organizations.component.scss']
 })
-export class EditUserOrganizationsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditUserOrganizationsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
 	selectedUserId: string;
 	selectedUserName: string;
@@ -59,8 +52,8 @@ export class EditUserOrganizationsComponent
 		this.subject$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
-				tap(() => this.showAddCard = false),
+				tap(() => (this.loading = true)),
+				tap(() => (this.showAddCard = false)),
 				tap(() => this.loadOrganizations()),
 				untilDestroyed(this)
 			)
@@ -68,7 +61,7 @@ export class EditUserOrganizationsComponent
 		this.route.parent.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => this.paramId = params.id),
+				tap((params) => (this.paramId = params.id)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -77,20 +70,13 @@ export class EditUserOrganizationsComponent
 
 	async addOrg(user: IUserOrganizationCreateInput) {
 		if (user.isActive) {
-			await firstValueFrom(this.userOrganizationsService
-				.create(user)
-			);
+			await firstValueFrom(this.userOrganizationsService.create(user));
 
 			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION',
-					{
-						username: this.selectedUserName,
-						orgname: this.getTranslation(
-							'ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION'
-						)
-					}
-				)
+				this.getTranslation('NOTES.ORGANIZATIONS.ADD_NEW_USER_TO_ORGANIZATION', {
+					username: this.selectedUserName,
+					orgname: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.ADDED_TO_ORGANIZATION')
+				})
 			);
 			this.subject$.next(true);
 		}
@@ -99,20 +85,13 @@ export class EditUserOrganizationsComponent
 	async remove(id: string) {
 		const { tenantId } = this.store.user;
 		const user = await this.usersService.getUserById(this.selectedUserId);
-		const { items } = await this.userOrganizationsService.getAll(
-			['user', 'user.role'],
-			{ tenantId }
-		);
+		const { items } = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
 
 		let counter = 0;
 		let userName: string;
 
 		for (const orgUser of items) {
-			if (
-				orgUser.isActive &&
-				(!orgUser.user.role ||
-					orgUser.user.role.name !== RolesEnum.EMPLOYEE)
-			) {
+			if (orgUser.isActive && (!orgUser.user.role || orgUser.user.role.name !== RolesEnum.EMPLOYEE)) {
 				this.userToRemove = orgUser;
 				userName = orgUser.user.firstName + ' ' + orgUser.user.lastName;
 
@@ -125,28 +104,17 @@ export class EditUserOrganizationsComponent
 			this.dialogService
 				.open(DeleteConfirmationComponent, {
 					context: {
-						recordType:
-							userName +
-							' ' +
-							this.getTranslation(
-								'FORM.DELETE_CONFIRMATION.DELETE_USER'
-							)
+						recordType: userName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.DELETE_USER')
 					}
 				})
 				.onClose.pipe(untilDestroyed(this))
 				.subscribe(async (result) => {
 					if (result) {
 						try {
-							this.usersService.delete(
-								this.userToRemove.user.id,
-								this.userToRemove
-							);
+							this.usersService.delete(this.userToRemove.user.id, this.userToRemove);
 
 							this.toastrService.success(
-								this.getTranslation(
-									'ORGANIZATIONS_PAGE.EDIT.USER_WAS_DELETED',
-									{ name: userName }
-								)
+								this.getTranslation('ORGANIZATIONS_PAGE.EDIT.USER_WAS_DELETED', { name: userName })
 							);
 
 							this.router.navigate(['/pages/users']);
@@ -159,28 +127,17 @@ export class EditUserOrganizationsComponent
 			this.dialogService
 				.open(DeleteConfirmationComponent, {
 					context: {
-						recordType:
-							userName +
-							' ' +
-							this.getTranslation(
-								'FORM.DELETE_CONFIRMATION.USER_RECORD'
-							)
+						recordType: userName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.USER_RECORD')
 					}
 				})
-				.onClose
-				.pipe(untilDestroyed(this))
+				.onClose.pipe(untilDestroyed(this))
 				.subscribe(async (result) => {
 					if (result) {
 						try {
-							await this.userOrganizationsService.removeUserFromOrg(
-								this.orgUserId
-							);
+							await this.userOrganizationsService.removeUserFromOrg(this.orgUserId);
 
 							this.toastrService.success(
-								this.getTranslation(
-									'ORGANIZATIONS_PAGE.EDIT.USER_WAS_REMOVED',
-									{ name: userName }
-								)
+								this.getTranslation('ORGANIZATIONS_PAGE.EDIT.USER_WAS_REMOVED', { name: userName })
 							);
 
 							this.loadOrganizations();
@@ -194,10 +151,7 @@ export class EditUserOrganizationsComponent
 
 	private async loadOrganizations() {
 		const { tenantId } = this.store.user;
-		const users = await this.userOrganizationsService.getAll(
-			['user', 'user.role'],
-			{ tenantId }
-		);
+		const users = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
 
 		const { items } = await this.userOrganizationsService.getAll(['user'], {
 			userId: this.paramId,
@@ -207,19 +161,15 @@ export class EditUserOrganizationsComponent
 		this.selectedUserId = items[0].userId;
 
 		const user = items[0]['user'];
-		this.selectedUserName = (user.name || '');
+		this.selectedUserName = user.name || '';
 
 		const { items: organizations } = await this.organizationsService.getAll({
 			tenantId
 		});
 
-		const includedOrgs = users.items.filter(
-			(item) => item.user.id === items[0].userId
-		);
+		const includedOrgs = users.items.filter((item) => item.user.id === items[0].userId);
 
-		const filtered = organizations.filter(
-			(a) => includedOrgs.filter((b) => b.organizationId === a.id).length
-		);
+		const filtered = organizations.filter((a) => includedOrgs.filter((b) => b.organizationId === a.id).length);
 
 		this.organizations = filtered;
 		this.loading = false;
@@ -229,5 +179,5 @@ export class EditUserOrganizationsComponent
 		this.showAddCard = !this.showAddCard;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

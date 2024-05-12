@@ -19,6 +19,10 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^14.0.0",
+		"ckeditor4-angular": "^5.0.0",
+		"ngx-permissions": "^13.0.1",
 		"tslib": "^2.3.0"
 	},
 	"repository": {

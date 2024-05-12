@@ -7,14 +7,8 @@ import { NbDialogService } from '@nebular/theme';
 import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
-import {
-	EmployeesService,
-	ErrorHandlingService,
-	Store,
-	ToastrService,
-	UsersService
-} from '../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { EmployeesService, ErrorHandlingService, Store, ToastrService, UsersService } from '../../@core/services';
 import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -23,9 +17,7 @@ import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/publ
 	templateUrl: './employee.component.html',
 	styleUrls: ['./employee.component.scss']
 })
-export class EmployeeComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	hasEditPermission$: Observable<boolean>;
 	imageUrl: string;
 	imageUpdateButton: boolean;
@@ -51,26 +43,22 @@ export class EmployeeComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this.organization$ = this.route.data.pipe(
 			map(({ organization }) => organization),
-			tap((organization: IOrganization) => this.organization = organization)
+			tap((organization: IOrganization) => (this.organization = organization))
 		);
 		this.employee$ = this.route.data.pipe(
 			map(({ employee }) => ({
 				...employee,
-				startedWorkOn: employee.startedWorkOn
-					? moment(employee.startedWorkOn).toDate()
-					: undefined
+				startedWorkOn: employee.startedWorkOn ? moment(employee.startedWorkOn).toDate() : undefined
 			})),
 			tap((employee: IEmployee) => (this.imageUrl = employee.user.imageUrl)),
 			tap((employee: IEmployee) => (this.employeeAwards = employee.awards))
 		);
 		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT))
 		);
 	}
 
-	ngAfterViewInit() { }
+	ngAfterViewInit() {}
 
 	updateImageUrl(url: string) {
 		this.imageUrl = url;
@@ -112,40 +100,24 @@ export class EmployeeComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	async handleEmployeeUpdate(
-		employee,
-		{
-			username,
-			email,
-			firstName,
-			lastName,
-			preferredLanguage,
-			...empFormValue
-		}
-	) {
+	async handleEmployeeUpdate(employee, { username, email, firstName, lastName, preferredLanguage, ...empFormValue }) {
 		try {
 			if (!this.organization) {
 				return;
 			}
 			const { id: organizationId, tenantId } = this.organization;
-			const updatedUser: any = await this.userService.update(
-				employee.user.id,
-				{
-					username,
-					email,
-					firstName,
-					lastName,
-					preferredLanguage
-				}
-			);
-			const employeeUpdatedRes = await this.employeeService.update(
-				employee.id,
-				{
-					organizationId,
-					tenantId,
-					...empFormValue
-				}
-			);
+			const updatedUser: any = await this.userService.update(employee.user.id, {
+				username,
+				email,
+				firstName,
+				lastName,
+				preferredLanguage
+			});
+			const employeeUpdatedRes = await this.employeeService.update(employee.id, {
+				organizationId,
+				tenantId,
+				...empFormValue
+			});
 			const updatedEmployee = {
 				...employee,
 				...employeeUpdatedRes,
@@ -154,14 +126,10 @@ export class EmployeeComponent extends TranslationBaseComponent
 				user: {
 					...employee.user,
 					...updatedUser,
-					imageUrl: updatedUser.imageUrl
-						? updatedUser.imageUrl
-						: employee.user.imageUrl
+					imageUrl: updatedUser.imageUrl ? updatedUser.imageUrl : employee.user.imageUrl
 				},
 				startedWorkOn: employeeUpdatedRes.startedWorkOn
-					? moment(new Date(employeeUpdatedRes.startedWorkOn)).format(
-						'MM-DD-YYYY'
-					)
+					? moment(new Date(employeeUpdatedRes.startedWorkOn)).format('MM-DD-YYYY')
 					: employee.startedWorkOn
 			};
 			this.employee$ = of(updatedEmployee);
@@ -175,5 +143,5 @@ export class EmployeeComponent extends TranslationBaseComponent
 		this.toastrService.danger(error, 'Error');
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

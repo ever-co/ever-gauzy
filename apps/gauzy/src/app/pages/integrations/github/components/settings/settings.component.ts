@@ -1,12 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	EventEmitter,
-	Input,
-	OnInit,
-	Output
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { EMPTY, Observable, catchError } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -24,7 +16,7 @@ import {
 	IntegrationEntitySettingServiceStoreService,
 	ToastrService
 } from './../../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy()
 @Component({
@@ -33,7 +25,6 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	styleUrls: ['./settings.component.scss']
 })
 export class GithubSettingsComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
-
 	// Define a public property 'IntegrationEntity' that appears to be an enum.
 	public IntegrationEntity = IntegrationEntity;
 
@@ -42,7 +33,8 @@ export class GithubSettingsComponent extends TranslationBaseComponent implements
 
 	// Define a public property 'entitiesToSync$' of type Observable<IEntitySettingToSync>.
 	// It's initialized with a property from '_integrationsService', possibly an observable.
-	public entitiesToSync$: Observable<IEntitySettingToSync> = this._integrationEntitySettingServiceStoreService.entitiesToSync$;
+	public entitiesToSync$: Observable<IEntitySettingToSync> =
+		this._integrationEntitySettingServiceStoreService.entitiesToSync$;
 
 	// Define a private property to hold the integration tenant
 	private _integration: IIntegrationTenant;
@@ -67,7 +59,7 @@ export class GithubSettingsComponent extends TranslationBaseComponent implements
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
-		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
+		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService
 	) {
 		super(_translateService);
 	}
@@ -97,16 +89,19 @@ export class GithubSettingsComponent extends TranslationBaseComponent implements
 		const { id: integrationId } = this.integration;
 
 		// Fetch entity settings by integration ID and handle the result as an observable
-		this._integrationEntitySettingService.getEntitySettings(integrationId).pipe(
-			// Map the result to the desired format using '_setSettingsValue' function
-			map(({ items }) => this._integrationEntitySettingServiceStoreService.setEntitySettingsValue(items)),
+		this._integrationEntitySettingService
+			.getEntitySettings(integrationId)
+			.pipe(
+				// Map the result to the desired format using '_setSettingsValue' function
+				map(({ items }) => this._integrationEntitySettingServiceStoreService.setEntitySettingsValue(items)),
 
-			// Execute the following code block when the observable completes or errors
-			finalize(() => this.loading = false),
+				// Execute the following code block when the observable completes or errors
+				finalize(() => (this.loading = false)),
 
-			// Automatically unsubscribe when the component is destroyed
-			untilDestroyed(this)
-		).subscribe();
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -126,36 +121,40 @@ export class GithubSettingsComponent extends TranslationBaseComponent implements
 		// Use try-catch for better error handling
 		try {
 			// Retrieve the current settings from the service
-			const { currentValue: settings }: IEntitySettingToSync = this._integrationEntitySettingServiceStoreService.getEntitySettingsValue();
+			const { currentValue: settings }: IEntitySettingToSync =
+				this._integrationEntitySettingServiceStoreService.getEntitySettingsValue();
 
 			// Set the 'loading' flag to true to indicate that data is being loaded
 			this.loading = true;
 
 			// Update entity settings if needed
-			this._integrationEntitySettingService.updateEntitySettings(integrationId, settings).pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				tap(() => {
-					// Display a success message
-					this._toastrService.success(
-						this.getTranslation('INTEGRATIONS.MESSAGE.SETTINGS_UPDATED', {
-							provider: IntegrationEnum.GITHUB
-						}),
-						this.getTranslation('TOASTR.TITLE.SUCCESS')
-					);
-				}),
-				catchError((error) => {
-					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				// Execute the following code block when the observable completes or errors
-				finalize(() => this.loading = false),
-				// Automatically unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			).subscribe()
+			this._integrationEntitySettingService
+				.updateEntitySettings(integrationId, settings)
+				.pipe(
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap(() => {
+						// Display a success message
+						this._toastrService.success(
+							this.getTranslation('INTEGRATIONS.MESSAGE.SETTINGS_UPDATED', {
+								provider: IntegrationEnum.GITHUB
+							}),
+							this.getTranslation('TOASTR.TITLE.SUCCESS')
+						);
+					}),
+					catchError((error) => {
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => (this.loading = false)),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 			// Optionally, you can provide feedback or handle success here
 		} catch (error) {
 			// Handle errors (e.g., display an error message or log the error)

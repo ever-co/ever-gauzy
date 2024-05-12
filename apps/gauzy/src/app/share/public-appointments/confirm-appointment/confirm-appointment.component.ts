@@ -7,16 +7,14 @@ import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { EmployeeAppointmentService, EmployeesService } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './confirm-appointment.component.html'
 })
-export class ConfirmAppointmentComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ConfirmAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = true;
 	employee: IEmployee;
 	appointment: IEmployeeAppointment;
@@ -36,53 +34,38 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.route.params
-			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe(async (params) => {
-				const appointmentId = params.appointmentId;
-				const employeeId = params.id;
-				if (employeeId && appointmentId) {
-					this.loadAppointment(appointmentId, employeeId);
-					const token = await this.employeeAppointmentService.signAppointmentId(
-						appointmentId
-					);
-					this.editLink = `/share/employee/edit-appointment?token=${token}`;
-					this.loading = false;
-				} else {
-					this.router.navigate(['/share/404']);
-				}
-			});
+		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
+			const appointmentId = params.appointmentId;
+			const employeeId = params.id;
+			if (employeeId && appointmentId) {
+				this.loadAppointment(appointmentId, employeeId);
+				const token = await this.employeeAppointmentService.signAppointmentId(appointmentId);
+				this.editLink = `/share/employee/edit-appointment?token=${token}`;
+				this.loading = false;
+			} else {
+				this.router.navigate(['/share/404']);
+			}
+		});
 	}
 
 	async loadAppointment(appointmentId: string, employeeId: string = '') {
-		this.appointment = await firstValueFrom(this.employeeAppointmentService
-			.getById(appointmentId)
-		);
+		this.appointment = await firstValueFrom(this.employeeAppointmentService.getById(appointmentId));
 
 		if (employeeId) {
-			this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
-				employeeId,
-				['user']
-			));
+			this.employee = await firstValueFrom(this.employeeService.getEmployeeById(employeeId, ['user']));
 		}
 
-		this.duration = `${moment(this.appointment.startDateTime).format(
-			'llll'
-		)} - ${moment(this.appointment.endDateTime).format('llll')}`;
+		this.duration = `${moment(this.appointment.startDateTime).format('llll')} - ${moment(
+			this.appointment.endDateTime
+		).format('llll')}`;
 	}
 
 	async cancelAppointment(appointmentId: string) {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: this.getTranslation(
-						'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'
-					),
-					message: this.getTranslation(
-						'APPOINTMENTS_PAGE.ARE_YOU_SURE'
-					),
+					title: this.getTranslation('APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'),
+					message: this.getTranslation('APPOINTMENTS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'
 				}
 			}

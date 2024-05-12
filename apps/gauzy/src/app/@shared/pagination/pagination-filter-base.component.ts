@@ -1,10 +1,10 @@
 import { AfterViewInit, Component } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/common-angular';
 import { Subject } from 'rxjs/internal/Subject';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/common-angular';
 
 export interface IPaginationBase {
 	totalItems?: number;
@@ -17,7 +17,6 @@ export interface IPaginationBase {
 	template: ''
 })
 export class PaginationFilterBaseComponent extends TranslationBaseComponent implements AfterViewInit {
-
 	public activePage: number = 1;
 	public totalItems: number = 0;
 	public itemsPerPage: number = 10;
@@ -60,13 +59,11 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		return this._filters;
 	}
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngAfterViewInit() { }
+	ngAfterViewInit() {}
 
 	/*
 	 * refresh pagination
@@ -89,14 +86,11 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		const fields = filter.field.split('.');
 
 		// Check if the search criteria is not empty or a boolean
-		if (isNotEmpty(filter.search) || 'boolean' === typeof (filter.search)) {
+		if (isNotEmpty(filter.search) || 'boolean' === typeof filter.search) {
 			const search = filter.search;
 
 			// Create an object with nested keys representing the field path and set the search value
-			const keys = fields.reduceRight(
-				(value: string, key: string) => ({ [key]: value }),
-				search
-			);
+			const keys = fields.reduceRight((value: string, key: string) => ({ [key]: value }), search);
 
 			// Update the 'where' property in the 'filters' object with the new keys
 			this.filters = {
@@ -117,7 +111,6 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 			this.subject$.next(true);
 		}
 	}
-
 
 	public onPageChange(selectedPage: number) {
 		this.setPagination({
