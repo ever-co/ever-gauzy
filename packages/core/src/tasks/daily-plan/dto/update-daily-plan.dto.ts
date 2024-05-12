@@ -10,6 +10,6 @@ import { CreateDailyPlanDTO } from './create-daily-plan.dto';
 export class UpdateDailyPlanDTO
 	extends IntersectionType(
 		TenantOrganizationBaseDTO,
-		PartialType(PickType(CreateDailyPlanDTO, ['date', 'workTimePlanned', 'status']))
+		PartialType(PickType(CreateDailyPlanDTO, ['date', 'workTimePlanned', 'status', 'employeeId']))
 	)
 	implements IDailyPlanUpdateInput {}
