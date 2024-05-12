@@ -22,4 +22,8 @@ export interface IDailyPlanCreateInput extends IDailyPlanBase, IRelationalEmploy
 	taskId?: ITask['id'];
 }
 
-export interface IDailyPlanUpdateInput extends Partial<IDailyPlanBase> { }
+export interface IDailyPlanUpdateInput extends Partial<IDailyPlanBase>, Pick<IDailyPlanCreateInput, 'employeeId'> {}
+
+export interface IDailyPlanTasksUpdateInput
+	extends Pick<IDailyPlanCreateInput, 'taskId' | 'employeeId'>,
+		IBasePerTenantAndOrganizationEntityModel {}
