@@ -51,8 +51,14 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 
@@ -226,10 +232,13 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 
 		try {
 			// Loop through the list and update each item's order
-			for (const item of list) {
+			for await (const item of list) {
 				logger.log(`Updating item with ID: ${item.id} to order: ${item.order}`); // Logging operation
+
 				// Update the entity with the new order value
-				await this.update({ id: item.id, isSystem: false }, { order: item.order });
+				if (item.id) {
+					await this.update({ id: item.id, isSystem: false }, { order: item.order });
+				}
 			}
 
 			// Return a success status and the updated list
@@ -237,7 +246,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		} catch (error) {
 			// Handle errors during reordering
 			logger.error('Error during reordering of task statues:', error); // Log the error for debugging
-			throw new BadRequestException('An error occurred while reordering task statues. Please try again.'); // Return error
+			throw new BadRequestException('An error occurred while reordering task statues. Please try again.', error); // Return error
 		}
 	}
 }
