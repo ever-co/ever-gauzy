@@ -208,6 +208,42 @@
 				}
 			}
 		},
+		"@gauzy/job-search-ui-plugin": {
+			"projectType": "library",
+			"root": "packages/plugins/job-search-ui",
+			"sourceRoot": "packages/plugins/job-search-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/job-search-ui/src/lib/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/job-search-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/job-search-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/job-search-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
 		"gauzy-e2e": {
 			"root": "apps/gauzy-e2e",
 			"sourceRoot": "apps/gauzy-e2e/src",
@@ -1059,42 +1095,6 @@
 							]
 						}
 					}
-				}
-			}
-		},
-		"job-search-ui-plugin": {
-			"projectType": "library",
-			"root": "packages/plugins/job-search-ui",
-			"sourceRoot": "packages/plugins/job-search-ui/src",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/plugins/job-search-ui/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/plugins/job-search-ui/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/plugins/job-search-ui/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@angular-devkit/build-angular:karma",
-					"options": {
-						"tsConfig": "packages/plugins/job-search-ui/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"prefix": "ngx",
-					"style": "scss"
 				}
 			}
 		}

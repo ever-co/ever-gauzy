@@ -6,7 +6,5 @@ import { Component } from '@angular/core';
 	styles: []
 })
 export class JobSearchUiComponent {
-    constructor() {
-        console.log('loaded job search ui component');
-    }
+    constructor() {}
 }
