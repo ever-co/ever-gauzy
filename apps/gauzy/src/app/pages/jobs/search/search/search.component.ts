@@ -8,6 +8,7 @@ import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
+import { AtLeastOneFieldValidator } from '@gauzy/ui-sdk/core';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -34,13 +35,11 @@ import {
 } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { DateRangePickerBuilderService, JobService, Store, ToastrService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
-import { AtLeastOneFieldValidator } from './../../../../@core/validators';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,34 +111,36 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		public readonly proposalTemplateService: ProposalTemplateService,
 		private readonly toastrService: ToastrService,
 		private readonly jobService: JobService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 
 		// Creating the observable pipeline
-		this._activatedRoute.data.pipe(
-			filter(({ integration }: Data) => {
-				if (!integration) {
-					this._router.navigate(['/pages/jobs']);
-					return false;
-				}
-				return true; // Continue with the pipeline if integration is found
-			}),
-			// Extracting the 'entitySettings' property from the 'integration_tenant' object in the route's data
-			map(({ integration }: Data) => integration?.entitySettings),
-			// Finding the entity setting related to the specified entity type
-			map((entitySettings: IIntegrationEntitySetting[]) =>
-				entitySettings.find((setting) => setting.entity === IntegrationEntity.JOB_MATCHING)
-			),
-			// Updating the specified component property with the fetched entity setting
-			tap((entity: IIntegrationEntitySetting) => {
-				if (!entity || !entity.sync || !entity.isActive) {
-					this._router.navigate(['/pages/jobs']);
-				}
-			}),
-			// Handling the component lifecycle to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+		this._activatedRoute.data
+			.pipe(
+				filter(({ integration }: Data) => {
+					if (!integration) {
+						this._router.navigate(['/pages/jobs']);
+						return false;
+					}
+					return true; // Continue with the pipeline if integration is found
+				}),
+				// Extracting the 'entitySettings' property from the 'integration_tenant' object in the route's data
+				map(({ integration }: Data) => integration?.entitySettings),
+				// Finding the entity setting related to the specified entity type
+				map((entitySettings: IIntegrationEntitySetting[]) =>
+					entitySettings.find((setting) => setting.entity === IntegrationEntity.JOB_MATCHING)
+				),
+				// Updating the specified component property with the fetched entity setting
+				tap((entity: IIntegrationEntitySetting) => {
+					if (!entity || !entity.sync || !entity.isActive) {
+						this._router.navigate(['/pages/jobs']);
+					}
+				}),
+				// Handling the component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngOnInit(): void {
@@ -455,11 +456,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				applied: true,
 				...(isNotEmpty(this.selectedEmployee)
 					? {
-						employeeId: this.selectedEmployee.id
-					}
+							employeeId: this.selectedEmployee.id
+					  }
 					: {
-						employeeId
-					}),
+							employeeId
+					  }),
 				providerCode,
 				providerJobId
 			};
@@ -526,24 +527,24 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			columns: {
 				...(isEmpty(this.selectedEmployee)
 					? {
-						employee: {
-							title: this.getTranslation('JOBS.EMPLOYEE'),
-							filter: false,
-							width: '15%',
-							type: 'custom',
-							sort: false,
-							renderComponent: EmployeeLinksComponent,
-							componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
-								const employee: IEmployee = cell.getRawValue() as IEmployee;
-								instance.rowData = cell.getRow().getData();
-								instance.value = {
-									name: employee?.user?.name ?? null,
-									imageUrl: employee?.user?.imageUrl ?? null,
-									id: employee?.id ?? null
-								};
-							},
-						}
-					}
+							employee: {
+								title: this.getTranslation('JOBS.EMPLOYEE'),
+								filter: false,
+								width: '15%',
+								type: 'custom',
+								sort: false,
+								renderComponent: EmployeeLinksComponent,
+								componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+									const employee: IEmployee = cell.getRawValue() as IEmployee;
+									instance.rowData = cell.getRow().getData();
+									instance.value = {
+										name: employee?.user?.name ?? null,
+										imageUrl: employee?.user?.imageUrl ?? null,
+										id: employee?.id ?? null
+									};
+								}
+							}
+					  }
 					: {}),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
@@ -616,86 +617,86 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				[
 					...(isNotEmpty(organizationId)
 						? [
-							{
-								field: 'organizationId',
-								search: organizationId
-							},
-							{
-								field: 'tenantId',
-								search: tenantId
-							}
-						]
+								{
+									field: 'organizationId',
+									search: organizationId
+								},
+								{
+									field: 'tenantId',
+									search: tenantId
+								}
+						  ]
 						: []),
 					...(isNotEmpty(this.selectedEmployee)
 						? [
-							{
-								field: 'employeeIds',
-								search: [this.selectedEmployee.id]
-							}
-						]
+								{
+									field: 'employeeIds',
+									search: [this.selectedEmployee.id]
+								}
+						  ]
 						: []),
 
 					...(startDate && endDate
 						? [
-							{
-								field: 'jobDateCreated',
-								search: {
-									between: {
-										lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-										upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+								{
+									field: 'jobDateCreated',
+									search: {
+										between: {
+											lower: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+											upper: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+										}
 									}
 								}
-							}
-						]
+						  ]
 						: []),
 					...(title
 						? [
-							{
-								field: 'title',
-								search: title
-							}
-						]
+								{
+									field: 'title',
+									search: title
+								}
+						  ]
 						: []),
 					...(jobSource
 						? [
-							{
-								field: 'jobSource',
-								search: jobSource
-							}
-						]
+								{
+									field: 'jobSource',
+									search: jobSource
+								}
+						  ]
 						: []),
 					...(jobType
 						? [
-							{
-								field: 'jobType',
-								search: jobType
-							}
-						]
+								{
+									field: 'jobType',
+									search: jobType
+								}
+						  ]
 						: []),
 					...(jobStatus
 						? [
-							{
-								field: 'jobStatus',
-								search: jobStatus
-							}
-						]
+								{
+									field: 'jobStatus',
+									search: jobStatus
+								}
+						  ]
 						: []),
 					...(budget
 						? [
-							{
-								field: 'budget',
-								search: budget
-							}
-						]
+								{
+									field: 'budget',
+									search: budget
+								}
+						  ]
 						: []),
 					// Get only fresh jobs (not applied yet)
 					...(true
 						? [
-							{
-								field: 'isApplied',
-								search: 'false'
-							}
-						]
+								{
+									field: 'isApplied',
+									search: 'false'
+								}
+						  ]
 						: [])
 				],
 				false
@@ -778,5 +779,5 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		this.jobs$.next(true);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -2,7 +2,7 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IVisibilityJobPostInput } from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'job-title-description-details',
@@ -11,10 +11,7 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	providers: [CurrencyPipe]
 })
 export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent {
-
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 

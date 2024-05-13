@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { AuthService, UserIdService, UsersService } from '../../../../@core/services';
-import { TranslationBaseComponent } from '../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,10 +14,7 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base';
 	templateUrl: './edit-user-data.component.html',
 	styleUrls: ['./edit-user-data.component.scss']
 })
-export class EditUserDataComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditUserDataComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	params: Params;
 	user: IUser;
 
@@ -36,8 +33,8 @@ export class EditUserDataComponent
 		this.route.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => this.params = params),
-				tap((params) => this.userIdService.userId = params.id),
+				tap((params) => (this.params = params)),
+				tap((params) => (this.userIdService.userId = params.id)),
 				tap(() => this.getUserProfile()),
 				untilDestroyed(this)
 			)
@@ -56,9 +53,7 @@ export class EditUserDataComponent
 			/**
 			 * Redirect If Edit Super Admin Without Permission
 			 */
-			const hasSuperAdminRole = await firstValueFrom(
-				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
-			);
+			const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
 			if (!hasSuperAdminRole) {
 				this.router.navigate(['/pages/users']);
 				return;
@@ -67,5 +62,5 @@ export class EditUserDataComponent
 		this.user = user;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

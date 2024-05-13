@@ -6,26 +6,18 @@ import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IProductCategoryTranslated,
-	IOrganization,
-	ComponentLayoutStyleEnum
-} from '@gauzy/contracts';
+import { IProductCategoryTranslated, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import {
-	ProductCategoryService,
-	Store,
-	ToastrService
-} from './../../../../@core/services';
+import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +26,6 @@ import { ServerDataSource } from './../../../../@core/utils/smart-table/server.d
 	styleUrls: ['./product-categories.component.scss']
 })
 export class ProductCategoriesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
-
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -89,9 +80,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, language]) => !!organization && !!language
-				),
+				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(() => this._refresh$.next(true)),
@@ -101,11 +90,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.productCategories = [])),
 				untilDestroyed(this)
@@ -119,15 +104,9 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.productCategories = [])),
 				tap(() => this.categories$.next(true)),
 				untilDestroyed(this)
@@ -156,7 +135,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -186,18 +165,13 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 			return;
 		}
 		try {
-			const dialog = this.dialogService.open(
-				ProductCategoryMutationComponent
-			);
+			const dialog = this.dialogService.open(ProductCategoryMutationComponent);
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				this.toastrService.success(
-					'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
-					{
-						name: productCategory.name
-					}
-				);
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
+					name: productCategory.name
+				});
 				this._refresh$.next(true);
 				this.categories$.next(true);
 			}
@@ -219,30 +193,21 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 
 		try {
 			const editProductCategory = this.selectedProductCategory
-				? await this.productCategoryService.getById(
-					this.selectedProductCategory.id
-				)
+				? await this.productCategoryService.getById(this.selectedProductCategory.id)
 				: null;
 
-			const dialog = this.dialogService.open(
-				ProductCategoryMutationComponent,
-				{
-					context: {
-						productCategory: editProductCategory
-					}
+			const dialog = this.dialogService.open(ProductCategoryMutationComponent, {
+				context: {
+					productCategory: editProductCategory
 				}
-			);
+			});
 			const productCategory = await firstValueFrom(dialog.onClose);
 
 			if (productCategory) {
-				let productCategoryTranslation =
-					productCategory.translations[0];
-				this.toastrService.success(
-					'INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED',
-					{
-						name: productCategoryTranslation?.name
-					}
-				);
+				let productCategoryTranslation = productCategory.translations[0];
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_SAVED', {
+					name: productCategoryTranslation?.name
+				});
 				this._refresh$.next(true);
 				this.categories$.next(true);
 			}
@@ -258,9 +223,7 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
 			if (this.selectedProductCategory) {
@@ -268,12 +231,9 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 				await this.productCategoryService
 					.delete(id)
 					.then(() => {
-						this.toastrService.success(
-							'INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED',
-							{
-								name
-							}
-						);
+						this.toastrService.success('INVENTORY_PAGE.PRODUCT_CATEGORY_DELETED', {
+							name
+						});
 					})
 					.finally(() => {
 						this._refresh$.next(true);
@@ -312,13 +272,8 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 					return Object.assign({}, item);
 				},
 				finalize: () => {
-					if (
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-					) {
-						this.productCategories.push(
-							...this.smartTableSource.getData()
-						);
+					if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+						this.productCategories.push(...this.smartTableSource.getData());
 					}
 					this.setPagination({
 						...this.getPagination(),
@@ -363,5 +318,5 @@ export class ProductCategoriesComponent extends PaginationFilterBaseComponent im
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

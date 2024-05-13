@@ -9,28 +9,13 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
+	"scripts": {
+		"build": "ng build",
+		"test": "ng test",
+		"clean": "rm -rf dist"
 	},
 	"publishConfig": {
 		"access": "restricted"
-	},
-	"scripts": {
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.lib.json"
-	},
-	"peerDependencies": {
-		"@angular/common": "^16.2.12",
-		"@angular/core": "^16.2.12"
-	},
-	"dependencies": {
-		"tslib": "^2.3.0"
 	},
 	"repository": {
 		"type": "git",
@@ -38,6 +23,18 @@
 	},
 	"bugs": {
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"job search",
+		"plugin",
+		"angular",
+		"ui"
+	],
+	"engines": {
+		"node": ">=14.0.0",
+		"npm": ">=6.0.0"
 	},
 	"sideEffects": false
 }

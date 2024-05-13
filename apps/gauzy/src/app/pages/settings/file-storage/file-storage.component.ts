@@ -6,10 +6,17 @@ import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '@env/environment';
-import { FileStorageProviderEnum, HttpStatus, ITenantSetting, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
+import {
+	FileStorageProviderEnum,
+	HttpStatus,
+	ITenantSetting,
+	IUser,
+	PermissionsEnum,
+	SMTPSecureEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { ErrorHandlingService, FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,12 +25,10 @@ import { TranslationBaseComponent } from '../../../@shared/language-base';
 	styleUrls: ['./file-storage.component.scss'],
 	providers: [FileStorageService, TenantService]
 })
-export class FileStorageComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class FileStorageComponent extends TranslationBaseComponent implements OnInit {
 	secureOptions = [
-		{ label: SMTPSecureEnum.TRUE, value: "true" },
-		{ label: SMTPSecureEnum.FALSE, value: "false" }
+		{ label: SMTPSecureEnum.TRUE, value: 'true' },
+		{ label: SMTPSecureEnum.FALSE, value: 'false' }
 	];
 	PermissionsEnum = PermissionsEnum;
 	FileStorageProviderEnum = FileStorageProviderEnum;
@@ -39,7 +44,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const defaultFileStorageProvider = environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum || FileStorageProviderEnum.LOCAL;
+		const defaultFileStorageProvider =
+			(environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL;
 		//
 		const form = fb.group({
 			fileStorageProvider: [defaultFileStorageProvider, Validators.required],
@@ -76,7 +82,7 @@ export class FileStorageComponent extends TranslationBaseComponent
 				cloudinary_api_secret: [],
 				cloudinary_api_secure: ['true'],
 				cloudinary_delivery_url: ['https://res.cloudinary.com']
-			}),
+			})
 		});
 		return form;
 	}
@@ -84,8 +90,8 @@ export class FileStorageComponent extends TranslationBaseComponent
 	public subject$: Subject<boolean> = new Subject();
 
 	/*
-	* Getter for file storage provider
-	*/
+	 * Getter for file storage provider
+	 */
 	get fileStorageProvider() {
 		return this.form.get('fileStorageProvider').value;
 	}
@@ -97,23 +103,21 @@ export class FileStorageComponent extends TranslationBaseComponent
 		private readonly _tenantService: TenantService,
 		private readonly _fileStorageService: FileStorageService,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translate);
 	}
 
 	ngOnInit(): void {
 		combineLatest([
-			this.subject$.pipe(
-				tap(() => this.getSetting())
-			),
+			this.subject$.pipe(tap(() => this.getSetting())),
 			this._store.user$.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this.subject$.next(true))
 			)
-		]).pipe(
-			untilDestroyed(this)
-		).subscribe();
+		])
+			.pipe(untilDestroyed(this))
+			.subscribe();
 	}
 
 	/**
@@ -126,13 +130,16 @@ export class FileStorageComponent extends TranslationBaseComponent
 			this.loading = true; // Set loading state to true while fetching settings
 
 			// Fetch tenant settings
-			const settings = this.settings = await this._tenantService.getSettings();
+			const settings = (this.settings = await this._tenantService.getSettings());
 
 			// Determine the default file storage provider
-			const defaultFileStorageProvider = (environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL;
+			const defaultFileStorageProvider =
+				(environment.FILE_PROVIDER.toUpperCase() as FileStorageProviderEnum) || FileStorageProviderEnum.LOCAL;
 
 			// Update file storage provider based on fetched settings or use the default one
-			const fileStorageProvider = isNotEmpty(settings) ? settings.fileStorageProvider : defaultFileStorageProvider;
+			const fileStorageProvider = isNotEmpty(settings)
+				? settings.fileStorageProvider
+				: defaultFileStorageProvider;
 			this.setFileStorageProvider(fileStorageProvider);
 		} catch (error) {
 			console.error('Error fetching tenant settings:', error); // Log the error

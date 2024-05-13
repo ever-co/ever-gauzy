@@ -5,16 +5,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ActivatedRoute, Params } from '@angular/router';
-import {
-	IImportHistory,
-	ImportTypeEnum,
-	ImportStatusEnum
-} from '@gauzy/contracts';
+import { IImportHistory, ImportTypeEnum, ImportStatusEnum } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { saveAs } from 'file-saver';
 import { environment } from '@env/environment';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX } from '../../../@core/constants';
 import { ImportService, Store } from '../../../@core/services';
 
@@ -24,9 +20,7 @@ import { ImportService, Store } from '../../../@core/services';
 	templateUrl: './import.component.html',
 	styleUrls: ['./import.component.scss']
 })
-export class ImportComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class ImportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	history$: Observable<IImportHistory[]> = this.importService.history$;
 
 	uploader: FileUploader;

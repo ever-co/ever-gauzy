@@ -4,7 +4,7 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ImageAssetService } from '../../../@core/services/image-asset.service';
-import { TranslationBaseComponent } from '../../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 
 @Component({
@@ -12,9 +12,7 @@ import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmatio
 	templateUrl: './img-asset.component.html',
 	styleUrls: ['./img-asset.component.scss']
 })
-export class ImageAssetComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class ImageAssetComponent extends TranslationBaseComponent implements OnInit {
 	@Input()
 	imageAsset: IImageAsset;
 
@@ -26,7 +24,7 @@ export class ImageAssetComponent
 	@Output() imageClicked = new EventEmitter<any>();
 	@Output() assetDeleted = new EventEmitter<any>();
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	constructor(
 		private imageAssetService: ImageAssetService,
@@ -40,9 +38,7 @@ export class ImageAssetComponent
 	get selected() {
 		if (!this.imageAsset || !this.selectedImages) return;
 
-		return this.selectedImages.find(
-			(image) => image.fullUrl == this.imageAsset.fullUrl
-		);
+		return this.selectedImages.find((image) => image.fullUrl == this.imageAsset.fullUrl);
 	}
 
 	onImageClick($event) {
@@ -50,28 +46,21 @@ export class ImageAssetComponent
 	}
 
 	async onDeleteAsset($event) {
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
 			await this.imageAssetService
 				.deleteImageAsset(this.imageAsset)
 				.then(() => {
 					this.toastrService.success(
-						this.getTranslation(
-							'INVENTORY_PAGE.IMAGE_ASSET_DELETED'
-						),
+						this.getTranslation('INVENTORY_PAGE.IMAGE_ASSET_DELETED'),
 						this.imageAsset.name
 					);
 
 					this.assetDeleted.emit(this.imageAsset);
 				})
 				.catch((err) => {
-					this.toastrService.danger(
-						err.error.message || 'Could not delete image',
-						'Error'
-					);
+					this.toastrService.danger(err.error.message || 'Could not delete image', 'Error');
 				});
 		}
 	}

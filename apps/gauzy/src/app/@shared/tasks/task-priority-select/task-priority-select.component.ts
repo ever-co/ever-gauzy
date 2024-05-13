@@ -1,13 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	EventEmitter,
-	forwardRef,
-	Input,
-	OnDestroy,
-	OnInit,
-	Output,
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -19,16 +10,12 @@ import {
 	IPagination,
 	ITaskPriority,
 	ITaskPriorityFindInput,
-	TaskPriorityEnum,
+	TaskPriorityEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	Store,
-	TaskPrioritiesService,
-	ToastrService,
-} from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { Store, TaskPrioritiesService, ToastrService } from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,14 +25,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => TaskPrioritySelectComponent),
-			multi: true,
-		},
-	],
+			multi: true
+		}
+	]
 })
-export class TaskPrioritySelectComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TaskPrioritySelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();
 	/**
 	 * Default global task priorities
@@ -56,25 +40,23 @@ export class TaskPrioritySelectComponent
 	}> = [
 		{
 			name: TaskPriorityEnum.URGENT,
-			value: sluggable(TaskPriorityEnum.URGENT),
+			value: sluggable(TaskPriorityEnum.URGENT)
 		},
 		{
 			name: TaskPriorityEnum.HIGH,
-			value: sluggable(TaskPriorityEnum.HIGH),
+			value: sluggable(TaskPriorityEnum.HIGH)
 		},
 		{
 			name: TaskPriorityEnum.MEDIUM,
-			value: sluggable(TaskPriorityEnum.MEDIUM),
+			value: sluggable(TaskPriorityEnum.MEDIUM)
 		},
 		{
 			name: TaskPriorityEnum.LOW,
-			value: sluggable(TaskPriorityEnum.LOW),
-		},
+			value: sluggable(TaskPriorityEnum.LOW)
+		}
 	];
 	public organization: IOrganization;
-	public priorities$: BehaviorSubject<ITaskPriority[]> = new BehaviorSubject(
-		[]
-	);
+	public priorities$: BehaviorSubject<ITaskPriority[]> = new BehaviorSubject([]);
 	@Output() onChanged = new EventEmitter<ITaskPriority>();
 
 	constructor(
@@ -205,17 +187,13 @@ export class TaskPrioritySelectComponent
 				organizationId,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			})
 			.pipe(
-				map(({ items, total }: IPagination<ITaskPriority>) =>
-					total > 0 ? items : this._priorities
-				),
-				tap((priorities: ITaskPriority[]) =>
-					this.priorities$.next(priorities)
-				),
+				map(({ items, total }: IPagination<ITaskPriority>) => (total > 0 ? items : this._priorities)),
+				tap((priorities: ITaskPriority[]) => this.priorities$.next(priorities)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -241,9 +219,9 @@ export class TaskPrioritySelectComponent
 				name,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			});
 			const priority: ITaskPriority = await firstValueFrom(source);
 			if (priority) {

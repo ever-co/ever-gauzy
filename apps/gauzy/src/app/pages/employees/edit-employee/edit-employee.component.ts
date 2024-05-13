@@ -1,34 +1,23 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
-import {
-	IEmployee,
-	IOrganization,
-	ISelectedEmployee,
-	IUser,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { IEmployee, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-employee',
 	templateUrl: './edit-employee.component.html',
-	styleUrls: [
-		'./edit-employee.component.scss',
-		'../../dashboard/dashboard.component.scss'
-	]
+	styleUrls: ['./edit-employee.component.scss', '../../dashboard/dashboard.component.scss']
 })
-export class EditEmployeeComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class EditEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	organization: IOrganization;
 	selectedEmployee: IEmployee;
 	selectedEmployeeFromHeader: ISelectedEmployee;
@@ -51,10 +40,11 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
-				tap((employee) => this.selectedEmployeeFromHeader = employee),
+				tap((employee) => (this.selectedEmployeeFromHeader = employee)),
 				tap(({ id }) => {
 					this.cdr.detectChanges();
-					this.router.navigate(['/pages/employees/edit',
+					this.router.navigate([
+						'/pages/employees/edit',
 						id,
 						this.route.firstChild.snapshot.routeConfig.path
 					]);
@@ -66,7 +56,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -78,7 +68,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((data) => !!data && !!data.employee),
-				tap(({ employee }) => this.selectedEmployee = employee),
+				tap(({ employee }) => (this.selectedEmployee = employee)),
 				tap(({ employee }) => {
 					try {
 						if (employee.startedWorkOn) {
@@ -110,7 +100,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 				this.store.selectedEmployee = {
 					...this.store.selectedEmployee,
 					imageUrl: imageUrl
-				}
+				};
 			}
 		} catch (error) {
 			console.log('Error while uploading profile avatar', error);
@@ -127,13 +117,15 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			return;
 		}
 		// The call to Location.prepareExternalUrl is the key thing here.
-		let tree = this.router.createUrlTree([`/share/organization/
+		let tree = this.router.createUrlTree([
+			`/share/organization/
 			${this.organization.profile_link}/
 			${this.organization.id}/
 			${this.selectedEmployee.profile_link}/
 			${this.selectedEmployee.id}
-		`]);
-    	// As far as I can tell you don't really need the UrlSerializer.
+		`
+		]);
+		// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');
 	}
@@ -143,9 +135,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent
 			.pipe(
 				filter((user) => !!user),
 				tap((user: IUser) => {
-					if (!!user && this.store.hasPermission(
-						PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					)) {
+					if (!!user && this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 						this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 					}
 				}),

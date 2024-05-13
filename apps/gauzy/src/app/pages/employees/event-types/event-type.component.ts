@@ -1,9 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -21,12 +16,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	ErrorHandlingService,
-	EventTypeService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { ErrorHandlingService, EventTypeService, Store, ToastrService } from '../../../@core/services';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -36,16 +26,14 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
 import { DEFAULT_EVENT_TYPE } from './default-event-type';
-import { ServerDataSource } from '../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './event-type.component.html',
 	styleUrls: ['event-type.component.scss']
 })
-export class EventTypeComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EventTypeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	smartTableSource: ServerDataSource;
 	smartTableSettings: object;
 	localDataSource = new LocalDataSource();
@@ -116,10 +104,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openAddEventTypeDialog()),
 				untilDestroyed(this)
@@ -127,11 +112,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.eventTypes = [])),
 				untilDestroyed(this)
@@ -140,14 +121,9 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	}
 
 	ngAfterViewInit() {
-		if (this.store.user && !this.store.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (this.store.user && !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			delete this.smartTableSettings['columns']['employeeName'];
-			this.smartTableSettings = Object.assign(
-				{},
-				this.smartTableSettings
-			);
+			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
 		}
 	}
 
@@ -157,15 +133,9 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.eventTypes = [])),
 				tap(() => this.eventTypes$.next(true)),
 				untilDestroyed(this)
@@ -241,12 +211,9 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 						} else {
 							await this.eventTypeService.update(id, request);
 						}
-						this.toastrService.success(
-							'NOTES.EVENT_TYPES.EDIT_EVENT_TYPE',
-							{
-								name: title
-							}
-						);
+						this.toastrService.success('NOTES.EVENT_TYPES.EDIT_EVENT_TYPE', {
+							name: title
+						});
 					}
 				} catch (error) {
 					this.errorHandler.handleError(error);
@@ -275,9 +242,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: this.getTranslation(
-						'FORM.DELETE_CONFIRMATION.EVENT_TYPE'
-					)
+					recordType: this.getTranslation('FORM.DELETE_CONFIRMATION.EVENT_TYPE')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
@@ -288,12 +253,9 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 						await this.eventTypeService
 							.delete(this.selectedEventType.id)
 							.then(() => {
-								this.toastrService.success(
-									'NOTES.EVENT_TYPES.DELETE_EVENT_TYPE',
-									{
-										name: title
-									}
-								);
+								this.toastrService.success('NOTES.EVENT_TYPES.DELETE_EVENT_TYPE', {
+									name: title
+								});
 							})
 							.finally(() => {
 								this._refresh$.next(true);
@@ -333,7 +295,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				durationFormat: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EVENT_DURATION'),
@@ -379,26 +341,20 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/event-type/pagination`,
-			relations: [
-				'employee',
-				'employee.user',
-				'tags'
-			],
+			relations: ['employee', 'employee.user', 'tags'],
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-						employeeId: this.selectedEmployeeId
-					}
+							employeeId: this.selectedEmployeeId
+					  }
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (i: IEventType) => {
 				const durationFormat = `${i.duration} ${i.durationUnit}`;
-				const employeeName = i.employee
-					? i.employee.fullName
-					: 'default';
+				const employeeName = i.employee ? i.employee.fullName : 'default';
 
 				return Object.assign({}, i, {
 					active: i.isActive
@@ -444,9 +400,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
-		);
+		return this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID;
 	}
 	/**
 	 * Map default types & organization event types
@@ -456,9 +410,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 	private mapEventTypes() {
 		const data = this.smartTableSource.getData() || [];
 		return data.concat(
-			this.defaultEventTypes.filter(
-				(e) => !data.find((i) => i.durationFormat === e.durationFormat)
-			)
+			this.defaultEventTypes.filter((e) => !data.find((i) => i.durationFormat === e.durationFormat))
 		);
 	}
 
@@ -472,5 +424,5 @@ export class EventTypeComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -1,11 +1,7 @@
 import { Component } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OnInit } from '@angular/core';
-import {
-	IInvoice,
-	InvoiceStatusTypesEnum,
-	IInvoiceItem
-} from '@gauzy/contracts';
+import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -19,9 +15,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './invoice-email-mutation.component.html',
 	styleUrls: ['./invoice-email-mutation.component.scss']
 })
-export class InvoiceEmailMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class InvoiceEmailMutationComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;
 	form: UntypedFormGroup;
 	isEstimate: boolean;
@@ -83,15 +77,13 @@ export class InvoiceEmailMutationComponent
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
 				? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-					name: this.form.value.email
-				})
+						name: this.form.value.email
+				  })
 				: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-					name: this.form.value.email
-				}),
+						name: this.form.value.email
+				  }),
 			invoice: this.createdInvoice ? this.createdInvoice : this.invoice,
-			invoiceId: this.createdInvoice
-				? this.createdInvoice.id
-				: this.invoice.id,
+			invoiceId: this.createdInvoice ? this.createdInvoice.id : this.invoice.id,
 			user: this.store.user,
 			userId: this.store.userId,
 			organization: this.invoice.fromOrganization,

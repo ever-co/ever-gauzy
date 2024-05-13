@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IInvoice } from '@gauzy/contracts';
 import { saveAs } from 'file-saver';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
@@ -66,12 +66,8 @@ export class InvoiceDownloadMutationComponent extends TranslationBaseComponent {
 	async createInvoiceHistory() {
 		await this.invoiceEstimateHistoryService.add({
 			action: this.isEstimate
-				? this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD'
-				  )
-				: this.getTranslation(
-						'INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'
-				  ),
+				? this.getTranslation('INVOICES_PAGE.DOWNLOAD.ESTIMATE_DOWNLOAD')
+				: this.getTranslation('INVOICES_PAGE.DOWNLOAD.INVOICE_DOWNLOAD'),
 			invoice: this.invoice,
 			invoiceId: this.invoice.id,
 			user: this.store.user,

@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbRouteTab } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -14,15 +14,16 @@ import { Store } from './../../../../@core/services';
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss']
 })
-export class TimesheetLayoutComponent extends TranslationBaseComponent
-	implements AfterContentChecked, OnInit, OnDestroy {
-
+export class TimesheetLayoutComponent
+	extends TranslationBaseComponent
+	implements AfterContentChecked, OnInit, OnDestroy
+{
 	public tabs: NbRouteTab[] = [];
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
 		public readonly translateService: TranslateService,
-		private readonly store: Store,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
@@ -42,35 +43,38 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 				PermissionsEnum.TIME_TRACKER,
 				PermissionsEnum.ALL_ORG_EDIT,
 				PermissionsEnum.TIME_TRACKING_DASHBOARD
-			) ? [
-				{
-					title: this.getTranslation('TIMESHEET.DAILY'),
-					responsive: true,
-					route: '/pages/employees/timesheets/daily',
-					queryParamsHandling: 'merge' as QueryParamsHandling
-				},
-				{
-					title: this.getTranslation('TIMESHEET.WEEKLY'),
-					responsive: true,
-					route: '/pages/employees/timesheets/weekly',
-					queryParamsHandling: 'merge' as QueryParamsHandling
-				},
-				{
-					title: this.getTranslation('TIMESHEET.CALENDAR'),
-					responsive: true,
-					route: '/pages/employees/timesheets/calendar',
-					queryParamsHandling: 'merge' as QueryParamsHandling
-				}
-			] : []),
-			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET) ?
-				[
-					{
-						title: this.getTranslation('TIMESHEET.APPROVALS'),
-						responsive: true,
-						route: '/pages/employees/timesheets/approvals',
-						queryParamsHandling: 'merge' as QueryParamsHandling
-					}
-				] : []),
+			)
+				? [
+						{
+							title: this.getTranslation('TIMESHEET.DAILY'),
+							responsive: true,
+							route: '/pages/employees/timesheets/daily',
+							queryParamsHandling: 'merge' as QueryParamsHandling
+						},
+						{
+							title: this.getTranslation('TIMESHEET.WEEKLY'),
+							responsive: true,
+							route: '/pages/employees/timesheets/weekly',
+							queryParamsHandling: 'merge' as QueryParamsHandling
+						},
+						{
+							title: this.getTranslation('TIMESHEET.CALENDAR'),
+							responsive: true,
+							route: '/pages/employees/timesheets/calendar',
+							queryParamsHandling: 'merge' as QueryParamsHandling
+						}
+				  ]
+				: []),
+			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)
+				? [
+						{
+							title: this.getTranslation('TIMESHEET.APPROVALS'),
+							responsive: true,
+							route: '/pages/employees/timesheets/approvals',
+							queryParamsHandling: 'merge' as QueryParamsHandling
+						}
+				  ]
+				: [])
 		];
 	}
 
@@ -86,5 +90,5 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
@@ -23,9 +23,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './edit-kpi.component.html',
 	styleUrls: ['./edit-kpi.component.scss']
 })
-export class EditKpiComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EditKpiComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	kpiForm: UntypedFormGroup;
 	employees: IEmployee[];
 	selectedKPI: IKPI;
@@ -57,10 +55,7 @@ export class EditKpiComponent
 			currentValue: [0],
 			targetValue: [1],
 			lead: ['', Validators.required],
-			operator: [
-				KpiOperatorEnum.GREATER_THAN_EQUAL_TO,
-				Validators.required
-			],
+			operator: [KpiOperatorEnum.GREATER_THAN_EQUAL_TO, Validators.required],
 			unit: [KeyResultNumberUnitsEnum.ITEMS]
 		});
 		const { id: organizationId, tenantId } = this.organization;
@@ -71,11 +66,7 @@ export class EditKpiComponent
 				this.employees = employees.items;
 			});
 		if (!!this.selectedKPI) {
-			if (
-				!this.numberUnitsEnum.find(
-					(unit) => unit === this.selectedKPI.unit
-				)
-			) {
+			if (!this.numberUnitsEnum.find((unit) => unit === this.selectedKPI.unit)) {
 				this.numberUnitsEnum.push(this.selectedKPI.unit);
 			}
 			this.kpiForm.patchValue({
@@ -106,16 +97,12 @@ export class EditKpiComponent
 				}
 			});
 		} else {
-			await this.goalSettingsService
-				.updateKPI(this.selectedKPI.id, kpiData)
-				.then((res) => {
-					if (res) {
-						this.toastrService.success(
-							'TOASTR.MESSAGE.KPI_UPDATED'
-						);
-						this.closeDialog(res);
-					}
-				});
+			await this.goalSettingsService.updateKPI(this.selectedKPI.id, kpiData).then((res) => {
+				if (res) {
+					this.toastrService.success('TOASTR.MESSAGE.KPI_UPDATED');
+					this.closeDialog(res);
+				}
+			});
 		}
 	}
 

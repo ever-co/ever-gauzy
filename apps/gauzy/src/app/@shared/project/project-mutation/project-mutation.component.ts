@@ -1,13 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	EventEmitter,
-	Input,
-	OnInit,
-	Output,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { EMPTY, of, switchMap } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, tap } from 'rxjs/operators';
@@ -17,6 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { environment } from '@env/environment';
+import { CompareDateValidator } from '@gauzy/ui-sdk/core';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployee,
 	IOrganization,
@@ -41,7 +34,7 @@ import {
 	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
 	ErrorHandlingService,
@@ -53,19 +46,14 @@ import {
 	ToastrService
 } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
-import { CompareDateValidator } from '../../../@core/validators';
 import { FormHelpers } from '../../forms/helpers';
-import { ckEditorConfig } from "../../ckeditor.config";
-
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-mutation',
 	templateUrl: './project-mutation.component.html',
 	styleUrls: ['./project-mutation.component.scss']
 })
-export class ProjectMutationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class ProjectMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public OrganizationProjectBudgetTypeEnum = OrganizationProjectBudgetTypeEnum;
 	public TaskListTypeEnum = TaskListTypeEnum;
@@ -83,55 +71,46 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	public loading: boolean;
 
 	/*
-	* Project Mutation Form
-	*/
+	 * Project Mutation Form
+	 */
 	public form: UntypedFormGroup = ProjectMutationComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const form = fb.group({
-			imageUrl: [],
-			imageId: [],
-			tags: [],
-			teams: [],
-			public: [],
-			billable: [],
-			name: [null, Validators.required],
-			organizationContact: [],
-			billing: [ProjectBillingEnum.RATE],
-			currency: [environment.DEFAULT_CURRENCY],
-			startDate: [],
-			endDate: [],
-			owner: [ProjectOwnerEnum.CLIENT],
-			taskListType: [TaskListTypeEnum.GRID],
-			description: [],
-			code: [],
-			color: [],
-			budget: [],
-			budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
-			openSource: [],
-			projectUrl: [
-				null,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			],
-			openSourceProjectUrl: [
-				null,
-				Validators.compose([
-					Validators.pattern(new RegExp(patterns.websiteUrl))
-				])
-			]
-		}, {
-			validators: [
-				CompareDateValidator.validateDate('startDate', 'endDate')
-			]
-		});
+		const form = fb.group(
+			{
+				imageUrl: [],
+				imageId: [],
+				tags: [],
+				teams: [],
+				public: [],
+				billable: [],
+				name: [null, Validators.required],
+				organizationContact: [],
+				billing: [ProjectBillingEnum.RATE],
+				currency: [environment.DEFAULT_CURRENCY],
+				startDate: [],
+				endDate: [],
+				owner: [ProjectOwnerEnum.CLIENT],
+				taskListType: [TaskListTypeEnum.GRID],
+				description: [],
+				code: [],
+				color: [],
+				budget: [],
+				budgetType: [OrganizationProjectBudgetTypeEnum.HOURS],
+				openSource: [],
+				projectUrl: [null, Validators.compose([Validators.pattern(new RegExp(patterns.websiteUrl))])],
+				openSourceProjectUrl: [null, Validators.compose([Validators.pattern(new RegExp(patterns.websiteUrl))])]
+			},
+			{
+				validators: [CompareDateValidator.validateDate('startDate', 'endDate')]
+			}
+		);
 		form.get('teams').setValue([]);
 		return form;
 	}
 
 	/*
-	* Project Setting Mutation Form
-	*/
+	 * Project Setting Mutation Form
+	 */
 
 	public projectSettingForm: UntypedFormGroup = ProjectMutationComponent.buildSettingForm(this._fb);
 	static buildSettingForm(fb: UntypedFormBuilder): UntypedFormGroup {
@@ -147,10 +126,12 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	 * Represents an integration tenant or a boolean value.
 	 */
 	private _integration: IIntegrationTenant | boolean;
-	get integration(): IIntegrationTenant | boolean { // Get the integration tenant or boolean value.
+	get integration(): IIntegrationTenant | boolean {
+		// Get the integration tenant or boolean value.
 		return this._integration;
 	}
-	@Input() set integration(value: IIntegrationTenant | boolean) { // Set the integration tenant or boolean value.
+	@Input() set integration(value: IIntegrationTenant | boolean) {
+		// Set the integration tenant or boolean value.
 		this._integration = value;
 	}
 
@@ -158,10 +139,12 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	 * Represents an organization project.
 	 */
 	private _project: IOrganizationProject;
-	get project(): IOrganizationProject { // Get the organization project.
+	get project(): IOrganizationProject {
+		// Get the organization project.
 		return this._project;
 	}
-	@Input() set project(project: IOrganizationProject) { // Set the organization project.
+	@Input() set project(project: IOrganizationProject) {
+		// Set the organization project.
 		this._project = project;
 	}
 
@@ -186,7 +169,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		private readonly _organizationTeamService: OrganizationTeamsService,
 		private readonly _organizationContactService: OrganizationContactService,
 		private readonly _githubService: GithubService,
-		private readonly _organizationProjectsService: OrganizationProjectsService,
+		private readonly _organizationProjectsService: OrganizationProjectsService
 	) {
 		super(translateService);
 	}
@@ -197,7 +180,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				distinctUntilChange(),
 				debounceTime(100),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._loadDefaultCurrency()),
 				tap(() => this._syncProject()),
 				tap(() => this._getOrganizationContacts()),
@@ -257,10 +240,10 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			tenantId
 		});
 		items.forEach((i) => {
-			this.organizationContacts = uniq([
-				...this.organizationContacts,
-				{ name: i.name, organizationContactId: i.id, id: i.id }
-			], 'id');
+			this.organizationContacts = uniq(
+				[...this.organizationContacts, { name: i.name, organizationContactId: i.id, id: i.id }],
+				'id'
+			);
 		});
 	}
 
@@ -270,23 +253,22 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	 * @returns
 	 */
 	private async _getOrganizationTeams(): Promise<IOrganizationTeam[]> {
-		if (!this.organization || !this._store.hasAnyPermission(
-			PermissionsEnum.ALL_ORG_VIEW,
-			PermissionsEnum.ORG_TEAM_VIEW
-		)) {
+		if (
+			!this.organization ||
+			!this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW)
+		) {
 			return;
 		}
 
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
-		this.teams = (await this._organizationTeamService.getAll(
-			[],
-			{
+		this.teams = (
+			await this._organizationTeamService.getAll([], {
 				organizationId,
 				tenantId
-			}
-		)).items;
+			})
+		).items;
 	}
 
 	changeProjectOwner(owner: ProjectOwnerEnum) {
@@ -307,9 +289,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 		}
 
 		const project: IOrganizationProject = this.project;
-		this.selectedEmployeeIds = project.members.map(
-			(member: IEmployee) => member.id
-		);
+		this.selectedEmployeeIds = project.members.map((member: IEmployee) => member.id);
 
 		this.members = this.selectedEmployeeIds;
 		this.form.patchValue({
@@ -334,8 +314,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			openSource: project.openSource || null,
 			projectUrl: project.projectUrl || null,
 			openSourceProjectUrl: project.openSourceProjectUrl || null,
-			teams: this.project.teams.map((team: IOrganizationTeam) => team.id),
-
+			teams: this.project.teams.map((team: IOrganizationTeam) => team.id)
 		});
 		this.form.updateValueAndValidity();
 
@@ -419,14 +398,17 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 			startDate: startDate,
 			endDate: endDate,
 			members: this.members.map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e),
-			teams: this.form.get('teams').value.map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e),
+			teams: this.form
+				.get('teams')
+				.value.map((id) => this.teams.find((e) => e.id === id))
+				.filter((e) => !!e),
 			// Description Step
 			description: description,
 			tags: tags || [],
 
 			// Billing Step
 			billing: billing,
-			billingFlat: (billing === ProjectBillingEnum.RATE) || (billing === ProjectBillingEnum.FLAT_FEE) ? true : false,
+			billingFlat: billing === ProjectBillingEnum.RATE || billing === ProjectBillingEnum.FLAT_FEE ? true : false,
 			currency: currency,
 
 			// Budget Step
@@ -458,9 +440,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	 * @param name
 	 * @returns
 	 */
-	addNewOrganizationContact = async (
-		name: string
-	): Promise<IOrganizationContact> => {
+	addNewOrganizationContact = async (name: string): Promise<IOrganizationContact> => {
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 
@@ -491,7 +471,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 
 	/**
 	 * Load employees from multiple selected employees
@@ -560,40 +540,43 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				tenantId,
 				integrationId,
 				repository
-			}
+			};
 			// Fetch entity settings by integration ID and handle the result as an observable
-			this._githubService.syncGithubRepository(request).pipe(
-				switchMap(({ id: repositoryId }: IOrganizationGithubRepository) => {
-					return this._organizationProjectsService.updateProjectSetting(projectId, {
-						organizationId,
-						tenantId,
-						repositoryId,
-						...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SYNC_TAG_GAUZY } : {}),
-					});
-				}),
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				tap(() => {
-					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
-						repository: repository.full_name,
-						project: this.project.name
-					});
-				}),
-				catchError((error) => {
-					this._errorHandler.handleError(error);
-					return EMPTY;
-				}),
-				// Execute the following code block when the observable completes or errors
-				finalize(() => {
-					// Set the 'loading' flag to false to indicate that data loading is complete
-					this.loading = false;
-				}),
-				// Automatically unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			).subscribe();
+			this._githubService
+				.syncGithubRepository(request)
+				.pipe(
+					switchMap(({ id: repositoryId }: IOrganizationGithubRepository) => {
+						return this._organizationProjectsService.updateProjectSetting(projectId, {
+							organizationId,
+							tenantId,
+							repositoryId,
+							...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SYNC_TAG_GAUZY } : {})
+						});
+					}),
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap(() => {
+						this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
+							repository: repository.full_name,
+							project: this.project.name
+						});
+					}),
+					catchError((error) => {
+						this._errorHandler.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => {
+						// Set the 'loading' flag to false to indicate that data loading is complete
+						this.loading = false;
+					}),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		}
@@ -606,7 +589,6 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 	public changeSyncTag() {
 		this.updateProjectAutoSyncSetting();
 	}
-
 
 	/**
 	 * Updates project auto-sync settings.
@@ -635,33 +617,39 @@ export class ProjectMutationComponent extends TranslationBaseComponent
 				organizationId,
 				tenantId,
 				...this.projectSettingForm.value
-			}
+			};
 
 			// Call the 'updateProjectSetting' method of the '_organizationProjectsService'
 			// to update project settings with 'projectId' and the 'request'
-			this._organizationProjectsService.updateProjectSetting(projectId, request).pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				tap(() => {
-					this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING', {
-						project: this.project.name
-					});
-				}),
-				catchError((error) => {
-					this._errorHandler.handleError(error);
-					return EMPTY;
-				}),
-				// Execute the following code block when the observable completes or errors
-				finalize(() => {
-					// Set the 'loading' flag to false to indicate that data loading is complete
-					this.loading = false;
-				}),
-				// Automatically unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			).subscribe();
+			this._organizationProjectsService
+				.updateProjectSetting(projectId, request)
+				.pipe(
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap(() => {
+						this._toastrService.success(
+							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING',
+							{
+								project: this.project.name
+							}
+						);
+					}),
+					catchError((error) => {
+						this._errorHandler.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => {
+						// Set the 'loading' flag to false to indicate that data loading is complete
+						this.loading = false;
+					}),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			this._errorHandler.handleError(error);
 		}

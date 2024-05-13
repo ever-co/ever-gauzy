@@ -15,6 +15,7 @@ import { NbDialogService } from '@nebular/theme';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -24,14 +25,8 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
-import {
-	EquipmentSharingService,
-	ErrorHandlingService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { EquipmentSharingService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { DateViewComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -40,7 +35,6 @@ import { DateViewComponent } from '../../@shared/table-components';
 	styleUrls: ['./equipment-sharing.component.scss']
 })
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	loading: boolean = false;
 	disableButton: boolean = true;
 
@@ -97,11 +91,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 				distinctUntilChange(),
 				tap(([user, organization, employee]) => {
 					this.organization = organization;
-					this.selectedEmployeeId = user.employee
-						? user.employee.id
-						: employee
-							? employee.id
-							: null;
+					this.selectedEmployeeId = user.employee ? user.employee.id : employee ? employee.id : null;
 				}),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharing$.next(true)),
@@ -119,11 +109,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.equipments = [])),
 				untilDestroyed(this)
@@ -131,7 +117,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT_SHARING;
@@ -139,16 +125,10 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
-				tap(() => this.equipments = []),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				tap(() => (this.equipments = [])),
 				tap(() => this.equipmentSharing$.next(true)),
 				untilDestroyed(this)
 			)
@@ -177,7 +157,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					renderComponent: EquipmentSharingPolicyTableComponent,
 					componentInitFunction: (instance: EquipmentSharingPolicyTableComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				shareRequestDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_REQUEST_DATE'),
@@ -186,7 +166,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				shareStartDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_START_DATE'),
@@ -195,7 +175,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				shareEndDay: {
 					title: this.getTranslation('EQUIPMENT_SHARING_PAGE.SHARE_END_DATE'),
@@ -218,7 +198,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				}
 			}
 		};
@@ -389,7 +369,6 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 		}
 	}
 
-
 	/**
 	 * Deletes the selected equipment sharing.
 	 * If a selectedItem is provided, it selects the equipment sharing and opens a confirmation dialog.
@@ -408,9 +387,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 
 		try {
 			// Open a confirmation dialog and await the result
-			const result = await firstValueFrom(
-				this.dialogService.open(DeleteConfirmationComponent).onClose
-			);
+			const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 			// If the user confirms the deletion, proceed with the deletion
 			if (result) {
@@ -434,10 +411,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 	 * @param isSelected - A boolean indicating whether the equipment sharing is selected.
 	 * @param data - The equipment sharing data.
 	 */
-	async selectEquipmentSharing({
-		isSelected,
-		data
-	}: ISelectedEquipmentSharing): Promise<void> {
+	async selectEquipmentSharing({ isSelected, data }: ISelectedEquipmentSharing): Promise<void> {
 		// Update the disableButton property based on the selection status
 		this.disableButton = !isSelected;
 

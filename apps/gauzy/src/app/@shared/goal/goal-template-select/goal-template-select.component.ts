@@ -11,11 +11,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { isFuture } from 'date-fns';
-import {
-	NbDialogRef,
-	NbDialogService,
-	NbStepperComponent
-} from '@nebular/theme';
+import { NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import {
@@ -28,7 +24,7 @@ import {
 } from '../../../@core/services';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -37,10 +33,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './goal-template-select.component.html',
 	styleUrls: ['./goal-template-select.component.scss']
 })
-export class GoalTemplateSelectComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class GoalTemplateSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	goalTemplates: IGoalTemplate[];
 	selectedGoalTemplate: IGoalTemplate;
 	timeFrames: IGoalTimeFrame[] = [];
@@ -54,17 +47,15 @@ export class GoalTemplateSelectComponent
 	@ViewChild('stepper') stepper: NbStepperComponent;
 
 	/*
-	* Goal Template Selection Mutation Form
-	*/
+	 * Goal Template Selection Mutation Form
+	 */
 	public form: UntypedFormGroup = GoalTemplateSelectComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: GoalTemplateSelectComponent): UntypedFormGroup {
 		return fb.group({
 			deadline: ['', Validators.required],
 			ownerId: ['', Validators.required],
 			level: [
-				!!self.selectedGoalTemplate
-					? self.selectedGoalTemplate.level
-					: GoalLevelEnum.ORGANIZATION,
+				!!self.selectedGoalTemplate ? self.selectedGoalTemplate.level : GoalLevelEnum.ORGANIZATION,
 				Validators.required
 			],
 			leadId: [null]
@@ -92,7 +83,7 @@ export class GoalTemplateSelectComponent
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getGoalTemplates()),
 				tap(() => this.getTimeFrames()),
 				untilDestroyed(this)
@@ -104,12 +95,10 @@ export class GoalTemplateSelectComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.goalTemplateService
-			.getAllGoalTemplates({ organizationId, tenantId })
-			.then((res) => {
-				const { items } = res;
-				this.goalTemplates = items;
-			});
+		this.goalTemplateService.getAllGoalTemplates({ organizationId, tenantId }).then((res) => {
+			const { items } = res;
+			this.goalTemplates = items;
+		});
 	}
 
 	async getTimeFrames() {
@@ -121,9 +110,8 @@ export class GoalTemplateSelectComponent
 			tenantId
 		};
 		await this.goalSettingService.getAllTimeFrames(findObj).then(({ items = [] }) => {
-			this.timeFrames = items.filter((timeFrame) =>
-				timeFrame.status === TimeFrameStatusEnum.ACTIVE &&
-				isFuture(new Date(timeFrame.endDate))
+			this.timeFrames = items.filter(
+				(timeFrame) => timeFrame.status === TimeFrameStatusEnum.ACTIVE && isFuture(new Date(timeFrame.endDate))
 			);
 		});
 	}
@@ -164,64 +152,52 @@ export class GoalTemplateSelectComponent
 				this.form.value.level === GoalLevelEnum.EMPLOYEE
 					? 'ownerEmployee'
 					: this.form.value.level === GoalLevelEnum.TEAM
-						? 'ownerTeam'
-						: 'organization'
+					? 'ownerTeam'
+					: 'organization'
 			] = this.form.value.owner;
 			delete goal.owner;
 			delete goal.keyResults;
 			const goalCreated = await this.goalService.createGoal(goal);
 			if (goalCreated) {
 				const kpiCreatedPromise = [];
-				this.selectedGoalTemplate.keyResults.forEach(
-					async (keyResult) => {
-						if (keyResult.type === KeyResultTypeEnum.KPI) {
-							const kpiData = {
-								...keyResult.kpi,
-								organization: this.orgId
-							};
-							await this.goalSettingsService
-								.createKPI(kpiData)
-								.then((res) => {
-									if (res) {
-										keyResult.kpiId = res.id;
-									}
-									kpiCreatedPromise.push(keyResult);
-								});
-						}
-					}
-				);
-				Promise.all(kpiCreatedPromise).then(async () => {
-					const keyResults = this.selectedGoalTemplate.keyResults.map(
-						(keyResult) => {
-							delete keyResult.kpi;
-							delete keyResult.goalId;
-							return {
-								...keyResult,
-								goalId: goalCreated.id,
-								description: ' ',
-								progress: 0,
-								update: keyResult.initialValue,
-								ownerId: this.employees[0].id,
-								organizationId,
-								tenantId,
-								status: 'none',
-								weight: KeyResultWeightEnum.DEFAULT
-							};
-						}
-					);
-
-					await this.keyResultService
-						.createBulkKeyResult(keyResults)
-						.then((res) => {
+				this.selectedGoalTemplate.keyResults.forEach(async (keyResult) => {
+					if (keyResult.type === KeyResultTypeEnum.KPI) {
+						const kpiData = {
+							...keyResult.kpi,
+							organization: this.orgId
+						};
+						await this.goalSettingsService.createKPI(kpiData).then((res) => {
 							if (res) {
-								this.toastrService.success(
-									this.getTranslation(
-										'TOASTR.MESSAGE.KEY_RESULTS_CREATED'
-									)
-								);
-								this.closeDialog('done');
+								keyResult.kpiId = res.id;
 							}
+							kpiCreatedPromise.push(keyResult);
 						});
+					}
+				});
+				Promise.all(kpiCreatedPromise).then(async () => {
+					const keyResults = this.selectedGoalTemplate.keyResults.map((keyResult) => {
+						delete keyResult.kpi;
+						delete keyResult.goalId;
+						return {
+							...keyResult,
+							goalId: goalCreated.id,
+							description: ' ',
+							progress: 0,
+							update: keyResult.initialValue,
+							ownerId: this.employees[0].id,
+							organizationId,
+							tenantId,
+							status: 'none',
+							weight: KeyResultWeightEnum.DEFAULT
+						};
+					});
+
+					await this.keyResultService.createBulkKeyResult(keyResults).then((res) => {
+						if (res) {
+							this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
+							this.closeDialog('done');
+						}
+					});
 				});
 			}
 		}
@@ -235,5 +211,5 @@ export class GoalTemplateSelectComponent
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

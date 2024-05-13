@@ -9,7 +9,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidatesService } from '../../../../@core/services/candidates.service';
 import { CandidateStore } from '../../../../@core/services/candidate-store.service';
 import { UsersService } from '../../../../@core/services';
@@ -30,9 +30,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	],
 	providers: [CandidateStore]
 })
-export class EditCandidateProfileComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	routeParams: Params;
 	selectedCandidate: ICandidate;
 	candidateName = 'Candidate';
@@ -60,25 +58,19 @@ export class EditCandidateProfileComponent
 	ngOnInit() {
 		this.route.params.pipe(untilDestroyed(this)).subscribe((params) => {
 			this.routeParams = params;
-			this.store.selectedOrganization$
-				.pipe(untilDestroyed(this))
-				.subscribe((organization) => {
-					if (organization) {
-						this.selectedOrganization = this.store.selectedOrganization;
-						this._loadCandidateData();
-					}
-				});
+			this.store.selectedOrganization$.pipe(untilDestroyed(this)).subscribe((organization) => {
+				if (organization) {
+					this.selectedOrganization = this.store.selectedOrganization;
+					this._loadCandidateData();
+				}
+			});
 		});
-		this.candidateStore.userForm$
-			.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				this.submitUserForm(value);
-			});
-		this.candidateStore.candidateForm$
-			.pipe(untilDestroyed(this))
-			.subscribe((value) => {
-				this.submitCandidateForm(value);
-			});
+		this.candidateStore.userForm$.pipe(untilDestroyed(this)).subscribe((value) => {
+			this.submitUserForm(value);
+		});
+		this.candidateStore.candidateForm$.pipe(untilDestroyed(this)).subscribe((value) => {
+			this.submitCandidateForm(value);
+		});
 		this.loadTabs();
 		this._applyTranslationOnTabs();
 	}
@@ -96,9 +88,7 @@ export class EditCandidateProfileComponent
 		if (interviews) {
 			this.interviewList = interviews.items;
 			const now = new Date().getTime();
-			this.futureInterviews = this.interviewList.filter(
-				(item) => new Date(item.startTime).getTime() > now
-			);
+			this.futureInterviews = this.interviewList.filter((item) => new Date(item.startTime).getTime() > now);
 		}
 	}
 	async interviewInfo() {
@@ -120,89 +110,67 @@ export class EditCandidateProfileComponent
 	loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.ACCOUNT'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.ACCOUNT'),
 				icon: 'person-outline',
 				responsive: true,
 				route: this.getRoute('account')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.EMPLOYMENT'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.EMPLOYMENT'),
 				icon: 'browser-outline',
 				responsive: true,
 				route: this.getRoute('employment')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.HIRING'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.HIRING'),
 				icon: 'map-outline',
 				responsive: true,
 				route: this.getRoute('hiring')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.LOCATION'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.LOCATION'),
 				icon: 'pin-outline',
 				responsive: true,
 				route: this.getRoute('location')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.RATE'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.RATE'),
 				icon: 'pricetags-outline',
 				responsive: true,
 				route: this.getRoute('rates')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.TASKS'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.TASKS'),
 				icon: 'layers-outline',
 				responsive: true,
 				route: this.getRoute('tasks')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.EXPERIENCE'),
 				icon: 'book-open-outline',
 				responsive: true,
 				route: this.getRoute('experience')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.HISTORY'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.HISTORY'),
 				icon: 'archive-outline',
 				responsive: true,
 				route: this.getRoute('history')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DOCUMENTS'),
 				icon: 'file-text-outline',
 				responsive: true,
 				route: this.getRoute('documents')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW'),
 				icon: 'people-outline',
 				responsive: true,
 				route: this.getRoute('interview')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.FEEDBACKS'),
 				icon: 'message-square-outline',
 				responsive: true,
 				route: this.getRoute('feedbacks')
@@ -217,17 +185,14 @@ export class EditCandidateProfileComponent
 	private async submitCandidateForm(value: ICandidateUpdateInput) {
 		if (value) {
 			try {
-				await this.candidatesService.update(
-					this.selectedCandidate.id,
-					{...value, organizationId : this.selectedCandidate.organizationId}
-				);
+				await this.candidatesService.update(this.selectedCandidate.id, {
+					...value,
+					organizationId: this.selectedCandidate.organizationId
+				});
 
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
-					{
-						name: this.candidateName
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE', {
+					name: this.candidateName
+				});
 				this._loadCandidateData();
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -242,17 +207,11 @@ export class EditCandidateProfileComponent
 	private async submitUserForm(value: IUserUpdateInput) {
 		if (value) {
 			try {
-				await this.userService.update(
-					this.selectedCandidate.user.id,
-					value
-				);
+				await this.userService.update(this.selectedCandidate.user.id, value);
 
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE',
-					{
-						name: this.candidateName
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE', {
+					name: this.candidateName
+				});
 
 				this._loadCandidateData();
 			} catch (error) {
@@ -290,11 +249,9 @@ export class EditCandidateProfileComponent
 	}
 
 	private _applyTranslationOnTabs() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadTabs();
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadTabs();
+		});
 	}
 
 	ngOnDestroy() {}

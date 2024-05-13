@@ -7,8 +7,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
-import { TranslationBaseComponent } from './../../../language-base/translation-base.component';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,31 +45,27 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 		const storeProject$ = this.store.selectedProject$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeTeam$ = this.store.selectedTeam$;
-		combineLatest([
-			storeOrganization$,
-			storeDateRange$,
-			storeEmployee$,
-			storeProject$,
-			storeTeam$
-		]).pipe(
-			debounceTime(300),
-			filter(([organization, dateRange]) => !!organization && !!dateRange),
-			tap(([organization, dateRange, employee, project, team]) => {
-				if (organization) {
-					this.organization = organization;
+		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$, storeProject$, storeTeam$])
+			.pipe(
+				debounceTime(300),
+				filter(([organization, dateRange]) => !!organization && !!dateRange),
+				tap(([organization, dateRange, employee, project, team]) => {
+					if (organization) {
+						this.organization = organization;
 
-					this.request.employeeIds = employee?.id ? [employee.id] : [];
-					this.request.projectIds = project?.id ? [project.id] : [];
-					this.request.teamIds = team?.id ? [team.id] : [];
+						this.request.employeeIds = employee?.id ? [employee.id] : [];
+						this.request.projectIds = project?.id ? [project.id] : [];
+						this.request.teamIds = team?.id ? [team.id] : [];
 
-					if (dateRange) {
-						this.request = { ...this.request, ...dateRange };
+						if (dateRange) {
+							this.request = { ...this.request, ...dateRange };
+						}
 					}
-				}
-			}),
-			tap(() => this.subject$.next(true)),
-			untilDestroyed(this)
-		).subscribe();
+				}),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

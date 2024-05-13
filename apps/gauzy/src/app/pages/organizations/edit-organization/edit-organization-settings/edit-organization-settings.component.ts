@@ -5,7 +5,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,16 +16,11 @@ import { TranslationBaseComponent } from '../../../../@shared/language-base/tran
 		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class EditOrganizationSettingsComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class EditOrganizationSettingsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	@Input() organization: IOrganization;
 	tabs: NbRouteTab[] = [];
 
-	constructor(
-		private readonly route: ActivatedRoute,
-		public readonly translateService: TranslateService
-	) {
+	constructor(private readonly route: ActivatedRoute, public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 

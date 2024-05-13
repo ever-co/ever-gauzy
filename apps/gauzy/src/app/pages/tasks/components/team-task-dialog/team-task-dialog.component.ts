@@ -1,26 +1,19 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-	IEmployee,
-	IOrganizationProject,
-	IOrganizationTeam,
-	ITag,
-	ITask,
-	TaskStatusEnum,
-} from '@gauzy/contracts';
+import { IEmployee, IOrganizationProject, IOrganizationTeam, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
 	Store,
-	ToastrService,
+	ToastrService
 } from '../../../../@core/services';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig } from '../../../../@shared/ckeditor.config';
 
 const initialTaskValue = {
 	title: '',
@@ -34,17 +27,15 @@ const initialTaskValue = {
 	tags: null,
 	taskStatus: null,
 	taskSize: null,
-	taskPriority: null,
+	taskPriority: null
 };
 
 @Component({
 	selector: 'ngx-team-task-dialog',
 	templateUrl: './team-task-dialog.component.html',
-	styleUrls: ['./team-task-dialog.component.scss'],
+	styleUrls: ['./team-task-dialog.component.scss']
 })
-export class TeamTaskDialogComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class TeamTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -93,7 +84,7 @@ export class TeamTaskDialogComponent
 			teams: [],
 			taskStatus: [],
 			taskSize: [],
-			taskPriority: [],
+			taskPriority: []
 		});
 	}
 
@@ -101,24 +92,20 @@ export class TeamTaskDialogComponent
 		const { organizationId, tenantId } = this;
 		const { items } = await this.organizationProjectsService.getAll([], {
 			organizationId,
-			tenantId,
+			tenantId
 		});
 
 		if (items) this.projects = items;
 	}
 
 	async ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant(
-			'FORM.PLACEHOLDERS.DESCRIPTION'
-		);
+		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.tenantId = this.store.user.tenantId;
 		this.organizationId = this._organizationsStore.selectedOrganization.id;
 
 		await this.loadProjects();
 		await this.loadTeams();
-		this.initializeForm(
-			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
-		);
+		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));
 	}
 
 	initializeForm({
@@ -135,7 +122,7 @@ export class TeamTaskDialogComponent
 		size,
 		taskStatus,
 		taskSize,
-		taskPriority,
+		taskPriority
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		this.selectedTeams = (teams || []).map((team) => team.id);
@@ -165,7 +152,7 @@ export class TeamTaskDialogComponent
 			teams: this.selectedTeams,
 			taskStatus,
 			taskSize,
-			taskPriority,
+			taskPriority
 		});
 		this.tags = this.form.get('tags').value || [];
 	}
@@ -173,14 +160,11 @@ export class TeamTaskDialogComponent
 	addNewProject = (name: string): Promise<IOrganizationProject> => {
 		const { organizationId, tenantId } = this;
 		try {
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT',
-				{ name }
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
 			return this.organizationProjectsService.create({
 				name,
 				organizationId,
-				tenantId,
+				tenantId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -192,19 +176,11 @@ export class TeamTaskDialogComponent
 			this.form
 				.get('teams')
 				.setValue(
-					(this.selectedTeams || [])
-						.map((id) => this.teams.find((e) => e.id === id))
-						.filter((e) => !!e)
+					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e)
 				);
-			this.form
-				.get('status')
-				.setValue(this.form.get('taskStatus').value?.name);
-			this.form
-				.get('priority')
-				.setValue(this.form.get('taskPriority').value?.name);
-			this.form
-				.get('size')
-				.setValue(this.form.get('taskSize').value?.name);
+			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
+			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
+			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
 			this.dialogRef.close(this.form.value);
 		}
 	}
@@ -225,7 +201,7 @@ export class TeamTaskDialogComponent
 		this.teams = (
 			await this.organizationTeamsService.getMyTeams({
 				organizationId,
-				tenantId,
+				tenantId
 			})
 		).items;
 	}

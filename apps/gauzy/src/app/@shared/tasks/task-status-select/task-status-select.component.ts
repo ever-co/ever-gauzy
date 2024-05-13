@@ -1,13 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	EventEmitter,
-	forwardRef,
-	Input,
-	OnDestroy,
-	OnInit,
-	Output,
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -19,16 +10,12 @@ import {
 	IPagination,
 	ITaskStatus,
 	ITaskStatusFindInput,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	Store,
-	TaskStatusesService,
-	ToastrService,
-} from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { Store, TaskStatusesService, ToastrService } from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,14 +25,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => TaskStatusSelectComponent),
-			multi: true,
-		},
-	],
+			multi: true
+		}
+	]
 })
-export class TaskStatusSelectComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TaskStatusSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();
 	/**
 	 * Default global task statuses
@@ -53,28 +37,28 @@ export class TaskStatusSelectComponent
 	private _statuses: Array<{ name: string; value: TaskStatusEnum & any }> = [
 		{
 			name: TaskStatusEnum.OPEN,
-			value: sluggable(TaskStatusEnum.OPEN),
+			value: sluggable(TaskStatusEnum.OPEN)
 		},
 		{
 			name: TaskStatusEnum.IN_PROGRESS,
-			value: sluggable(TaskStatusEnum.IN_PROGRESS),
+			value: sluggable(TaskStatusEnum.IN_PROGRESS)
 		},
 		{
 			name: TaskStatusEnum.READY_FOR_REVIEW,
-			value: sluggable(TaskStatusEnum.READY_FOR_REVIEW),
+			value: sluggable(TaskStatusEnum.READY_FOR_REVIEW)
 		},
 		{
 			name: TaskStatusEnum.IN_REVIEW,
-			value: sluggable(TaskStatusEnum.IN_REVIEW),
+			value: sluggable(TaskStatusEnum.IN_REVIEW)
 		},
 		{
 			name: TaskStatusEnum.BLOCKED,
-			value: sluggable(TaskStatusEnum.BLOCKED),
+			value: sluggable(TaskStatusEnum.BLOCKED)
 		},
 		{
 			name: TaskStatusEnum.COMPLETED,
-			value: sluggable(TaskStatusEnum.COMPLETED),
-		},
+			value: sluggable(TaskStatusEnum.COMPLETED)
+		}
 	];
 	public organization: IOrganization;
 	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
@@ -208,14 +192,12 @@ export class TaskStatusSelectComponent
 				organizationId,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			})
 			.pipe(
-				map(({ items, total }: IPagination<ITaskStatus>) =>
-					total > 0 ? items : this._statuses
-				),
+				map(({ items, total }: IPagination<ITaskStatus>) => (total > 0 ? items : this._statuses)),
 				tap((statuses: ITaskStatus[]) => this.statuses$.next(statuses)),
 				untilDestroyed(this)
 			)
@@ -242,9 +224,9 @@ export class TaskStatusSelectComponent
 				name,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			});
 			await firstValueFrom(source);
 		} catch (error) {

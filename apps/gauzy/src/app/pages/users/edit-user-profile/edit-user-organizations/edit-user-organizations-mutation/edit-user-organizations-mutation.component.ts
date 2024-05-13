@@ -1,6 +1,6 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,9 +13,7 @@ import { Store } from '../../../../../@core/services/store.service';
 	templateUrl: './edit-user-organizations-mutation.component.html',
 	styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss']
 })
-export class EditUserOrganizationsMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class EditUserOrganizationsMutationComponent extends TranslationBaseComponent implements OnInit {
 	@Input()
 	organization: IOrganization;
 
@@ -54,12 +52,9 @@ export class EditUserOrganizationsMutationComponent
 
 	private async _loadOrganizations() {
 		const { tenantId } = this.store.user;
-		const users = await this.usersOrganizationService.getAll(
-			['user', 'user.role'],
-			{
-				tenantId
-			}
-		);
+		const users = await this.usersOrganizationService.getAll(['user', 'user.role'], {
+			tenantId
+		});
 
 		const { items } = await this.usersOrganizationService.getAll([], {
 			userId: this.userIdService.userId,
@@ -72,13 +67,9 @@ export class EditUserOrganizationsMutationComponent
 			tenantId
 		});
 
-		const excludedOrgs = users.items.filter(
-			(item) => item.user.id === items[0].userId
-		);
+		const excludedOrgs = users.items.filter((item) => item.user.id === items[0].userId);
 
-		const filtered = all_orgs.items.filter(
-			(a) => !excludedOrgs.filter((b) => b.organizationId === a.id).length
-		);
+		const filtered = all_orgs.items.filter((a) => !excludedOrgs.filter((b) => b.organizationId === a.id).length);
 
 		this.organizations = filtered;
 	}

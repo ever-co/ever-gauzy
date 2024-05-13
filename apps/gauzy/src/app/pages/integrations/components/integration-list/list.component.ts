@@ -7,9 +7,22 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { HttpStatus, IIntegration, IIntegrationTenant, IOrganization, IPagination, IntegrationEnum } from '@gauzy/contracts';
-import { ErrorHandlingService, IntegrationEntitySettingServiceStoreService, IntegrationTenantService, IntegrationsService, Store } from './../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import {
+	HttpStatus,
+	IIntegration,
+	IIntegrationTenant,
+	IOrganization,
+	IPagination,
+	IntegrationEnum
+} from '@gauzy/contracts';
+import {
+	ErrorHandlingService,
+	IntegrationEntitySettingServiceStoreService,
+	IntegrationTenantService,
+	IntegrationsService,
+	Store
+} from './../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -19,7 +32,6 @@ import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
 	styleUrls: ['./list.component.scss']
 })
 export class IntegrationListComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
-
 	public loading: boolean = false; // Flag to indicate if data loading is in progress
 	public organization: IOrganization;
 	public integrations$: Observable<IIntegrationTenant[]>;
@@ -41,7 +53,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		},
 		Upwork: {
 			description: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.DESCRIPTION')
-		},
+		}
 	};
 
 	constructor(
@@ -64,10 +76,10 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				debounceTime(100),
 				filter((organization: IOrganization) => !!organization), // Filter out undefined or falsy values
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getIntegrations()),
 				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -78,7 +90,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				debounceTime(100),
 				tap(() => this.getIntegrations()),
 				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
@@ -122,7 +134,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				this.loading = false;
 			}),
 			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
+			untilDestroyed(this)
 		);
 	}
 
@@ -132,55 +144,57 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	 * @param integration - The integration to update.
 	 * @param isActive - A boolean indicating whether the integration should be active.
 	 */
-	public updateIntegrationTenant(
-		integration: IIntegrationTenant,
-		isActive: boolean
-	) {
+	public updateIntegrationTenant(integration: IIntegrationTenant, isActive: boolean) {
 		if (!integration) {
 			return; // If integration is missing, exit the function.
 		}
 		const { organizationId, tenantId } = integration;
 
 		// Update the integration using the _integrationTenantService.
-		this._integrationTenantService.update(integration.id, {
-			isActive: isActive,
-			isArchived: !isActive,
-			tenantId,
-			organizationId
-		}).pipe(
-			tap((response: any) => {
-				if (response['status'] == HttpStatus.BAD_REQUEST) {
-					throw new Error(`${response['message']}`);
-				}
-			}),
-			// Catch and handle errors
-			catchError((error) => {
-				// Handle and log errors using the _errorHandlingService
-				this._errorHandlingService.handleError(error);
-				// Return an empty observable to continue the stream
-				return EMPTY;
-			}),
-			tap(() => {
-				// Determine the success message based on whether 'isActive' is true or false.
-				const message = isActive ? 'INTEGRATIONS.MESSAGE.INTEGRATION_ENABLED' : 'INTEGRATIONS.MESSAGE.INTEGRATION_DISABLED';
+		this._integrationTenantService
+			.update(integration.id, {
+				isActive: isActive,
+				isArchived: !isActive,
+				tenantId,
+				organizationId
+			})
+			.pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				// Catch and handle errors
+				catchError((error) => {
+					// Handle and log errors using the _errorHandlingService
+					this._errorHandlingService.handleError(error);
+					// Return an empty observable to continue the stream
+					return EMPTY;
+				}),
+				tap(() => {
+					// Determine the success message based on whether 'isActive' is true or false.
+					const message = isActive
+						? 'INTEGRATIONS.MESSAGE.INTEGRATION_ENABLED'
+						: 'INTEGRATIONS.MESSAGE.INTEGRATION_DISABLED';
 
-				// Display a success toast message using the _toastrService.
-				this._toastrService.success(
-					this.getTranslation(message, { provider: integration?.integration?.name }),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-			}),
-			// Update the subject with a value of true
-			tap(() => this.subject$.next(true)),
-			//
-			tap((integration: IIntegrationTenant) => {
-				if (integration.name === IntegrationEnum.GAUZY_AI) {
-					this.updateAIJobMatchingEntity();
-				}
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+					// Display a success toast message using the _toastrService.
+					this._toastrService.success(
+						this.getTranslation(message, { provider: integration?.integration?.name }),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}),
+				// Update the subject with a value of true
+				tap(() => this.subject$.next(true)),
+				//
+				tap((integration: IIntegrationTenant) => {
+					if (integration.name === IntegrationEnum.GAUZY_AI) {
+						this.updateAIJobMatchingEntity();
+					}
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -228,19 +242,21 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 	 */
 	deleteIntegration(integration: IIntegrationTenant): void {
 		const dialog$ = this.openConfirmationDialog();
-		dialog$.pipe(
-			filter(isConfirmed => isConfirmed),
-			switchMap(() => this._integrationTenantService.delete(integration.id)),
-			tap(() => {
-				this.showDeletionSuccessMessage(integration);
-				this.subject$.next(true);
+		dialog$
+			.pipe(
+				filter((isConfirmed) => isConfirmed),
+				switchMap(() => this._integrationTenantService.delete(integration.id)),
+				tap(() => {
+					this.showDeletionSuccessMessage(integration);
+					this.subject$.next(true);
 
-				if (integration.name === IntegrationEnum.GAUZY_AI) {
-					this.updateAIJobMatchingEntity();
-				}
-			}),
-			untilDestroyed(this)
-		).subscribe();
+					if (integration.name === IntegrationEnum.GAUZY_AI) {
+						this.updateAIJobMatchingEntity();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

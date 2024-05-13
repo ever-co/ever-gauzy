@@ -1,17 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, Observable, throwError } from 'rxjs';
-import {
-	ITask,
-	IGetTaskOptions,
-	IGetTaskByEmployeeOptions,
-	IPagination,
-	IEmployee
-} from '@gauzy/contracts';
+import { ITask, IGetTaskOptions, IGetTaskByEmployeeOptions, IPagination, IEmployee } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { toParams } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -30,22 +24,20 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getAllTasks(where: IGetTaskOptions, relations: string[] = []): Observable<IPagination<ITask>> {
-		return this._http.get<IPagination<ITask>>(this.API_URL, {
-			params: toParams({ relations, where })
-		})
-		.pipe(catchError((error) => this.errorHandler(error)));
+		return this._http
+			.get<IPagination<ITask>>(this.API_URL, {
+				params: toParams({ relations, where })
+			})
+			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
 	getAllTasksByEmployee(id: IEmployee['id'], options: IGetTaskByEmployeeOptions) {
 		return firstValueFrom(
-			this._http.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
-				params: toParams(options)
-			})
-			.pipe(
-				catchError(
-					(error) => this.errorHandler(error)
-				)
-			)
+			this._http
+				.get<ITask[]>(`${this.API_URL}/employee/${id}`, {
+					params: toParams(options)
+				})
+				.pipe(catchError((error) => this.errorHandler(error)))
 		);
 	}
 
@@ -60,10 +52,7 @@ export class TasksService extends TranslationBaseComponent {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
-	getTeamTasks(
-		findInput: IGetTaskOptions = {},
-		employeeId = ''
-	): Observable<IPagination<ITask>> {
+	getTeamTasks(findInput: IGetTaskOptions = {}, employeeId = ''): Observable<IPagination<ITask>> {
 		const data = JSON.stringify({
 			relations: ['project', 'tags', 'members', 'members.user', 'teams'],
 			findInput,
@@ -77,10 +66,7 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	getById(id: string) {
-		return firstValueFrom(
-			this._http
-			.get<ITask>(`${this.API_URL}/${id}`)
-		);
+		return firstValueFrom(this._http.get<ITask>(`${this.API_URL}/${id}`));
 	}
 
 	createTask(task): Observable<ITask> {
@@ -105,10 +91,7 @@ export class TasksService extends TranslationBaseComponent {
 	}
 
 	errorHandler(error: HttpErrorResponse) {
-		this.toastrService.danger(
-			error.message,
-			this.getTranslation('TOASTR.TITLE.ERROR')
-		);
+		this.toastrService.danger(error.message, this.getTranslation('TOASTR.TITLE.ERROR'));
 
 		return throwError(error.message);
 	}

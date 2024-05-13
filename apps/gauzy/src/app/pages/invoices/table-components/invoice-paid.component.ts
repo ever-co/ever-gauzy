@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IPayment } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-invoice-paid',
@@ -27,15 +27,12 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	]
 })
 export class InvoicePaidComponent extends TranslationBaseComponent implements OnInit {
-
 	public paidAmountPercentage: number;
 	public totalPaid = 0;
 
 	@Input() rowData: any;
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -53,7 +50,7 @@ export class InvoicePaidComponent extends TranslationBaseComponent implements On
 		// Ensure that total value is non-zero to avoid division by zero
 		const totalValue = +this.rowData.totalValue || 1;
 
-		this.paidAmountPercentage = +(this.calculatePercentage(this.totalPaid, totalValue)).toFixed(2);
+		this.paidAmountPercentage = +this.calculatePercentage(this.totalPaid, totalValue).toFixed(2);
 	}
 
 	/**

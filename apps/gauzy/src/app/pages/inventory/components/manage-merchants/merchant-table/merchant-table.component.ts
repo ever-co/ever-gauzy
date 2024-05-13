@@ -8,28 +8,15 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	IMerchant,
-	IOrganization,
-	ComponentLayoutStyleEnum,
-	IWarehouse
-} from '@gauzy/contracts';
+import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
-import {
-	MerchantService,
-	Store,
-	ToastrService
-} from '../../../../../@core/services';
-import {
-	ContactRowComponent,
-	EnabledStatusComponent,
-	ItemImgTagsComponent
-} from '../../inventory-table-components';
+import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
 
@@ -39,9 +26,7 @@ import { InputFilterComponent } from './../../../../../@shared/table-filters';
 	templateUrl: './merchant-table.component.html',
 	styleUrls: ['./merchant-table.component.scss']
 })
-export class MerchantTableComponent extends PaginationFilterBaseComponent
-	implements OnInit {
-
+export class MerchantTableComponent extends PaginationFilterBaseComponent implements OnInit {
 	settingsSmartTable: object;
 	loading: boolean = false;
 	selectedMerchant: IMerchant;
@@ -103,10 +88,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
@@ -114,11 +96,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.merchants = [])),
 				untilDestroyed(this)
@@ -132,15 +110,9 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.merchants = [])),
 				tap(() => this.merchants$.next(true)),
 				untilDestroyed(this)
@@ -195,13 +167,13 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: ContactRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
 					filter: false,
-					valuePrepareFunction: (value: string) => value ? value.slice(0, 15) + '...' : ''
+					valuePrepareFunction: (value: string) => (value ? value.slice(0, 15) + '...' : '')
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
@@ -212,7 +184,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: EnabledStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -228,9 +200,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 	}
 
 	onAddStoreClick() {
-		this.router.navigate([
-			'/pages/organization/inventory/merchants/create'
-		]);
+		this.router.navigate(['/pages/organization/inventory/merchants/create']);
 	}
 
 	onEditStore(selectedItem?: IMerchant) {
@@ -241,10 +211,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			});
 		}
 
-		this.router.navigate([
-			`/pages/organization/inventory/merchants/edit`,
-			this.selectedMerchant.id
-		]);
+		this.router.navigate([`/pages/organization/inventory/merchants/edit`, this.selectedMerchant.id]);
 	}
 
 	async onDelete(selectedItem?: IMerchant) {
@@ -258,9 +225,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 			return;
 		}
 
-		const dialog = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const dialog = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (dialog) {
 			await this.merchantService
@@ -268,12 +233,9 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 				.then((res) => {
 					if (res && res['affected'] == 1) {
 						const { name } = this.selectedMerchant;
-						this.toastrService.success(
-							'INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY',
-							{
-								name
-							}
-						);
+						this.toastrService.success('INVENTORY_PAGE.MERCHANT_DELETED_SUCCESSFULLY', {
+							name
+						});
 					}
 				})
 				.finally(() => {
@@ -308,10 +270,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent
 					return Object.assign({}, warehouse);
 				},
 				finalize: () => {
-					if (
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-					) {
+					if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 						this.merchants.push(...this.smartTableSource.getData());
 					}
 					this.setPagination({

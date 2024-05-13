@@ -1,11 +1,4 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnInit,
-	Output,
-	ViewChild
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -22,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
@@ -35,9 +28,7 @@ import { FormHelpers } from '../../../@shared/forms';
 	templateUrl: './contact-mutation.component.html',
 	styleUrls: ['./contact-mutation.component.scss']
 })
-export class ContactMutationComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class ContactMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	/**
@@ -56,8 +47,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for projectsWithoutOrganizationContacts element
-	*/
+	 * Getter & Setter for projectsWithoutOrganizationContacts element
+	 */
 	private _projectsWithoutOrganizationContacts: IOrganizationProject[];
 	get projectsWithoutOrganizationContacts(): IOrganizationProject[] {
 		return this._projectsWithoutOrganizationContacts;
@@ -67,8 +58,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for contactType element
-	*/
+	 * Getter & Setter for contactType element
+	 */
 	private _contactType: ContactType;
 	get contactType(): ContactType {
 		return this._contactType;
@@ -78,13 +69,13 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Output event emitter for cancel process event
-	*/
+	 * Output event emitter for cancel process event
+	 */
 	@Output() canceled = new EventEmitter();
 
 	/*
-	* Output event emitter for add/edit organization contact event
-	*/
+	 * Output event emitter for add/edit organization contact event
+	 */
 	@Output() addOrEditOrganizationContact = new EventEmitter();
 
 	// leaflet map template
@@ -108,8 +99,8 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	organizationContactBudgetTypeEnum = OrganizationContactBudgetTypeEnum;
 
 	/**
-	* Main Content Stepper Form Group
-	*/
+	 * Main Content Stepper Form Group
+	 */
 	public contMainForm: UntypedFormGroup = ContactMutationComponent.buildMainForm(this.fb);
 	static buildMainForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
@@ -128,13 +119,13 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/**
-	* Location Stepper Form Group
-	*/
+	 * Location Stepper Form Group
+	 */
 	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/**
-	* Budget Stepper Form Group
-	*/
+	 * Budget Stepper Form Group
+	 */
 	readonly budgetForm: UntypedFormGroup = ContactMutationComponent.buildBudgetForm(this.fb);
 	static buildBudgetForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
@@ -145,15 +136,15 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter form control value for budgetType
-	*/
+	 * Getter form control value for budgetType
+	 */
 	get budgetType(): string {
 		return this.budgetForm.get('budgetType').value;
 	}
 
 	/*
-	* Getter form control value for budgetType
-	*/
+	 * Getter form control value for budgetType
+	 */
 	get tags(): ITag[] {
 		return this.contMainForm.get('tags').value;
 	}
@@ -177,7 +168,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._patchForm()),
 				tap(() => this._getProjects()),
 				untilDestroyed(this)
@@ -200,10 +191,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	 */
 	public onLoadEmployees(employees: IEmployee[]) {
 		this.employees = employees;
-		this.selectedMembers = this.filterArrayPipe.transform(
-			this.employees,
-			this.selectedEmployeeIds
-		);
+		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.selectedEmployeeIds);
 	}
 
 	/**
@@ -314,10 +302,7 @@ export class ContactMutationComponent extends TranslationBaseComponent
 
 	onMembersSelected(members: string[]) {
 		this.members = members;
-		this.selectedMembers = this.filterArrayPipe.transform(
-			this.employees,
-			this.members
-		);
+		this.selectedMembers = this.filterArrayPipe.transform(this.employees, this.members);
 	}
 
 	cancel() {
@@ -411,7 +396,11 @@ export class ContactMutationComponent extends TranslationBaseComponent
 		// Assuming the second step is related to map operations.
 		if (this.stepper.selectedIndex === 1) {
 			// Directly destructure 'coordinates' from the location form value.
-			const { loc: { coordinates: [lat, lng] } } = this.locationFormDirective.getValue();
+			const {
+				loc: {
+					coordinates: [lat, lng]
+				}
+			} = this.locationFormDirective.getValue();
 
 			// Delay marker addition to ensure the map is ready. Adjust delay as needed.
 			setTimeout(() => {
@@ -424,7 +413,9 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
 	onCoordinatesChanges($event: google.maps.LatLng | google.maps.LatLngLiteral) {
-		const { loc: { coordinates } } = this.locationFormDirective.getValue();
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
 
 		const [lat, lng] = coordinates;
 		if (this.leafletTemplate) {
@@ -456,5 +447,5 @@ export class ContactMutationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) { }
+	onGeometrySend(geometry: any) {}
 }

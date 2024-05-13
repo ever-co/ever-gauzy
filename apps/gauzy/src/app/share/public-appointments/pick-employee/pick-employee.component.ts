@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
@@ -15,9 +15,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './pick-employee.component.html',
 	styleUrls: ['pick-employee.component.scss']
 })
-export class PickEmployeeComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class PickEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('employeeSelector')
 	employeeSelector: EmployeeSelectorComponent;
 	loading: boolean;
@@ -49,15 +47,12 @@ export class PickEmployeeComponent
 	async bookAppointment() {
 		const selectedEmployee = this.employeeSelector.selectedEmployee.id;
 		if (selectedEmployee) {
-			let { items } = await this.eventTypeService.getAll(
-				['employee', 'employee.user', 'tags'],
-				{
-					employee: {
-						id: selectedEmployee
-					},
-					isActive: true
-				}
-			);
+			let { items } = await this.eventTypeService.getAll(['employee', 'employee.user', 'tags'], {
+				employee: {
+					id: selectedEmployee
+				},
+				isActive: true
+			});
 
 			if (items.length === 0) {
 				const { tenantId } = this.store.user;
@@ -71,16 +66,12 @@ export class PickEmployeeComponent
 			}
 
 			if (items.length === 1) {
-				this.router.navigate([
-					`/share/employee/${selectedEmployee}/${items[0].id}`
-				]);
+				this.router.navigate([`/share/employee/${selectedEmployee}/${items[0].id}`]);
 			} else {
 				this.router.navigate([`/share/employee/${selectedEmployee}`]);
 			}
 		} else {
-			this.toastrService.danger(
-				this.getTranslation('PUBLIC_APPOINTMENTS.SELECT_EMPLOYEE_ERROR')
-			);
+			this.toastrService.danger(this.getTranslation('PUBLIC_APPOINTMENTS.SELECT_EMPLOYEE_ERROR'));
 		}
 	}
 

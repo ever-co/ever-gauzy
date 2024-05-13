@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ICandidateTechnologies, IOrganization } from '@gauzy/contracts';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { takeUntil } from 'rxjs/operators';
@@ -14,9 +14,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	templateUrl: './candidate-technologies.component.html',
 	styleUrls: ['./candidate-technologies.component.scss']
 })
-export class CandidateTechnologiesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class CandidateTechnologiesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	technologiesList: ICandidateTechnologies[];
 	existedTechNames: string[];
@@ -35,15 +33,13 @@ export class CandidateTechnologiesComponent
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this._initializeForm();
-					this.loadTechnologies();
-				}
-			});
+		this.store.selectedOrganization$.pipe(takeUntil(this._ngDestroy$)).subscribe((organization: IOrganization) => {
+			if (organization) {
+				this.organization = organization;
+				this._initializeForm();
+				this.loadTechnologies();
+			}
+		});
 	}
 
 	cancel() {
@@ -63,10 +59,7 @@ export class CandidateTechnologiesComponent
 			this.existedTechNames = [];
 			const enteredName = item.technologies[0].name;
 			this.technologiesList.forEach((el) => {
-				if (
-					enteredName !== '' &&
-					el.name.toLocaleLowerCase().includes(enteredName)
-				) {
+				if (enteredName !== '' && el.name.toLocaleLowerCase().includes(enteredName)) {
 					this.existedTechNames.push(el.name);
 				}
 			});
@@ -80,9 +73,7 @@ export class CandidateTechnologiesComponent
 			tenantId
 		});
 		if (res) {
-			this.technologiesList = res.items.filter(
-				(item) => !item.interviewId
-			);
+			this.technologiesList = res.items.filter((item) => !item.interviewId);
 			this.technologyNames = [];
 			this.technologiesList.forEach((tech) => {
 				this.technologyNames.push(tech.name.toLocaleLowerCase());
@@ -107,75 +98,56 @@ export class CandidateTechnologiesComponent
 	}
 
 	async update(formValue: ICandidateTechnologies) {
-		if (
-			!this.technologyNames.includes(formValue.name.toLocaleLowerCase())
-		) {
+		if (!this.technologyNames.includes(formValue.name.toLocaleLowerCase())) {
 			try {
 				await this.candidateTechnologiesService.update(this.editId, {
 					...formValue
 				});
 				this.editId = null;
-				this.toastrService.success(
-					'TOASTR.MESSAGE.TECHNOLOGY_STACK_UPDATED',
-					{
-						name: formValue.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.TECHNOLOGY_STACK_UPDATED', {
+					name: formValue.name
+				});
 				this.loadTechnologies();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
 			this.toastrService.danger(
-				this.getTranslation(
-					'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-				),
+				this.getTranslation('CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
 		}
 	}
 
 	async create(formValue: ICandidateTechnologies) {
-		if (
-			!this.technologyNames.includes(formValue.name.toLocaleLowerCase())
-		) {
+		if (!this.technologyNames.includes(formValue.name.toLocaleLowerCase())) {
 			try {
 				await this.candidateTechnologiesService.create({
 					...formValue
 				});
-				this.toastrService.success(
-					'TOASTR.MESSAGE.TECHNOLOGY_STACK_CREATED',
-					{
-						name: formValue.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.TECHNOLOGY_STACK_CREATED', {
+					name: formValue.name
+				});
 				this.loadTechnologies();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
-			this.toastrService.danger(
-				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-			);
+			this.toastrService.danger('CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST');
 		}
 	}
 
 	async edit(index: number, id: string) {
 		this.editId = id;
-		this.form.controls.technologies.patchValue([
-			this.technologiesList[index]
-		]);
+		this.form.controls.technologies.patchValue([this.technologiesList[index]]);
 	}
 	async remove(technology: ICandidateTechnologies) {
 		try {
 			await this.candidateTechnologiesService.delete(technology.id);
 			this.loadTechnologies();
-			this.toastrService.success(
-				'TOASTR.MESSAGE.TECHNOLOGY_STACK_DELETED',
-				{
-					name: technology.name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.TECHNOLOGY_STACK_DELETED', {
+				name: technology.name
+			});
 		} catch (error) {
 			this.toastrError(error);
 		}

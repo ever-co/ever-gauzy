@@ -1,7 +1,7 @@
 import { Component, Output, EventEmitter } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
@@ -37,9 +37,7 @@ export class DangerZoneMutationComponent extends TranslationBaseComponent {
 		if (this.data === this.recordType) {
 			this.dialogRef.close('ok');
 		} else {
-			this.toastrService.danger(
-				'NOTES.DANGER_ZONE.WRONG_INPUT_DATA'
-			);
+			this.toastrService.danger('NOTES.DANGER_ZONE.WRONG_INPUT_DATA');
 		}
 	}
 }

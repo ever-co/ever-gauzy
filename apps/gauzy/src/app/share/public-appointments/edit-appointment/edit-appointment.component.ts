@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,8 +8,7 @@ import { EmployeeAppointmentService } from '../../../@core/services/employee-app
 @Component({
 	templateUrl: './edit-appointment.component.html'
 })
-export class EditAppointmentComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EditAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	loading: boolean;
 	appointmentID: string;
@@ -27,9 +26,7 @@ export class EditAppointmentComponent extends TranslationBaseComponent
 		this.route.queryParams.subscribe(async ({ token }) => {
 			try {
 				if (!token) throw new Error('token missing');
-				this.appointmentID = await this.employeeAppointmentService.decodeToken(
-					token
-				);
+				this.appointmentID = await this.employeeAppointmentService.decodeToken(token);
 			} catch (error) {
 				await this.router.navigate(['/share/404']);
 			}
