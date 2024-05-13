@@ -340,20 +340,20 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Is check to disabled Next Button or Not
-	 *
-	 * @returns
+	 * Checks if the Next Button should be disabled.
+	 * @returns True if the Next Button should be disabled, false otherwise.
 	 */
-	isNextDisabled() {
+	isNextDisabled(): boolean {
 		if (!this.selectedDateRange) {
 			return true;
 		}
+
 		const { startDate, endDate } = this.selectedDateRange;
-		if (startDate && endDate) {
-			return this.hasFutureStrategy() ? false : this.isSameOrAfterDay(endDate);
-		} else {
+		if (!startDate || !endDate) {
 			return true;
 		}
+
+		return !this.hasFutureStrategy() && this.isSameOrAfterDay(endDate);
 	}
 
 	/**
@@ -385,26 +385,22 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * listen range click event on ngx-daterangepicker-material
-	 * @param range
+	 * Listens to the range click event on ngx-daterangepicker-material.
+	 * @param range The clicked range object.
 	 */
 	rangeClicked(range: any) {
-		const { label } = range;
-		switch (label) {
-			case DateRangeKeyEnum.TODAY:
-			case DateRangeKeyEnum.YESTERDAY:
-				this.unitOfTime = 'day';
-				break;
-			case DateRangeKeyEnum.CURRENT_WEEK:
-			case DateRangeKeyEnum.LAST_WEEK:
-				this.unitOfTime = 'week';
-				break;
-			case DateRangeKeyEnum.CURRENT_MONTH:
-			case DateRangeKeyEnum.LAST_MONTH:
-				this.unitOfTime = 'month';
-				break;
-			default:
-				break;
+		const unitOfTimeMap: { [key in DateRangeKeyEnum]: string } = {
+			[DateRangeKeyEnum.TODAY]: 'day',
+			[DateRangeKeyEnum.YESTERDAY]: 'day',
+			[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
+			[DateRangeKeyEnum.LAST_WEEK]: 'week',
+			[DateRangeKeyEnum.CURRENT_MONTH]: 'month',
+			[DateRangeKeyEnum.LAST_MONTH]: 'month'
+		};
+
+		const unitOfTime = unitOfTimeMap[range.label];
+		if (unitOfTime) {
+			this.unitOfTime = unitOfTime;
 		}
 	}
 
@@ -493,18 +489,16 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * get selector default dates
+	 * Gets the selector default dates from the BehaviorSubject.
 	 *
-	 * @returns
+	 * @returns The default date range picker configuration.
 	 */
 	private getSelectorDates(): IDateRangePicker {
 		const { startDate, endDate, isCustomDate } = this.dates$.getValue();
-		const start = moment(startDate);
-		const end = moment(endDate);
 		return {
-			startDate: start.toDate(),
-			endDate: end.toDate(),
-			isCustomDate: isCustomDate
+			startDate: moment(startDate).toDate(),
+			endDate: moment(endDate).toDate(),
+			isCustomDate
 		};
 	}
 
