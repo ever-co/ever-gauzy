@@ -18,17 +18,16 @@ export class DateRangePickerResolver implements Resolve<Observable<IDateRangePic
 	resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker> {
 		// Extract the unitOfTime from route data
 		const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
+		const { queryParams } = route;
 
 		// Calculate the start date based on the route query parameter or the current date
-		const startDate = moment(route.queryParams.date || new Date()).startOf(unitOfTime);
+		const startDate = queryParams.date ? moment(queryParams.date) : moment().startOf(unitOfTime); // Use current date if no query parameter is
 
 		// Calculate the end date based on the route query parameter or the start date
-		const endDate = moment(route.queryParams.date_end || startDate).endOf(unitOfTime);
+		let endDate = queryParams.date_end ? moment(queryParams.date_end) : moment(startDate).endOf(unitOfTime); // Use start date if no end date query parameter is provided
 
 		// Determine if it's a custom date range by checking the existence of the end date query parameter
-		const isCustomDate = !!route.queryParams.date_end;
-
-		console.log({ startDate: startDate.toDate(), endDate: endDate.toDate(), isCustomDate });
+		const isCustomDate = !!queryParams.date_end;
 
 		// Return an observable emitting the resolved date range picker configuration
 		return of({ startDate: startDate.toDate(), endDate: endDate.toDate(), isCustomDate });
