@@ -13,9 +13,6 @@ export class AppGlobalRippleOptions implements RippleGlobalOptions {
 	 * @param enabled Whether to enable or disable the Ripple effect.
 	 */
 	public toggle(enabled: boolean): void {
-		// Alerting for demonstration purposes only; you may replace it with your actual logic
-		alert(enabled);
-
 		// Toggles the disabled state based on the provided value
 		this.disabled = !enabled;
 	}
