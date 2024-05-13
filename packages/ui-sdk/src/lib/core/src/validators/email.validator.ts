@@ -1,5 +1,5 @@
 import { AbstractControl, ValidatorFn } from '@angular/forms';
-import { isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/common-angular';
 import { patterns } from './regex-patterns.const';
 
 export class EmailValidator {
@@ -25,7 +25,7 @@ export class EmailValidator {
 	 */
 	static validator(control: AbstractControl, pattern: RegExp) {
 		const value = control.value;
-		if (!value) {
+		if (isEmpty(value)) {
 			control.setErrors({ required: true });
 			return { emailValid: false };
 		}
