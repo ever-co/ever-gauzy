@@ -7,9 +7,10 @@ import {
 	IIssueType,
 	IIssueTypeCreateInput,
 	IIssueTypeFindInput,
+	IIssueTypeUpdateInput,
 	IOrganization,
 	IPagination,
-	ITenant,
+	ITenant
 } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
@@ -42,7 +43,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 		return await super.delete(id, {
 			where: {
 				isSystem: false
-			},
+			}
 		});
 	}
 
@@ -98,26 +99,32 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			}));
 
 			// Function to generate issue types based on a source array
-			const generateIssueTypes = (source: IIssueType[]) => tenants.flatMap((tenant) =>
-				source.map(({ name, value, description, icon, color, imageId = null }: IIssueType) => ({
-					name,
-					value,
-					description,
-					icon,
-					color,
-					imageId,
-					tenant,
-					isSystem: false
-				}))
-			);
+			const generateIssueTypes = (source: IIssueType[]) =>
+				tenants.flatMap((tenant) =>
+					source.map(({ name, value, description, icon, color, imageId = null }: IIssueType) => ({
+						name,
+						value,
+						description,
+						icon,
+						color,
+						imageId,
+						tenant,
+						isDefault: false,
+						isSystem: false
+					}))
+				);
 
 			// Generate the array of issue types based on existing or default values
-			const issueTypes: IIssueType[] = total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
+			const issueTypes: IIssueType[] =
+				total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
 
 			// Save the created or fetched issue types to the repository and return the result.
 			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
-			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
+			throw new BadRequestException(
+				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				error
+			);
 		}
 	}
 
@@ -132,22 +139,27 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const { items = [] } = await super.fetchAll({ tenantId });
 
 			// Use map to generate issue types for each item.
-			const issueTypes: IIssueType[] = items.map((item: IIssueType) => (
-				new IssueType({
-					tenantId,
-					name: item.name,
-					value: item.value,
-					description: item.description,
-					icon: item.icon,
-					color: item.color,
-					imageId: item.imageId,
-					organization,
-					isSystem: false
-				})
-			));
+			const issueTypes: IIssueType[] = items.map(
+				(item: IIssueType) =>
+					new IssueType({
+						tenantId,
+						name: item.name,
+						value: item.value,
+						description: item.description,
+						icon: item.icon,
+						color: item.color,
+						imageId: item.imageId,
+						organization,
+						isDefault: false,
+						isSystem: false
+					})
+			);
 			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
-			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
+			throw new BadRequestException(
+				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				error
+			);
 		}
 	}
 
@@ -180,6 +192,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						icon,
 						color,
 						imageId,
+						isDefault: false,
 						isSystem: false
 					});
 				})
@@ -187,7 +200,45 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			return issueTypes;
 		} catch (error) {
 			// If an error occurs, throw an HttpException with a more specific message.
-			throw new HttpException('Failed to create bulk issue types for the organization entity.', HttpStatus.BAD_REQUEST);
+			throw new HttpException(
+				'Failed to create bulk issue types for the organization entity.',
+				HttpStatus.BAD_REQUEST
+			);
+		}
+	}
+
+	/**
+	 * @description
+	 * @param id - the id of issue type to make as default
+	 * @param entity - input that includes options useful for filters when search issues types items
+	 * @returns A Promise resolving to an array of updated issue types (IIssueType[]).
+	 * @throws HttpException if an error occurs during the creation process.
+	 */
+	async makeIssueTypeAsDefault(id: IIssueType['id'], entity: IIssueTypeUpdateInput): Promise<IIssueType[]> {
+		try {
+			const { organizationId, organizationTeamId, projectId } = entity;
+			const tenantId = RequestContext.currentTenantId();
+
+			// Fetch items based on tenant, organization, team and project
+			const { items = [] } = await super.fetchAll({ tenantId, organizationId, organizationTeamId, projectId });
+
+			// Use Promise.all to concurrently update issue types isDefault for each item
+			const updatedIssueTypes = await Promise.all(
+				items.map(async (item: IIssueType) => {
+					// if the item matches, then make it as default
+					if (item.id === id) {
+						item.isDefault = true;
+						return await this.save(item);
+					}
+
+					// Preload all of item's fields, update isDefault status and save it
+					const notDefaultIssueType = await this.typeOrmRepository.preload({ ...item, isDefault: false });
+					return await this.save(notDefaultIssueType);
+				})
+			);
+			return updatedIssueTypes;
+		} catch (error) {
+			throw new BadRequestException(error);
 		}
 	}
 }

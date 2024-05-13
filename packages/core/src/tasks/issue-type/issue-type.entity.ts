@@ -1,27 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	JoinColumn,
-	RelationId,
-} from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import {
-	IImageAsset,
-	IIssueType,
-	IOrganizationProject,
-	IOrganizationTeam,
-} from '@gauzy/contracts';
+import { IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	OrganizationProject,
 	OrganizationTeam,
-	TenantOrganizationBaseEntity,
+	TenantOrganizationBaseEntity
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from './../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from './../../core/decorators/entity';
 import { MikroOrmIssueTypeRepository } from './repository/mikro-orm-issue-type.repository';
 
 @MultiORMEntity('issue_type', { mikroOrmRepository: () => MikroOrmIssueTypeRepository })
 export class IssueType extends TenantOrganizationBaseEntity implements IIssueType {
-
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
 	@IsString()
@@ -50,6 +47,10 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	isDefault?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@MultiORMColumn({ default: false, update: false })
 	isSystem?: boolean;
 
@@ -74,7 +75,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -91,7 +92,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 * Organization Project
 	 */
 	@MultiORMManyToOne(() => OrganizationProject, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -107,7 +108,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	 * Organization Team
 	 */
 	@MultiORMManyToOne(() => OrganizationTeam, {
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationTeam?: IOrganizationTeam;
 
