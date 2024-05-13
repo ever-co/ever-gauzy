@@ -62,7 +62,6 @@ export class IssueTypeController extends CrudFactory<
 		@Param('id') id: IIssueType['id'],
 		@Body() input: IIssueTypeUpdateInput
 	): Promise<IIssueType[]> {
-		console.log('===============================route', 'child controller');
 		return await this.issueTypeService.makeIssueTypeAsDefault(id, input);
 	}
 }

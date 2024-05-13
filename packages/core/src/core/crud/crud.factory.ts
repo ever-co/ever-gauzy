@@ -151,7 +151,6 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 			@Param('id', UUIDValidationPipe) id: BaseType['id'],
 			@Body() entity: QueryDeepPartialEntity<BaseType>
 		): Promise<BaseType | UpdateResult> {
-			console.log('===============================route', 'parent controller');
 			return await this.crudService.update(id, entity);
 		}
 
