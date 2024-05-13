@@ -1,0 +1,47 @@
+{
+	"name": "@gauzy/ui-sdk",
+	"version": "0.0.1",
+	"description": "A collection of core UI components and utilities for the Gauzy framework. This library provides essential building blocks for constructing user interfaces, designed to be flexible and reusable in various Angular applications.",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"private": true,
+	"scripts": {
+		"lib:build": "ng build @gauzy/ui-sdk",
+		"lib:watch": "ng build @gauzy/ui-sdk --watch --configuration development",
+		"clean": "rimraf dist"
+	},
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^14.0.0",
+		"ckeditor4-angular": "^5.0.0",
+		"ngx-permissions": "^13.0.1",
+		"tslib": "^2.3.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"plugin",
+		"angular",
+		"ui"
+	],
+	"engines": {
+		"node": ">=16.20.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}

@@ -11,7 +11,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -22,9 +22,7 @@ import { take } from 'rxjs/operators';
 	templateUrl: './product-gallery.component.html',
 	styleUrls: ['./product-gallery.component.scss']
 })
-export class ProductGalleryComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class ProductGalleryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedImage: IImageAsset;
 	gallery: IImageAsset[] = [];
 	featuredImage: IImageAsset;
@@ -59,44 +57,36 @@ export class ProductGalleryComponent
 	}
 
 	async ngOnInit() {
-		this.inventoryStore.activeProduct$
-			.pipe(untilDestroyed(this))
-			.subscribe((activeProduct) => {
-				this.gallery = activeProduct.gallery;
-				this.featuredImage = activeProduct.featuredImage;
-			});
+		this.inventoryStore.activeProduct$.pipe(untilDestroyed(this)).subscribe((activeProduct) => {
+			this.gallery = activeProduct.gallery;
+			this.featuredImage = activeProduct.featuredImage;
+		});
 
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-				}
-			});
+		this.store.selectedOrganization$.pipe(untilDestroyed(this)).subscribe((organization: IOrganization) => {
+			if (organization) {
+				this.organization = organization;
+			}
+		});
 
-		this.newImageUploadedEvent$
-			.pipe(untilDestroyed(this))
-			.subscribe(async (resultData) => {
-				const newAsset = {
-					name: resultData['original_filename'],
-					url: resultData.url,
-					width: resultData.width,
-					height: resultData.height,
-					isFeatured: false,
-					organizationId: this.organization.id,
-					tenantId: this.store.user.tenantId
-				};
+		this.newImageUploadedEvent$.pipe(untilDestroyed(this)).subscribe(async (resultData) => {
+			const newAsset = {
+				name: resultData['original_filename'],
+				url: resultData.url,
+				width: resultData.width,
+				height: resultData.height,
+				isFeatured: false,
+				organizationId: this.organization.id,
+				tenantId: this.store.user.tenantId
+			};
 
-				let result = await this.imageAssetService.createImageAsset(
-					newAsset
-				);
+			let result = await this.imageAssetService.createImageAsset(newAsset);
 
-				if (result) {
-					this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
+			if (result) {
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
 
-					this.newImageStoredEvent$.next(result);
-				}
-			});
+				this.newImageStoredEvent$.next(result);
+			}
+		});
 	}
 
 	async onAddImageClick() {
@@ -116,13 +106,10 @@ export class ProductGalleryComponent
 		if (!selectedImages) return;
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {
-				return !this.inventoryStore.gallery.find((galleryImg) => {
-					return (
-						galleryImg.id == image.id ||
-						galleryImg.name == image.name
-					);
-				});
-			})
+					return !this.inventoryStore.gallery.find((galleryImg) => {
+						return galleryImg.id == image.id || galleryImg.name == image.name;
+					});
+			  })
 			: [];
 
 		try {
@@ -133,17 +120,10 @@ export class ProductGalleryComponent
 				);
 
 				this.inventoryStore.activeProduct = resultProduct;
-				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
-				);
-			} else if (
-				selectedImages.length &&
-				!this.inventoryStore.activeProduct.id
-			) {
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
+			} else if (selectedImages.length && !this.inventoryStore.activeProduct.id) {
 				this.inventoryStore.addGalleryImages(selectedImages);
-				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY'
-				);
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_ADDED_TO_GALLERY');
 			}
 		} catch (err) {
 			this.toastrService.danger('Something bad happened');
@@ -157,9 +137,7 @@ export class ProductGalleryComponent
 	async onSetFeaturedClick() {
 		if (this.selectedImage && !this.inventoryStore.activeProduct.id) {
 			this.inventoryStore.updateFeaturedImage(this.selectedImage);
-			this.toastrService.success(
-				'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
-			);
+			this.toastrService.success('INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED');
 			return;
 		}
 
@@ -172,9 +150,7 @@ export class ProductGalleryComponent
 			if (result) {
 				this.inventoryStore.updateFeaturedImage(this.selectedImage);
 
-				this.toastrService.success(
-					'INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED'
-				);
+				this.toastrService.success('INVENTORY_PAGE.FEATURED_IMAGE_WAS_SAVED');
 			}
 		} catch (err) {
 			this.toastrService.danger('Something bad happened!');
@@ -202,9 +178,7 @@ export class ProductGalleryComponent
 			this.selectedImage = null;
 			this.toastrService.success('INVENTORY_PAGE.IMAGE_WAS_DELETED');
 		} catch (err) {
-			this.toastrService.danger(
-				err.error.message || 'Something bad happened!'
-			);
+			this.toastrService.danger(err.error.message || 'Something bad happened!');
 		}
 	}
 
@@ -240,10 +214,7 @@ export class ProductGalleryComponent
 
 	async onDeleteGalleryImage() {
 		const { activeProduct } = this.inventoryStore;
-		if (
-			activeProduct.featuredImage &&
-			activeProduct.featuredImage.id == this.selectedImage.id
-		) {
+		if (activeProduct.featuredImage && activeProduct.featuredImage.id == this.selectedImage.id) {
 			await this.productService.deleteFeaturedImage(activeProduct.id);
 		}
 	}
@@ -265,5 +236,5 @@ export class ProductGalleryComponent
 			});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

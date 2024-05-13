@@ -1,16 +1,11 @@
 import { Component, OnDestroy, OnInit, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import {
-	IEmployee,
-	IEmployeeUpdateInput,
-	IUserUpdateInput,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -30,9 +25,7 @@ import {
 	],
 	providers: [EmployeeStore]
 })
-export class EditEmployeeProfileComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	routeParams: Params;
 	selectedEmployee: IEmployee;
 	employeeName: string;
@@ -66,7 +59,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		this.route.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => this.routeParams = params),
+				tap((params) => (this.routeParams = params)),
 				tap(() => this.loadTabs()),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -75,7 +68,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		this.employeeStore.userForm$
 			.pipe(
 				tap((value: IUserUpdateInput) => {
-					this.submitUserForm(value)
+					this.submitUserForm(value);
 				}),
 				untilDestroyed(this)
 			)
@@ -83,7 +76,7 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 		this.employeeStore.employeeForm$
 			.pipe(
 				tap((value: IEmployeeUpdateInput) => {
-					this.submitEmployeeForm(value)
+					this.submitEmployeeForm(value);
 				}),
 				untilDestroyed(this)
 			)
@@ -136,12 +129,16 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				responsive: true,
 				route: this.getRoute('rates')
 			},
-			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW) ? [{
-				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
-				icon: 'book-outline',
-				responsive: true,
-				route: this.getRoute('projects')
-			}] : []),
+			...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)
+				? [
+						{
+							title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.PROJECTS'),
+							icon: 'book-outline',
+							responsive: true,
+							route: this.getRoute('projects')
+						}
+				  ]
+				: []),
 			{
 				title: this.getTranslation('EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS'),
 				icon: 'book-open-outline',
@@ -165,18 +162,10 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 				 * But employee can not update whole profile except some of the fields provided by UI
 				 * We will define later, which fields allow to employee to update from the form
 				 */
-				if (!!this.store.hasPermission(
-					PermissionsEnum.ORG_EMPLOYEES_EDIT
-				)) {
-					await this.employeeService.update(
-						this.selectedEmployee.id,
-						value
-					);
+				if (!!this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)) {
+					await this.employeeService.update(this.selectedEmployee.id, value);
 				} else {
-					await this.employeeService.updateProfile(
-						this.selectedEmployee.id,
-						value
-					);
+					await this.employeeService.updateProfile(this.selectedEmployee.id, value);
 				}
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', {
 					name: this.employeeName
@@ -196,17 +185,12 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 	private async submitUserForm(value: IUserUpdateInput) {
 		if (value) {
 			try {
-				await this.userService.update(
-					this.selectedEmployee.user.id,
-					value
-				);
-				this.updatedImage.emit(value.imageUrl)
+				await this.userService.update(this.selectedEmployee.user.id, value);
+				this.updatedImage.emit(value.imageUrl);
 				if (!value.email) {
 					this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 				} else {
-					this.toastrService.success(
-						'TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE',
-						{ name: this.employeeName });
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_PROFILE_UPDATE', { name: this.employeeName });
 				}
 			} catch (error) {
 				this.errorHandler.handleError(error);
@@ -218,20 +202,22 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent
 
 	private async _getEmployeeProfile() {
 		const { id } = this.routeParams;
-		const employee = await firstValueFrom(this.employeeService.getEmployeeById(id, [
-			'user',
-			'organizationDepartments',
-			'organizationPosition',
-			'organizationEmploymentTypes',
-			'tags',
-			'skills',
-			'contact'
-		]));
+		const employee = await firstValueFrom(
+			this.employeeService.getEmployeeById(id, [
+				'user',
+				'organizationDepartments',
+				'organizationPosition',
+				'organizationEmploymentTypes',
+				'tags',
+				'skills',
+				'contact'
+			])
+		);
 		this.employeeStore.selectedEmployee = this.selectedEmployee = employee;
 		this.employeeName = employee?.user?.name || employee?.user?.username || 'Employee';
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	private _applyTranslationOnTabs() {
 		this.translateService.onLangChange

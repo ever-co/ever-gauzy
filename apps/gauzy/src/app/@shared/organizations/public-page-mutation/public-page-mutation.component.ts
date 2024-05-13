@@ -1,6 +1,10 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import * as moment from 'moment';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IIncome,
 	IOrganization,
@@ -11,21 +15,15 @@ import {
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import * as moment from 'moment';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationAwardsService, OrganizationLanguagesService, Store, ToastrService } from '../../../@core/services';
-import { ckEditorConfig } from "../../ckeditor.config";
 
 @Component({
 	selector: 'ngx-public-page-mutation',
 	templateUrl: './public-page-mutation.component.html',
 	styleUrls: ['./public-page-mutation.component.scss']
 })
-export class PublicPageMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class PublicPageMutationComponent extends TranslationBaseComponent implements OnInit {
 	income?: IIncome;
 	organization?: IOrganization;
 	client_focus = Object.values(ClientFocusEnum);
@@ -46,7 +44,7 @@ export class PublicPageMutationComponent
 	moment = moment;
 	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
-		height: "200"
+		height: '200'
 	};
 
 	get totalEmployees() {
@@ -101,9 +99,7 @@ export class PublicPageMutationComponent
 				formValue.client_focus = this.organization.client_focus;
 			}
 			if (!!formValue.founded) {
-				formValue.registrationDate = moment(
-					this.organization.registrationDate
-				).year(formValue.founded);
+				formValue.registrationDate = moment(this.organization.registrationDate).year(formValue.founded);
 			}
 			this.dialogRef.close(formValue);
 		}
@@ -116,9 +112,7 @@ export class PublicPageMutationComponent
 	private _initializeForm() {
 		if (this.organization) {
 			if (typeof this.organization.client_focus === 'string') {
-				this.selectedClientFocus = this.organization.client_focus.split(
-					','
-				);
+				this.selectedClientFocus = this.organization.client_focus.split(',');
 			}
 			this.organizationId = this.organization.id;
 			this.tenantId = this.store.user.tenantId;
@@ -133,8 +127,7 @@ export class PublicPageMutationComponent
 				show_profits: this.organization.show_profits,
 				show_bonuses_paid: this.organization.show_bonuses_paid,
 				show_total_hours: this.organization.show_total_hours,
-				show_minimum_project_size: this.organization
-					.show_minimum_project_size,
+				show_minimum_project_size: this.organization.show_minimum_project_size,
 				show_projects_count: this.organization.show_projects_count,
 				show_clients_count: this.organization.show_clients_count,
 				show_clients: this.organization.show_clients,
@@ -173,12 +166,9 @@ export class PublicPageMutationComponent
 				year
 			});
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.ADD_AWARD',
-				{
-					name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.ADD_AWARD', {
+				name
+			});
 
 			this.showAddAward = !this.showAddAward;
 			this.loadAwards();
@@ -191,12 +181,7 @@ export class PublicPageMutationComponent
 		}
 	}
 
-	async addLanguage(
-		language: ILanguage,
-		level: string,
-		organization: IOrganization,
-		name: string
-	) {
+	async addLanguage(language: ILanguage, level: string, organization: IOrganization, name: string) {
 		if (language && level && name) {
 			const { tenantId } = this;
 			await this.organizationLanguagesService.create({
@@ -207,12 +192,9 @@ export class PublicPageMutationComponent
 				name
 			});
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.ADD_LANGUAGE',
-				{
-					name
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.ADD_LANGUAGE', {
+				name
+			});
 
 			this.showAddLanguage = !this.showAddLanguage;
 			this.loadLanguages();
@@ -227,23 +209,17 @@ export class PublicPageMutationComponent
 
 	async removeAward(award) {
 		await this.organizationAwardsService.delete(award.id);
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.REMOVE_AWARD',
-			{
-				name: award.name
-			}
-		);
+		this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_AWARDS.REMOVE_AWARD', {
+			name: award.name
+		});
 		this.loadAwards();
 	}
 
 	async removeLanguage(language) {
 		await this.organizationLanguagesService.delete(language.id);
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.REMOVE_LANGUAGE',
-			{
-				name: language.name
-			}
-		);
+		this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_LANGUAGES.REMOVE_LANGUAGE', {
+			name: language.name
+		});
 		this.loadLanguages();
 	}
 
@@ -265,10 +241,7 @@ export class PublicPageMutationComponent
 
 	private async loadLanguages() {
 		const { organizationId, tenantId } = this;
-		const res = await this.organizationLanguagesService.getAll(
-			{ organizationId, tenantId },
-			['language']
-		);
+		const res = await this.organizationLanguagesService.getAll({ organizationId, tenantId }, ['language']);
 		if (res) {
 			this.organization_languages = res.items;
 			if (this.organization_languages.length <= 0) {

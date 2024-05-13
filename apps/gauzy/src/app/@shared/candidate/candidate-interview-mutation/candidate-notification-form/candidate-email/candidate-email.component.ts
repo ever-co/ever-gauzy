@@ -2,8 +2,8 @@ import { Component, OnInit, Input } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { CandidatesService } from '../../../../../@core/services/candidates.service';
-import { ckEditorConfig } from "../../../../ckeditor.config";
 
 @Component({
 	selector: 'ga-candidate-email',
@@ -24,18 +24,13 @@ export class CandidateEmailComponent implements OnInit {
 	textTemplate: string;
 	ckConfig: CKEditor4.Config = ckEditorConfig;
 
-	constructor(
-		protected candidatesService: CandidatesService,
-		private readonly fb: UntypedFormBuilder
-	) { }
+	constructor(protected candidatesService: CandidatesService, private readonly fb: UntypedFormBuilder) {}
 
 	ngOnInit() {
 		this.loadFormData();
 		this.setTemplate();
 		this.form.patchValue({
-			text: this.isCandidate
-				? this.textTemplate
-				: this.textTemplate + this.candidateNameTemplate
+			text: this.isCandidate ? this.textTemplate : this.textTemplate + this.candidateNameTemplate
 		});
 	}
 
@@ -49,10 +44,7 @@ export class CandidateEmailComponent implements OnInit {
 	}
 
 	setTemplate() {
-		this.candidateName =
-			this.selectedCandidate.user.firstName +
-			' ' +
-			this.selectedCandidate.user.lastName;
+		this.candidateName = this.selectedCandidate.user.firstName + ' ' + this.selectedCandidate.user.lastName;
 
 		this.getDate(this.templateData.startTime, this.templateData.endTime);
 
@@ -73,12 +65,7 @@ export class CandidateEmailComponent implements OnInit {
 	}
 
 	getDate(startTime: Date, endTime: Date) {
-		this.dateTemplate =
-			startTime.toDateString() +
-			', ' +
-			this.getTime(startTime) +
-			'-' +
-			this.getTime(endTime);
+		this.dateTemplate = startTime.toDateString() + ', ' + this.getTime(startTime) + '-' + this.getTime(endTime);
 	}
 	getTime(time: Date) {
 		const hours = time.getHours();

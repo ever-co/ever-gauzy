@@ -1,22 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-	UntypedFormBuilder,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import {
-	ITag,
-	IOrganization,
-	IExpenseCategory
-} from '@gauzy/contracts';
+import { ITag, IOrganization, IExpenseCategory } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from './../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FormHelpers } from './../../../../@shared/forms';
 import { filter, tap } from 'rxjs/operators';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,15 +15,13 @@ import { filter, tap } from 'rxjs/operators';
 	templateUrl: './expense-category-mutation.component.html',
 	styleUrls: ['./expense-category-mutation.component.scss']
 })
-export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class ExpenseCategoryMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	public organization: IOrganization;
 
 	/*
-	* Getter & Setter category element
-	*/
+	 * Getter & Setter category element
+	 */
 	_category: IExpenseCategory;
 	get category(): IExpenseCategory {
 		return this._category;
@@ -42,8 +31,8 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Expense Category Mutation Form
-	*/
+	 * Expense Category Mutation Form
+	 */
 	public form: UntypedFormGroup = ExpenseCategoryMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -65,7 +54,7 @@ export class ExpenseCategoryMutationComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._patchFormValue()),
 				untilDestroyed(this)
 			)

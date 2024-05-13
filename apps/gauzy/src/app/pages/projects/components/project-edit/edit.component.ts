@@ -11,13 +11,8 @@ import {
 	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
 import { ProjectMutationComponent } from './../../../../@shared/project';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
-import {
-	ErrorHandlingService,
-	OrganizationProjectsService,
-	Store,
-	ToastrService
-} from './../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,7 +21,6 @@ import {
 	styleUrls: ['./edit.component.scss']
 })
 export class ProjectEditMutationComponent extends TranslationBaseComponent implements OnInit {
-
 	/** Project Mutation Component*/
 	@ViewChild(ProjectMutationComponent, { static: false }) public _component: ProjectMutationComponent;
 
@@ -43,7 +37,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		private readonly _store: Store,
 		private readonly _organizationProjectsService: OrganizationProjectsService,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -90,7 +84,6 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		/** Make loading true  */
 		this.loading = true;
 		try {
-
 			const { id: organizationId, tenantId } = this.organization;
 			const { id } = this.project;
 

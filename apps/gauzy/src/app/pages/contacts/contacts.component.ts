@@ -19,6 +19,7 @@ import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
@@ -35,7 +36,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,7 +45,6 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	styleUrls: ['./contacts.component.scss']
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	showAddCard: boolean;
 	organizationContacts: IOrganizationContact[] = [];
 	projectsWithoutOrganizationContacts: IOrganizationProject[] = [];
@@ -238,7 +237,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				primaryPhone: {
 					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
@@ -273,13 +272,13 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
 					filter: false,
-					valuePrepareFunction: (value: ICountry['isoCode']) => this.getCountry(value),
+					valuePrepareFunction: (value: ICountry['isoCode']) => this.getCountry(value)
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
@@ -386,7 +385,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 
 				if (organizationContact.id) {
 					await this.organizationContactService.update(organizationContact.id, request);
-					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT', { name });
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.UPDATE_CONTACT', {
+						name
+					});
 				} else {
 					await this.organizationContactService.create(request);
 					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_CONTACTS.ADD_CONTACT', { name });
@@ -419,10 +420,9 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 			organizationId,
 			organization: { id: organizationId },
 			tenantId,
-			tenant: { id: tenantId },
+			tenant: { id: tenantId }
 		};
 	}
-
 
 	/*
 	 * Register Smart Table Source Config
@@ -451,8 +451,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					contactType: this.contactType,
 					...(this.selectedEmployeeId
 						? {
-							members: [this.selectedEmployeeId]
-						}
+								members: [this.selectedEmployeeId]
+						  }
 						: {}),
 					...(this.filters.where ? this.filters.where : {})
 				},
@@ -615,5 +615,5 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 		return foundCountry?.country || null;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

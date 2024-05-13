@@ -1,11 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,12 +21,8 @@ import {
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import {
-	ProductService,
-	Store,
-	ToastrService
-} from '../../../../@core/services';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ProductService, Store, ToastrService } from '../../../../@core/services';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { TagsOnlyComponent } from './../../../../@shared/table-components';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
@@ -44,9 +33,7 @@ import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-ta
 	templateUrl: './table-inventory.component.html',
 	styleUrls: ['./table-inventory.component.scss']
 })
-export class TableInventoryComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class TableInventoryComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -110,9 +97,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.pipe(
 				debounceTime(300),
 				distinctUntilChange(),
-				filter(
-					([organization, language]) => !!organization && !!language
-				),
+				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization]) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.products$.next(true)),
@@ -121,11 +106,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.products = [])),
 				untilDestroyed(this)
@@ -139,15 +120,9 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.products = [])),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
@@ -176,7 +151,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -184,7 +159,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					renderComponent: NameWithDescriptionComponent,
 					componentInitFunction: (instance: NameWithDescriptionComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
@@ -196,9 +171,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					valuePrepareFunction: (value: string) => value || '-'
 				},
 				productCategory: {
-					title: this.getTranslation(
-						'INVENTORY_PAGE.PRODUCT_CATEGORY'
-					),
+					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY'),
 					type: 'string',
 					valuePrepareFunction: (category: string) => category || '-'
 				},
@@ -210,7 +183,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -221,9 +194,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 	}
 
 	manageProductCategories() {
-		this.router.navigate([
-			'/pages/organization/inventory/product-categories'
-		]);
+		this.router.navigate(['/pages/organization/inventory/product-categories']);
 	}
 
 	manageWarehouses() {
@@ -256,7 +227,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		this.router.navigate([`/pages/organization/inventory/edit`, this.selectedProduct.id]);
 	}
 
-
 	/**
 	 * Navigate to the detailed view of a selected inventory item.
 	 *
@@ -275,7 +245,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		this.router.navigate([`/pages/organization/inventory/view`, this.selectedProduct.id]);
 	}
 
-
 	/**
 	 * Asynchronously deletes a product.
 	 *
@@ -291,9 +260,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		}
 
 		// Open a confirmation dialog and wait for the result
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		// If the user cancels the deletion, return early
 		if (!result) return;
@@ -344,12 +311,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 			// Create a new ServerDataSource for Smart Table
 			this.smartTableSource = new ServerDataSource(this.http, {
 				endPoint: `${API_PREFIX}/products/pagination`,
-				relations: [
-					'productType',
-					'productCategory',
-					'tags',
-					'featuredImage'
-				],
+				relations: ['productType', 'productCategory', 'tags', 'featuredImage'],
 				// Define query parameters for the API request
 				where: {
 					organizationId,
@@ -413,7 +375,6 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-
 	selectProduct({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedProduct = isSelected ? data : null;
@@ -438,5 +399,5 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

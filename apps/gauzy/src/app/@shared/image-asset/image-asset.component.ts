@@ -7,7 +7,7 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ImageAssetService } from '../../@core/services/image-asset.service';
 import { ToastrService } from '../../@core/services/toastr.service';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy()
 @Component({
@@ -15,9 +15,7 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 	templateUrl: './image-asset.component.html',
 	styleUrls: ['./image-asset.component.scss']
 })
-export class ImageAssetComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class ImageAssetComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;
 	@Input() imageAsset: IImageAsset;
 
@@ -53,9 +51,7 @@ export class ImageAssetComponent
 		this.imageAssetService
 			.updateImageAsset(request)
 			.then((res) => {
-				this.toastrService.success(
-					'INVENTORY_PAGE.IMAGE_ASSET_UPDATED'
-				);
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_ASSET_UPDATED');
 
 				this.dialogRef.close(request);
 			})

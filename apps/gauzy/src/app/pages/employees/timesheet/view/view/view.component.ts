@@ -2,13 +2,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IGetTimeLogInput,
-	ITimeLog,
-	ITimesheet,
-	TimesheetStatus,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { filter, Subject } from 'rxjs';
@@ -17,20 +11,15 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-timesheet-view',
 	templateUrl: './view.component.html',
-	styleUrls: [
-		'../../daily/daily/daily.component.scss',
-		'./view.component.scss'
-	]
+	styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss']
 })
-export class GithubViewComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class GithubViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
 	timeLogs: any;
@@ -124,10 +113,7 @@ export class GithubViewComponent extends TranslationBaseComponent
 	}
 
 	public selectLog(isChecked: boolean, log: ITimeLog) {
-		if (
-			(this.selectedLog.data && this.selectedLog.data.id === log?.id) ||
-			!isChecked
-		) {
+		if ((this.selectedLog.data && this.selectedLog.data.id === log?.id) || !isChecked) {
 			this.clearData();
 		} else {
 			this.disable = true;
@@ -145,5 +131,5 @@ export class GithubViewComponent extends TranslationBaseComponent
 		this.disable = true;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

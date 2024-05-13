@@ -5,14 +5,13 @@
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { SeoService } from './@core/utils/seo.service';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
-import { AnalyticsService } from './@core/utils/analytics.service';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
@@ -21,15 +20,14 @@ import {
 	ISelectorVisibility,
 	LanguagesService,
 	SelectorBuilderService,
-	Store,
+	Store
 } from './@core/services';
 import { environment } from '../environments/environment';
-import { JitsuService } from './@core/services/analytics/jitsu.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-app',
-	template: '<router-outlet *ngIf="!loading"></router-outlet>',
+	template: '<router-outlet *ngIf="!loading"></router-outlet>'
 })
 export class AppComponent implements OnInit, AfterViewInit {
 	//
@@ -76,11 +74,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		/**
 		 * Observable that emits when system languages change.
 		 */
-		const systemLanguages$ = this.store.systemLanguages$.pipe(
-			distinctUntilChange(),
-			untilDestroyed(this),
-			take(1)
-		);
+		const systemLanguages$ = this.store.systemLanguages$.pipe(distinctUntilChange(), untilDestroyed(this), take(1));
 		// Subscribe to changes in system languages
 		systemLanguages$.subscribe((languages: ILanguage[]) => {
 			// Returns the language code name from the browser, e.g., "en", "bg", "he", "ru"
@@ -100,7 +94,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const preferredLanguage = this.store?.user?.preferredLanguage ?? this.store.preferredLanguage ?? null;
 
 			// Use browser language as the primary language, if not found then use the system default language (e.g., "en")
-			const selectedLanguage = preferredLanguage ?? (systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH);
+			const selectedLanguage =
+				preferredLanguage ?? (systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH);
 
 			// Set the selected language
 			this.translate.use(selectedLanguage);
@@ -134,14 +129,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 		const { items = [] } = await this.languagesService.getSystemLanguages();
 
 		// Filter languages to include only system languages
-		const systemLanguages = items.filter(
-			(item: ILanguage) => item.is_system
-		);
+		const systemLanguages = items.filter((item: ILanguage) => item.is_system);
 
 		// Store the filtered system languages in the store
 		this.store.systemLanguages = systemLanguages || [];
 	}
-
 
 	/**
 	 * Dynamically loads the Chatwoot SDK.
@@ -166,7 +158,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			// Run the Chatwoot SDK with the specified website token and base URL
 			window['chatwootSDK'].run({
 				websiteToken: environment.CHATWOOT_SDK_TOKEN,
-				baseUrl: chatwootBaseUrl,
+				baseUrl: chatwootBaseUrl
 			});
 		};
 	}
@@ -176,47 +168,57 @@ export class AppComponent implements OnInit, AfterViewInit {
 	 * Handles updating Date Range Picker, Date Picker Config, and Selector visibility based on route data.
 	 */
 	getActivateRouterDataEvent() {
-		this.router.events.pipe(
-			// Filter for NavigationEnd events
-			filter((event) => event instanceof NavigationEnd),
-			// Map to the activated route
-			map(() => this.activatedRoute),
-			// Traverse to the primary outlet route
-			map((route) => {
-				while (route.firstChild) route = route.firstChild;
-				return route;
-			}),
-			// Filter for routes in the primary outlet
-			filter((route) => route.outlet === 'primary'),
-			// MergeMap to the route data
-			mergeMap((route) => route.data),
-			/**
-			 * Set Date Range Picker Default Unit and Config
-			 */
-			tap(({ datePicker, dates }: {
-				datePicker: IDatePickerConfig;
-				dates: IDateRangePicker;
-				selectors: ISelectorVisibility;
-			}) => {
-				// Set Date Range Picker Default Unit
-				const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
-				if (isNotEmpty(dates)) {
-					this.dateRangePickerBuilderService.setDateRangePicker(dates);
-				}
-				this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
-			}),
-			// Set selectors' visibility
-			tap(({ selectors }: { selectors?: ISelectorVisibility }) => {
-				// Iterate through the visibility settings for selectors
-				Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
-					// Set the visibility for each selector based on the provided or default value
-					this.selectorBuilderService.setSelectorsVisibility(id, typeof selectors === 'boolean' ? selectors : value);
-				});
-				// Retrieve and get the updated selectors' visibility
-				this.selectorBuilderService.getSelectorsVisibility();
-			}),
-			// Automatically unsubscribe when the component is destroyed
-			untilDestroyed(this)
-		).subscribe();
+		this.router.events
+			.pipe(
+				// Filter for NavigationEnd events
+				filter((event) => event instanceof NavigationEnd),
+				// Map to the activated route
+				map(() => this.activatedRoute),
+				// Traverse to the primary outlet route
+				map((route) => {
+					while (route.firstChild) route = route.firstChild;
+					return route;
+				}),
+				// Filter for routes in the primary outlet
+				filter((route) => route.outlet === 'primary'),
+				// MergeMap to the route data
+				mergeMap((route) => route.data),
+				/**
+				 * Set Date Range Picker Default Unit and Config
+				 */
+				tap(
+					({
+						datePicker,
+						dates
+					}: {
+						datePicker: IDatePickerConfig;
+						dates: IDateRangePicker;
+						selectors: ISelectorVisibility;
+					}) => {
+						// Set Date Range Picker Default Unit
+						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
+						if (isNotEmpty(dates)) {
+							this.dateRangePickerBuilderService.setDateRangePicker(dates);
+						}
+						this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
+					}
+				),
+				// Set selectors' visibility
+				tap(({ selectors }: { selectors?: ISelectorVisibility }) => {
+					// Iterate through the visibility settings for selectors
+					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
+						// Set the visibility for each selector based on the provided or default value
+						this.selectorBuilderService.setSelectorsVisibility(
+							id,
+							typeof selectors === 'boolean' ? selectors : value
+						);
+					});
+					// Retrieve and get the updated selectors' visibility
+					this.selectorBuilderService.getSelectorsVisibility();
+				}),
+				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

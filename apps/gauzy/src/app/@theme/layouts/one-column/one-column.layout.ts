@@ -1,19 +1,11 @@
-import {
-	AfterViewInit,
-	Component,
-	Inject,
-	PLATFORM_ID,
-	ViewChild,
-	OnInit,
-	OnDestroy
-} from '@angular/core';
+import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit, OnDestroy } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Observable } from 'rxjs';
 import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { IUser } from '@gauzy/contracts';
 import { NavigationBuilderService, Store } from '../../../@core/services';
-import { LayoutService } from '../../../@core/utils/layout.service';
+import { LayoutService } from '../../../@core/services/layout.service';
 import { WindowModeBlockScrollService } from '../../services/window-mode-block-scroll.service';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector.service';
@@ -25,7 +17,6 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
-
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	private _user$: Observable<IUser>;

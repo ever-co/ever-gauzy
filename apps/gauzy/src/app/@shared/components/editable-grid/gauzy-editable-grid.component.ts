@@ -1,19 +1,11 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	TemplateRef,
-	EventEmitter,
-	Output,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, Input, TemplateRef, EventEmitter, Output, OnDestroy } from '@angular/core';
 
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil, take, tap, filter } from 'rxjs/operators';
 
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 export type ItemActionType = 'create' | 'edit' | 'delete';
 
@@ -24,7 +16,8 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 })
 export class GauzyEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+	implements OnInit, OnDestroy
+{
 	@Input() items: T[];
 	@Input() itemTmpl?: TemplateRef<{ $implicit: any }>;
 
@@ -38,10 +31,7 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 
 	private _onDestroy$: Subject<void> = new Subject<void>();
 
-	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService
-	) {
+	constructor(readonly translateService: TranslateService, private dialogService: NbDialogService) {
 		super(translateService);
 	}
 

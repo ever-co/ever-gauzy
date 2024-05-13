@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -14,7 +15,7 @@ import {
 	ISelectedEmployee,
 	ITask,
 	PermissionsEnum,
-	TaskListTypeEnum,
+	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { HashNumberPipe } from './../../../../@shared/pipes';
@@ -28,7 +29,7 @@ import {
 	MyTasksStoreService,
 	Store,
 	TasksStoreService,
-	TeamTasksStoreService,
+	TeamTasksStoreService
 } from './../../../../@core/services';
 import {
 	AssignedToComponent,
@@ -38,28 +39,26 @@ import {
 	EmployeesMergedTeamsComponent,
 	NotesWithTagsComponent,
 	ProjectComponent,
-	StatusViewComponent,
+	StatusViewComponent
 } from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
 import {
 	InputFilterComponent,
 	OrganizationTeamFilterComponent,
-	TaskStatusFilterComponent,
+	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
 import {
 	IPaginationBase,
-	PaginationFilterBaseComponent,
+	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './task.component.html',
-	styleUrls: ['task.component.scss'],
+	styleUrls: ['task.component.scss']
 })
 export class TaskComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	private _refresh$: Subject<boolean> = new Subject();
 	private _tasks: ITask[] = [];
 	settingsSmartTable: object;
@@ -161,7 +160,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			selectedRowIndex: -1,
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TASK'),
 			columns: {
@@ -171,7 +170,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					width: '10%',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
@@ -191,11 +190,11 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'title', search: value });
-					},
+					}
 				},
 				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
@@ -205,7 +204,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
@@ -214,7 +213,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					renderComponent: CreatedAtComponent,
 					componentInitFunction: (instance: CreatedAtComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				creator: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_CREATOR'),
@@ -226,14 +225,14 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value: string) => {
 						this.setFilter({
 							field: 'creator.firstName',
-							search: value,
+							search: value
 						});
-					},
+					}
 				},
 				...this.getColumnsByPage(),
 				dueDate: {
@@ -241,7 +240,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					type: 'custom',
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'dueDate', search: value });
@@ -250,7 +249,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				status: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_STATUS'),
@@ -263,13 +262,13 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filter: {
 						type: 'custom',
-						component: TaskStatusFilterComponent,
+						component: TaskStatusFilterComponent
 					},
 					filterFunction: (value) => {
-						this.setFilter({ field: 'status', search: value?.name, });
-					},
-				},
-			},
+						this.setFilter({ field: 'status', search: value?.name });
+					}
+				}
+			}
 		};
 	}
 
@@ -277,15 +276,18 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (this.isTasksPage()) {
 			return {
 				employeesMergedTeams: {
-					title: this.getTranslation('TASKS_PAGE.TASK_MEMBERS') + '/' + this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
+					title:
+						this.getTranslation('TASKS_PAGE.TASK_MEMBERS') +
+						'/' +
+						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
 					filter: false,
 					renderComponent: EmployeesMergedTeamsComponent,
 					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
 						instance.rowData = cell.getRow().getData();
-					},
-				},
+					}
+				}
 			};
 		} else if (this.isMyTasksPage()) {
 			return {
@@ -297,8 +299,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
-					},
-				},
+					}
+				}
 			};
 		} else if (this.isTeamTaskPage()) {
 			return {
@@ -313,15 +315,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					},
 					filter: {
 						type: 'custom',
-						component: OrganizationTeamFilterComponent,
+						component: OrganizationTeamFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({
 							field: 'teams',
-							search: value ? [value.id] : [],
+							search: value ? [value.id] : []
 						});
-					},
-				},
+					}
+				}
 			};
 		} else {
 			return {};
@@ -369,10 +371,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.createTaskDialog()),
 				untilDestroyed(this)
@@ -380,11 +379,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this._tasks = [])),
 				untilDestroyed(this)
@@ -397,15 +392,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this._tasks = [])),
 				tap(() => this.taskSubject$.next(true)),
 				untilDestroyed(this)
@@ -430,12 +419,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			...(this.viewComponentName === ComponentEnum.ALL_TASKS
 				? { endPoint: `${API_PREFIX}/tasks/pagination` }
 				: {}),
-			...(this.viewComponentName === ComponentEnum.TEAM_TASKS
-				? { endPoint: `${API_PREFIX}/tasks/team` }
-				: {}),
-			...(this.viewComponentName === ComponentEnum.MY_TASKS
-				? { endPoint: `${API_PREFIX}/tasks/me` }
-				: {}),
+			...(this.viewComponentName === ComponentEnum.TEAM_TASKS ? { endPoint: `${API_PREFIX}/tasks/team` } : {}),
+			...(this.viewComponentName === ComponentEnum.MY_TASKS ? { endPoint: `${API_PREFIX}/tasks/me` } : {}),
 			relations: [
 				'members',
 				'members.user',
@@ -449,57 +434,56 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				'organizationSprint',
 				'taskStatus',
 				'taskSize',
-				'taskPriority',
+				'taskPriority'
 			],
 			join: {
 				alias: 'task',
 				leftJoin: {
 					members: 'task.members',
-					user: 'members.user',
-				},
+					user: 'members.user'
+				}
 			},
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedProject && this.selectedProject.id
 					? {
-						...(this.viewMode === TaskListTypeEnum.SPRINT
-							? {
-								organizationSprintId: null,
-							}
-							: {}),
-						projectId: this.selectedProject.id,
-					}
+							...(this.viewMode === TaskListTypeEnum.SPRINT
+								? {
+										organizationSprintId: null
+								  }
+								: {}),
+							projectId: this.selectedProject.id
+					  }
 					: {}),
 				...(this.selectedEmployeeId
 					? {
-						members: {
-							id: this.selectedEmployeeId,
-						},
-					}
+							members: {
+								id: this.selectedEmployeeId
+							}
+					  }
 					: {}),
 				...(this.selectedTeamIds ? { teams: this.selectedTeamIds } : {}),
-				...(this.filters.where ? this.filters.where : {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (task: ITask) => {
 				return Object.assign({}, task, {
 					employees: task.members ? task.members : undefined,
 					assignTo: this._teamTaskStore._getTeamNames(task),
-					employeesMergedTeams: [task.members, task.teams],
+					employeesMergedTeams: [task.members, task.teams]
 				});
 			},
 			finalize: () => {
-				this.dataLayoutStyle ===
-					this.componentLayoutStyleEnum.CARDS_GRID
+				this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
 					? this._tasks.push(...this.smartTableSource.getData())
 					: (this._tasks = this.smartTableSource.getData());
 				this.storeInstance.loadAllTasks(this._tasks);
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
+					totalItems: this.smartTableSource.count()
 				});
 				this.loading = false;
-			},
+			}
 		});
 	}
 
@@ -519,7 +503,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				await this.smartTableSource.getElements();
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
+					totalItems: this.smartTableSource.count()
 				});
 			}
 		} catch (error) {
@@ -531,27 +515,22 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
-				context: {},
+				context: {}
 			});
 		} else if (this.isMyTasksPage()) {
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
-				context: {},
+				context: {}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
-				context: {},
+				context: {}
 			});
 		}
 		if (dialog) {
-			const data: any = await firstValueFrom(
-				dialog.onClose.pipe(first())
-			);
+			const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
-				const estimate =
-					estimateDays * 24 * 60 * 60 +
-					estimateHours * 60 * 60 +
-					estimateMinutes * 60;
+				const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
@@ -559,7 +538,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId,
+					tenantId
 				});
 				this.storeInstance
 					.createTask(payload)
@@ -577,41 +556,36 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask,
-				},
+					selectedTask: this.selectedTask
+				}
 			});
 		} else if (this.isMyTasksPage()) {
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask,
-				},
+					selectedTask: this.selectedTask
+				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask,
-				},
+					selectedTask: this.selectedTask
+				}
 			});
 		}
 		if (dialog) {
-			const data: any = await firstValueFrom(
-				dialog.onClose.pipe(first())
-			);
+			const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
 
-				const estimate =
-					estimateDays * 24 * 60 * 60 +
-					estimateHours * 60 * 60 +
-					estimateMinutes * 60;
+				const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
@@ -619,7 +593,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId,
+					tenantId
 				});
 
 				this.storeInstance
@@ -638,15 +612,15 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 		let dialog;
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask,
-				},
+					selectedTask: this.selectedTask
+				}
 			});
 		} else if (this.isMyTasksPage()) {
 			const selectedTask: ITask = Object.assign({}, this.selectedTask);
@@ -654,27 +628,22 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 			selectedTask.members = null;
 			dialog = this.dialogService.open(MyTaskDialogComponent, {
 				context: {
-					selectedTask: selectedTask,
-				},
+					selectedTask: selectedTask
+				}
 			});
 		} else if (this.isTeamTaskPage()) {
 			dialog = this.dialogService.open(TeamTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask,
-				},
+					selectedTask: this.selectedTask
+				}
 			});
 		}
 		if (dialog) {
-			const data: any = await firstValueFrom(
-				dialog.onClose.pipe(first())
-			);
+			const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 
 			if (data) {
 				const { estimateDays, estimateHours, estimateMinutes } = data;
-				const estimate =
-					estimateDays * 24 * 60 * 60 +
-					estimateHours * 60 * 60 +
-					estimateMinutes * 60;
+				const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
 				estimate ? (data.estimate = estimate) : (data.estimate = null);
 
@@ -682,7 +651,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				const { id: organizationId } = this.organization;
 				const payload = Object.assign(data, {
 					organizationId,
-					tenantId,
+					tenantId
 				});
 				this.storeInstance
 					.createTask(payload)
@@ -700,14 +669,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (selectedItem) {
 			this.selectTask({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService
-				.open(DeleteConfirmationComponent)
-				.onClose.pipe(first())
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose.pipe(first()));
 		if (result) {
 			this.storeInstance
 				.delete(this.selectedTask.id)
@@ -743,7 +708,10 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	 * @param selectedProject - The project for which the task settings page should be opened.
 	 */
 	openTasksSettings(selectedProject: IOrganizationProject): void {
-		if (this.isDefaultProject || !this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)) {
+		if (
+			this.isDefaultProject ||
+			!this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+		) {
 			return;
 		}
 
@@ -758,9 +726,9 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	clearItem() {
 		this.selectTask({
 			isSelected: false,
-			data: null,
+			data: null
 		});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

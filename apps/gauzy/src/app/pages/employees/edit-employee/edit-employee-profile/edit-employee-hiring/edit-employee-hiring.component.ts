@@ -3,8 +3,8 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { CompareDateValidator } from '@gauzy/ui-sdk/core';
 import { EmployeeStore, Store } from './../../../../../@core/services';
-import { CompareDateValidator } from './../../../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -20,29 +20,32 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 
 	public form: UntypedFormGroup = EditEmployeeHiringComponent.buildForm(this.fb);
 	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
-		return formBuilder.group({
-			offerDate: [],
-			acceptDate: [],
-			rejectDate: []
-		}, {
-			validators: [
-				CompareDateValidator.validateDate('offerDate', 'acceptDate'),
-				CompareDateValidator.validateDate('offerDate', 'rejectDate')
-			]
-		});
+		return formBuilder.group(
+			{
+				offerDate: [],
+				acceptDate: [],
+				rejectDate: []
+			},
+			{
+				validators: [
+					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
+					CompareDateValidator.validateDate('offerDate', 'rejectDate')
+				]
+			}
+		);
 	}
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
 		private readonly employeeStore: EmployeeStore,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee: IEmployee) => !!employee),
-				tap((employee: IEmployee) => this.selectedEmployee = employee),
+				tap((employee: IEmployee) => (this.selectedEmployee = employee)),
 				tap((employee) => this._patchForm(employee)),
 				untilDestroyed(this)
 			)
@@ -68,5 +71,5 @@ export class EditEmployeeHiringComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

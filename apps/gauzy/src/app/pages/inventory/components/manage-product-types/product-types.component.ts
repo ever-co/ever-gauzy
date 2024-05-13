@@ -1,16 +1,6 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	OnDestroy,
-	TemplateRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-	IOrganization,
-	IProductTypeTranslated,
-	ComponentLayoutStyleEnum
-} from '@gauzy/contracts';
+import { IOrganization, IProductTypeTranslated, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -19,12 +9,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	ErrorHandlingService,
-	ProductTypeService,
-	Store,
-	ToastrService
-} from '../../../../@core/services';
+import { ErrorHandlingService, ProductTypeService, Store, ToastrService } from '../../../../@core/services';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from '../inventory-table-components';
@@ -33,7 +18,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { InputFilterComponent } from './../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,7 +28,6 @@ import { InputFilterComponent } from './../../../../@shared/table-filters';
 	styleUrls: ['./product-types.component.scss']
 })
 export class ProductTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
 	loading: boolean = false;
@@ -101,9 +85,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 		combineLatest([storeOrganization$, preferredLanguage$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([organization, language]) => !!organization && !!language
-				),
+				filter(([organization, language]) => !!organization && !!language),
 				tap(([organization]) => (this.organization = organization)),
 				distinctUntilChange(),
 				tap(() => this._refresh$.next(true)),
@@ -113,11 +95,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.productTypes = [])),
 				untilDestroyed(this)
@@ -131,15 +109,9 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.productTypes = [])),
 				tap(() => this.types$.next(true)),
 				untilDestroyed(this)
@@ -167,7 +139,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 					renderComponent: IconRowComponent,
 					componentInitFunction: (instance: IconRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				name: {
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
@@ -204,18 +176,13 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 			return;
 		}
 		try {
-			const dialog = this.dialogService.open(
-				ProductTypeMutationComponent
-			);
+			const dialog = this.dialogService.open(ProductTypeMutationComponent);
 			const productType = await firstValueFrom(dialog.onClose);
 
 			if (productType) {
-				this.toastrService.success(
-					'INVENTORY_PAGE.PRODUCT_TYPE_SAVED',
-					{
-						name: productType.name
-					}
-				);
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
+					name: productType.name
+				});
 				this._refresh$.next(true);
 				this.types$.next(true);
 			}
@@ -237,29 +204,21 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 
 		try {
 			const editProductType = this.selectedProductType
-				? await this.productTypeService.getById(
-					this.selectedProductType.id
-				)
+				? await this.productTypeService.getById(this.selectedProductType.id)
 				: null;
 
-			const dialog = this.dialogService.open(
-				ProductTypeMutationComponent,
-				{
-					context: {
-						productType: editProductType
-					}
+			const dialog = this.dialogService.open(ProductTypeMutationComponent, {
+				context: {
+					productType: editProductType
 				}
-			);
+			});
 
 			const productType = await firstValueFrom(dialog.onClose);
 			if (productType) {
 				let translation = productType.translations[0];
-				this.toastrService.success(
-					'INVENTORY_PAGE.PRODUCT_TYPE_SAVED',
-					{
-						name: translation.name
-					}
-				);
+				this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_SAVED', {
+					name: translation.name
+				});
 				this._refresh$.next(true);
 				this.types$.next(true);
 			}
@@ -277,21 +236,16 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 				});
 			}
 
-			const result = await firstValueFrom(
-				this.dialogService.open(DeleteConfirmationComponent).onClose
-			);
+			const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 			if (result) {
 				if (this.selectedProductType) {
 					await this.productTypeService
 						.delete(this.selectedProductType.id)
 						.then(() => {
-							this.toastrService.success(
-								'INVENTORY_PAGE.PRODUCT_TYPE_DELETED',
-								{
-									name: this.selectedProductType.name
-								}
-							);
+							this.toastrService.success('INVENTORY_PAGE.PRODUCT_TYPE_DELETED', {
+								name: this.selectedProductType.name
+							});
 						})
 						.finally(() => {
 							this._refresh$.next(true);
@@ -333,13 +287,8 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 					return Object.assign({}, item);
 				},
 				finalize: () => {
-					if (
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-					) {
-						this.productTypes.push(
-							...this.smartTableSource.getData()
-						);
+					if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+						this.productTypes.push(...this.smartTableSource.getData());
 					}
 					this.setPagination({
 						...this.getPagination(),
@@ -384,5 +333,5 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

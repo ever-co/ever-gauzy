@@ -14,7 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmailService,
 	EmployeesService,
@@ -29,9 +29,7 @@ import {
 	templateUrl: './email-history.component.html',
 	styleUrls: ['./email-history.component.scss']
 })
-export class EmailHistoryComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EmailHistoryComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	loading: boolean = false;
 	selectedEmail: IEmailHistory;
 	filteredCount: Number;
@@ -42,8 +40,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 	disableLoadMore: boolean = false;
 	totalNoPage: number;
 	nextDataLoading: boolean = false;
-	EmailStatusEnum: typeof EmailStatusEnum = EmailStatusEnum
-
+	EmailStatusEnum: typeof EmailStatusEnum = EmailStatusEnum;
 
 	organizationContacts: IOrganizationContact[] = [];
 	emails: IEmailHistory[] = [];
@@ -75,7 +72,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.resetFilters()),
 				tap(() => this._getEmployees()),
 				tap(() => this._getOrganizationContacts()),
@@ -86,10 +83,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 
 	selectEmail(email: IEmailHistory) {
 		this.selectedEmail = email;
-		this.selectedEmail.content =
-			email.content ?
-				email.content :
-				email.emailTemplate.hbs;
+		this.selectedEmail.content = email.content ? email.content : email.emailTemplate.hbs;
 	}
 
 	async openFiltersDialog() {
@@ -129,35 +123,35 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
 			this.loading = true;
-			await this.emailService.getAll(['emailTemplate', 'user'],
-				{
-					organizationId,
-					tenantId,
-					isArchived: false,
-					...(this.filters ? this.filters : {})
-				},
-				this.thresholdHitCount * this.pageSize
-			)
-			.then((data) => {
-				this.emails = data.items;
-				this.selectedEmail = this.emails ? this.emails[0] : null;
-				const totalNoPage = Math.ceil(data.total / this.pageSize)
+			await this.emailService
+				.getAll(
+					['emailTemplate', 'user'],
+					{
+						organizationId,
+						tenantId,
+						isArchived: false,
+						...(this.filters ? this.filters : {})
+					},
+					this.thresholdHitCount * this.pageSize
+				)
+				.then((data) => {
+					this.emails = data.items;
+					this.selectedEmail = this.emails ? this.emails[0] : null;
+					const totalNoPage = Math.ceil(data.total / this.pageSize);
 
-				if (this.thresholdHitCount >= totalNoPage) {
-					this.disableLoadMore = true
-				} else {
-					this.disableLoadMore = false
-				}
-			}).finally(() => {
-				this.nextDataLoading = false;
-				this.loading = false;
-			});
+					if (this.thresholdHitCount >= totalNoPage) {
+						this.disableLoadMore = true;
+					} else {
+						this.disableLoadMore = false;
+					}
+				})
+				.finally(() => {
+					this.nextDataLoading = false;
+					this.loading = false;
+				});
 		} catch (error) {
 			this.loading = false;
-			this.toastrService.danger(
-				error,
-				this.getTranslation('TOASTR.TITLE.ERROR')
-			);
+			this.toastrService.danger(error, this.getTranslation('TOASTR.TITLE.ERROR'));
 		}
 	}
 
@@ -174,7 +168,8 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 				this.employeesService.getAll(['user'], {
 					organizationId,
 					tenantId
-				}))
+				})
+			)
 		).items;
 	}
 
@@ -201,9 +196,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrService.success(
-				this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED')
-			);
+			this.toastrService.success(this.getTranslation('SETTINGS.EMAIL_HISTORY.EMAIL_ARCHIVED'));
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -222,9 +215,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 				organizationId,
 				tenantId
 			});
-			this.toastrService.success(
-				this.getTranslation('SETTINGS.EMAIL_HISTORY.RESEND')
-			);
+			this.toastrService.success(this.getTranslation('SETTINGS.EMAIL_HISTORY.RESEND'));
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -240,7 +231,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 
 	loadNext() {
 		if (this.disableLoadMore || this.nextDataLoading) {
-			return
+			return;
 		}
 		this.nextDataLoading = true;
 		this.thresholdHitCount++;
@@ -255,9 +246,7 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 			employee = this.employees.find((e) => e.user.email === email.email);
 		}
 		if (this.organizationContacts) {
-			organizationContact = this.organizationContacts.find(
-				(oc) => oc.primaryEmail === email.email
-			);
+			organizationContact = this.organizationContacts.find((oc) => oc.primaryEmail === email.email);
 		}
 		if (employee) {
 			return employee.user.imageUrl;
@@ -275,5 +264,5 @@ export class EmailHistoryComponent extends TranslationBaseComponent
 		this.filteredCount = 0;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

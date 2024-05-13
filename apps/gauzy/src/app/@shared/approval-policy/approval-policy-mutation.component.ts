@@ -1,17 +1,13 @@
 import { OnInit, Component, Input, ViewChild } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
-import {
-	IApprovalPolicy,
-	IApprovalPolicyCreateInput,
-	IOrganization
-} from '@gauzy/contracts';
+import { IApprovalPolicy, IApprovalPolicyCreateInput, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
 import { FormHelpers } from '../forms/helpers';
-import { TranslationBaseComponent } from '../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,16 +15,14 @@ import { TranslationBaseComponent } from '../language-base';
 	templateUrl: './approval-policy-mutation.component.html',
 	styleUrls: ['./approval-policy-mutation.component.scss']
 })
-export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class ApprovalPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	public organization: IOrganization;
 
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	private _approvalPolicy: IApprovalPolicy;
 	get approvalPolicy(): IApprovalPolicy {
 		return this._approvalPolicy;
@@ -39,13 +33,13 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Approval Policy Mutation Form
-	*/
+	 * Approval Policy Mutation Form
+	 */
 	public form: UntypedFormGroup = ApprovalPolicyMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
-			description: [],
+			description: []
 		});
 	}
 
@@ -55,7 +49,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 		private readonly fb: UntypedFormBuilder,
 		public readonly translationService: TranslateService,
 		private readonly store: Store,
-		private readonly toastrService: ToastrService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translationService);
 	}
@@ -64,7 +58,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -84,11 +78,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 	}
 
 	async onSubmit() {
-		if (
-			this.form.invalid ||
-			!this.formDirective.submitted ||
-			!this.organization
-		) {
+		if (this.form.invalid || !this.formDirective.submitted || !this.organization) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -98,7 +88,7 @@ export class ApprovalPolicyMutationComponent extends TranslationBaseComponent
 			tenantId,
 			organizationId,
 			...this.form.getRawValue(),
-			...(this.approvalPolicy ? { id: this.approvalPolicy.id } : {}),
+			...(this.approvalPolicy ? { id: this.approvalPolicy.id } : {})
 		};
 		try {
 			const result: IApprovalPolicy = await this.approvalPolicyService.save(approvalPolicy);

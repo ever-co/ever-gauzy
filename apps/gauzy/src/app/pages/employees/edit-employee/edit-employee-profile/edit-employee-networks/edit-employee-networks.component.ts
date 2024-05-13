@@ -4,9 +4,9 @@ import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { EmployeeStore, Store } from './../../../../../@core/services';
-import { UrlPatternValidator } from './../../../../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,26 +23,29 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 
 	public form: UntypedFormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const form = fb.group({
-			linkedInUrl: [],
-			facebookUrl: [],
-			instagramUrl: [],
-			twitterUrl: [],
-			githubUrl: [],
-			gitlabUrl: [],
-			upworkUrl: [],
-			stackoverflowUrl: []
-		}, {
-			validators: [
-				UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
-				UrlPatternValidator.websiteUrlValidator('facebookUrl'),
-				UrlPatternValidator.websiteUrlValidator('instagramUrl'),
-				UrlPatternValidator.websiteUrlValidator('twitterUrl'),
-				UrlPatternValidator.websiteUrlValidator('githubUrl'),
-				UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
-				UrlPatternValidator.websiteUrlValidator('upworkUrl')
-			]
-		});
+		const form = fb.group(
+			{
+				linkedInUrl: [],
+				facebookUrl: [],
+				instagramUrl: [],
+				twitterUrl: [],
+				githubUrl: [],
+				gitlabUrl: [],
+				upworkUrl: [],
+				stackoverflowUrl: []
+			},
+			{
+				validators: [
+					UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
+					UrlPatternValidator.websiteUrlValidator('facebookUrl'),
+					UrlPatternValidator.websiteUrlValidator('instagramUrl'),
+					UrlPatternValidator.websiteUrlValidator('twitterUrl'),
+					UrlPatternValidator.websiteUrlValidator('githubUrl'),
+					UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
+					UrlPatternValidator.websiteUrlValidator('upworkUrl')
+				]
+			}
+		);
 		return form;
 	}
 
@@ -50,7 +53,7 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore
-	) { }
+	) {}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -106,5 +109,5 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		};
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

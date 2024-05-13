@@ -1,10 +1,4 @@
-import {
-	Component,
-	Input,
-	OnChanges,
-	OnInit,
-	SimpleChanges
-} from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,15 +6,9 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
-import {
-	IFeature,
-	IFeatureOrganization,
-	IFeatureToggle,
-	IOrganization,
-	IUser
-} from '@gauzy/contracts';
+import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
 import { FeatureStoreService, Store } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CountdownConfirmationComponent } from '../user/forms';
 import { environment } from './../../../environments/environment';
 
@@ -30,9 +18,7 @@ import { environment } from './../../../environments/environment';
 	templateUrl: './feature-toggle.component.html',
 	styleUrls: ['./feature-toggle.component.scss']
 })
-export class FeatureToggleComponent extends TranslationBaseComponent
-	implements OnInit, OnChanges {
-
+export class FeatureToggleComponent extends TranslationBaseComponent implements OnInit, OnChanges {
 	@Input() organization: IOrganization;
 
 	blocks$: Observable<IFeature[][]> = this._featureStoreService.blocks$;
@@ -49,7 +35,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 		private readonly _featureStoreService: FeatureStoreService,
 		private readonly _storeService: Store,
 		public readonly translationService: TranslateService,
-		private readonly dialogService: NbDialogService,
+		private readonly dialogService: NbDialogService
 	) {
 		super(translationService);
 	}
@@ -57,10 +43,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
-				tap(
-					({ isOrganization }) =>
-						(this.isOrganization = isOrganization)
-				),
+				tap(({ isOrganization }) => (this.isOrganization = isOrganization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -85,10 +68,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 			.subscribe();
 		this._storeService.featureTenant$
 			.pipe(
-				tap(
-					(value: IFeatureOrganization[]) =>
-						(this.featureTenant = value)
-				),
+				tap((value: IFeatureOrganization[]) => (this.featureTenant = value)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -111,13 +91,10 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngOnChanges(change: SimpleChanges): void { }
+	ngOnChanges(change: SimpleChanges): void {}
 
 	getFeatures() {
-		this._featureStoreService
-			.loadFeatures(['children'])
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this._featureStoreService.loadFeatures(['children']).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	getFeatureOrganizations() {
@@ -130,7 +107,7 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 				tenantId,
 				...(this.organization && this.isOrganization
 					? {
-						organizationId: this.organization.id
+							organizationId: this.organization.id
 					  }
 					: {})
 			})
@@ -139,17 +116,17 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 	}
 
 	async featureChanged(isEnabled: boolean, feature: IFeature) {
-		const result = await firstValueFrom(this.dialogService
-			.open(CountdownConfirmationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(CountdownConfirmationComponent, {
 				context: {
 					recordType: feature.description,
 					isEnabled: isEnabled
 				},
 				closeOnBackdropClick: false
-			})
-			.onClose);
+			}).onClose
+		);
 
-		if (result && result === "continue") {
+		if (result && result === 'continue') {
 			this.emitFeatureToggle(feature, isEnabled);
 		} else {
 			if (!environment.IS_ELECTRON) {
@@ -173,11 +150,13 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 
 		this._featureStoreService
 			.changedFeature(request)
-			.pipe(tap(() => {
-				if (!environment.IS_ELECTRON) {
-					window.location.reload();
-				}
-			}))
+			.pipe(
+				tap(() => {
+					if (!environment.IS_ELECTRON) {
+						window.location.reload();
+					}
+				})
+			)
 			.subscribe();
 	}
 
@@ -189,21 +168,15 @@ export class FeatureToggleComponent extends TranslationBaseComponent
 			unique = [...this.featureTenant];
 		}
 
-		const filtered: IFeatureOrganization[] = _.uniq(
-			unique,
-			(x) => x.featureId
-		);
+		const filtered: IFeatureOrganization[] = _.uniq(unique, (x) => x.featureId);
 		const featureOrganization = filtered.find(
-			(featureOrganization: IFeatureOrganization) =>
-				featureOrganization.featureId === row.id
+			(featureOrganization: IFeatureOrganization) => featureOrganization.featureId === row.id
 		);
 		if (featureOrganization && featureOrganization.isEnabled === false) {
 			return featureOrganization.isEnabled;
 		}
 
-		const featureToggle = this.featureTogglesDefinitions.find(
-			(item: IFeatureToggle) => item.name == row.code
-		);
+		const featureToggle = this.featureTogglesDefinitions.find((item: IFeatureToggle) => item.name == row.code);
 		if (featureToggle) {
 			return featureToggle.enabled;
 		}

@@ -1,26 +1,13 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnDestroy,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import {
-	ICurrency,
-	IOrganization,
-	ITag,
-	CrudActionEnum,
-	IImageAsset
-} from '@gauzy/contracts';
+import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	ErrorHandlingService,
 	OrganizationEditStore,
@@ -36,17 +23,18 @@ import { DUMMY_PROFILE_IMAGE } from './../../../../../@core/constants';
 	templateUrl: './edit-organization-main.component.html',
 	styleUrls: ['./edit-organization-main.component.scss']
 })
-export class EditOrganizationMainComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class EditOrganizationMainComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	hoverState: boolean;
 	employeesCount: number;
 
 	@Input() organization: IOrganization;
 
 	/*
-	* Organization Mutation Form
-	*/
+	 * Organization Mutation Form
+	 */
 	public form: UntypedFormGroup = EditOrganizationMainComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -54,19 +42,11 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			currency: [null, Validators.required],
 			name: [null, Validators.required],
 			officialName: [null],
-			profile_link: [
-				null,
-				[
-					Validators.required,
-					Validators.pattern('^[a-z0-9-]+$')
-				]
-			],
+			profile_link: [null, [Validators.required, Validators.pattern('^[a-z0-9-]+$')]],
 			taxId: [null],
 			registrationDate: [null],
 			website: [null],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			imageUrl: [{ value: null, disabled: true }],
 			imageId: []
 		});
 	}
@@ -92,22 +72,16 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
-				tap(
-					({ employeesCount }) =>
-						(this.employeesCount = employeesCount)
-				),
+				tap(({ employeesCount }) => (this.employeesCount = employeesCount)),
 				map(({ organization }) => organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
@@ -190,9 +164,7 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 			profile_link: this.organization.profile_link || null,
 			taxId: this.organization.taxId || null,
 			website: this.organization.website || null,
-			registrationDate: this.organization.registrationDate
-				? new Date(this.organization.registrationDate)
-				: null
+			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -210,5 +182,5 @@ export class EditOrganizationMainComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 }

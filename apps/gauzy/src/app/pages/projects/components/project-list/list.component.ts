@@ -35,7 +35,7 @@ import {
 	TagsOnlyComponent
 } from '../../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { ServerDataSource } from '../../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { VisibilityComponent } from '../../../../@shared/table-components/visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from '../../../../@shared/table-components';
@@ -49,7 +49,6 @@ import { CardGridComponent } from '../../../../@shared/card-grid/card-grid.compo
 	styleUrls: ['./list.component.scss']
 })
 export class ProjectListComponent extends PaginationFilterBaseComponent implements OnInit {
-
 	public loading: boolean = false;
 	public disableButton: boolean = true;
 	public settingsSmartTable: any;
@@ -237,10 +236,10 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-						members: {
-							id: this.selectedEmployeeId
-						}
-					}
+							members: {
+								id: this.selectedEmployeeId
+							}
+					  }
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			},
@@ -496,7 +495,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			if (this._isGridCardLayout && this._grid) {
 				if (this._grid.customComponentInstance().constructor === ProjectOrganizationGridComponent) {
 					this.disableButton = true;
-					const projectOrganizationGrid: ProjectOrganizationGridComponent = this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
+					const projectOrganizationGrid: ProjectOrganizationGridComponent =
+						this._grid.customComponentInstance<ProjectOrganizationGridComponent>();
 					await this.updateProjectVisibility(data.id, !projectOrganizationGrid.visibility);
 				}
 			}
@@ -526,12 +526,14 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 		try {
 			await this._organizationProjectsService.edit({
 				public: visibility,
-				id: projectId,
+				id: projectId
 			});
-			const successMessage = visibility ? this.getTranslation('BUTTONS.PRIVATE') : this.getTranslation('BUTTONS.PUBLIC');
+			const successMessage = visibility
+				? this.getTranslation('BUTTONS.PRIVATE')
+				: this.getTranslation('BUTTONS.PUBLIC');
 
 			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.VISIBILITY', {
-				name: successMessage,
+				name: successMessage
 			});
 		} catch (error) {
 			console.error('Error while updating project visibility', error?.message);

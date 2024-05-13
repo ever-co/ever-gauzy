@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -15,9 +15,7 @@ import { IOrganization } from '@gauzy/contracts';
 	templateUrl: './transactions.component.html',
 	styleUrls: ['./transactions.component.scss']
 })
-export class TransactionsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class TransactionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _selectedOrganizationId: string;
 	file: File;
 
@@ -63,10 +61,10 @@ export class TransactionsComponent
 			.subscribe(
 				({ totalExpenses, totalIncomes }) => {
 					this.toastrService.success(
-						this.getTranslation(
-							'INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED',
-							{ totalExpenses, totalIncomes }
-						)
+						this.getTranslation('INTEGRATIONS.TOTAL_UPWORK_TRANSACTIONS_SUCCEED', {
+							totalExpenses,
+							totalIncomes
+						})
 					);
 				},
 				(err) => {

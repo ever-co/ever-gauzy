@@ -1,5 +1,4 @@
-import { GuiDrag } from '../../interfaces/gui-drag.abstract';
-import { IPersistance } from '../../interfaces/persistance.interface';
+import { GuiDrag, IPersistance } from '@gauzy/ui-sdk/shared';
 
 export class Persistance implements IPersistance {
 	private _state: Partial<GuiDrag>[];

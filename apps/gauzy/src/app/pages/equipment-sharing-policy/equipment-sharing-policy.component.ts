@@ -7,26 +7,17 @@ import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	IEquipmentSharing,
-	ComponentLayoutStyleEnum,
-	IEquipmentSharingPolicy,
-	IOrganization
-} from '@gauzy/contracts';
+import { IEquipmentSharing, ComponentLayoutStyleEnum, IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	EquipmentSharingPolicyService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { EquipmentSharingPolicyService, Store, ToastrService } from '../../@core/services';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,7 +26,6 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	styleUrls: ['./equipment-sharing-policy.component.scss']
 })
 export class EquipmentSharingPolicyComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	settingsSmartTable: object;
 	loading: boolean;
 	selectedEquipmentSharingPolicy: IEquipmentSharingPolicy;
@@ -87,10 +77,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.selectedOrganization = organization)
-				),
+				tap((organization: IOrganization) => (this.selectedOrganization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipmentSharingPolicy$.next(true)),
 				untilDestroyed(this)
@@ -98,11 +85,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.equipmentSharingPolicyData = [])),
 				untilDestroyed(this)
@@ -116,15 +99,9 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.equipmentSharingPolicyData = [])),
 				tap(() => this.equipmentSharingPolicy$.next(true)),
 				untilDestroyed(this)
@@ -171,26 +148,20 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				data: selectedItem
 			});
 		}
-		const dialog = this.dialogService.open(
-			EquipmentSharingPolicyMutationComponent,
-			{
-				context: {
-					equipmentSharingPolicy: this.selectedEquipmentSharingPolicy,
-					selectedOrganization: this.selectedOrganization
-				}
+		const dialog = this.dialogService.open(EquipmentSharingPolicyMutationComponent, {
+			context: {
+				equipmentSharingPolicy: this.selectedEquipmentSharingPolicy,
+				selectedOrganization: this.selectedOrganization
 			}
-		);
+		});
 		const equipmentSharingPolicy = await firstValueFrom(dialog.onClose);
 		this.selectedEquipmentSharingPolicy = null;
 		this.disableButton = true;
 
 		if (equipmentSharingPolicy) {
-			this.toastrService.success(
-				'EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_SAVED',
-				{
-					name: equipmentSharingPolicy.name
-				}
-			);
+			this.toastrService.success('EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_SAVED', {
+				name: equipmentSharingPolicy.name
+			});
 			this._refresh$.next(true);
 			this.equipmentSharingPolicy$.next(true);
 		}
@@ -205,23 +176,16 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
-			await this.equipmentSharingPolicyService.delete(
-				this.selectedEquipmentSharingPolicy.id
-			);
+			await this.equipmentSharingPolicyService.delete(this.selectedEquipmentSharingPolicy.id);
 			this._refresh$.next(true);
 			this.equipmentSharingPolicy$.next(true);
 			this.clearItem();
-			this.toastrService.success(
-				'EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_DELETED',
-				{
-					name: this.selectedEquipmentSharingPolicy.name
-				}
-			);
+			this.toastrService.success('EQUIPMENT_SHARING_POLICY_PAGE.MESSAGES.EQUIPMENT_REQUEST_DELETED', {
+				name: this.selectedEquipmentSharingPolicy.name
+			});
 		}
 	}
 
@@ -245,12 +209,8 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				...this.filters.where
 			},
 			finalize: () => {
-				if (
-					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-				) {
-					this.equipmentSharingPolicyData.push(
-						...this.smartTableSource.getData()
-					);
+				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+					this.equipmentSharingPolicyData.push(...this.smartTableSource.getData());
 				}
 				this.setPagination({
 					...this.getPagination(),
@@ -280,11 +240,9 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 
 	/*
@@ -297,5 +255,5 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

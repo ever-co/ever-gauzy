@@ -1,11 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import {
@@ -19,11 +12,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { combineLatest, Subject } from 'rxjs';
-import {
-	distinctUntilChange,
-	employeeMapper,
-	toUTC
-} from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
@@ -49,7 +38,7 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -65,9 +54,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './income.component.html',
 	styleUrls: ['./income.component.scss']
 })
-export class IncomeComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class IncomeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;
 	public selectedEmployeeId: string;
 	public selectedDateRange: IDateRangePicker;
@@ -211,7 +198,10 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				distinctUntilChange(),
 				tap((componentLayout: ComponentLayoutStyleEnum) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter((componentLayout: ComponentLayoutStyleEnum) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
+				filter(
+					(componentLayout: ComponentLayoutStyleEnum) =>
+						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
+				),
 				tap(() => (this.incomes = [])),
 				tap(() => this.incomes$.next(true)),
 				untilDestroyed(this)
@@ -241,7 +231,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				client: {
 					title: this.getTranslation('SM_TABLE.CONTACT'),
@@ -270,7 +260,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				amount: {
 					title: this.getTranslation('SM_TABLE.VALUE'),
@@ -281,7 +271,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -350,16 +340,8 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 				if (dialogResult) {
 					const { tenantId } = this.store.user;
 					const { id: organizationId } = this.organization;
-					const {
-						amount,
-						organizationContact,
-						valueDate,
-						employee,
-						notes,
-						currency,
-						isBonus,
-						tags
-					} = dialogResult;
+					const { amount, organizationContact, valueDate, employee, notes, currency, isBonus, tags } =
+						dialogResult;
 
 					// Create a new income using the service
 					await this.incomeService.create({
@@ -399,7 +381,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 	 * @param {boolean} isSelected - A boolean indicating whether the income item is selected.
 	 * @param {IIncome} data - The data of the selected income item.
 	 */
-	selectIncome({ isSelected, data }: { isSelected: boolean, data: IIncome }): void {
+	selectIncome({ isSelected, data }: { isSelected: boolean; data: IIncome }): void {
 		this.disableButton = !isSelected;
 		this.selectedIncome = isSelected ? data : null;
 	}
@@ -430,15 +412,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 			try {
 				// If there is a result, proceed with updating the income
 				if (dialogResult) {
-					const {
-						amount,
-						organizationContact,
-						valueDate,
-						notes,
-						currency,
-						isBonus,
-						tags
-					} = dialogResult;
+					const { amount, organizationContact, valueDate, notes, currency, isBonus, tags } = dialogResult;
 					const { employee } = this.selectedIncome;
 
 					const { id: organizationId, tenantId } = this.organization;
@@ -509,7 +483,6 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					this.toastrService.success('NOTES.INCOME.DELETE_INCOME', {
 						name: this.employeeName(employee)
 					});
-
 				} catch (error) {
 					this.errorHandler.handleError(error);
 				} finally {
@@ -536,13 +509,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/income/pagination`,
-			relations: [
-				'employee',
-				'employee.user',
-				'tags',
-				'organization',
-				'client'
-			],
+			relations: ['employee', 'employee.user', 'tags', 'organization', 'client'],
 			join: {
 				alias: 'income',
 				leftJoin: {
@@ -558,7 +525,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
 					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
 				},
-				...(this.filters.where ? this.filters.where : {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (income: IIncome): any => ({
 				...income,
@@ -624,5 +591,5 @@ export class IncomeComponent extends PaginationFilterBaseComponent
 		return employee && employee.id ? employee.fullName.trim() : ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

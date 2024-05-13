@@ -1,26 +1,20 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-	IEmployee,
-	IOrganizationProject,
-	ITag,
-	ITask,
-	TaskStatusEnum,
-} from '@gauzy/contracts';
+import { IEmployee, IOrganizationProject, ITag, ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeesService,
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	Store,
-	ToastrService,
+	ToastrService
 } from '../../../../@core/services';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig } from 'apps/gauzy/src/app/@shared/ckeditor.config';
 
 const initialTaskValue = {
 	title: '',
@@ -31,17 +25,15 @@ const initialTaskValue = {
 	estimate: null,
 	dueDate: null,
 	description: '',
-	tags: null,
+	tags: null
 };
 
 @Component({
 	selector: 'ngx-my-task-dialog',
 	templateUrl: './my-task-dialog.component.html',
-	styleUrls: ['./my-task-dialog.component.scss'],
+	styleUrls: ['./my-task-dialog.component.scss']
 })
-export class MyTaskDialogComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class MyTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	selectedTaskId: string;
 	projects: IOrganizationProject[];
 	employees: IEmployee[] = [];
@@ -89,7 +81,7 @@ export class MyTaskDialogComponent
 			teams: [],
 			taskStatus: [],
 			taskSize: [],
-			taskPriority: [],
+			taskPriority: []
 		});
 	}
 
@@ -99,7 +91,7 @@ export class MyTaskDialogComponent
 			//['client']
 			[],
 			{
-				organizationId: organizationId,
+				organizationId: organizationId
 			}
 		);
 
@@ -114,7 +106,7 @@ export class MyTaskDialogComponent
 
 		const { items } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
-				organization: { id: organizationId },
+				organization: { id: organizationId }
 			})
 		);
 
@@ -122,14 +114,10 @@ export class MyTaskDialogComponent
 	}
 
 	async ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant(
-			'FORM.PLACEHOLDERS.DESCRIPTION'
-		);
+		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		await this.loadProjects();
 		await this.loadEmployees();
-		this.initializeForm(
-			Object.assign({}, initialTaskValue, this.selectedTask || this.task)
-		);
+		this.initializeForm(Object.assign({}, initialTaskValue, this.selectedTask || this.task));
 	}
 
 	initializeForm({
@@ -145,7 +133,7 @@ export class MyTaskDialogComponent
 		size,
 		taskStatus,
 		taskSize,
-		taskPriority,
+		taskPriority
 	}: ITask) {
 		const duration = moment.duration(estimate, 'seconds');
 		// select members from database of default value
@@ -177,7 +165,7 @@ export class MyTaskDialogComponent
 			taskStatus,
 			taskSize,
 			taskPriority,
-			teams: [],
+			teams: []
 		});
 		this.tags = this.form.get('tags').value || [];
 	}
@@ -186,14 +174,12 @@ export class MyTaskDialogComponent
 		this.organizationId = this.store.selectedOrganization.id;
 		try {
 			this.toastrService.success(
-				this.getTranslation(
-					'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT'
-				),
+				this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT'),
 				{ name: name }
 			);
 			return this.organizationProjectsService.create({
 				name,
-				organizationId: this.organizationId,
+				organizationId: this.organizationId
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -202,21 +188,13 @@ export class MyTaskDialogComponent
 
 	onSave() {
 		if (this.form.valid) {
-			this.form
-				.get('status')
-				.setValue(this.form.get('taskStatus').value?.name);
-			this.form
-				.get('priority')
-				.setValue(this.form.get('taskPriority').value?.name);
-			this.form
-				.get('size')
-				.setValue(this.form.get('taskSize').value?.name);
+			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
+			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
+			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
 			this.form
 				.get('members')
 				.setValue(
-					(this.selectedMembers || [])
-						.map((id) => this.employees.find((e) => e.id === id))
-						.filter((e) => !!e)
+					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e)
 				);
 			this.dialogRef.close(this.form.value);
 		}

@@ -1,33 +1,13 @@
-import {
-	AfterViewInit,
-	Component,
-	Input,
-	OnChanges,
-	OnInit,
-	SimpleChanges,
-	ViewChild
-} from '@angular/core';
-import {
-	UntypedFormBuilder,
-	FormControl,
-	UntypedFormGroup,
-	FormGroupDirective,
-	Validators
-} from '@angular/forms';
+import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { ActivatedRoute, Data } from '@angular/router';
-import {
-	ICustomSmtp,
-	IOrganization,
-	IUser,
-	PermissionsEnum,
-	SMTPSecureEnum
-} from '@gauzy/contracts';
+import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
 import { CustomSmtpService, Store, ToastrService } from '../../@core/services';
 import { FormHelpers } from '../forms/helpers';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,9 +15,7 @@ import { patterns } from '../regex/regex-patterns.const';
 	templateUrl: './smtp.component.html',
 	styleUrls: ['./smtp.component.scss']
 })
-export class SMTPComponent extends TranslationBaseComponent
-	implements OnInit, OnChanges, AfterViewInit {
-
+export class SMTPComponent extends TranslationBaseComponent implements OnInit, OnChanges, AfterViewInit {
 	@ViewChild('formDirective') formDirective: FormGroupDirective;
 
 	@Input() organization?: IOrganization;
@@ -57,21 +35,15 @@ export class SMTPComponent extends TranslationBaseComponent
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	/*
-	* SMTP Mutation Form
-	*/
+	 * SMTP Mutation Form
+	 */
 	public form: UntypedFormGroup = SMTPComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			id: [],
 			organizationId: [],
-			fromAddress: [null, Validators.compose([
-				Validators.required,
-				Validators.pattern(patterns.email)
-			])],
-			host: [null, Validators.compose([
-				Validators.required,
-				Validators.pattern(patterns.host)
-			])],
+			fromAddress: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
+			host: [null, Validators.compose([Validators.required, Validators.pattern(patterns.host)])],
 			port: [],
 			secure: [],
 			username: [null, Validators.required],
@@ -95,10 +67,7 @@ export class SMTPComponent extends TranslationBaseComponent
 		this._activatedRoute.data
 			.pipe(
 				filter((data: Data) => !!data),
-				tap(
-					({ isOrganization }) =>
-						(this.isOrganization = isOrganization)
-				),
+				tap(({ isOrganization }) => (this.isOrganization = isOrganization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -134,14 +103,8 @@ export class SMTPComponent extends TranslationBaseComponent
 		this.form.valueChanges.pipe(pairwise()).subscribe((values) => {
 			const oldVal = values[0];
 			const newVal = values[1];
-			if (
-				(newVal.username && oldVal.username) ||
-				(newVal.host && oldVal.host)
-			) {
-				if (
-					newVal.username !== oldVal.username ||
-					newVal.host !== oldVal.host
-				) {
+			if ((newVal.username && oldVal.username) || (newVal.host && oldVal.host)) {
+				if (newVal.username !== oldVal.username || newVal.host !== oldVal.host) {
 					this.isValidated = false;
 				}
 			}
@@ -163,8 +126,8 @@ export class SMTPComponent extends TranslationBaseComponent
 				tenantId,
 				...(this.organization && this.isOrganization
 					? {
-						organizationId: this.organization.id
-					}
+							organizationId: this.organization.id
+					  }
 					: {})
 			})
 			.then((setting) => {

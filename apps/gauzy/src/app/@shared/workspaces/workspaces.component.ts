@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/internal/Observable';
 
@@ -22,9 +22,7 @@ interface IWorkSpace {
 	templateUrl: './workspaces.component.html',
 	styleUrls: ['./workspaces.component.scss']
 })
-export class WorkspacesComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);
 	public workspaces$: Observable<IWorkSpace[]> = this._workspaces$.asObservable();
 
@@ -32,10 +30,7 @@ export class WorkspacesComponent extends TranslationBaseComponent
 	contextMenus: NbMenuItem[];
 	user: IUser;
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly store: Store
-	) {
+	constructor(public readonly translateService: TranslateService, private readonly store: Store) {
 		super(translateService);
 	}
 
@@ -66,14 +61,11 @@ export class WorkspacesComponent extends TranslationBaseComponent
 			id: tenant.id,
 			imgUrl: tenant.logo,
 			isOnline: true
-		}
+		};
 		const workspaces = this._workspaces$.getValue();
 		const index = workspaces.find((workspace: IWorkSpace) => workspace.id === tenant.id);
 		if (!index) {
-			this._workspaces$.next([
-				...workspaces,
-				workspace
-			]);
+			this._workspaces$.next([...workspaces, workspace]);
 			this.selected = workspace;
 		}
 	}

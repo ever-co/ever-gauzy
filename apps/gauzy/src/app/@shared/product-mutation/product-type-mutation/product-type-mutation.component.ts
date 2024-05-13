@@ -13,12 +13,8 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import {
-	ProductTypeService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ProductTypeService, Store, ToastrService } from '../../../@core/services';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,10 +23,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 	templateUrl: './product-type-mutation.component.html',
 	styleUrls: ['./product-type-mutation.component.scss']
 })
-export class ProductTypeMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ProductTypeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() productType: IProductTypeTranslatable;
 
 	icons = Object.values(ProductTypesIconsEnum);
@@ -76,7 +69,7 @@ export class ProductTypeMutationComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	async onSubmit() {
 		if (!this.organization || this.form.invalid) {
@@ -101,14 +94,10 @@ export class ProductTypeMutationComponent
 		let productType: IProductTypeTranslatable;
 		try {
 			if (!this.productType) {
-				productType = await this.productTypeService.create(
-					payload
-				);
+				productType = await this.productTypeService.create(payload);
 			} else {
 				payload['id'] = this.productType.id;
-				productType = await this.productTypeService.update(
-					payload
-				);
+				productType = await this.productTypeService.update(payload);
 			}
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
