@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { ISelectorVisibility } from '../../@core/services';
 import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '../../@shared/legal';
+import { ISelectorVisibility } from '../../@core/services/selector-builder/selector-builder-types';
 
 /**
  * Disabled header selectors for privacy/terms pages
@@ -22,14 +22,14 @@ export const routes: Routes = [
 				path: 'terms',
 				component: TermsAndConditionsComponent,
 				data: {
-					selectors
+					selectors // Disables header selectors for terms page
 				}
 			},
 			{
 				path: 'privacy',
 				component: PrivacyPolicyComponent,
 				data: {
-					selectors
+					selectors // Disables header selectors for privacy page
 				}
 			}
 		]
@@ -40,4 +40,4 @@ export const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class PageLegalRoutingModule { }
+export class PageLegalRoutingModule {}

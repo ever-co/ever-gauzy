@@ -1,13 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-
-export interface ISelectorVisibility {
-	readonly organization: boolean;
-	readonly date: boolean;
-	readonly project: boolean;
-	readonly employee: boolean;
-	readonly team: boolean;
-}
+import { ISelectorVisibility } from './selector-builder-types';
 
 export const DEFAULT_SELECTOR_VISIBILITY: ISelectorVisibility = {
 	organization: true,
@@ -22,17 +15,22 @@ export const DEFAULT_SELECTOR_VISIBILITY: ISelectorVisibility = {
 })
 export class SelectorBuilderService {
 	private selectorsMapper = new Map<string, boolean>();
-	private _selectors$: BehaviorSubject<ISelectorVisibility> = new BehaviorSubject(
-		DEFAULT_SELECTOR_VISIBILITY
-	);
+	private _selectors$: BehaviorSubject<ISelectorVisibility> = new BehaviorSubject(DEFAULT_SELECTOR_VISIBILITY);
 	public selectors$: Observable<ISelectorVisibility> = this._selectors$.asObservable();
 
-	constructor() { }
-
+	/**
+	 * Sets the visibility of a selector by ID.
+	 *
+	 * @param id The ID of the selector.
+	 * @param value The visibility value.
+	 */
 	setSelectorsVisibility(id: string, value: boolean): void {
 		this.selectorsMapper.set(id, value);
 	}
 
+	/**
+	 * Retrieves the visibility of all selectors and updates the BehaviorSubject.
+	 */
 	getSelectorsVisibility() {
 		const selectors: any = {};
 		this.getSelectorsIds().forEach((id) => {
@@ -41,10 +39,20 @@ export class SelectorBuilderService {
 		this._selectors$.next(selectors);
 	}
 
+	/**
+	 * Retrieves the IDs of all selectors.
+	 * @returns An array of selector IDs.
+	 */
 	getSelectorsIds() {
 		return [...this.selectorsMapper.entries()].map(([id]) => id);
 	}
 
+	/**
+	 * Retrieves the visibility of a selector by ID.
+	 *
+	 * @param id The ID of the selector.
+	 * @returns The visibility of the selector.
+	 */
 	getSelectorVisibilityById(id: string) {
 		if (!this.selectorsMapper.has(id)) {
 			throw new Error(`No selector was found with the id "${id}"`);

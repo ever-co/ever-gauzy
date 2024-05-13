@@ -1,36 +1,36 @@
-import { Injectable } from "@angular/core";
-import { ActivatedRouteSnapshot, Resolve } from "@angular/router";
-import { of as observableOf } from 'rxjs';
-import { Observable } from "rxjs/internal/Observable";
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { of } from 'rxjs';
+import { Observable } from 'rxjs/internal/Observable';
 import * as moment from 'moment';
-import { IDateRangePicker } from "@gauzy/contracts";
-import { IDatePickerConfig } from "./../../../../../@core/services/selector-builder/date-range-picker-builder.service";
+import { IDateRangePicker } from '@gauzy/contracts';
+import { IDatePickerConfig } from '../../../../../@core/services/selector-builder/selector-builder-types';
 
 @Injectable({
-    providedIn: 'root'
+	providedIn: 'root'
 })
 export class DateRangePickerResolver implements Resolve<Observable<IDateRangePicker>> {
+	/**
+	 * Resolves the date range picker configuration based on the route parameters.
+	 * @param route The activated route snapshot containing route information.
+	 * @returns An observable of type `IDateRangePicker` representing the resolved date range picker configuration.
+	 */
+	resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker> {
+		// Extract the unitOfTime from route data
+		const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
 
-    resolve(route: ActivatedRouteSnapshot): Observable<IDateRangePicker> {
-        const { unitOfTime } = route.data.datePicker as IDatePickerConfig;
+		// Calculate the start date based on the route query parameter or the current date
+		const startDate = moment(route.queryParams.date || new Date()).startOf(unitOfTime);
 
-        const date_start = route.queryParams.date || new Date();
-        const date_end = route.queryParams.date_end;
+		// Calculate the end date based on the route query parameter or the start date
+		const endDate = moment(route.queryParams.date_end || startDate).endOf(unitOfTime);
 
-        const start_date = moment(date_start).startOf(unitOfTime);
-        const end_date = moment(date_end || start_date).endOf(unitOfTime);
+		// Determine if it's a custom date range by checking the existence of the end date query parameter
+		const isCustomDate = !!route.queryParams.date_end;
 
-        let isCustomDate: boolean;
-        if (date_end) {
-            isCustomDate = true;
-        } else {
-            isCustomDate = false;
-        }
+		console.log({ startDate: startDate.toDate(), endDate: endDate.toDate(), isCustomDate });
 
-        return observableOf({
-            startDate: start_date.toDate(),
-            endDate: end_date.toDate(),
-            isCustomDate: isCustomDate
-        });
-    }
+		// Return an observable emitting the resolved date range picker configuration
+		return of({ startDate: startDate.toDate(), endDate: endDate.toDate(), isCustomDate });
+	}
 }

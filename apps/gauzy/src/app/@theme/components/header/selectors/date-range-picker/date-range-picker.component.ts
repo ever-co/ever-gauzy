@@ -59,7 +59,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
 		format: 'DD.MM.YYYY', // default is format value
 		direction: 'ltr',
-		firstDay: dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY) || moment.localeData().firstDayOfWeek()
+		firstDay:
+			dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY) ||
+			moment.localeData().firstDayOfWeek()
 	};
 	get locale(): LocaleConfig {
 		return this._locale;
@@ -96,7 +98,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			this.selectedDateRange = this.rangePicker = this.getSelectorDates();
 		}
 	}
-
 
 	/*
 	 * Getter & Setter for dynamic selected date range
@@ -263,9 +264,15 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			[DateRangeKeyEnum.TODAY]: [moment(), moment()],
 			[DateRangeKeyEnum.YESTERDAY]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
 			[DateRangeKeyEnum.CURRENT_WEEK]: [moment().startOf('week'), moment().endOf('week')],
-			[DateRangeKeyEnum.LAST_WEEK]: [moment().subtract(1, 'week').startOf('week'), moment().subtract(1, 'week').endOf('week')],
+			[DateRangeKeyEnum.LAST_WEEK]: [
+				moment().subtract(1, 'week').startOf('week'),
+				moment().subtract(1, 'week').endOf('week')
+			],
 			[DateRangeKeyEnum.CURRENT_MONTH]: [moment().startOf('month'), moment().endOf('month')],
-			[DateRangeKeyEnum.LAST_MONTH]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+			[DateRangeKeyEnum.LAST_MONTH]: [
+				moment().subtract(1, 'month').startOf('month'),
+				moment().subtract(1, 'month').endOf('month')
+			]
 		};
 
 		// Define the units of time to remove based on conditions
@@ -282,7 +289,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		}
 
 		// Remove date ranges based on unitsToRemove
-		unitsToRemove.forEach(unit => {
+		unitsToRemove.forEach((unit) => {
 			delete this.ranges[unit];
 		});
 	}
@@ -440,7 +447,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				filter(() => !!this.isSaveDatePicker),
 				tap((filters: ITimeLogFilters) => {
 					const { startDate = range.startDate } = filters;
-					const date = !this.hasFutureStrategy() && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
+					const date =
+						!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
 
 					const start = moment(date).startOf(this.unitOfTime);
 					const end = moment(date).endOf(this.unitOfTime);
@@ -470,17 +478,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * If has future strategy or not
-	 *
-	 * @returns {Boolean}
+	 * Checks if there is a future strategy or not.
+	 * @returns {Boolean} True if there is a future strategy, false otherwise.
 	 */
 	private hasFutureStrategy(): boolean {
-		const { isDisableFutureDatePicker, futureDateAllowed } = this;
-		if (isDisableFutureDatePicker) {
-			return !isDisableFutureDatePicker;
-		} else {
-			return futureDateAllowed;
-		}
+		return !this.isDisableFutureDatePicker && this.futureDateAllowed;
 	}
 
 	/**
@@ -506,5 +508,5 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		};
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
