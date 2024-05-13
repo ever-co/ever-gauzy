@@ -6,7 +6,7 @@ import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { Observable, of as observableOf } from 'rxjs';
 
 import { throwIfAlreadyLoaded } from './module-import-guard';
-import { AnalyticsService, JitsuService, LayoutService, RippleService, SeoService } from './services';
+import { AnalyticsService, JitsuService, LayoutService, AppGlobalRippleOptions, SeoService } from './services';
 import { AuthModule } from './auth/auth.module';
 
 const DATA_SERVICES = [];
@@ -40,7 +40,7 @@ export const NB_CORE_PROVIDERS = [
 	},
 	{
 		provide: MAT_RIPPLE_GLOBAL_OPTIONS,
-		useExisting: RippleService
+		useExisting: AppGlobalRippleOptions
 	},
 	AnalyticsService,
 	LayoutService,

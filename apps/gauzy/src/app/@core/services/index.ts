@@ -1,6 +1,6 @@
 export * from './layout.service';
 export * from './seo.service';
-export * from './ripple.service';
+export * from './app-global-ripple-options.service';
 export * from './analytics/analytics.service';
 export * from './analytics/jitsu.service';
 
