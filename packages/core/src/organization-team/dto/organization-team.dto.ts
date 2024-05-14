@@ -1,9 +1,4 @@
-import {
-	ApiPropertyOptional,
-	IntersectionType,
-	PartialType,
-	PickType,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
@@ -11,10 +6,21 @@ import { RelationalTagDTO } from './../../tags/dto';
 import { OrganizationTeam } from './../organization-team.entity';
 import { OrganizationProject } from '../../organization-project/organization-project.entity';
 
-export class OrganizationTeamDTO extends IntersectionType(
-	IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
-	PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
-) implements Omit<IOrganizationTeam, 'name'> {
+export class OrganizationTeamDTO
+	extends IntersectionType(
+		IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
+		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
+	)
+	implements Omit<IOrganizationTeam, 'name'>
+{
+	/**
+	 * Team setting for sharing profile view should be boolean true/false
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	readonly shareProfileView?: boolean;
+
 	/**
 	 * Team type should be boolean true/false
 	 */

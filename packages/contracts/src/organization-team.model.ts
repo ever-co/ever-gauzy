@@ -51,6 +51,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 
 export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
 	id: string;
+	shareProfileView?: boolean;
 	public?: boolean;
 }
 
