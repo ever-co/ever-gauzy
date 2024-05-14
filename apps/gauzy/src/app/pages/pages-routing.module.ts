@@ -560,37 +560,14 @@ const routes: Routes = [
 						loadChildren: () =>
 							import('./reports/time-limit-report/time-limit-report.module').then(
 								(m) => m.TimeLimitReportModule
-							),
-						data: {
-							duration: 'week',
-							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT',
-							datePicker: {
-								unitOfTime: 'week',
-								isLockDatePicker: true
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+							)
 					},
 					{
 						path: 'daily-limits',
 						loadChildren: () =>
 							import('./reports/time-limit-report/time-limit-report.module').then(
 								(m) => m.TimeLimitReportModule
-							),
-						data: {
-							duration: 'day',
-							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT',
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+							)
 					},
 					{
 						path: 'project-budgets',

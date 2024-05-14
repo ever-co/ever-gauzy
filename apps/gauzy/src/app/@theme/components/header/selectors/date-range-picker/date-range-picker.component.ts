@@ -489,9 +489,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 					};
 					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-
-					// Update query parameters and navigate
-					this.navigateWithQueryParams();
 				}),
 				untilDestroyed(this)
 			)
