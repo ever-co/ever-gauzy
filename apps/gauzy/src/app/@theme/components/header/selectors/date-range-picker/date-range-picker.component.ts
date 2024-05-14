@@ -31,6 +31,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	public picker: NgxDateRangePickerComponent;
 	public organization: IOrganization;
 	public maxDate: string;
+	public minDate: string;
 	public futureDateAllowed: boolean;
 
 	/**
@@ -178,6 +179,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		this._isDisableFutureDatePicker = isDisable;
 	}
 
+	/**
+	 * Getter & Setter for disabled past dates
+	 */
+	private _isDisablePastDatePicker: boolean = false;
+	get isDisablePastDatePicker(): boolean {
+		return this._isDisablePastDatePicker;
+	}
+	@Input() set isDisablePastDatePicker(isDisable: boolean) {
+		this._isDisablePastDatePicker = isDisable;
+	}
+
 	/** */
 	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
@@ -230,9 +242,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.futureDateAllowed = organization.futureDateAllowed;
 
 					const { isLockDatePicker, isSaveDatePicker } = datePickerConfig;
-					const { isSingleDatePicker, isDisableFutureDate } = datePickerConfig;
+					const { isSingleDatePicker, isDisableFutureDate, isDisablePastDate } = datePickerConfig;
 
 					this.isDisableFutureDatePicker = isDisableFutureDate;
+					this.isDisablePastDatePicker = isDisablePastDate;
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSaveDatePicker = isSaveDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
@@ -242,6 +255,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
+					this.setPastStrategy();
 					this.setFutureStrategy();
 				}),
 				untilDestroyed(this)
@@ -313,6 +327,19 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					endDate: moment().toDate()
 				};
 			}
+		}
+	}
+
+	/**
+	 * Sets the strategy for allowing/disallowing past dates.
+	 */
+	private setPastStrategy() {
+		if (this.hasPastStrategy()) {
+			// If there is a past strategy, set the minimum date to the current date
+			this.minDate = moment().format();
+		} else {
+			// If there is no past strategy, set the minimum date to null, allowing past dates
+			this.minDate = null;
 		}
 	}
 
@@ -489,6 +516,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 					};
 					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+					// Update query parameters and navigate
+					this.navigateWithQueryParams();
 				}),
 				untilDestroyed(this)
 			)
@@ -511,6 +541,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 */
 	private hasFutureStrategy(): boolean {
 		return !this.isDisableFutureDatePicker && this.futureDateAllowed;
+	}
+
+	/**
+	 * Determines whether there is a strategy to disable past dates.
+	 * @returns {Boolean} True if there is a strategy to disable past dates, otherwise false.
+	 */
+	private hasPastStrategy(): boolean {
+		return this.isDisablePastDatePicker;
 	}
 
 	/**

@@ -4,6 +4,7 @@ export interface IDatePickerConfig {
 	readonly isSaveDatePicker: boolean;
 	readonly isSingleDatePicker: boolean;
 	readonly isDisableFutureDate: boolean;
+	readonly isDisablePastDate: boolean;
 }
 
 export interface ISelectorVisibility {
