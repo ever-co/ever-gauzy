@@ -89,6 +89,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		if (unitOfTime) {
 			this._unitOfTime = unitOfTime;
 		}
+
 		if (this.isSaveDatePicker) {
 			this.onSavingFilter(this.getSelectorDates());
 		} else {
@@ -228,14 +229,16 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.organization = organization;
 					this.futureDateAllowed = organization.futureDateAllowed;
 
-					const { unitOfTime, isLockDatePicker, isSaveDatePicker } = datePickerConfig;
+					const { isLockDatePicker, isSaveDatePicker } = datePickerConfig;
 					const { isSingleDatePicker, isDisableFutureDate } = datePickerConfig;
 
 					this.isDisableFutureDatePicker = isDisableFutureDate;
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSaveDatePicker = isSaveDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
-					this.unitOfTime = queryParams.unit_of_time || unitOfTime;
+
+					const { unit_of_time = datePickerConfig.unitOfTime } = queryParams;
+					this.unitOfTime = unit_of_time;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -486,6 +489,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 					};
 					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+					// Update query parameters and navigate
+					this.navigateWithQueryParams();
 				}),
 				untilDestroyed(this)
 			)

@@ -15,21 +15,17 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'time-activities',
-				loadChildren: () => import('./time-and-activities/time-and-activities.module').then(
-					(m) => m.TimeAndActivitiesModule
-				)
+				loadChildren: () =>
+					import('./time-and-activities/time-and-activities.module').then((m) => m.TimeAndActivitiesModule)
 			},
 			{
 				path: 'screenshots',
-				loadChildren: () => import('./screenshot/screenshot.module').then(
-					(m) => m.ScreenshotModule
-				)
+				loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
 			},
 			{
 				path: 'apps',
-				loadChildren: () => import('./app-url-activity/app-url-activity.module').then(
-					(m) => m.AppUrlActivityModule
-				),
+				loadChildren: () =>
+					import('./app-url-activity/app-url-activity.module').then((m) => m.AppUrlActivityModule),
 				data: {
 					title: 'ACTIVITY.APPS',
 					type: 'apps',
@@ -43,13 +39,13 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				}
+				},
+				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 			},
 			{
 				path: 'urls',
-				loadChildren: () => import('./app-url-activity/app-url-activity.module').then(
-					(m) => m.AppUrlActivityModule
-				),
+				loadChildren: () =>
+					import('./app-url-activity/app-url-activity.module').then((m) => m.AppUrlActivityModule),
 				data: {
 					title: 'ACTIVITY.VISITED_SITES',
 					type: 'urls',
@@ -63,7 +59,8 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				}
+				},
+				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 			}
 		]
 	}
