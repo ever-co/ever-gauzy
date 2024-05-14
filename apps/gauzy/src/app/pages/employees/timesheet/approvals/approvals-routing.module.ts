@@ -27,7 +27,8 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		}
+		},
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	}
 ];
 
@@ -35,4 +36,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ApprovalsRoutingModule { }
+export class ApprovalsRoutingModule {}
