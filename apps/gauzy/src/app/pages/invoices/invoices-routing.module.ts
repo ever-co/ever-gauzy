@@ -19,67 +19,69 @@ export function redirectTo() {
 	return '/pages/dashboard';
 }
 
-const INVOICES_VIEW_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
-		redirectTo
-	}
-};
-
-const INVOICES_EDIT_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
-		redirectTo
-	}
-};
-
-const ESTIMATES_VIEW_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
-		redirectTo
-	}
-};
-
-const ESTIMATES_EDIT_PERMISSION = {
-	permissions: {
-		only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_EDIT],
-		redirectTo
-	}
-};
-
 const routes: Routes = [
 	{
 		path: '',
 		component: InvoicesComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_VIEW_PERMISSION,
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+				redirectTo
+			}
+		},
 		resolve: {
 			dates: DateRangePickerResolver
-		}
+		},
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	},
 	{
 		path: 'add',
 		component: InvoiceAddComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_EDIT_PERMISSION
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
+				redirectTo
+			}
+		}
 	},
 	{
 		path: 'edit/:id',
 		component: InvoiceEditComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_EDIT_PERMISSION
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
+				redirectTo
+			}
+		}
 	},
 	{
 		path: 'received-invoices',
 		component: InvoicesReceivedComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_VIEW_PERMISSION
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+				redirectTo
+			}
+		},
+		resolve: {
+			dates: DateRangePickerResolver
+		},
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	},
 	{
 		path: 'view/:id',
 		component: InvoiceViewComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: INVOICES_VIEW_PERMISSION
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+				redirectTo
+			}
+		}
 	},
 	{
 		path: 'estimates',
@@ -88,7 +90,12 @@ const routes: Routes = [
 			{
 				path: '',
 				component: EstimatesComponent,
-				data: ESTIMATES_VIEW_PERMISSION,
+				data: {
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+						redirectTo
+					}
+				},
 				resolve: {
 					dates: DateRangePickerResolver
 				}
@@ -97,7 +104,10 @@ const routes: Routes = [
 				path: 'add',
 				component: EstimateAddComponent,
 				data: {
-					...ESTIMATES_EDIT_PERMISSION,
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_EDIT],
+						redirectTo
+					},
 					datePicker: {
 						unitOfTime: 'month'
 					}
@@ -109,12 +119,22 @@ const routes: Routes = [
 			{
 				path: 'edit/:id',
 				component: EstimateEditComponent,
-				data: ESTIMATES_EDIT_PERMISSION
+				data: {
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_EDIT],
+						redirectTo
+					}
+				}
 			},
 			{
 				path: 'view/:id',
 				component: EstimateViewComponent,
-				data: ESTIMATES_VIEW_PERMISSION
+				data: {
+					permissions: {
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+						redirectTo
+					}
+				}
 			}
 		]
 	},
@@ -122,27 +142,36 @@ const routes: Routes = [
 		path: 'received-estimates',
 		component: EstimatesReceivedComponent,
 		canActivate: [NgxPermissionsGuard],
-		data: ESTIMATES_VIEW_PERMISSION
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
+				redirectTo
+			}
+		},
+		resolve: {
+			dates: DateRangePickerResolver
+		},
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	},
 	{
 		path: 'payments/:id',
 		component: InvoicePaymentsComponent,
 		data: {
-			...INVOICES_VIEW_PERMISSION,
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
+				redirectTo
+			},
 			selectors: {
 				organization: false,
-				date:false,
+				date: false,
 				project: false,
 				employee: false
-			},
-		},
+			}
+		}
 	},
 	{
 		path: 'recurring',
-		loadChildren: () =>
-			import('./../work-in-progress/work-in-progress.module').then(
-				(m) => m.WorkInProgressModule
-			)
+		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule)
 	}
 ];
 
