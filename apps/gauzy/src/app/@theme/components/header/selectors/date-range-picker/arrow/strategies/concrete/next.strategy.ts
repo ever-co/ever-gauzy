@@ -1,6 +1,6 @@
 import * as moment from 'moment';
-import { IDateRangePicker } from "@gauzy/contracts";
-import { IArrowStrategy } from "../arrow-strategy.interface";
+import { IDateRangePicker } from '@gauzy/contracts';
+import { IArrowStrategy } from '../arrow-strategy.interface';
 
 export class Next implements IArrowStrategy {
 	// declaration of variable
@@ -11,10 +11,7 @@ export class Next implements IArrowStrategy {
 	 * @param request
 	 * @returns any type of request
 	 */
-	action(
-		request: IDateRangePicker,
-		unitOfTime: moment.unitOfTime.Base
-	): IDateRangePicker {
+	action(request: IDateRangePicker, unitOfTime: moment.unitOfTime.Base): IDateRangePicker {
 		const { startDate, endDate, isCustomDate } = request;
 		let start: moment.Moment = moment(endDate).add(1, 'days');
 		let end: moment.Moment;

@@ -52,8 +52,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							title: this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'),
 							icon: 'people-outline',
 							responsive: true,
-							route: this.getRoute('teams'),
-							queryParamsHandling: 'merge'
+							route: this.getRoute('teams')
 						} as NbRouteTab
 				  ]
 				: []),
@@ -66,8 +65,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							title: this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'),
 							icon: 'browser-outline',
 							responsive: true,
-							route: this.getRoute('project-management'),
-							queryParamsHandling: 'merge'
+							route: this.getRoute('project-management')
 						} as NbRouteTab
 				  ]
 				: []),
@@ -80,8 +78,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							title: this.getTranslation('DASHBOARD_PAGE.TIME_TRACKING'),
 							icon: 'clock-outline',
 							responsive: true,
-							route: this.getRoute('time-tracking'),
-							queryParamsHandling: 'merge'
+							route: this.getRoute('time-tracking')
 						} as NbRouteTab
 				  ]
 				: []),
@@ -93,8 +90,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 										title: this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'),
 										icon: 'credit-card-outline',
 										responsive: true,
-										route: this.getRoute('accounting'),
-										queryParamsHandling: 'merge'
+										route: this.getRoute('accounting')
 									} as NbRouteTab
 							  ]
 							: [])
@@ -111,8 +107,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 										title: this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'),
 										icon: 'person-outline',
 										responsive: true,
-										route: this.getRoute('hr'),
-										queryParamsHandling: 'merge'
+										route: this.getRoute('hr')
 									} as NbRouteTab
 							  ]
 							: [])

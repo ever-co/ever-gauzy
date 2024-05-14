@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input, ViewChild } from '@angular/core';
-import { BehaviorSubject, combineLatest, of as observableOf, Subject, switchMap, take } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
+import { BehaviorSubject, combineLatest, of, Subject, switchMap, take } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -8,17 +9,17 @@ import {
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
+import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { TranslateService } from '@ngx-translate/core';
 import { OrganizationsService, Store } from './../../../../../@core/services';
+import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
-import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -91,7 +92,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		if (this.isSaveDatePicker) {
 			this.onSavingFilter(this.getSelectorDates());
 		} else {
-			this.selectedDateRange = this.rangePicker = this.getSelectorDates();
+			this.selectedDateRange = this.getSelectorDates();
+			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
 		}
 	}
 
@@ -179,11 +181,13 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
+		private readonly _route: ActivatedRoute,
 		private readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly organizationService: OrganizationsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly timesheetFilterService: TimesheetFilterService
+		private readonly timesheetFilterService: TimesheetFilterService,
+		private readonly _navigationService: NavigationService
 	) {
 		super(translateService);
 	}
@@ -191,11 +195,12 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	ngOnInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeDatePickerConfig$ = this.dateRangePickerBuilderService.datePickerConfig$;
+		const queryParams$ = this._route.queryParams;
 
-		combineLatest([storeOrganization$, storeDatePickerConfig$])
+		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParams$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
-				switchMap(([organization, datePickerConfig]) =>
+				switchMap(([organization, datePickerConfig, queryParams]) =>
 					combineLatest([
 						this.organizationService.getById(organization.id, [], {
 							id: true,
@@ -203,7 +208,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 							timeZone: true,
 							startWeekOn: true
 						}),
-						observableOf(datePickerConfig)
+						of(datePickerConfig),
+						of(queryParams) // Emit queryParams as part of the inner observable
 					])
 				),
 				tap(([organization]) => {
@@ -218,7 +224,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 						this.locale.format = format;
 					}
 				}),
-				tap(([organization, datePickerConfig]) => {
+				tap(([organization, datePickerConfig, queryParams]) => {
 					this.organization = organization;
 					this.futureDateAllowed = organization.futureDateAllowed;
 
@@ -229,7 +235,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					this.isLockDatePicker = isLockDatePicker;
 					this.isSaveDatePicker = isSaveDatePicker;
 					this.isSingleDatePicker = isSingleDatePicker;
-					this.unitOfTime = unitOfTime;
+					this.unitOfTime = queryParams.unit_of_time || unitOfTime;
 				}),
 				tap(() => {
 					this.createDateRangeMenus();
@@ -308,31 +314,54 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * get next selected range
+	 * Retrieves the next selected range if not disabled.
 	 */
-	nextRange() {
+	async nextRange() {
 		if (this.isNextDisabled()) {
 			return;
 		}
+
 		this.arrow.setStrategy = this.next;
 		const nextRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = this.rangePicker = {
-			...this.selectedDateRange,
-			...nextRange
-		};
+		this.selectedDateRange = { ...this.selectedDateRange, ...nextRange };
+		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
 		this.setFutureStrategy();
+
+		// Update query parameters and navigate
+		await this.navigateWithQueryParams();
 	}
 
 	/**
-	 * get previous selected range
+	 * Retrieves the previous selected range.
 	 */
-	previousRange() {
+	async previousRange() {
 		this.arrow.setStrategy = this.previous;
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
-		this.selectedDateRange = this.rangePicker = {
-			...this.selectedDateRange,
-			...previousRange
-		};
+		this.selectedDateRange = { ...this.selectedDateRange, ...previousRange };
+		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+		// Update query parameters and navigate
+		await this.navigateWithQueryParams();
+	}
+
+	/**
+	 * Navigates to the current route with specified query parameters, while preserving existing ones.
+	 *
+	 * @param queryParams The query parameters to be attached.
+	 */
+	async navigateWithQueryParams(): Promise<void> {
+		const { startDate, endDate, isCustomDate } = this.selectedDateRange;
+
+		// Create new moment objects for formatted dates to avoid mutation
+		const formattedStartDate = moment(startDate).clone().format('YYYY-MM-DD');
+		const formattedEndDate = moment(endDate).clone().format('YYYY-MM-DD');
+
+		await this._navigationService.navigate([], {
+			date: formattedStartDate,
+			date_end: formattedEndDate,
+			unit_of_time: this.unitOfTime,
+			is_custom_date: isCustomDate
+		});
 	}
 
 	/**
@@ -353,30 +382,32 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * listen event on ngx-daterangepicker-material
-	 * @param event
+	 * Listens to the event on ngx-daterangepicker-material.
+	 * @param event The updated time period.
 	 */
 	onDatesUpdated(event: TimePeriod) {
-		if (this.dateRangePickerDirective) {
-			const { startDate, endDate } = shiftUTCtoLocal(event);
-			if (startDate && endDate) {
-				const range = {} as IDateRangePicker;
-				if (!this.isLockDatePicker) {
-					range['startDate'] = startDate.toDate();
-					range['endDate'] = endDate.toDate();
-					range['isCustomDate'] = this.isCustomDate(event);
-				} else {
-					const start = moment(startDate.toDate()).startOf(this.unitOfTime);
-					const end = moment(startDate.toDate()).endOf(this.unitOfTime);
-					range['startDate'] = start.toDate();
-					range['endDate'] = end.toDate();
-					range['isCustomDate'] = this.isCustomDate({
-						startDate: start,
-						endDate: end
-					});
-				}
-				this.selectedDateRange = this.rangePicker = range;
-			}
+		if (!this.dateRangePickerDirective) {
+			return;
+		}
+
+		const { startDate, endDate } = shiftUTCtoLocal(event);
+		if (startDate && endDate) {
+			const range = {} as IDateRangePicker;
+			const start = this.isLockDatePicker ? moment(startDate).startOf(this.unitOfTime) : startDate;
+			const end = this.isLockDatePicker ? moment(startDate).endOf(this.unitOfTime) : endDate;
+
+			range.startDate = start.toDate();
+			range.endDate = end.toDate();
+			range.isCustomDate = this.isCustomDate({
+				startDate: start,
+				endDate: end
+			});
+
+			this.selectedDateRange = range;
+			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+
+			// Update query parameters and navigate
+			this.navigateWithQueryParams();
 		}
 	}
 
@@ -401,30 +432,35 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Check is custom date
+	 * Checks if the provided date range is a custom date range.
 	 *
-	 * @param dateRange
-	 * @returns
+	 * @param dateRange The date range to check.
+	 * @returns True if the date range is custom, false otherwise.
 	 */
 	isCustomDate(dateRange: any): boolean {
-		let isCustomRange = true;
-		if (this.dateRangePickerDirective) {
-			const ranges = this.dateRangePickerDirective.ranges;
-			for (const range in ranges) {
-				if (this.ranges[range]) {
-					const [startDate, endDate] = this.ranges[range];
-					// ignore times when comparing dates if time picker is not enabled
-					if (
-						dateRange.startDate.format('YYYY-MM-DD') === startDate.format('YYYY-MM-DD') &&
-						dateRange.endDate.format('YYYY-MM-DD') === endDate.format('YYYY-MM-DD')
-					) {
-						isCustomRange = false;
-						break;
-					}
+		if (!this.dateRangePickerDirective) {
+			return true; // If dateRangePickerDirective is not available, consider it as a custom range
+		}
+
+		const ranges = this.dateRangePickerDirective.ranges;
+		for (const range in ranges) {
+			if (this.ranges[range]) {
+				const [rangeStartDate, rangeEndDate] = this.ranges[range];
+
+				// Create new moment objects for formatted dates to avoid mutation
+				const formattedStartDate = moment(dateRange.startDate).clone().format('YYYY-MM-DD');
+				const formattedEndDate = moment(dateRange.endDate).clone().format('YYYY-MM-DD');
+
+				const isStartDateEqual = formattedStartDate === rangeStartDate.format('YYYY-MM-DD');
+				const isEndDateEqual = formattedEndDate === rangeEndDate.format('YYYY-MM-DD');
+
+				// ignore times when comparing dates if time picker is not enabled
+				if (isStartDateEqual && isEndDateEqual) {
+					return false; // If the range matches any predefined range, it's not custom
 				}
 			}
 		}
-		return isCustomRange;
+		return true; // If no predefined range matches, it's a custom range
 	}
 
 	/**
@@ -439,20 +475,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				filter(() => !!this.isSaveDatePicker),
 				tap((filters: ITimeLogFilters) => {
 					const { startDate = range.startDate } = filters;
-					const date =
-						!this.hasFutureStrategy() && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
-
+					const hasFutureStrategy = this.hasFutureStrategy();
+					const date = !hasFutureStrategy && this.isSameOrAfterDay(startDate) ? moment() : moment(startDate);
 					const start = moment(date).startOf(this.unitOfTime);
 					const end = moment(date).endOf(this.unitOfTime);
 
-					this.selectedDateRange = this.rangePicker = {
+					this.selectedDateRange = {
 						startDate: start.toDate(),
 						endDate: end.toDate(),
-						isCustomDate: this.isCustomDate({
-							startDate: start,
-							endDate: end
-						})
+						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 					};
+					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
 				}),
 				untilDestroyed(this)
 			)

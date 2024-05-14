@@ -1,7 +1,6 @@
 <div class="row col-auto">
 	<div class="filter-input">
 		<div class="custom-input">
-			{{ selectedDateRange?.isCustomDate | json }}
 			<ng-container *ngIf="arrows">
 				<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
 					<nb-icon icon="arrow-ios-back-outline"></nb-icon>

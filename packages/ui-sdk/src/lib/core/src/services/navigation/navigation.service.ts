@@ -12,12 +12,12 @@ export class NavigationService {
 	 *
 	 * @param queryParams The query parameters to be attached.
 	 */
-	navigate(
+	async navigate(
 		route: string[] = [],
-		queryParams: { [key: string]: string | string[] },
+		queryParams: { [key: string]: string | string[] | boolean },
 		queryParamsHandling: QueryParamsHandling = 'merge'
-	): void {
-		this.router.navigate(route, {
+	): Promise<void> {
+		await this.router.navigate(route, {
 			relativeTo: this.activatedRoute,
 			queryParams,
 			queryParamsHandling
