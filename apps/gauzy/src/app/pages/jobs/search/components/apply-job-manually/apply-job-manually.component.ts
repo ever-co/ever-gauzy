@@ -8,6 +8,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployeeJobApplication,
 	IEmployee,
@@ -25,8 +26,7 @@ import { EmployeeSelectorComponent } from './../../../../../@theme/components/he
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
-import { ckEditorConfig } from './../../../../../@shared/ckeditor.config';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,19 +56,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			},
 			{
 				name: 'clipboard',
-				items: [
-					'Cut',
-					'Copy',
-					'Paste',
-					'PasteText',
-					'PasteFromWord',
-					'-',
-					'Undo',
-					'Redo'
-				]
+				items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo']
 			}
 		],
-		height: '191px', // Set the desired height here
+		height: '191px' // Set the desired height here
 	};
 	public organization: IOrganization;
 	public uploader: FileUploader;
@@ -150,9 +141,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 					this.organization = organization;
 					this.selectedEmployee = employee && employee.id ? employee : null;
 				}),
-				tap(() => this.employeeSelector.selectEmployeeById(
-					this.selectedEmployee?.id
-				)),
+				tap(() => this.employeeSelector.selectEmployeeById(this.selectedEmployee?.id)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -276,7 +265,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		/** Patch proposal value inside form directive */
 		this.form.patchValue({
 			proposal: this.proposalTemplate?.content || null,
-			details: this.proposalTemplate?.content || null,
+			details: this.proposalTemplate?.content || null
 		});
 	}
 
@@ -365,9 +354,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 			this.loading = true;
 			// send the employee job application
-			this.application$.next(
-				await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest)
-			);
+			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
 		} catch (error) {
 			console.error('Error while creating employee job application', error);
 		}
@@ -378,9 +365,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 *
 	 * @param application
 	 */
-	public async generateAIProposal(
-		employeeJobApplication: IEmployeeJobApplication
-	) {
+	public async generateAIProposal(employeeJobApplication: IEmployeeJobApplication) {
 		try {
 			const employeeJobApplicationId = employeeJobApplication.id;
 			await this.jobService.generateAIProposal(employeeJobApplicationId);
@@ -422,7 +407,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 							/** If employee proposal generated successfully from Gauzy AI */
 							if (isNotEmpty(application)) {
 								// Replace line breaks with spaces
-								const proposal = application.proposal.replace(/\n\n/g, '<br/><br>').replace(/\n/g, '<br/>');
+								const proposal = application.proposal
+									.replace(/\n\n/g, '<br/><br>')
+									.replace(/\n/g, '<br/>');
 
 								// Set ckeditor html content
 								this.ckeditor.instance.document.getBody().setHtml(proposal);
@@ -472,7 +459,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/**
 	 * On editor change
 	 */
-	onEditorChange(content: string): void { }
+	onEditorChange(content: string): void {}
 
 	/**
 	 * Close dialog

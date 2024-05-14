@@ -1,18 +1,8 @@
-import {
-	Directive,
-	Input,
-	Output,
-	HostListener,
-	EventEmitter,
-	OnDestroy
-} from '@angular/core';
-import {
-	PromptComponent,
-	PromptDialogOptions
-} from '../prompt/prompt.component';
+import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from '@angular/core';
+import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -21,8 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class PromptDirective extends TranslationBaseComponent implements OnDestroy {
 	/*
-	* Getter & Setter for label
-	*/
+	 * Getter & Setter for label
+	 */
 	_label: string;
 	get label(): string {
 		return this._label;
@@ -32,8 +22,8 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 	}
 
 	/*
-	* Getter & Setter for title
-	*/
+	 * Getter & Setter for title
+	 */
 	_title: string;
 	get title(): string {
 		return this._title;
@@ -43,9 +33,9 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 	}
 
 	/*
-	* Getter & Setter for okText
-	*/
-	_okText: string = this.getTranslation('BUTTONS.OK'); 
+	 * Getter & Setter for okText
+	 */
+	_okText: string = this.getTranslation('BUTTONS.OK');
 	get okText(): string {
 		return this._okText;
 	}
@@ -54,8 +44,8 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 	}
 
 	/*
-	* Getter & Setter for cancelText
-	*/
+	 * Getter & Setter for cancelText
+	 */
 	_cancelText: string = this.getTranslation('BUTTONS.CANCEL');
 	get cancelText(): string {
 		return this._cancelText;
@@ -65,8 +55,8 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 	}
 
 	/*
-	* Getter & Setter for placeholder
-	*/
+	 * Getter & Setter for placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -76,8 +66,8 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 	}
 
 	/*
-	* Getter & Setter for inputType
-	*/
+	 * Getter & Setter for inputType
+	 */
 	_inputType: PromptDialogOptions['inputType'] = 'text';
 	get inputType(): PromptDialogOptions['inputType'] {
 		return this._inputType;
@@ -88,10 +78,7 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 
 	@Output() callback = new EventEmitter<string | string[]>();
 
-	constructor(
-		private readonly dialogService: NbDialogService,
-		readonly translateService: TranslateService,
-	) {
+	constructor(private readonly dialogService: NbDialogService, readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -112,14 +99,11 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 			}
 		});
 
-		dialogRef.onClose
-			.pipe(
-				untilDestroyed(this)
-			).subscribe((confirm) => {
-				if (confirm) {
-					this.callback.emit(confirm);
-				}
-			});
+		dialogRef.onClose.pipe(untilDestroyed(this)).subscribe((confirm) => {
+			if (confirm) {
+				this.callback.emit(confirm);
+			}
+		});
 	}
 
 	ngOnDestroy(): void {}

@@ -2,7 +2,7 @@ import { IHelpCenter } from '@gauzy/contracts';
 import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { HelpCenterService } from '../../../@core/services';
 
 @Component({
@@ -10,9 +10,7 @@ import { HelpCenterService } from '../../../@core/services';
 	templateUrl: 'delete-category.component.html',
 	styleUrls: ['delete-category.component.scss']
 })
-export class DeleteCategoryComponent
-	extends TranslationBaseComponent
-	implements OnDestroy {
+export class DeleteCategoryComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() category: IHelpCenter;
 
 	constructor(

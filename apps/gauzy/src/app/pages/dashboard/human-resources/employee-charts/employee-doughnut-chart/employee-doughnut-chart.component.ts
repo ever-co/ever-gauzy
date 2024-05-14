@@ -11,7 +11,7 @@ import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } f
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { Store } from './../../../../../@core/services/store.service';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -50,7 +50,6 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	providers: [CurrencyPipe, CurrencyPositionPipe]
 })
 export class EmployeeDoughnutChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
-
 	public chartType: ChartType = 'doughnut';
 	public chartOptions: ChartConfiguration['options'];
 	public data: ChartConfiguration['data'];
@@ -108,7 +107,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -148,7 +147,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 			elements: {
 				arc: {
 					borderWidth: 2
-				},
+				}
 			},
 			plugins: {
 				legend: {
@@ -156,7 +155,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false
-					},
+					}
 				},
 				tooltip: {
 					enabled: true,
@@ -185,9 +184,12 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 	 */
 	formatCurrency = (value: number): string => {
 		const currencyPosition = this.organization?.currencyPosition || CurrencyPosition.LEFT;
-		const currency = this._currencyPipe.transform(value, this.organization?.currency || environment.DEFAULT_CURRENCY);
+		const currency = this._currencyPipe.transform(
+			value,
+			this.organization?.currency || environment.DEFAULT_CURRENCY
+		);
 		return this._currencyPositionPipe.transform(currency, currencyPosition);
-	}
+	};
 
 	/**
 	 * Initializes the chart dataset with appropriate colors and labels.
@@ -213,12 +215,7 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 						this.statistics.bonus,
 						this.statistics.profit
 					],
-					backgroundColor: [
-						'#089c17',
-						'#dbc300',
-						'#66de0b',
-						'#0091ff'
-					],
+					backgroundColor: ['#089c17', '#dbc300', '#66de0b', '#0091ff'],
 					hoverBorderColor: 'rgba(0, 0, 0, 0)',
 					borderWidth: 1
 				}
@@ -249,5 +246,5 @@ export class EmployeeDoughnutChartComponent extends TranslationBaseComponent imp
 		this.statistics.bonus = this.employeeStatistics[0] ? this.employeeStatistics[0].bonus : 0;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

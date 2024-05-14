@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NbSidebarService, NbThemeService, NbMenuItem, NbDialogService, NbDialogRef } from '@nebular/theme';
 import { combineLatest, firstValueFrom, lastValueFrom, Subject } from 'rxjs';
@@ -36,9 +36,8 @@ import {
 	UsersOrganizationsService
 } from '../../../@core/services';
 import { DEFAULT_SELECTOR_VISIBILITY, SelectorBuilderService } from '../../../@core/services';
-import { LayoutService } from '../../../@core/utils';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
-import { ChangeDetectorRef } from '@angular/core';
+import { LayoutService } from '../../../@core/services/layout.service';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
 import { ISelectorVisibility } from '../../../@core/services/selector-builder/selector-builder-types';

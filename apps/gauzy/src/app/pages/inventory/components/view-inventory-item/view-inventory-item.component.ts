@@ -5,15 +5,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
-import {
-	IImageAsset,
-	IProductOptionTranslatable,
-	IProductTranslatable,
-	LanguagesEnum
-} from '@gauzy/contracts';
+import { IImageAsset, IProductOptionTranslatable, IProductTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { ProductService, Store, TranslatableService } from './../../../../@core/services';
 import { GalleryComponent, GalleryService } from './../../../../@shared/gallery';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
 
 @UntilDestroy()
@@ -22,9 +17,7 @@ import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-co
 	templateUrl: './view-inventory-item.component.html',
 	styleUrls: ['./view-inventory-item.component.scss']
 })
-export class InventoryItemViewComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class InventoryItemViewComponent extends TranslationBaseComponent implements OnInit {
 	inventoryItem: IProductTranslatable;
 	loading: boolean = true;
 	options: IProductOptionTranslatable[] = [];
@@ -50,18 +43,15 @@ export class InventoryItemViewComponent
 		combineLatest([this.route.params, this.store.preferredLanguage$])
 			.pipe(untilDestroyed(this))
 			.subscribe(async ([params, languageCode]) => {
-				this.inventoryItem = await this.productService.getById(
-					params.id,
-					[
-						'productCategory',
-						'productType',
-						'optionGroups',
-						'variants',
-						'tags',
-						'gallery',
-						'featuredImage'
-					]
-				);
+				this.inventoryItem = await this.productService.getById(params.id, [
+					'productCategory',
+					'productType',
+					'optionGroups',
+					'variants',
+					'tags',
+					'gallery',
+					'featuredImage'
+				]);
 				let variants = [];
 
 				if (this.inventoryItem && this.inventoryItem.variants) {
@@ -82,15 +72,12 @@ export class InventoryItemViewComponent
 				}
 
 				this.options.map((option) => {
-					let currentTranslation = option.translations.find(
-						(translation) => {
-							return (
-								translation.languageCode == languageCode ||
-								translation.languageCode ==
-								LanguagesEnum.ENGLISH
-							);
-						}
-					);
+					let currentTranslation = option.translations.find((translation) => {
+						return (
+							translation.languageCode == languageCode ||
+							translation.languageCode == LanguagesEnum.ENGLISH
+						);
+					});
 
 					if (currentTranslation) {
 						option.name = currentTranslation.name;
@@ -118,9 +105,7 @@ export class InventoryItemViewComponent
 		this.nbDialogService.open(GalleryComponent, {
 			context: {
 				items: mappedImages,
-				item: mappedImages.find(
-					(image) => image.thumbUrl == galleryItem.fullUrl
-				)
+				item: mappedImages.find((image) => image.thumbUrl == galleryItem.fullUrl)
 			},
 			dialogClass: 'fullscreen'
 		});
@@ -146,12 +131,8 @@ export class InventoryItemViewComponent
 					type: 'string',
 					valuePrepareFunction: (_, variant) => {
 						return variant.options && variant.options.length > 0
-							? variant.options
-								.map((option) => option.name)
-								.join(', ')
-							: this.getTranslation(
-								'INVENTORY_PAGE.NO_OPTIONS_LABEL'
-							);
+							? variant.options.map((option) => option.name).join(', ')
+							: this.getTranslation('INVENTORY_PAGE.NO_OPTIONS_LABEL');
 					},
 					filter: false
 				},
@@ -180,9 +161,7 @@ export class InventoryItemViewComponent
 					filter: false
 				},
 				canBePurchased: {
-					title: this.getTranslation(
-						'INVENTORY_PAGE.CAN_BE_PURCHASED'
-					),
+					title: this.getTranslation('INVENTORY_PAGE.CAN_BE_PURCHASED'),
 					type: 'custom',
 					renderComponent: EnabledStatusComponent,
 					filter: false

@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	ChangeDetectorRef,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
@@ -12,12 +6,8 @@ import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
-import {
-	IncomeTypeEnum,
-	IOrganization,
-	IUpworkDateRange
-} from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IncomeExpenseAmountComponent } from './../../../../@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from './../../../../@shared/table-components/date-view/date-view.component';
 import { Store, UpworkStoreService } from './../../../../@core/services';
@@ -29,7 +19,6 @@ import { Store, UpworkStoreService } from './../../../../@core/services';
 	styleUrls: ['./reports.component.scss']
 })
 export class ReportsComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
-
 	public reports$: Observable<any> = this._upworkStoreService.reports$;
 	public settingsSmartTable: object;
 	public today: Date = new Date();
@@ -61,7 +50,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		this._storeService.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._setDefaultRange()),
 				untilDestroyed(this)
 			)
@@ -74,19 +63,14 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-
-	}
+	ngOnDestroy(): void {}
 
 	ngAfterViewInit(): void {
 		this.cdr.detectChanges();
 	}
 
 	private _getReport(): void {
-		this._upworkStoreService
-			.loadReports(this.organization)
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this._upworkStoreService.loadReports(this.organization).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	private _loadSettingsSmartTable(): void {
@@ -103,7 +87,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				type: {
 					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
@@ -135,7 +119,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -187,7 +171,12 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
 			debounceTime(100),
 			tap((dateRange) => ((this.selectedDateRange = dateRange), this.updateReports$.next(true))),
-			tap((dateRange) => (this.displayDate = `${moment(dateRange.start).format('MMM D, YYYY')} - ${moment(dateRange.end).format('MMM D, YYYY')}`))
+			tap(
+				(dateRange) =>
+					(this.displayDate = `${moment(dateRange.start).format('MMM D, YYYY')} - ${moment(
+						dateRange.end
+					).format('MMM D, YYYY')}`)
+			)
 		);
 	}
 
@@ -195,10 +184,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	 * Onchange date range for filter'
 	 */
 	public handleRangeChange({ start, end }: IUpworkDateRange): void {
-		if (
-			moment(start, 'YYYY-MM-DD').isValid() &&
-			moment(end, 'YYYY-MM-DD').isValid()
-		) {
+		if (moment(start, 'YYYY-MM-DD').isValid() && moment(end, 'YYYY-MM-DD').isValid()) {
 			this._upworkStoreService.setFilterDateRange({ start, end });
 			this.updateReports$.next(true);
 		}
@@ -210,12 +196,8 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	public previousMonth(): void {
 		const { start, end }: IUpworkDateRange = this.selectedDateRange;
 		this.selectedDateRange = {
-			start: new Date(
-				moment(start).subtract(1, 'months').format('YYYY-MM-DD')
-			),
-			end: new Date(
-				moment(end).subtract(1, 'months').format('YYYY-MM-DD')
-			)
+			start: new Date(moment(start).subtract(1, 'months').format('YYYY-MM-DD')),
+			end: new Date(moment(end).subtract(1, 'months').format('YYYY-MM-DD'))
 		};
 		this._upworkStoreService.setFilterDateRange(this.selectedDateRange);
 	}
@@ -226,15 +208,11 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	public nextMonth(): void {
 		const { start, end }: IUpworkDateRange = this.selectedDateRange;
 		this.selectedDateRange = {
-			start: new Date(
-				moment(start).add(1, 'months').format('YYYY-MM-DD')
-			),
+			start: new Date(moment(start).add(1, 'months').format('YYYY-MM-DD')),
 			end: new Date(moment(end).add(1, 'months').format('YYYY-MM-DD'))
 		};
 		if (this.selectedDateRange.start > this.today) {
-			this.selectedDateRange.start = new Date(
-				moment(this.today).subtract(1, 'months').format('YYYY-MM-DD')
-			);
+			this.selectedDateRange.start = new Date(moment(this.today).subtract(1, 'months').format('YYYY-MM-DD'));
 		}
 		if (this.selectedDateRange.end > this.today) {
 			this.selectedDateRange.end = this.today;
@@ -249,9 +227,6 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 		if (!this.selectedDateRange) {
 			return true;
 		}
-		return moment(this.selectedDateRange.end).isSameOrAfter(
-			this.today,
-			'day'
-		);
+		return moment(this.selectedDateRange.end).isSameOrAfter(this.today, 'day');
 	}
 }

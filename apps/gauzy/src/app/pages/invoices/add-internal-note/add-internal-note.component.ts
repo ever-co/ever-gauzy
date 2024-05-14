@@ -5,7 +5,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 
 @Component({
@@ -13,9 +13,7 @@ import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mu
 	templateUrl: './add-internal-note.component.html',
 	styleUrls: ['./add-internal-note.component.scss']
 })
-export class AddInternalNoteComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class AddInternalNoteComponent extends TranslationBaseComponent implements OnInit {
 	invoice: IInvoice;
 	form: UntypedFormGroup;
 

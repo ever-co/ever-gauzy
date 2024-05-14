@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IInvoice, IUser } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { saveAs } from 'file-saver';
 import { InvoicesService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';

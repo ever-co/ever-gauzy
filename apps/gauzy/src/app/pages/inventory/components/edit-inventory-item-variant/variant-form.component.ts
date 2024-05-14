@@ -1,11 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-	BillingInvoicingPolicyEnum,
-	IProductVariant,
-	IOrganization,
-	IImageAsset
-} from '@gauzy/contracts';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { BillingInvoicingPolicyEnum, IProductVariant, IOrganization, IImageAsset } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
@@ -35,9 +30,7 @@ export interface IVariantCreateInput {
 	templateUrl: './variant-form.component.html',
 	styleUrls: ['./variant-form.component.scss']
 })
-export class InventoryVariantFormComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class InventoryVariantFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	itemVariant: IProductVariant;
 	hoverState: boolean;
 	billingInvoicingPolicies = Object.values(BillingInvoicingPolicyEnum);
@@ -66,35 +59,29 @@ export class InventoryVariantFormComponent
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this.defaultCurrency = organization.currency;
+		this.store.selectedOrganization$.pipe(takeUntil(this.ngDestroy$)).subscribe((organization: IOrganization) => {
+			if (organization) {
+				this.organization = organization;
+				this.defaultCurrency = organization.currency;
+			}
+		});
+
+		this.route.params.pipe(takeUntil(this.ngDestroy$)).subscribe(async (params) => {
+			if (!params.itemVariantId) return;
+
+			this.productVariantService.getProductVariant(params.itemVariantId).then((result) => {
+				if (result) {
+					this.itemVariant = result;
+					this._initializeForm();
 				}
+
+				if (result && result.image) {
+					this.image = result.image;
+				}
+
+				this.loading = false;
 			});
-
-		this.route.params
-			.pipe(takeUntil(this.ngDestroy$))
-			.subscribe(async (params) => {
-				if (!params.itemVariantId) return;
-
-				this.productVariantService
-					.getProductVariant(params.itemVariantId)
-					.then((result) => {
-						if (result) {
-							this.itemVariant = result;
-							this._initializeForm();
-						}
-
-						if (result && result.image) {
-							this.image = result.image;
-						}
-
-						this.loading = false;
-					});
-			});
+		});
 	}
 
 	ngOnDestroy(): void {
@@ -104,32 +91,21 @@ export class InventoryVariantFormComponent
 
 	private _initializeForm() {
 		this.form = this.fb.group({
-			internationalReference: [
-				this.itemVariant ? this.itemVariant.internalReference : '',
-				[Validators.required]
-			],
+			internationalReference: [this.itemVariant ? this.itemVariant.internalReference : '', [Validators.required]],
 			invoicingPolicy: [
 				this.itemVariant
 					? this.itemVariant.billingInvoicingPolicy
 					: BillingInvoicingPolicyEnum.QUANTITY_ORDERED,
 				[Validators.required]
 			],
-			quantity: [
-				this.itemVariant ? this.itemVariant.quantity : 0,
-				[Validators.required, Validators.min(0)]
-			],
-			taxes: [
-				this.itemVariant ? this.itemVariant.taxes : 0,
-				[Validators.required, Validators.min(0)]
-			],
+			quantity: [this.itemVariant ? this.itemVariant.quantity : 0, [Validators.required, Validators.min(0)]],
+			taxes: [this.itemVariant ? this.itemVariant.taxes : 0, [Validators.required, Validators.min(0)]],
 			retailPrice: [
 				this.itemVariant ? this.itemVariant.price.retailPrice : 0,
 				[Validators.required, Validators.min(0)]
 			],
 			retailPriceCurrency: [
-				this.itemVariant
-					? this.itemVariant.price.retailPriceCurrency
-					: this.defaultCurrency,
+				this.itemVariant ? this.itemVariant.price.retailPriceCurrency : this.defaultCurrency,
 				Validators.required
 			],
 			unitCost: [
@@ -137,47 +113,18 @@ export class InventoryVariantFormComponent
 				[Validators.required, Validators.min(0)]
 			],
 			unitCostCurrency: [
-				this.itemVariant
-					? this.itemVariant.price.unitCostCurrency
-					: this.defaultCurrency,
+				this.itemVariant ? this.itemVariant.price.unitCostCurrency : this.defaultCurrency,
 				Validators.required
 			],
-			enabled: [
-				this.itemVariant ? this.itemVariant.enabled : true,
-				Validators.required
-			],
-			isSubscription: [
-				this.itemVariant
-					? this.itemVariant.setting.isSubscription
-					: false
-			],
-			isPurchaseAutomatically: [
-				this.itemVariant
-					? this.itemVariant.setting.isPurchaseAutomatically
-					: false
-			],
-			canBeSold: [
-				this.itemVariant ? this.itemVariant.setting.canBeSold : true
-			],
-			canBePurchased: [
-				this.itemVariant
-					? this.itemVariant.setting.canBePurchased
-					: true
-			],
-			canBeCharged: [
-				this.itemVariant ? this.itemVariant.setting.canBeCharged : true
-			],
-			canBeRented: [
-				this.itemVariant ? this.itemVariant.setting.canBeRented : false
-			],
-			trackInventory: [
-				this.itemVariant
-					? this.itemVariant.setting.trackInventory
-					: false
-			],
-			isEquipment: [
-				this.itemVariant ? this.itemVariant.setting.isEquipment : false
-			],
+			enabled: [this.itemVariant ? this.itemVariant.enabled : true, Validators.required],
+			isSubscription: [this.itemVariant ? this.itemVariant.setting.isSubscription : false],
+			isPurchaseAutomatically: [this.itemVariant ? this.itemVariant.setting.isPurchaseAutomatically : false],
+			canBeSold: [this.itemVariant ? this.itemVariant.setting.canBeSold : true],
+			canBePurchased: [this.itemVariant ? this.itemVariant.setting.canBePurchased : true],
+			canBeCharged: [this.itemVariant ? this.itemVariant.setting.canBeCharged : true],
+			canBeRented: [this.itemVariant ? this.itemVariant.setting.canBeRented : false],
+			trackInventory: [this.itemVariant ? this.itemVariant.setting.trackInventory : false],
+			isEquipment: [this.itemVariant ? this.itemVariant.setting.isEquipment : false],
 			notes: [this.itemVariant ? this.itemVariant.notes : '']
 		});
 	}
@@ -236,13 +183,9 @@ export class InventoryVariantFormComponent
 				productVariantRequest.productVariantSetting
 			);
 
-			await this.productVariantPriceService.updateProductVariantPrice(
-				productVariantRequest.productVariantPrice
-			);
+			await this.productVariantPriceService.updateProductVariantPrice(productVariantRequest.productVariantPrice);
 
-			await this.productVariantService.updateProductVariant(
-				productVariantRequest.itemVariant
-			);
+			await this.productVariantService.updateProductVariant(productVariantRequest.itemVariant);
 
 			this.toastrService.success('INVENTORY_PAGE.PRODUCT_VARIANT_SAVED');
 

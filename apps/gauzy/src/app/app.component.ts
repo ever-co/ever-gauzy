@@ -5,14 +5,13 @@
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { SeoService } from './@core/utils/seo.service';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
-import { AnalyticsService } from './@core/utils/analytics.service';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import {
 	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
@@ -22,7 +21,6 @@ import {
 	Store
 } from './@core/services';
 import { environment } from '../environments/environment';
-import { JitsuService } from './@core/services/analytics/jitsu.service';
 import { IDatePickerConfig, ISelectorVisibility } from './@core/services/selector-builder/selector-builder-types';
 
 @UntilDestroy({ checkProperties: true })

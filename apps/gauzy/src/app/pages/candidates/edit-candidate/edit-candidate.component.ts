@@ -1,14 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import {
-	PermissionsEnum,
-	ICandidate,
-	ICandidateInterview
-} from '@gauzy/contracts';
+import { PermissionsEnum, ICandidate, ICandidateInterview } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
@@ -18,14 +14,9 @@ import { CandidateInterviewService } from '../../../@core/services/candidate-int
 @Component({
 	selector: 'ga-edit-candidate',
 	templateUrl: './edit-candidate.component.html',
-	styleUrls: [
-		'../../dashboard/dashboard.component.scss',
-		'./edit-candidate.component.scss'
-	]
+	styleUrls: ['../../dashboard/dashboard.component.scss', './edit-candidate.component.scss']
 })
-export class EditCandidateComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EditCandidateComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	selectedCandidate: ICandidate;
 	candidateName = 'Candidate';
@@ -44,30 +35,20 @@ export class EditCandidateComponent
 	}
 
 	async ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasEditPermission = this.store.hasPermission(
-					PermissionsEnum.ORG_CANDIDATES_EDIT
-				);
-			});
+		this.store.userRolePermissions$.pipe(takeUntil(this._ngDestroy$)).subscribe(() => {
+			this.hasEditPermission = this.store.hasPermission(PermissionsEnum.ORG_CANDIDATES_EDIT);
+		});
 
-		this.route.params
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(async (params) => {
-				const id = params.id;
+		this.route.params.pipe(takeUntil(this._ngDestroy$)).subscribe(async (params) => {
+			const id = params.id;
 
-				const { items } = await firstValueFrom(this.candidatesService
-					.getAll(['user'], { id })
-				);
+			const { items } = await firstValueFrom(this.candidatesService.getAll(['user'], { id }));
 
-				this.selectedCandidate = items[0];
-				this.loadInterview();
-				const checkUsername = this.selectedCandidate.user.username;
-				this.candidateName = checkUsername
-					? checkUsername
-					: 'Candidate';
-			});
+			this.selectedCandidate = items[0];
+			this.loadInterview();
+			const checkUsername = this.selectedCandidate.user.username;
+			this.candidateName = checkUsername ? checkUsername : 'Candidate';
+		});
 	}
 	private async loadInterview() {
 		const interviews = await this.candidateInterviewService.getAll(
@@ -92,11 +73,7 @@ export class EditCandidateComponent
 	}
 
 	editCandidate() {
-		this.router.navigate([
-			'/pages/employees/candidates/edit/' +
-				this.selectedCandidate.id +
-				'/profile'
-		]);
+		this.router.navigate(['/pages/employees/candidates/edit/' + this.selectedCandidate.id + '/profile']);
 	}
 	ngOnDestroy() {
 		this._ngDestroy$.next();

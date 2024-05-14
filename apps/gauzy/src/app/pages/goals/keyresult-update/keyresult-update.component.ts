@@ -10,7 +10,7 @@ import {
 	KpiOperatorEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { Store } from '../../../@core/services/store.service';
@@ -20,9 +20,7 @@ import { Store } from '../../../@core/services/store.service';
 	templateUrl: './keyresult-update.component.html',
 	styleUrls: ['./keyresult-update.component.scss']
 })
-export class KeyResultUpdateComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class KeyResultUpdateComponent extends TranslationBaseComponent implements OnInit {
 	keyResultUpdateForm: UntypedFormGroup;
 	keyResult: IKeyResult;
 	KPI: IKPI;
@@ -48,10 +46,7 @@ export class KeyResultUpdateComponent
 			newStatus: [KeyResultUpdateStatusEnum.ON_TRACK]
 		});
 		this.keyResultUpdateForm.patchValue({
-			newStatus:
-				this.keyResult.status === 'none'
-					? KeyResultUpdateStatusEnum.ON_TRACK
-					: this.keyResult.status
+			newStatus: this.keyResult.status === 'none' ? KeyResultUpdateStatusEnum.ON_TRACK : this.keyResult.status
 		});
 		await this.getKPI();
 		if (
@@ -87,35 +82,20 @@ export class KeyResultUpdateComponent
 	}
 
 	async updateKeyResult() {
-		if (
-			this.keyResult.type === KeyResultTypeEnum.NUMERICAL ||
-			this.keyResult.type === KeyResultTypeEnum.CURRENCY
-		) {
+		if (this.keyResult.type === KeyResultTypeEnum.NUMERICAL || this.keyResult.type === KeyResultTypeEnum.CURRENCY) {
 			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
-			const diff =
-				this.keyResult.targetValue - this.keyResult.initialValue;
-			const updateDiff =
-				this.keyResultUpdateForm.value.newValueNumber -
-				this.keyResult.initialValue;
-			this.keyResult.progress = Math.round(
-				(Math.abs(updateDiff) / Math.abs(diff)) * 100
-			);
+			const diff = this.keyResult.targetValue - this.keyResult.initialValue;
+			const updateDiff = this.keyResultUpdateForm.value.newValueNumber - this.keyResult.initialValue;
+			this.keyResult.progress = Math.round((Math.abs(updateDiff) / Math.abs(diff)) * 100);
 		} else if (this.keyResult.type === KeyResultTypeEnum.TRUE_OR_FALSE) {
-			this.keyResult.update =
-				this.keyResultUpdateForm.value.newValueBoolean === true ? 1 : 0;
+			this.keyResult.update = this.keyResultUpdateForm.value.newValueBoolean === true ? 1 : 0;
 			this.keyResult.progress = this.keyResult.update === 0 ? 0 : 100;
 		} else if (this.keyResult.type === KeyResultTypeEnum.KPI) {
 			this.keyResult.update = this.keyResultUpdateForm.value.newValueNumber;
 			if (this.KPI.operator === KpiOperatorEnum.LESSER_THAN_EQUAL_TO) {
-				this.keyResult.progress =
-					this.keyResult.update <= this.keyResult.targetValue
-						? 100
-						: 0;
+				this.keyResult.progress = this.keyResult.update <= this.keyResult.targetValue ? 100 : 0;
 			} else {
-				this.keyResult.progress =
-					this.keyResult.update >= this.keyResult.targetValue
-						? 100
-						: 0;
+				this.keyResult.progress = this.keyResult.update >= this.keyResult.targetValue ? 100 : 0;
 			}
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
@@ -128,13 +108,11 @@ export class KeyResultUpdateComponent
 				status: this.keyResult.status
 			};
 			delete this.keyResult.updates;
-			await this.keyResultUpdateService
-				.createUpdate(update)
-				.then(async (res) => {
-					if (res) {
-						this.dialogRef.close(this.keyResult);
-					}
-				});
+			await this.keyResultUpdateService.createUpdate(update).then(async (res) => {
+				if (res) {
+					this.dialogRef.close(this.keyResult);
+				}
+			});
 		} catch (error) {
 			console.log(error);
 		}

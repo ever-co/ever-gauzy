@@ -4,7 +4,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -12,15 +12,11 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 	templateUrl: './feature.component.html',
 	styleUrls: ['./feature.component.scss']
 })
-export class FeatureComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class FeatureComponent extends TranslationBaseComponent implements OnInit {
 	public tabs: NbRouteTab[] = [];
 	public organization: IOrganization;
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -40,7 +36,7 @@ export class FeatureComponent extends TranslationBaseComponent
 				title: this.getTranslation('MENU.ORGANIZATION'),
 				route: this.getRoute('organization'),
 				queryParamsHandling: 'merge'
-			},
+			}
 		];
 	}
 

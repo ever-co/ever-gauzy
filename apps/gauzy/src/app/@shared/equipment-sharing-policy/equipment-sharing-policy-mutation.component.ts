@@ -1,5 +1,5 @@
 import { OnInit, Component } from '@angular/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -11,9 +11,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 	templateUrl: './equipment-sharing-policy-mutation.component.html',
 	styleUrls: ['./equipment-sharing-policy-mutation.component.scss']
 })
-export class EquipmentSharingPolicyMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class EquipmentSharingPolicyMutationComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	isHasType = true;
@@ -34,27 +32,10 @@ export class EquipmentSharingPolicyMutationComponent
 
 	async initializeForm() {
 		this.form = this.fb.group({
-			name: [
-				this.equipmentSharingPolicy
-					? this.equipmentSharingPolicy.name
-					: '',
-				Validators.required
-			],
-			description: [
-				this.equipmentSharingPolicy
-					? this.equipmentSharingPolicy.description
-					: ''
-			],
-			organizationId: [
-				this.equipmentSharingPolicy
-					? this.equipmentSharingPolicy.organizationId
-					: ''
-			],
-			id: [
-				this.equipmentSharingPolicy
-					? this.equipmentSharingPolicy.id
-					: null
-			]
+			name: [this.equipmentSharingPolicy ? this.equipmentSharingPolicy.name : '', Validators.required],
+			description: [this.equipmentSharingPolicy ? this.equipmentSharingPolicy.description : ''],
+			organizationId: [this.equipmentSharingPolicy ? this.equipmentSharingPolicy.organizationId : ''],
+			id: [this.equipmentSharingPolicy ? this.equipmentSharingPolicy.id : null]
 		});
 	}
 

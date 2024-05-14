@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { IEventTypeViewModel, IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -13,19 +13,13 @@ import { Store } from './../../../../@core/services';
 	templateUrl: './event-type-mutation.component.html',
 	styleUrls: ['./event-type-mutation.component.scss']
 })
-export class EventTypeMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
-
+export class EventTypeMutationComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
 	eventType: IEventTypeViewModel;
 	durationUnits: string[] = ['Minute(s)', 'Hour(s)', 'Day(s)'];
 
 	readonly form: UntypedFormGroup = EventTypeMutationComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: EventTypeMutationComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: EventTypeMutationComponent): UntypedFormGroup {
 		return fb.group({
 			title: [],
 			description: [],
@@ -50,7 +44,7 @@ export class EventTypeMutationComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._patchRawForm()),
 				untilDestroyed(this)
 			)
@@ -71,11 +65,14 @@ export class EventTypeMutationComponent
 		const { tenantId } = this.store.user;
 
 		this.dialogRef.close(
-			Object.assign({
-				id: this.eventType ? this.eventType.id : null,
-				tenantId,
-				organizationId
-			}, this.form.value)
+			Object.assign(
+				{
+					id: this.eventType ? this.eventType.id : null,
+					tenantId,
+					organizationId
+				},
+				this.form.value
+			)
 		);
 	}
 
@@ -96,7 +93,7 @@ export class EventTypeMutationComponent
 
 		const { durationUnit } = this.eventType;
 		this.form.patchValue({
-			durationUnit: (durationUnit) ? durationUnit : this.durationUnits[0],
+			durationUnit: durationUnit ? durationUnit : this.durationUnits[0]
 		});
 	}
 

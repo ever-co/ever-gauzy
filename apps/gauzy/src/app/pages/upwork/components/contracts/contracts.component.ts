@@ -9,13 +9,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
 import * as moment from 'moment';
 import { IEngagement } from '@gauzy/contracts';
-import {
-	ErrorHandlingService,
-	ToastrService,
-	UpworkStoreService
-} from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService, UpworkStoreService } from './../../../../@core/services';
 import { DateViewComponent } from './../../../../@shared/table-components';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -26,7 +22,6 @@ import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-sel
 	providers: [TitleCasePipe]
 })
 export class ContractsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-
 	public contracts$: Observable<IEngagement[]> = this._upworkStoreServices.contracts$;
 	public smartTableSettings: object;
 	public selectedContracts: IEngagement[] = [];
@@ -48,7 +43,8 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 	 * This method subscribes to the getContracts method of _upworkStoreServices.
 	 */
 	private _loadContracts(): void {
-		this._upworkStoreServices.getContracts()
+		this._upworkStoreServices
+			.getContracts()
 			.pipe(
 				// Handle errors using the _errorHandlingService.handleError method
 				catchError((error) => {
@@ -106,7 +102,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 					valuePrepareFunction: (value: string) => moment.unix(parseInt(value) / 1000),
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				engagement_end_date: {
 					title: this.getTranslation('SM_TABLE.END_DATE'),
@@ -116,7 +112,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 					valuePrepareFunction: (value: string) => moment.unix(parseInt(value) / 1000),
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				job__title: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
@@ -163,7 +159,8 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 	 */
 	syncContracts(): void {
 		// Trigger the synchronization of selected contracts using _upworkStoreServices
-		this._upworkStoreServices.syncContracts(this.selectedContracts)
+		this._upworkStoreServices
+			.syncContracts(this.selectedContracts)
 			.pipe(
 				// Display a success toast upon successful synchronization
 				tap(() => {
@@ -183,7 +180,6 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 			.subscribe();
 	}
 
-
 	/**
 	 * Listens for language changes and applies translations to Smart Table settings accordingly.
 	 * This method subscribes to the onLangChange event from the translateService.
@@ -200,5 +196,5 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

@@ -14,12 +14,8 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import {
-	ProductCategoryService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ProductCategoryService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,10 +23,7 @@ import {
 	templateUrl: './product-category-mutation.component.html',
 	styleUrls: ['./product-category-mutation.component.scss']
 })
-export class ProductCategoryMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ProductCategoryMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() productCategory: IProductCategoryTranslatable;
 
 	hoverState: boolean;
@@ -43,9 +36,7 @@ export class ProductCategoryMutationComponent
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			imageUrl: [{ value: null, disabled: true }],
 			imageId: [],
 			description: []
 		});
@@ -101,14 +92,10 @@ export class ProductCategoryMutationComponent
 		let productCategory: IProductCategoryTranslatable;
 		try {
 			if (!this.productCategory) {
-				productCategory = await this.productCategoryService.create(
-					payload
-				);
+				productCategory = await this.productCategoryService.create(payload);
 			} else {
 				payload['id'] = this.productCategory.id;
-				productCategory = await this.productCategoryService.update(
-					payload
-				);
+				productCategory = await this.productCategoryService.update(payload);
 			}
 		} catch (error) {
 			if (error instanceof HttpErrorResponse) {
@@ -218,5 +205,5 @@ export class ProductCategoryMutationComponent
 		this.toastrService.danger(error.error.message || error.message, 'TOASTR.TITLE.ERROR');
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

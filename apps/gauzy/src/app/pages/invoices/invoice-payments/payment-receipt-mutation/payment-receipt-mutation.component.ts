@@ -2,13 +2,13 @@ import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { PaymentService } from 'apps/gauzy/src/app/@core/services/payment.service';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IInvoice, IPayment } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-payment-receipt-mutation',
 	templateUrl: './payment-receipt-mutation.component.html',
-	styleUrls:['../payment-mutation/payment-mutation.component.scss']
+	styleUrls: ['../payment-mutation/payment-mutation.component.scss']
 })
 export class InvoicePaymentReceiptMutationComponent extends TranslationBaseComponent {
 	constructor(

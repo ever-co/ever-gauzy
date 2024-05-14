@@ -10,7 +10,7 @@ import { environment } from '@env/environment';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from './../../../../../@core/services';
 import { months } from './../../../../../@core/moment-extend';
 
@@ -20,12 +20,7 @@ import { months } from './../../../../../@core/moment-extend';
 	template: `
 		<ng-template [ngIf]="employeeStatistics.length" [ngIfElse]="chartNotFoundTemplate">
 			<div class="chart">
-				<canvas
-					baseChart
-					[data]="data"
-					[options]="chartOptions"
-					[type]="chartType"
-				></canvas>
+				<canvas baseChart [data]="data" [options]="chartOptions" [type]="chartType"></canvas>
 			</div>
 		</ng-template>
 		<ng-template #chartNotFoundTemplate>
@@ -55,8 +50,10 @@ import { months } from './../../../../../@core/moment-extend';
 	],
 	providers: [CurrencyPipe, CurrencyPositionPipe]
 })
-export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
-
+export class EmployeeHorizontalBarChartComponent
+	extends TranslationBaseComponent
+	implements OnInit, OnDestroy, OnChanges
+{
 	public chartType: ChartType = 'bar';
 	public chartOptions: ChartConfiguration['options'];
 	public data: ChartConfiguration['data'];
@@ -67,7 +64,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 		income: [] as number[],
 		expense: [] as number[],
 		profit: [] as number[],
-		bonus: [] as number[],
+		bonus: [] as number[]
 	};
 
 	/**
@@ -102,7 +99,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 		public readonly translateService: TranslateService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _currencyPositionPipe: CurrencyPositionPipe,
-		private readonly _store: Store,
+		private readonly _store: Store
 	) {
 		super(translateService);
 	}
@@ -113,7 +110,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -153,7 +150,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			elements: {
 				bar: {
 					borderWidth: 2
-				},
+				}
 			},
 			plugins: {
 				legend: {
@@ -161,7 +158,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 					labels: {
 						color: chartJs.textColor,
 						usePointStyle: false
-					},
+					}
 				},
 				tooltip: {
 					enabled: true,
@@ -176,7 +173,7 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 				x: {
 					grid: {
 						display: true,
-						color: chartJs.axisLineColor,
+						color: chartJs.axisLineColor
 					},
 					ticks: {
 						color: chartJs.textColo
@@ -190,8 +187,8 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 					},
 					ticks: {
 						color: chartJs.textColor
-					},
-				},
+					}
+				}
 			}
 		};
 
@@ -228,9 +225,12 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 	 */
 	formatCurrency = (value: number): string => {
 		const currencyPosition = this.organization?.currencyPosition || CurrencyPosition.LEFT;
-		const currency = this._currencyPipe.transform(value, this.organization?.currency || environment.DEFAULT_CURRENCY);
+		const currency = this._currencyPipe.transform(
+			value,
+			this.organization?.currency || environment.DEFAULT_CURRENCY
+		);
 		return this._currencyPositionPipe.transform(currency, currencyPosition);
-	}
+	};
 
 	/**
 	 * Initializes the chart dataset with appropriate colors and labels.
@@ -294,9 +294,9 @@ export class EmployeeHorizontalBarChartComponent extends TranslationBaseComponen
 			income: mapStatistics('income'),
 			expense: mapStatistics('expense'),
 			profit: mapStatistics('profit'),
-			bonus: mapStatistics('bonus'),
+			bonus: mapStatistics('bonus')
 		};
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

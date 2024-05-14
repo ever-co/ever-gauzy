@@ -19,7 +19,7 @@ import {
 } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';

@@ -1,24 +1,7 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	Output,
-	EventEmitter
-} from '@angular/core';
-import {
-	UntypedFormBuilder,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
-import {
-	IUser,
-	ITag,
-	IRole,
-	IUserUpdateInput,
-	RolesEnum,
-	IImageAsset
-} from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatchValidator } from '@gauzy/ui-sdk/core';
+import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -30,7 +13,6 @@ import {
 	ToastrService,
 	UsersService
 } from '../../../@core/services';
-import { MatchValidator } from '../../../@core/validators';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
@@ -39,9 +21,7 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './edit-profile-form.component.html',
 	styleUrls: ['./edit-profile-form.component.scss']
 })
-export class EditProfileFormComponent
-	implements OnInit, OnDestroy {
-
+export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	hoverState: boolean;
@@ -53,8 +33,8 @@ export class EditProfileFormComponent
 	user$: Subject<any> = new Subject();
 
 	/*
-	* Getter & Setter for selected user
-	*/
+	 * Getter & Setter for selected user
+	 */
 	_selectedUser: IUser;
 	get selectedUser(): IUser {
 		return this._selectedUser;
@@ -64,8 +44,8 @@ export class EditProfileFormComponent
 	}
 
 	/*
-	* Getter & Setter for allow role change
-	*/
+	 * Getter & Setter for allow role change
+	 */
 	_allowRoleChange: boolean = false;
 	get allowRoleChange(): boolean {
 		return this._allowRoleChange;
@@ -79,29 +59,25 @@ export class EditProfileFormComponent
 
 	public form: UntypedFormGroup = EditProfileFormComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		return fb.group({
-			firstName: [],
-			lastName: [],
-			email: [null, Validators.required],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
-			imageId: [],
-			password: [],
-			repeatPassword: [],
-			role: [],
-			tags: [],
-			preferredLanguage: [],
-			timeZone: [],
-			phoneNumber: []
-		}, {
-			validators: [
-				MatchValidator.mustMatch(
-					'password',
-					'repeatPassword'
-				)
-			]
-		});
+		return fb.group(
+			{
+				firstName: [],
+				lastName: [],
+				email: [null, Validators.required],
+				imageUrl: [{ value: null, disabled: true }],
+				imageId: [],
+				password: [],
+				repeatPassword: [],
+				role: [],
+				tags: [],
+				preferredLanguage: [],
+				timeZone: [],
+				phoneNumber: []
+			},
+			{
+				validators: [MatchValidator.mustMatch('password', 'repeatPassword')]
+			}
+		);
 	}
 
 	public excludes: RolesEnum[] = [];
@@ -114,7 +90,7 @@ export class EditProfileFormComponent
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly roleService: RoleService
-	) { }
+	) {}
 
 	async ngOnInit() {
 		this.excludeRoles();
@@ -136,9 +112,7 @@ export class EditProfileFormComponent
 	}
 
 	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(
-			this.authService.hasRole([RolesEnum.SUPER_ADMIN])
-		);
+		const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		if (!hasSuperAdminRole) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
@@ -147,10 +121,7 @@ export class EditProfileFormComponent
 	async getUserProfile() {
 		try {
 			const { id: userId } = this.selectedUser || this.user;
-			const user = await this.userService.getUserById(userId, [
-				'tags',
-				'role'
-			]);
+			const user = await this.userService.getUserById(userId, ['tags', 'role']);
 
 			this._patchForm({ ...user });
 		} catch (error) {
@@ -166,7 +137,7 @@ export class EditProfileFormComponent
 		this.store.user = {
 			...this.store.user,
 			imageId: image.id
-		}
+		};
 
 		let request: IUserUpdateInput = {
 			imageId: image.id
@@ -174,10 +145,11 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByOptions({
-				name: (this.form.get('role').value).name,
-				tenantId
-			})
+			const role = await firstValueFrom(
+				this.roleService.getRoleByOptions({
+					name: this.form.get('role').value.name,
+					tenantId
+				})
 			);
 
 			request = {
@@ -187,17 +159,15 @@ export class EditProfileFormComponent
 		}
 
 		try {
-			await this.userService.update(
-				this.selectedUser ? this.selectedUser.id : this.store.userId,
-				request
-			)
+			await this.userService
+				.update(this.selectedUser ? this.selectedUser.id : this.store.userId, request)
 				.then((res: IUser) => {
 					try {
 						if (res) {
 							this.store.user = {
 								...this.store.user,
 								imageUrl: res.imageUrl
-							} as IUser
+							} as IUser;
 						}
 						this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 					} catch (error) {
@@ -210,7 +180,8 @@ export class EditProfileFormComponent
 	}
 
 	async submitForm() {
-		const { email, firstName, lastName, tags, preferredLanguage, password, timeZone, phoneNumber } = this.form.getRawValue();
+		const { email, firstName, lastName, tags, preferredLanguage, password, timeZone, phoneNumber } =
+			this.form.getRawValue();
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
@@ -230,10 +201,11 @@ export class EditProfileFormComponent
 
 		if (this.allowRoleChange) {
 			const { tenantId } = this.store.user;
-			const role = await firstValueFrom(this.roleService.getRoleByOptions({
-				name: (this.form.get('role').value).name,
-				tenantId
-			})
+			const role = await firstValueFrom(
+				this.roleService.getRoleByOptions({
+					name: this.form.get('role').value.name,
+					tenantId
+				})
 			);
 
 			request = {
@@ -243,10 +215,8 @@ export class EditProfileFormComponent
 		}
 
 		try {
-			await this.userService.update(
-				this.selectedUser ? this.selectedUser.id : this.store.userId,
-				request
-			)
+			await this.userService
+				.update(this.selectedUser ? this.selectedUser.id : this.store.userId, request)
 				.then(() => {
 					if ((this.selectedUser ? this.selectedUser.id : this.store.userId) === this.store.user.id) {
 						this.store.user.email = request.email;
@@ -255,10 +225,12 @@ export class EditProfileFormComponent
 					this.toastrService.success('TOASTR.MESSAGE.PROFILE_UPDATED');
 					this.userSubmitted.emit();
 					/**
-					* selectedUser is null for edit profile and populated in User edit
-					* Update app language when current user's profile is modified.
-					*/
-					if (this.selectedUser && this.selectedUser.id !== this.store.userId) { return; }
+					 * selectedUser is null for edit profile and populated in User edit
+					 * Update app language when current user's profile is modified.
+					 */
+					if (this.selectedUser && this.selectedUser.id !== this.store.userId) {
+						return;
+					}
 					this.store.preferredLanguage = preferredLanguage;
 				});
 		} catch (error) {
@@ -267,7 +239,9 @@ export class EditProfileFormComponent
 	}
 
 	private _patchForm(user: IUser) {
-		if (!user) { return; }
+		if (!user) {
+			return;
+		}
 
 		this.form.patchValue({
 			firstName: user.firstName,
@@ -298,5 +272,5 @@ export class EditProfileFormComponent
 		this.form.get('role').updateValueAndValidity();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }
