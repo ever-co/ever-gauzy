@@ -209,8 +209,16 @@ const routes: Routes = [
 							selectors: {
 								project: false,
 								team: false
+							},
+							datePicker: {
+								unitOfTime: 'week',
+								isDisablePastDate: true
 							}
-						}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'event-types',

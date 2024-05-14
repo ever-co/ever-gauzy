@@ -11,7 +11,8 @@ export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	isLockDatePicker: false,
 	isSaveDatePicker: false,
 	isSingleDatePicker: false,
-	isDisableFutureDate: false
+	isDisableFutureDate: false,
+	isDisablePastDate: false
 };
 
 export const DEFAULT_DATE_RANGE: IDateRangePicker = {
