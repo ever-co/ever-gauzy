@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import * as moment from 'moment';
 import { IDateRangePicker } from '@gauzy/contracts';
-import { IDatePickerConfig } from '../../../../../@core/services/selector-builder/selector-builder-types';
+import { IDatePickerConfig } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'

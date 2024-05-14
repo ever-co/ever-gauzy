@@ -18,11 +18,17 @@ import {
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { environment } from '../../../../environments/environment';
+import {
+	DEFAULT_SELECTOR_VISIBILITY,
+	DateRangePickerBuilderService,
+	ISelectorVisibility,
+	SelectorBuilderService
+} from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { environment } from '@env/environment';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
-	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStore,
 	ISidebarActionConfig,
@@ -35,12 +41,9 @@ import {
 	Store,
 	UsersOrganizationsService
 } from '../../../@core/services';
-import { DEFAULT_SELECTOR_VISIBILITY, SelectorBuilderService } from '../../../@core/services';
 import { LayoutService } from '../../../@core/services/layout.service';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
-import { ISelectorVisibility } from '../../../@core/services/selector-builder/selector-builder-types';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

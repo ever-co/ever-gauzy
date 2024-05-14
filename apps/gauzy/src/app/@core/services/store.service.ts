@@ -22,9 +22,9 @@ import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import * as moment from 'moment';
 import * as _ from 'underscore';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { GuiDrag } from '@gauzy/ui-sdk/shared';
 import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../constants/layout.constants';
-import { DateRangePickerBuilderService } from './selector-builder';
 
 export interface AppState {
 	user: IUser;

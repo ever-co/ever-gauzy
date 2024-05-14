@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
@@ -17,8 +11,9 @@ import { pick } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -28,9 +23,7 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 	templateUrl: './activities-report-grid.component.html',
 	styleUrls: ['./activities-report-grid.component.scss']
 })
-export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IReportDayData[] = [];
 	loading: boolean;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
@@ -51,7 +44,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 		public readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly cdr: ChangeDetectorRef,
-		public readonly translateService: TranslateService,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService, dateRangePickerBuilderService);
 	}
@@ -88,12 +81,7 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
 			...this.getFilterRequest(this.request),

@@ -5,10 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/common-angular';
-import { NavMenuBuilderService, NavMenuSectionItem } from '../../services/nav-builder';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
 import { Store } from '../../services/store.service';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy()
 @Directive({

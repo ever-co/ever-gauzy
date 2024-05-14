@@ -9,19 +9,19 @@ import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import {
-	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
-	LanguagesService,
-	SelectorBuilderService,
-	Store
-} from './@core/services';
-import { environment } from '../environments/environment';
-import { IDatePickerConfig, ISelectorVisibility } from './@core/services/selector-builder/selector-builder-types';
+	DateRangePickerBuilderService,
+	IDatePickerConfig,
+	ISelectorVisibility,
+	SelectorBuilderService
+} from '@gauzy/ui-sdk/core';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { environment } from '@env/environment';
+import { AnalyticsService, JitsuService, SeoService } from './@core/services';
+import { LanguagesService, Store } from './@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

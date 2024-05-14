@@ -18,14 +18,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	InvoicesService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,

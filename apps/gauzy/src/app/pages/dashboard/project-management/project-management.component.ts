@@ -4,16 +4,16 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/common-angular';
 import { IDateRangePicker, IOrganization } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-management',
 	templateUrl: './project-management.component.html',
-  	styleUrls:['./project-management.component.scss']
+	styleUrls: ['./project-management.component.scss']
 })
 export class ProjectManagementComponent implements OnInit, OnDestroy {
-
 	organization: IOrganization;
 	selectedDateRange: IDateRangePicker;
 

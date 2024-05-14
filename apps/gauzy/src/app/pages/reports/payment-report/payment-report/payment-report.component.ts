@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import {
 	ICurrency,
 	IGetPaymentInput,
@@ -22,10 +16,11 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
 import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { DateRangePickerBuilderService, PaymentService, Store } from './../../../../@core/services';
+import { PaymentService, Store } from './../../../../@core/services';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
@@ -35,9 +30,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './payment-report.component.html',
 	styleUrls: ['./payment-report.component.scss']
 })
-export class PaymentReportComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class PaymentReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetPaymentInput;
 	public loading: boolean;
 	public charts: IChartData;
@@ -153,18 +146,20 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 			const logs: IPaymentReportChartData[] = await this.paymentService.getPaymentsReportCharts(payloads);
 
 			// Extract payment values and create a dataset
-			const datasets = [{
-				label: this.getTranslation('REPORT_PAGE.PAYMENT'), // Label for the dataset, translated using a translation function
-				data: logs.map((log) => log.value['payment']),      // Array of data points for the dataset, extracted from 'logs'
-				borderColor: ChartUtil.CHART_COLORS.red,            // Color of the dataset border
-				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5), // Background color with transparency
-				borderWidth: 2,               // Width of the dataset border
-				pointRadius: 2,               // Radius of the data points
-				pointHoverRadius: 4,          // Radius of the data points on hover
-				pointHoverBorderWidth: 4,     // Width of the border of data points on hover
-				tension: 0.4,                 // Tension of the spline curve connecting data points
-				fill: false                   // Whether to fill the area under the line or not
-			}];
+			const datasets = [
+				{
+					label: this.getTranslation('REPORT_PAGE.PAYMENT'), // Label for the dataset, translated using a translation function
+					data: logs.map((log) => log.value['payment']), // Array of data points for the dataset, extracted from 'logs'
+					borderColor: ChartUtil.CHART_COLORS.red, // Color of the dataset border
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 0.5), // Background color with transparency
+					borderWidth: 2, // Width of the dataset border
+					pointRadius: 2, // Radius of the data points
+					pointHoverRadius: 4, // Radius of the data points on hover
+					pointHoverBorderWidth: 4, // Width of the border of data points on hover
+					tension: 0.4, // Tension of the spline curve connecting data points
+					fill: false // Whether to fill the area under the line or not
+				}
+			];
 
 			// Update the chart data with the retrieved data
 			this.charts = {
@@ -183,10 +178,10 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent
 	/*
 	 * On Changed Contact Event Emitter
 	 */
-	contactChanged(contact: IOrganizationContact) { }
+	contactChanged(contact: IOrganizationContact) {}
 
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged(currency: ICurrency) { }
+	currencyChanged(currency: ICurrency) {}
 }

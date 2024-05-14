@@ -11,18 +11,14 @@ import * as moment from 'moment';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	DateRangePickerBuilderService,
-	DEFAULT_DATE_PICKER_CONFIG,
-	OrganizationsService,
-	Store
-} from './../../../../../@core/services';
+import { OrganizationsService, Store } from './../../../../../@core/services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
+import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

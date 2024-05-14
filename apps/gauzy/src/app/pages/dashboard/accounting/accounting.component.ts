@@ -6,19 +6,14 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import {
-	DateRangePickerBuilderService,
-	EmployeesService,
-	EmployeeStatisticsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { EmployeesService, EmployeeStatisticsService, Store, ToastrService } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

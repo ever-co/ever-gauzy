@@ -9,7 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import * as moment from 'moment';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -34,7 +34,6 @@ import {
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
-	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,
 	PaymentService,

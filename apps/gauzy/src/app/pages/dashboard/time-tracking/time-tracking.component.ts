@@ -10,7 +10,17 @@ import {
 	ViewChildren
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { indexBy, range, reduce } from 'underscore';
+import * as moment from 'moment';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { TranslateService } from '@ngx-translate/core';
+import { SwiperComponent } from 'swiper/angular';
+// import Swiper core and required modules
+import SwiperCore, { Virtual, Pagination, Navigation } from 'swiper';
 import {
 	IOrganization,
 	IGetTimeSlotStatistics,
@@ -35,30 +45,14 @@ import {
 	IUser,
 	ITimeLogTodayFilters
 } from '@gauzy/contracts';
-import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { indexBy, range, reduce } from 'underscore';
 import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
-import * as moment from 'moment';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { TranslateService } from '@ngx-translate/core';
-import { SwiperComponent } from 'swiper/angular';
-// import Swiper core and required modules
-import SwiperCore, { Virtual, Pagination, Navigation } from 'swiper';
-import { GuiDrag } from '@gauzy/ui-sdk/shared';
+import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import {
-	DateRangePickerBuilderService,
-	EmployeesService,
-	OrganizationProjectsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { EmployeesService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
-import { NbPopoverDirective } from '@nebular/theme';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
 
