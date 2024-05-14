@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
 import { QueryParamsHandling } from '@angular/router';
+import { tap } from 'rxjs/operators';
 import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { tap } from 'rxjs/operators';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from './../../../../@core/services';
 import { RouteUtil } from './../../../../@core/services/route-utils';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

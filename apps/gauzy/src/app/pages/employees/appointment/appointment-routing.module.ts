@@ -5,7 +5,7 @@ import { ManageAppointmentComponent } from './manage-appointment/manage-appointm
 const routes: Routes = [
 	{
 		path: '',
-		component: AppointmentComponent
+		component: AppointmentComponent,
 	},
 	{
 		path: 'manage/:employeeId',

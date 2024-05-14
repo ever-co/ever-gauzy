@@ -19,7 +19,8 @@ import {
 	IEventType,
 	IEmployee,
 	IAvailabilitySlot,
-	IOrganization
+	IOrganization,
+	WeekDaysEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -32,6 +33,7 @@ import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertLocalToTimezone } from '@gauzy/common-angular';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { dayOfWeekAsString } from '../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -153,9 +155,13 @@ export class AppointmentComponent extends TranslationBaseComponent implements On
 	}
 
 	getCalendarOption() {
-		let currentDay = moment().day();
-		while (currentDay > 0) {
-			this.hiddenDays.push(currentDay--);
+		// Get yesterday's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+		let currentDay = moment().subtract(1, 'day').day();
+
+		// Loop to hide days from yesterday until Sunday
+		while (currentDay >= 0) {
+			this.hiddenDays.push(currentDay);
+			currentDay--;
 		}
 		this.calendarOptions = {
 			eventClick: (event) => {
@@ -206,7 +212,8 @@ export class AppointmentComponent extends TranslationBaseComponent implements On
 			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin, momentTimezonePlugin],
 			weekends: true,
 			height: 'auto',
-			dayHeaderDidMount: this.headerMount.bind(this)
+			dayHeaderDidMount: this.headerMount.bind(this),
+			firstDay: dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY)
 		};
 	}
 
