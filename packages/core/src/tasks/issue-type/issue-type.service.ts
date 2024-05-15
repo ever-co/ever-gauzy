@@ -94,7 +94,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Function to generate issue types based on a source array
 			const generateIssueTypes = (source: IIssueType[]) =>
 				tenants.flatMap((tenant) =>
-					source.map(({ name, value, description, icon, color, imageId = null }: IIssueType) => ({
+					source.map(({ name, value, description, icon, color, isDefault, imageId = null }: IIssueType) => ({
 						name,
 						value,
 						description,
@@ -102,7 +102,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						color,
 						imageId,
 						tenant,
-						isDefault: false,
+						isDefault,
 						isSystem: false
 					}))
 				);
@@ -142,8 +142,8 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						icon: item.icon,
 						color: item.color,
 						imageId: item.imageId,
+						isDefault: item.isDefault,
 						organization,
-						isDefault: false,
 						isSystem: false
 					})
 			);
@@ -175,7 +175,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Wait for all issue types to be created and resolve the promises
 			const issueTypes = await Promise.all(
 				items.map(async (item: IIssueType) => {
-					const { name, value, description, icon, color, imageId } = item;
+					const { name, value, description, icon, color, imageId, isDefault } = item;
 					// Create and return the issue type
 					return await this.create({
 						...entity,
@@ -185,7 +185,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						icon,
 						color,
 						imageId,
-						isDefault: false,
+						isDefault,
 						isSystem: false
 					});
 				})
