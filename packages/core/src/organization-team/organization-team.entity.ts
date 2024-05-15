@@ -105,6 +105,16 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	prefix?: string;
 
 	/**
+	 * Optional property representing the team sharing profile views between employees
+	 * Default value is set to true
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: true })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	shareProfileView?: boolean;
+
+	/**
 	 * Optional property representing the team type (boolean true/false).
 	 * Default value is set to false.
 	 */

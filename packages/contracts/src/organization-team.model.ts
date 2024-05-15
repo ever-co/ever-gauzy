@@ -15,6 +15,7 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	teamSize?: string;
 	logo?: string;
 	prefix?: string;
+	shareProfileView?: boolean; // If true, all members can view "Worked" tasks and "Daily Plan" tabs of all other employees, By default, it's true
 	public?: boolean;
 	profile_link?: string;
 	members?: IOrganizationTeamEmployee[];
@@ -39,6 +40,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 	color?: string;
 	logo?: string;
 	prefix?: string;
+	shareProfileView?: boolean;
 	public?: boolean;
 	profile_link?: string;
 	memberIds?: string[];
@@ -49,6 +51,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 
 export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
 	id: string;
+	shareProfileView?: boolean;
 	public?: boolean;
 }
 
