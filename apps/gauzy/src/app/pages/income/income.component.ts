@@ -38,14 +38,8 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	IncomeService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 

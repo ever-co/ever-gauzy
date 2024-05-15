@@ -8,9 +8,9 @@ import { Observable, of as observableOf, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import {
-	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStatisticsService,
 	OrganizationsService,

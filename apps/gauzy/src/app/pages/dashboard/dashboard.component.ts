@@ -1,11 +1,11 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { NbRouteTab } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
-import { Store } from '../../@core/services';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
+import { Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,11 +40,19 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 		this.cdr.detectChanges();
 	}
 
-	getRoute(name: string) {
+	/**
+	 * Returns the route path for the specified route name within the dashboard page.
+	 * @param name The name of the route.
+	 * @returns The route path.
+	 */
+	getRoute(name: string): string {
 		return `/pages/dashboard/${name}`;
 	}
 
-	loadTabs() {
+	/**
+	 * Populates the tabs array based on user permissions and selected employee.
+	 */
+	loadTabs(): void {
 		this.tabs = [
 			...(this.store.hasAllPermissions(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD)
 				? [
@@ -53,7 +61,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							icon: 'people-outline',
 							responsive: true,
 							route: this.getRoute('teams'),
-							queryParamsHandling: 'merge'
+							activeLinkOptions: { exact: false }
 						} as NbRouteTab
 				  ]
 				: []),
@@ -67,7 +75,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							icon: 'browser-outline',
 							responsive: true,
 							route: this.getRoute('project-management'),
-							queryParamsHandling: 'merge'
+							activeLinkOptions: { exact: false }
 						} as NbRouteTab
 				  ]
 				: []),
@@ -81,7 +89,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 							icon: 'clock-outline',
 							responsive: true,
 							route: this.getRoute('time-tracking'),
-							queryParamsHandling: 'merge'
+							activeLinkOptions: { exact: false }
 						} as NbRouteTab
 				  ]
 				: []),
@@ -94,7 +102,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 										icon: 'credit-card-outline',
 										responsive: true,
 										route: this.getRoute('accounting'),
-										queryParamsHandling: 'merge'
+										activeLinkOptions: { exact: false }
 									} as NbRouteTab
 							  ]
 							: [])
@@ -112,7 +120,7 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 										icon: 'person-outline',
 										responsive: true,
 										route: this.getRoute('hr'),
-										queryParamsHandling: 'merge'
+										activeLinkOptions: { exact: false }
 									} as NbRouteTab
 							  ]
 							: [])

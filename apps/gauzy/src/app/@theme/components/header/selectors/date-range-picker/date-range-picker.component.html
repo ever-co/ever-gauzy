@@ -2,13 +2,7 @@
 	<div class="filter-input">
 		<div class="custom-input">
 			<ng-container *ngIf="arrows">
-				<button
-					size="tiny"
-					nbButton
-					status="primary"
-					outline
-					(click)="previousRange()"
-				>
+				<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
 					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
 				</button>
 				<button
@@ -22,7 +16,7 @@
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
 			</ng-container>
-      		<i class="far fa-calendar" (click)="openDatepicker($event)"></i>
+			<i class="far fa-calendar" (click)="openDatepicker($event)"></i>
 			<input
 				nbInput
 				name="date-range"
@@ -36,6 +30,7 @@
 				[customRangeDirection]="false"
 				[linkedCalendars]="true"
 				[maxDate]="maxDate"
+				[minDate]="minDate"
 				[ranges]="ranges"
 				[locale]="locale"
 				[(ngModel)]="selectedDateRange"

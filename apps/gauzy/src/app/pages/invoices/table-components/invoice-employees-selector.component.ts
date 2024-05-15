@@ -4,7 +4,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, EmployeesService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { EmployeesService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +31,6 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '../../..
 	styles: []
 })
 export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
-
 	public employee: IEmployee;
 	public employees: IEmployee[] = [];
 	public organization: IOrganization;
@@ -66,12 +66,7 @@ export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements 
 		const { id: organizationId } = this.organization;
 		const { selectedDateRange } = this.dateRangePickerBuilderService;
 
-		const { items = [] } = await this.employeeService.getWorking(
-			organizationId,
-			tenantId,
-			selectedDateRange,
-			true
-		);
+		const { items = [] } = await this.employeeService.getWorking(organizationId, tenantId, selectedDateRange, true);
 		this.employees = items;
 		this.preSelectedEmployee();
 	}
@@ -88,9 +83,7 @@ export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements 
 		// Check if the list of employees is not empty
 		if (isNotEmpty(this.employees)) {
 			// Find the employee in the list whose ID matches the ID of the employee from the cell
-			this.employee = this.employees.find(
-				(item: IEmployee) => item.id === employee.id
-			);
+			this.employee = this.employees.find((item: IEmployee) => item.id === employee.id);
 		}
 	}
 
@@ -103,5 +96,5 @@ export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements 
 		this.cell.setValue(employee);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

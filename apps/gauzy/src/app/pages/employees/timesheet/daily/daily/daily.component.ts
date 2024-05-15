@@ -2,25 +2,16 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import {
-	NbDialogService,
-	NbMenuItem,
-	NbMenuService
-} from '@nebular/theme';
+import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import * as moment from 'moment';
-import {
-	IGetTimeLogInput,
-	ITimeLog,
-	PermissionsEnum,
-	ITimeLogFilters,
-	TimeLogSourceEnum
-} from '@gauzy/contracts';
-import { DateRangePickerBuilderService, ErrorHandlingService, Store, ToastrService } from './../../../../../@core/services';
+import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, Store, ToastrService } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
@@ -34,9 +25,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './daily.component.html',
 	styleUrls: ['./daily.component.scss']
 })
-export class DailyComponent extends BaseSelectorFilterComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class DailyComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	public PermissionsEnum = PermissionsEnum; // Enum for permissions.
 	public logs$: Observable<ITimeLog[]>; // Observable for an array of Time Logs.
 	public logs: ITimeLog[] = []; // Array of organization time logs.
@@ -60,8 +49,8 @@ export class DailyComponent extends BaseSelectorFilterComponent
 
 	// Represents the selected log along with its selection status.
 	public selectedLog: {
-		data: ITimeLog,
-		isSelected: boolean
+		data: ITimeLog;
+		isSelected: boolean;
 	};
 
 	constructor(
@@ -75,7 +64,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _route: ActivatedRoute,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(_store, translateService, _dateRangePickerBuilderService);
 	}
@@ -102,16 +91,18 @@ export class DailyComponent extends BaseSelectorFilterComponent
 
 	// Subscribe to the subject and perform operations.
 	private _handleSubjectOperationsSubscriber(): void {
-		this.subject$.pipe(
-			// Filter to ensure there is a valid organization
-			filter(() => !!this.organization),
-			// Tap to prepare the request
-			tap(() => this.prepareRequest()),
-			// Tap to set allChecked to false
-			tap(() => (this.allChecked = false)),
-			// Ensure lifecycle management to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+		this.subject$
+			.pipe(
+				// Filter to ensure there is a valid organization
+				filter(() => !!this.organization),
+				// Tap to prepare the request
+				tap(() => this.prepareRequest()),
+				// Tap to set allChecked to false
+				tap(() => (this.allChecked = false)),
+				// Ensure lifecycle management to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	// Subscribe to the updateLog$ observable and perform operations.
@@ -130,16 +121,19 @@ export class DailyComponent extends BaseSelectorFilterComponent
 
 	// Subscribe to the onItemClick event and perform operations.
 	private _handleItemClickSubscriber(): void {
-		this._nbMenuService.onItemClick().pipe(
-			// Filter to ensure the correct tag and action
-			filter(({ tag, item }) => tag === 'time-logs-bulk-action' && item?.data.action === 'DELETE'),
-			// Map to extract the action from the menu item
-			map(({ item }) => item.data.action),
-			// Tap to execute the bulk delete action
-			tap(() => this._bulkDeleteAction()),
-			// Ensure lifecycle management to avoid memory leaks
-			untilDestroyed(this),
-		).subscribe();
+		this._nbMenuService
+			.onItemClick()
+			.pipe(
+				// Filter to ensure the correct tag and action
+				filter(({ tag, item }) => tag === 'time-logs-bulk-action' && item?.data.action === 'DELETE'),
+				// Map to extract the action from the menu item
+				map(({ item }) => item.data.action),
+				// Tap to execute the bulk delete action
+				tap(() => this._bulkDeleteAction()),
+				// Ensure lifecycle management to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	// Subscribe to the queryParamMap changes and perform operations.
@@ -180,14 +174,16 @@ export class DailyComponent extends BaseSelectorFilterComponent
 	 * Handles the refresh of daily time logs.
 	 */
 	private _handleRefreshDailyLogs() {
-		this.refreshTrigger$.pipe(
-			// Filter to ensure a valid organization
-			filter((value) => !!this.organization && !!value),
-			// SwitchMap to fetch time logs using provided payloads
-			switchMap(() => this._getDailyLogs()),
-			// Ensure lifecycle management to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+		this.refreshTrigger$
+			.pipe(
+				// Filter to ensure a valid organization
+				filter((value) => !!this.organization && !!value),
+				// SwitchMap to fetch time logs using provided payloads
+				switchMap(() => this._getDailyLogs()),
+				// Ensure lifecycle management to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -270,7 +266,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		// Create a request object by combining appliedFilter and processed request
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.request),
+			...this.getFilterRequest(this.request)
 		};
 
 		// Update the payloads$ BehaviorSubject with the new request
@@ -284,13 +280,12 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		const defaultTimeLog = {
 			startedAt: moment(this.request.startDate).toDate(),
 			employeeId: this.request.employeeIds?.[0] || null,
-			projectId: this.request.projectIds?.[0] || null,
+			projectId: this.request.projectIds?.[0] || null
 		};
 
 		this._dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog: defaultTimeLog } })
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				// Filter out falsy results
 				filter((timeLog: ITimeLog) => !!timeLog),
 				// Tap to refresh the date range picker
@@ -317,8 +312,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 
 		this._dialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				// Filter out falsy results
 				filter((editedTimeLog: ITimeLog) => !!editedTimeLog),
 				// Tap to refresh the date range picker
@@ -342,14 +336,13 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		this._dialogService
 			.open(ViewTimeLogModalComponent, {
 				context: { timeLog },
-				dialogClass: 'view-log-dialog',
+				dialogClass: 'view-log-dialog'
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				// Filter out falsy results
 				filter((data) => !!data),
 				// Ensure lifecycle management to avoid memory leaks
-				untilDestroyed(this),
+				untilDestroyed(this)
 			)
 			.subscribe(() => {
 				this.refreshTrigger$.next(true);
@@ -404,10 +397,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 					}
 				}
 			})
-			.onClose.pipe(
-				filter(Boolean),
-				untilDestroyed(this)
-			);
+			.onClose.pipe(filter(Boolean), untilDestroyed(this));
 	}
 
 	/**
@@ -486,7 +476,7 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		// Update the checked status for non-running time logs
 		this.logs
 			.filter((timeLog: ITimeLog) => !timeLog.isRunning)
-			.forEach((timesheet: any) => timesheet.checked = checked);
+			.forEach((timesheet: any) => (timesheet.checked = checked));
 	}
 
 	/**
@@ -534,13 +524,13 @@ export class DailyComponent extends BaseSelectorFilterComponent
 
 		this.contextMenus = deletePermission
 			? [
-				{
-					title: this.getTranslation('TIMESHEET.DELETE'),
-					data: {
-						action: 'DELETE'
+					{
+						title: this.getTranslation('TIMESHEET.DELETE'),
+						data: {
+							action: 'DELETE'
+						}
 					}
-				}
-			]
+			  ]
 			: [];
 	}
 
@@ -602,5 +592,5 @@ export class DailyComponent extends BaseSelectorFilterComponent
 		return !!this.logs.find((log: ITimeLog) => log['checked']);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

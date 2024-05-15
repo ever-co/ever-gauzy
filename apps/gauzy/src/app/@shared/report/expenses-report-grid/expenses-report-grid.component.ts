@@ -1,10 +1,8 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	IExpenseReportData,
 	IGetTimeLogReportInput,
@@ -12,12 +10,9 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { DateRangePickerBuilderService, ExpensesService, Store } from '../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { ExpensesService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -26,9 +21,7 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 	templateUrl: './expenses-report-grid.component.html',
 	styleUrls: ['./expenses-report-grid.component.scss']
 })
-export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class ExpensesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IExpenseReportData[] = [];
 	loading: boolean = false;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
@@ -89,7 +82,7 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
 			groupBy: this.groupBy,
-			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {}),
+			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {})
 		};
 		this.payloads$.next(request);
 	}

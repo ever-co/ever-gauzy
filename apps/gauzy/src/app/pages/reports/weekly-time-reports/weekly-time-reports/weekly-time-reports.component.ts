@@ -1,24 +1,15 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
 import * as randomColor from 'randomcolor';
-import {
-	IGetTimeLogReportInput,
-	ITimeLogFilters,
-	ReportDayData
-} from '@gauzy/contracts';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
 import { moment } from './../../../../@core/moment-extend';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
@@ -32,9 +23,7 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 	templateUrl: './weekly-time-reports.component.html',
 	styleUrls: ['./weekly-time-reports.component.scss']
 })
-export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;
 	public weekLogs: ReportDayData[] = [];
 	public weekDays: string[] = [];
@@ -81,7 +70,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 				// Ensures that the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
 			)
-			.subscribe();  // Subscribes to the observable
+			.subscribe(); // Subscribes to the observable
 	}
 
 	ngAfterViewInit() {
@@ -133,7 +122,6 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 		// Notify subscribers about the filter change
 		this.subject$.next(true);
 	}
-
 
 	/**
 	 * Updates the week days based on the specified start and end dates.
@@ -209,16 +197,16 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent
 
 			// Build a dataset for the employee
 			datasets.push({
-				label: log.employee.fullName,  // Label for the dataset, presumably representing an employee's full name
-				data: pluck(log.dates, 'sum').map((val) => val ? parseFloat((val / 3600).toFixed(1)) : 0), // An array of data points derived from the 'dates' property of 'log', converted from seconds to hours
-				borderColor: color,            // Color of the dataset border
+				label: log.employee.fullName, // Label for the dataset, presumably representing an employee's full name
+				data: pluck(log.dates, 'sum').map((val) => (val ? parseFloat((val / 3600).toFixed(1)) : 0)), // An array of data points derived from the 'dates' property of 'log', converted from seconds to hours
+				borderColor: color, // Color of the dataset border
 				backgroundColor: ChartUtil.transparentize(color, 1), // Background color with transparency
-				borderWidth: 2,                // Width of the dataset border
-				pointRadius: 2,               // Radius of the data points
-				pointHoverRadius: 4,          // Radius of the data points on hover
-				pointHoverBorderWidth: 4,     // Width of the border of data points on hover
-				tension: 0.4,                 // Tension of the spline curve connecting data points
-				fill: false                   // Whether to fill the area under the line or not
+				borderWidth: 2, // Width of the dataset border
+				pointRadius: 2, // Radius of the data points
+				pointHoverRadius: 4, // Radius of the data points on hover
+				pointHoverBorderWidth: 4, // Width of the border of data points on hover
+				tension: 0.4, // Tension of the spline curve connecting data points
+				fill: false // Whether to fill the area under the line or not
 			});
 		});
 

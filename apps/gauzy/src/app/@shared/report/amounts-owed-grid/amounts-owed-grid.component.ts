@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import {
 	IAmountOwedReport,
 	IGetTimeLogReportInput,
@@ -17,8 +11,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
@@ -28,9 +23,7 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 	templateUrl: './amounts-owed-grid.component.html',
 	styleUrls: ['./amounts-owed-grid.component.scss']
 })
-export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public loading: boolean;
 	public groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 	public dailyData: IAmountOwedReport[];
@@ -54,7 +47,7 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService,
+		public readonly translateService: TranslateService
 	) {
 		super(store, translateService, dateRangePickerBuilderService);
 	}
@@ -117,7 +110,6 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 		this.subject$.next(true);
 	}
 
-
 	/**
 	 * Retrieves amounts owed reports, updates the 'dailyData' property, and handles loading state.
 	 *
@@ -146,5 +138,4 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent
 			this.loading = false;
 		}
 	}
-
 }

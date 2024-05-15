@@ -8,7 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { toUTC } from '@gauzy/common-angular';
 import { pick } from 'underscore';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { Store } from './../../../../@core/services';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })

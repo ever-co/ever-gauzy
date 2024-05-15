@@ -1,11 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnDestroy,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,12 +13,12 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { Environment } from '@env/model';
 import { environment } from '@env/environment';
-import { DateRangePickerBuilderService, Store } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,11 +26,10 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 	templateUrl: './daily-grid.component.html',
 	styleUrls: ['./daily-grid.component.scss']
 })
-export class DailyGridComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-
+export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	// This constant holds the URL for downloading content from the platform's website.
-	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] = environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
+	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] =
+		environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -47,8 +39,8 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	/*
-	* Getter & Setter for dynamic filters
-	*/
+	 * Getter & Setter for dynamic filters
+	 */
 	private _filters: ITimeLogFilters = this.request;
 	get filters(): ITimeLogFilters {
 		return this._filters;
@@ -131,7 +123,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 		this.payloads$.next(request);
 	}
 
-
 	async getLogs() {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
@@ -148,8 +139,8 @@ export class DailyGridComponent extends BaseSelectorFilterComponent
 	}
 
 	public getStatus(value: number) {
-		return progressStatus(value)
+		return progressStatus(value);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

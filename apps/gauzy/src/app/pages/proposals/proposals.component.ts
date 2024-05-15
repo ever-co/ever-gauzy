@@ -19,7 +19,7 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
 import {
 	ClickableLinkComponent,
@@ -36,13 +36,7 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	ProposalsService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

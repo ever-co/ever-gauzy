@@ -6,6 +6,7 @@ import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
 import * as moment from 'moment';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	ITimeLogFilters,
 	IGetActivitiesInput,
@@ -14,9 +15,9 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { toUTC, toLocal, isJsObject, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
+import { Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -27,9 +28,7 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	styleUrls: ['./app-url-activity.component.scss'],
 	templateUrl: './app-url-activity.component.html'
 })
-export class AppUrlActivityComponent extends BaseSelectorFilterComponent
-	implements OnInit, OnDestroy {
-
+export class AppUrlActivityComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	filters: ITimeLogFilters = this.request;
 	loading: boolean;
 	apps: {
@@ -56,7 +55,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 	ngOnInit(): void {
 		this.activatedRoute.data
 			.pipe(
-				tap((params) => this.type = params.type),
+				tap((params) => (this.type = params.type)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -117,29 +116,27 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 		};
 
 		this.activityService.getActivities(request).then((items) => {
-			item.childItems = items.map(
-				(activity: IActivity): IDailyActivity => {
-					const dailyActivity = {
-						duration: activity.duration,
-						employeeId: activity.employeeId,
-						date: activity.date,
-						title: activity.title,
-						description: activity.description,
-						durationPercentage: (activity.duration * 100) / item.duration
+			item.childItems = items.map((activity: IActivity): IDailyActivity => {
+				const dailyActivity = {
+					duration: activity.duration,
+					employeeId: activity.employeeId,
+					date: activity.date,
+					title: activity.title,
+					description: activity.description,
+					durationPercentage: (activity.duration * 100) / item.duration
+				};
+				if (activity.metaData) {
+					let metaData: IURLMetaData = new Object();
+					if (typeof activity.metaData === 'string') {
+						metaData = JSON.parse(activity.metaData) as IURLMetaData;
+					} else if (isJsObject(activity.metaData)) {
+						metaData = activity.metaData as IURLMetaData;
 					}
-					if (activity.metaData) {
-						let metaData: IURLMetaData = new Object();
-						if (typeof activity.metaData === 'string') {
-							metaData = JSON.parse(activity.metaData) as IURLMetaData;
-						} else if (isJsObject(activity.metaData)) {
-							metaData = activity.metaData as IURLMetaData;
-						}
-						dailyActivity['metaData'] = metaData;
-						dailyActivity['url'] = metaData.url || '';
-					}
-					return dailyActivity;
+					dailyActivity['metaData'] = metaData;
+					dailyActivity['url'] = metaData.url || '';
 				}
-			);
+				return dailyActivity;
+			});
 		});
 	}
 
@@ -161,27 +158,16 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent
 				this.apps = chain(activities)
 					.map((activity) => {
 						activity.hours = toLocal(
-							moment.utc(
-								moment.utc(activity.date).format('YYYY-MM-DD') +
-									' ' +
-									activity.time
-							)
+							moment.utc(moment.utc(activity.date).format('YYYY-MM-DD') + ' ' + activity.time)
 						);
 						return activity;
 					})
 					.groupBy('hours')
 					.mapObject((value, key) => {
 						value = value.slice(0, 6);
-						const sum = reduce(
-							value,
-							(memo, activity) =>
-								memo + parseInt(activity.duration + '', 10),
-							0
-						);
+						const sum = reduce(value, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
 						value = value.map((activity) => {
-							activity.durationPercentage = parseFloat(
-								((activity.duration * 100) / sum).toFixed(1)
-							);
+							activity.durationPercentage = parseFloat(((activity.duration * 100) / sum).toFixed(1));
 							return activity;
 						});
 						return { hour: key, activities: value };

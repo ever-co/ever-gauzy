@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -13,16 +7,13 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import {
-	IGetTimeLimitReportInput,
-	ITimeLimitReport,
-	ITimeLogFilters
-} from '@gauzy/contracts';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { IGetTimeLimitReportInput, ITimeLimitReport, ITimeLogFilters } from '@gauzy/contracts';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,9 +21,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './time-limit-report.component.html',
 	styleUrls: ['./time-limit-report.component.scss']
 })
-export class TimeLimitReportComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class TimeLimitReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	filters: ITimeLogFilters;
 	loading: boolean = false;
 	dailyData: any;
@@ -63,7 +52,8 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 					this.title = data.title;
 				}),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 		this.subject$
 			.pipe(
 				filter(() => !!this.organization),
@@ -108,7 +98,6 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 		this.payloads$.next(request);
 	}
 
-
 	/**
 	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
 	 * and notifies subscribers about the change.
@@ -127,7 +116,6 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent
 		// Notify subscribers about the filter change
 		this.subject$.next(true);
 	}
-
 
 	/**
 	 * Retrieves time limit reports, updates the 'dailyData' property, and handles loading state.

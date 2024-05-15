@@ -9,20 +9,19 @@ import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
-import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import {
-	DateRangePickerBuilderService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
+	DateRangePickerBuilderService,
 	IDatePickerConfig,
 	ISelectorVisibility,
-	LanguagesService,
-	SelectorBuilderService,
-	Store
-} from './@core/services';
-import { environment } from '../environments/environment';
+	SelectorBuilderService
+} from '@gauzy/ui-sdk/core';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { environment } from '@env/environment';
+import { AnalyticsService, JitsuService, SeoService } from './@core/services';
+import { LanguagesService, Store } from './@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -195,11 +194,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 						dates: IDateRangePicker;
 						selectors: ISelectorVisibility;
 					}) => {
-						// Set Date Range Picker Default Unit
-						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
 						if (isNotEmpty(dates)) {
 							this.dateRangePickerBuilderService.setDateRangePicker(dates);
 						}
+						// Set Date Range Picker Default Unit
+						const datePickerConfig = Object.assign({}, DEFAULT_DATE_PICKER_CONFIG, datePicker);
 						this.dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 					}
 				),

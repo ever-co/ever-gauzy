@@ -3,21 +3,16 @@ import * as moment from 'moment';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common-angular';
 import { IDateRangePicker } from '@gauzy/contracts';
-
-export interface IDatePickerConfig {
-	readonly unitOfTime: moment.unitOfTime.Base;
-	readonly isLockDatePicker: boolean;
-	readonly isSaveDatePicker: boolean;
-	readonly isSingleDatePicker: boolean;
-	readonly isDisableFutureDate: boolean;
-}
+import { IDatePickerConfig } from './selector-builder-types';
+import { NavigationService } from '../navigation/navigation.service';
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	unitOfTime: 'week',
 	isLockDatePicker: false,
 	isSaveDatePicker: false,
 	isSingleDatePicker: false,
-	isDisableFutureDate: false
+	isDisableFutureDate: false,
+	isDisablePastDate: false
 };
 
 export const DEFAULT_DATE_RANGE: IDateRangePicker = {
@@ -38,8 +33,6 @@ export class DateRangePickerBuilderService {
 	private _selectedDateRange$: BehaviorSubject<IDateRangePicker | null> = new BehaviorSubject(null);
 	public selectedDateRange$: Observable<IDateRangePicker | null> = this._selectedDateRange$.asObservable();
 
-	constructor() {}
-
 	/**
 	 * Getter & Setter for selected date range
 	 */
@@ -51,6 +44,8 @@ export class DateRangePickerBuilderService {
 			this._selectedDateRange$.next(range);
 		}
 	}
+
+	constructor(private readonly _navigationService: NavigationService) {}
 
 	/**
 	 * Override date range picker default configuration
@@ -66,29 +61,56 @@ export class DateRangePickerBuilderService {
 	/**
 	 * Override date range picker default values
 	 *
-	 * @param options
+	 * @param dates An object containing the start date, end date, and possibly other properties related to the date range picker.
 	 */
-	setDateRangePicker(options: IDateRangePicker) {
-		if (isNotEmpty(options)) {
-			this.dates$.next(options);
+	setDateRangePicker(dates: IDateRangePicker) {
+		// Check if dates object is not empty
+		if (isNotEmpty(dates)) {
+			// Update the BehaviorSubject `dates$` with the new dates
+			this.dates$.next(dates);
+
+			// Navigate to the same route with updated query parameters representing the start date and end date
+			this.navigateWithQueryParams(dates);
+		}
+	}
+
+	/**
+	 * Navigates to the current route with specified query parameters, while preserving existing ones.
+	 *
+	 * @param queryParams The query parameters to be attached.
+	 */
+	navigateWithQueryParams(dates: IDateRangePicker): void {
+		if (isNotEmpty(dates)) {
+			// Navigate to the same route with updated query parameters representing the start date and end date
+			this._navigationService.navigate([], {
+				date: moment(dates.startDate).format('YYYY-MM-DD'),
+				date_end: moment(dates.endDate).format('YYYY-MM-DD'),
+				unit_of_time: dates.unitOfTime,
+				is_custom_date: dates.isCustomDate
+			});
 		}
 	}
 
 	/**
 	 * Refresh date range picker for specific dates
 	 *
-	 * @param date
+	 * @param date The date used to refresh the date range picker.
 	 */
 	refreshDateRangePicker(date: moment.Moment) {
+		// Extract the unit of time from the current date picker configuration
 		const { unitOfTime } = this._datePickerConfig$.getValue();
 
+		// Calculate the start and end dates based on the provided date and unit of time
 		const startDate = moment(date).startOf(unitOfTime);
 		const endDate = moment(date).endOf(unitOfTime);
 
+		// Update the date range picker with the new start and end dates
 		this.setDateRangePicker({
 			startDate: startDate.toDate(),
 			endDate: endDate.toDate()
 		});
+
+		// Maintain the current date picker configuration
 		this.setDatePickerConfig(this._datePickerConfig$.getValue());
 	}
 }
