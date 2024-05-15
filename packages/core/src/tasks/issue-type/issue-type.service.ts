@@ -218,9 +218,6 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Update the issue type to mark it as default
 			issueType.isDefault = true;
 
-			// Save the updated issue type
-			await super.save(issueType);
-
 			// Define options to find issue types to update
 			const findOptions: FindOptionsWhere<IssueType> = {
 				...(organizationId ? { organizationId } : {}),
@@ -232,6 +229,9 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 
 			// Update other issue types to mark them as non-default
 			await super.update(findOptions, { isDefault: false });
+
+			// Save the updated issue type
+			await super.save(issueType);
 
 			// Fetch and return all issue types based on the specified parameters
 			const { items = [] } = await super.fetchAll({
