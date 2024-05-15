@@ -47,6 +47,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	color?: string;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
 	@MultiORMColumn({ default: false })
 	isDefault?: boolean;
 

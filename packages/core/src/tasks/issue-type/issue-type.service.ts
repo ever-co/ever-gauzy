@@ -1,6 +1,5 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, SelectQueryBuilder } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import {
@@ -22,13 +21,9 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 @Injectable()
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	constructor(
-		@InjectRepository(IssueType)
 		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
-
 		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository, knexConnection);
 	}
@@ -41,9 +36,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 */
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
-			where: {
-				isSystem: false
-			}
+			where: { isSystem: false }
 		});
 	}
 
@@ -208,36 +201,46 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	}
 
 	/**
-	 * @description
-	 * @param id - the id of issue type to make as default
-	 * @param entity - input that includes options useful for filters when search issues types items
-	 * @returns A Promise resolving to an array of updated issue types (IIssueType[]).
-	 * @throws HttpException if an error occurs during the creation process.
+	 * Marks an issue type as default and updates other issue types accordingly.
+	 *
+	 * @param id The ID of the issue type to mark as default.
+	 * @param input An object containing input parameters, including organization, team, and project IDs.
+	 * @returns A Promise that resolves to an array of updated issue types.
 	 */
-	async makeIssueTypeAsDefault(id: IIssueType['id'], entity: IIssueTypeUpdateInput): Promise<IIssueType[]> {
+	async markAsDefault(id: IIssueType['id'], input: IIssueTypeUpdateInput): Promise<IIssueType[]> {
 		try {
-			const { organizationId, organizationTeamId, projectId } = entity;
-			const tenantId = RequestContext.currentTenantId();
+			const { organizationId, organizationTeamId, projectId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			// Fetch items based on tenant, organization, team and project
-			const { items = [] } = await super.fetchAll({ tenantId, organizationId, organizationTeamId, projectId });
+			// Find the issue type by ID
+			const issueType: IIssueType = await this.findOneByIdString(id, { where: { isSystem: false } });
 
-			// Use Promise.all to concurrently update issue types isDefault for each item
-			const updatedIssueTypes = await Promise.all(
-				items.map(async (item: IIssueType) => {
-					// if the item matches, then make it as default
-					if (item.id === id) {
-						item.isDefault = true;
-						return await this.save(item);
-					}
+			// Update the issue type to mark it as default
+			issueType.isDefault = true;
 
-					// Preload all of item's fields, update isDefault status and save it
-					const notDefaultIssueType = await this.typeOrmRepository.preload({ ...item, isDefault: false });
-					return await this.save(notDefaultIssueType);
-				})
-			);
-			return updatedIssueTypes;
+			// Define options to find issue types to update
+			const findOptions: FindOptionsWhere<IssueType> = {
+				organizationId,
+				tenantId,
+				...(organizationTeamId ? { organizationTeamId } : {}),
+				...(projectId ? { projectId } : {}),
+				isSystem: false
+			};
+
+			// Update other issue types to mark them as non-default
+			await super.update(findOptions, { isDefault: false });
+
+			// Fetch and return all issue types based on the specified parameters
+			const { items = [] } = await super.fetchAll({
+				tenantId,
+				organizationId,
+				organizationTeamId,
+				projectId
+			});
+
+			return items;
 		} catch (error) {
+			// If an error occurs, throw a BadRequestException
 			throw new BadRequestException(error);
 		}
 	}

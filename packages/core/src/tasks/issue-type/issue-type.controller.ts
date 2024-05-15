@@ -10,11 +10,11 @@ import {
 } from '@gauzy/contracts';
 import { CountQueryDTO } from '../../shared/dto';
 import { UseValidationPipe } from '../../shared/pipes';
+import { TenantPermissionGuard } from '../../shared/guards';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CreateIssueTypeDTO, IssueTypeQueryDTO, UpdateIssueTypeDTO } from './dto';
-import { TenantPermissionGuard } from '../../shared/guards';
 
 @UseGuards(TenantPermissionGuard)
 @ApiTags('Issue Type')
@@ -28,6 +28,27 @@ export class IssueTypeController extends CrudFactory<
 >(PaginationParams, CreateIssueTypeDTO, UpdateIssueTypeDTO, CountQueryDTO) {
 	constructor(protected readonly issueTypeService: IssueTypeService) {
 		super(issueTypeService);
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Make issue type default.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task issue type maked as default'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Put(':id/default')
+	@UseValidationPipe({ whitelist: true })
+	async markAsDefault(
+		@Param('id') id: IIssueType['id'],
+		@Body() input: IIssueTypeUpdateInput
+	): Promise<IIssueType[]> {
+		return await this.issueTypeService.markAsDefault(id, input);
 	}
 
 	/**
@@ -48,20 +69,5 @@ export class IssueTypeController extends CrudFactory<
 	async findAllIssueTypes(@Query() params: IssueTypeQueryDTO): Promise<IPagination<IIssueType>> {
 		console.log('IssueTypeController -> findAllIssueTypes -> params', params);
 		return await this.issueTypeService.fetchAll(params);
-	}
-
-	@ApiOperation({ summary: 'Make issue type default.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Task issue type maked as default'
-	})
-	@HttpCode(HttpStatus.OK)
-	@Put(':id/default')
-	@UseValidationPipe({ whitelist: true })
-	async makeIssueTypeAsDefault(
-		@Param('id') id: IIssueType['id'],
-		@Body() input: IIssueTypeUpdateInput
-	): Promise<IIssueType[]> {
-		return await this.issueTypeService.makeIssueTypeAsDefault(id, input);
 	}
 }
