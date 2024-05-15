@@ -8,7 +8,8 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 			'A "bug type issue" typically refers to a specific type of technical issue that occurs in software development',
 		icon: 'task-issue-types/bug.svg',
 		color: '#C24A4A',
-		isSystem: true
+		isSystem: true,
+		isDefault: false
 	},
 	{
 		name: 'Story',
@@ -17,7 +18,8 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 			'A "story (or user story) type issue" typically refers to an issue related to a user story in software development.',
 		icon: 'task-issue-types/note.svg',
 		color: '#54BA95',
-		isSystem: true
+		isSystem: true,
+		isDefault: false
 	},
 	{
 		name: 'Task',
@@ -25,7 +27,8 @@ export const DEFAULT_GLOBAL_ISSUE_TYPES: IIssueType[] = [
 		description: 'A "task type issue" typically refers to an issue related to a specific task within a project.',
 		icon: 'task-issue-types/task-square.svg',
 		color: '#5483BA',
-		isSystem: true
+		isSystem: true,
+		isDefault: false
 	},
 	{
 		name: 'Epic',
