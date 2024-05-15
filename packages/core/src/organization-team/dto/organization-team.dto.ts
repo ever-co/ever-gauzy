@@ -9,18 +9,10 @@ import { OrganizationProject } from '../../organization-project/organization-pro
 export class OrganizationTeamDTO
 	extends IntersectionType(
 		IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
-		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId'])
+		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId', 'shareProfileView'])
 	)
 	implements Omit<IOrganizationTeam, 'name'>
 {
-	/**
-	 * Team setting for sharing profile view should be boolean true/false
-	 */
-	@ApiPropertyOptional({ type: () => Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly shareProfileView?: boolean;
-
 	/**
 	 * Team type should be boolean true/false
 	 */

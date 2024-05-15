@@ -57,11 +57,7 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(`ALTER TABLE "organization_team" ADD "shareProfileView" boolean DEFAULT true`);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -70,11 +66,7 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(`ALTER TABLE "organization_team" DROP COLUMN "shareProfileView"`);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -83,22 +75,6 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_e22ab0f1236b1a07785b641727"`);
 		await queryRunner.query(`DROP INDEX "IDX_176f5ed3c4534f3110d423d569"`);
 		await queryRunner.query(`DROP INDEX "IDX_eef1c19a0cb5321223cfe3286c"`);
@@ -129,22 +105,6 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 		await queryRunner.query(`CREATE INDEX "IDX_51e91be110fa0b8e70066f5727" ON "organization_team" ("imageId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_722d648e0b83267d4a66332ccb" ON "organization_team" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_38f1d96e8c2d59e4f0f84209ab" ON "organization_team" ("isArchived") `);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 	}
 
 	/**
@@ -153,22 +113,6 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_38f1d96e8c2d59e4f0f84209ab"`);
 		await queryRunner.query(`DROP INDEX "IDX_722d648e0b83267d4a66332ccb"`);
 		await queryRunner.query(`DROP INDEX "IDX_51e91be110fa0b8e70066f5727"`);
@@ -199,22 +143,6 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 		await queryRunner.query(
 			`CREATE INDEX "IDX_e22ab0f1236b1a07785b641727" ON "organization_team" ("profile_link") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 	}
 
 	/**
@@ -223,13 +151,7 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
 		await queryRunner.query(`ALTER TABLE \`organization_team\` ADD \`shareProfileView\` tinyint NULL DEFAULT 1`);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -238,12 +160,6 @@ export class AlterOrganizationTeamAddShareProfileViewField1715680147522 implemen
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
 		await queryRunner.query(`ALTER TABLE \`organization_team\` DROP COLUMN \`shareProfileView\``);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 }
