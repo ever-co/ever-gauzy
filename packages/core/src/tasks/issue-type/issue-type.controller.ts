@@ -44,10 +44,7 @@ export class IssueTypeController extends CrudFactory<
 	@HttpCode(HttpStatus.OK)
 	@Put(':id/default')
 	@UseValidationPipe({ whitelist: true })
-	async markAsDefault(
-		@Param('id') id: IIssueType['id'],
-		@Body() input: IIssueTypeUpdateInput
-	): Promise<IIssueType[]> {
+	async markAsDefault(@Param('id') id: IIssueType['id'], @Body() input: UpdateIssueTypeDTO): Promise<IIssueType[]> {
 		return await this.issueTypeService.markAsDefault(id, input);
 	}
 
@@ -67,7 +64,6 @@ export class IssueTypeController extends CrudFactory<
 	@Get()
 	@UseValidationPipe({ whitelist: true })
 	async findAllIssueTypes(@Query() params: IssueTypeQueryDTO): Promise<IPagination<IIssueType>> {
-		console.log('IssueTypeController -> findAllIssueTypes -> params', params);
 		return await this.issueTypeService.fetchAll(params);
 	}
 }
