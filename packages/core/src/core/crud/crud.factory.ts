@@ -25,7 +25,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 	countQueryDTO?: Type<CountQueryType>
 ): Type<ICrudController<BaseType>> {
 	class BaseCrudController<BaseType extends BaseEntity> implements ICrudController<BaseType> {
-		constructor(public readonly crudService: ICrudService<BaseType>) { }
+		constructor(public readonly crudService: ICrudService<BaseType>) {}
 
 		/**
 		 *
@@ -186,19 +186,16 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@ApiOperation({ summary: 'Soft delete a record by ID' })
 		@ApiResponse({
 			status: HttpStatus.ACCEPTED,
-			description: 'Record soft deleted successfully',
+			description: 'Record soft deleted successfully'
 		})
 		@ApiResponse({
 			status: HttpStatus.NOT_FOUND,
-			description: 'Record not found',
+			description: 'Record not found'
 		})
 		@Delete(':id/soft')
 		@HttpCode(HttpStatus.ACCEPTED)
 		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-		async softRemove(
-			@Param('id', UUIDValidationPipe) id: BaseType['id'],
-			...options: any[]
-		): Promise<BaseType> {
+		async softRemove(@Param('id', UUIDValidationPipe) id: BaseType['id'], ...options: any[]): Promise<BaseType> {
 			// Soft delete the record
 			return await this.crudService.softRemove(id, options);
 		}
@@ -215,19 +212,16 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
 		@ApiResponse({
 			status: HttpStatus.ACCEPTED,
-			description: 'Record restored successfully',
+			description: 'Record restored successfully'
 		})
 		@ApiResponse({
 			status: HttpStatus.NOT_FOUND,
-			description: 'Record not found or not in a soft-deleted state',
+			description: 'Record not found or not in a soft-deleted state'
 		})
 		@Put(':id/recover')
 		@HttpCode(HttpStatus.ACCEPTED)
 		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-		async softRecover(
-			@Param('id', UUIDValidationPipe) id: BaseType['id'],
-			...options: any[]
-		): Promise<BaseType> {
+		async softRecover(@Param('id', UUIDValidationPipe) id: BaseType['id'], ...options: any[]): Promise<BaseType> {
 			// Restore the soft-deleted record
 			return await this.crudService.softRecover(id, options);
 		}
