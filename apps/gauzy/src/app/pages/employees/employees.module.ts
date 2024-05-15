@@ -60,7 +60,7 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import {
@@ -71,7 +71,7 @@ import {
 } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TimeZoneSelectorModule } from '../../@shared/selectors';
 import { DirectivesModule } from '../../@shared/directives/directives.module';
@@ -150,4 +150,4 @@ const COMPONENTS = [
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]
 })
-export class EmployeesModule { }
+export class EmployeesModule {}

@@ -21,12 +21,12 @@ import { IncomeMutationModule } from '../../@shared/income/income-mutation/incom
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { DirectivesModule } from '../../@shared/directives/directives.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
@@ -59,4 +59,4 @@ import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagin
 	declarations: [IncomeComponent],
 	providers: [IncomeService]
 })
-export class IncomeModule { }
+export class IncomeModule {}

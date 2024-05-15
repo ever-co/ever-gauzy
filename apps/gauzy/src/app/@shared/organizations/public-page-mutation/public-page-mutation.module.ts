@@ -24,7 +24,7 @@ import { LanguageSelectorModule } from '../../language/language-selector/languag
 import { SkillsService } from '../../../@core/services/skills.service';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

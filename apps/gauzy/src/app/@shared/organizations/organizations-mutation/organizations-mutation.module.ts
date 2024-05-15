@@ -19,7 +19,7 @@ import { ImageUploaderModule } from '../../image-uploader/image-uploader.module'
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

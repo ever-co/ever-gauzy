@@ -6,7 +6,7 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [KeyresultTypeSelectComponent],

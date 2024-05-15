@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [GoalTemplateSelectComponent],

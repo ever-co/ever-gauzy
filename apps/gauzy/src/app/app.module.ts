@@ -51,7 +51,7 @@ import { LegalModule } from './legal/legal.module';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { HttpLoaderFactory } from './@shared/translate/translate.module';
+import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';

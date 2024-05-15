@@ -19,7 +19,7 @@ import { EmailTemplatesComponent } from './email-templates.component';
 import { EmailTemplateService } from '../../@core/services/email-template.service';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
@@ -49,4 +49,4 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 	providers: [EmailTemplateService],
 	declarations: [EmailTemplatesComponent]
 })
-export class EmailTemplatesModule { }
+export class EmailTemplatesModule {}

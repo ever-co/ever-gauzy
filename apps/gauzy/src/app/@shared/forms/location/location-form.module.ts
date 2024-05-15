@@ -3,16 +3,10 @@ import { LocationFormComponent } from './location-form.component';
 import { NgMapsGoogleModule } from '@ng-maps/google';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import {
-	NbCheckboxModule,
-	NbFormFieldModule,
-	NbIconModule,
-	NbInputModule,
-	NbSelectModule
-} from '@nebular/theme';
+import { NbCheckboxModule, NbFormFieldModule, NbIconModule, NbInputModule, NbSelectModule } from '@nebular/theme';
 import { CountryModule } from '../../country/country.module';
 import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -32,4 +26,4 @@ import { TranslateModule } from '../../translate/translate.module';
 	exports: [LocationFormComponent],
 	declarations: [LocationFormComponent]
 })
-export class LocationFormModule { }
+export class LocationFormModule {}

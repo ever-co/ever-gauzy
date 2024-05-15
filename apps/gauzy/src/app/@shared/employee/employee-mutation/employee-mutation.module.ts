@@ -12,7 +12,7 @@ import { EmployeeMutationComponent } from './employee-mutation.component';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeesService, OrganizationsService, RoleService } from '../../../@core/services';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

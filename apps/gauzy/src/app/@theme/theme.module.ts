@@ -48,7 +48,7 @@ import { EmployeeSelectorsModule } from './components/header/selectors/employee/
 import { SelectorService } from '../@core/services/selector.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
-import { TranslateModule } from '../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { MatRippleModule } from '@angular/material/core';
 import { NbAccordionModule, NbToggleModule, NbCardModule } from '@nebular/theme';

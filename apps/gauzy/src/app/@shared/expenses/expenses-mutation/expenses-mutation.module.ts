@@ -20,7 +20,7 @@ import { AttachReceiptComponent } from './attach-receipt/attach-receipt.componen
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';

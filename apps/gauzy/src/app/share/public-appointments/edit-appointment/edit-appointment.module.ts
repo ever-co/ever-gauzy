@@ -5,7 +5,7 @@ import { EditAppointmentRoutingModule } from './edit-appointment.routing.module'
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
 import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

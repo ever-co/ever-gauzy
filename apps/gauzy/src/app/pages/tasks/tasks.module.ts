@@ -22,7 +22,7 @@ import {
 	NbActionsModule,
 	NbContextMenuModule,
 	NbTooltipModule,
-	NbPopoverModule,
+	NbPopoverModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -42,10 +42,10 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -63,7 +63,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		TaskSettingsComponent,
 		ProjectViewComponent,
 		TasksSprintViewComponent,
-		SprintTaskComponent,
+		SprintTaskComponent
 	],
 	imports: [
 		NbTooltipModule,
@@ -112,7 +112,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		NgxPermissionsModule.forChild(),
 		DirectivesModule,
 		CKEditorModule,
-		NbPopoverModule,
-	],
+		NbPopoverModule
+	]
 })
-export class TasksModule { }
+export class TasksModule {}

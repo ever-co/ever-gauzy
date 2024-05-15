@@ -4,22 +4,11 @@ import { GauzyButtonActionComponent } from './gauzy-button-action.component';
 import { SharedModule } from '../shared.module';
 import { ThemeModule } from '../../@theme';
 import { NbIconModule, NbButtonModule } from '@nebular/theme';
-import { TranslateModule } from '../translate/translate.module';
-
-
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-  declarations: [
-    GauzyButtonActionComponent
-  ],
-  exports:[GauzyButtonActionComponent],
-  imports: [
-    CommonModule,
-    SharedModule,
-    ThemeModule,
-    NbIconModule,
-    NbButtonModule,
-    TranslateModule
-  ]
+	declarations: [GauzyButtonActionComponent],
+	exports: [GauzyButtonActionComponent],
+	imports: [CommonModule, SharedModule, ThemeModule, NbIconModule, NbButtonModule, TranslateModule]
 })
-export class GauzyButtonActionModule { }
+export class GauzyButtonActionModule {}

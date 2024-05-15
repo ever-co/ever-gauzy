@@ -23,11 +23,11 @@ import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
@@ -64,4 +64,4 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	providers: [OrganizationTeamsService]
 })
-export class TeamsModule { }
+export class TeamsModule {}

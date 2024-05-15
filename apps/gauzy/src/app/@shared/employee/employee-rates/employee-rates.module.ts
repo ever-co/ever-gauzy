@@ -12,7 +12,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CandidateStore, EmployeeStore } from '../../../@core/services';
 
 @NgModule({

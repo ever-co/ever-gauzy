@@ -17,7 +17,7 @@ import { Store } from '../../@core/services/store.service';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

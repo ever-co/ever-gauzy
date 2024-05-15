@@ -14,7 +14,7 @@ import { CandidateStore } from '../../../@core/services/candidate-store.service'
 import { EmployeeStore } from '../../../@core/services/employee-store.service';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { LocationFormModule } from '../../forms/location';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

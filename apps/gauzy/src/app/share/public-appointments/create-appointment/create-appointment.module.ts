@@ -6,7 +6,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 import { CreateAppointmentRoutingModule } from './create-appointment.routing.module';
 import { AppointmentModule } from '../../../pages/employees/appointment/appointment.module';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

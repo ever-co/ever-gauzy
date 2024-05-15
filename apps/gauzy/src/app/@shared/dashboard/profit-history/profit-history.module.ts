@@ -6,8 +6,8 @@ import { IncomeModule } from '../../../pages/income/income.module';
 import { ProfitHistoryComponent } from './profit-history.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
-import { TranslateModule } from '../../translate/translate.module';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
@@ -21,11 +21,7 @@ import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pa
 		PaginationV2Module
 	],
 	exports: [ProfitHistoryComponent],
-	declarations: [
-		ProfitHistoryComponent,
-		ExpenseTableComponent,
-		IncomeTableComponent
-	],
+	declarations: [ProfitHistoryComponent, ExpenseTableComponent, IncomeTableComponent],
 	providers: []
 })
-export class ProfitHistoryModule { }
+export class ProfitHistoryModule {}

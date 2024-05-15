@@ -13,7 +13,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

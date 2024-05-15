@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { SharedModule } from './../../../../@shared/shared.module';
-import { TranslateModule } from './../../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 import { StatusBadgeModule } from './../../../../@shared/status-badge';

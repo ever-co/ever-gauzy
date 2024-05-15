@@ -24,7 +24,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TimeZoneSelectorModule } from '../../selectors';
 
 @NgModule({

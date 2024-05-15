@@ -18,7 +18,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

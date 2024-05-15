@@ -14,7 +14,7 @@ import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ImageAssetService } from '../../@core';
 
 @NgModule({

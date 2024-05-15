@@ -4,7 +4,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseHistoryModule } from '../recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockComponent } from './recurring-expense-block.component';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
@@ -21,4 +21,4 @@ import { SharedModule } from '../../shared.module';
 	declarations: [RecurringExpenseBlockComponent],
 	providers: []
 })
-export class RecurringExpenseBlockModule { }
+export class RecurringExpenseBlockModule {}

@@ -5,7 +5,7 @@ import { AppointmentModule } from '../../../pages/employees/appointment/appointm
 import { AppointmentFormRoutingModule } from './appointment-form.routing.module';
 import { AppointmentFormComponent } from './appointment-form.component';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

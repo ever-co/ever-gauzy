@@ -14,9 +14,9 @@ import {
 } from '@nebular/theme';
 import { EventTypeMutationComponent } from './event-type-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeeMultiSelectModule } from './../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '../../../../@shared/translate/translate.module';
 
 @NgModule({
 	imports: [

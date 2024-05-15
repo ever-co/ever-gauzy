@@ -16,7 +16,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
 import { IncomeService, OrganizationsService } from '../../../@core/services';
 

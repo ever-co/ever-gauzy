@@ -27,7 +27,7 @@ import { SyncDataSelectionComponent } from './components/sync-data-selection/syn
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [
@@ -63,4 +63,4 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	]
 })
-export class UpworkModule { }
+export class UpworkModule {}

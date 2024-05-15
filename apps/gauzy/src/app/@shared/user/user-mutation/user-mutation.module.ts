@@ -5,18 +5,10 @@ import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { UserMutationComponent } from './user-mutation.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { UsersService } from '../../../@core/services';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [
-		ThemeModule,
-		FormsModule,
-		NbCardModule,
-		UserFormsModule,
-		NbButtonModule,
-		NbIconModule,
-		TranslateModule
-	],
+	imports: [ThemeModule, FormsModule, NbCardModule, UserFormsModule, NbButtonModule, NbIconModule, TranslateModule],
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],
 	providers: [UsersService]

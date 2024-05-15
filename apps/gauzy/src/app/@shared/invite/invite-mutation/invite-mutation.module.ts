@@ -9,18 +9,10 @@ import { InviteFormsModule } from '../forms/invite-forms.module';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
 import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [
-		ThemeModule,
-		FormsModule,
-		NbCardModule,
-		NbButtonModule,
-		NbIconModule,
-		TranslateModule,
-		InviteFormsModule
-	],
+	imports: [ThemeModule, FormsModule, NbCardModule, NbButtonModule, NbIconModule, TranslateModule, InviteFormsModule],
 	exports: [InviteMutationComponent],
 	declarations: [InviteMutationComponent],
 	providers: [

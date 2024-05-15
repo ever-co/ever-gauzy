@@ -1,7 +1,17 @@
 import { NgModule } from '@angular/core';
-import { NbAccordionModule, NbCardModule, NbLayoutModule, NbListModule, NbRouteTabsetModule, NbSidebarModule, NbTabsetModule, NbTagModule, NbUserModule } from '@nebular/theme';
+import {
+	NbAccordionModule,
+	NbCardModule,
+	NbLayoutModule,
+	NbListModule,
+	NbRouteTabsetModule,
+	NbSidebarModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbUserModule
+} from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 import { LeafletMapModule } from '../../../@shared/forms';
@@ -31,4 +41,4 @@ import { TableComponentsModule } from '../../../@shared';
 	declarations: [ContactViewComponent],
 	providers: []
 })
-export class ContactViewModule { }
+export class ContactViewModule {}

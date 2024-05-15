@@ -29,10 +29,10 @@ import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { NbToggleModule } from '@nebular/theme';
 
 @NgModule({
@@ -66,12 +66,7 @@ import { NbToggleModule } from '@nebular/theme';
 		PaginationV2Module,
 		NbToggleModule
 	],
-	declarations: [
-		TimeOffComponent,
-		TimeOffSettingsComponent,
-		RequestApprovalIcon,
-		PaidIcon
-	],
+	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],
 	providers: [OrganizationsService, TimeOffService]
 })
-export class TimeOffModule { }
+export class TimeOffModule {}

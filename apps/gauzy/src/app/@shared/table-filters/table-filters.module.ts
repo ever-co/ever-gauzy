@@ -5,7 +5,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { ExpenseCategorySelectModule } from '../expenses/expense-category-select/expense-category-select.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorSelectModule } from '../vendor-select/vendor-select.module';
 import { ExpenseCategoryFilterComponent } from './expense-category-filter.component';
 import { InputFilterComponent } from './input-filter.component';
@@ -17,8 +17,8 @@ import { VendorFilterComponent } from './vendor-filter.component';
 import { TaskStatusFilterComponent } from './task-status-filter.component';
 import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-select.module';
 import { ToggleFilterComponent } from './toggle-filter/toggle-filter.component';
-import {NbToggleModule} from "@nebular/theme";
-import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
+import { NbToggleModule } from '@nebular/theme';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 @NgModule({
 	imports: [
@@ -44,7 +44,7 @@ import {FontAwesomeModule} from "@fortawesome/angular-fontawesome";
 		InputFilterComponent,
 		OrganizationTeamFilterComponent,
 		TaskStatusFilterComponent,
-  		ToggleFilterComponent
+		ToggleFilterComponent
 	],
 	exports: [],
 	providers: []

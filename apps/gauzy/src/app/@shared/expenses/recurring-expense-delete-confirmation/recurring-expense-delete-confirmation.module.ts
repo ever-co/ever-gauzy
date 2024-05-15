@@ -3,7 +3,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbRadioModule, NbCardModule, NbButtonModule } from '@nebular/theme';
 import { RecurringExpenseDeleteConfirmationComponent } from './recurring-expense-delete-confirmation.component';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
