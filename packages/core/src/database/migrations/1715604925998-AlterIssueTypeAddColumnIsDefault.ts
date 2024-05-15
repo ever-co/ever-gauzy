@@ -57,11 +57,7 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(`ALTER TABLE "issue_type" ADD "isDefault" boolean NOT NULL DEFAULT false`);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -70,11 +66,7 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" DROP CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2"`);
 		await queryRunner.query(`ALTER TABLE "issue_type" DROP COLUMN "isDefault"`);
-		await queryRunner.query(
-			`ALTER TABLE "employee_job_preset" ADD CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -83,22 +75,6 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_586513cceb16777fd14a17bfe1"`);
 		await queryRunner.query(`DROP INDEX "IDX_131331557078611a68b4a5b2e7"`);
 		await queryRunner.query(`DROP INDEX "IDX_33779b0395f72af0b50dc526d1"`);
@@ -127,22 +103,6 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 		await queryRunner.query(`CREATE INDEX "IDX_8b12c913c39c72fe5980427c96" ON "issue_type" ("tenantId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_722ce5d7535524b96c6d03f7c4" ON "issue_type" ("isActive") `);
 		await queryRunner.query(`CREATE INDEX "IDX_1909e9bae7d8b2c920b3e4d859" ON "issue_type" ("isArchived") `);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 	}
 
 	/**
@@ -151,22 +111,6 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_1909e9bae7d8b2c920b3e4d859"`);
 		await queryRunner.query(`DROP INDEX "IDX_722ce5d7535524b96c6d03f7c4"`);
 		await queryRunner.query(`DROP INDEX "IDX_8b12c913c39c72fe5980427c96"`);
@@ -195,22 +139,6 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 		await queryRunner.query(
 			`CREATE INDEX "IDX_586513cceb16777fd14a17bfe1" ON "issue_type" ("organizationTeamId") `
 		);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 	}
 
 	/**
@@ -219,13 +147,7 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
 		await queryRunner.query(`ALTER TABLE \`issue_type\` ADD \`isDefault\` tinyint NOT NULL DEFAULT 0`);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 
 	/**
@@ -234,12 +156,6 @@ export class AlterIssueTypeAddColumnIsDefault1715604925998 implements MigrationI
 	 * @param queryRunner
 	 */
 	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` DROP FOREIGN KEY \`FK_7ae5b4d4bdec77971dab319f2e2\``
-		);
 		await queryRunner.query(`ALTER TABLE \`issue_type\` DROP COLUMN \`isDefault\``);
-		await queryRunner.query(
-			`ALTER TABLE \`employee_job_preset\` ADD CONSTRAINT \`FK_7ae5b4d4bdec77971dab319f2e2\` FOREIGN KEY (\`jobPresetId\`) REFERENCES \`job_preset\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-		);
 	}
 }
