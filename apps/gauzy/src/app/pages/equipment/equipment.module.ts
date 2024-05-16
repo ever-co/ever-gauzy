@@ -18,9 +18,9 @@ import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
@@ -47,4 +47,4 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 	providers: [EquipmentService],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })
-export class EquipmentModule { }
+export class EquipmentModule {}

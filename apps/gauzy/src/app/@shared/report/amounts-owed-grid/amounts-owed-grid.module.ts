@@ -1,16 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 import { FormsModule } from '@angular/forms';
-import {
-	NbIconModule,
-	NbSpinnerModule,
-	NbCardModule,
-	NbSelectModule
-} from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
+import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 
 @NgModule({
 	declarations: [AmountsOwedGridComponent],
@@ -27,4 +22,4 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NoDataMessageModule
 	]
 })
-export class AmountsOwedGridModule { }
+export class AmountsOwedGridModule {}

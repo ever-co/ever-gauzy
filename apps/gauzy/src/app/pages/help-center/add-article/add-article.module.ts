@@ -13,7 +13,7 @@ import {
 import { AddArticleComponent } from './add-article.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

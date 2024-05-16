@@ -13,7 +13,7 @@ import { CountdownModule } from 'ngx-countdown';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '../../../@core/services';
 import { SharedModule } from '../../shared.module';
@@ -44,12 +44,8 @@ import { NbIconModule } from '@nebular/theme';
 		RoleFormFieldModule,
 		NbIconModule
 	],
-	exports: [
-		...COMPONENTS
-	],
-	declarations: [
-		...COMPONENTS
-	],
+	exports: [...COMPONENTS],
+	declarations: [...COMPONENTS],
 	providers: [AuthService, RoleService, IncomeService, TagsService, CandidatesService]
 })
-export class UserFormsModule { }
+export class UserFormsModule {}

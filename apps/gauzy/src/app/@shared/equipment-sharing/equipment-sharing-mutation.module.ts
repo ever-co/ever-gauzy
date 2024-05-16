@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbCardModule,
@@ -9,11 +10,10 @@ import {
 	NbDatepickerModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '../translate/translate.module';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
 import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService, Store } from '../../@core/services';
 
@@ -36,11 +36,6 @@ import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingServic
 		EmployeeMultiSelectModule
 	],
 	declarations: [EquipmentSharingMutationComponent],
-	providers: [
-		EquipmentSharingService,
-		Store,
-		EquipmentService,
-		EquipmentSharingPolicyService
-	]
+	providers: [EquipmentSharingService, Store, EquipmentService, EquipmentSharingPolicyService]
 })
 export class EquipmentSharingMutationModule {}

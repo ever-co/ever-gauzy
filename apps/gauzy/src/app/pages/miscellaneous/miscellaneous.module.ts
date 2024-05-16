@@ -4,15 +4,10 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { MiscellaneousRoutingModule } from './miscellaneous-routing.module';
 import { MiscellaneousComponent } from './miscellaneous.component';
 import { NotFoundComponent } from './not-found/not-found.component';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [
-		ThemeModule,
-		NbCardModule,
-		MiscellaneousRoutingModule,
-		TranslateModule
-	],
+	imports: [ThemeModule, NbCardModule, MiscellaneousRoutingModule, TranslateModule],
 	declarations: [MiscellaneousComponent, NotFoundComponent]
 })
 export class MiscellaneousModule {}

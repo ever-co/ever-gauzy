@@ -3,13 +3,11 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { NgxDaterangepickerMd as NgxDateRangePickerMd } from 'ngx-daterangepicker-material';
-import { TranslateModule } from './../../../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DateRangePickerComponent } from './date-range-picker.component';
 
 @NgModule({
-	declarations: [
-		DateRangePickerComponent
-	],
+	declarations: [DateRangePickerComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -20,8 +18,6 @@ import { DateRangePickerComponent } from './date-range-picker.component';
 		NbButtonModule,
 		NbIconModule
 	],
-	exports: [
-		DateRangePickerComponent
-	]
+	exports: [DateRangePickerComponent]
 })
 export class DateRangePickerModule {}

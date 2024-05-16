@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GoalTemplateSelectComponent } from './goal-template-select.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbInputModule,
@@ -10,9 +10,9 @@ import {
 	NbSelectModule,
 	NbIconModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GoalTemplateSelectComponent } from './goal-template-select.component';
 import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.module';
-import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	declarations: [GoalTemplateSelectComponent],

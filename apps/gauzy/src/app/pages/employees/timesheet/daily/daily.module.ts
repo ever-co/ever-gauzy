@@ -15,7 +15,7 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -43,14 +43,14 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		NbCheckboxModule,
 		NbContextMenuModule,
 		NbDatepickerModule,
-		NbDialogModule,		
+		NbDialogModule,
 		NbIconModule,
 		NbPopoverModule,
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
 		TranslateModule,
-		SharedModule,		
+		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,

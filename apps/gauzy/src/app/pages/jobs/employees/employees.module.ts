@@ -11,14 +11,14 @@ import {
 	NbToggleModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../../../@shared/shared.module';
 import { SmartTableToggleModule } from '../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 
 @NgModule({
@@ -44,4 +44,4 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		WorkInProgressModule
 	]
 })
-export class EmployeesModule { }
+export class EmployeesModule {}

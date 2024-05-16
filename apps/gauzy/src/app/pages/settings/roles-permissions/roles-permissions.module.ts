@@ -14,7 +14,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RolePermissionsService } from '../../../@core/services';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { RolesPermissionsRoutingModule } from './roles-permissions-routing.module';
 import { RolesPermissionsComponent } from './roles-permissions.component';
 

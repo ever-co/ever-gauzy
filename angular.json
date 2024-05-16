@@ -44,7 +44,12 @@
 							"apps/gauzy/src/favicon.ico",
 							"apps/gauzy/src/assets",
 							"apps/gauzy/src/manifest.json",
-							"apps/gauzy/src/silent-refresh.html"
+							"apps/gauzy/src/silent-refresh.html",
+							{
+								"glob": "**/*",
+								"input": "packages/ui-sdk/src/lib/i18n/assets/i18n",
+								"output": "assets/i18n/"
+							}
 						],
 						"styles": [
 							"node_modules/@nebular/theme/styles/prebuilt/default.css",
@@ -438,6 +443,11 @@
 								"input": "apps/desktop/src/",
 								"ignore": ["**/*.ts"],
 								"output": ""
+							},
+							{
+								"glob": "**/*",
+								"input": "packages/ui-sdk/src/lib/i18n/assets/i18n",
+								"output": "assets/i18n/"
 							}
 						],
 						"styles": [
@@ -998,7 +1008,12 @@
 							"apps/gauzy/src/favicon.ico",
 							"apps/gauzy/src/assets",
 							"apps/gauzy/src/manifest.json",
-							"apps/gauzy/src/silent-refresh.html"
+							"apps/gauzy/src/silent-refresh.html",
+							{
+								"glob": "**/*",
+								"input": "packages/ui-sdk/src/lib/i18n/assets/i18n",
+								"output": "assets/i18n/"
+							}
 						],
 						"styles": [
 							"node_modules/bootstrap/dist/css/bootstrap.css",

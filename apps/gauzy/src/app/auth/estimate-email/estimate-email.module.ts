@@ -4,7 +4,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { CommonModule } from '@angular/common';
 import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [CommonModule, NbCardModule, NbSpinnerModule, TranslateModule],

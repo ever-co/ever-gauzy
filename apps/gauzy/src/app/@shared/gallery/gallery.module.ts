@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbButtonModule, NbDialogModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { GalleryComponent } from './gallery.component';
 import { GalleryDirective } from './gallery.directive';
 import { SharedModule } from '../shared.module';
-import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [

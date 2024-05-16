@@ -11,9 +11,9 @@ import {
 	NbCardModule,
 	NbSelectModule,
 	NbToggleModule,
-  NbButtonModule
+	NbButtonModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
@@ -30,7 +30,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		FormsModule,
 		NbToggleModule,
 		HeaderTitleModule,
-    NbButtonModule
+		NbButtonModule
 	]
 })
 export class AllReportModule {}

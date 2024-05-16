@@ -24,10 +24,10 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
@@ -54,9 +54,9 @@ import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagin
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
-		PaginationV2Module,
+		PaginationV2Module
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	providers: [RequestApprovalService]
 })
-export class ApprovalsModule { }
+export class ApprovalsModule {}

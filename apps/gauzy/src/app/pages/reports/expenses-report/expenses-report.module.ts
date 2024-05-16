@@ -3,13 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ExpensesReportRoutingModule } from './expenses-report-routing.module';
 import { ExpensesReportComponent } from './expenses-report/expenses-report.component';
 import { FormsModule } from '@angular/forms';
-import {
-	NbIconModule,
-	NbSpinnerModule,
-	NbCardModule,
-	NbSelectModule
-} from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ExpensesReportGridModule } from '../../../@shared/report/expenses-report-grid/expenses-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
@@ -34,7 +29,7 @@ import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-c
 		LineChartModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyFiltersModule,
+		GauzyFiltersModule,
 		ExpenseCategorySelectModule
 	]
 })

@@ -8,11 +8,11 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '../../translate/translate.module';
 import { CandidateStore, EmployeeStore } from '../../../@core/services';
 
 @NgModule({
