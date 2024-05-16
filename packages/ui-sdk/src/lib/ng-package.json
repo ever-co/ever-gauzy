@@ -1,7 +1,10 @@
 {
 	"$schema": "../../../../node_modules/ng-packagr/ng-package.schema.json",
 	"dest": "../../../../dist/packages/ui-sdk",
+	"allowedNonPeerDependencies": ["."],
+	"assets": ["./i18n/assets/i18n/*.*", "./i18n/assets/i18n"],
 	"lib": {
-		"entryFile": "./public-api.ts"
+		"entryFile": "./public-api.ts",
+		"styleIncludePaths": []
 	}
 }
