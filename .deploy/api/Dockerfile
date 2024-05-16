@@ -161,6 +161,8 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
+COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
+COPY --chown=node:node packages/ui-sdk/package.json ./packages/job-search-ui/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
@@ -219,6 +221,8 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-search/package.json ./packages/plugins/job-search/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
+COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
+COPY --chown=node:node packages/ui-sdk/package.json ./packages/job-search-ui/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/
