@@ -72,8 +72,6 @@
 		"@ng-maps/google": "5.0.4",
 		"@ng-select/ng-select": "^11.2.0",
 		"@ngneat/until-destroy": "^9.2.0",
-		"@ngx-translate/core": "^14.0.0",
-		"@ngx-translate/http-loader": "^7.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
 		"@sentry/browser": "^7.90.0",
 		"@sentry/node": "^7.101.1",
