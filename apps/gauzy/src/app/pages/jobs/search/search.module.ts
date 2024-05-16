@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { SearchRoutingModule } from './search-routing.module';
 import { SearchComponent } from './search/search.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../../@shared/shared.module';
 import {
 	NbButtonModule,
@@ -24,7 +24,7 @@ import { DialogsModule } from '../../../@shared/dialogs';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule } from '@nebular/theme';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -54,4 +54,4 @@ import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pa
 		PaginationV2Module
 	]
 })
-export class SearchModule { }
+export class SearchModule {}

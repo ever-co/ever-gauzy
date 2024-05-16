@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module'; // deepscan-disable-line
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
+import { ThemeModule } from '../../@theme/theme.module';
 import { WorkInProgressComponent } from './work-in-progress.component';
 import { WorkInProgressRoutingModule } from './work-in-progress-routing.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [WorkInProgressRoutingModule, ThemeModule, NbCardModule, NbIconModule, TranslateModule],

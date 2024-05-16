@@ -12,6 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorsComponent } from './vendors.component';
 import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
 import { VendorsRoutingModule } from './vendors-routing.module';
@@ -20,7 +21,6 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../@shared/shared.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';

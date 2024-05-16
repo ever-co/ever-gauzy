@@ -1,13 +1,6 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import { CommonModule } from '@angular/common';
-import { AlertComponent } from './alert/alert.component';
-import { ConfirmComponent } from './confirm/confirm.component';
-import { PromptComponent } from './prompt/prompt.component';
-import { AlertDirective } from './directive/alert.directive';
-import { ConfirmDirective } from './directive/confirm.directive';
-import { PromptDirective } from './directive/prompt.directive';
 import {
 	NbDialogModule,
 	NbRadioModule,
@@ -23,7 +16,14 @@ import {
 	NbBadgeModule,
 	NbTagModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { AlertComponent } from './alert/alert.component';
+import { ConfirmComponent } from './confirm/confirm.component';
+import { PromptComponent } from './prompt/prompt.component';
+import { AlertDirective } from './directive/alert.directive';
+import { ConfirmDirective } from './directive/confirm.directive';
+import { PromptDirective } from './directive/prompt.directive';
+
 import { QuickActionsComponent } from './quick-actions/quick-actions.component';
 
 const directives = [AlertDirective, ConfirmDirective, PromptDirective];

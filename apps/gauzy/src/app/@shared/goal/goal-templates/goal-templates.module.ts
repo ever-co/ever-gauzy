@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { GoalTemplatesComponent } from './goal-templates.component';
-import { NbCardModule, NbInputModule, NbButtonModule, NbSelectModule } from '@nebular/theme';
 import { ReactiveFormsModule } from '@angular/forms';
-import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
+import { NbCardModule, NbInputModule, NbButtonModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GoalTemplatesComponent } from './goal-templates.component';
+import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.module';
 
 @NgModule({
 	declarations: [GoalTemplatesComponent],

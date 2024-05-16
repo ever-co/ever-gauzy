@@ -1,15 +1,9 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-	NbDialogModule,
-	NbCardModule,
-	NbButtonModule,
-	NbIconModule,
-	NbSpinnerModule
-} from '@nebular/theme';
+import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
 import { ShareModule } from './../../../../share/share.module';
@@ -35,7 +29,7 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 		SharedModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
-		GauzyFiltersModule,
+		GauzyFiltersModule
 	]
 })
 export class CalendarModule {}

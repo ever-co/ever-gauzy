@@ -13,8 +13,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
 import { InviteService, RoleService } from '../../../@core/services';
 import { SharedModule } from '../../shared.module';

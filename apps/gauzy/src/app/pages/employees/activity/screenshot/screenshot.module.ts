@@ -1,15 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import {
-	NbSpinnerModule,
-	NbButtonModule,
-	NbDialogModule,
-	NbIconModule,
-	NbCheckboxModule
-} from '@nebular/theme';
+import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 import { ScreenshotRoutingModule } from './screenshot-routing.module';
 import { ScreenshotComponent } from './screenshot/screenshot.component';

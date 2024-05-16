@@ -16,6 +16,7 @@ import {
 	NbActionsModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 import { OrganizationsService } from '../../@core/services/organizations.service';
@@ -42,7 +43,6 @@ import { UserIdService } from '../../@core/services/edit-user-data.service';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';

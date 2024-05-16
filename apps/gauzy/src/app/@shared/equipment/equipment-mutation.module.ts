@@ -1,4 +1,3 @@
-import { EquipmentService } from '../../@core/services/equipment.service';
 import { NgModule } from '@angular/core';
 import {
 	NbIconModule,
@@ -9,13 +8,14 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '../../@core/services/store.service';
+import { EquipmentService } from '../../@core/services/equipment.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ImageAssetService } from '../../@core';
+import { ImageAssetService } from '../../@core/services';
 
 @NgModule({
 	imports: [

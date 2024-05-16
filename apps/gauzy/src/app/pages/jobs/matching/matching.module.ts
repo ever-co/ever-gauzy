@@ -16,7 +16,7 @@ import {
 	NbRadioModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { MomentModule } from 'ngx-moment';
 import { SharedModule } from '../../../@shared/shared.module';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';

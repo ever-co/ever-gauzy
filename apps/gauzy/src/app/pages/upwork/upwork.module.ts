@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkRoutingModule } from './upwork-routing.module';
 import {
@@ -18,7 +19,7 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -27,7 +28,6 @@ import { SyncDataSelectionComponent } from './components/sync-data-selection/syn
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [

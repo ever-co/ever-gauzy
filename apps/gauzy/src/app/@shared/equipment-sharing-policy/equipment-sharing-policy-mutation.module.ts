@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbCardModule,
@@ -8,12 +9,11 @@ import {
 	NbCheckboxModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
