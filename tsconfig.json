@@ -26,7 +26,7 @@
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
 			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
-			"ckeditor4-angular/*": ["node_modules/ckeditor4-angular/*"],
+			"ckeditor4-angular": ["node_modules/ckeditor4-angular"],
 			"@ngx-translate/*": ["./apps/gauzy/node_modules/@ngx-translate/*"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
 			"swiper_angular": ["./node_modules/swiper/angular"],
