@@ -41,7 +41,6 @@
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
-		"@gauzy/common-angular": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@kurkle/color": "^0.2.0",
