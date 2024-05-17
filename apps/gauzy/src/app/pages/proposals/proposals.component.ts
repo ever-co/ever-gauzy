@@ -20,7 +20,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import {
 	ClickableLinkComponent,
 	ContactLinksComponent,

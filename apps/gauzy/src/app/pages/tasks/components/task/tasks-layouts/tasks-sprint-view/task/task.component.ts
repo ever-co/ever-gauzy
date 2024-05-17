@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, TaskStatusesService } from '../../../../../../../@core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

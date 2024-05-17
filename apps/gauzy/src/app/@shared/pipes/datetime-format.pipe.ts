@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 import * as moment from 'moment';
 import { filter } from 'rxjs/operators';
 import { IOrganization, RegionsEnum } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '../../@core/services';
 
@@ -12,7 +12,6 @@ import { Store } from '../../@core/services';
 	pure: false
 })
 export class DateTimeFormatPipe implements PipeTransform {
-
 	timeFormat: number = 12;
 	dateFormat: string = 'd MMMM, y H:mm';
 	regionCode: string = RegionsEnum.EN;
@@ -25,17 +24,19 @@ export class DateTimeFormatPipe implements PipeTransform {
 			)
 			.subscribe((organization: IOrganization) => {
 				const { regionCode, dateFormat, timeFormat } = organization;
-				if (regionCode) { this.regionCode = regionCode; }
-				if (dateFormat) { this.dateFormat = dateFormat; }
-				if (timeFormat) { this.timeFormat = timeFormat; }
+				if (regionCode) {
+					this.regionCode = regionCode;
+				}
+				if (dateFormat) {
+					this.dateFormat = dateFormat;
+				}
+				if (timeFormat) {
+					this.timeFormat = timeFormat;
+				}
 			});
 	}
 
-	transform(
-		value: Date | string | number | null | undefined,
-		format?: string,
-		locale?: string
-	) {
+	transform(value: Date | string | number | null | undefined, format?: string, locale?: string) {
 		if (!value) {
 			return;
 		}

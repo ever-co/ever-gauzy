@@ -4,7 +4,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
 import { IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange, toParams } from '@gauzy/common-angular';
+import { distinctUntilChange, toParams } from '@gauzy/ui-sdk/common';
 import { Store } from '../../../../../@core/services';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
@@ -13,7 +13,6 @@ import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 	templateUrl: './wizard.component.html'
 })
 export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	/**
 	 * Event listener function for handling the 'window:onSuccess' custom event.
 	 * This function is triggered when a custom event named 'window:onSuccess' occurs,
@@ -46,7 +45,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
 		private readonly _store: Store
-	) { }
+	) {}
 
 	/**
 	 * This method is part of the Angular lifecycle and is called when the component is initialized.
@@ -92,7 +91,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 				// Ensure that the organization is valid (truthy) before proceeding
 				filter((organization: IOrganization) => !!organization),
 				// Set the 'organization' property to the selected organization
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				// Call the 'startGitHubAppInstallation' method
 				tap(() => this.startGitHubAppInstallation()),
 				// Use the 'untilDestroyed' operator to automatically unsubscribe when the component is destroyed
@@ -114,10 +113,10 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 
 		// Define the query parameters for the authorization request
 		const queryParams = toParams({
-			'redirect_uri': `${redirect_uri}`,
-			'client_id': `${client_id}`,
-			'scope': 'user',
-			'state': `${postInstallURL}`
+			redirect_uri: `${redirect_uri}`,
+			client_id: `${client_id}`,
+			scope: 'user',
+			state: `${postInstallURL}`
 		});
 
 		// Construct the external URL for GitHub authorization with the query parameters
@@ -173,7 +172,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		}
 
 		// Specify the width and height for the popup window
-		const width = 600, height = 600;
+		const width = 600,
+			height = 600;
 
 		// Calculate the left and top positions for the popup window
 		const left = window.innerWidth - width; // Adjust the left position to place it on the right side
@@ -194,13 +194,15 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
-				'redirect_uri': `${redirect_uri}`,
-				'state': `${postInstallURL}`,
+				redirect_uri: `${redirect_uri}`,
+				state: `${postInstallURL}`
 			});
 
 			// Construct the external URL for GitHub authorization with the query parameters
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${environment.GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
+			const url = `https://github.com/apps/${
+				environment.GAUZY_GITHUB_APP_NAME
+			}/installations/new?${queryParams.toString()}`;
 			console.log('External Github App Installation URL: %s', url);
 
 			/** Navigate to the external URL with query parameters */
@@ -217,7 +219,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 				menubar=no,
 				scrollbars=yes,
 				resizable=yes,
-			`);
+			`
+			);
 		}
 	}
 
@@ -257,7 +260,6 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			this._router.navigate(['/pages/integrations']);
 		}, ms); // Delay for 'ms' milliseconds before redirecting
 	}
-
 
 	/**
 	 * Angular lifecycle hook called when the component is destroyed.

@@ -2,18 +2,20 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { IBaseRelationsEntityModel, IIntegration, IIntegrationTenant, IIntegrationTenantFindInput } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import {
+	IBaseRelationsEntityModel,
+	IIntegration,
+	IIntegrationTenant,
+	IIntegrationTenantFindInput
+} from '@gauzy/contracts';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class IntegrationsService {
-
-	constructor(
-		private readonly _http: HttpClient
-	) { }
+	constructor(private readonly _http: HttpClient) {}
 
 	fetchIntegrations(
 		integrationTypeId: string,
@@ -34,13 +36,9 @@ export class IntegrationsService {
 		return this._http.get<any[]>(`${API_PREFIX}/integration/types`).pipe(
 			map((groups) =>
 				groups.reduce((prev, current) => {
-					const index = prev.findIndex(
-						(p) => p.order === current.order
-					);
+					const index = prev.findIndex((p) => p.order === current.order);
 					if (index > -1) {
-						prev[index].integrationTypes = prev[
-							index
-						].integrationTypes.concat({
+						prev[index].integrationTypes = prev[index].integrationTypes.concat({
 							name: current.name,
 							id: current.id
 						});
@@ -49,9 +47,7 @@ export class IntegrationsService {
 					return prev.concat({
 						groupName: current.groupName,
 						order: current.order,
-						integrationTypes: [
-							{ name: current.name, id: current.id }
-						]
+						integrationTypes: [{ name: current.name, id: current.id }]
 					});
 				}, [])
 			)

@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	CrudActionEnum,
 	IDateRangePicker,

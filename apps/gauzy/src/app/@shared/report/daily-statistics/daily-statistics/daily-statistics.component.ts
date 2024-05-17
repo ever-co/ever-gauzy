@@ -6,7 +6,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { EmployeesService, OrganizationProjectsService, Store } from './../../../../@core/services';
 import { TimesheetStatisticsService } from '../../../timesheet/timesheet-statistics.service';

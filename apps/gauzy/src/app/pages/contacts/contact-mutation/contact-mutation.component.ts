@@ -14,7 +14,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';

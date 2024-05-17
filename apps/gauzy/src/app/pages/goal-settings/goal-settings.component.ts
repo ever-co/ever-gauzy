@@ -11,12 +11,7 @@ import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.compo
 import { Store } from '../../@core/services/store.service';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
-import {
-	ComponentLayoutStyleEnum,
-	GoalOwnershipEnum,
-	IGoalGeneralSetting,
-	IOrganization
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
@@ -24,7 +19,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +28,6 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 	styleUrls: ['./goal-settings.component.scss']
 })
 export class GoalSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	smartTableData = new LocalDataSource();
 	generalSettingsForm: UntypedFormGroup;
 	smartTableSettings: object;
@@ -77,18 +71,16 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		});
 		this._loadTableSettings(null);
 		this._applyTranslationOnSmartTable();
-		this.store.selectedOrganization$
-			.pipe(untilDestroyed(this))
-			.subscribe(async (organization) => {
-				if (organization) {
-					this.organization = organization;
-					this.selectedOrganizationId = organization.id;
-					if (this.selectedTab) {
-						this._refresh$.next(true);
-						await this._loadTableData(this.selectedTab);
-					}
+		this.store.selectedOrganization$.pipe(untilDestroyed(this)).subscribe(async (organization) => {
+			if (organization) {
+				this.organization = organization;
+				this.selectedOrganizationId = organization.id;
+				if (this.selectedTab) {
+					this._refresh$.next(true);
+					await this._loadTableData(this.selectedTab);
 				}
-			});
+			}
+		});
 		this.pagination$
 			.pipe(
 				distinctUntilChange(),
@@ -106,11 +98,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.goalTimeFrames = [])),
 				untilDestroyed(this)
@@ -124,15 +112,9 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.goalTimeFrames = [])),
 				tap(() => this._goalSettings$.next(true)),
 				untilDestroyed(this)
@@ -145,15 +127,10 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 
 	async saveGeneralSettings() {
 		await this.goalSettingService
-			.updateGeneralSettings(
-				this.goalGeneralSettings.id,
-				this.generalSettingsForm.value
-			)
+			.updateGeneralSettings(this.goalGeneralSettings.id, this.generalSettingsForm.value)
 			.then((res) => {
 				if (res) {
-					this.toastrService.success(
-						'TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED'
-					);
+					this.toastrService.success('TOASTR.MESSAGE.GOAL_GENERAL_SETTING_UPDATED');
 					this._refresh$.next(true);
 					this._loadTableData(null);
 				}
@@ -205,30 +182,26 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 				this.smartTableData.load(res.items);
 			});
 		} else if (tab === 'timeframe') {
-			await this.goalSettingService
-				.getAllTimeFrames(findObj)
-				.then((res) => {
-					if (!!res) {
-						const mappedItems = [];
-						res.items.map((item) => {
-							item = Object.assign({}, item, {
-								status: this.statusMapper(item.status)
-							});
-							mappedItems.push(item);
+			await this.goalSettingService.getAllTimeFrames(findObj).then((res) => {
+				if (!!res) {
+					const mappedItems = [];
+					res.items.map((item) => {
+						item = Object.assign({}, item, {
+							status: this.statusMapper(item.status)
 						});
-						this.smartTableData.load(mappedItems);
-					}
-				});
-		} else {
-			await this.goalSettingService
-				.getAllGeneralSettings(findObj)
-				.then((generalSettings) => {
-					const { items } = generalSettings;
-					this.goalGeneralSettings = items.pop();
-					this.generalSettingsForm.patchValue({
-						...this.goalGeneralSettings
+						mappedItems.push(item);
 					});
+					this.smartTableData.load(mappedItems);
+				}
+			});
+		} else {
+			await this.goalSettingService.getAllGeneralSettings(findObj).then((generalSettings) => {
+				const { items } = generalSettings;
+				this.goalGeneralSettings = items.pop();
+				this.generalSettingsForm.patchValue({
+					...this.goalGeneralSettings
 				});
+			});
 		}
 		this._loadGridLayoutData();
 		this.setPagination({
@@ -240,9 +213,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 
 	private async _loadGridLayoutData() {
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-			this.goalTimeFrames.push(
-				...(await this.smartTableData.getElements())
-			);
+			this.goalTimeFrames.push(...(await this.smartTableData.getElements()));
 		}
 	}
 
@@ -299,9 +270,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		} else if (tab === 'timeframe') {
 			this.smartTableSettings = {
 				...this.smartTableSettings,
-				noDataMessage: this.getTranslation(
-					'SM_TABLE.NO_DATA.TIME_FRAME'
-				),
+				noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.TIME_FRAME'),
 				columns: {
 					name: {
 						title: this.getTranslation('SM_TABLE.NAME'),
@@ -344,15 +313,9 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	}
 
 	async editTimeFrame(source, selectedItem?: any) {
-		const preDefinedTimeFrames = this.preDefinedTimeFrames.filter(
-			(timeFrame) => {
-				return (
-					this.goalTimeFrames.findIndex(
-						(goalTimeFrame) => goalTimeFrame.name === timeFrame.name
-					) === -1
-				);
-			}
-		);
+		const preDefinedTimeFrames = this.preDefinedTimeFrames.filter((timeFrame) => {
+			return this.goalTimeFrames.findIndex((goalTimeFrame) => goalTimeFrame.name === timeFrame.name) === -1;
+		});
 		if (source === 'add') {
 			this.selectedTimeFrame = null;
 		} else {
@@ -418,12 +381,8 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: this.translateService.instant(
-						'GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_TITLE'
-					),
-					message: this.translateService.instant(
-						'GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_CONFIRMATION'
-					),
+					title: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_TITLE'),
+					message: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_CONFIRMATION'),
 					status: 'danger'
 				}
 			},
@@ -432,20 +391,17 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				await this.goalSettingService
-					.deleteTimeFrame(this.selectedTimeFrame.id)
-					.then(async (res) => {
-						if (res) {
-							this.toastrService.success(
-								'TOASTR.MESSAGE.TIME_FRAME_DELETED',
-								{ name: this.selectedTimeFrame.name }
-							);
-							this.clearItem();
-							this._refresh$.next(true);
-							this._loadTableSettings('timeframe');
-							await this._loadTableData('timeframe');
-						}
-					});
+				await this.goalSettingService.deleteTimeFrame(this.selectedTimeFrame.id).then(async (res) => {
+					if (res) {
+						this.toastrService.success('TOASTR.MESSAGE.TIME_FRAME_DELETED', {
+							name: this.selectedTimeFrame.name
+						});
+						this.clearItem();
+						this._refresh$.next(true);
+						this._loadTableSettings('timeframe');
+						await this._loadTableData('timeframe');
+					}
+				});
 			}
 		}
 	}
@@ -460,12 +416,8 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
 				alertOptions: {
-					title: this.translateService.instant(
-						'GOALS_PAGE.SETTINGS.DELETE_KPI_TITLE'
-					),
-					message: this.translateService.instant(
-						'GOALS_PAGE.SETTINGS.DELETE_KPI_CONFIRMATION'
-					),
+					title: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_KPI_TITLE'),
+					message: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_KPI_CONFIRMATION'),
 					status: 'danger'
 				}
 			},
@@ -474,37 +426,29 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				await this.goalSettingService
-					.deleteKPI(this.selectedKPI.id)
-					.then(async (res) => {
-						if (res) {
-							this.toastrService.success(
-								'TOASTR.MESSAGE.KPI_DELETED'
-							);
-							this.clearItem();
-							this._refresh$.next(true);
-							this._loadTableSettings('kpi');
-							await this._loadTableData('kpi');
-						}
-					});
+				await this.goalSettingService.deleteKPI(this.selectedKPI.id).then(async (res) => {
+					if (res) {
+						this.toastrService.success('TOASTR.MESSAGE.KPI_DELETED');
+						this.clearItem();
+						this._refresh$.next(true);
+						this._loadTableSettings('kpi');
+						await this._loadTableData('kpi');
+					}
+				});
 			}
 		}
 	}
 
 	private _applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._loadTableSettings(null);
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._loadTableSettings(null);
+		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	async addTemplate() {
-		const goalTemplateDialog = this.dialogService.open(
-			GoalTemplatesComponent
-		);
+		const goalTemplateDialog = this.dialogService.open(GoalTemplatesComponent);
 		await firstValueFrom(goalTemplateDialog.onClose);
 	}
 
@@ -535,11 +479,14 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	 */
 	private statusMapper = (value: string): { text: string; class: string } => {
 		const badgeClass = value === 'Active' ? 'success' : 'danger';
-		const translatedText = value === 'Active' ? this.getTranslation('PIPELINES_PAGE.ACTIVE') : this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		const translatedText =
+			value === 'Active'
+				? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+				: this.getTranslation('PIPELINES_PAGE.INACTIVE');
 
 		return {
 			text: translatedText,
-			class: badgeClass,
+			class: badgeClass
 		};
 	};
 }

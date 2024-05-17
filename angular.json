@@ -71,7 +71,6 @@
 							"node_modules/chart.js/dist/chart.js"
 						],
 						"allowedCommonJsDependencies": [
-							"@gauzy/common-angular",
 							"@gauzy/contracts",
 							"@gauzy/integration-hubstaff",
 							"brace",
@@ -83,7 +82,8 @@
 							"moment-timezone",
 							"moment",
 							"randomcolor",
-							"underscore.string"
+							"underscore.string",
+							"slugify"
 						]
 					},
 					"configurations": {

@@ -12,7 +12,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';

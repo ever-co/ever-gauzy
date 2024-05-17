@@ -15,7 +15,7 @@ import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms'
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick, isEmpty } from 'underscore';
-import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@env/environment';
 import { FormHelpers } from '../helpers';

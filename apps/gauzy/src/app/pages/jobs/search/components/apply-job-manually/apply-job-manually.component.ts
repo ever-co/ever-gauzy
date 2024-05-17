@@ -20,7 +20,7 @@ import {
 	IUser,
 	JobPostSourceEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
 import { environment } from '@env/environment';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';

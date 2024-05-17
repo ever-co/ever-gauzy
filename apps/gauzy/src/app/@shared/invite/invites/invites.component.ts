@@ -21,7 +21,7 @@ import {
 	IInvite,
 	InviteStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { InviteService, Store, ToastrService } from '../../../@core/services';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';

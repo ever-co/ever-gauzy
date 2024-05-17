@@ -9,17 +9,14 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class OrganizationContactService {
-
-	constructor(
-		private readonly http: HttpClient
-	) {}
+	constructor(private readonly http: HttpClient) {}
 
 	/**
 	 * Create organization contact
@@ -28,9 +25,7 @@ export class OrganizationContactService {
 	 * @returns
 	 */
 	create(input: IOrganizationContactCreateInput): Promise<IOrganizationContact> {
-		return firstValueFrom(
-			this.http.post<IOrganizationContact>( `${API_PREFIX}/organization-contact`, input)
-		);
+		return firstValueFrom(this.http.post<IOrganizationContact>(`${API_PREFIX}/organization-contact`, input));
 	}
 
 	/**
@@ -41,15 +36,10 @@ export class OrganizationContactService {
 	 * @returns
 	 */
 	update(id: IOrganizationContact['id'], input: IOrganizationContactUpdateInput): Promise<IOrganizationContact> {
-		return firstValueFrom(
-			this.http.put<IOrganizationContact>(`${API_PREFIX}/organization-contact/${id}`, input)
-		);
+		return firstValueFrom(this.http.put<IOrganizationContact>(`${API_PREFIX}/organization-contact/${id}`, input));
 	}
 
-	getAllByEmployee(
-		id: IEmployee['id'],
-		where?: IOrganizationContactFindInput
-	): Promise<IOrganizationContact[]> {
+	getAllByEmployee(id: IEmployee['id'], where?: IOrganizationContactFindInput): Promise<IOrganizationContact[]> {
 		return firstValueFrom(
 			this.http.get<IOrganizationContact[]>(`${API_PREFIX}/organization-contact/employee/${id}`, {
 				params: toParams({ ...where })
@@ -60,52 +50,31 @@ export class OrganizationContactService {
 	getById(id: string, tenantId: string, relations?: string[]) {
 		const data = JSON.stringify({ relations, tenantId });
 		return firstValueFrom(
-			this.http
-			.get<IOrganizationContact>(
-				`${API_PREFIX}/organization-contact/${id}`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<IOrganizationContact>(`${API_PREFIX}/organization-contact/${id}`, {
+				params: { data }
+			})
 		);
 	}
 
-	getAll(
-		relations?: string[],
-		findInput?: IOrganizationContactFindInput
-	): Promise<{ items: any[]; total: number }> {
+	getAll(relations?: string[], findInput?: IOrganizationContactFindInput): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationContact[]; total: number }>(
-				`${API_PREFIX}/organization-contact`,
-				{ params: toParams({ data }) }
-			)
+			this.http.get<{ items: IOrganizationContact[]; total: number }>(`${API_PREFIX}/organization-contact`, {
+				params: toParams({ data })
+			})
 		);
 	}
 
-	getByName(
-		relations?: string[],
-		findInput?: string
-	): Promise<IOrganizationContactFindInput> {
+	getByName(relations?: string[], findInput?: string): Promise<IOrganizationContactFindInput> {
 		const data = JSON.stringify({ relations, findInput });
-		return firstValueFrom(
-			this.http
-			.get(`${API_PREFIX}/organization-contact`, { params: { data } })
-		);
+		return firstValueFrom(this.http.get(`${API_PREFIX}/organization-contact`, { params: { data } }));
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization-contact/employee`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-contact/employee`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/organization-contact/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/organization-contact/${id}`));
 	}
 }

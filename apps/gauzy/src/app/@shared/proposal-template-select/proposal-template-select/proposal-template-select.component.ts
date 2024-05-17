@@ -1,15 +1,8 @@
-import {
-	Component,
-	EventEmitter,
-	forwardRef,
-	Input,
-	OnInit,
-	Output
-} from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { IEmployeeProposalTemplate, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services/store.service';
@@ -29,13 +22,12 @@ import { ProposalTemplateService } from '../../../pages/jobs/proposal-template/p
 	]
 })
 export class ProposalTemplateSelectComponent implements OnInit {
-
 	proposalTemplates: IEmployeeProposalTemplate[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() selectedChange: EventEmitter<any> = new EventEmitter();
 
@@ -43,8 +35,8 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	@Input() multiple = false;
 
 	/*
-	* Getter & Setter for employeeId
-	*/
+	 * Getter & Setter for employeeId
+	 */
 	private _employeeId: string;
 	public get employeeId(): string {
 		return this._employeeId;
@@ -64,10 +56,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 		return this._proposalTemplateId;
 	}
 
-	constructor(
-		private readonly _proposalTemplateService: ProposalTemplateService,
-		private readonly _store: Store
-	) { }
+	constructor(private readonly _proposalTemplateService: ProposalTemplateService, private readonly _store: Store) {}
 
 	ngOnInit() {
 		this.subject$
@@ -81,7 +70,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -125,7 +114,7 @@ export class ProposalTemplateSelectComponent implements OnInit {
 				where: {
 					organizationId,
 					tenantId,
-					...(employeeId ? { employeeId } : {}),
+					...(employeeId ? { employeeId } : {})
 				}
 			});
 			this.proposalTemplates = items;
@@ -138,8 +127,8 @@ export class ProposalTemplateSelectComponent implements OnInit {
 	defaultSelectedTemplate() {
 		const proposalTemplate = this.proposalTemplates.find(
 			({ isDefault }: IEmployeeProposalTemplate) => isDefault === true
-		)
-		this.proposalTemplateId = (proposalTemplate)?.id || null;
+		);
+		this.proposalTemplateId = proposalTemplate?.id || null;
 		this.onSelectedChange(this.proposalTemplateId);
 	}
 }

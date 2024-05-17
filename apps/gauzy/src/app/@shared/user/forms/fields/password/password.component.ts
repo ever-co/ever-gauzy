@@ -14,7 +14,7 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/f
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime } from 'rxjs/operators';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { NbComponentSize } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 

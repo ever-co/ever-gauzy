@@ -4,7 +4,7 @@ import { firstValueFrom, Observable, throwError } from 'rxjs';
 import { ITask, IGetTaskOptions, IGetTaskByEmployeeOptions, IPagination, IEmployee } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '../constants/app.constants';

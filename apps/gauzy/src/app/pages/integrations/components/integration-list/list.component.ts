@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	HttpStatus,
 	IIntegration,

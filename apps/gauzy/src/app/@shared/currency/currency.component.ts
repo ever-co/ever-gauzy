@@ -14,7 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CurrencyService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from './../../../environments/environment';

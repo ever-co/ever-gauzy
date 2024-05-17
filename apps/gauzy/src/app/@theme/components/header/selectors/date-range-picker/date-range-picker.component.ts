@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { OrganizationsService, Store } from './../../../../../@core/services';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';

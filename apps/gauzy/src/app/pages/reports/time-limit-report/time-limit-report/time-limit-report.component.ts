@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { IGetTimeLimitReportInput, ITimeLimitReport, ITimeLogFilters } from '@gauzy/contracts';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';

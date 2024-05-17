@@ -12,7 +12,7 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { Environment } from '@env/model';
 import { environment } from '@env/environment';

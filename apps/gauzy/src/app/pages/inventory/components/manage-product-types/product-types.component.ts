@@ -8,7 +8,7 @@ import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ProductTypeService, Store, ToastrService } from '../../../../@core/services';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';

@@ -5,7 +5,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { Store, ToastrService } from './../../../../@core/services';

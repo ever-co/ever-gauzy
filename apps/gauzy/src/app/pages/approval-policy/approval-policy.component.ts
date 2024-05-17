@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';

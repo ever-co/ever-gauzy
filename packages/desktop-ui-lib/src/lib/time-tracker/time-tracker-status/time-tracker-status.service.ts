@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ITimerStatus } from '@gauzy/contracts';
 import {
 	BehaviorSubject,
@@ -14,7 +14,7 @@ import {
 	Subject,
 	switchMap,
 	tap,
-	timer,
+	timer
 } from 'rxjs';
 import { TimerIconFactory } from './factory';
 import { ITimerIcon, IRemoteTimer } from './interfaces';
@@ -32,23 +32,17 @@ export class TimeTrackerStatusService {
 	private _external$: Subject<IRemoteTimer> = new Subject<IRemoteTimer>();
 	private _backgroundSync$: Observable<number> = timer(BACKGROUND_SYNC_INTERVAL);
 	private _remoteTimer: IRemoteTimer;
-	constructor(
-		private readonly _timeTrackerService: TimeTrackerService,
-		private readonly _store: Store
-	) {
+	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		defer(() =>
 			of<boolean>(
-				!!this._store.token &&
-					!this._store.isOffline &&
-					!!this._store.user.employeeId &&
-					!!this._store.tenantId
+				!!this._store.token && !this._store.isOffline && !!this._store.user.employeeId && !!this._store.tenantId
 			).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
 						? from(this.status()).pipe(
-							catchError(() => EMPTY),
-							untilDestroyed(this)
-						)
+								catchError(() => EMPTY),
+								untilDestroyed(this)
+						  )
 						: EMPTY
 				),
 				untilDestroyed(this)
@@ -58,17 +52,14 @@ export class TimeTrackerStatusService {
 				tap((status: ITimerStatus) => {
 					const remoteTimer = new RemoteTimer({
 						...status.lastLog,
-						duration: status.duration,
+						duration: status.duration
 					});
-					this._icon$.next(
-						TimerIconFactory.create(remoteTimer.source)
-					);
-					if (!remoteTimer.running || !remoteTimer.isExternalSource)
-						this._icon$.next(null);
+					this._icon$.next(TimerIconFactory.create(remoteTimer.source));
+					if (!remoteTimer.running || !remoteTimer.isExternalSource) this._icon$.next(null);
 					this._external$.next(remoteTimer);
 				}),
 				repeat({
-					delay: () => this._backgroundSync$,
+					delay: () => this._backgroundSync$
 				}),
 				untilDestroyed(this)
 			)

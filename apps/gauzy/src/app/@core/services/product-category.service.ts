@@ -7,7 +7,7 @@ import {
 	IProductCategoryTranslated
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -17,12 +17,7 @@ export class ProductCategoryService {
 	constructor(private http: HttpClient) {}
 
 	getById(id: string): Promise<IProductCategoryTranslatable> {
-		return firstValueFrom(
-			this.http
-			.get<IProductCategoryTranslatable>(
-				`${this.PRODUCT_CATEGORY_URL}/${id}`
-			)
-		);
+		return firstValueFrom(this.http.get<IProductCategoryTranslatable>(`${this.PRODUCT_CATEGORY_URL}/${id}`));
 	}
 
 	getAllTranslated(
@@ -33,24 +28,15 @@ export class ProductCategoryService {
 		});
 	}
 
-	create(
-		productTypeRequest: IProductCategoryTranslatable
-	): Promise<IProductCategoryTranslatable> {
+	create(productTypeRequest: IProductCategoryTranslatable): Promise<IProductCategoryTranslatable> {
 		return firstValueFrom(
-			this.http
-			.post<IProductCategoryTranslatable>(
-				`${this.PRODUCT_CATEGORY_URL}`,
-				productTypeRequest
-			)
+			this.http.post<IProductCategoryTranslatable>(`${this.PRODUCT_CATEGORY_URL}`, productTypeRequest)
 		);
 	}
 
-	update(
-		productTypeRequest: IProductCategoryTranslatable
-	): Promise<IProductCategoryTranslatable> {
+	update(productTypeRequest: IProductCategoryTranslatable): Promise<IProductCategoryTranslatable> {
 		return firstValueFrom(
-			this.http
-			.put<IProductCategoryTranslatable>(
+			this.http.put<IProductCategoryTranslatable>(
 				`${this.PRODUCT_CATEGORY_URL}/${productTypeRequest.id}`,
 				productTypeRequest
 			)
@@ -58,11 +44,6 @@ export class ProductCategoryService {
 	}
 
 	delete(id: string): Promise<IProductCategoryTranslatable> {
-		return firstValueFrom(
-			this.http
-			.delete<IProductCategoryTranslatable>(
-				`${this.PRODUCT_CATEGORY_URL}/${id}`
-			)
-		);
+		return firstValueFrom(this.http.delete<IProductCategoryTranslatable>(`${this.PRODUCT_CATEGORY_URL}/${id}`));
 	}
 }

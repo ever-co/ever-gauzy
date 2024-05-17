@@ -13,7 +13,7 @@ import {
 	EquipmentSharingParticipantEnum
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';

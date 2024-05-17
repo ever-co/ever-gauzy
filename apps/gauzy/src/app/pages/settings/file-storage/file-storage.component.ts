@@ -14,7 +14,7 @@ import {
 	PermissionsEnum,
 	SMTPSecureEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 

@@ -10,7 +10,7 @@ import {
 	IPaymentReportData,
 	IPaymentUpdateInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 import { firstValueFrom } from 'rxjs';
 
@@ -18,12 +18,9 @@ import { firstValueFrom } from 'rxjs';
 	providedIn: 'root'
 })
 export class PaymentService {
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
-	getAll(
-		relations: string[] = [],
-		where?: IPaymentFindInput
-	): Promise<IPagination<IPayment>> {
+	getAll(relations: string[] = [], where?: IPaymentFindInput): Promise<IPagination<IPayment>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IPayment>>(`${API_PREFIX}/payments`, {
 				params: toParams({ relations, where })
@@ -32,24 +29,15 @@ export class PaymentService {
 	}
 
 	add(payment: IPayment): Promise<IPayment> {
-		return firstValueFrom(
-			this.http
-				.post<IPayment>(`${API_PREFIX}/payments`, payment)
-		);
+		return firstValueFrom(this.http.post<IPayment>(`${API_PREFIX}/payments`, payment));
 	}
 
 	update(id: string, updateInput: IPaymentUpdateInput): Promise<IPayment> {
-		return firstValueFrom(
-			this.http
-				.put<IPayment>(`${API_PREFIX}/payments/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put<IPayment>(`${API_PREFIX}/payments/${id}`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.delete(`${API_PREFIX}/payments/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/payments/${id}`));
 	}
 
 	/**
@@ -63,9 +51,7 @@ export class PaymentService {
 		const params = toParams(request);
 
 		// Make an HTTP GET request to the payment report data endpoint
-		return await firstValueFrom(
-			this.http.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, { params })
-		);
+		return await firstValueFrom(this.http.get<IPaymentReportData[]>(`${API_PREFIX}/payments/report`, { params }));
 	}
 
 	/**
@@ -86,13 +72,12 @@ export class PaymentService {
 
 	sendReceipt(payment: IPayment, invoice: IInvoice): Promise<any> {
 		return firstValueFrom(
-			this.http
-				.post<any>(`${API_PREFIX}/payments/receipt`, {
-					params: {
-						payment,
-						invoice
-					}
-				})
+			this.http.post<any>(`${API_PREFIX}/payments/receipt`, {
+				params: {
+					payment,
+					invoice
+				}
+			})
 		);
 	}
 }

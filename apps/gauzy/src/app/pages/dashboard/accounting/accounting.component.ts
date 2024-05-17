@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { EmployeesService, EmployeeStatisticsService, Store, ToastrService } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart';

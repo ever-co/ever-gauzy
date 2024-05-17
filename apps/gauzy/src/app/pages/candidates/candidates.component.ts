@@ -15,7 +15,7 @@ import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';

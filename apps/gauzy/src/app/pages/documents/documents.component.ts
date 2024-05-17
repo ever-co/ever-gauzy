@@ -1,17 +1,7 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	OnDestroy,
-	TemplateRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
-import {
-	IOrganizationDocument,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { IOrganizationDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,16 +10,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '../../@core/constants';
-import {
-	DocumentDateTableComponent,
-	DocumentUrlTableComponent
-} from '../../@shared/table-components';
-import {
-	ErrorHandlingService,
-	OrganizationDocumentsService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
+import { ErrorHandlingService, OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
 import { ActivatedRoute } from '@angular/router';
 import {
 	IPaginationBase,
@@ -44,7 +26,6 @@ import { Subject } from 'rxjs/internal/Subject';
 	styleUrls: ['documents.component.scss']
 })
 export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	@ViewChild('uploadDoc') uploadDoc: UploadDocumentComponent;
 	@ViewChild('addEditTemplate') addEditTemplate: TemplateRef<any>;
 
@@ -122,10 +103,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this._loadDocuments()),
 				untilDestroyed(this)
@@ -133,10 +111,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.addEditTemplate, false)),
 				untilDestroyed(this)
@@ -162,10 +137,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout: ComponentLayoutStyleEnum) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout: ComponentLayoutStyleEnum) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.documentList = [])),
 				tap(() => this.subject$.next(true)),
@@ -187,9 +159,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 					type: 'string'
 				},
 				documentUrl: {
-					title: this.getTranslation(
-						'ORGANIZATIONS_PAGE.DOCUMENT_URL'
-					),
+					title: this.getTranslation('ORGANIZATIONS_PAGE.DOCUMENT_URL'),
 					type: 'custom',
 					renderComponent: DocumentUrlTableComponent
 				},
@@ -203,9 +173,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	submitForm() {
@@ -216,10 +184,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 		formValue.documentId = this.formDocument.get('documentId').value;
 
 		if (this.documentId !== null) {
-			formValue.documentUrl =
-				formValue.documentUrl === ''
-					? this.documentUrl
-					: formValue.documentUrl;
+			formValue.documentUrl = formValue.documentUrl === '' ? this.documentUrl : formValue.documentUrl;
 
 			if (formValue.name !== '') {
 				this._updateDocument(formValue);
@@ -251,21 +216,15 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.pipe(first(), untilDestroyed(this))
 			.subscribe(
 				() => {
-					this.toastrService.success(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED',
-						{
-							name: formValue.name
-						}
-					);
+					this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.CREATED', {
+						name: formValue.name
+					});
 					this.addEditDialogRef.close();
 					this.cancel();
 					this._refresh$.next(true);
 					this.subject$.next(true);
 				},
-				() =>
-					this.toastrService.error(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_CREATE'
-					)
+				() => this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_CREATE')
 			);
 	}
 
@@ -288,11 +247,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.subscribe({
 				next: (data) => {
 					this.loading = false;
-					this.smartTableSource.setPaging(
-						activePage,
-						itemsPerPage,
-						false
-					);
+					this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 					this.smartTableSource.load(data.items);
 					if (this._isGridLayout) {
 						this._loadGridLayoutData();
@@ -304,9 +259,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 				},
 				error: () =>
 					this._errorHandlingService.handleError(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD'
-						)
+						this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_LOAD')
 					)
 			});
 	}
@@ -322,22 +275,16 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 			.subscribe({
 				next: () => {
 					this.toastrService.success(
-						this.getTranslation(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED',
-							{
-								name: formValue.name
-							}
-						)
+						this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.UPDATED', {
+							name: formValue.name
+						})
 					);
 					this.addEditDialogRef.close();
 					this.cancel();
 					this._refresh$.next(true);
 					this.subject$.next(true);
 				},
-				error: () =>
-					this.toastrService.error(
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_UPDATED'
-					)
+				error: () => this.toastrService.error('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_UPDATED')
 			});
 	}
 
@@ -354,8 +301,7 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 		this.dialogService
 			.open(DeleteConfirmationComponent, {
 				context: {
-					recordType:
-						'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.SELECTED_DOC'
+					recordType: 'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.SELECTED_DOC'
 				}
 			})
 			.onClose.pipe(first())
@@ -367,21 +313,16 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 						.subscribe({
 							next: () => {
 								this.toastrService.success(
-									this.getTranslation(
-										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.DELETED',
-										{
-											name: document.name
-										}
-									)
+									this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.DELETED', {
+										name: document.name
+									})
 								);
 								this._refresh$.next(true);
 								this.subject$.next(true);
 							},
 							error: () =>
 								this._errorHandlingService.handleError(
-									this.getTranslation(
-										'NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED'
-									)
+									this.getTranslation('NOTES.ORGANIZATIONS.EDIT_ORGANIZATION_DOCS.ERR_DELETED')
 								)
 						});
 				}
@@ -436,5 +377,5 @@ export class DocumentsComponent extends PaginationFilterBaseComponent implements
 		this.selectedDocument = this.selected.document;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

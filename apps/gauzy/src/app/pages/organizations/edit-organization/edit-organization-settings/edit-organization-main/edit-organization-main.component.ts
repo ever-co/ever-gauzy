@@ -4,7 +4,7 @@ import { ActivatedRoute, Data, Router } from '@angular/router';
 import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';

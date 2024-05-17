@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, isNotEmpty } from '@gauzy/common-angular';
+import { compareDate, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	IInvoice,
 	IPayment,

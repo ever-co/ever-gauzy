@@ -19,7 +19,7 @@ import {
 	TimeLogSourceEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { distinctUntilChange, toLocal, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-sdk/common';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
@@ -33,9 +33,9 @@ import { TimeTrackerStatusService } from '../components/time-tracker-status/time
 	styleUrls: ['./time-tracker.component.scss']
 })
 export class TimeTrackerComponent implements OnInit, OnDestroy {
-
 	// This constant holds the URL for downloading content from the platform's website.
-	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] = environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
+	readonly PLATFORM_WEBSITE_DOWNLOAD_URL: Environment['PLATFORM_WEBSITE_DOWNLOAD_URL'] =
+		environment.PLATFORM_WEBSITE_DOWNLOAD_URL;
 
 	play = faPlay;
 	pause = faPause;
@@ -244,9 +244,9 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		try {
 			this.isDisable = true;
 			this.timeTrackerService.timerSynced &&
-				this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
-				!onClick &&
-				this.timeTrackerService.timerSynced.isExternalSource
+			this.xor(this.running, this.timeTrackerService.timerSynced.running) &&
+			!onClick &&
+			this.timeTrackerService.timerSynced.isExternalSource
 				? this.timeTrackerService.remoteToggle()
 				: await this.timeTrackerService.toggle();
 		} catch (error) {
@@ -323,5 +323,5 @@ export class TimeTrackerComponent implements OnInit, OnDestroy {
 		return (!a && b) || (a && !b);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

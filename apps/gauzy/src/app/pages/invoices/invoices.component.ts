@@ -32,7 +32,7 @@ import {
 	DiscountTaxTypeEnum,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';

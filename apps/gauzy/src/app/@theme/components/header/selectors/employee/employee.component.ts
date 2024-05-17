@@ -24,7 +24,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { EmployeesService, EmployeeStore, Store, ToastrService } from './../../../../../@core/services';
 import { TruncatePipe } from './../../../../../@shared/pipes';

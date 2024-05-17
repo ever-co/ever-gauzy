@@ -8,7 +8,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';

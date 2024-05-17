@@ -11,7 +11,7 @@ import {
 	IEmployeeLevel
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';

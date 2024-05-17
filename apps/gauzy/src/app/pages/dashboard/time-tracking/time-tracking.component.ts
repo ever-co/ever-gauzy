@@ -45,7 +45,7 @@ import {
 	IUser,
 	ITimeLogTodayFilters
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/ui-sdk/common';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import { EmployeesService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';

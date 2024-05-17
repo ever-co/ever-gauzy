@@ -1,21 +1,12 @@
 import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
-import {
-	IOrganizationPosition,
-	ITag,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { IOrganizationPosition, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	OrganizationPositionsService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { OrganizationPositionsService, Store, ToastrService } from '../../@core/services';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
@@ -30,9 +21,7 @@ import {
 	templateUrl: './positions.component.html',
 	styleUrls: ['positions.component.scss']
 })
-export class PositionsComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class PositionsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	showAddCard: boolean;
 	positions: IOrganizationPosition[];
 	selectedPosition: IOrganizationPosition;
@@ -85,10 +74,7 @@ export class PositionsComponent
 			.pipe(
 				debounceTime(300),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -106,7 +92,7 @@ export class PositionsComponent
 		this._applyTranslationOnSmartTable();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
@@ -130,9 +116,7 @@ export class PositionsComponent
 		const result = await firstValueFrom(
 			this.dialogService.open(DeleteConfirmationComponent, {
 				context: {
-					recordType: this.getTranslation(
-						'ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION'
-					)
+					recordType: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.EMPLOYEE_POSITION')
 				}
 			}).onClose
 		);
@@ -140,10 +124,7 @@ export class PositionsComponent
 		if (result) {
 			await this.organizationPositionsService.delete(id);
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION',
-				{ name }
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.REMOVE_POSITION', { name });
 
 			this._refresh$.next(true);
 			this.subject$.next(true);
@@ -152,9 +133,7 @@ export class PositionsComponent
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	edit(position: IOrganizationPosition) {
@@ -206,10 +185,7 @@ export class PositionsComponent
 			tags: this.tags
 		});
 
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.UPDATED_POSITION',
-			{ name }
-		);
+		this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.UPDATED_POSITION', { name });
 		this.subject$.next(true);
 		this.cancel();
 	}
@@ -229,10 +205,7 @@ export class PositionsComponent
 				tags: this.tags
 			});
 
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION',
-				{ name }
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.ADD_POSITION', { name });
 			this._refresh$.next(true);
 			this.subject$.next(true);
 			this.cancel();
@@ -240,9 +213,7 @@ export class PositionsComponent
 			// TODO translate
 			this.toastrService.danger(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_POSITIONS.INVALID_POSITION_NAME',
-				this.getTranslation(
-					'TOASTR.MESSAGE.NEW_ORGANIZATION_POSITION_INVALID_NAME'
-				)
+				this.getTranslation('TOASTR.MESSAGE.NEW_ORGANIZATION_POSITION_INVALID_NAME')
 			);
 		}
 	}

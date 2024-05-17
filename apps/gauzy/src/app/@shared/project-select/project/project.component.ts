@@ -10,28 +10,14 @@ import {
 	ChangeDetectionStrategy
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	IOrganization,
-	IOrganizationProject,
-	CrudActionEnum,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { IOrganization, IOrganizationProject, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	distinctUntilChange,
-	isEmpty,
-	isNotEmpty
-} from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_PROJECT_SELECTED } from './default-project';
-import {
-	OrganizationProjectsService,
-	OrganizationProjectStore,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrService } from '../../../@core/services';
 import { TruncatePipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,19 +31,18 @@ import { TruncatePipe } from '../../pipes';
 			useExisting: forwardRef(() => ProjectSelectorComponent),
 			multi: true
 		}
-	],
+	]
 	// changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
-
 	projects: IOrganizationProject[] = [];
 	selectedProject: IOrganizationProject;
 	hasAddProject$: Observable<boolean>;
 
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Input() shortened = false;
 	@Input() disabled = false;
@@ -141,16 +126,11 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router,
 		private readonly activatedRoute: ActivatedRoute
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.hasAddProject$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_PROJECT_ADD
-				)
-			)
+			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD))
 		);
 		this.subject$
 			.pipe(
@@ -314,7 +294,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			// Show error message
 			this.toastrService.error(error);
 		}
-	}
+	};
 
 	/*
 	 * After created new organization project pushed on dropdown
@@ -349,9 +329,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	deleteOrganizationProject(project: IOrganizationProject) {
 		let projects: IOrganizationProject[] = this.projects || [];
 		if (Array.isArray(projects) && projects.length) {
-			projects = projects.filter(
-				(item: IOrganizationProject) => item.id !== project.id
-			);
+			projects = projects.filter((item: IOrganizationProject) => item.id !== project.id);
 		}
 		this.projects = [...projects].filter(isNotEmpty);
 	}
@@ -359,7 +337,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	selectProject(project: IOrganizationProject): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
-			this.setAttributesToParams({ projectId: project?.id || null })
+			this.setAttributesToParams({ projectId: project?.id || null });
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
 		this.projectId = this.selectedProject.id;
@@ -370,14 +348,12 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
 			queryParams: { ...params },
-			queryParamsHandling: 'merge',
+			queryParamsHandling: 'merge'
 		});
 	}
 
 	selectProjectById(projectId: string) {
-		const project = this.projects.find(
-			(project: IOrganizationProject) => projectId === project.id
-		);
+		const project = this.projects.find((project: IOrganizationProject) => projectId === project.id);
 		if (project) {
 			this.selectProject(project);
 		}
@@ -433,5 +409,5 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

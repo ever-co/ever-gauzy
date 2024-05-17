@@ -15,7 +15,7 @@ import {
 	IDateRangePicker,
 	ComponentType
 } from '@gauzy/contracts';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeRecurringExpenseService, EmployeesService, Store, ToastrService } from '../../@core/services';
 import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses';

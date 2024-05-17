@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
 import { Store } from '../services/store.service';
@@ -19,48 +19,44 @@ export class AuthStrategy extends NbAuthStrategy {
 		login: {
 			redirect: {
 				success: '/',
-				failure: null,
+				failure: null
 			},
-			defaultErrors: [
-				'Login/Email combination is not correct, please try again.',
-			],
-			defaultMessages: ['You have been successfully logged in.'],
+			defaultErrors: ['Login/Email combination is not correct, please try again.'],
+			defaultMessages: ['You have been successfully logged in.']
 		},
 		register: {
 			redirect: {
 				success: '/',
-				failure: null,
+				failure: null
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.'],
+			defaultMessages: ['You have been successfully registered.']
 		},
 		logout: {
 			redirect: {
 				success: '/',
-				failure: null,
+				failure: null
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully logged out.'],
+			defaultMessages: ['You have been successfully logged out.']
 		},
 		requestPass: {
 			redirect: {
 				success: '/',
-				failure: null,
+				failure: null
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: [
-				'Reset password instructions have been sent to your email.',
-			],
+			defaultMessages: ['Reset password instructions have been sent to your email.']
 		},
 		resetPass: {
 			redirect: {
 				success: '/',
-				failure: null,
+				failure: null
 			},
 			resetPasswordTokenKey: 'reset_password_token',
 			defaultErrors: ['Password Reset Failed.'],
-			defaultMessages: ['Your password has been successfully changed.'],
-		},
+			defaultMessages: ['Your password has been successfully changed.']
+		}
 	};
 
 	logout$: Subject<boolean> = new Subject();
@@ -91,7 +87,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email, password } = data;
 		return this.login({
 			email,
-			password,
+			password
 		}).pipe(tap(() => this.rememberMe(data)));
 	}
 
@@ -115,13 +111,17 @@ export class AuthStrategy extends NbAuthStrategy {
 	 * @returns
 	 */
 	register(data?: any): Observable<NbAuthResult> {
-		const { email, fullName, password, confirmPassword, tenant, tags, preferredLanguage = LanguagesEnum.ENGLISH } = data;
+		const {
+			email,
+			fullName,
+			password,
+			confirmPassword,
+			tenant,
+			tags,
+			preferredLanguage = LanguagesEnum.ENGLISH
+		} = data;
 		if (password !== confirmPassword) {
-			return of(
-				new NbAuthResult(false, null, null, [
-					"The passwords don't match.",
-				])
-			);
+			return of(new NbAuthResult(false, null, null, ["The passwords don't match."]));
 		}
 
 		/**
@@ -137,7 +137,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				preferredLanguage
 			},
 			password,
-			confirmPassword,
+			confirmPassword
 		};
 		return this.authService.register(register).pipe(
 			switchMap((res: IUser | any) => {
@@ -146,18 +146,14 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 				const user: IUser = res;
 				if (isNotEmpty(user)) {
-					return this.login({ email, password, });
+					return this.login({ email, password });
 				}
 			}),
 			catchError((err) => {
 				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.register.defaultErrors,
-						[AuthStrategy.config.register.defaultErrors]
-					)
+					new NbAuthResult(false, err, false, AuthStrategy.config.register.defaultErrors, [
+						AuthStrategy.config.register.defaultErrors
+					])
 				);
 			})
 		);
@@ -177,7 +173,7 @@ export class AuthStrategy extends NbAuthStrategy {
 		const { email } = data;
 		return this.authService
 			.requestPassword({
-				email,
+				email
 			})
 			.pipe(
 				map((value: any) => {
@@ -194,19 +190,14 @@ export class AuthStrategy extends NbAuthStrategy {
 						false,
 						value.response,
 						false,
-						value.message ||
-						AuthStrategy.config.requestPass.defaultErrors
+						value.message || AuthStrategy.config.requestPass.defaultErrors
 					);
 				}),
 				catchError((error) => {
 					return of(
-						new NbAuthResult(
-							false,
-							error,
-							false,
-							AuthStrategy.config.requestPass.defaultErrors,
-							[AuthStrategy.config.requestPass.defaultErrors]
-						)
+						new NbAuthResult(false, error, false, AuthStrategy.config.requestPass.defaultErrors, [
+							AuthStrategy.config.requestPass.defaultErrors
+						])
 					);
 				})
 			);
@@ -217,18 +208,14 @@ export class AuthStrategy extends NbAuthStrategy {
 		const token = this.route.snapshot.queryParamMap.get('token');
 
 		if (password !== confirmPassword) {
-			return of(
-				new NbAuthResult(false, null, null, [
-					'The password and confirmation password do not match.',
-				])
-			);
+			return of(new NbAuthResult(false, null, null, ['The password and confirmation password do not match.']));
 		}
 
 		return this.authService
 			.resetPassword({
 				token,
 				password,
-				confirmPassword,
+				confirmPassword
 			})
 			.pipe(
 				map((res: any) => {
@@ -245,13 +232,9 @@ export class AuthStrategy extends NbAuthStrategy {
 				}),
 				catchError((err) => {
 					return of(
-						new NbAuthResult(
-							false,
-							err,
-							false,
-							AuthStrategy.config.resetPass.defaultErrors,
-							[AuthStrategy.config.resetPass.defaultErrors]
-						)
+						new NbAuthResult(false, err, false, AuthStrategy.config.resetPass.defaultErrors, [
+							AuthStrategy.config.resetPass.defaultErrors
+						])
 					);
 				})
 			);
@@ -318,12 +301,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 
 				if (!user) {
-					return new NbAuthResult(
-						false,
-						res,
-						false,
-						AuthStrategy.config.login.defaultErrors
-					);
+					return new NbAuthResult(false, res, false, AuthStrategy.config.login.defaultErrors);
 				}
 
 				this.store.userId = user.id;
@@ -338,8 +316,7 @@ export class AuthStrategy extends NbAuthStrategy {
 				return new NbAuthResult(
 					true,
 					res,
-					this.route.snapshot.queryParams['returnUrl'] ||
-					AuthStrategy.config.login.redirect.success,
+					this.route.snapshot.queryParams['returnUrl'] || AuthStrategy.config.login.redirect.success,
 					[],
 					AuthStrategy.config.login.defaultMessages
 				);
@@ -347,13 +324,9 @@ export class AuthStrategy extends NbAuthStrategy {
 			catchError((err) => {
 				console.log(err);
 				return of(
-					new NbAuthResult(
-						false,
-						err,
-						false,
-						AuthStrategy.config.login.defaultErrors,
-						[AuthStrategy.config.login.defaultErrors]
-					)
+					new NbAuthResult(false, err, false, AuthStrategy.config.login.defaultErrors, [
+						AuthStrategy.config.login.defaultErrors
+					])
 				);
 			})
 		);
@@ -368,7 +341,7 @@ export class AuthStrategy extends NbAuthStrategy {
 					userId: user.id,
 					employeeId: user.employee ? user.employee.id : null,
 					organizationId: user.employee ? user.employee.organizationId : null,
-					tenantId: user.tenantId ? user.tenantId : null,
+					tenantId: user.tenantId ? user.tenantId : null
 				});
 			}
 		} catch (error) {

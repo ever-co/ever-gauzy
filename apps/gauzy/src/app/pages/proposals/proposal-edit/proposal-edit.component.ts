@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';

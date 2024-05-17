@@ -1,7 +1,7 @@
 import { Injectable, Type } from '@angular/core';
 import { Observable, of as ObservableOf } from 'rxjs';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '../store.service';
 
 export interface ISidebarActionConfig {
@@ -65,10 +65,7 @@ export class NavigationBuilderService {
 	getAvailableSidebarIds() {
 		return [...this.sidebarMapper.entries()]
 			.filter(([, config]) => {
-				return (
-					isEmpty(config.permissions) ||
-					this.hasPermissions(config.permissions)
-				);
+				return isEmpty(config.permissions) || this.hasPermissions(config.permissions);
 			})
 			.map(([id]) => id);
 	}

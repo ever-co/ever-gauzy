@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { EMPTY, firstValueFrom } from "rxjs";
+import { EMPTY, firstValueFrom } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
-import { sleep } from '@gauzy/common-angular';
+import { sleep } from '@gauzy/ui-sdk/common';
 import { AuthService, ErrorHandlingService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -15,7 +15,6 @@ import { AuthService, ErrorHandlingService, Store } from '../../@core/services';
 	styleUrls: ['./magic-login-workspace.component.scss']
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
-
 	public error: boolean = false;
 	public success: boolean = false;
 
@@ -31,32 +30,33 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		public readonly router: Router,
 		private readonly _store: Store,
 		private readonly _authService: AuthService,
-		private readonly _errorHandlingService: ErrorHandlingService,
-	) {
-	}
+		private readonly _errorHandlingService: ErrorHandlingService
+	) {}
 
 	/**
 	 *
 	 */
 	ngOnInit(): void {
 		// Create an observable to listen to query parameter changes in the current route.
-		this._activatedRoute.queryParams.pipe(
-			// Filter and ensure that query parameters are present.
-			filter((params: Params) => !!params),
+		this._activatedRoute.queryParams
+			.pipe(
+				// Filter and ensure that query parameters are present.
+				filter((params: Params) => !!params),
 
-			// Filter and ensure that query parameters are present.
-			filter(({ email, code }: Params) => !!email && !!code),
+				// Filter and ensure that query parameters are present.
+				filter(({ email, code }: Params) => !!email && !!code),
 
-			// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
-			tap(({ email, code }: Params) => {
-				if (email && code) {
-					this.confirmSingInCode();
-				}
-			}),
+				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
+				tap(({ email, code }: Params) => {
+					if (email && code) {
+						this.confirmSingInCode();
+					}
+				}),
 
-			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
-			untilDestroyed(this)
-		).subscribe();
+				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -124,35 +124,38 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		const token = workspace.token;
 
 		// Send a request to sign in to the workspace using the authentication service
-		this._authService.signinWorkspaceByToken({ email, token }).pipe(
-			tap((response: any) => {
-				if (response['status'] === HttpStatus.UNAUTHORIZED) {
-					throw new Error(`${response['message']}`);
-				}
-			}),
-			filter(({ user, token }: IAuthResponse) => !!user && !!token),
-			tap((response: IAuthResponse) => {
-				const user: IUser = response.user;
-				const token: string = response.token;
-				const refresh_token: string = response.refresh_token;
+		this._authService
+			.signinWorkspaceByToken({ email, token })
+			.pipe(
+				tap((response: any) => {
+					if (response['status'] === HttpStatus.UNAUTHORIZED) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				filter(({ user, token }: IAuthResponse) => !!user && !!token),
+				tap((response: IAuthResponse) => {
+					const user: IUser = response.user;
+					const token: string = response.token;
+					const refresh_token: string = response.refresh_token;
 
-				/** */
-				this._store.userId = user.id;
-				this._store.user = user;
-				this._store.token = token;
-				this._store.refresh_token = refresh_token;
-				this._store.organizationId = user.employee?.organizationId;
-				this._store.tenantId = user.tenantId;
+					/** */
+					this._store.userId = user.id;
+					this._store.user = user;
+					this._store.token = token;
+					this._store.refresh_token = refresh_token;
+					this._store.organizationId = user.employee?.organizationId;
+					this._store.tenantId = user.tenantId;
 
-				this.router.navigate(['/']);
-			}),
-			catchError((error) => {
-				// Handle and log errors using the error handling service
-				this._errorHandlingService.handleError(error);
-				return EMPTY;
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+					this.router.navigate(['/']);
+				}),
+				catchError((error) => {
+					// Handle and log errors using the error handling service
+					this._errorHandlingService.handleError(error);
+					return EMPTY;
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

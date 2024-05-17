@@ -7,7 +7,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
 import { Store } from './../../../../../@core/services';

@@ -8,7 +8,7 @@ import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {

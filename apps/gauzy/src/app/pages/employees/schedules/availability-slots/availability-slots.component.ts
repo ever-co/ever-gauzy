@@ -23,7 +23,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	AvailabilitySlotsService,

@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs/internal/Subject';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/common-angular';
+import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/ui-sdk/common';
 
 export interface IPaginationBase {
 	totalItems?: number;

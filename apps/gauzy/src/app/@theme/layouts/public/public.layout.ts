@@ -1,16 +1,9 @@
-import {
-	AfterViewInit,
-	Component,
-	Inject,
-	PLATFORM_ID,
-	ViewChild,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, Component, Inject, PLATFORM_ID, ViewChild, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { tap } from 'rxjs/operators';
 import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { WindowModeBlockScrollService } from '../../services';
 import { Store, UsersService } from '../../../@core/services';
 
@@ -27,7 +20,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 		private readonly store: Store,
 		private readonly usersService: UsersService,
 		private readonly themeService: NbThemeService
-	) { }
+	) {}
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	user: any;
@@ -40,9 +33,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 				distinctUntilChange(),
 				tap((theme) =>
 					this.themeService.changeTheme(
-						(this.store.currentTheme
-							? this.store.currentTheme
-							: theme.name) as string
+						(this.store.currentTheme ? this.store.currentTheme : theme.name) as string
 					)
 				),
 				untilDestroyed(this)
@@ -70,11 +61,7 @@ export class PublicLayoutComponent implements OnInit, AfterViewInit {
 
 		try {
 			// Fetch user details, including role permissions and tenant information
-			this.user = await this.usersService.getMe([
-				'role',
-				'role.rolePermissions',
-				'tenant'
-			], true);
+			this.user = await this.usersService.getMe(['role', 'role.rolePermissions', 'tenant'], true);
 
 			// Update the store with user details and role permissions
 			this.store.userRolePermissions = this.user.role.rolePermissions;

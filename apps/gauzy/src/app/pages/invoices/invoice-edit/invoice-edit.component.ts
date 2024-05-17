@@ -22,7 +22,7 @@ import {
 	IProduct,
 	IExpense
 } from '@gauzy/contracts';
-import { compareDate, distinctUntilChange } from '@gauzy/common-angular';
+import { compareDate, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import {
@@ -54,7 +54,6 @@ import {
 	styleUrls: ['./invoice-edit.component.scss']
 })
 export class InvoiceEditComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	shouldLoadTable = false;
 	invoiceId: string;
 	settingsSmartTable: object;
@@ -314,7 +313,9 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 						component: InvoiceProductsSelectorComponent
 					},
 					valuePrepareFunction: (product: IProduct) => {
-						return product?.name ? `${this.translatableService.getTranslatedProperty(product, 'name')}` : '';
+						return product?.name
+							? `${this.translatableService.getTranslatedProperty(product, 'name')}`
+							: '';
 					}
 				};
 				break;
@@ -405,7 +406,9 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				filter: false,
 				width: '10%',
 				valuePrepareFunction: (isApplied: any) => {
-					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
+					return isApplied
+						? this.getTranslation('INVOICES_PAGE.APPLIED')
+						: this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 			this.settingsSmartTable['columns']['applyDiscount'] = {
@@ -417,7 +420,9 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				filter: false,
 				width: '10%',
 				valuePrepareFunction: (isApplied: any) => {
-					return isApplied ? this.getTranslation('INVOICES_PAGE.APPLIED') : this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
+					return isApplied
+						? this.getTranslation('INVOICES_PAGE.APPLIED')
+						: this.getTranslation('INVOICES_PAGE.NOT_APPLIED');
 				}
 			};
 		}
@@ -585,11 +590,11 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			await this.invoiceEstimateHistoryService.add({
 				action: this.isEstimate
 					? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-						name: this.form.value.organizationContact.name
-					})
+							name: this.form.value.organizationContact.name
+					  })
 					: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-						name: this.form.value.organizationContact.name
-					}),
+							name: this.form.value.organizationContact.name
+					  }),
 				invoice: this.invoice,
 				invoiceId: this.invoice.id,
 				user: this.store.user,
@@ -931,5 +936,5 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		this.selectedItem = item;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

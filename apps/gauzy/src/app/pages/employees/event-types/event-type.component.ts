@@ -14,7 +14,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, EventTypeService, Store, ToastrService } from '../../../@core/services';
 import {

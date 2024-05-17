@@ -8,7 +8,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IProduct,
 	ComponentLayoutStyleEnum,

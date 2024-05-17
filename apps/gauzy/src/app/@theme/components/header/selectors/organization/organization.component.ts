@@ -4,7 +4,7 @@ import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { uniq } from 'underscore';
 import {
 	OrganizationEditStore,
@@ -19,17 +19,15 @@ import {
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationSelectorComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
 	organizations: IOrganization[] = [];
 	selectedOrganization: IOrganization;
 	isOpen: boolean = false;
 	public hasEditOrganization$: Observable<boolean>;
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -45,13 +43,11 @@ export class OrganizationSelectorComponent
 		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly _organizationEditStore: OrganizationEditStore,
 		private readonly activatedRoute: ActivatedRoute
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.hasEditOrganization$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ALL_ORG_EDIT))
 		);
 
 		this.loadSelectedOrganization();
@@ -65,7 +61,6 @@ export class OrganizationSelectorComponent
 				)
 				.subscribe();
 		});
-
 	}
 
 	selectOrganization(organization: IOrganization) {
@@ -74,7 +69,7 @@ export class OrganizationSelectorComponent
 			this.store.organizationId = organization.id;
 			this.store.selectedEmployee = null;
 
-			this.updateQueryParams({ organizationId: organization.id })
+			this.updateQueryParams({ organizationId: organization.id });
 		}
 	}
 
@@ -102,7 +97,7 @@ export class OrganizationSelectorComponent
 		// Navigate to the updated route with the new query parameters
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
-			queryParams: { ...updatedQueryParams, ...newParams },
+			queryParams: { ...updatedQueryParams, ...newParams }
 		});
 	}
 
@@ -158,9 +153,7 @@ export class OrganizationSelectorComponent
 	ngAfterViewInit() {
 		this._organizationEditStore.organizationAction$
 			.pipe(
-				filter(
-					({ action, organization }) => !!action && !!organization
-				),
+				filter(({ action, organization }) => !!action && !!organization),
 				tap(() => this._organizationEditStore.destroy()),
 				untilDestroyed(this)
 			)
@@ -216,9 +209,7 @@ export class OrganizationSelectorComponent
 	deleteOrganization(organization: IOrganization) {
 		let organizations: IOrganization[] = this.organizations || [];
 		if (Array.isArray(organizations) && organizations.length) {
-			organizations = organizations.filter(
-				(item: IOrganization) => item.id !== organization.id
-			);
+			organizations = organizations.filter((item: IOrganization) => item.id !== organization.id);
 		}
 
 		this.organizations = [...organizations].filter(isNotEmpty);
@@ -271,5 +262,5 @@ export class OrganizationSelectorComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

@@ -1,27 +1,21 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {
-	IPagination,
-	IUser,
-	IUserOrganization,
-	IUserOrganizationFindInput,
-	IUserUpdateInput,
-} from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { IPagination, IUser, IUserOrganization, IUserOrganizationFindInput, IUserUpdateInput } from '@gauzy/contracts';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
 import { OrganizationsCacheService } from '../../services/organizations-cache.service';
 import { UserOrganizationCacheService } from '../../services/user-organization-cache.service';
 import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class UserOrganizationService {
 	constructor(
 		private readonly _userOrganizationsCacheService: OrganizationsCacheService,
 		private readonly _userOrganizationCacheService: UserOrganizationCacheService,
 		private readonly _http: HttpClient
-	) { }
+	) {}
 
 	/**
 	 * Fetches all user organizations with optional relations, where conditions, and inclusion of employee information.
@@ -44,12 +38,14 @@ export class UserOrganizationService {
 
 		if (!usersOrganizations$) {
 			// If no cached observable, fetch from the server
-			usersOrganizations$ = this._http.get<IPagination<IUserOrganization>>(`${API_PREFIX}/user-organization`, {
-				params: toParams(params)
-			}).pipe(
-				map((response: any) => response), // Map to ensure correct data handling
-				shareReplay(1) // Cache the result for future use
-			);
+			usersOrganizations$ = this._http
+				.get<IPagination<IUserOrganization>>(`${API_PREFIX}/user-organization`, {
+					params: toParams(params)
+				})
+				.pipe(
+					map((response: any) => response), // Map to ensure correct data handling
+					shareReplay(1) // Cache the result for future use
+				);
 
 			// Store the observable in the cache
 			this._userOrganizationsCacheService.setValue(usersOrganizations$, 'all');
@@ -71,11 +67,7 @@ export class UserOrganizationService {
 		// If not cached, fetch the details from the server
 		if (!user$) {
 			const params = toParams({
-				relations: [
-					'tenant',
-					'role',
-					'role.rolePermissions',
-				],
+				relations: ['tenant', 'role', 'role.rolePermissions'],
 				includeEmployee: true,
 				includeOrganization: true
 			});
@@ -94,8 +86,6 @@ export class UserOrganizationService {
 	}
 
 	public async updatePreferredLanguage(input: IUserUpdateInput): Promise<void> {
-		await firstValueFrom(
-			this._http.put(`${API_PREFIX}/user/preferred-language`, input)
-		);
+		await firstValueFrom(this._http.put(`${API_PREFIX}/user/preferred-language`, input));
 	}
 }
