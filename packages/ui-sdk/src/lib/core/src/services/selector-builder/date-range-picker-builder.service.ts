@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { IDateRangePicker } from '@gauzy/contracts';
 import { IDatePickerConfig } from './selector-builder-types';
 import { NavigationService } from '../navigation/navigation.service';

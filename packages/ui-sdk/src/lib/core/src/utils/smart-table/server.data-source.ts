@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { IFilterConfig, LocalDataSource } from 'angular2-smart-table';
-import { isNotEmpty, toParams } from '@gauzy/common-angular';
+import { isNotEmpty, toParams } from '@gauzy/ui-sdk/common';
 import { ServerSourceConf } from './server-source.conf';
 
 export class ServerDataSource extends LocalDataSource {

@@ -1,5 +1,5 @@
 import { AbstractControl, ValidatorFn } from '@angular/forms';
-import { isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/ui-sdk/common';
 import { patterns } from './regex-patterns.const';
 
 export class EmailValidator {
