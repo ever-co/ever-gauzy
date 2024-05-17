@@ -6,7 +6,14 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
-		"tslib": "^2.3.0"
+		"tslib": "^2.3.0",
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^14.0.0",
+		"@ngx-translate/http-loader": "^7.0.0",
+		"angular2-smart-table": "^3.2.0",
+		"ckeditor4-angular": "^5.0.0",
+		"ngx-permissions": "^13.0.1",
+		"rxjs": "^7.4.0"
 	},
 	"sideEffects": false
 }
