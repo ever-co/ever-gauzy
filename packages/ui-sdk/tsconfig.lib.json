@@ -1,0 +1,19 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../../out-tsc/lib",
+		"declaration": true,
+		"declarationMap": true,
+		"inlineSources": true,
+		"types": [],
+		"allowSyntheticDefaultImports": true
+	},
+	"angularCompilerOptions": {
+		"annotateForClosureCompiler": true,
+		"skipTemplateCodegen": true,
+		"strictMetadataEmit": true,
+		"fullTemplateTypeCheck": true,
+		"strictInjectionParameters": true
+	},
+	"exclude": ["**/*.spec.ts"]
+}

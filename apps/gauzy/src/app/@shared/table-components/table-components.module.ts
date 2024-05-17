@@ -1,13 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import {
-	NbIconModule,
-	NbTooltipModule,
-	NbBadgeModule,
-	NbToggleModule,
-	NbButtonModule
-} from '@nebular/theme';
+import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -20,7 +14,7 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../shared.module';
 import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
@@ -62,7 +56,7 @@ import { StatusBadgeModule } from '../status-badge';
 		NbTooltipModule,
 		TranslateModule,
 		SharedModule,
-		StatusBadgeModule,
+		StatusBadgeModule
 	],
 	declarations: [
 		DateViewComponent,
@@ -134,4 +128,4 @@ import { StatusBadgeModule } from '../status-badge';
 	],
 	providers: []
 })
-export class TableComponentsModule { }
+export class TableComponentsModule {}

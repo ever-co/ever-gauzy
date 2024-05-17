@@ -6,6 +6,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { UiSdkModule } from '@gauzy/ui-sdk';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
@@ -50,7 +51,7 @@ import { LegalModule } from './legal/legal.module';
 import { Router } from '@angular/router';
 import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { HttpLoaderFactory } from './@shared/translate/translate.module';
+import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
@@ -92,6 +93,7 @@ if (environment.SENTRY_DSN) {
 		}),
 		NbEvaIconsModule,
 		CoreModule.forRoot(),
+		UiSdkModule,
 		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {

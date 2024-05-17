@@ -13,7 +13,7 @@ import { SharedModule } from '../../shared.module';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-modal.module';
 import { DialogsModule } from '../../dialogs';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [ViewTimeLogComponent],

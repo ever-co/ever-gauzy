@@ -6,7 +6,7 @@ import { PublicAppointmentRoutingModule } from './public-appointment.routing.mod
 import { EventTypeService } from '../../@core/services/event-type.service';
 import { CreateAppointmentModule } from './create-appointment/create-appointment.module';
 import { AppointmentModule } from '../../pages/employees/appointment/appointment.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

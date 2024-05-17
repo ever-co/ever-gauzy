@@ -23,15 +23,10 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
-import {
-	DateRangePickerBuilderService,
-	EmployeesService,
-	EmployeeStore,
-	Store,
-	ToastrService
-} from './../../../../../@core/services';
+import { EmployeesService, EmployeeStore, Store, ToastrService } from './../../../../../@core/services';
 import { TruncatePipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
@@ -42,10 +37,9 @@ import { TruncatePipe } from './../../../../../@shared/pipes';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
-
 	/*
-	* Getter & Setter for dynamic clearable option
-	*/
+	 * Getter & Setter for dynamic clearable option
+	 */
 	_clearable: boolean = true;
 	get clearable(): boolean {
 		return this._clearable;
@@ -74,8 +68,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/*
-	* Getter & Setter for dynamic disabled element
-	*/
+	 * Getter & Setter for dynamic disabled element
+	 */
 	private _disabled: boolean = false;
 	get disabled(): boolean {
 		return this._disabled;
@@ -85,8 +79,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -157,23 +151,18 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		private readonly toastrService: ToastrService,
 		private readonly _truncatePipe: TruncatePipe,
 		private readonly router: Router
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.onSelectEmployee();
 		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT))
 		);
 		this.subject$
 			.pipe(
 				debounceTime(200),
 				switchMap(async ([organization, dateRange]) => {
-					await this.loadWorkingEmployeesIfRequired(
-						organization,
-						dateRange
-					);
+					await this.loadWorkingEmployeesIfRequired(organization, dateRange);
 				}),
 				untilDestroyed(this)
 			)
@@ -266,9 +255,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	deleteEmployee(employee: IEmployee) {
 		let people: ISelectedEmployee[] = this.people || [];
 		if (Array.isArray(people) && people.length) {
-			people = people.filter(
-				(item: ISelectedEmployee) => item.id !== employee.id
-			);
+			people = people.filter((item: ISelectedEmployee) => item.id !== employee.id);
 		}
 		this.people = [...people].filter(isNotEmpty);
 	}
@@ -289,7 +276,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-			this.setAttributesToParams({ employeeId: employee?.id })
+			this.setAttributesToParams({ employeeId: employee?.id });
 		} else {
 			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
@@ -298,19 +285,16 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
-
 	private setAttributesToParams(params: Object) {
 		this.router.navigate([], {
 			relativeTo: this.activatedRoute,
 			queryParams: { ...params },
-			queryParamsHandling: 'merge',
+			queryParamsHandling: 'merge'
 		});
 	}
 
 	selectEmployeeById(employeeId: string) {
-		const employee = this.people.find(
-			(employee: ISelectedEmployee) => employeeId === employee.id
-		);
+		const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
 		if (employee) {
 			this.selectEmployee(employee);
 		}
@@ -345,18 +329,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
 			this.selectEmployee(this.people[0]);
 		}
-		if (
-			!this.defaultSelected &&
-			this.selectedEmployee === ALL_EMPLOYEES_SELECTED
-		) {
+		if (!this.defaultSelected && this.selectedEmployee === ALL_EMPLOYEES_SELECTED) {
 			this.selectedEmployee = null;
 		}
 	}
 
-	loadWorkingEmployeesIfRequired = async (
-		organization: IOrganization,
-		selectedDateRange: IDateRangePicker
-	) => {
+	loadWorkingEmployeesIfRequired = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		//If no organization, then something is wrong
 		if (!organization) {
 			this.people = [];
@@ -366,10 +344,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		await this.getEmployees(organization, selectedDateRange);
 	};
 
-	private getEmployees = async (
-		organization: IOrganization,
-		selectedDateRange: IDateRangePicker
-	) => {
+	private getEmployees = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		if (!organization) {
 			this.people = [];
 			return;
@@ -377,12 +352,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = organization;
 
-		const { items } = await this.employeesService.getWorking(
-			organizationId,
-			tenantId,
-			selectedDateRange,
-			true
-		);
+		const { items } = await this.employeesService.getWorking(organizationId, tenantId, selectedDateRange, true);
 
 		this.people = [
 			...items.map((employee: IEmployee) => {
@@ -401,28 +371,19 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		];
 
 		//Insert All Employees Option
-		if (
-			this.showAllEmployeesOption &&
-			this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-		) {
+		if (this.showAllEmployeesOption && this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
 		//Set selected employee if no employee selected
 		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 
 	ngOnDestroy() {
-		if (
-			this.people.length > 0 &&
-			!this.store.selectedEmployee &&
-			!this.skipGlobalChange
-		) {
-			this.store.selectedEmployee =
-				this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (this.people.length > 0 && !this.store.selectedEmployee && !this.skipGlobalChange) {
+			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
@@ -433,19 +394,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 */
 	isClearable(): boolean {
 		if (this.clearable) {
-			if (
-				this.selectedEmployee &&
-				this.selectedEmployee.hasOwnProperty('defaultType')
-			) {
-				if (
-					this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE
-				) {
+			if (this.selectedEmployee && this.selectedEmployee.hasOwnProperty('defaultType')) {
+				if (this.selectedEmployee.defaultType === DEFAULT_TYPE.ALL_EMPLOYEE) {
 					return false;
 				}
 			}
-			return !!this.store.hasPermission(
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			);
+			return !!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		}
 	}
 

@@ -1,16 +1,10 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs/internal/Observable';
 import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { Store } from './../../../../@core/services';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -21,9 +15,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './apps-urls-report.component.html',
 	styleUrls: ['./apps-urls-report.component.scss']
 })
-export class AppsUrlsReportComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-
+export class AppsUrlsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	filters: IGetActivitiesInput;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
@@ -35,7 +27,7 @@ export class AppsUrlsReportComponent extends BaseSelectorFilterComponent
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
-    ) {
+	) {
 		super(store, translateService, dateRangePickerBuilderService);
 	}
 

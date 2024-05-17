@@ -1,15 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbDialogModule,
-	NbIconModule,
-	NbAlertModule
-} from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbDialogModule, NbIconModule, NbAlertModule } from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { DialogsModule } from '../../dialogs';
 import { LabelModule } from '../../components/label/label.module';

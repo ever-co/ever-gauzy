@@ -10,7 +10,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from './../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { BackNavigationModule } from './../../../@shared/back-navigation';
 import { DirectivesModule } from '../../../@shared/directives/directives.module';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -48,4 +48,4 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		SharedModule.forRoot()
 	]
 })
-export class GauzyAIModule { }
+export class GauzyAIModule {}

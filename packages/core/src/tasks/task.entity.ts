@@ -1,22 +1,10 @@
-import {
-	JoinColumn,
-	JoinTable,
-	RelationId,
-} from 'typeorm';
+import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-	IsArray,
-	IsBoolean,
-	IsNotEmpty,
-	IsNumber,
-	IsObject,
-	IsOptional,
-	IsString,
-	IsUUID,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
+	IDailyPlan,
 	IEmployee,
 	IInvoiceItem,
 	IOrganizationProject,
@@ -31,11 +19,12 @@ import {
 	IUser,
 	TaskPriorityEnum,
 	TaskSizeEnum,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
-import { isMySQL } from "@gauzy/config";
+import { isMySQL } from '@gauzy/config';
 import {
 	Activity,
+	DailyPlan,
 	Employee,
 	InvoiceItem,
 	OrganizationProject,
@@ -50,15 +39,22 @@ import {
 	TaskStatus,
 	TenantOrganizationBaseEntity,
 	TimeLog,
-	User,
+	User
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
+} from './../core/decorators/entity';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 
 @MultiORMEntity('task', { mikroOrmRepository: () => MikroOrmTaskRepository })
 @ColumnIndex('taskNumber', ['projectId', 'number'], { unique: true })
 export class Task extends TenantOrganizationBaseEntity implements ITask {
-
 	[EntityRepositoryType]?: MikroOrmTaskRepository;
 
 	@MultiORMColumn({
@@ -169,7 +165,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => Task, (task) => task.children, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	parent?: Task;
 
@@ -191,7 +187,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	project?: IOrganizationProject;
 
@@ -208,7 +204,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	 */
 	@MultiORMManyToOne(() => User, {
 		nullable: true,
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	creator?: IUser;
@@ -243,7 +239,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskStatus, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskStatus?: ITaskStatus;
@@ -263,7 +259,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskSize, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskSize?: ITaskSize;
@@ -283,7 +279,7 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsOptional()
 	@IsObject()
 	@MultiORMManyToOne(() => TaskPriority, {
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	taskPriority?: ITaskPriority;
@@ -355,6 +351,14 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	*/
 
 	/**
+	 * Daily planned Tasks
+	 */
+	@MultiORMManyToMany(() => DailyPlan, (dailyPlan) => dailyPlan.tasks, {
+		onDelete: 'CASCADE'
+	})
+	dailyPlans?: IDailyPlan[];
+
+	/**
 	 * Tags
 	 */
 	@ApiPropertyOptional({ type: () => Array, isArray: true })
@@ -366,10 +370,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		owner: true,
 		pivotTable: 'tag_task',
 		joinColumn: 'taskId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
-		name: 'tag_task',
+		name: 'tag_task'
 	})
 	tags?: ITag[];
 
@@ -385,11 +389,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		owner: true,
 		pivotTable: 'task_employee',
 		joinColumn: 'taskId',
-		inverseJoinColumn: 'employeeId',
-
+		inverseJoinColumn: 'employeeId'
 	})
 	@JoinTable({
-		name: 'task_employee',
+		name: 'task_employee'
 	})
 	members?: IEmployee[];
 
@@ -405,10 +408,10 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 		owner: true,
 		pivotTable: 'task_team',
 		joinColumn: 'taskId',
-		inverseJoinColumn: 'organizationTeamId',
+		inverseJoinColumn: 'organizationTeamId'
 	})
 	@JoinTable({
-		name: 'task_team',
+		name: 'task_team'
 	})
 	teams?: IOrganizationTeam[];
 }

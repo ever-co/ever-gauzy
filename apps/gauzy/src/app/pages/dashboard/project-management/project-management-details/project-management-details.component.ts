@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck } from 'underscore';
 import { NbDialogService } from '@nebular/theme';
-import { ServerDataSource } from './../../../../@core/utils/smart-table';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -16,7 +16,7 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, Store, TasksService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
@@ -105,24 +105,24 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		this._smartTableSource = new ServerDataSource(this._httpClient, {
 			...(this.selectedEmployeeId
 				? {
-					endPoint: `${API_PREFIX}/tasks/employee`
-				}
+						endPoint: `${API_PREFIX}/tasks/employee`
+				  }
 				: {
-					endPoint: `${API_PREFIX}/tasks/pagination`
-				}),
+						endPoint: `${API_PREFIX}/tasks/pagination`
+				  }),
 			relations: ['project', 'tags'],
 			where: {
 				organizationId,
 				tenantId,
 				...(this.selectedEmployeeId
 					? {
-						employeeId: this.selectedEmployeeId
-					}
+							employeeId: this.selectedEmployeeId
+					  }
 					: {}),
 				...(this.selectedProjectId
 					? {
-						projectId: this.selectedProjectId
-					}
+							projectId: this.selectedProjectId
+					  }
 					: {}),
 				...(this.filters.where ? this.filters.where : {})
 			}
@@ -204,9 +204,9 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 				context: {
 					selectedTask: this.selectedEmployeeId
 						? ({
-							members: [{ ...this._selectedEmployee }] as any,
-							status: this.status.OPEN
-						} as ITask)
+								members: [{ ...this._selectedEmployee }] as any,
+								status: this.status.OPEN
+						  } as ITask)
 						: ({} as ITask)
 				}
 			});
@@ -250,5 +250,5 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		this._router.navigate(['/pages/tasks/me']);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -45,10 +45,10 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
@@ -80,7 +80,11 @@ import {
 	EstimatesReceivedComponent,
 	EstimateViewComponent
 } from './invoice-estimates';
-import { InvoicePaymentReceiptMutationComponent, InvoicePaymentsComponent, PaymentMutationComponent } from './invoice-payments';
+import {
+	InvoicePaymentReceiptMutationComponent,
+	InvoicePaymentsComponent,
+	PaymentMutationComponent
+} from './invoice-payments';
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
@@ -183,4 +187,4 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 	],
 	exports: [InvoiceViewInnerComponent]
 })
-export class InvoicesModule { }
+export class InvoicesModule {}

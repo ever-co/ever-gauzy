@@ -3,7 +3,7 @@ import { BehaviorSubject, filter, tap } from 'rxjs';
 import { ActivityWatchEventService } from './activity-watch-event.service';
 import { GAUZY_ENV } from '../../constants';
 import { ActivityWatchElectronService } from './activity-watch-electron.service';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })

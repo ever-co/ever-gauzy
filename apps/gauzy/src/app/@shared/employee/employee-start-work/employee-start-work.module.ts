@@ -1,9 +1,8 @@
-import {NgModule} from '@angular/core';
-import {EmployeeStartWorkComponent} from "./employee-start-work.component";
-import {FormsModule} from "@angular/forms";
-import {TranslateModule} from "../../translate/translate.module";
-import {NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule} from "@nebular/theme";
-
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule } from '@nebular/theme';
+import { EmployeeStartWorkComponent } from './employee-start-work.component';
 
 @NgModule({
 	declarations: [EmployeeStartWorkComponent],
@@ -18,5 +17,4 @@ import {NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputM
 		TranslateModule
 	]
 })
-export class EmployeeStartWorkModule {
-}
+export class EmployeeStartWorkModule {}

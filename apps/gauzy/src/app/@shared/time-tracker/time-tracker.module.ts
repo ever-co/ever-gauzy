@@ -11,7 +11,7 @@ import {
 	NbAlertModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';

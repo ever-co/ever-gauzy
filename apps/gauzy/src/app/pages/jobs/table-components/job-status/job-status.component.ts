@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { JobPostStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'job-status',
@@ -10,10 +10,7 @@ import { TranslationBaseComponent } from './../../../../@shared/language-base';
 	providers: []
 })
 export class JobStatusComponent extends TranslationBaseComponent {
-
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -49,7 +46,7 @@ export class JobStatusComponent extends TranslationBaseComponent {
 		}
 		return {
 			text: badgeText,
-			class: badgeClass,
+			class: badgeClass
 		};
 	}
 }

@@ -24,10 +24,10 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeesService } from '../../@core/services';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { SharedModule } from '../../@shared/shared.module';
 
@@ -57,15 +57,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		GauzyButtonActionModule,
 		NbTooltipModule
 	],
-	providers: [
-		EquipmentSharingService,
-		ApprovalPolicyService,
-		EmployeesService
-	],
-	declarations: [
-		EquipmentSharingComponent,
-		EquipmentSharingActionComponent,
-		EquipmentSharingStatusComponent
-	]
+	providers: [EquipmentSharingService, ApprovalPolicyService, EmployeesService],
+	declarations: [EquipmentSharingComponent, EquipmentSharingActionComponent, EquipmentSharingStatusComponent]
 })
-export class EquipmentSharingModule { }
+export class EquipmentSharingModule {}

@@ -3,7 +3,7 @@ import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@
 import { filter, tap } from 'rxjs/operators';
 import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE, ToastrService } from '../../../@core';
 
@@ -14,7 +14,6 @@ import { DUMMY_PROFILE_IMAGE, ToastrService } from '../../../@core';
 	styleUrls: ['./teams-mutation.component.scss']
 })
 export class TeamsMutationComponent implements OnInit {
-
 	@Input() employees: IEmployee[] = [];
 	@Input() projects: IOrganizationProject[] = [];
 	@Input() team?: IOrganizationTeam;
@@ -25,8 +24,8 @@ export class TeamsMutationComponent implements OnInit {
 	public hoverState: boolean;
 	public imageUrl: string;
 	/*
-	* Team Mutation Form
-	*/
+	 * Team Mutation Form
+	 */
 	public form: UntypedFormGroup = TeamsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
@@ -36,7 +35,7 @@ export class TeamsMutationComponent implements OnInit {
 			projects: [[]],
 			tags: [[]],
 			imageUrl: [{ value: null, disabled: true }],
-			imageId: [],
+			imageId: []
 		});
 		return form;
 	}
@@ -45,14 +44,14 @@ export class TeamsMutationComponent implements OnInit {
 		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -91,7 +90,7 @@ export class TeamsMutationComponent implements OnInit {
 				managerIds: selectedManagers,
 				imageUrl: this.team.image?.fullUrl,
 				imageId: this.team.image?.id,
-				projects: this.team.projects.map((project: IOrganizationProject) => project.id),
+				projects: this.team.projects.map((project: IOrganizationProject) => project.id)
 			});
 		}
 	}
@@ -114,13 +113,12 @@ export class TeamsMutationComponent implements OnInit {
 
 		// Prepare team information and emit the event
 		this.addOrEditTeam.emit({
-			...this.form.value,  // Include form values
-			projects: projects.map((id: string) => this.projects.find((p) => p.id === id)).filter((p) => !!p),  // Map project IDs to projects and filter out null values
+			...this.form.value, // Include form values
+			projects: projects.map((id: string) => this.projects.find((p) => p.id === id)).filter((p) => !!p), // Map project IDs to projects and filter out null values
 			organizationId,
-			tenantId,
+			tenantId
 		});
 	}
-
 
 	/**
 	 * On Selected Members Handler

@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IIssueType,
@@ -9,8 +9,8 @@ import {
 	IPaginationParam
 } from '@gauzy/contracts';
 import { CountQueryDTO } from '../../shared/dto';
-import { TenantPermissionGuard } from './../../shared/guards';
 import { UseValidationPipe } from '../../shared/pipes';
+import { TenantPermissionGuard } from '../../shared/guards';
 import { CrudFactory, PaginationParams } from './../../core/crud';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
@@ -31,6 +31,24 @@ export class IssueTypeController extends CrudFactory<
 	}
 
 	/**
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Make issue type default.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task issue type maked as default'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Put(':id/default')
+	@UseValidationPipe({ whitelist: true })
+	async markAsDefault(@Param('id') id: IIssueType['id'], @Body() input: UpdateIssueTypeDTO): Promise<IIssueType[]> {
+		return await this.issueTypeService.markAsDefault(id, input);
+	}
+
+	/**
 	 * GET issue types by filters
 	 * If parameters not match, retrieve global task sizes
 	 *
@@ -40,13 +58,12 @@ export class IssueTypeController extends CrudFactory<
 	@ApiOperation({ summary: 'Find issue types by filters.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found task sizes by filters.'
+		description: 'Found task issue type by filters.'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
 	@UseValidationPipe({ whitelist: true })
 	async findAllIssueTypes(@Query() params: IssueTypeQueryDTO): Promise<IPagination<IIssueType>> {
-		console.log('IssueTypeController -> findAllIssueTypes -> params', params);
 		return await this.issueTypeService.fetchAll(params);
 	}
 }

@@ -1,25 +1,12 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output
-} from '@angular/core';
-import {
-	ContactType,
-	IOrganization,
-	IOrganizationContact,
-	PermissionsEnum,
-} from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
+import { ContactType, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ErrorHandlingService, OrganizationContactService, Store, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,17 +20,15 @@ import { TranslationBaseComponent } from '../language-base/translation-base.comp
 		}
 	]
 })
-export class ContactSelectComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ContactSelectComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditEmployee$: Observable<boolean>;
 	contacts: IOrganizationContact[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	_disabled: boolean = false;
 	get disabled(): boolean {
 		return this._disabled;
@@ -53,8 +38,8 @@ export class ContactSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -64,8 +49,8 @@ export class ContactSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic clearable option
-	*/
+	 * Getter & Setter for dynamic clearable option
+	 */
 	_clearable: boolean;
 	get clearable(): boolean {
 		return this._clearable;
@@ -75,8 +60,8 @@ export class ContactSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = false;
 	get addTag(): boolean {
 		return this._addTag;
@@ -86,8 +71,8 @@ export class ContactSelectComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic searchable option
-	*/
+	 * Getter & Setter for dynamic searchable option
+	 */
 	_searchable: boolean = true;
 	get searchable(): boolean {
 		return this._searchable;
@@ -96,8 +81,8 @@ export class ContactSelectComponent extends TranslationBaseComponent
 		this._searchable = value;
 	}
 
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	private _organizationContact: IOrganizationContact;
 	set organizationContact(val: IOrganizationContact) {
@@ -117,7 +102,7 @@ export class ContactSelectComponent extends TranslationBaseComponent
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly organizationContactService: OrganizationContactService,
+		private readonly organizationContactService: OrganizationContactService
 	) {
 		super(translateService);
 	}
@@ -139,9 +124,7 @@ export class ContactSelectComponent extends TranslationBaseComponent
 			)
 			.subscribe();
 		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT))
 		);
 	}
 
@@ -222,5 +205,5 @@ export class ContactSelectComponent extends TranslationBaseComponent
 		}
 	};
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

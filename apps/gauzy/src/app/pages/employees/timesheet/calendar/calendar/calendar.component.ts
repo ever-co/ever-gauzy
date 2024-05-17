@@ -1,13 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	AfterViewInit,
-	OnDestroy,
-	TemplateRef,
-	ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -22,17 +14,10 @@ import * as moment from 'moment';
 import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import {
-	IGetTimeLogInput,
-	ITimeLog,
-	ITimeLogFilters,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { toLocal, isEmpty } from '@gauzy/common-angular';
-import {
-	DateRangePickerBuilderService,
-	Store
-} from './../../../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
+import { toLocal, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store } from './../../../../../@core/services';
 import {
 	EditTimeLogModalComponent,
 	TimesheetFilterService,
@@ -47,11 +32,9 @@ import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/
 @Component({
 	selector: 'ngx-calendar-timesheet',
 	templateUrl: './calendar.component.html',
-  	styleUrls:['./calendar.component.scss']
+	styleUrls: ['./calendar.component.scss']
 })
-export class CalendarComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-
+export class CalendarComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
@@ -84,12 +67,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 				right: 'dayGridMonth,timeGridWeek,timeGridDay'
 			},
 			themeSystem: 'bootstrap',
-			plugins: [
-				dayGridPlugin,
-				timeGrigPlugin,
-				interactionPlugin,
-				bootstrapPlugin
-			],
+			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin],
 			showNonCurrentDates: false,
 			weekends: true,
 			height: 'auto',
@@ -149,7 +127,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		/**
 		 * Allow manual time
 		 */
-		if (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME) && allowManualTime) {
+		if ((await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MANUAL_TIME)) && allowManualTime) {
 			calendar.setOption('selectable', true);
 		} else {
 			calendar.setOption('selectable', false);
@@ -157,7 +135,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		/**
 		 * Allow modify time
 		 */
-		if (await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME) && allowModifyTime) {
+		if ((await this.ngxPermissionsService.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME)) && allowModifyTime) {
 			calendar.setOption('editable', true);
 		} else {
 			calendar.setOption('editable', false);
@@ -192,12 +170,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
 		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
@@ -211,18 +184,16 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.timesheetService
 			.getTimeLogs(request, ['project', 'task', 'organizationContact', 'employee.user'])
 			.then((logs: ITimeLog[]) => {
-				const events = logs.map(
-					(log: ITimeLog): EventInput => {
-						const title = log.project ? log.project.name : this.getTranslation('TIMESHEET.NO_PROJECT');
-						return {
-							id: log.id,
-							title: title,
-							start: toLocal(log.startedAt).toDate(),
-							end: toLocal(log.stoppedAt).toDate(),
-							log: log
-						};
-					}
-				);
+				const events = logs.map((log: ITimeLog): EventInput => {
+					const title = log.project ? log.project.name : this.getTranslation('TIMESHEET.NO_PROJECT');
+					return {
+						id: log.id,
+						title: title,
+						start: toLocal(log.startedAt).toDate(),
+						end: toLocal(log.stoppedAt).toDate(),
+						log: log
+					};
+				});
 				callback(events);
 			})
 			.finally(() => (this.loading = false));
@@ -230,9 +201,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 
 	selectAllow({ start, end }) {
 		const isOneDay = moment(start).isSame(moment(end), 'day');
-		return this.futureDateAllowed
-			? isOneDay
-			: isOneDay && moment(end).isSameOrBefore(moment());
+		return this.futureDateAllowed ? isOneDay : isOneDay && moment(end).isSameOrBefore(moment());
 	}
 
 	handleEventClick({ event }) {
@@ -252,12 +221,8 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		this.openDialog({
 			startedAt: event.start,
 			stoppedAt: event.end,
-			employeeId: this.request.employeeIds
-				? this.request.employeeIds[0]
-				: null,
-			projectId: this.request.projectIds
-				? this.request.projectIds[0]
-				: null
+			employeeId: this.request.employeeIds ? this.request.employeeIds[0] : null,
+			projectId: this.request.projectIds ? this.request.projectIds[0] : null
 		});
 	}
 
@@ -290,12 +255,9 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 		}
 		const curOverflow = el.style ? el.style.overflow : 'hidden';
 
-		if (!curOverflow || curOverflow === 'visible')
-			el.style.overflow = 'hidden';
+		if (!curOverflow || curOverflow === 'visible') el.style.overflow = 'hidden';
 
-		const isOverflowing =
-			el.clientWidth < el.scrollWidth ||
-			el.clientHeight < el.scrollHeight;
+		const isOverflowing = el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
 
 		if (el.style) {
 			el.style.overflow = curOverflow;
@@ -307,12 +269,11 @@ export class CalendarComponent extends BaseSelectorFilterComponent
 	openDialog(timeLog?: ITimeLog | Partial<ITimeLog>) {
 		this.nbDialogService
 			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
-					moment(timeLog.startedAt)
-				)),
+				tap((timeLog: ITimeLog) =>
+					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt))
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)

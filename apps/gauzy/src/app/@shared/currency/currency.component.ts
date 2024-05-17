@@ -8,19 +8,15 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import {
-	ControlValueAccessor,
-	FormControl,
-	NG_VALUE_ACCESSOR
-} from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ICurrency, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CurrencyService, Store } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,9 +32,7 @@ import { environment as ENV } from './../../../environments/environment';
 		}
 	]
 })
-export class CurrencyComponent extends TranslationBaseComponent
-	implements OnInit, AfterViewInit, ControlValueAccessor {
-
+export class CurrencyComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
 	@Input() formControl: FormControl = new FormControl();
 	@Output() optionChange = new EventEmitter<ICurrency>();
 
@@ -51,8 +45,8 @@ export class CurrencyComponent extends TranslationBaseComponent
 	onTouched: any = () => {};
 
 	/*
-	* Getter & Setter for dynamic selected currency
-	*/
+	 * Getter & Setter for dynamic selected currency
+	 */
 	private _currency: string;
 	get currency() {
 		return this._currency;
@@ -66,8 +60,8 @@ export class CurrencyComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder() {
 		return this._placeholder;
@@ -79,8 +73,8 @@ export class CurrencyComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic label display
-	*/
+	 * Getter & Setter for dynamic label display
+	 */
 	private _label: boolean = true;
 	get label() {
 		return this._label;
@@ -104,7 +98,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(({ currency }) => {
 					this.currency = currency || ENV.DEFAULT_CURRENCY;
 				}),
@@ -119,7 +113,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 			.pipe(
 				tap((currencies: ICurrency[]) => (this._currencies = currencies)),
 				tap(() => this.onSelectChange(this.currency)),
-				tap(() => this.loading = false),
+				tap(() => (this.loading = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -131,9 +125,7 @@ export class CurrencyComponent extends TranslationBaseComponent
 
 	onSelectChange(value: string) {
 		if (this._currencies.length > 0) {
-			const currency = this._currencies.find(
-				(currency: ICurrency) => currency.isoCode === value
-			);
+			const currency = this._currencies.find((currency: ICurrency) => currency.isoCode === value);
 			this.currency = !!currency ? currency.isoCode : null;
 			this.onOptionChange(currency);
 		}

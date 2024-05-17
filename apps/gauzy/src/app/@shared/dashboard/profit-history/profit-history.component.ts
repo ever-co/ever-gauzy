@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { IEmployeeStatisticsHistory, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store } from '../../../@core/services/store.service';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
@@ -20,7 +20,6 @@ import { PaginationFilterBaseComponent } from '../../pagination/pagination-filte
 	styleUrls: ['./profit-history.component.scss']
 })
 export class ProfitHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
-
 	public organization: IOrganization;
 	public smartTableSettings: object;
 	public smartTableSource = new LocalDataSource();
@@ -126,7 +125,7 @@ export class ProfitHistoryComponent extends PaginationFilterBaseComponent implem
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				expense: {
 					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.EXPENSES'),
@@ -135,7 +134,7 @@ export class ProfitHistoryComponent extends PaginationFilterBaseComponent implem
 					componentInitFunction: (instance: ExpenseTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				income: {
 					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.INCOME'),
@@ -144,7 +143,7 @@ export class ProfitHistoryComponent extends PaginationFilterBaseComponent implem
 					componentInitFunction: (instance: IncomeTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				notes: {
 					title: this.getTranslation('DASHBOARD_PAGE.PROFIT_HISTORY.DESCRIPTION'),

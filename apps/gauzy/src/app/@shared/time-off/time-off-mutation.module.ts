@@ -16,7 +16,7 @@ import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-s
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { TimeOffRequestMutationComponent } from './time-off-request-mutation/time-off-request-mutation.component';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/time-off-holiday-mutation.component';
 import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-policy-select.module';
 
@@ -39,11 +39,7 @@ import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-pol
 		TranslateModule,
 		TimeOffPolicySelectModule
 	],
-	declarations: [
-		TimeOffSettingsMutationComponent,
-		TimeOffRequestMutationComponent,
-		TimeOffHolidayMutationComponent
-	],
+	declarations: [TimeOffSettingsMutationComponent, TimeOffRequestMutationComponent, TimeOffHolidayMutationComponent],
 	providers: []
 })
 export class TimeOffMutationModule {}

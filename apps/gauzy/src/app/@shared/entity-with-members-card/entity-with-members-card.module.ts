@@ -9,10 +9,10 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 import { TableComponentsModule } from '../table-components/table-components.module';
-import { TranslateModule } from '../translate/translate.module';
 
 @NgModule({
 	imports: [

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { ImportExportRoutingModule } from './import-export-routing.module';
 import { ImportExportComponent } from './import-export.component';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DialogsModule } from '../../@shared/dialogs';
 

@@ -10,30 +10,20 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom, Observable } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class CandidatesService {
+	constructor(private readonly http: HttpClient) {}
 
-	constructor(
-		private readonly http: HttpClient
-	) {}
-
-	getAll(
-		relations: string[] = [],
-		where: ICandidateFindInput
-	): Observable<IPagination<ICandidate>> {
+	getAll(relations: string[] = [], where: ICandidateFindInput): Observable<IPagination<ICandidate>> {
 		return this.http.get<IPagination<ICandidate>>(`${API_PREFIX}/candidate`, {
 			params: toParams({ where, relations })
 		});
 	}
 
-	getCandidateById(
-		id: ICandidate['id'],
-		relations: string[] = [],
-		where?: ICandidateFindInput
-	): Promise<ICandidate> {
+	getCandidateById(id: ICandidate['id'], relations: string[] = [], where?: ICandidateFindInput): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				params: toParams({ where, relations })
@@ -42,16 +32,11 @@ export class CandidatesService {
 	}
 
 	delete(id: ICandidate['id']): Promise<ICandidate> {
-		return firstValueFrom(
-			this.http.delete<ICandidate>(`${API_PREFIX}/candidate/${id}`)
-		);
+		return firstValueFrom(this.http.delete<ICandidate>(`${API_PREFIX}/candidate/${id}`));
 	}
 
 	update(id: ICandidate['id'], body: ICandidateUpdateInput): Promise<ICandidate> {
-		return firstValueFrom(
-			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`,
-			body
-		));
+		return firstValueFrom(this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, body));
 	}
 
 	create(body: ICandidateCreateInput): Observable<ICandidate> {
@@ -69,10 +54,7 @@ export class CandidatesService {
 	 * @param body
 	 * @returns
 	 */
-	setCandidateAsArchived(
-		id: ICandidate['id'],
-		body: IBasePerTenantAndOrganizationEntityModel
-	): Promise<ICandidate> {
+	setCandidateAsArchived(id: ICandidate['id'], body: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				isArchived: true,
@@ -88,9 +70,7 @@ export class CandidatesService {
 	 * @returns
 	 */
 	setCandidateAsHired(id: ICandidate['id']): Promise<ICandidate> {
-		return firstValueFrom(
-			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/hired`, {})
-		);
+		return firstValueFrom(this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/hired`, {}));
 	}
 
 	/**
@@ -100,9 +80,7 @@ export class CandidatesService {
 	 * @returns
 	 */
 	setCandidateAsRejected(id: ICandidate['id']): Promise<ICandidate> {
-		return firstValueFrom(
-			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/rejected`, {})
-		);
+		return firstValueFrom(this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}/rejected`, {}));
 	}
 
 	/**

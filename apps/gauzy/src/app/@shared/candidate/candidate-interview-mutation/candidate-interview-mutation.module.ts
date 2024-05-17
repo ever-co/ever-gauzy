@@ -15,8 +15,10 @@ import {
 	NbRadioModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { CKEditorModule } from 'ckeditor4-angular';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
@@ -25,8 +27,6 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
-import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [

@@ -18,7 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, combineLatest, map, switchMap, of as observableOf, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	JobPresetService,
 	JobSearchCategoryService,
@@ -34,7 +34,6 @@ import {
 	styleUrls: ['./matching.component.scss']
 })
 export class MatchingComponent implements AfterViewInit, OnInit {
-
 	criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null
@@ -58,7 +57,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		private readonly jobSearchCategoryService: JobSearchCategoryService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.hasAddPreset$ = this.store.selectedEmployee$.pipe(
@@ -129,9 +128,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			organizationId,
 			...(this.selectedEmployeeId
 				? {
-					employeeId: this.selectedEmployeeId
-				}
-				: {}),
+						employeeId: this.selectedEmployeeId
+				  }
+				: {})
 		};
 		this.payloads$.next(request);
 	}
@@ -200,11 +199,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				name,
 				...(this.selectedEmployeeId
 					? {
-						employees: [
-							{ id: this.selectedEmployeeId }
-						]
-					}
-					: []),
+							employees: [{ id: this.selectedEmployeeId }]
+					  }
+					: [])
 			});
 			this.jobPresets = this.jobPresets.concat([jobPreset]);
 			this.criterionForm.jobPresetId = jobPreset.id;
@@ -214,7 +211,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		} catch (error) {
 			console.error('Error while creating job presets', error);
 		}
-	}
+	};
 
 	async onPresetSelected(jobPreset: IJobPreset) {
 		try {
@@ -250,11 +247,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 				jobPresetIds: [this.criterionForm.jobPresetId],
 				employeeId: this.selectedEmployeeId
 			};
-			await this.jobPresetService
-				.saveEmployeePreset(request)
-				.then((criterions) => {
-					this.criterions = criterions;
-				});
+			await this.jobPresetService.saveEmployeePreset(request).then((criterions) => {
+				this.criterions = criterions;
+			});
 		}
 	}
 
@@ -266,20 +261,13 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			if (this.criterions && this.criterions.length > 0) {
 				request.jobPresetCriterions = this.criterions.map(
 					(employeeCriterion): IJobPresetUpworkJobSearchCriterion => {
-						return _.omit(
-							employeeCriterion,
-							'employeeId',
-							'id',
-							'jobPresetId'
-						);
+						return _.omit(employeeCriterion, 'employeeId', 'id', 'jobPresetId');
 					}
 				);
-				request.jobPresetCriterions = request.jobPresetCriterions.filter(
-					(employeeCriterion) => {
-						const values = Object.values(employeeCriterion);
-						return values.length > 0;
-					}
-				);
+				request.jobPresetCriterions = request.jobPresetCriterions.filter((employeeCriterion) => {
+					const values = Object.values(employeeCriterion);
+					return values.length > 0;
+				});
 			}
 			this.jobPresetService.createJobPreset(request).then(() => {
 				this.hasAnyChanges = false;
@@ -292,15 +280,9 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		let req: any;
 		this.hasAnyChanges = true;
 		if (this.selectedEmployeeId) {
-			req = this.jobPresetService.createEmployeeCriterion(
-				this.selectedEmployeeId,
-				criterion
-			);
+			req = this.jobPresetService.createEmployeeCriterion(this.selectedEmployeeId, criterion);
 		} else {
-			req = this.jobPresetService.createJobPresetCriterion(
-				this.criterionForm.jobPresetId,
-				criterion
-			);
+			req = this.jobPresetService.createJobPresetCriterion(this.criterionForm.jobPresetId, criterion);
 		}
 
 		req.then((newCreation) => {
@@ -317,31 +299,18 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 			this.hasAnyChanges = true;
 			if (this.selectedEmployeeId) {
 				try {
-					await this.jobPresetService.deleteEmployeeCriterion(
-						this.selectedEmployeeId,
-						criterion.id
-					);
-					this.toastrService.success(
-						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
-					);
+					await this.jobPresetService.deleteEmployeeCriterion(this.selectedEmployeeId, criterion.id);
+					this.toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_DELETED');
 				} catch (error) {
-					this.toastrService.error(
-						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
-					);
+					this.toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
 					return;
 				}
 			} else {
 				try {
-					await this.jobPresetService.deleteJobPresetCriterion(
-						criterion.id
-					);
-					this.toastrService.success(
-						'TOASTR.MESSAGE.JOB_MATCHING_DELETED'
-					);
+					await this.jobPresetService.deleteJobPresetCriterion(criterion.id);
+					this.toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_DELETED');
 				} catch (error) {
-					this.toastrService.error(
-						'TOASTR.MESSAGE.JOB_MATCHING_ERROR'
-					);
+					this.toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
 					return;
 				}
 			}
@@ -358,9 +327,11 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 	 *
 	 * @param criterion
 	 */
-	addNewCriterion(criterion: IMatchingCriterions = {
-		jobType: JobPostTypeEnum.HOURLY
-	}) {
+	addNewCriterion(
+		criterion: IMatchingCriterions = {
+			jobType: JobPostTypeEnum.HOURLY
+		}
+	) {
 		this.criterions.push(criterion);
 	}
 
@@ -437,7 +408,7 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		} catch (error) {
 			console.error('Error while creating new job search category', error);
 		}
-	}
+	};
 
 	/**
 	 * Create new job search occupation
@@ -464,5 +435,5 @@ export class MatchingComponent implements AfterViewInit, OnInit {
 		} catch (error) {
 			console.error('Error while creating new job search occupation', error);
 		}
-	}
+	};
 }

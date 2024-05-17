@@ -3,7 +3,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormBuilder, Validators, FormArray } from '@angular/forms';
 import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import {
 	CandidateStatusEnum,
@@ -24,9 +24,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 	templateUrl: './candidate-interview-feedback.component.html',
 	styleUrls: ['./candidate-interview-feedback.component.scss']
 })
-export class CandidateInterviewFeedbackComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class CandidateInterviewFeedbackComponent extends TranslationBaseComponent implements OnInit {
 	@Input() candidateId: string;
 	@Input() interviewId: string;
 	@Input() currentInterview: ICandidateInterview;
@@ -79,47 +77,31 @@ export class CandidateInterviewFeedbackComponent
 			personalQualities: this.fb.array([])
 		});
 		this.form.valueChanges.subscribe((item) => {
-			this.averageRating = this.setRating(
-				item.technologies,
-				item.personalQualities
-			);
+			this.averageRating = this.setRating(item.technologies, item.personalQualities);
 		});
 	}
 	private setRating(technologies: number[], qualities: number[]) {
-		this.technologiesList.forEach(
-			(tech, index) => (tech.rating = technologies[index])
-		);
-		this.personalQualitiesList.forEach(
-			(qual, index) => (qual.rating = qualities[index])
-		);
+		this.technologiesList.forEach((tech, index) => (tech.rating = technologies[index]));
+		this.personalQualitiesList.forEach((qual, index) => (qual.rating = qualities[index]));
 		const techSum =
-			technologies.length > 0
-				? technologies.reduce((sum, current) => sum + current, 0) /
-				technologies.length
-				: 0;
+			technologies.length > 0 ? technologies.reduce((sum, current) => sum + current, 0) / technologies.length : 0;
 		const qualSum =
-			qualities.length > 0
-				? qualities.reduce((sum, current) => sum + current, 0) /
-				qualities.length
-				: 0;
-		const isSomeEmpty =
-			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
+			qualities.length > 0 ? qualities.reduce((sum, current) => sum + current, 0) / qualities.length : 0;
+		const isSomeEmpty = (technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
 		const res = techSum || qualSum ? (techSum + qualSum) / isSomeEmpty : 0;
 		return res;
 	}
 
 	private async loadFeedbacks() {
 		const { id: organizationId, tenantId } = this.organization;
-		const result = await this.candidateFeedbacksService.getAll(
-			['interviewer'],
-			{ candidateId: this.candidateId, organizationId, tenantId }
-		);
+		const result = await this.candidateFeedbacksService.getAll(['interviewer'], {
+			candidateId: this.candidateId,
+			organizationId,
+			tenantId
+		});
 		if (result) {
 			for (const feedback of result.items) {
-				if (
-					feedback.interviewId === this.interviewId &&
-					feedback.interviewer
-				) {
+				if (feedback.interviewId === this.interviewId && feedback.interviewer) {
 					this.disabledIds.push(feedback.interviewer.employeeId);
 					if (feedback.status === CandidateStatusEnum.REJECTED) {
 						this.isRejected = true;
@@ -127,9 +109,7 @@ export class CandidateInterviewFeedbackComponent
 						this.isRejected = false;
 					}
 					this.statusHire =
-						feedback.status === CandidateStatusEnum.HIRED
-							? this.statusHire + 1
-							: this.statusHire;
+						feedback.status === CandidateStatusEnum.HIRED ? this.statusHire + 1 : this.statusHire;
 				}
 			}
 		}
@@ -161,69 +141,46 @@ export class CandidateInterviewFeedbackComponent
 					organizationId,
 					tenantId
 				});
-				if (
-					this.technologiesList.length !== 0 ||
-					this.personalQualitiesList.length !== 0
-				) {
+				if (this.technologiesList.length !== 0 || this.personalQualitiesList.length !== 0) {
 					await this.candidateCriterionsRatingService.createBulk(
 						feedback.id,
 						this.technologiesList,
 						this.personalQualitiesList
 					);
 				}
-				const updated = await this.candidateFeedbacksService.update(
-					feedback.id,
-					{
-						description: description,
-						rating:
-							this.technologiesList.length === 0 &&
-								this.personalQualitiesList.length === 0
-								? this.form.get('rating').value
-								: this.averageRating,
-						interviewer: this.feedbackInterviewer,
-						status: this.status,
-						organizationId,
-						tenantId
-					}
-				);
+				const updated = await this.candidateFeedbacksService.update(feedback.id, {
+					description: description,
+					rating:
+						this.technologiesList.length === 0 && this.personalQualitiesList.length === 0
+							? this.form.get('rating').value
+							: this.averageRating,
+					interviewer: this.feedbackInterviewer,
+					status: this.status,
+					organizationId,
+					tenantId
+				});
 				this.setStatus(this.status);
 				this.technologiesList.forEach((tech) => (tech.rating = null));
-				this.personalQualitiesList.forEach(
-					(qual) => (qual.rating = null)
-				);
+				this.personalQualitiesList.forEach((qual) => (qual.rating = null));
 				this.dialogRef.close(updated);
 				this.form.reset();
 			} catch (error) {
-				this.toastrService.danger(
-					'NOTES.CANDIDATE.EXPERIENCE.ERROR',
-					'TOASTR.TITLE.ERROR',
-					{
-						error: error.error ? error.error.message : error.message
-					}
-				);
+				this.toastrService.danger('NOTES.CANDIDATE.EXPERIENCE.ERROR', 'TOASTR.TITLE.ERROR', {
+					error: error.error ? error.error.message : error.message
+				});
 			}
 		} else {
-			this.toastrService.danger(
-				'NOTES.CANDIDATE.INVALID_FORM',
-				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED'
-			);
+			this.toastrService.danger('NOTES.CANDIDATE.INVALID_FORM', 'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_REQUIRED');
 		}
 	}
 
 	private async setStatus(status: string) {
 		if (status === CandidateStatusEnum.REJECTED) {
-			await this.candidatesService.setCandidateAsRejected(
-				this.candidateId
-			);
-		} else if (
-			this.statusHire + 1 ===
-			this.currentInterview.employees.length
-		) {
+			await this.candidatesService.setCandidateAsRejected(this.candidateId);
+		} else if (this.statusHire + 1 === this.currentInterview.employees.length) {
 			await this.candidatesService.setCandidateAsHired(this.candidateId);
 		} else {
-			await this.candidatesService.setCandidateAsApplied(
-				this.candidateId
-			);
+			await this.candidatesService.setCandidateAsApplied(this.candidateId);
 		}
 	}
 	private loadCriterions() {
@@ -234,9 +191,7 @@ export class CandidateInterviewFeedbackComponent
 			technologyRating.push(this.fb.control(item.rating));
 		});
 
-		const personalQualityRating = this.form.get(
-			'personalQualities'
-		) as FormArray;
+		const personalQualityRating = this.form.get('personalQualities') as FormArray;
 		this.personalQualitiesList.forEach((item) => {
 			personalQualityRating.push(this.fb.control(item.rating));
 		});

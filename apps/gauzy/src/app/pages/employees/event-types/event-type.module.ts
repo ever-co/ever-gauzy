@@ -22,10 +22,10 @@ import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tag
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '../../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
@@ -56,4 +56,4 @@ import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pa
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]
 })
-export class EventTypeModule { }
+export class EventTypeModule {}

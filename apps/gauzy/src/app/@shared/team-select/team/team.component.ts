@@ -1,35 +1,13 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	Output,
-	EventEmitter
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	IOrganization,
-	IOrganizationTeam,
-	CrudActionEnum,
-	PermissionsEnum,
-	IPagination
-} from '@gauzy/contracts';
+import { IOrganization, IOrganizationTeam, CrudActionEnum, PermissionsEnum, IPagination } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	distinctUntilChange,
-	isEmpty,
-	isNotEmpty
-} from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_TEAM_SELECTED } from './default-team';
-import {
-	OrganizationTeamsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { OrganizationTeamsService, Store, ToastrService } from '../../../@core/services';
 import { TruncatePipe } from '../../pipes';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 
@@ -47,15 +25,14 @@ import { OrganizationTeamStore } from '../../../@core/services/organization-team
 	]
 })
 export class TeamSelectorComponent implements OnInit, OnDestroy {
-
 	teams: IOrganizationTeam[] = [];
 	selectedTeam: IOrganizationTeam;
 	hasAddTeam$: Observable<boolean>;
 
 	public organization: IOrganization;
 	subject$: Subject<any> = new Subject();
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Input() shortened = false;
 	@Input() disabled = false;
@@ -139,16 +116,11 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		private readonly toastrService: ToastrService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
 		private readonly _truncatePipe: TruncatePipe
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.hasAddTeam$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_TEAM_ADD
-				)
-			)
+			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_ADD))
 		);
 		this.subject$
 			.pipe(
@@ -172,10 +144,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -346,9 +315,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	deleteOrganizationTeam(team: IOrganizationTeam) {
 		let teams: IOrganizationTeam[] = this.teams || [];
 		if (Array.isArray(teams) && teams.length) {
-			teams = teams.filter(
-				(item: IOrganizationTeam) => item.id !== team.id
-			);
+			teams = teams.filter((item: IOrganizationTeam) => item.id !== team.id);
 		}
 		this.teams = [...teams].filter(isNotEmpty);
 	}
@@ -356,7 +323,7 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	selectTeam(team: IOrganizationTeam): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedTeam = team || ALL_TEAM_SELECTED;
-			this.setAttributesToParams({ teamId: team?.id || null })
+			this.setAttributesToParams({ teamId: team?.id || null });
 		}
 		this.selectedTeam = team || ALL_TEAM_SELECTED;
 		this.teamId = this.selectedTeam.id;
@@ -367,14 +334,12 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		this._router.navigate([], {
 			relativeTo: this._activatedRoute,
 			queryParams: { ...params },
-			queryParamsHandling: 'merge',
+			queryParamsHandling: 'merge'
 		});
 	}
 
 	selectTeamById(teamId: string) {
-		const team = this.teams.find(
-			(team: IOrganizationTeam) => teamId === team.id
-		);
+		const team = this.teams.find((team: IOrganizationTeam) => teamId === team.id);
 		if (team) {
 			this.selectTeam(team);
 		}
@@ -430,5 +395,5 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

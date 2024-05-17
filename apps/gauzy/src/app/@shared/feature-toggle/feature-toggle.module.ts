@@ -1,8 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FeatureToggleComponent } from './feature-toggle.component';
-import { FeatureService } from '../../@core/services/feature/feature.service';
-import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,8 +9,11 @@ import {
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
-import { TranslateModule } from '../translate/translate.module';
+import { FeatureService } from '../../@core/services/feature/feature.service';
+import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
+import { FeatureToggleComponent } from './feature-toggle.component';
 
 @NgModule({
 	imports: [

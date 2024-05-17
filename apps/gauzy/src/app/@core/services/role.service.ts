@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { IRole, IPagination, IRoleCreateInput, IRoleFindInput } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -16,26 +16,20 @@ export class RoleService {
 	}
 
 	getAll(): Promise<IPagination<IRole>> {
-		return firstValueFrom(
-			this.http
-			.get<IPagination<IRole>>(`${API_PREFIX}/roles`)
-		);
+		return firstValueFrom(this.http.get<IPagination<IRole>>(`${API_PREFIX}/roles`));
 	}
 
 	create(role: IRoleCreateInput): Observable<IRole> {
 		return this.http.post<IRole>(`${API_PREFIX}/roles`, {
 			...role
-		})
+		});
 	}
 
 	delete(role: IRole): Observable<IRole> {
-		return this.http.delete<IRole>(`${API_PREFIX}/roles/${role.id}`)
+		return this.http.delete<IRole>(`${API_PREFIX}/roles/${role.id}`);
 	}
 
 	getRoleById(roleId: string): Promise<IRole> {
-		return firstValueFrom(
-			this.http
-			.get<IRole>(`${API_PREFIX}/roles/${roleId}`)
-		);
+		return firstValueFrom(this.http.get<IRole>(`${API_PREFIX}/roles/${roleId}`));
 	}
 }

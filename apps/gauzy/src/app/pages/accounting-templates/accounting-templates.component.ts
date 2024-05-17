@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -12,12 +6,8 @@ import { combineLatest, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { NbThemeService } from '@nebular/theme';
-import {
-	AccountingTemplateTypeEnum,
-	IOrganization,
-	LanguagesEnum
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { AccountingTemplateTypeEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { AccountingTemplateService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -25,9 +15,7 @@ import { AccountingTemplateService, Store } from '../../@core/services';
 	templateUrl: './accounting-templates.component.html',
 	styleUrls: ['./accounting-templates.component.scss']
 })
-export class AccountingTemplatesComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-
+export class AccountingTemplatesComponent implements OnInit, AfterViewInit, OnDestroy {
 	previewTemplate: SafeHtml;
 	languageCodes: string[] = Object.values(LanguagesEnum);
 	templateTypes: string[] = Object.values(AccountingTemplateTypeEnum);
@@ -51,7 +39,7 @@ export class AccountingTemplatesComponent
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
 		private readonly themeService: NbThemeService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.subject$
@@ -82,23 +70,17 @@ export class AccountingTemplatesComponent
 		this.themeService
 			.getJsTheme()
 			.pipe(untilDestroyed(this))
-			.subscribe(
-				({
-					name
-				}: {
-					name: 'dark' | 'cosmic' | 'corporate' | 'default';
-				}) => {
-					switch (name) {
-						case 'dark':
-						case 'cosmic':
-							this.templateEditor.setTheme('tomorrow_night');
-							break;
-						default:
-							this.templateEditor.setTheme('sqlserver');
-							break;
-					}
+			.subscribe(({ name }: { name: 'dark' | 'cosmic' | 'corporate' | 'default' }) => {
+				switch (name) {
+					case 'dark':
+					case 'cosmic':
+						this.templateEditor.setTheme('tomorrow_night');
+						break;
+					default:
+						this.templateEditor.setTheme('sqlserver');
+						break;
 				}
-			);
+			});
 
 		const editorOptions = {
 			enableBasicAutocompletion: true,
@@ -118,10 +100,8 @@ export class AccountingTemplatesComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const {
-			languageCode = LanguagesEnum.ENGLISH,
-			templateType = AccountingTemplateTypeEnum.INVOICE
-		} = this.form.value;
+		const { languageCode = LanguagesEnum.ENGLISH, templateType = AccountingTemplateTypeEnum.INVOICE } =
+			this.form.value;
 
 		const result = await this.accountingTemplateService.getTemplate({
 			languageCode,
@@ -140,12 +120,10 @@ export class AccountingTemplatesComponent
 
 		const html = await this.accountingTemplateService.generateTemplatePreview({
 			organization: this.organization.name,
-			data: result.mjml,
+			data: result.mjml
 		});
 
-		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
-			html.html
-		);
+		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(html.html);
 	}
 
 	async onTemplateChange(code: string) {
@@ -157,11 +135,9 @@ export class AccountingTemplatesComponent
 
 		const html = await this.accountingTemplateService.generateTemplatePreview({
 			organization: this.organization.name,
-			data: code,
+			data: code
 		});
-		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(
-			html.html
-		);
+		this.previewTemplate = this.sanitizer.bypassSecurityTrustHtml(html.html);
 	}
 
 	async onSave() {
@@ -178,5 +154,5 @@ export class AccountingTemplatesComponent
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

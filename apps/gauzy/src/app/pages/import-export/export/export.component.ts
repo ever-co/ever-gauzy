@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { saveAs } from 'file-saver';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,7 +7,7 @@ import * as _ from 'underscore';
 import { Subject } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { IEntityModel } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ExportAllService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -17,7 +17,6 @@ import { ExportAllService } from '../../../@core/services';
 	styleUrls: ['./export.component.scss']
 })
 export class ExportComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
-
 	entities: Array<IEntityModel> = [];
 	selectedEntities: string[] = [];
 	selectedModels: Array<IEntityModel> = [];
@@ -25,17 +24,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	subject$: Subject<any> = new Subject();
 	loading: boolean;
 
-	constructor(
-		private readonly exportAll: ExportAllService,
-		public readonly translateService: TranslateService
-	) {
+	constructor(private readonly exportAll: ExportAllService, public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	ngOnInit() {
 		this.subject$
 			.pipe(
-				tap(() => this.checkedAll = true),
+				tap(() => (this.checkedAll = true)),
 				tap(() => this.getEntities()),
 				tap(() => this.onCheckboxChangeAll(this.checkedAll)),
 				untilDestroyed(this)
@@ -73,20 +69,10 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 
 	selectedCheckboxes() {
 		const singleArray = JSON.parse(
-			JSON.stringify(
-				_.filter(
-					this.entities,
-					(entity: IEntityModel) => !entity.isGroup
-				)
-			)
+			JSON.stringify(_.filter(this.entities, (entity: IEntityModel) => !entity.isGroup))
 		);
 		const multipleArray = JSON.parse(
-			JSON.stringify(
-				_.filter(
-					this.entities,
-					(entity: IEntityModel) => entity.isGroup
-				)
-			)
+			JSON.stringify(_.filter(this.entities, (entity: IEntityModel) => entity.isGroup))
 		);
 
 		this.selectedModels = [];
@@ -102,10 +88,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 		});
 
 		this.selectedEntities = _.map(
-			_.filter(
-				this.selectedModels,
-				(checkbox: IEntityModel) => checkbox.checked
-			),
+			_.filter(this.selectedModels, (checkbox: IEntityModel) => checkbox.checked),
 			(checkbox: any, i) => {
 				return checkbox.value;
 			}
@@ -118,7 +101,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 		this.exportAll
 			.downloadSpecificTable(entities)
 			.pipe(
-				finalize(() => this.loading = false),
+				finalize(() => (this.loading = false)),
 				untilDestroyed(this)
 			)
 			.subscribe((data) => saveAs(data, `archive.zip`));
@@ -141,9 +124,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.AVAILABILITY_SLOT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.AVAILABILITY_SLOT'),
 				value: 'availability_slot',
 				checked: true,
 				isGroup: false,
@@ -339,9 +320,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: this.getReportEntities()
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.REQUEST_APPROVAL'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.REQUEST_APPROVAL'),
 				value: 'request_approval',
 				checked: true,
 				isGroup: true,
@@ -409,72 +388,56 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getCandidateEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_CRITERION_RATING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_CRITERION_RATING'),
 				value: 'candidate_criterion_rating',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_DOCUMENT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_DOCUMENT'),
 				value: 'candidate_document',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_EDUCATION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_EDUCATION'),
 				value: 'candidate_education',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_EXPERIENCE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_EXPERIENCE'),
 				value: 'candidate_experience',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_FEEDBACK'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_FEEDBACK'),
 				value: 'candidate_feedback',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_INTERVIEW'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_INTERVIEW'),
 				value: 'candidate_interview',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_INTERVIEWER'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_INTERVIEWER'),
 				value: 'candidate_interviewer',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_PERSONAL_QUALITY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_PERSONAL_QUALITY'),
 				value: 'candidate_personal_quality',
 				checked: true,
 				isGroup: false,
@@ -488,18 +451,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_SOURCE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_SOURCE'),
 				value: 'candidate_source',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.CANDIDATE_TECHNOLOGY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.CANDIDATE_TECHNOLOGY'),
 				value: 'candidate_technology',
 				checked: true,
 				isGroup: false,
@@ -511,126 +470,98 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getOrganizationEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_AWARD'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_AWARD'),
 				value: 'organization_award',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_CONTACT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_CONTACT'),
 				value: 'organization_contact',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_DEPARTMENT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_DEPARTMENT'),
 				value: 'organization_department',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_DOCUMENT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_DOCUMENT'),
 				value: 'organization_document',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_EMPLOYEE_LEVEL'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_EMPLOYEE_LEVEL'),
 				value: 'organization_employee_level',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_EMPLOYMENT_TYPE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_EMPLOYMENT_TYPE'),
 				value: 'organization_employment_type',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_LANGUAGES'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_LANGUAGES'),
 				value: 'organization_language',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_POSITION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_POSITION'),
 				value: 'organization_position',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_PROJECT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_PROJECT'),
 				value: 'organization_project',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_RECURRING_EXPENSE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_RECURRING_EXPENSE'),
 				value: 'organization_recurring_expense',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_SPRINT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_SPRINT'),
 				value: 'organization_sprint',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_TEAM'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_TEAM'),
 				value: 'organization_team',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_TEAM_EMPLOYEE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_TEAM_EMPLOYEE'),
 				value: 'organization_team_employee',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.ORGANIZATION_VENDOR'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.ORGANIZATION_VENDOR'),
 				value: 'organization_vendor',
 				checked: true,
 				isGroup: false,
@@ -661,9 +592,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getEmployeeEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EMPLOYEE_APPOINTMENT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_APPOINTMENT'),
 				value: 'employee_appointment',
 				checked: true,
 				isGroup: false,
@@ -677,36 +606,28 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EMPLOYEE_PROPOSAL_TEMPLATE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_PROPOSAL_TEMPLATE'),
 				value: 'employee_proposal_template',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EMPLOYEE_RECURRING_EXPENSE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_RECURRING_EXPENSE'),
 				value: 'employee_recurring_expense',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EMPLOYEE_SETTING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_SETTING'),
 				value: 'employee_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EMPLOYEE_UPWORK_JOB_SEARCH_CRITERION'),
 				value: 'employee_upwork_job_search_criterion',
 				checked: true,
 				isGroup: false,
@@ -718,27 +639,21 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getIntegrationEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INTEGRATION_TYPE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_TYPE'),
 				value: 'integration_type',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING'),
 				value: 'integration_entity_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING_TIED_ENTITY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_ENTITY_SETTING_TIED_ENTITY'),
 				value: 'integration_entity_setting_tied_entity',
 				checked: true,
 				isGroup: false,
@@ -752,18 +667,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INTEGRATION_SETTING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_SETTING'),
 				value: 'integration_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INTEGRATION_TENANT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INTEGRATION_TENANT'),
 				value: 'integration_tenant',
 				checked: true,
 				isGroup: false,
@@ -775,18 +686,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getProductEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PRODUCT_CATEGORY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_CATEGORY'),
 				value: 'product_category',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PRODUCT_CATEGORY_TRANSLATION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_CATEGORY_TRANSLATION'),
 				value: 'product_category_translation',
 				checked: true,
 				isGroup: false,
@@ -856,36 +763,28 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PRODUCT_VARIANT_PRICE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_VARIANT_PRICE'),
 				value: 'product_variant_price',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PRODUCT_VARIANT_SETTING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_VARIANT_SETTING'),
 				value: 'product_variant_setting',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PRODUCT_IMAGE_ASSET'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PRODUCT_IMAGE_ASSET'),
 				value: 'image_asset',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.WAREHOUSE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.WAREHOUSE'),
 				value: 'warehouse',
 				checked: true,
 				isGroup: false,
@@ -899,18 +798,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT'),
 				value: 'warehouse_product',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT_VARIANT'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.WAREHOUSE_PRODUCT_VARIANT'),
 				value: 'warehouse_product_variant',
 				checked: true,
 				isGroup: false,
@@ -941,18 +836,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getRequestApprovalEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.REQUEST_APPROVAL_EMPLOYEE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.REQUEST_APPROVAL_EMPLOYEE'),
 				value: 'request_approval_employee',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.REQUEST_APPROVAL_TEAM'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.REQUEST_APPROVAL_TEAM'),
 				value: 'request_approval_team',
 				checked: true,
 				isGroup: false,
@@ -964,32 +855,26 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getEquipmentEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EQUIPMENT_SHARING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EQUIPMENT_SHARING'),
 				value: 'equipment_sharing',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EQUIPMENT_SHARE_POLICY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EQUIPMENT_SHARE_POLICY'),
 				value: 'equipment_sharing_policy',
 				checked: true,
 				isGroup: false,
 				entities: []
-			},
+			}
 		];
 	}
 
 	getExpenseEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.EXPENSE_CATEGORY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.EXPENSE_CATEGORY'),
 				value: 'expense_category',
 				checked: true,
 				isGroup: false,
@@ -1001,9 +886,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getFeatureEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.FEATURE_ORGANIZATION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.FEATURE_ORGANIZATION'),
 				value: 'feature_organization',
 				checked: true,
 				isGroup: false,
@@ -1029,9 +912,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.GOAL_KPI_TEMPLATE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.GOAL_KPI_TEMPLATE'),
 				value: 'goal_kpi_template',
 				checked: true,
 				isGroup: false,
@@ -1057,18 +938,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getKnowledgeBaseEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_ARTICLE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_ARTICLE'),
 				value: 'knowledge_base_article',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_AUTHOR'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KNOWLEDGE_BASE_AUTHOR'),
 				value: 'knowledge_base_author',
 				checked: true,
 				isGroup: false,
@@ -1080,9 +957,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getInvoiceEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.INVOICE_ESTIMATE_HISTORY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.INVOICE_ESTIMATE_HISTORY'),
 				value: 'invoice_estimate_history',
 				checked: true,
 				isGroup: false,
@@ -1115,18 +990,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.JOB_SEARCH_OCCUPATION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB_SEARCH_OCCUPATION'),
 				value: 'job_search_occupation',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.JOB_SEARCH_CATEGORY'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.JOB_SEARCH_CATEGORY'),
 				value: 'job_search_category',
 				checked: true,
 				isGroup: false,
@@ -1138,18 +1009,14 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getKeyResultEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KEY_RESULT_TEMPLATE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KEY_RESULT_TEMPLATE'),
 				value: 'key_result_template',
 				checked: true,
 				isGroup: false,
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.KEY_RESULT_UPDATE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.KEY_RESULT_UPDATE'),
 				value: 'key_result_update',
 				checked: true,
 				isGroup: false,
@@ -1173,9 +1040,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getTimeOffEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TIME_OFF_REQUEST'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TIME_OFF_REQUEST'),
 				value: 'time_off_request',
 				checked: true,
 				isGroup: false,
@@ -1215,9 +1080,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TIME_SLOT_MINUTES'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TIME_SLOT_MINUTES'),
 				value: 'time_slot_minute',
 				checked: true,
 				isGroup: false,
@@ -1229,9 +1092,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getUserEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.USER_ORGANIZATION'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.USER_ORGANIZATION'),
 				value: 'user_organization',
 				checked: true,
 				isGroup: false,
@@ -1243,9 +1104,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getPipelineEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.PIPELINE_STAGE'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PIPELINE_STAGE'),
 				value: 'pipeline_stage',
 				checked: true,
 				isGroup: false,
@@ -1257,9 +1116,7 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 	getTenantEntities(): IEntityModel[] {
 		return [
 			{
-				name: this.getTranslation(
-					'MENU.IMPORT_EXPORT.TENANT_SETTING'
-				),
+				name: this.getTranslation('MENU.IMPORT_EXPORT.TENANT_SETTING'),
 				value: 'tenant_setting',
 				checked: true,
 				isGroup: false,

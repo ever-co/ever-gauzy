@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { progressStatus } from '@gauzy/common-angular';
+import { progressStatus } from '@gauzy/ui-sdk/common';
 import { NbComponentOrCustomStatus } from '@nebular/theme';
 
 @Component({
@@ -8,12 +8,11 @@ import { NbComponentOrCustomStatus } from '@nebular/theme';
 	styleUrls: ['./progress-status.component.scss']
 })
 export class ProgressStatusComponent implements OnInit {
-
 	progressStatus = progressStatus;
 
 	/*
-	* Getter & Setter for Percentage
-	*/
+	 * Getter & Setter for Percentage
+	 */
 	private _percentage: any;
 	get percentage(): boolean {
 		return this._percentage;
@@ -23,8 +22,8 @@ export class ProgressStatusComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for NbComponentOrCustomStatus
-	*/
+	 * Getter & Setter for NbComponentOrCustomStatus
+	 */
 	private _defaultStatus: NbComponentOrCustomStatus;
 	get defaultStatus(): NbComponentOrCustomStatus {
 		return this._defaultStatus;

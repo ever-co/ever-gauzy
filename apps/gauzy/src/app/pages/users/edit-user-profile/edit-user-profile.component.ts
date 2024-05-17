@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { AuthService, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -19,10 +19,7 @@ import { AuthService, UsersService } from '../../../@core/services';
 		'./edit-user-profile.component.scss'
 	]
 })
-export class EditUserProfileComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	form: UntypedFormGroup;
 	params: Params;
 	user: IUser;
@@ -45,7 +42,7 @@ export class EditUserProfileComponent
 		this.route.params
 			.pipe(
 				filter((params) => !!params),
-				tap((params) => this.params = params),
+				tap((params) => (this.params = params)),
 				tap(() => this.loadTabs()),
 				tap(() => this.getUserProfile()),
 				untilDestroyed(this)
@@ -74,9 +71,7 @@ export class EditUserProfileComponent
 				route: this.getRoute('')
 			},
 			{
-				title: this.getTranslation(
-					'USERS_PAGE.EDIT_USER.USER_ORGANIZATIONS'
-				),
+				title: this.getTranslation('USERS_PAGE.EDIT_USER.USER_ORGANIZATIONS'),
 				icon: 'book-open-outline',
 				responsive: true,
 				route: this.getRoute('organizations')
@@ -95,9 +90,7 @@ export class EditUserProfileComponent
 			/**
 			 * Redirect If Edit Super Admin Without Permission
 			 */
-			const hasSuperAdminRole = await firstValueFrom(
-				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
-			);
+			const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
 			if (!hasSuperAdminRole) {
 				this.router.navigate(['/pages/users']);
 				return;
@@ -115,5 +108,5 @@ export class EditUserProfileComponent
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

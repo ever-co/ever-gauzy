@@ -1,15 +1,7 @@
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, IOrganization } from '@gauzy/contracts';
-import {
-	Component,
-	ViewChild,
-	OnInit,
-	OnDestroy,
-	Output,
-	EventEmitter,
-	AfterViewInit
-} from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@ali-hm/angular-tree-component';
-import { TranslationBaseComponent } from './../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
@@ -31,7 +23,6 @@ import { firstValueFrom } from 'rxjs';
 	styleUrls: ['./sidebar.component.scss']
 })
 export class SidebarComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
-
 	public organization: IOrganization;
 	public actionEnum = HelpCenterActionEnum;
 	public tempNodes: IHelpCenter[] = [];
@@ -88,7 +79,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				tap(() => this.loadMenu()),
 				untilDestroyed(this)
 			)
@@ -112,8 +103,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 	setClasses(node) {
 		const classes = {
 			child: node.data.flag === HelpCenterFlagEnum.CATEGORY && node.data.parentId !== null,
-			childout:
-				node.data.flag === HelpCenterFlagEnum.CATEGORY && node.data.parentId === null,
+			childout: node.data.flag === HelpCenterFlagEnum.CATEGORY && node.data.parentId === null,
 			parent: node.data.flag === HelpCenterFlagEnum.BASE && node.data.parentId === null,
 			parentin: node.data.flag === HelpCenterFlagEnum.BASE && node.data.parentId !== null
 		};
@@ -126,7 +116,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 			editType,
 			flag: HelpCenterFlagEnum.BASE,
 			parentId: null
-		}
+		};
 		if (editType === HelpCenterActionEnum.EDIT) {
 			const { data } = this.tree.treeModel.getNodeById(this.nodeId);
 			context['base'] = data;
@@ -135,8 +125,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 			.open(KnowledgeBaseComponent, {
 				context
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					if (editType === HelpCenterActionEnum.EDIT) {
@@ -161,7 +150,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 			parentId: data.id,
 			editType,
 			flag: HelpCenterFlagEnum.CATEGORY
-		}
+		};
 		if (editType === HelpCenterActionEnum.EDIT) {
 			context['base'] = node;
 			this.isChosenNode = true;
@@ -170,8 +159,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 			.open(KnowledgeBaseComponent, {
 				context
 			})
-			.onClose
-			.pipe(untilDestroyed(this))
+			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
 				if (data) {
 					if (editType === HelpCenterActionEnum.EDIT) {
@@ -223,10 +211,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 		}
 	}
 
-	async updateIndexes(
-		oldChildren: IHelpCenter[],
-		newChildren: IHelpCenter[]
-	) {
+	async updateIndexes(oldChildren: IHelpCenter[], newChildren: IHelpCenter[]) {
 		try {
 			await this.helpService.updateBulk(oldChildren, newChildren);
 		} catch (error) {
@@ -248,10 +233,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 				}
 			}
 		}
-		this.updateIndexes(
-			$event.from.parent.children,
-			$event.to.parent.children
-		);
+		this.updateIndexes($event.from.parent.children, $event.to.parent.children);
 		await this.loadMenu();
 		this.tree.treeModel.update();
 	}
@@ -279,10 +261,7 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 		this.nodeId = node.id.toString();
 		this.isChosenNode = true;
 		const someNode = this.tree.treeModel.getNodeById(this.nodeId);
-		someNode.data.privacy =
-			someNode.data.privacy === 'eye-outline'
-				? 'eye-off-outline'
-				: 'eye-outline';
+		someNode.data.privacy = someNode.data.privacy === 'eye-outline' ? 'eye-off-outline' : 'eye-outline';
 		try {
 			await this.helpService.update(someNode.data.id, {
 				privacy: `${someNode.data.privacy}`
@@ -296,10 +275,10 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 	async loadMenu() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const result = await this.helpService.getAll(
-			['parent', 'children', 'organization'],
-			{ organizationId, tenantId }
-		);
+		const result = await this.helpService.getAll(['parent', 'children', 'organization'], {
+			organizationId,
+			tenantId
+		});
 		if (result) {
 			this.tempNodes = result.items;
 			this.nodes = this.tempNodes.filter((item) => item.parent === null);
@@ -316,5 +295,5 @@ export class SidebarComponent extends TranslationBaseComponent implements OnInit
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

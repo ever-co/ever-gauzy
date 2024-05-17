@@ -19,22 +19,32 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-ref
 		});
 	}
 
-	async validate(request: Request, payload: JwtPayload, done: Function) {
+	/**
+	 * Validates the refresh token and payload to ensure user authorization.
+	 *
+	 * @param request - The incoming request, expected to contain the refresh token in its body.
+	 * @param payload - The JWT payload to validate.
+	 * @param done - The callback function to be called upon validation completion.
+	 */
+	async validate(
+		request: Request,
+		payload: JwtPayload,
+		done: Function
+	): Promise<void> {
 		try {
-			const { body } = request;
-			const refresh_token = body.refresh_token;
+			const { refresh_token } = request.body; // Extract the refresh token
 
+			// Validate the user using the refresh token and JWT payload
 			const user = await this.userService.getUserIfRefreshTokenMatches(refresh_token, payload);
+
 			if (!user) {
-				return done(new UnauthorizedException('unauthorized'), false);
-			} else {
-				done(null, user);
+				return done(new UnauthorizedException('Unauthorized'), false); // Return unauthorized if validation fails
 			}
+
+			done(null, user); // Return user if validation is successful
 		} catch (err) {
-			return done(
-				new UnauthorizedException('unauthorized', err.message),
-				false
-			);
+			// Handle errors and provide a meaningful response
+			return done(new UnauthorizedException('Unauthorized', err.message), false);
 		}
 	}
 }

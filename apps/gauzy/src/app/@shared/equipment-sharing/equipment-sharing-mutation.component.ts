@@ -1,10 +1,5 @@
 import { OnInit, Component, OnDestroy } from '@angular/core';
-import {
-	UntypedFormGroup,
-	UntypedFormBuilder,
-	Validators,
-	AbstractControl
-} from '@angular/forms';
+import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import {
 	IEquipmentSharing,
 	IEquipment,
@@ -18,10 +13,10 @@ import {
 	EquipmentSharingParticipantEnum
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeesService,
 	EquipmentService,
@@ -38,9 +33,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './equipment-sharing-mutation.component.html',
 	styleUrls: ['./equipment-sharing-mutation.component.scss']
 })
-export class EquipmentSharingMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class EquipmentSharingMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	constructor(
 		public readonly dialogRef: NbDialogRef<EquipmentSharingMutationComponent>,
 		private readonly equipmentSharingService: EquipmentSharingService,
@@ -108,51 +101,27 @@ export class EquipmentSharingMutationComponent
 		return parseInt(value, 10);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	async initializeForm() {
 		this.form = this.fb.group({
-			equipment: [
-				this.equipmentSharing ? this.equipmentSharing.equipmentId : '',
-				Validators.required
-			],
+			equipment: [this.equipmentSharing ? this.equipmentSharing.equipmentId : '', Validators.required],
 			equipmentSharingPolicyId: [
-				this.equipmentSharing &&
-					this.equipmentSharing.equipmentSharingPolicyId
+				this.equipmentSharing && this.equipmentSharing.equipmentSharingPolicyId
 					? this.equipmentSharing.equipmentSharingPolicyId
 					: '',
 				Validators.required
 			],
-			employees: [
-				this.equipmentSharing
-					? this.equipmentSharing.employees.map((emp) => emp.id)
-					: []
-			],
-			teams: [
-				this.equipmentSharing
-					? this.equipmentSharing.teams.map((team) => team.id)
-					: []
-			],
+			employees: [this.equipmentSharing ? this.equipmentSharing.employees.map((emp) => emp.id) : []],
+			teams: [this.equipmentSharing ? this.equipmentSharing.teams.map((team) => team.id) : []],
 			shareRequestDay: [
-				this.equipmentSharing
-					? new Date(this.equipmentSharing.shareRequestDay)
-					: new Date(Date.now())
+				this.equipmentSharing ? new Date(this.equipmentSharing.shareRequestDay) : new Date(Date.now())
 			],
-			shareStartDay: [
-				this.equipmentSharing
-					? new Date(this.equipmentSharing.shareStartDay)
-					: null
-			],
-			shareEndDay: [
-				this.equipmentSharing
-					? new Date(this.equipmentSharing.shareEndDay)
-					: null
-			],
+			shareStartDay: [this.equipmentSharing ? new Date(this.equipmentSharing.shareStartDay) : null],
+			shareEndDay: [this.equipmentSharing ? new Date(this.equipmentSharing.shareEndDay) : null],
 			status: [this.requestStatus],
 			name: [
-				this.equipmentSharing && this.equipmentSharing.name
-					? this.equipmentSharing.name
-					: '',
+				this.equipmentSharing && this.equipmentSharing.name ? this.equipmentSharing.name : '',
 				Validators.required
 			]
 		});
@@ -186,14 +155,10 @@ export class EquipmentSharingMutationComponent
 	async onSaveRequest() {
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
-			equipment: this.equipmentItems.find(
-				(eq) => eq.id === this.form.value['equipment']
-			),
+			equipment: this.equipmentItems.find((eq) => eq.id === this.form.value['equipment']),
 			createdBy: '',
 			createdByName: '',
-			equipmentSharingPolicyId: this.form.value[
-				'equipmentSharingPolicyId'
-			],
+			equipmentSharingPolicyId: this.form.value['equipmentSharingPolicyId'],
 			employees: this.employees.filter((emp) => {
 				return this.selectedEmployees.includes(emp.id);
 			}),
@@ -214,15 +179,9 @@ export class EquipmentSharingMutationComponent
 		if (this.equipmentSharing) {
 			shareRequest.createdBy = this.equipmentSharing.createdBy;
 			shareRequest.createdByName = this.equipmentSharing.createdByName;
-			equipmentSharing = await this.equipmentSharingService.update(
-				this.equipmentSharing.id,
-				shareRequest
-			);
+			equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
 		} else {
-			equipmentSharing = await this.equipmentSharingService.create(
-				shareRequest,
-				this.selectedOrganization.id
-			);
+			equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
 		}
 
 		this.closeDialog(equipmentSharing);
@@ -249,9 +208,7 @@ export class EquipmentSharingMutationComponent
 				organizationId: id,
 				tenantId
 			})
-			.pipe(
-				untilDestroyed(this)
-			)
+			.pipe(untilDestroyed(this))
 			.subscribe(({ items }) => {
 				this.employees = items;
 			});
@@ -278,11 +235,7 @@ export class EquipmentSharingMutationComponent
 			return item.id === statusValue;
 		});
 
-		if (
-			this.equipmentSharing &&
-			this.equipmentSharing.status ===
-			RequestApprovalStatusTypesEnum.REFUSED
-		) {
+		if (this.equipmentSharing && this.equipmentSharing.status === RequestApprovalStatusTypesEnum.REFUSED) {
 			this.requestStatus = RequestApprovalStatusTypesEnum.REFUSED;
 			return;
 		}
@@ -323,9 +276,7 @@ export class EquipmentSharingMutationComponent
 
 		this.form
 			.get('equipment')
-			.valueChanges.pipe(
-				untilDestroyed(this)
-			)
+			.valueChanges.pipe(untilDestroyed(this))
 			.subscribe((valueId) => {
 				this.selectedItem = this.equipmentItems.find((item) => {
 					return item.id === valueId;
@@ -333,110 +284,78 @@ export class EquipmentSharingMutationComponent
 
 				this.periodsUnderUse = [];
 				if (this.selectedItem.equipmentSharings.length > 0) {
-					this.selectedItem.equipmentSharings.forEach(
-						(equipmentSharing) => {
-							this.periodsUnderUse.push({
-								startDate: new Date(
-									equipmentSharing.shareStartDay
-								),
-								endDate: new Date(equipmentSharing.shareEndDay)
-							});
-						}
-					);
-				}
-			});
-
-		this.form.valueChanges
-			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe((form) => {
-				//check if start day is after share request day
-				if (this.shareStartDay.value <= this.shareRequestDay.value) {
-					this.shareStartDay.setErrors({
-						invalid: true,
-						beforeRequestDay: true,
-						beforeRequestDayMsg: this.getTranslation(
-							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_REQUEST_DAY_ERR'
-						)
-					});
-				}
-
-				//check if user selects longer period than allowed
-				const diffDays = Math.ceil(
-					Math.abs(
-						(this.shareEndDay.value - this.shareStartDay.value) /
-						oneDay
-					)
-				);
-
-				if (
-					this.selectedItem &&
-					this.selectedItem.maxSharePeriod &&
-					diffDays + 1 > this.selectedItem.maxSharePeriod
-				) {
-					this.shareEndDay.setErrors({
-						invalid: true,
-						exceedAllowedDays: true,
-						exceedAllowedDaysMsg:
-							this.getTranslation(
-								'EQUIPMENT_SHARING_PAGE.MESSAGES.EXCEED_PERIOD_ERR'
-							) + this.selectedItem.maxSharePeriod
-					});
-				}
-
-				// check of share end date after share start date
-				if (this.shareEndDay.value < this.shareStartDay.value) {
-					this.shareEndDay.setErrors({
-						invalid: true,
-						beforeStartDate: true,
-						beforeStartDateMsg: this.getTranslation(
-							'EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_START_DATE_ERR'
-						)
-					});
-				}
-
-				//check if end date is after period in use
-				//
-				//find nearest period in use and get start date
-				const followingPeriods = [...this.periodsUnderUse]
-					.sort((a, b) => a.startDate - b.startDate)
-					.filter((period) => {
-						return period.startDate > this.shareStartDay.value;
-					});
-
-				const dateItemToBeReturned =
-					followingPeriods.length > 0
-						? followingPeriods[0].startDate
-						: null;
-
-				if (
-					dateItemToBeReturned &&
-					this.shareEndDay.value > dateItemToBeReturned
-				) {
-					this.shareEndDay.setErrors({
-						invalid: true,
-						itemInUse: true,
-						itemInUseMsg:
-							this.getTranslation(
-								'EQUIPMENT_SHARING_PAGE.MESSAGES.ITEM_RETURNED_BEFORE_ERR'
-							) +
-							dateItemToBeReturned.toLocaleString().split(',')[0]
+					this.selectedItem.equipmentSharings.forEach((equipmentSharing) => {
+						this.periodsUnderUse.push({
+							startDate: new Date(equipmentSharing.shareStartDay),
+							endDate: new Date(equipmentSharing.shareEndDay)
+						});
 					});
 				}
 			});
+
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((form) => {
+			//check if start day is after share request day
+			if (this.shareStartDay.value <= this.shareRequestDay.value) {
+				this.shareStartDay.setErrors({
+					invalid: true,
+					beforeRequestDay: true,
+					beforeRequestDayMsg: this.getTranslation('EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_REQUEST_DAY_ERR')
+				});
+			}
+
+			//check if user selects longer period than allowed
+			const diffDays = Math.ceil(Math.abs((this.shareEndDay.value - this.shareStartDay.value) / oneDay));
+
+			if (
+				this.selectedItem &&
+				this.selectedItem.maxSharePeriod &&
+				diffDays + 1 > this.selectedItem.maxSharePeriod
+			) {
+				this.shareEndDay.setErrors({
+					invalid: true,
+					exceedAllowedDays: true,
+					exceedAllowedDaysMsg:
+						this.getTranslation('EQUIPMENT_SHARING_PAGE.MESSAGES.EXCEED_PERIOD_ERR') +
+						this.selectedItem.maxSharePeriod
+				});
+			}
+
+			// check of share end date after share start date
+			if (this.shareEndDay.value < this.shareStartDay.value) {
+				this.shareEndDay.setErrors({
+					invalid: true,
+					beforeStartDate: true,
+					beforeStartDateMsg: this.getTranslation('EQUIPMENT_SHARING_PAGE.MESSAGES.BEFORE_START_DATE_ERR')
+				});
+			}
+
+			//check if end date is after period in use
+			//
+			//find nearest period in use and get start date
+			const followingPeriods = [...this.periodsUnderUse]
+				.sort((a, b) => a.startDate - b.startDate)
+				.filter((period) => {
+					return period.startDate > this.shareStartDay.value;
+				});
+
+			const dateItemToBeReturned = followingPeriods.length > 0 ? followingPeriods[0].startDate : null;
+
+			if (dateItemToBeReturned && this.shareEndDay.value > dateItemToBeReturned) {
+				this.shareEndDay.setErrors({
+					invalid: true,
+					itemInUse: true,
+					itemInUseMsg:
+						this.getTranslation('EQUIPMENT_SHARING_PAGE.MESSAGES.ITEM_RETURNED_BEFORE_ERR') +
+						dateItemToBeReturned.toLocaleString().split(',')[0]
+				});
+			}
+		});
 	}
 
-	checkIfDateBetweenPeriods(
-		periods: { startDate: Date; endDate: Date }[],
-		dateForCheck: Date
-	): boolean {
+	checkIfDateBetweenPeriods(periods: { startDate: Date; endDate: Date }[], dateForCheck: Date): boolean {
 		let dateIsInGivenPeriods = false;
 		periods.forEach((period) => {
-			if (
-				dateForCheck >= period.startDate &&
-				dateForCheck <= period.endDate
-			) {
+			if (dateForCheck >= period.startDate && dateForCheck <= period.endDate) {
 				dateIsInGivenPeriods = true;
 			}
 		});

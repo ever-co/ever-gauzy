@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import {
 	IOrganization,
 	IPagination,
+	IReorderDTO,
 	ITaskStatus,
 	ITaskStatusCreateInput,
 	ITaskStatusFindInput,
@@ -50,8 +51,14 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 				return await super.fetchAll(params);
 			}
 		} catch (error) {
-			console.log('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
-			throw new BadRequestException('Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.', error);
+			console.log(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
+			throw new BadRequestException(
+				'Failed to retrieve task statuses. Ensure that the provided parameters are valid and complete.',
+				error
+			);
 		}
 	}
 
@@ -210,6 +217,36 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 		} catch (error) {
 			// If an error occurs during the creation process, log the error.
 			console.error('Error while creating task statuses', error);
+		}
+	}
+
+	/**
+	 * Reorders a list of items based on the given ReorderDTO array.
+	 * @param list - An array of ReorderDTO representing the IDs and their new orders.
+	 * @returns An object indicating success or failure, along with the updated list.
+	 * @throws BadRequestException if an error occurs during reordering.
+	 */
+	async reorder(list: IReorderDTO[]): Promise<{ success: boolean; list?: IReorderDTO[] }> {
+		// Logger for tracking operations
+		const logger = new Logger('TaskStatusService'); // Update with your service name
+
+		try {
+			// Loop through the list and update each item's order
+			for await (const item of list) {
+				logger.log(`Updating item with ID: ${item.id} to order: ${item.order}`); // Logging operation
+
+				// Update the entity with the new order value
+				if (item.id) {
+					await this.update({ id: item.id, isSystem: false }, { order: item.order });
+				}
+			}
+
+			// Return a success status and the updated list
+			return { success: true, list };
+		} catch (error) {
+			// Handle errors during reordering
+			logger.error('Error during reordering of task statues:', error); // Log the error for debugging
+			throw new BadRequestException('An error occurred while reordering task statues. Please try again.', error); // Return error
 		}
 	}
 }

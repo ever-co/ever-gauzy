@@ -1,4 +1,3 @@
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -15,6 +14,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
@@ -24,7 +25,6 @@ import { CurrencyModule } from '../../currency/currency.module';
 import { CountryModule } from '../../country/country.module';
 import { LocationFormModule } from '../../forms/location';
 import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
-import { TranslateModule } from '../../translate/translate.module';
 import { TimeZoneSelectorModule } from '../../selectors';
 
 @NgModule({

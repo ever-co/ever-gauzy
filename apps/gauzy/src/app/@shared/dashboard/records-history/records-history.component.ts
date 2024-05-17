@@ -10,12 +10,8 @@ import {
 	EmployeeStatisticsHistoryEnum as HistoryType,
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	ContactLinksComponent,
-	IncomeExpenseAmountComponent,
-	DateViewComponent
-} from '../../table-components';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ContactLinksComponent, IncomeExpenseAmountComponent, DateViewComponent } from '../../table-components';
 import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -25,7 +21,6 @@ import { PaginationFilterBaseComponent } from '../../pagination/pagination-filte
 	styleUrls: ['./records-history.component.scss']
 })
 export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit {
-
 	type: HistoryType;
 	recordsData: IEmployeeStatisticsHistory[];
 	smartTableSource = new LocalDataSource();
@@ -85,16 +80,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 			case HistoryType.EXPENSES:
 			case HistoryType.EXPENSES_WITHOUT_SALARY:
 				viewModel = this.recordsData.map(
-					({
-						valueDate,
-						vendorName,
-						categoryName,
-						amount,
-						notes,
-						isRecurring,
-						source,
-						splitExpense
-					}) => {
+					({ valueDate, vendorName, categoryName, amount, notes, isRecurring, source, splitExpense }) => {
 						return {
 							valueDate,
 							vendorName,
@@ -139,7 +125,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
 								instance.value = cell.getValue();
-							},
+							}
 						},
 						client: {
 							title: this.getTranslation('SM_TABLE.CONTACT'),
@@ -151,7 +137,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
 								instance.value = cell.getValue();
-							},
+							}
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
@@ -162,7 +148,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
 								instance.value = cell.getValue();
-							},
+							}
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -184,10 +170,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							width: '8%',
 							valuePrepareFunction: (_) =>
 								`<div class='text-center'>
-								${_ === 'org'
-									? '<i class="fas fa-building"></i>'
-									: '<i class="fas fa-user-alt"></i>'
-								}
+								${_ === 'org' ? '<i class="fas fa-building"></i>' : '<i class="fas fa-user-alt"></i>'}
 								</div>
 								`
 						},
@@ -200,7 +183,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
 								instance.value = cell.getValue();
-							},
+							}
 						},
 						vendorName: {
 							title: this.getTranslation('SM_TABLE.VENDOR'),
@@ -210,7 +193,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
 							type: 'html',
 							filter: false,
-							valuePrepareFunction: (_) => this.getCategoryName(_),
+							valuePrepareFunction: (_) => this.getCategoryName(_)
 						},
 						amount: {
 							title: this.getTranslation('SM_TABLE.VALUE'),
@@ -220,7 +203,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
 								instance.value = cell.getValue();
-							},
+							}
 						},
 						notes: {
 							title: this.getTranslation('SM_TABLE.NOTES'),
@@ -245,12 +228,10 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSettingsSmartTable();
-				this._populateSmartTable();
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadSettingsSmartTable();
+			this._populateSmartTable();
+		});
 	}
 
 	close() {

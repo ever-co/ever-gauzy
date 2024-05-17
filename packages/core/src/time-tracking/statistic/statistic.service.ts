@@ -913,16 +913,13 @@ export class StatisticService {
 				if (isNotEmpty(taskIds)) {
 					sq.whereIn(`${qb.alias}.taskId`, taskIds);
 				}
-				if (isNotEmpty(organizationTeamId)) {
-					sq.andWhere(`${qb.alias}.organizationTeamId`, organizationTeamId);
-				}
 				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(() => {
+					sq.andWhere(function () {
 						if (isNotEmpty(organizationTeamId)) {
-							sq.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
 						}
 						if (isNotEmpty(teamIds)) {
-							sq.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
 						}
 					});
 				}
@@ -1037,12 +1034,12 @@ export class StatisticService {
 					sq.whereIn(`${qb.alias}.taskId`, taskIds);
 				}
 				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(() => {
+					sq.andWhere(function () {
 						if (isNotEmpty(organizationTeamId)) {
-							sq.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
 						}
 						if (isNotEmpty(teamIds)) {
-							sq.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
 						}
 					});
 				}
@@ -1149,12 +1146,12 @@ export class StatisticService {
 					sq.whereIn(`${qb.alias}.projectId`, projectIds);
 				}
 				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(() => {
+					sq.andWhere(function () {
 						if (isNotEmpty(organizationTeamId)) {
-							sq.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
 						}
 						if (isNotEmpty(teamIds)) {
-							sq.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
 						}
 					});
 				}

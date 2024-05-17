@@ -3,17 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { LatLng } from 'leaflet';
 import { IOrganization, CrudActionEnum } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../../../@shared/language-base/translation-base.component';
-import {
-	OrganizationEditStore,
-	OrganizationsService,
-	Store,
-	ToastrService
-} from '../../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { OrganizationEditStore, OrganizationsService, Store, ToastrService } from '../../../../../@core/services';
 import { LeafletMapComponent, LocationFormComponent } from '../../../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })
@@ -22,9 +17,10 @@ import { LeafletMapComponent, LocationFormComponent } from '../../../../../@shar
 	templateUrl: './edit-organization-location.component.html',
 	styleUrls: ['./edit-organization-location.component.scss']
 })
-export class EditOrganizationLocationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EditOrganizationLocationComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@Input() organization: IOrganization;
 
 	readonly form: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
@@ -57,14 +53,8 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 				debounceTime(100),
 				filter((data) => !!data && !!data.organization),
 				map(({ organization }) => organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
-				tap(
-					(organization: IOrganization) =>
-						this.organizationEditStore.selectedOrganization = organization
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap((organization: IOrganization) => (this.organizationEditStore.selectedOrganization = organization)),
 				tap(() => this._setLocationFormValue()),
 				untilDestroyed(this)
 			)
@@ -118,7 +108,6 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 		}
 	}
 
-
 	/**
 	 * Initialized Location Form Value
 	 *
@@ -142,17 +131,12 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 						address2: contact.address2 || null,
 						loc: {
 							type: 'Point',
-							coordinates: [
-								contact.latitude || null,
-								contact.longitude || null
-							]
+							coordinates: [contact.latitude || null, contact.longitude || null]
 						}
 					});
 				}
 				if (this.leafletTemplate) {
-					this.leafletTemplate.addMarker(
-						new LatLng(contact.latitude || null, contact.longitude || null)
-					);
+					this.leafletTemplate.addMarker(new LatLng(contact.latitude || null, contact.longitude || null));
 				}
 			}
 		}, 200);
@@ -161,9 +145,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
-	onCoordinatesChanges(
-		$event: google.maps.LatLng | google.maps.LatLngLiteral
-	): void {
+	onCoordinatesChanges($event: google.maps.LatLng | google.maps.LatLngLiteral): void {
 		const {
 			loc: { coordinates }
 		} = this.locationFormDirective.getValue();
@@ -204,7 +186,7 @@ export class EditOrganizationLocationComponent extends TranslationBaseComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any): void { }
+	onGeometrySend(geometry: any): void {}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

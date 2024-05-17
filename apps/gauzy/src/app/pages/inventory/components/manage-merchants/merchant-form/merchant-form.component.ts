@@ -7,14 +7,8 @@ import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
-import {
-	ITag,
-	IMerchant,
-	IWarehouse,
-	IImageAsset,
-	IOrganization,
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { ITag, IMerchant, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { LocationFormComponent, LeafletMapComponent, FormHelpers } from './../../../../../@shared/forms';
 import {
 	ToastrService,
@@ -24,7 +18,7 @@ import {
 	MerchantService
 } from './../../../../../@core/services';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,9 +26,7 @@ import { TranslationBaseComponent } from './../../../../../@shared/language-base
 	templateUrl: './merchant-form.component.html',
 	styleUrls: ['./merchant-form.component.scss']
 })
-export class MerchantFormComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class MerchantFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	organization: IOrganization;
@@ -63,11 +55,8 @@ export class MerchantFormComponent extends TranslationBaseComponent
 			name: [null, Validators.required],
 			code: [null, Validators.required],
 			currency: [null, Validators.required],
-			email: [null, [
-				Validators.required,
-				Validators.email
-			]],
-			phone: [null, Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')],
+			email: [null, [Validators.required, Validators.email]],
+			phone: [null, Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-s./0-9]*$')],
 			fax: [],
 			fiscalInformation: [],
 			website: [],
@@ -105,11 +94,9 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		private readonly merchantService: MerchantService,
 		private readonly router: Router,
 		private readonly route: ActivatedRoute
-
 	) {
 		super(translateService);
 	}
-
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -117,7 +104,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._getWarehouses()),
 				tap(() => this._getAssetsImages()),
 				untilDestroyed(this)
@@ -130,7 +117,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(100),
 				filter((data) => !!data && !!data.merchant),
-				tap(({ merchant }) => this.merchant = merchant),
+				tap(({ merchant }) => (this.merchant = merchant)),
 				tap(() => {
 					this._patchForm();
 					this._patchLocationForm();
@@ -148,18 +135,14 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.images = (
-			await this.imageAssetService.getAll({ tenantId, organizationId })
-		).items;
+		this.images = (await this.imageAssetService.getAll({ tenantId, organizationId })).items;
 	}
 
 	private async _getWarehouses() {
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		this.warehouses = (
-			await this.warehouseService.getAll({ organizationId, tenantId })
-		).items;
+		this.warehouses = (await this.warehouseService.getAll({ organizationId, tenantId })).items;
 	}
 
 	private _patchForm() {
@@ -180,7 +163,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 
 		this.image = merchant.logo;
 		this.selectedWarehouses = merchant.warehouses.map((warehouse) => warehouse.id);
-	};
+	}
 
 	private _patchLocationForm() {
 		if (!this.merchant || !this.merchant.contact) return;
@@ -194,10 +177,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 			address2: contact.address2,
 			loc: {
 				type: 'Point',
-				coordinates: [
-					contact.latitude,
-					contact.longitude
-				]
+				coordinates: [contact.latitude, contact.longitude]
 			}
 		});
 
@@ -243,7 +223,9 @@ export class MerchantFormComponent extends TranslationBaseComponent
 
 		const request = {
 			...this.form.getRawValue(),
-			warehouses: this.selectedWarehouses.map(id => { return { id } }),
+			warehouses: this.selectedWarehouses.map((id) => {
+				return { id };
+			}),
 			logo: this.image,
 			tenantId,
 			organizationId,
@@ -253,10 +235,11 @@ export class MerchantFormComponent extends TranslationBaseComponent
 				latitude,
 				longitude
 			}
-		}
+		};
 
 		if (!this.merchant) {
-			await this.merchantService.create(request)
+			await this.merchantService
+				.create(request)
 				.then(() => {
 					this.toastrService.success('INVENTORY_PAGE.MERCHANT_CREATED_SUCCESSFULLY', {
 						name: request.name
@@ -271,7 +254,8 @@ export class MerchantFormComponent extends TranslationBaseComponent
 					this.cancel();
 				});
 		} else {
-			await this.merchantService.update({ ...request, id: this.merchant.id })
+			await this.merchantService
+				.update({ ...request, id: this.merchant.id })
 				.then(() => {
 					this.toastrService.success('INVENTORY_PAGE.MERCHANT_UPDATED_SUCCESSFULLY', {
 						name: request.name
@@ -289,9 +273,7 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	}
 
 	cancel() {
-		this.router.navigate([
-			'/pages/organization/inventory/merchants'
-		]);
+		this.router.navigate(['/pages/organization/inventory/merchants']);
 	}
 
 	selectedTagsEvent(tags: ITag[]) {
@@ -300,7 +282,9 @@ export class MerchantFormComponent extends TranslationBaseComponent
 	}
 
 	onCoordinatesChanges($event) {
-		const { loc: { coordinates } } = this.locationFormDirective.getValue();
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
 		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
@@ -319,5 +303,5 @@ export class MerchantFormComponent extends TranslationBaseComponent
 		});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -48,7 +48,7 @@ import {
 	ProjectOwnerEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { compressImage, distinctUntilChange } from '@gauzy/common-angular';
+import { compressImage, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlerService,
 	NativeNotificationService,
@@ -398,8 +398,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					current,
 					updatedAtMoment.isAfter(current?.updatedAt)
 						? {
-							updatedAt: updatedAtMoment.toISOString()
-						}
+								updatedAt: updatedAtMoment.toISOString()
+						  }
 						: {}
 				);
 			} else {
@@ -574,9 +574,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
 							: await this.timeTrackerService.toggleApiStart({
-								...lastTimer,
-								...params
-							});
+									...lastTimer,
+									...params
+							  });
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.log.error(error);
@@ -589,13 +589,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						timelog =
 							isRemote ||
-								this._remoteSleepLock ||
-								(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
+							this._remoteSleepLock ||
+							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
-									...lastTimer,
-									...params
-								});
+										...lastTimer,
+										...params
+								  });
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
 						this._loggerService.log.error(error);
@@ -736,8 +736,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			organizationId,
 			...(this.projectSelect
 				? {
-					projectId: this.projectSelect
-				}
+						projectId: this.projectSelect
+				  }
 				: {})
 		});
 	}

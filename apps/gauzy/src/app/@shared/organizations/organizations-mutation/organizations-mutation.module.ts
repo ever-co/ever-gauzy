@@ -1,4 +1,3 @@
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -14,12 +13,13 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
-import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [

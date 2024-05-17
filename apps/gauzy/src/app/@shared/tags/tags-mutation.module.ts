@@ -13,7 +13,7 @@ import { TagsService } from '../../@core/services/tags.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [

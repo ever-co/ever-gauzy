@@ -1,3 +1,9 @@
+export * from './layout.service';
+export * from './seo.service';
+export * from './app-global-ripple-options.service';
+export * from './analytics/analytics.service';
+export * from './analytics/jitsu.service';
+
 export * from './accounting-template.service';
 export * from './appointment-employees.service';
 export * from './approval-policy.service';
@@ -105,7 +111,6 @@ export * from './request-approval.service';
 export * from './role-permissions.service';
 export * from './role.service';
 export * from './route-utils';
-export * from './selector-builder';
 export * from './server-connection.service';
 export * from './service';
 export * from './skills.service';

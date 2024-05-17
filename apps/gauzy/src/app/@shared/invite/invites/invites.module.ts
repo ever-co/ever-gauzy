@@ -16,6 +16,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ClipboardModule } from 'ngx-clipboard';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -26,10 +27,9 @@ import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
-import { TranslateModule } from '../../translate/translate.module';
 import { HeaderTitleModule } from '../../components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -71,4 +71,4 @@ const COMPONENTS = [
 	exports: [...COMPONENTS],
 	providers: []
 })
-export class InviteTableModule { }
+export class InviteTableModule {}

@@ -1,23 +1,13 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
-import {
-	IOrganization,
-	ComponentLayoutStyleEnum,
-	IUser,
-	CrudActionEnum
-} from '@gauzy/contracts';
+import { IOrganization, ComponentLayoutStyleEnum, IUser, CrudActionEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	OrganizationsService,
@@ -46,7 +36,6 @@ import {
 	styleUrls: ['./organizations.component.scss']
 })
 export class OrganizationsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	settingsSmartTable: object;
 	selectedOrganization: IOrganization;
 	smartTableSource = new LocalDataSource();
@@ -99,9 +88,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 			.pipe(
 				debounceTime(1000),
 				filter((params: ParamMap) => !!params),
-				filter(
-					(params: ParamMap) => params.get('openAddDialog') === 'true'
-				),
+				filter((params: ParamMap) => params.get('openAddDialog') === 'true'),
 				tap(() => this.addOrganization()),
 				untilDestroyed(this)
 			)
@@ -130,10 +117,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				filter(() => this._isGridLayout),
 				tap(() => (this.organizations = [])),
@@ -210,9 +194,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 	}
 
 	async addOrganization() {
-		const result = await firstValueFrom(
-			this.dialogService.open(OrganizationsMutationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(OrganizationsMutationComponent).onClose);
 		if (result) {
 			try {
 				this.organizationsService
@@ -223,12 +205,9 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 								organization,
 								action: CrudActionEnum.CREATED
 							};
-							this.toastrService.success(
-								'NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION',
-								{
-									name: result.name
-								}
-							);
+							this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION', {
+								name: result.name
+							});
 						}
 					})
 					.catch((error) => {
@@ -251,9 +230,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 				data: selectedItem
 			});
 		}
-		this.router.navigate([
-			'/pages/organizations/edit/' + this.selectedOrganization.id
-		]);
+		this.router.navigate(['/pages/organizations/edit/' + this.selectedOrganization.id]);
 	}
 
 	async deleteOrganization(selectedItem?: IOrganization) {
@@ -280,12 +257,9 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 							organization: this.selectedOrganization,
 							action: CrudActionEnum.DELETED
 						};
-						this.toastrService.success(
-							'NOTES.ORGANIZATIONS.DELETE_ORGANIZATION',
-							{
-								name: this.selectedOrganization.name
-							}
-						);
+						this.toastrService.success('NOTES.ORGANIZATIONS.DELETE_ORGANIZATION', {
+							name: this.selectedOrganization.name
+						});
 					})
 					.catch((error) => {
 						this.errorHandler.handleError(error);
@@ -310,9 +284,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 
 			const { itemsPerPage, activePage } = this.getPagination();
 
-			const organizations = items.map(
-				(userOrganization) => userOrganization.organization
-			);
+			const organizations = items.map((userOrganization) => userOrganization.organization);
 
 			for (const org of organizations) {
 				const activeEmployees = org.employees.filter((i) => i.isActive);
@@ -335,16 +307,12 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 
 	private async _loadDataGridLayout() {
 		if (this._isGridLayout) {
-			this.organizations.push(
-				...(await this.smartTableSource.getElements())
-			);
+			this.organizations.push(...(await this.smartTableSource.getElements()));
 		}
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID
-		);
+		return this.dataLayoutStyle === this.componentLayoutStyleEnum.CARDS_GRID;
 	}
 
 	/*
@@ -357,5 +325,5 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

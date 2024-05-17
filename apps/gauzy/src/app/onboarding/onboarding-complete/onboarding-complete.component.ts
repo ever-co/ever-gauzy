@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UsersService } from '../../@core/services';
 import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '../../@core/services/store.service';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,9 +16,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './onboarding-complete.component.html',
 	styleUrls: ['./onboarding-complete.component.scss']
 })
-export class OnboardingCompleteComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class OnboardingCompleteComponent extends TranslationBaseComponent implements OnInit {
 	constructor(
 		private router: Router,
 		public readonly translationService: TranslateService,
@@ -51,10 +49,7 @@ export class OnboardingCompleteComponent
 	}
 
 	getFeatures() {
-		this._featureStoreService
-			.loadFeatures(['children'])
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this._featureStoreService.loadFeatures(['children']).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	navigateTo(link: string) {

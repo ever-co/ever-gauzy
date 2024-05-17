@@ -1,6 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
@@ -8,6 +8,7 @@ import { IssueTypeController } from './issue-type.controller';
 import { IssueType } from './issue-type.entity';
 import { IssueTypeService } from './issue-type.service';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { CommandHandlers } from './commands/handlers';
 		CqrsModule
 	],
 	controllers: [IssueTypeController],
-	providers: [IssueTypeService, ...CommandHandlers],
+	providers: [IssueTypeService, TypeOrmIssueTypeRepository, ...CommandHandlers],
 	exports: []
 })
 export class IssueTypeModule {}

@@ -1,16 +1,10 @@
 import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit } from '@angular/core';
-import {
-	ContactType,
-	IEmployee,
-	IOrganization,
-	IOrganizationContact,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ContactType, IEmployee, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { OrganizationContactService, Store, ToastrService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,7 +21,6 @@ import { OrganizationContactService, Store, ToastrService } from '../../@core/se
 	]
 })
 export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	public organization: IOrganization;
 	contacts: IOrganizationContact[] = [];
 
@@ -67,9 +60,7 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 
 	ngOnInit(): void {
 		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT))
 		);
 	}
 
@@ -84,7 +75,7 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -100,13 +91,10 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 			const { id: organizationId } = this.organization;
 
 			if (this.employeeId) {
-				const items = await this.organizationContactService.getAllByEmployee(
-					this.employeeId,
-					{
-						organizationId,
-						tenantId
-					}
-				);
+				const items = await this.organizationContactService.getAllByEmployee(this.employeeId, {
+					organizationId,
+					tenantId
+				});
 				this.contacts = items;
 			} else {
 				const { items = [] } = await this.organizationContactService.getAll([], {

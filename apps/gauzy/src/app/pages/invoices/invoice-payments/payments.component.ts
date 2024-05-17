@@ -1,14 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import {
-	IInvoice,
-	IPayment,
-	InvoiceStatusTypesEnum,
-	IOrganization,
-	IUser
-} from '@gauzy/contracts';
+import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
@@ -20,7 +14,13 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, Store, ToastrService } from '../../../@core/services';
+import {
+	InvoiceEstimateHistoryService,
+	InvoicesService,
+	PaymentService,
+	Store,
+	ToastrService
+} from '../../../@core/services';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -30,7 +30,6 @@ import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@share
 	styleUrls: ['./payments.component.scss']
 })
 export class InvoicePaymentsComponent extends TranslationBaseComponent implements OnInit {
-
 	public invoiceId: string;
 	public invoice: IInvoice;
 	public payments: IPayment[] = [];
@@ -81,7 +80,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				// Filter out cases where 'id' parameter is present in the paramMap
 				filter((params) => !!params && !!params.get('id')),
 				// Tap into the paramMap to assign the 'id' to the 'invoiceId' property
-				tap((params) => this.invoiceId = params.get('id')),
+				tap((params) => (this.invoiceId = params.get('id'))),
 				// Trigger the subject$ observable when the paramMap changes
 				tap(() => this.subject$.next(true)),
 				// Automatically unsubscribe when the component is destroyed
@@ -120,7 +119,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			];
 
 			// Fetch invoice details
-			const invoice = await this.invoicesService.getById(this.invoiceId, relatedEntities, { organizationId, tenantId });
+			const invoice = await this.invoicesService.getById(this.invoiceId, relatedEntities, {
+				organizationId,
+				tenantId
+			});
 
 			// Update the component's invoice and payments properties
 			this.invoice = invoice;
@@ -147,10 +149,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			this.totalPaid += +payment.amount;
 		}
 
-		this.barWidth = +(
-			(this.totalPaid / this.invoice.totalValue) *
-			100
-		).toFixed(2);
+		this.barWidth = +((this.totalPaid / this.invoice.totalValue) * 100).toFixed(2);
 
 		if (this.barWidth > 100) {
 			this.barWidth = 100;
@@ -179,7 +178,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			this.leftToPay = 0;
 		}
 
-		this.isDisabled = (this.leftToPay === 0);
+		this.isDisabled = this.leftToPay === 0;
 
 		await this.invoicesService.updateAction(this.invoice.id, {
 			alreadyPaid: this.totalPaid,
@@ -188,84 +187,64 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 	}
 
 	async recordPayment() {
-		const result = await firstValueFrom(this.dialogService
-			.open(PaymentMutationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.paymentService.add(result);
 			this.totalPaid = 0;
 			this.subject$.next(true);
-			await this.updateInvoiceStatus(
-				+this.invoice.totalValue,
-				this.totalPaid
-			);
+			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
 
 			if (result.invoice) {
 				const { invoice, amount, currency } = result;
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
 
-				await this.createInvoiceHistory(
-					action,
-					invoice
-				);
+				await this.createInvoiceHistory(action, invoice);
 			}
 		}
 	}
 
 	async editPayment() {
-		const result = await firstValueFrom(this.dialogService
-			.open(PaymentMutationComponent, {
+		const result = await firstValueFrom(
+			this.dialogService.open(PaymentMutationComponent, {
 				context: {
 					invoice: this.invoice,
 					payment: this.selectedPayment
 				}
-			})
-			.onClose);
+			}).onClose
+		);
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
 			this.subject$.next(true);
-			await this.updateInvoiceStatus(
-				+this.invoice.totalValue,
-				this.totalPaid
-			);
+			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
 
 			if (result.invoice) {
 				const { invoice } = result;
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_EDIT');
-				await this.createInvoiceHistory(
-					action,
-					invoice
-				);
+				await this.createInvoiceHistory(action, invoice);
 			}
 		}
 	}
 
 	async deletePayment() {
-		const result = await firstValueFrom(this.dialogService
-			.open(DeleteConfirmationComponent)
-			.onClose);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
 			await this.paymentService.delete(this.selectedPayment.id);
 			this.subject$.next(true);
-			await this.updateInvoiceStatus(
-				+this.invoice.totalValue,
-				this.totalPaid
-			);
+			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
 
 			const { invoice } = this.selectedPayment;
 			if (invoice) {
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
-				await this.createInvoiceHistory(
-					action,
-					invoice
-				);
+				await this.createInvoiceHistory(action, invoice);
 			}
 
 			this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
@@ -276,9 +255,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 	async download() {
 		const tableData = await this.smartTableSource.getAll();
 		if (!tableData.length) {
-			this.toastrService.danger(
-				'INVOICES_PAGE.PAYMENTS.NO_PAYMENTS_RECORDED'
-			);
+			this.toastrService.danger('INVOICES_PAGE.PAYMENTS.NO_PAYMENTS_RECORDED');
 			return;
 		}
 
@@ -290,16 +267,12 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe(() => {
-				this.toastrService.success(
-					'INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD'
-				);
+				this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_DOWNLOAD');
 			});
 	}
 
 	downloadFile(data) {
-		const filename = `${this.getTranslation(
-			'INVOICES_PAGE.PAYMENTS.PAYMENT'
-		)}.pdf`;
+		const filename = `${this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT')}.pdf`;
 		saveAs(data, filename);
 	}
 
@@ -308,7 +281,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 	 * @param isSelected A boolean indicating whether the payment is selected.
 	 * @param data The payment data associated with the selection.
 	 */
-	selectPayment({ isSelected, data }: { isSelected: boolean, data: IPayment }): void {
+	selectPayment({ isSelected, data }: { isSelected: boolean; data: IPayment }): void {
 		// Update the disableButton property based on the isSelected value
 		this.disableButton = !isSelected;
 
@@ -330,7 +303,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				amount: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.AMOUNT'),
@@ -338,7 +311,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				recordedBy: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.RECORDED_BY'),
@@ -354,7 +327,8 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 				paymentMethod: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_METHOD'),
 					type: 'text',
-					valuePrepareFunction: (value: IPayment['paymentMethod']) => this.getTranslation(`INVOICES_PAGE.PAYMENTS.${value}`) ?? ''
+					valuePrepareFunction: (value: IPayment['paymentMethod']) =>
+						this.getTranslation(`INVOICES_PAGE.PAYMENTS.${value}`) ?? ''
 				},
 				overdue: {
 					title: this.getTranslation('INVOICES_PAGE.PAYMENTS.STATUS'),
@@ -363,7 +337,9 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 					renderComponent: StatusBadgeComponent,
 					valuePrepareFunction: (value: IPayment['overdue']) => {
 						const badgeClass = value ? 'danger' : 'success';
-						const translatedCell = value ? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE') : this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME');
+						const translatedCell = value
+							? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE')
+							: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME');
 
 						return {
 							text: translatedCell,
@@ -372,7 +348,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 					},
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -427,10 +403,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		const { amount, currency, invoice } = payment;
 		if (payment.invoice) {
 			const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_AMOUNT_ADDED', { amount, currency });
-			await this.createInvoiceHistory(
-				action,
-				invoice
-			);
+			await this.createInvoiceHistory(action, invoice);
 		}
 
 		this.subject$.next(true);
@@ -449,7 +422,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 		// Update the already paid amount for the invoice
 		await this.invoicesService.updateAction(this.invoice.id, {
-			alreadyPaid: +this.totalPaid,
+			alreadyPaid: +this.totalPaid
 		});
 
 		// Navigate to the invoice editing page with the remaining amount query parameter
@@ -466,12 +439,14 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		this.payments.forEach((payment) => {
 			data.push({
 				invoiceNumber: this.invoice.invoiceNumber,
-				contact: (this.invoice.toContact) ? this.invoice.toContact.name : '',
+				contact: this.invoice.toContact ? this.invoice.toContact.name : '',
 				paymentDate: payment.paymentDate.toString().slice(0, 10),
 				amount: `${payment.currency + ' ' + payment.amount}`,
 				recordedBy: payment.recordedBy.firstName + payment.recordedBy.lastName,
 				note: payment.note || '',
-				paymentMethod: payment.paymentMethod ? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`) : '',
+				paymentMethod: payment.paymentMethod
+					? this.getTranslation(`INVOICES_PAGE.PAYMENTS.${payment.paymentMethod}`)
+					: '',
 				status: payment.overdue
 					? this.getTranslation('INVOICES_PAGE.PAYMENTS.OVERDUE')
 					: this.getTranslation('INVOICES_PAGE.PAYMENTS.ON_TIME')
@@ -503,8 +478,8 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			this.dialogService.open(InvoicePaymentReceiptMutationComponent, {
 				context: {
 					invoice: this.invoice,
-					payment: this.selectedPayment,
-				},
+					payment: this.selectedPayment
+				}
 			}).onClose
 		);
 	}

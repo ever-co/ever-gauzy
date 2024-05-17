@@ -7,33 +7,24 @@ import {
 	ICandidateSourceCreateInput,
 	IPagination
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class CandidateSourceService {
+	constructor(private readonly http: HttpClient) {}
 
-	constructor(
-		private readonly http: HttpClient
-	) { }
-
-	getAll(
-		where?: ICandidateSourceFindInput
-	): Promise<IPagination<ICandidateSource>> {
+	getAll(where?: ICandidateSourceFindInput): Promise<IPagination<ICandidateSource>> {
 		return firstValueFrom(
-			this.http.get<IPagination<ICandidateSource>>( `${API_PREFIX}/candidate-source`, {
+			this.http.get<IPagination<ICandidateSource>>(`${API_PREFIX}/candidate-source`, {
 				params: toParams({ where })
 			})
 		);
 	}
 
-	create(
-		input: ICandidateSourceCreateInput
-	): Promise<ICandidateSource> {
-		return firstValueFrom(
-			this.http.post<ICandidateSource>( `${API_PREFIX}/candidate-source`, input)
-		);
+	create(input: ICandidateSourceCreateInput): Promise<ICandidateSource> {
+		return firstValueFrom(this.http.post<ICandidateSource>(`${API_PREFIX}/candidate-source`, input));
 	}
 }

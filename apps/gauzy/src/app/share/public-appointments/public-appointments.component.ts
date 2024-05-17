@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeesService, EventTypeService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -14,9 +14,7 @@ import { EmployeesService, EventTypeService, Store } from '../../@core/services'
 	templateUrl: './public-appointments.component.html',
 	styleUrls: ['./public-appointments.component.scss']
 })
-export class PublicAppointmentsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class PublicAppointmentsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	employee: IEmployee;
 	eventTypes: IEventType[];
 	loading = true;
@@ -35,19 +33,14 @@ export class PublicAppointmentsComponent
 	}
 
 	ngOnInit(): void {
-		this.route.params
-			.pipe(untilDestroyed(this))
-			.subscribe(async (params) => {
-				try {
-					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
-						params.id,
-						['user']
-					));
-					await this._getEventTypes();
-				} catch (error) {
-					await this.router.navigate(['/share/404']);
-				}
-			});
+		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
+			try {
+				this.employee = await firstValueFrom(this.employeeService.getEmployeeById(params.id, ['user']));
+				await this._getEventTypes();
+			} catch (error) {
+				await this.router.navigate(['/share/404']);
+			}
+		});
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
@@ -61,15 +54,12 @@ export class PublicAppointmentsComponent
 	}
 
 	async _getEventTypes() {
-		let { items } = await this.eventTypeService.getAll(
-			['employee', 'employee.user', 'tags'],
-			{
-				employee: {
-					id: this.employee.id
-				},
-				isActive: true
-			}
-		);
+		let { items } = await this.eventTypeService.getAll(['employee', 'employee.user', 'tags'], {
+			employee: {
+				id: this.employee.id
+			},
+			isActive: true
+		});
 
 		if (items.length === 0) {
 			const { tenantId } = this.store.user;
@@ -83,9 +73,7 @@ export class PublicAppointmentsComponent
 		}
 
 		if (items.length === 1) {
-			this.router.navigate([
-				`/share/employee/${this.employee.id}/${items[0].id}`
-			]);
+			this.router.navigate([`/share/employee/${this.employee.id}/${items[0].id}`]);
 		}
 
 		if (items.length !== 0) {
@@ -97,10 +85,7 @@ export class PublicAppointmentsComponent
 			if (a.duration > b.duration && a.durationUnit === b.durationUnit) {
 				return 1;
 			} else if (a.durationUnit !== b.durationUnit) {
-				return (
-					eventTypesOrder.indexOf(a.durationUnit) -
-					eventTypesOrder.indexOf(b.durationUnit)
-				);
+				return eventTypesOrder.indexOf(a.durationUnit) - eventTypesOrder.indexOf(b.durationUnit);
 			}
 
 			return -1;

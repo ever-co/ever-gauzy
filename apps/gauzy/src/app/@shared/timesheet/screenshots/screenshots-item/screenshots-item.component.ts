@@ -1,25 +1,12 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	OnDestroy,
-	Output,
-	EventEmitter
-} from '@angular/core';
-import {
-	ITimeSlot,
-	IScreenshot,
-	ITimeLog,
-	IOrganization,
-	IEmployee
-} from '@gauzy/contracts';
+import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
 import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
@@ -32,15 +19,14 @@ import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/
 	styleUrls: ['./screenshots-item.component.scss']
 })
 export class ScreenshotsItemComponent implements OnInit, OnDestroy {
-
 	public isShowBorder: boolean = false;
 	public organization: IOrganization;
 	progressStatus = progressStatus;
 	fallbackSvg = DEFAULT_SVG;
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	_employees: IEmployee[] = [];
 	get employees(): IEmployee[] {
 		return this._employees;
@@ -59,8 +45,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	@Output() toggle: EventEmitter<any> = new EventEmitter();
 
 	/*
-	* Getter & Setter for TimeSlot
-	*/
+	 * Getter & Setter for TimeSlot
+	 */
 	private _timeSlot: ITimeSlot;
 	get timeSlot(): ITimeSlot {
 		return this._timeSlot;
@@ -72,16 +58,15 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		let screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
 
 		// Map each screenshot with additional properties and employeeId
-		this.screenshots = screenshots.map((screenshot: IScreenshot) => ({
-			employeeId: timeSlot.employeeId,
-			...screenshot
-		})) || [];
+		this.screenshots =
+			screenshots.map((screenshot: IScreenshot) => ({
+				employeeId: timeSlot.employeeId,
+				...screenshot
+			})) || [];
 
 		if (isNotEmpty(this.screenshots)) {
 			// Check if all screenshots have isWorkRelated as false
-			this.isShowBorder = this.screenshots.every(
-				(screenshot: IScreenshot) => screenshot.isWorkRelated === false
-			);
+			this.isShowBorder = this.screenshots.every((screenshot: IScreenshot) => screenshot.isWorkRelated === false);
 		}
 
 		// Assign a new object to _timeSlot with modified properties
@@ -101,8 +86,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for Screenshots
-	*/
+	 * Getter & Setter for Screenshots
+	 */
 	private _screenshots: IScreenshot[] = [];
 	get screenshots(): IScreenshot[] {
 		return this._screenshots;
@@ -112,8 +97,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for Screenshot
-	*/
+	 * Getter & Setter for Screenshot
+	 */
 	private _lastScreenshot: IScreenshot;
 	get lastScreenshot(): IScreenshot {
 		return this._lastScreenshot;
@@ -129,14 +114,14 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -198,17 +183,20 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	 * @param timeSlot - The time slot for which information is to be viewed.
 	 */
 	viewInfo(timeSlot: ITimeSlot): void {
-		this.nbDialogService.open(ViewScreenshotsModalComponent, {
-			context: {
-				timeSlot,
-				timeLogs: timeSlot.timeLogs
-			}
-		}).onClose.pipe(
-			filter(data => Boolean(data && data['isDelete'])),
-			tap(() => this.delete.emit()),
-			take(1),
-			untilDestroyed(this)
-		).subscribe();
+		this.nbDialogService
+			.open(ViewScreenshotsModalComponent, {
+				context: {
+					timeSlot,
+					timeLogs: timeSlot.timeLogs
+				}
+			})
+			.onClose.pipe(
+				filter((data) => Boolean(data && data['isDelete'])),
+				tap(() => this.delete.emit()),
+				take(1),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -221,5 +209,5 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		return timeSlot.timeLogs.every((log: ITimeLog) => !log.isRunning);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

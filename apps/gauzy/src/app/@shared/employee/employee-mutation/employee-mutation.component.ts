@@ -2,15 +2,9 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
-import {
-	IEmployee,
-	IUser,
-	IEmployeeCreateInput,
-	CrudActionEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	EmployeesService,
@@ -46,7 +40,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		protected readonly store: Store,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
@@ -75,16 +69,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		const { tenantId } = this.store.user;
 
 		this.form = this.userBasicInfo.form;
-		const {
-			firstName,
-			lastName,
-			email,
-			username,
-			password,
-			tags,
-			imageUrl,
-			imageId
-		} = this.form.value;
+		const { firstName, lastName, email, username, password, tags, imageUrl, imageId } = this.form.value;
 		const {
 			offerDate = null,
 			acceptDate = null,
@@ -125,9 +110,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.addEmployee();
 		try {
 			this.loading = true;
-			const employees = await firstValueFrom(
-				this.employeesService.createBulk(this.employees)
-			).finally(() => {
+			const employees = await firstValueFrom(this.employeesService.createBulk(this.employees)).finally(() => {
 				this.loading = false;
 			});
 			this._employeeStore.employeeAction = {
@@ -145,9 +128,7 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 	 * @param tag
 	 */
 	onEmployeeRemove(tag: NbTagComponent): void {
-		this.employees = this.employees.filter(
-			(t: IEmployeeCreateInput) => t.user.email !== tag.text
-		);
+		this.employees = this.employees.filter((t: IEmployeeCreateInput) => t.user.email !== tag.text);
 	}
 
 	/**

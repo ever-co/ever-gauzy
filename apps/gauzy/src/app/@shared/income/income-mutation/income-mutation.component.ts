@@ -1,23 +1,13 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import {
-	Validators,
-	UntypedFormBuilder,
-	UntypedFormGroup
-} from '@angular/forms';
+import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import {
-	IIncome,
-	ITag,
-	IOrganization,
-	ICurrency,
-	ISelectedEmployee
-} from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { IIncome, ITag, IOrganization, ICurrency, ISelectedEmployee } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
@@ -26,15 +16,13 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './income-mutation.component.html',
 	styleUrls: ['./income-mutation.component.scss']
 })
-export class IncomeMutationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class IncomeMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	public organization: IOrganization;
 
 	/*
-	* Getter & Setter
-	*/
+	 * Getter & Setter
+	 */
 	_income: IIncome;
 	get income(): IIncome {
 		return this._income;
@@ -44,13 +32,10 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Income Mutation Form
-	*/
+	 * Income Mutation Form
+	 */
 	public form: UntypedFormGroup = IncomeMutationComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: IncomeMutationComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: IncomeMutationComponent): UntypedFormGroup {
 		return fb.group({
 			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			amount: ['', Validators.required],
@@ -67,7 +52,7 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<IncomeMutationComponent>,
 		private readonly store: Store,
-		readonly translateService: TranslateService,
+		readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -78,25 +63,20 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._initializeForm()),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void { }
+	ngAfterViewInit(): void {}
 
 	async addOrEditIncome() {
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(
-			Object.assign(
-				{},
-				this.form.getRawValue()
-			)
-		);
+		this.dialogRef.close(Object.assign({}, this.form.getRawValue()));
 	}
 
 	close() {
@@ -141,5 +121,5 @@ export class IncomeMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 }

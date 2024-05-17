@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
 import { LanguagesService } from '../../../@core/services/languages.service';
 import { ILanguage } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core';
 import { filter, tap } from 'rxjs/operators';
@@ -25,12 +25,12 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 export class LanguageSelectorComponent extends TranslationBaseComponent implements OnInit {
 	languages: ILanguage[];
 	loading: boolean;
-	onChange: any = () => { }
-	onTouch: any = () => { }
+	onChange: any = () => {};
+	onTouch: any = () => {};
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string = this.getTranslation('MENU.LANGUAGE');
 	get placeholder(): string {
 		return this._placeholder;
@@ -40,8 +40,8 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	/*
-	* Getter & Setter for dynamic clearable option
-	*/
+	 * Getter & Setter for dynamic clearable option
+	 */
 	_clearable: boolean;
 	get clearable(): boolean {
 		return this._clearable;
@@ -51,8 +51,8 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean;
 	get addTag(): boolean {
 		return this._addTag;
@@ -62,8 +62,8 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	/*
-	* Getter & Setter for automatic language selection as per selected language code
-	*/
+	 * Getter & Setter for automatic language selection as per selected language code
+	 */
 	_selectedLanguageCode: string;
 	get selectedLanguageCode(): string {
 		return this._selectedLanguageCode;
@@ -76,14 +76,14 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		}
 	}
 	/*
-	* Getter & Setter for automatic language selection as per selected language
-	*/
+	 * Getter & Setter for automatic language selection as per selected language
+	 */
 
-	@Input() selectBy: 'code' | 'object' = 'code'
+	@Input() selectBy: 'code' | 'object' = 'code';
 
 	/*
-	* Getter & Setter for dynamic template
-	*/
+	 * Getter & Setter for dynamic template
+	 */
 	_template: string;
 	get template(): string {
 		return this._template;
@@ -93,8 +93,8 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	/*
-	* Getter & Setter for dynamic template size
-	*/
+	 * Getter & Setter for dynamic template size
+	 */
 	_size: NbComponentSize = 'medium';
 	get size(): NbComponentSize {
 		return this._size;
@@ -109,13 +109,13 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 		private readonly languagesService: LanguagesService,
 		readonly translate: TranslateService,
 		private readonly store: Store,
-		private  cd: ChangeDetectorRef,
+		private cd: ChangeDetectorRef
 	) {
 		super(translate);
 		this.store.preferredLanguage$
 			.pipe(
 				filter((preferredLanguage: string) => !!preferredLanguage),
-				tap((preferredLanguage: string) => this.selectedLanguageCode = preferredLanguage),
+				tap((preferredLanguage: string) => (this.selectedLanguageCode = preferredLanguage)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -132,7 +132,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	onSelectedChange(code: ILanguage['code']) {
-		this.cd.detectChanges()
+		this.cd.detectChanges();
 		let selectedLanguage: any;
 		if (this.selectBy === 'object') {
 			selectedLanguage = this.getLanguageByCode(code);
@@ -147,11 +147,11 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	registerOnChange(fn: any) {
-		this.onChange = fn
+		this.onChange = fn;
 	}
 
 	registerOnTouched(fn: any) {
-		this.onTouch = fn
+		this.onTouch = fn;
 	}
 
 	addLanguage = async (languageName: string) => {
@@ -161,9 +161,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 			description: ''
 		};
 		this.loading = true;
-		const language = await this.languagesService.insertLanguage(
-			newLanguage
-		);
+		const language = await this.languagesService.insertLanguage(newLanguage);
 		this.loading = false;
 		return language;
 	};
@@ -171,7 +169,7 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	async ngOnInit() {
 		await this.getAllLanguages();
 		if (this.selectBy === 'object') {
-			this.checkPreFilledLanguage()
+			this.checkPreFilledLanguage();
 		}
 	}
 
@@ -191,8 +189,6 @@ export class LanguageSelectorComponent extends TranslationBaseComponent implemen
 	}
 
 	getLanguageByCode(code: ILanguage['code']) {
-		return this.languages.find(
-			(language: ILanguage) => code === language.code
-		);
+		return this.languages.find((language: ILanguage) => code === language.code);
 	}
 }

@@ -4,7 +4,7 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } from '@gauzy/contracts';
 import { ProjectMutationComponent } from './../../../../@shared/project';
-import { TranslationBaseComponent } from './../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -14,7 +14,6 @@ import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService
 	styleUrls: ['./create.component.scss']
 })
 export class ProjectCreateMutationComponent extends TranslationBaseComponent implements OnInit {
-
 	/** Project Mutation Component*/
 	@ViewChild(ProjectMutationComponent, { static: false }) public _component: ProjectMutationComponent;
 
@@ -32,7 +31,7 @@ export class ProjectCreateMutationComponent extends TranslationBaseComponent imp
 		super(translateService);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	/**
 	 * Handles the submission of the project mutation form.
