@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import {

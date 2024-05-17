@@ -7,7 +7,7 @@ import { pluck, pick } from 'underscore';
 import * as randomColor from 'randomcolor';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { moment } from './../../../../@core/moment-extend';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';

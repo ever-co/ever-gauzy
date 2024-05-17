@@ -9,7 +9,7 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import {
 	IPaginationBase,

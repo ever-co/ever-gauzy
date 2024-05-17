@@ -19,7 +19,7 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,

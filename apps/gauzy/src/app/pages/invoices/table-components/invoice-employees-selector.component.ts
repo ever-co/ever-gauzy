@@ -3,7 +3,7 @@ import { DefaultEditor } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { EmployeesService, Store } from '../../../@core/services';
 

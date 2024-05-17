@@ -22,7 +22,7 @@ import {
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	GithubService,
@@ -30,7 +30,10 @@ import {
 	Store,
 	ToastrService
 } from './../../../../../@core/services';
-import { IPaginationBase, PaginationFilterBaseComponent } from './../../../../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from './../../../../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import { HashNumberPipe } from './../../../../../@shared/pipes';
 import {
@@ -44,7 +47,7 @@ import {
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',
-	MANUAL_SYNC = 'MANUAL_SYNC',
+	MANUAL_SYNC = 'MANUAL_SYNC'
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -54,7 +57,6 @@ export enum SyncTabsEnum {
 	providers: [TitleCasePipe]
 })
 export class GithubViewComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
-
 	public syncTabsEnum: typeof SyncTabsEnum = SyncTabsEnum;
 	public nbTab$: Subject<string> = new BehaviorSubject(SyncTabsEnum.AUTO_SYNC);
 	public page$: Observable<IPaginationBase>; // Observable for the organization project
@@ -116,7 +118,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		this.project$ = this.selectedProject$.pipe(
 			debounceTime(100),
 			distinctUntilChange(),
-			tap((project: IOrganizationProject) => this.project = project || null),
+			tap((project: IOrganizationProject) => (this.project = project || null)),
 			filter(() => !!this.project),
 			switchMap(() => {
 				// Extract project properties
@@ -132,7 +134,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						return EMPTY;
 					}),
 					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this),
+					untilDestroyed(this)
 				);
 			})
 		);
@@ -146,7 +148,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			// Extract the 'integration' from the data
 			map(({ integration }: Data) => integration),
 			// Store the integration in the 'integration' property
-			tap((integration: IIntegrationTenant) => this.integration = integration),
+			tap((integration: IIntegrationTenant) => (this.integration = integration)),
 			// Automatically unsubscribe when the component is destroyed
 			untilDestroyed(this)
 		);
@@ -173,7 +175,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						return EMPTY;
 					}),
 					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this),
+					untilDestroyed(this)
 				);
 			})
 		);
@@ -238,10 +240,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 
 		this.issues$ = this._activatedRoute.parent.data.pipe(
 			filter(({ integration }: Data) => !!integration),
-			switchMap(() => this._activatedRoute.params.pipe(
-				filter(({ integrationId }) => integrationId)
-			)),
-			tap(() => this.loading = true),
+			switchMap(() => this._activatedRoute.params.pipe(filter(({ integrationId }) => integrationId))),
+			tap(() => (this.loading = true)),
 			// Get the 'integrationId' route parameter
 			switchMap(({ integrationId }) => {
 				/**
@@ -270,9 +270,9 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				this._errorHandlingService.handleError(error);
 				return of([]);
 			}),
-			tap(() => this.loading = false),
+			tap(() => (this.loading = false)),
 			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
+			untilDestroyed(this)
 		);
 		this.issues$.subscribe();
 	}
@@ -326,7 +326,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					},
 					valuePrepareFunction: (number: IGithubIssue['number']) => {
 						return this._hashNumberPipe.transform(number);
-					},
+					}
 				},
 				body: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'), // Set column title based on translation
@@ -347,8 +347,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					},
 					valuePrepareFunction: (value: TaskStatusEnum) => {
 						return this.getIssueStatus(value);
-					},
-				},
+					}
+				}
 			}
 		};
 
@@ -487,39 +487,44 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		const { organizationId, tenantId } = project;
 
 		// Update a GitHub repository using the _githubService and handle various operations.
-		this._githubService.updateGithubRepository(repository.id, {
-			hasSyncEnabled,
-			tenantId,
-			organizationId
-		}).pipe(
-			tap((response: any) => {
-				if (response['status'] == HttpStatus.BAD_REQUEST) {
-					throw new Error(`${response['message']}`);
-				}
-			}),
-			// Catch and handle errors
-			catchError((error) => {
-				// Handle and log errors using the _errorHandlingService
-				this._errorHandlingService.handleError(error);
-				// Return an empty observable to continue the stream
-				return EMPTY;
-			}),
-			// Perform side effects
-			tap(() => {
-				// Determine the success message based on whether hasSyncEnabled is true or false
-				const message = hasSyncEnabled ? 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_ENABLED' : 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_DISABLED';
+		this._githubService
+			.updateGithubRepository(repository.id, {
+				hasSyncEnabled,
+				tenantId,
+				organizationId
+			})
+			.pipe(
+				tap((response: any) => {
+					if (response['status'] == HttpStatus.BAD_REQUEST) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				// Catch and handle errors
+				catchError((error) => {
+					// Handle and log errors using the _errorHandlingService
+					this._errorHandlingService.handleError(error);
+					// Return an empty observable to continue the stream
+					return EMPTY;
+				}),
+				// Perform side effects
+				tap(() => {
+					// Determine the success message based on whether hasSyncEnabled is true or false
+					const message = hasSyncEnabled
+						? 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_ENABLED'
+						: 'INTEGRATIONS.GITHUB_PAGE.HAS_SYNCED_DISABLED';
 
-				// Display a success toast message using the _toastrService
-				this._toastrService.success(
-					this.getTranslation(message, { repository: repository.fullName }),
-					this.getTranslation('TOASTR.TITLE.SUCCESS')
-				);
-			}),
-			// Update the subject with a value of true
-			tap(() => this.subject$.next(true)),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this)
-		).subscribe();
+					// Display a success toast message using the _toastrService
+					this._toastrService.success(
+						this.getTranslation(message, { repository: repository.fullName }),
+						this.getTranslation('TOASTR.TITLE.SUCCESS')
+					);
+				}),
+				// Update the subject with a value of true
+				tap(() => this.subject$.next(true)),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -584,9 +589,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
-			this._githubService.syncGithubRepository(repositorySyncRequest)
+			this._githubService
+				.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					tap((item: IOrganizationGithubRepository) => repository = item),
+					tap((item: IOrganizationGithubRepository) => (repository = item)),
 					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
@@ -601,15 +607,11 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						}
 					}),
 					mergeMap(() =>
-						this._githubService.autoSyncIssues(
-							integrationId,
-							repository,
-							{
-								projectId,
-								organizationId,
-								tenantId
-							}
-						)
+						this._githubService.autoSyncIssues(integrationId, repository, {
+							projectId,
+							organizationId,
+							tenantId
+						})
 					),
 					tap((process: boolean) => {
 						if (process) {
@@ -627,7 +629,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = this.loading = false),
+					finalize(() => (this.syncing = this.loading = false)),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)
@@ -676,9 +678,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			let repository: IOrganizationGithubRepository;
 
 			// Synchronize the GitHub repository and update project settings
-			this._githubService.syncGithubRepository(repositorySyncRequest)
+			this._githubService
+				.syncGithubRepository(repositorySyncRequest)
 				.pipe(
-					tap((item: IOrganizationGithubRepository) => repository = item),
+					tap((item: IOrganizationGithubRepository) => (repository = item)),
 					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
 						this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
@@ -688,16 +691,12 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						})
 					),
 					mergeMap(() =>
-						this._githubService.manualSyncIssues(
-							integrationId,
-							repository,
-							{
-								projectId,
-								organizationId,
-								tenantId,
-								issues: this.selectedIssues
-							},
-						)
+						this._githubService.manualSyncIssues(integrationId, repository, {
+							projectId,
+							organizationId,
+							tenantId,
+							issues: this.selectedIssues
+						})
 					),
 					tap((response: any) => {
 						if (response['status'] == HttpStatus.BAD_REQUEST) {
@@ -723,7 +722,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						return EMPTY;
 					}),
 					// Execute the following code block when the observable completes or errors
-					finalize(() => this.syncing = this.loading = false),
+					finalize(() => (this.syncing = this.loading = false)),
 					// Automatically unsubscribe when the component is destroyed
 					untilDestroyed(this)
 				)
@@ -757,40 +756,39 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 			const { id: integrationId } = this.integration;
 			const { id: projectId } = this.project;
 
-			this._githubService.autoSyncIssues(
-				integrationId,
-				repository,
-				{
+			this._githubService
+				.autoSyncIssues(integrationId, repository, {
 					projectId,
 					organizationId,
 					tenantId
-				}
-			).pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				tap((process: boolean) => {
-					if (process) {
-						this._toastrService.success(
-							this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
-								repository: repository.fullName
-							}),
-							this.getTranslation('TOASTR.TITLE.SUCCESS')
-						);
-					}
-					this.subject$.next(true);
-				}),
-				catchError((error) => {
-					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				// Execute the following code block when the observable completes or errors
-				finalize(() => this.loading = false),
-				// Automatically unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			).subscribe();;
+				})
+				.pipe(
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					tap((process: boolean) => {
+						if (process) {
+							this._toastrService.success(
+								this.getTranslation('INTEGRATIONS.GITHUB_PAGE.SYNCED_ISSUES', {
+									repository: repository.fullName
+								}),
+								this.getTranslation('TOASTR.TITLE.SUCCESS')
+							);
+						}
+						this.subject$.next(true);
+					}),
+					catchError((error) => {
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Execute the following code block when the observable completes or errors
+					finalize(() => (this.loading = false)),
+					// Automatically unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			console.log(error);
 		}
@@ -870,13 +868,13 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		}
 		return {
 			text: badgeText,
-			class: badgeClass,
+			class: badgeClass
 		};
 	}
 
 	/**
 	 * Navigate to the "Integrations" page.
-	*/
+	 */
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}

@@ -21,7 +21,7 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';

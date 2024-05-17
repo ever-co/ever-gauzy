@@ -8,7 +8,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
 import { ITag, IMerchant, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { LocationFormComponent, LeafletMapComponent, FormHelpers } from './../../../../../@shared/forms';
 import {
 	ToastrService,

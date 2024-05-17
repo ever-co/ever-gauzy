@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from '@gauzy/common-angular';
+import { getContrastColor } from '@gauzy/ui-sdk/common';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({
@@ -9,11 +9,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				<img [src]="imageUrl" />
 			</div>
 			<div *ngIf="!imageUrl" class="image-container">
-				<ga-no-image
-					class="no-image"
-					(mouseenter)="hoverState = true"
-					(mouseleave)="hoverState = false"
-				>
+				<ga-no-image class="no-image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false">
 				</ga-no-image>
 			</div>
 			<div class="row">
@@ -71,7 +67,7 @@ import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 				height: 64px;
 				border-radius: 4px;
 				object-fit: cover;
-				box-shadow: var(--gauzy-shadow)(0 0 0 / 15%);
+				box-shadow: var(--gauzy-shadow) (0 0 0 / 15%);
 			}
 
 			.no-image {
@@ -120,10 +116,7 @@ export class ItemImgTagsComponent {
 	get imageUrl() {
 		if (this.rowData.logo) {
 			return this.rowData.logo.url || this.rowData.logo;
-		} else if (
-			this.rowData.featuredImage &&
-			this.rowData.featuredImage.url
-		) {
+		} else if (this.rowData.featuredImage && this.rowData.featuredImage.url) {
 			return this.rowData.featuredImage.url;
 		}
 

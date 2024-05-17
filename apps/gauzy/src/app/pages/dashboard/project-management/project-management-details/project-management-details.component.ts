@@ -16,7 +16,7 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, Store, TasksService } from './../../../../@core/services';
 import { API_PREFIX } from './../../../../@core/constants';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';

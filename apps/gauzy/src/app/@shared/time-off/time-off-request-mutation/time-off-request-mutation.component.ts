@@ -12,7 +12,7 @@ import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { OrganizationDocumentsService, Store } from '../../../@core/services';
 import { FormHelpers } from '../../forms/helpers';

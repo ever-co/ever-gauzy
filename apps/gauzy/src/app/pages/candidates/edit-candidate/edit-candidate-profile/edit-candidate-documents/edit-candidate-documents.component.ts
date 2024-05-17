@@ -2,23 +2,14 @@ import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular
 import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import {
-	ICandidateDocument,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 import { ComponentEnum } from './../../../../../@core/constants';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import {
-	CandidateDocumentsService,
-	CandidateStore,
-	Store,
-	ToastrService
-} from './../../../../../@core/services';
+import { CandidateDocumentsService, CandidateStore, Store, ToastrService } from './../../../../../@core/services';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,9 +18,10 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 	templateUrl: './edit-candidate-documents.component.html',
 	styleUrls: ['./edit-candidate-documents.component.scss']
 })
-export class EditCandidateDocumentsComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class EditCandidateDocumentsComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@ViewChild('candidateCv')
 	candidateCv: CandidateCvComponent;
 
@@ -47,8 +39,8 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	selectedOrganization: IOrganization;
 
 	/*
-	* Candidate Document Mutation Form
-	*/
+	 * Candidate Document Mutation Form
+	 */
 	public form: UntypedFormGroup = EditCandidateDocumentsComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		const form = fb.group({
@@ -77,18 +69,14 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	}
 
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe((candidate) => {
-				if (candidate) {
-					this.selectedOrganization = this.store.selectedOrganization;
-					this.candidateId = candidate.id;
-					this.loadDocuments();
-					this.loadSmartTable();
-				}
-			});
+		this.candidateStore.selectedCandidate$.pipe(untilDestroyed(this)).subscribe((candidate) => {
+			if (candidate) {
+				this.selectedOrganization = this.store.selectedOrganization;
+				this.candidateId = candidate.id;
+				this.loadDocuments();
+				this.loadSmartTable();
+			}
+		});
 	}
 
 	ngAfterViewInit() {
@@ -101,7 +89,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -175,10 +163,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 		formValue.documentUrl = this.formCv.get('cvUrl').value;
 		if (this.documentId !== null) {
 			//editing existing document
-			formValue.documentUrl =
-				formValue.documentUrl === ''
-					? this.documentUrl
-					: formValue.documentUrl;
+			formValue.documentUrl = formValue.documentUrl === '' ? this.documentUrl : formValue.documentUrl;
 			if (formValue.name !== '') {
 				this.updateDocument(formValue);
 			} else {
@@ -209,12 +194,9 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 				tenantId
 			});
 			this.loadDocuments();
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_UPDATED',
-				{
-					name: formValue.name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_UPDATED', {
+				name: formValue.name
+			});
 			this.showAddCard = !this.showAddCard;
 			this.form.controls.documents.reset();
 		} catch (error) {
@@ -239,12 +221,9 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 				organizationId,
 				tenantId
 			});
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_CREATED',
-				{
-					name: formValue.name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_CREATED', {
+				name: formValue.name
+			});
 			this.loadDocuments();
 			this.showAddCard = !this.showAddCard;
 			this.documents.reset();
@@ -256,12 +235,9 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	async removeDocument(document) {
 		try {
 			await this.candidateDocumentsService.delete(document.id);
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_DOCUMENT_DELETED',
-				{
-					name: document.name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_DOCUMENT_DELETED', {
+				name: document.name
+			});
 			this.loadDocuments();
 		} catch (error) {
 			this.toastrError(error);
@@ -269,13 +245,9 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 	}
 
 	private toastrError(error) {
-		this.toastrService.danger(
-			'NOTES.CANDIDATE.EXPERIENCE.ERROR',
-			'TOASTR.TITLE.ERROR',
-			{
-				error: error.error ? error.error.message : error.message
-			}
-		);
+		this.toastrService.danger('NOTES.CANDIDATE.EXPERIENCE.ERROR', 'TOASTR.TITLE.ERROR', {
+			error: error.error ? error.error.message : error.message
+		});
 	}
 
 	private toastrInvalid() {
@@ -295,7 +267,7 @@ export class EditCandidateDocumentsComponent extends PaginationFilterBaseCompone
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	/*
 	 * Getter for candidate documents form controls array

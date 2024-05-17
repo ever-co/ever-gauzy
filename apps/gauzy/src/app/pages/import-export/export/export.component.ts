@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { isNotEmpty } from '@gauzy/common-angular';
+import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { saveAs } from 'file-saver';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

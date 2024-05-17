@@ -8,7 +8,7 @@ import {
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { EmployeeStore, OrganizationProjectsService, Store, ToastrService } from './../../../../../@core/services';

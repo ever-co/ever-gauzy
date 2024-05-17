@@ -16,7 +16,7 @@ import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { toLocal, isEmpty } from '@gauzy/common-angular';
+import { toLocal, isEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from './../../../../../@core/services';
 import {
 	EditTimeLogModalComponent,

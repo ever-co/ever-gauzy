@@ -1,34 +1,21 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-	IEmployeeAward,
-	IEmployeeAwardFindInput,
-	IEmployeeAwardCreateInput,
-	IPagination
-} from '@gauzy/contracts';
+import { IEmployeeAward, IEmployeeAwardFindInput, IEmployeeAwardCreateInput, IPagination } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class EmployeeAwardService {
-	constructor(
-		private readonly http: HttpClient
-	) {}
+	constructor(private readonly http: HttpClient) {}
 
 	create(createInput: IEmployeeAwardCreateInput): Observable<IEmployeeAward> {
-		return this.http.post<IEmployeeAward>(
-			`${API_PREFIX}/employee-award`,
-			createInput
-		);
+		return this.http.post<IEmployeeAward>(`${API_PREFIX}/employee-award`, createInput);
 	}
 
-	getAll(
-		where?: IEmployeeAwardFindInput,
-		relations: string[] = []
-	): Observable<IPagination<IEmployeeAward>> {
+	getAll(where?: IEmployeeAwardFindInput, relations: string[] = []): Observable<IPagination<IEmployeeAward>> {
 		return this.http.get<IPagination<IEmployeeAward>>(`${API_PREFIX}/employee-award`, {
 			params: toParams({ relations, where })
 		});

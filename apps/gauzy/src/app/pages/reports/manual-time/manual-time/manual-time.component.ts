@@ -8,7 +8,7 @@ import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';

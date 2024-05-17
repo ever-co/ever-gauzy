@@ -1,12 +1,11 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from "@angular/core";
-import { FormControl, NG_VALUE_ACCESSOR } from "@angular/forms";
-import { filter, first, tap } from "rxjs/operators";
-import { Subject } from "rxjs/internal/Subject";
-import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
-import { distinctUntilChange } from "@gauzy/common-angular";
-import { IOrganization, ITimeOffPolicy } from "@gauzy/contracts";
-import { Store, TimeOffService } from "../../../@core/services";
-
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { filter, first, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
+import { Store, TimeOffService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,7 +21,6 @@ import { Store, TimeOffService } from "../../../@core/services";
 	]
 })
 export class TimeOffPolicySelectComponent implements OnInit {
-	
 	policies: ITimeOffPolicy[] = [];
 
 	public organization: IOrganization;
@@ -34,8 +32,8 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	@Output() selectedChange: EventEmitter<any> = new EventEmitter();
 
 	/*
-	* Getter & Setter for policyId
-	*/
+	 * Getter & Setter for policyId
+	 */
 	private _policyId: string;
 	@Input() set policyId(value: string) {
 		if (value) {
@@ -49,8 +47,8 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for policy
-	*/
+	 * Getter & Setter for policy
+	 */
 	private _policy: ITimeOffPolicy;
 	@Input() set policy(value: ITimeOffPolicy) {
 		if (value) {
@@ -62,9 +60,9 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter accessor for dynamic form control
-	*/
-	private _ctrl: FormControl = new FormControl(); 
+	 * Getter & Setter accessor for dynamic form control
+	 */
+	private _ctrl: FormControl = new FormControl();
 	get ctrl(): FormControl {
 		return this._ctrl;
 	}
@@ -73,8 +71,8 @@ export class TimeOffPolicySelectComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -92,10 +90,7 @@ export class TimeOffPolicySelectComponent implements OnInit {
 		this._id = value;
 	}
 
-	constructor(
-		private readonly _store: Store,
-		private readonly timeOffService: TimeOffService
-	) {}
+	constructor(private readonly _store: Store, private readonly timeOffService: TimeOffService) {}
 
 	ngOnInit() {
 		this.policies$
@@ -108,7 +103,7 @@ export class TimeOffPolicySelectComponent implements OnInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.policies$.next(true)),
 				untilDestroyed(this)
 			)
@@ -131,8 +126,8 @@ export class TimeOffPolicySelectComponent implements OnInit {
 
 	/**
 	 * On policy select
-	 * 
-	 * @param selectedItem 
+	 *
+	 * @param selectedItem
 	 */
 	onSelectedChange(policyId: string) {
 		this.policy = this.getPolicyById(policyId);
@@ -141,8 +136,8 @@ export class TimeOffPolicySelectComponent implements OnInit {
 
 	/**
 	 * GET time off policies
-	 * 
-	 * @returns 
+	 *
+	 * @returns
 	 */
 	getTimeOffPolicies() {
 		if (!this.organization) {
@@ -152,20 +147,19 @@ export class TimeOffPolicySelectComponent implements OnInit {
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
-		this.timeOffService.getAllPolicies(['employees'], {
-			organizationId,
-			tenantId
-		})
-		.pipe(
-			first(),
-			tap(({ items }) => this.policies = items)
-		)
-		.subscribe();
+		this.timeOffService
+			.getAllPolicies(['employees'], {
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				first(),
+				tap(({ items }) => (this.policies = items))
+			)
+			.subscribe();
 	}
 
 	getPolicyById(policyId: ITimeOffPolicy['id']) {
-		return this.policies.find(
-			(policy: ITimeOffPolicy) => policyId === policy.id
-		);
+		return this.policies.find((policy: ITimeOffPolicy) => policyId === policy.id);
 	}
 }

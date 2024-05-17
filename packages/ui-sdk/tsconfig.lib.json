@@ -1,12 +1,12 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"outDir": "../../out-tsc/lib",
-		"target": "es2015",
+		"outDir": "../../../out-tsc/lib",
 		"declaration": true,
+		"declarationMap": true,
 		"inlineSources": true,
 		"types": [],
-		"lib": ["dom", "es2018"]
+		"allowSyntheticDefaultImports": true
 	},
 	"angularCompilerOptions": {
 		"annotateForClosureCompiler": true,
@@ -15,5 +15,5 @@
 		"fullTemplateTypeCheck": true,
 		"strictInjectionParameters": true
 	},
-	"exclude": ["src/test.ts", "**/*.spec.ts"]
+	"exclude": ["**/*.spec.ts"]
 }

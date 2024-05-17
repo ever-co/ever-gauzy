@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 
@@ -81,8 +81,7 @@ export class PaginationComponent implements OnInit {
 		const pagesCount = this.getPagesCount();
 		let pages = [];
 		let showPagesCount = 5;
-		showPagesCount =
-			pagesCount < showPagesCount ? pagesCount : showPagesCount;
+		showPagesCount = pagesCount < showPagesCount ? pagesCount : showPagesCount;
 		let middleOne = Math.ceil(showPagesCount / 2);
 		middleOne = this.activePage >= middleOne ? this.activePage : middleOne;
 		let lastOne = middleOne + Math.floor(showPagesCount / 2);
@@ -95,13 +94,13 @@ export class PaginationComponent implements OnInit {
 	}
 
 	getStartPagesCount() {
-		return ((this.activePage - 1) * this.itemsPerPage) + 1;
+		return (this.activePage - 1) * this.itemsPerPage + 1;
 	}
 
 	getEndPagesCount() {
-		const entriesEndPage = ((this.activePage - 1) * this.itemsPerPage) + this.itemsPerPage;
-		
-		if(entriesEndPage > this.totalItems) {
+		const entriesEndPage = (this.activePage - 1) * this.itemsPerPage + this.itemsPerPage;
+
+		if (entriesEndPage > this.totalItems) {
 			return this.totalItems;
 		}
 		return entriesEndPage;
@@ -116,10 +115,7 @@ export class PaginationComponent implements OnInit {
 	}
 
 	onNextPageClick() {
-		this.activePage =
-			this.activePage >= this.getPagesCount()
-				? this.getPagesCount()
-				: this.activePage + 1;
+		this.activePage = this.activePage >= this.getPagesCount() ? this.getPagesCount() : this.activePage + 1;
 		this.subject$.next(this.activePage);
 	}
 

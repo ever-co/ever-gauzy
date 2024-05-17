@@ -16,7 +16,7 @@ import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {

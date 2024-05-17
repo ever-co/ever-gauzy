@@ -16,7 +16,7 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';

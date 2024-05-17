@@ -5,7 +5,7 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmployeeStore, Store } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

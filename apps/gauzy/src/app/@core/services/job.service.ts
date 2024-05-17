@@ -8,49 +8,38 @@ import {
 	IEmployeeJobApplicationAppliedResult,
 	IUpdateEmployeeJobPostAppliedResult,
 	IEmployeeJobApplication,
-	IVisibilityJobPostInput,
+	IVisibilityJobPostInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class JobService {
 	constructor(private http: HttpClient) {}
 
 	getJobs(request?: IGetEmployeeJobPostInput) {
 		return firstValueFrom(
-			this.http.get<IPagination<IEmployeeJobPost>>(
-				`${API_PREFIX}/employee-job`,
-				{
-					params: request ? toParams(request) : {},
-				}
-			)
+			this.http.get<IPagination<IEmployeeJobPost>>(`${API_PREFIX}/employee-job`, {
+				params: request ? toParams(request) : {}
+			})
 		);
 	}
 
 	hideJob(request: IVisibilityJobPostInput) {
-		return firstValueFrom(
-			this.http.post<boolean>(`${API_PREFIX}/employee-job/hide`, request)
-		);
+		return firstValueFrom(this.http.post<boolean>(`${API_PREFIX}/employee-job/hide`, request));
 	}
 
 	updateApplied(request: IEmployeeJobApplication) {
 		return firstValueFrom(
-			this.http.post<IUpdateEmployeeJobPostAppliedResult>(
-				`${API_PREFIX}/employee-job/updateApplied`,
-				request
-			)
+			this.http.post<IUpdateEmployeeJobPostAppliedResult>(`${API_PREFIX}/employee-job/updateApplied`, request)
 		);
 	}
 
 	applyJob(request: IEmployeeJobApplication) {
 		return firstValueFrom(
-			this.http.post<IEmployeeJobApplicationAppliedResult>(
-				`${API_PREFIX}/employee-job/apply`,
-				request
-			)
+			this.http.post<IEmployeeJobApplicationAppliedResult>(`${API_PREFIX}/employee-job/apply`, request)
 		);
 	}
 
@@ -61,15 +50,8 @@ export class JobService {
 	 * @param request
 	 * @returns
 	 */
-	preProcessEmployeeJobApplication(
-		request: any
-	): Promise<IEmployeeJobApplication> {
-		return firstValueFrom(
-			this.http.post<any>(
-				`${API_PREFIX}/employee-job/pre-process`,
-				request
-			)
-		);
+	preProcessEmployeeJobApplication(request: any): Promise<IEmployeeJobApplication> {
+		return firstValueFrom(this.http.post<any>(`${API_PREFIX}/employee-job/pre-process`, request));
 	}
 
 	/**
@@ -80,10 +62,7 @@ export class JobService {
 	 */
 	generateAIProposal(employeeJobApplicationId: string) {
 		return firstValueFrom(
-			this.http.post<any>(
-				`${API_PREFIX}/employee-job/generate-proposal/${employeeJobApplicationId}`,
-				{}
-			)
+			this.http.post<any>(`${API_PREFIX}/employee-job/generate-proposal/${employeeJobApplicationId}`, {})
 		);
 	}
 
@@ -94,8 +73,6 @@ export class JobService {
 	 * @returns
 	 */
 	getEmployeeJobApplication(employeeJobApplicationId: string) {
-		return this.http.get<any>(
-			`${API_PREFIX}/employee-job/application/${employeeJobApplicationId}`
-		);
+		return this.http.get<any>(`${API_PREFIX}/employee-job/application/${employeeJobApplicationId}`);
 	}
 }

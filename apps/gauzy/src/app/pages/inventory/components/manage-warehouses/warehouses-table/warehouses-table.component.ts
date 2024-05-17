@@ -8,7 +8,7 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
 import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';

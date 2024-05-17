@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
 import { Store } from '../../services/store.service';

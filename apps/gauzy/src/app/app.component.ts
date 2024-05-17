@@ -18,7 +18,7 @@ import {
 	SelectorBuilderService
 } from '@gauzy/ui-sdk/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { environment } from '@env/environment';
 import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import { LanguagesService, Store } from './@core/services';

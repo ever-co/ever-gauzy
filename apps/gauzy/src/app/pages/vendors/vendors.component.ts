@@ -18,7 +18,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
 
 @UntilDestroy({ checkProperties: true })

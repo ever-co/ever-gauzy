@@ -27,7 +27,7 @@ import {
 	IIntegrationEntitySetting,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,

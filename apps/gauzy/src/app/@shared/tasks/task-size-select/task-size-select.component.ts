@@ -12,7 +12,7 @@ import {
 	ITaskSizeFindInput,
 	TaskSizeEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
+import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';

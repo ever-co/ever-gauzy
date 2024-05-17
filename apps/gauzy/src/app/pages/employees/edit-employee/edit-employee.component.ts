@@ -4,7 +4,7 @@ import { Location } from '@angular/common';
 import { IEmployee, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '../../../@core/services';

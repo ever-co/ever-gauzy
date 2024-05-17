@@ -16,7 +16,7 @@ import {
 	IURLMetaData
 } from '@gauzy/contracts';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { toUTC, toLocal, isJsObject, isEmpty, distinctUntilChange } from '@gauzy/common-angular';
+import { toUTC, toLocal, isJsObject, isEmpty, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store } from './../../../../../@core/services';
 import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';

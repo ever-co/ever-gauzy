@@ -10,7 +10,7 @@ import {
 	IRecurringExpenseOrderFields,
 	IPagination
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 
@@ -20,21 +20,16 @@ import { API_PREFIX } from '../constants/app.constants';
 export class EmployeeRecurringExpenseService {
 	private readonly API_URL = `${API_PREFIX}/employee-recurring-expense`;
 
-	constructor(
-		private readonly http: HttpClient
-	) {}
+	constructor(private readonly http: HttpClient) {}
 
 	create(createInput: IEmployeeRecurringExpense): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.post<IEmployeeRecurringExpense>(this.API_URL, createInput)
-		);
+		return firstValueFrom(this.http.post<IEmployeeRecurringExpense>(this.API_URL, createInput));
 	}
 
 	getAll(
 		relations: string[] = [],
 		where?: IEmployeeRecurringExpenseFindInput,
-		order?: IRecurringExpenseOrderFields,
+		order?: IRecurringExpenseOrderFields
 	): Promise<IPagination<IEmployeeRecurringExpense>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IEmployeeRecurringExpense>>(this.API_URL, {
@@ -54,35 +49,25 @@ export class EmployeeRecurringExpenseService {
 		);
 	}
 
-	delete(
-		id: string,
-		deleteInput: IRecurringExpenseDeleteInput
-	): Promise<any> {
+	delete(id: string, deleteInput: IRecurringExpenseDeleteInput): Promise<any> {
 		const data = JSON.stringify({ deleteInput });
 
 		return firstValueFrom(
-			this.http
-			.delete(`${this.API_URL}/${id}`, {
+			this.http.delete(`${this.API_URL}/${id}`, {
 				params: { data }
 			})
 		);
 	}
 
 	update(id: string, updateInput: IEmployeeRecurringExpense): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${this.API_URL}/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${this.API_URL}/${id}`, updateInput));
 	}
 
-	getStartDateUpdateType(
-		findInput?: IFindStartDateUpdateTypeInput
-	): Promise<IStartUpdateTypeInfo> {
+	getStartDateUpdateType(findInput?: IFindStartDateUpdateTypeInput): Promise<IStartUpdateTypeInfo> {
 		const data = JSON.stringify({ findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
+			this.http.get<IStartUpdateTypeInfo>(`${this.API_URL}/date-update-type`, {
 				params: { data }
 			})
 		);

@@ -1,24 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import * as Holidays from 'date-holidays';
-import {
-	IEmployee,
-	ITimeOffPolicy,
-	IOrganization,
-	StatusTypesEnum,
-	IUser
-} from '@gauzy/contracts';
+import { IEmployee, ITimeOffPolicy, IOrganization, StatusTypesEnum, IUser } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	EmployeesService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EmployeesService, Store, ToastrService } from '../../../@core/services';
 import { environment as ENV } from './../../../../environments/environment';
 import { FormHelpers } from '../../forms/helpers';
 
@@ -51,22 +41,23 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 	employeeIds: string[] = [];
 
 	/*
-	* Time Off Holiday Mutation Form
-	*/
+	 * Time Off Holiday Mutation Form
+	 */
 	public form: UntypedFormGroup = TimeOffHolidayMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const form = fb.group({
-			start: ['', Validators.required],
-			end: ['', Validators.required],
-			policy: ['', Validators.required],
-			policyId: ['', Validators.required],
-			status: [],
-			description: []
-		}, {
-			validators: [
-				CompareDateValidator.validateDate('start', 'end')
-			]
-		});
+		const form = fb.group(
+			{
+				start: ['', Validators.required],
+				end: ['', Validators.required],
+				policy: ['', Validators.required],
+				policyId: ['', Validators.required],
+				status: [],
+				description: []
+			},
+			{
+				validators: [CompareDateValidator.validateDate('start', 'end')]
+			}
+		);
 		return form;
 	}
 
@@ -87,7 +78,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				tap(({ contact }: IOrganization) => {
 					if (contact && contact.country) {
 						this.countryCode = contact.country;
@@ -105,9 +96,7 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		const countryCode = this.countryCode || ENV.DEFAULT_COUNTRY;
 		if (countryCode) {
 			holidays.init(countryCode);
-			this.holidays = holidays
-				.getHolidays(moment().year())
-				.filter((holiday) => holiday.type === 'public');
+			this.holidays = holidays.getHolidays(moment().year()).filter((holiday) => holiday.type === 'public');
 		} else {
 			this.toastrService.danger('TOASTR.MESSAGE.HOLIDAY_ERROR');
 		}
@@ -154,13 +143,14 @@ export class TimeOffHolidayMutationComponent implements OnInit {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.employeesService.getAll(['user', 'tags'], {
-			organizationId,
-			tenantId
-		})
+		this.employeesService
+			.getAll(['user', 'tags'], {
+				organizationId,
+				tenantId
+			})
 			.pipe(
 				first(),
-				tap(({ items }) => this.orgEmployees = items)
+				tap(({ items }) => (this.orgEmployees = items))
 			)
 			.subscribe();
 	}

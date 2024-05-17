@@ -1,9 +1,6 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import {
-	IWarehouse,
-	IOrganization
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { IWarehouse, IOrganization } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
@@ -17,7 +14,7 @@ import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.comp
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
-} from "../../../../../@shared/pagination/pagination-filter-base.component";
+} from '../../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,9 +22,7 @@ import {
 	templateUrl: './warehouse-products-table.component.html',
 	styleUrls: ['./warehouse-products-table.component.scss']
 })
-export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit {
-
+export class WarehouseProductsTableComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit {
 	loading: boolean = true;
 	smartTableSource = new LocalDataSource();
 	settingsSmartTable: object;
@@ -39,7 +34,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 	selectedWarehouse: any = {
 		isSelected: false,
 		data: null
-	}
+	};
 
 	constructor(
 		private readonly dialogService: NbDialogService,
@@ -69,7 +64,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.products$.next(true)),
 				untilDestroyed(this)
 			)
@@ -82,12 +77,14 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.pagination$.pipe(
-			debounceTime(100),
-			distinctUntilChange(),
-			tap(() => this.products$.next(true)),
-			untilDestroyed(this)
-		).subscribe();
+		this.pagination$
+			.pipe(
+				debounceTime(100),
+				distinctUntilChange(),
+				tap(() => this.products$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	private _loadSmartTableSettings() {
@@ -131,10 +128,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(
-			error.error.message || error.message,
-			'TOASTR.TITLE.ERROR'
-		);
+		this.toastrService.danger(error.error.message || error.message, 'TOASTR.TITLE.ERROR');
 	}
 
 	async loadItems() {
@@ -143,18 +137,16 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 		}
 		this.loading = true;
 		try {
-			const items = await this.warehouseService.getWarehouseProducts(
-				this.warehouse.id
-			);
+			const items = await this.warehouseService.getWarehouseProducts(this.warehouse.id);
 			let mappedItems = items
 				? items.map((item) => {
-					return {
-						...item,
-						name: item.product.translations[0]['name'],
-						featuredImage: item.product.featuredImage,
-						quantity: item.quantity
-					};
-				})
+						return {
+							...item,
+							name: item.product.translations[0]['name'],
+							featuredImage: item.product.featuredImage,
+							quantity: item.quantity
+						};
+				  })
 				: [];
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage);
@@ -162,9 +154,8 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 			this.setPagination({
 				...this.getPagination(),
 				totalItems: this.smartTableSource.count()
-			})
+			});
 		} catch (error) {
-
 		} finally {
 			this.loading = false;
 		}
@@ -182,19 +173,16 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 
 		let createWarehouseProductsInput = selectedProducts
 			? selectedProducts.map((pr) => {
-				return {
-					productId: pr.id,
-					variants: pr.variants.map((variant) => variant.id),
-					tenantId,
-					organizationId
-				};
-			})
+					return {
+						productId: pr.id,
+						variants: pr.variants.map((variant) => variant.id),
+						tenantId,
+						organizationId
+					};
+			  })
 			: [];
 
-		let result = await this.warehouseService.addWarehouseProducts(
-			createWarehouseProductsInput,
-			this.warehouse.id
-		);
+		let result = await this.warehouseService.addWarehouseProducts(createWarehouseProductsInput, this.warehouse.id);
 
 		if (createWarehouseProductsInput.length && result) {
 			this.toastrService.success('INVENTORY_PAGE.SUCCESSFULLY_ADDED_PRODUCTS');

@@ -10,7 +10,7 @@ import { chain } from 'underscore';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	IJobMatchingEntity,
 	IntegrationEntitySettingServiceStoreService,

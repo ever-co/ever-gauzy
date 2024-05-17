@@ -19,7 +19,7 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/common-angular';
+import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -59,7 +59,6 @@ import {
 	styleUrls: ['./invoice-add.component.scss']
 })
 export class InvoiceAddComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	settingsSmartTable: object;
 	loading: boolean;
 	form: UntypedFormGroup;
@@ -601,11 +600,11 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				await this.invoiceEstimateHistoryService.add({
 					action: this.isEstimate
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_SENT_TO', {
-							name: organizationContact.name
-						})
+								name: organizationContact.name
+						  })
 						: this.getTranslation('INVOICES_PAGE.INVOICE_SENT_TO', {
-							name: organizationContact.name
-						}),
+								name: organizationContact.name
+						  }),
 					invoice: this.createdInvoice,
 					invoiceId: this.createdInvoice.id,
 					user: this.store.user,
@@ -1125,5 +1124,5 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		return date;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

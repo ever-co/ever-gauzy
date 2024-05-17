@@ -2,7 +2,7 @@ import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { IIncome, ITag, IOrganization, ICurrency, ISelectedEmployee } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';

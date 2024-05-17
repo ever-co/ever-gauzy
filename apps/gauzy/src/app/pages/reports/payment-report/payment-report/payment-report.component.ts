@@ -15,7 +15,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
 import * as moment from 'moment';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';

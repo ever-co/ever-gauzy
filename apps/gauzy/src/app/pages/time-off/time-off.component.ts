@@ -10,7 +10,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
 import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';

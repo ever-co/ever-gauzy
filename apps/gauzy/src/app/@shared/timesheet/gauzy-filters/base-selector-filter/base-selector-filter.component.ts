@@ -5,7 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { toUTC } from '@gauzy/common-angular';
+import { toUTC } from '@gauzy/ui-sdk/common';
 import { pick } from 'underscore';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';

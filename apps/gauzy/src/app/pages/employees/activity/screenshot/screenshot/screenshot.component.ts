@@ -18,7 +18,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { toLocal, isEmpty, distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { toLocal, isEmpty, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';

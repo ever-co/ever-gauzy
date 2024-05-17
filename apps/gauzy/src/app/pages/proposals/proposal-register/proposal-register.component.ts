@@ -17,7 +17,7 @@ import {
 	IOrganizationContact,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 

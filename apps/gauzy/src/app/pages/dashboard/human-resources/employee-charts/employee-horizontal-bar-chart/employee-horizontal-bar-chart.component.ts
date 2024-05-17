@@ -8,7 +8,7 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { environment } from '@env/environment';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from './../../../../../@core/services';

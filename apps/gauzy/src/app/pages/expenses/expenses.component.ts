@@ -16,7 +16,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';

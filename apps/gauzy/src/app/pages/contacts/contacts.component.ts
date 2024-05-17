@@ -20,7 +20,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	CountryService,

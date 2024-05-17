@@ -17,7 +17,7 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { HashNumberPipe } from './../../../../@shared/pipes';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
