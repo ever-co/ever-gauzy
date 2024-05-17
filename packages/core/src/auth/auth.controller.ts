@@ -173,8 +173,13 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UseValidationPipe({ transform: true })
-	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
-		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
+	async sendWorkspaceSigninCode(
+		@Body() entity: UserEmailDTO,
+		@I18nLang() locale: LanguagesEnum
+	): Promise<any> {
+		return await this.commandBus.execute(
+			new WorkspaceSigninSendCodeCommand(entity, locale)
+		);
 	}
 
 	/**
@@ -190,7 +195,10 @@ export class AuthController {
 		@Query() query: Record<string, boolean>,
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.confirmWorkspaceSigninByCode(input, convertNativeParameters(query.includeTeams));
+		return await this.authService.confirmWorkspaceSigninByCode(
+			input,
+			convertNativeParameters(query.includeTeams)
+		);
 	}
 
 	/**
@@ -202,8 +210,12 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
-	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
+	async signinWorkspaceByToken(
+		@Body() input: WorkspaceSigninDTO
+	): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(
+			new WorkspaceSigninVerifyTokenCommand(input)
+		);
 	}
 
 	/**

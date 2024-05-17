@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, isNotEmpty } from '@gauzy/common-angular';
+import { compareDate, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	IInvoice,
 	IPayment,
@@ -16,7 +16,7 @@ import {
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InvoicesService, Store } from './../../../../@core/services';
 import { environment as ENV } from './../../../../../environments/environment';
 
@@ -26,9 +26,7 @@ import { environment as ENV } from './../../../../../environments/environment';
 	templateUrl: './payment-mutation.component.html',
 	styleUrls: ['./payment-mutation.component.scss']
 })
-export class PaymentMutationComponent extends TranslationBaseComponent
-	implements OnInit, AfterViewInit {
-
+export class PaymentMutationComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	invoice: IInvoice;
 	invoices: IInvoice[] = [];
 	public organization: IOrganization;
@@ -41,18 +39,12 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Payment Mutation Form
-	*/
+	 * Payment Mutation Form
+	 */
 	public form: UntypedFormGroup = PaymentMutationComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: PaymentMutationComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: PaymentMutationComponent): UntypedFormGroup {
 		return fb.group({
-			amount: [null, Validators.compose([
-				Validators.required,
-				Validators.min(1)
-			])],
+			amount: [null, Validators.compose([Validators.required, Validators.min(1)])],
 			currency: [],
 			paymentDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
 			note: [],
@@ -80,8 +72,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ currency }) => this.currencyString = currency || ENV.DEFAULT_CURRENCY),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(({ currency }) => (this.currencyString = currency || ENV.DEFAULT_CURRENCY)),
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)
@@ -125,7 +117,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 
 	initializeForm() {
 		if (this.payment) {
-			const { amount, currency, paymentDate, note, paymentMethod, invoice, organizationContact, project, tags } = this.payment;
+			const { amount, currency, paymentDate, note, paymentMethod, invoice, organizationContact, project, tags } =
+				this.payment;
 			this.form.patchValue({
 				amount,
 				currency,
@@ -133,10 +126,10 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 				note,
 				paymentMethod,
 				invoice,
-				organizationContact: (organizationContact) ? organizationContact : null,
-				organizationContactId: (organizationContact) ? organizationContact.id : null,
-				project: (project) ? project : null,
-				projectId: (project) ? project.id : null,
+				organizationContact: organizationContact ? organizationContact : null,
+				organizationContactId: organizationContact ? organizationContact.id : null,
+				project: project ? project : null,
+				projectId: project ? project.id : null,
 				tags
 			});
 			this.form.updateValueAndValidity();
@@ -154,7 +147,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	async addEditPayment() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } = this.form.value;
+		const { amount, paymentDate, note, paymentMethod, organizationContact, project, tags, invoice } =
+			this.form.value;
 
 		const payment = {
 			amount,
@@ -214,5 +208,5 @@ export class PaymentMutationComponent extends TranslationBaseComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 }

@@ -28,17 +28,13 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { GoalTemplatesModule } from '../../@shared/goal/goal-templates/goal-templates.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
-	declarations: [
-		GoalSettingsComponent,
-		EditTimeFrameComponent,
-		EditKpiComponent
-	],
+	declarations: [GoalSettingsComponent, EditTimeFrameComponent, EditKpiComponent],
 	imports: [
 		CommonModule,
 		NbCardModule,
@@ -71,4 +67,4 @@ import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagin
 		PaginationV2Module
 	]
 })
-export class GoalSettingsModule { }
+export class GoalSettingsModule {}

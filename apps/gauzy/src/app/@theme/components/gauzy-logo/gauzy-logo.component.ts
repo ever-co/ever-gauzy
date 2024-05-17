@@ -7,12 +7,12 @@ import {
 	ChangeDetectorRef,
 	Input,
 	AfterViewInit,
-	Inject,
+	Inject
 } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { tap, debounceTime, filter } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services';
 import { GAUZY_ENV } from '../../../@core';
@@ -34,9 +34,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	@Input() controlled: boolean = true;
 	@Input() isAccordion: boolean = true;
 
-	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(
-		this.isCollapse
-	);
+	@Output() onCollapsed: EventEmitter<boolean> = new EventEmitter<boolean>(this.isCollapse);
 
 	actions = [
 		{
@@ -45,10 +43,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			link: '/pages/employees',
 			data: {
 				translationKey: 'MENU.INVITE_PEOPLE',
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_INVITE_VIEW
-				],
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVITE_VIEW],
 				featureKey: FeatureEnum.FEATURE_MANAGE_INVITE
 			}
 		},
@@ -58,10 +53,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			link: '/pages/users',
 			data: {
 				translationKey: 'MENU.USERS',
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_USERS_VIEW
-				],
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_USERS_VIEW],
 				featureKey: FeatureEnum.FEATURE_USER
 			}
 		},
@@ -71,11 +63,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			link: '/pages/settings/import-export',
 			data: {
 				translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.IMPORT_ADD,
-					PermissionsEnum.EXPORT_ADD
-				],
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD, PermissionsEnum.EXPORT_ADD],
 				featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
 			}
 		},
@@ -85,10 +73,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			link: '/pages/organizations',
 			data: {
 				translationKey: 'MENU.ORGANIZATIONS',
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				],
+				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EXPENSES_EDIT],
 				featureKey: FeatureEnum.FEATURE_ORGANIZATIONS
 			}
 		},
@@ -99,9 +84,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			pathMatch: 'prefix',
 			data: {
 				translationKey: 'MENU.INTEGRATIONS',
-				permissionKeys: [
-					PermissionsEnum.INTEGRATION_VIEW
-				],
+				permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
 				featureKey: FeatureEnum.FEATURE_APP_INTEGRATION
 			}
 		}
@@ -128,10 +111,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 				link: '/pages/settings/features',
 				data: {
 					translationKey: 'MENU.FEATURES',
-					permissionKeys: [
-						PermissionsEnum.ALL_ORG_EDIT,
-						PermissionsEnum.ALL_ORG_VIEW
-					]
+					permissionKeys: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ALL_ORG_VIEW]
 				}
 			},
 			{
@@ -160,9 +140,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 				link: '/pages/settings/accounting-templates',
 				data: {
 					translationKey: 'MENU.ACCOUNTING_TEMPLATES',
-					permissionKeys: [
-						PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES
-					]
+					permissionKeys: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES]
 				}
 			},
 			{
@@ -211,10 +189,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 				icon: 'fas fa-radiation-alt',
 				data: {
 					translationKey: 'MENU.DANGER_ZONE',
-					permissionKeys: [
-						PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-						PermissionsEnum.ACCESS_DELETE_ALL_DATA
-					]
+					permissionKeys: [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA]
 				}
 			}
 		]
@@ -228,9 +203,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		private readonly environment: Environment,
 		private readonly domSanitizer: DomSanitizer
 	) {
-		this.logoUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
-			environment.PLATFORM_LOGO
-		);
+		this.logoUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(environment.PLATFORM_LOGO);
 	}
 
 	ngOnInit(): void {
@@ -239,10 +212,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -269,5 +239,5 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		return this.environment.PLATFORM_LOGO.endsWith('.svg');
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
 import { InvoicesService } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,9 +24,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 			class="pdfDoc loading"
 			*ngIf="isLoading"
 		></div>
-		<div class="pdfDoc error" *ngIf="error">
-			A error occurred, please reload.
-		</div>`,
+		<div class="pdfDoc error" *ngIf="error">A error occurred, please reload.</div>`,
 	styles: [
 		`
 			::ng-deep .pdf-preview-card {
@@ -35,7 +33,7 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 			}
 			.error {
 				color: red;
-        font-weight: bold;
+				font-weight: bold;
 			}
 			.pdfDoc {
 				height: 100%;
@@ -44,19 +42,13 @@ import { TranslationBaseComponent } from '../../../@shared/language-base/transla
 		`
 	]
 })
-export class InvoicePdfComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class InvoicePdfComponent extends TranslationBaseComponent implements OnInit {
 	@Input() invoice: IInvoice;
 	fileURL: string;
 	isLoading: boolean;
 	error: boolean;
 
-	constructor(
-		private readonly invoicesService: InvoicesService,
-		readonly translateService: TranslateService
-	) {
+	constructor(private readonly invoicesService: InvoicesService, readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -87,8 +79,7 @@ export class InvoicePdfComponent
 
 	filterUrl(url: string) {
 		const baseUrl = window.location.origin;
-		const uuidPattern =
-			/^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+		const uuidPattern = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 		let isFilterUrl = false;
 		let uri = 'blob:' + baseUrl + '/';
 		let regex = new RegExp(uri);

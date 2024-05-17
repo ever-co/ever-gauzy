@@ -11,10 +11,10 @@ import {
 import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { CompareDateValidator } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { OrganizationDocumentsService, Store, } from '../../../@core/services';
-import { CompareDateValidator } from '../../../@core/validators';
+import { OrganizationDocumentsService, Store } from '../../../@core/services';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
@@ -24,7 +24,6 @@ import { FormHelpers } from '../../forms/helpers';
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffRequestMutationComponent implements OnInit {
-
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffRequestMutationComponent>,
 		private readonly fb: UntypedFormBuilder,
@@ -50,15 +49,15 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	@Input() type: string;
 
 	/*
-	* Getter & Setter
-	*/
+	 * Getter & Setter
+	 */
 	_timeOff: ITimeOff;
 	get timeOff(): ITimeOff {
 		return this._timeOff;
 	}
 	@Input() set timeOff(value: ITimeOff) {
 		this._timeOff = value;
-	};
+	}
 
 	employeesArr: IEmployee[] = [];
 	selectedEmployee: any;
@@ -67,26 +66,25 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	public organization: IOrganization;
 
 	/*
-	* Time Off Request Mutation Form
-	*/
+	 * Time Off Request Mutation Form
+	 */
 	public form: UntypedFormGroup = TimeOffRequestMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const form = fb.group({
-			start: [null, Validators.required],
-			end: [null, Validators.required],
-			policy: [null, Validators.required],
-			policyId: [null, Validators.required],
-			documentUrl: [
-				{ value: null, disabled: true }
-			],
-			documentId: [],
-			status: [],
-			description: []
-		}, {
-			validators: [
-				CompareDateValidator.validateDate('start', 'end')
-			]
-		});
+		const form = fb.group(
+			{
+				start: [null, Validators.required],
+				end: [null, Validators.required],
+				policy: [null, Validators.required],
+				policyId: [null, Validators.required],
+				documentUrl: [{ value: null, disabled: true }],
+				documentId: [],
+				status: [],
+				description: []
+			},
+			{
+				validators: [CompareDateValidator.validateDate('start', 'end')]
+			}
+		);
 		return form;
 	}
 
@@ -96,7 +94,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization) => this.organization = organization),
+				tap((organization) => (this.organization = organization)),
 				tap(() => this.patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -152,7 +150,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 				policyId: this.timeOff.policyId,
 				status: this.timeOff.status,
 				documentUrl: this.timeOff.documentUrl,
-				documentId: this.timeOff.documentId,
+				documentId: this.timeOff.documentId
 			});
 
 			this.selectedEmployee = this.timeOff['employees'][0];

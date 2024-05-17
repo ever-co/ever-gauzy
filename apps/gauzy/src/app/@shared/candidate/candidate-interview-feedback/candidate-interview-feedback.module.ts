@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbButtonModule,
@@ -7,8 +8,8 @@ import {
 	NbRadioModule,
 	NbAccordionModule
 } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
@@ -16,7 +17,6 @@ import { CandidatePersonalQualitiesService } from '../../../@core/services/candi
 import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
-import { TranslateModule } from '../../translate/translate.module';
 
 @NgModule({
 	imports: [
@@ -37,10 +37,6 @@ import { TranslateModule } from '../../translate/translate.module';
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],
-	providers: [
-		CandidateTechnologiesService,
-		CandidatePersonalQualitiesService,
-		CandidateCriterionsRatingService
-	]
+	providers: [CandidateTechnologiesService, CandidatePersonalQualitiesService, CandidateCriterionsRatingService]
 })
 export class CandidateInterviewFeedbackModule {}

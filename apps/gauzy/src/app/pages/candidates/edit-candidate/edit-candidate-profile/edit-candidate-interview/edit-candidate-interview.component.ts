@@ -15,7 +15,7 @@ import {
 	ICandidateFeedback,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import {
 	CandidateFeedbacksService,
@@ -42,9 +42,7 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 	templateUrl: './edit-candidate-interview.component.html',
 	styleUrls: ['./edit-candidate-interview.component.scss']
 })
-export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditCandidateInterviewComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	interviewList: ICandidateInterview[];
 	candidateId: string;
 	selectedCandidate: ICandidate;
@@ -92,7 +90,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate: ICandidate) => !!candidate),
-				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
+				tap((candidate: ICandidate) => (this.selectedCandidate = candidate)),
 				untilDestroyed(this)
 			)
 			.subscribe((candidate) => {
@@ -120,7 +118,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -215,26 +213,18 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	}
 
 	async add() {
-		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent,
-			{
-				context: {
-					headerTitle: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
-					),
-					selectedCandidate: this.selectedCandidate,
-					interviews: this.interviewList
-				}
+		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
+			context: {
+				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+				selectedCandidate: this.selectedCandidate,
+				interviews: this.interviewList
 			}
-		);
+		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_CREATED',
-				{
-					name: data.title
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_INTERVIEW_CREATED', {
+				name: data.title
+			});
 			this.loadInterview();
 		}
 	}
@@ -263,13 +253,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		this.employeeList = items;
 
 		const interviews = await this.candidateInterviewService.getAll(
-			[
-				'feedbacks',
-				'interviewers',
-				'technologies',
-				'personalQualities',
-				'candidate'
-			],
+			['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
 			{ candidateId: this.candidateId, organizationId, tenantId }
 		);
 
@@ -281,19 +265,15 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 			if (isNotEmpty(this.interviewList)) {
 				this.interviewList.forEach((interview) => {
 					const employees = [];
-					interview.interviewers.forEach(
-						(interviewer: ICandidateInterviewers) => {
-							this.employeeList.forEach((employee: IEmployee) => {
-								if (interviewer.employeeId === employee.id) {
-									interviewer.employeeImageUrl =
-										employee.user.imageUrl;
-									interviewer.employeeName =
-										employee.user.name;
-									employees.push(employee);
-								}
-							});
-						}
-					);
+					interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
+						this.employeeList.forEach((employee: IEmployee) => {
+							if (interviewer.employeeId === employee.id) {
+								interviewer.employeeImageUrl = employee.user.imageUrl;
+								interviewer.employeeName = employee.user.name;
+								employees.push(employee);
+							}
+						});
+					});
 					this.candidates.forEach((item) => {
 						if (item.id === interview.candidate.id) {
 							interview.candidate.user = item.user;
@@ -313,9 +293,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 				});
 			}
 		}
-		this.interviewList = this.onlyPast
-			? this.filterInterviewByTime(this.interviewList, true)
-			: this.interviewList;
+		this.interviewList = this.onlyPast ? this.filterInterviewByTime(this.interviewList, true) : this.interviewList;
 
 		this.interviewList = this.onlyFuture
 			? this.filterInterviewByTime(this.interviewList, false)
@@ -338,66 +316,43 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	}
 
 	async addInterviewFeedback(id: string) {
-		const currentInterview = this.interviewList.find(
-			(item) => item.id === id
-		);
-		if (
-			currentInterview.feedbacks.length !==
-			currentInterview.interviewers.length
-		) {
-			const dialog = this.dialogService.open(
-				CandidateInterviewFeedbackComponent,
-				{
-					context: {
-						currentInterview: currentInterview,
-						candidateId: this.selectedCandidate.id,
-						interviewId: id
-					}
+		const currentInterview = this.interviewList.find((item) => item.id === id);
+		if (currentInterview.feedbacks.length !== currentInterview.interviewers.length) {
+			const dialog = this.dialogService.open(CandidateInterviewFeedbackComponent, {
+				context: {
+					currentInterview: currentInterview,
+					candidateId: this.selectedCandidate.id,
+					interviewId: id
 				}
-			);
+			});
 			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
-				this.toastrService.success(
-					'TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED',
-					{
-						name: currentInterview.title
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.INTERVIEW_FEEDBACK_CREATED', {
+					name: currentInterview.title
+				});
 				this.loadInterview();
 			}
 		} else {
-			this.toastrService.warning(
-				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY'
-			);
+			this.toastrService.warning('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_ABILITY');
 		}
 	}
 
 	async editInterview(id: string) {
-		const currentInterview = this.interviewList.find(
-			(item) => item.id === id
-		);
-		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent,
-			{
-				context: {
-					headerTitle: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'
-					),
-					editData: currentInterview,
-					selectedCandidate: this.selectedCandidate,
-					interviewId: id,
-					interviews: this.interviewList
-				}
+		const currentInterview = this.interviewList.find((item) => item.id === id);
+		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
+			context: {
+				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'),
+				editData: currentInterview,
+				selectedCandidate: this.selectedCandidate,
+				interviewId: id,
+				interviews: this.interviewList
 			}
-		);
+		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_UPDATED',
-				{
-					name: data.title
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_INTERVIEW_UPDATED', {
+				name: data.title
+			});
 			this.loadInterview();
 		}
 	}
@@ -427,16 +382,12 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 	filterInterviewByTime(list: ICandidateInterview[], isPast: boolean) {
 		const now = new Date().getTime();
 		return list.filter((item) =>
-			isPast
-				? new Date(item.startTime).getTime() < now
-				: new Date(item.startTime).getTime() > now
+			isPast ? new Date(item.startTime).getTime() < now : new Date(item.startTime).getTime() > now
 		);
 	}
 
 	async removeInterview(id: string) {
-		const currentInterview = this.interviewList.find(
-			(item) => item.id === id
-		);
+		const currentInterview = this.interviewList.find((item) => item.id === id);
 		const dialog = this.dialogService.open(DeleteInterviewComponent, {
 			context: {
 				interview: currentInterview
@@ -444,12 +395,9 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_INTERVIEW_DELETED',
-				{
-					name: data.title
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_INTERVIEW_DELETED', {
+				name: data.title
+			});
 			this.loadInterview();
 		}
 	}
@@ -463,7 +411,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	selectInterview(interview: any) {
 		this.disabled = !interview.isSelected;

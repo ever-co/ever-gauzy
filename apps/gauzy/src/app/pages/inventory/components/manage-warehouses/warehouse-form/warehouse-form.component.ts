@@ -1,36 +1,20 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import {
-	ITag,
-	IWarehouse,
-	IImageAsset,
-	IOrganization
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from './../../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import {
-	ImageAssetService,
-	Store,
-	ToastrService,
-	WarehouseService
-} from './../../../../../@core/services';
+import { ImageAssetService, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,9 +22,7 @@ import {
 	templateUrl: './warehouse-form.component.html',
 	styleUrls: ['./warehouse-form.component.scss']
 })
-export class WarehouseFormComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class WarehouseFormComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	hoverState: boolean;
@@ -52,23 +34,20 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	private newImageUploadedEvent$ = new Subject<any>();
 
 	/*
-	* Location Mutation Form
-	*/
+	 * Location Mutation Form
+	 */
 	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
-	* Warehouse Mutation Form
-	*/
+	 * Warehouse Mutation Form
+	 */
 	public form: UntypedFormGroup = WarehouseFormComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			name: [null, Validators.required],
 			tags: [],
 			code: [null, Validators.required],
-			email: [null, [
-				Validators.required,
-				Validators.email
-			]],
+			email: [null, [Validators.required, Validators.email]],
 			active: [false],
 			logo: [null],
 			description: [null]
@@ -113,7 +92,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._getAssetsImages()),
 				untilDestroyed(this)
 			)
@@ -131,7 +110,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 			.pipe(
 				debounceTime(100),
 				filter((data) => !!data && !!data.warehouse),
-				tap(({ warehouse }) => this.warehouse = warehouse),
+				tap(({ warehouse }) => (this.warehouse = warehouse)),
 				tap(() => {
 					this._patchForm();
 					this._patchLocationForm();
@@ -159,7 +138,6 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 			this.logo = selectedImage;
 		}
 	}
-
 
 	private async _getAssetsImages() {
 		if (!this.organization) {
@@ -200,19 +178,13 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 			address2: contact.address2,
 			loc: {
 				type: 'Point',
-				coordinates: [
-					contact.latitude,
-					contact.longitude
-				]
+				coordinates: [contact.latitude, contact.longitude]
 			}
 		});
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(
-			'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE',
-			'TOASTR.TITLE.ERROR'
-		);
+		this.toastrService.danger('INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE', 'TOASTR.TITLE.ERROR');
 	}
 
 	async onSaveRequest() {
@@ -269,9 +241,7 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	}
 
 	cancel() {
-		this.router.navigate([
-			'/pages/organization/inventory/warehouses'
-		]);
+		this.router.navigate(['/pages/organization/inventory/warehouses']);
 	}
 
 	selectedTagsEvent(currentSelection: ITag[]) {
@@ -280,7 +250,9 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 	}
 
 	onCoordinatesChanges($event) {
-		const { loc: { coordinates } } = this.locationFormDirective.getValue();
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
 		this.leafletTemplate.addMarker(new LatLng(lat, lng));
 	}
@@ -307,5 +279,5 @@ export class WarehouseFormComponent extends TranslationBaseComponent
 		return this.warehouse && this.warehouse.id;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

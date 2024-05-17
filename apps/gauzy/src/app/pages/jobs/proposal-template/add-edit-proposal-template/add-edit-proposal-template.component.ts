@@ -1,20 +1,16 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import {
-	IEmployeeProposalTemplate,
-	IOrganization,
-	ISelectedEmployee
-} from '@gauzy/contracts';
+import { IEmployeeProposalTemplate, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { Store, ToastrService } from './../../../../@core/services';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ProposalTemplateService } from '../proposal-template.service';
-import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 
 @UntilDestroy()
 @Component({
@@ -22,9 +18,7 @@ import { ckEditorConfig } from "../../../../@shared/ckeditor.config";
 	templateUrl: './add-edit-proposal-template.component.html',
 	styleUrls: ['./add-edit-proposal-template.component.scss']
 })
-export class AddEditProposalTemplateComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class AddEditProposalTemplateComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
 	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
@@ -38,8 +32,8 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for proposal template selected employee
-	*/
+	 * Getter & Setter for proposal template selected employee
+	 */
 	_selectedEmployee: ISelectedEmployee;
 	get selectedEmployee(): ISelectedEmployee {
 		return this._selectedEmployee;
@@ -56,8 +50,8 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for selected proposal template
-	*/
+	 * Getter & Setter for selected proposal template
+	 */
 	_proposalTemplate: IEmployeeProposalTemplate;
 	get proposalTemplate(): IEmployeeProposalTemplate {
 		return this._proposalTemplate;
@@ -82,7 +76,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._setFormValues()),
 				untilDestroyed(this)
 			)
@@ -124,31 +118,22 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent
 		if (!this.proposalTemplate) {
 			resp = this.proposalTemplateService.create(template);
 		} else {
-			resp = this.proposalTemplateService.update(
-				this.proposalTemplate.id,
-				{
-					...template,
-					employeeId: this.proposalTemplate.employeeId
-				}
-			);
+			resp = this.proposalTemplateService.update(this.proposalTemplate.id, {
+				...template,
+				employeeId: this.proposalTemplate.employeeId
+			});
 		}
 
 		resp.then((data) => {
 			this.dialogRef.close(data);
 			if (!this.proposalTemplate) {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE',
-					{
-						name: template.name
-					}
-				);
+				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE', {
+					name: template.name
+				});
 			} else {
-				this.toastrService.success(
-					'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE',
-					{
-						name: template.name
-					}
-				);
+				this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE', {
+					name: template.name
+				});
 			}
 		}).catch((error) => {
 			this.toastrService.error(error);

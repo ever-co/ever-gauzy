@@ -28,7 +28,7 @@ import { tap, from, Observable, map } from 'rxjs';
 @Component({
 	selector: 'ngx-tasks',
 	templateUrl: './tasks.component.html',
-	styleUrls: ['./tasks.component.scss'],
+	styleUrls: ['./tasks.component.scss']
 })
 export class TasksComponent implements OnInit {
 	@Input() userData: IUserOrganization;
@@ -60,28 +60,28 @@ export class TasksComponent implements OnInit {
 	statuses = [
 		{
 			id: TaskStatusEnum.OPEN,
-			name: this._formatStatus(TaskStatusEnum.OPEN),
+			name: this._formatStatus(TaskStatusEnum.OPEN)
 		},
 		{
 			id: TaskStatusEnum.IN_PROGRESS,
-			name: this._formatStatus(TaskStatusEnum.IN_PROGRESS),
+			name: this._formatStatus(TaskStatusEnum.IN_PROGRESS)
 		},
 		{
 			id: TaskStatusEnum.READY_FOR_REVIEW,
-			name: this._formatStatus(TaskStatusEnum.READY_FOR_REVIEW),
+			name: this._formatStatus(TaskStatusEnum.READY_FOR_REVIEW)
 		},
 		{
 			id: TaskStatusEnum.IN_REVIEW,
-			name: this._formatStatus(TaskStatusEnum.IN_REVIEW),
+			name: this._formatStatus(TaskStatusEnum.IN_REVIEW)
 		},
 		{
 			id: TaskStatusEnum.BLOCKED,
-			name: this._formatStatus(TaskStatusEnum.BLOCKED),
+			name: this._formatStatus(TaskStatusEnum.BLOCKED)
 		},
 		{
 			id: TaskStatusEnum.COMPLETED,
-			name: this._formatStatus(TaskStatusEnum.COMPLETED),
-		},
+			name: this._formatStatus(TaskStatusEnum.COMPLETED)
+		}
 	];
 	public isLoading = false;
 
@@ -103,13 +103,10 @@ export class TasksComponent implements OnInit {
 			this.projects = await this.timeTrackerService.getProjects({
 				organizationContactId: this.selected.contactId,
 				organizationTeamId: this.selected.teamId,
-				...user,
+				...user
 			});
 		} catch (error) {
-			console.error(
-				'[error]',
-				"can't get employee project::" + error.message
-			);
+			console.error('[error]', "can't get employee project::" + error.message);
 		}
 	}
 
@@ -156,8 +153,7 @@ export class TasksComponent implements OnInit {
 
 	private async _priorities(): Promise<void> {
 		try {
-			this.taskPriorities =
-				await this.timeTrackerService.taskPriorities();
+			this.taskPriorities = await this.timeTrackerService.taskPriorities();
 		} catch (error) {
 			console.error('[error]', 'while get priorities::' + error.message);
 		}
@@ -171,9 +167,7 @@ export class TasksComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.editorConfig.editorplaceholder = this.translate.instant(
-			'FORM.PLACEHOLDERS.DESCRIPTION'
-		);
+		this.editorConfig.editorplaceholder = this.translate.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		this.taskStatuses = this.store.statuses;
 		from(
 			Promise.allSettled([
@@ -183,13 +177,11 @@ export class TasksComponent implements OnInit {
 				this._clients(this.userData),
 				this._teams(),
 				this._sizes(),
-				this._priorities(),
+				this._priorities()
 			])
 		)
 			.pipe(
-				tap(() =>
-					this.form.patchValue({ taskStatus: this.taskStatuses[0] })
-				),
+				tap(() => this.form.patchValue({ taskStatus: this.taskStatuses[0] })),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -199,14 +191,8 @@ export class TasksComponent implements OnInit {
 			dueDate: new FormControl(moment().add(1, 'day').utc().toDate()),
 			estimate: new FormControl(null),
 			estimateDays: new FormControl(null, [Validators.min(0)]),
-			estimateHours: new FormControl(null, [
-				Validators.min(0),
-				Validators.max(23),
-			]),
-			estimateMinutes: new FormControl(null, [
-				Validators.min(0),
-				Validators.max(59),
-			]),
+			estimateHours: new FormControl(null, [Validators.min(0), Validators.max(23)]),
+			estimateMinutes: new FormControl(null, [Validators.min(0), Validators.max(59)]),
 			members: new FormControl([]),
 			organizationId: new FormControl(this.userData.organizationId),
 			project: new FormControl(null),
@@ -222,7 +208,7 @@ export class TasksComponent implements OnInit {
 			taskPriority: new FormControl(null),
 			taskSize: new FormControl(null),
 			organizationContactId: new FormControl(this.selected.contactId),
-			organizationTeamId: new FormControl(this.selected.teamId),
+			organizationTeamId: new FormControl(this.selected.teamId)
 		});
 		this.hasAddTagPermission$ = this.store.userRolePermissions$.pipe(
 			map(() => this.store.hasPermissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
@@ -244,7 +230,7 @@ export class TasksComponent implements OnInit {
 			taskStatus,
 			taskPriority,
 			taskSize,
-			organizationTeamId,
+			organizationTeamId
 		} = this.form.value;
 		const days = estimateDays ? estimateDays * 24 * 3600 : 0;
 		const hours = estimateHours ? estimateHours * 3600 : 1;
@@ -263,22 +249,19 @@ export class TasksComponent implements OnInit {
 				status,
 				size,
 				priority,
-				teams,
+				teams
 			});
 
-			await this.timeTrackerService.saveNewTask(
-				this.userData,
-				this.form.value
-			);
+			await this.timeTrackerService.saveNewTask(this.userData, this.form.value);
 			this.close({
 				isSuccess: true,
-				message: this.translate.instant('TOASTR.MESSAGE.CREATED'),
+				message: this.translate.instant('TOASTR.MESSAGE.CREATED')
 			});
 		} catch (error) {
 			console.log(error);
 			this.close({
 				isSuccess: false,
-				message: error.message,
+				message: error.message
 			});
 		}
 
@@ -295,22 +278,17 @@ export class TasksComponent implements OnInit {
 				name,
 				organizationId,
 				tenantId,
-				...(organizationContactId
-					? { contactId: organizationContactId }
-					: {}),
+				...(organizationContactId ? { contactId: organizationContactId } : {})
 			};
 
 			request['members'] = [...this.employees];
 
-			const project = await this.timeTrackerService.createNewProject(
-				request,
-				data
-			);
+			const project = await this.timeTrackerService.createNewProject(request, data);
 
 			this.projects = this.projects.concat([project]);
 			this.toastrService.success(
 				this.translate.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'),
-				this._environment.DESCRIPTION,
+				this._environment.DESCRIPTION
 			);
 		} catch (error) {
 			this.toastrService.danger(error);

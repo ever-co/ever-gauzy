@@ -1,17 +1,6 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	AfterViewInit,
-	Input
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import {
-	UntypedFormBuilder,
-	Validators,
-	UntypedFormGroup,
-	FormControl
-} from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup, FormControl } from '@angular/forms';
 import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
@@ -24,13 +13,13 @@ import {
 	ExpenseStatusesEnum,
 	ICurrency
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '../../../@core/services';
 import { FormHelpers } from '../../forms/helpers';
 
@@ -40,14 +29,12 @@ import { FormHelpers } from '../../forms/helpers';
 	templateUrl: './expenses-mutation.component.html',
 	styleUrls: ['./expenses-mutation.component.scss']
 })
-export class ExpensesMutationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ExpensesMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	/*
-	* Getter & Setter for expense
-	*/
+	 * Getter & Setter for expense
+	 */
 	_expense: IExpense;
 	get expense(): IExpense {
 		return this._expense;
@@ -73,13 +60,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 
 	public organization: IOrganization;
 	/*
-	* Expense Mutation Form
-	*/
+	 * Expense Mutation Form
+	 */
 	public form: UntypedFormGroup = ExpensesMutationComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: ExpensesMutationComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: ExpensesMutationComponent): UntypedFormGroup {
 		return fb.group({
 			amount: ['', Validators.required],
 			vendor: [],
@@ -119,7 +103,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => {
 					const typeOfExpense = <FormControl>this.form.get('typeOfExpense');
 					this.setExpenseStatuses(typeOfExpense.value);
@@ -129,7 +113,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit() { }
+	ngAfterViewInit() {}
 
 	/**
 	 * Added statuses dropdown selector
@@ -194,9 +178,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(Object.assign(this.form.getRawValue(), {
-			splitExpense: this.showTooltip
-		}));
+		this.dialogRef.close(
+			Object.assign(this.form.getRawValue(), {
+				splitExpense: this.showTooltip
+			})
+		);
 	}
 
 	showNotesInput() {
@@ -221,9 +207,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 				valueDate: new Date(this.expense.valueDate),
 				purpose: this.expense.purpose,
 				organizationContact: organizationContact,
-				organizationContactId: (organizationContact) ? organizationContact.id : null,
+				organizationContactId: organizationContact ? organizationContact.id : null,
 				project: project,
-				projectId: (project) ? project.id : null,
+				projectId: project ? project.id : null,
 				taxType: this.expense.taxType,
 				taxLabel: this.expense.taxLabel,
 				rateValue: this.expense.rateValue,
@@ -243,35 +229,27 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	private calculateTaxes() {
-		this.form.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((val) => {
-				const amount = val.amount;
-				const rate = val.rateValue;
-				const oldNotes = val.notes;
+		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
+			const amount = val.amount;
+			const rate = val.rateValue;
+			const oldNotes = val.notes;
 
-				if (val.taxType === TaxTypesEnum.PERCENTAGE) {
-					const result = (amount / (rate + 100)) * 100 * (rate / 100);
-					this.calculatedValue =
-						`${this.getTranslation(
-							'EXPENSES_PAGE.MUTATION.TAX_AMOUNT'
-						)}: ` +
-						result.toFixed(2) +
-						' ' +
-						val.currency;
-				} else {
-					const result = (rate / (amount - rate)) * 100;
-					this.calculatedValue =
-						`${this.getTranslation(
-							'EXPENSES_PAGE.MUTATION.TAX_RATE'
-						)}: ` +
-						result.toFixed(2) +
-						' %';
-				}
-				if (rate !== 0) {
-					val.notes = this.calculatedValue + '. ' + oldNotes;
-				}
-			});
+			if (val.taxType === TaxTypesEnum.PERCENTAGE) {
+				const result = (amount / (rate + 100)) * 100 * (rate / 100);
+				this.calculatedValue =
+					`${this.getTranslation('EXPENSES_PAGE.MUTATION.TAX_AMOUNT')}: ` +
+					result.toFixed(2) +
+					' ' +
+					val.currency;
+			} else {
+				const result = (rate / (amount - rate)) * 100;
+				this.calculatedValue =
+					`${this.getTranslation('EXPENSES_PAGE.MUTATION.TAX_RATE')}: ` + result.toFixed(2) + ' %';
+			}
+			if (rate !== 0) {
+				val.notes = this.calculatedValue + '. ' + oldNotes;
+			}
+		});
 	}
 
 	closeWarning() {
@@ -285,8 +263,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 					currentReceipt: this.form.value.receipt
 				}
 			})
-			.onClose
-			.pipe(
+			.onClose.pipe(
 				tap((receipt) => {
 					this.form.get('receipt').setValue(receipt);
 					this.form.get('receipt').updateValueAndValidity();
@@ -297,7 +274,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 	}
 
 	onEmployeeChange(employee: ISelectedEmployee) {
-		this.showTooltip = (!employee || JSON.stringify(employee) == JSON.stringify(ALL_EMPLOYEES_SELECTED));
+		this.showTooltip = !employee || JSON.stringify(employee) == JSON.stringify(ALL_EMPLOYEES_SELECTED);
 		if (employee) {
 			this.form.get('employee').setValue(employee);
 			this.form.get('employee').updateValueAndValidity();
@@ -316,5 +293,5 @@ export class ExpensesMutationComponent extends TranslationBaseComponent
 		this.form.get('currency').updateValueAndValidity();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

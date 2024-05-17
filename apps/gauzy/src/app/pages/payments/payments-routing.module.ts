@@ -25,7 +25,7 @@ const routes: Routes = [
 		resolve: {
 			dates: DateRangePickerResolver
 		},
-		runGuardsAndResolvers: 'always'
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	}
 ];
 

@@ -1,15 +1,11 @@
 import { Component, OnInit, OnDestroy, Input, TemplateRef, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	DiscountTaxTypeEnum,
-	IInvoice,
-	InvoiceTypeEnum
-} from '@gauzy/contracts';
+import { DiscountTaxTypeEnum, IInvoice, InvoiceTypeEnum } from '@gauzy/contracts';
 import { tap } from 'rxjs/operators';
 import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store, TranslatableService, UsersOrganizationsService } from './../../../../@core/services';
 import { CurrencyPositionPipe } from './../../../../@shared/pipes';
 
@@ -19,9 +15,7 @@ import { CurrencyPositionPipe } from './../../../../@shared/pipes';
 	templateUrl: './invoice-view-inner.component.html',
 	styleUrls: ['./invoice-view-inner.component.scss']
 })
-export class InvoiceViewInnerComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class InvoiceViewInnerComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	invoiceDate: string;
 	dueDate: string;
 	settingsSmartTable: object;
@@ -35,9 +29,7 @@ export class InvoiceViewInnerComponent
 	discountTaxTypes = DiscountTaxTypeEnum;
 
 	invoiceViewInnerTable: Angular2SmartTableComponent;
-	@ViewChild('invoiceViewInnerTable') set content(
-		content: Angular2SmartTableComponent
-	) {
+	@ViewChild('invoiceViewInnerTable') set content(content: Angular2SmartTableComponent) {
 		if (content) {
 			this.invoiceViewInnerTable = content;
 			this._onChangedSource();
@@ -47,7 +39,6 @@ export class InvoiceViewInnerComponent
 	@Input() invoice: IInvoice;
 	@Input() isEstimate: boolean;
 	@Input() buttonsOutlet: TemplateRef<any>;
-
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -84,23 +75,17 @@ export class InvoiceViewInnerComponent
 					filter: false
 				},
 				description: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
 					type: 'text',
 					filter: false
 				},
 				quantity: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.QUANTITY'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 					type: 'text',
 					filter: false
 				},
 				price: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.PRICE'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
@@ -113,9 +98,7 @@ export class InvoiceViewInnerComponent
 					}
 				},
 				totalValue: {
-					title: this.getTranslation(
-						'INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'
-					),
+					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
 					valuePrepareFunction: (cell, row) => {
@@ -147,9 +130,7 @@ export class InvoiceViewInnerComponent
 				case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 					if (item.employeeId) {
 						const { employee } = item;
-						data[
-							'name'
-						] = `${employee.user.firstName} ${employee.user.lastName}`;
+						data['name'] = `${employee.user.firstName} ${employee.user.lastName}`;
 					}
 					break;
 				case InvoiceTypeEnum.BY_PROJECT_HOURS:
@@ -167,12 +148,7 @@ export class InvoiceViewInnerComponent
 				case InvoiceTypeEnum.BY_PRODUCTS:
 					if (item.productId) {
 						const { product } = item;
-						data[
-							'name'
-						] = this.translatableService.getTranslatedProperty(
-							product,
-							'name'
-						);
+						data['name'] = this.translatableService.getTranslatedProperty(product, 'name');
 					}
 					break;
 				case InvoiceTypeEnum.BY_EXPENSES:
@@ -214,11 +190,9 @@ export class InvoiceViewInnerComponent
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this.loadSmartTable();
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.loadSmartTable();
+		});
 	}
 	/**
 	 * This function transform simple number to currency format.
@@ -251,5 +225,5 @@ export class InvoiceViewInnerComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

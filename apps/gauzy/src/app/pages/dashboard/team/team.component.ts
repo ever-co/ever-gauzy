@@ -1,4 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import * as moment from 'moment';
+import { combineLatest, debounceTime, tap } from 'rxjs';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
@@ -8,13 +13,9 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { combineLatest, debounceTime, tap } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, OrganizationTeamsService, Store } from '../../../@core';
+import { OrganizationTeamsService, Store } from '../../../@core/services';
 import { TimesheetService, TimesheetStatisticsService } from '../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import * as moment from 'moment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -134,10 +135,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		combineLatest([
-			this._store.selectedEmployee$,
-			this._store.selectedTeam$,
-		])
+		combineLatest([this._store.selectedEmployee$, this._store.selectedTeam$])
 			.pipe(
 				tap(([employee, organizationTeam]) => {
 					this._selectedEmployee = employee;
@@ -199,15 +197,13 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				const isTeamMember = team.members.some((member) => member.employeeId === this._selectedEmployee.id);
 				if (
 					(!isTeamMember && this._selectedEmployee?.id) ||
-					(this._selectedOrganizationTeam.id &&
-						team.id !== this._selectedOrganizationTeam.id)
+					(this._selectedOrganizationTeam.id && team.id !== this._selectedOrganizationTeam.id)
 				) {
 					return null;
 				}
 				const members = team.members.map((member) => {
 					const [memberDailyLog] = this._dailyLogs.filter(
-						(dailyLog) =>
-							dailyLog.employee.userId === member.employee.userId
+						(dailyLog) => dailyLog.employee.userId === member.employee.userId
 					);
 					const logs = this._logs.filter(
 						(log) =>
@@ -228,12 +224,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 							}, 0)
 						};
 					});
-					const todayWorkDuration = tasks.reduce(
-						(accumulator: number, task) => {
-							return accumulator + task?.duration || 0;
-						},
-						0
-					);
+					const todayWorkDuration = tasks.reduce((accumulator: number, task) => {
+						return accumulator + task?.duration || 0;
+					}, 0);
 					const proj = projectKeys.map((value: string) => {
 						return {
 							...groupByProject[value][0].project

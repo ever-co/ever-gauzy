@@ -25,7 +25,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -57,14 +57,14 @@ import { SharedModule } from '../../@shared/shared.module';
 		BackNavigationModule,
 		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),
-		SharedModule,
+		SharedModule
 	],
 	declarations: [
 		SettingsComponent,
 		DangerZoneComponent,
 		EmailHistoryComponent,
 		EmailFiltersComponent,
-		SmsGatewayComponent,
+		SmsGatewayComponent
 	],
 	providers: []
 })

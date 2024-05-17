@@ -13,8 +13,9 @@ import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, EmployeeStatisticsService, Store } from '../../../@core/services';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { EmployeeStatisticsService, Store } from '../../../@core/services';
 import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
 
 @UntilDestroy({ checkProperties: true })
@@ -58,7 +59,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		private readonly router: Router,
 		private readonly employeeStatisticsService: EmployeeStatisticsService,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
-	) { }
+	) {}
 
 	async ngOnInit() {
 		this.statistics$
@@ -70,7 +71,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 			.subscribe();
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		const selectedEmployee$ = this.store.selectedEmployee$
+		const selectedEmployee$ = this.store.selectedEmployee$;
 		combineLatest([storeOrganization$, selectedDateRange$, selectedEmployee$])
 			.pipe(
 				debounceTime(300),
@@ -108,31 +109,21 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 		this.loading = true;
 
-		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId(
-			{
-				employeeId: this.selectedEmployee.id,
-				startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-				endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-				organizationId,
-				tenantId
-			}
-		);
+		this.employeeStatistics = await this.employeeStatisticsService.getAggregatedStatisticsByEmployeeId({
+			employeeId: this.selectedEmployee.id,
+			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			organizationId,
+			tenantId
+		});
 		this.income = this._statsSum(this.employeeStatistics, 'income');
-		this.expenseWithoutSalary = this._statsSum(
-			this.employeeStatistics,
-			'expenseWithoutSalary'
-		);
+		this.expenseWithoutSalary = this._statsSum(this.employeeStatistics, 'expenseWithoutSalary');
 		this.expense = this._statsSum(this.employeeStatistics, 'expense');
-		this.directIncomeBonus = this._statsSum(
-			this.employeeStatistics,
-			'directIncomeBonus'
-		);
+		this.directIncomeBonus = this._statsSum(this.employeeStatistics, 'directIncomeBonus');
 		this.nonBonusIncome = this.income - this.directIncomeBonus;
 		this.profit = this._statsSum(this.employeeStatistics, 'profit');
 		this.bonus = this._statsSum(this.employeeStatistics, 'bonus');
-		this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(
-			2
-		);
+		this.calculatedBonus = +(this.bonus - this.directIncomeBonus).toFixed(2);
 		this.salary = +(this.expense - this.expenseWithoutSalary).toFixed(2);
 
 		this.loading = false;
@@ -149,16 +140,14 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		this.dialogService.open(RecordsHistoryComponent, {
 			context: {
 				type,
-				recordsData: await this.employeeStatisticsService.getEmployeeStatisticsHistory(
-					{
-						employeeId: this.selectedEmployee.id,
-						startDate,
-						endDate,
-						type,
-						organizationId,
-						tenantId
-					}
-				)
+				recordsData: await this.employeeStatisticsService.getEmployeeStatisticsHistory({
+					employeeId: this.selectedEmployee.id,
+					startDate,
+					endDate,
+					type,
+					organizationId,
+					tenantId
+				})
 			}
 		});
 	}
@@ -171,26 +160,22 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		const { id: organizationId } = this.selectedOrganization;
 		const { startDate, endDate } = this.selectedDateRange;
 
-		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
-			{
-				employeeId: this.selectedEmployee.id,
-				startDate,
-				endDate,
-				type: EmployeeStatisticsHistoryEnum.INCOME,
-				organizationId,
-				tenantId
-			}
-		);
-		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory(
-			{
-				employeeId: this.selectedEmployee.id,
-				startDate,
-				endDate,
-				type: EmployeeStatisticsHistoryEnum.EXPENSES,
-				organizationId,
-				tenantId
-			}
-		);
+		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory({
+			employeeId: this.selectedEmployee.id,
+			startDate,
+			endDate,
+			type: EmployeeStatisticsHistoryEnum.INCOME,
+			organizationId,
+			tenantId
+		});
+		const expenses = await this.employeeStatisticsService.getEmployeeStatisticsHistory({
+			employeeId: this.selectedEmployee.id,
+			startDate,
+			endDate,
+			type: EmployeeStatisticsHistoryEnum.EXPENSES,
+			organizationId,
+			tenantId
+		});
 
 		this.dialogService.open(ProfitHistoryComponent, {
 			context: {
@@ -205,10 +190,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	private _statsSum = (
-		employeeStatistics: IMonthAggregatedEmployeeStatistics[],
-		key: string
-	): number =>
+	private _statsSum = (employeeStatistics: IMonthAggregatedEmployeeStatistics[], key: string): number =>
 		Number(employeeStatistics.reduce((a, b) => a + b[key], 0).toFixed(2));
 
 	navigateToAccounting() {
@@ -216,9 +198,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	}
 
 	edit() {
-		this.router.navigate([
-			'/pages/employees/edit/' + this.selectedEmployee.id
-		]);
+		this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id]);
 	}
 
 	/**
@@ -232,5 +212,5 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		return [shortDescription, employeeLevel].filter(Boolean).join(' | ');
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

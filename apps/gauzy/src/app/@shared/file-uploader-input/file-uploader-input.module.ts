@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { FileUploadModule } from 'ng2-file-upload';
-import { FileUploaderInputComponent } from './file-uploader-input.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbSpinnerModule } from '@nebular/theme';
+import { FileUploadModule } from 'ng2-file-upload';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { FileUploaderInputComponent } from './file-uploader-input.component';
 import { DirectivesModule } from '../directives/directives.module';
 
 @NgModule({
@@ -12,7 +12,7 @@ import { DirectivesModule } from '../directives/directives.module';
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule.forChild(),
+		TranslateModule,
 		FileUploadModule,
 		NbButtonModule,
 		NbSpinnerModule,
@@ -21,4 +21,4 @@ import { DirectivesModule } from '../directives/directives.module';
 	exports: [FileUploaderInputComponent],
 	declarations: [FileUploaderInputComponent]
 })
-export class FileUploaderModule { }
+export class FileUploaderModule {}

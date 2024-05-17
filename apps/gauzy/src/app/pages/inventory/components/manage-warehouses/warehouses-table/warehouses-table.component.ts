@@ -1,11 +1,4 @@
-import {
-	AfterViewInit,
-	Component,
-	OnDestroy,
-	OnInit,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
@@ -14,32 +7,19 @@ import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	ComponentLayoutStyleEnum,
-	IOrganization,
-	IWarehouse,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
-import {
-	Store,
-	ToastrService,
-	WarehouseService
-} from './../../../../../@core/services';
-import {
-	ContactRowComponent,
-	EnabledStatusComponent,
-	ItemImgTagsComponent
-} from '../../inventory-table-components';
+import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from './../../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
-import { DescriptionComponent } from "../../inventory-table-components/description/description.component";
+import { DescriptionComponent } from '../../inventory-table-components/description/description.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,9 +27,10 @@ import { DescriptionComponent } from "../../inventory-table-components/descripti
 	templateUrl: './warehouses-table.component.html',
 	styleUrls: ['./warehouses-table.component.scss']
 })
-export class WarehousesTableComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class WarehousesTableComponent
+	extends PaginationFilterBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	settingsSmartTable: object;
 	loading: boolean = false;
 	disableButton: boolean = true;
@@ -110,10 +91,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 				debounceTime(300),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
@@ -121,11 +99,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.warehouses = [])),
 				untilDestroyed(this)
@@ -139,15 +113,9 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.warehouses = [])),
 				tap(() => this.warehouses$.next(true)),
 				untilDestroyed(this)
@@ -240,9 +208,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 	}
 
 	onCreateWarehouse() {
-		if (!this.store.hasPermission(
-			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-		) {
+		if (!this.store.hasPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)) {
 			return;
 		}
 		this.router.navigate(['/pages/organization/inventory/warehouses/create']);
@@ -255,9 +221,7 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 				data: selectedItem
 			});
 		}
-		if (!this.store.hasPermission(
-			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-		) {
+		if (!this.store.hasPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)) {
 			return;
 		}
 		const { id } = this.selectedWarehouse;
@@ -274,26 +238,19 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 		if (!this.selectedWarehouse) {
 			return;
 		}
-		if (!this.store.hasPermission(
-			PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)
-		) {
+		if (!this.store.hasPermission(PermissionsEnum.ORG_INVENTORY_PRODUCT_EDIT)) {
 			return;
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 		if (result) {
 			await this.warehouseService
 				.deleteFeaturedImage(this.selectedWarehouse.id)
 				.then((res) => {
 					if (res && res.affected == 1) {
 						const { name } = this.selectedWarehouse;
-						this.toastrService.success(
-							'INVENTORY_PAGE.WAREHOUSE_WAS_DELETED',
-							{
-								name
-							}
-						);
+						this.toastrService.success('INVENTORY_PAGE.WAREHOUSE_WAS_DELETED', {
+							name
+						});
 					}
 				})
 				.finally(() => {
@@ -325,13 +282,8 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 					...(this.filters.where ? this.filters.where : {})
 				},
 				finalize: () => {
-					if (
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-					) {
-						this.warehouses.push(
-							...this.smartTableSource.getData()
-						);
+					if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
+						this.warehouses.push(...this.smartTableSource.getData());
 					}
 					this.setPagination({
 						...this.getPagination(),
@@ -382,5 +334,5 @@ export class WarehousesTableComponent extends PaginationFilterBaseComponent
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

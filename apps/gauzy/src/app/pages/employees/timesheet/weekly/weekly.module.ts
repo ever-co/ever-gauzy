@@ -12,7 +12,7 @@ import {
 	NbCardModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';

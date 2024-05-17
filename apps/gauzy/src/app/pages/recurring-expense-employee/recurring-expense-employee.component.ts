@@ -1,5 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { combineLatest, firstValueFrom, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { DateRangePickerBuilderService, monthNames } from '@gauzy/ui-sdk/core';
 import {
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
@@ -9,25 +15,10 @@ import {
 	IDateRangePicker,
 	ComponentType
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { combineLatest, firstValueFrom, Subject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../@shared/language-base';
-import { monthNames } from '../../@core/utils/date';
-import {
-	DateRangePickerBuilderService,
-	EmployeeRecurringExpenseService,
-	EmployeesService,
-	Store,
-	ToastrService
-} from '../../@core/services';
-import {
-	RecurringExpenseMutationComponent,
-	RecurringExpenseDeleteConfirmationComponent
-} from '../../@shared/expenses';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { EmployeeRecurringExpenseService, EmployeesService, Store, ToastrService } from '../../@core/services';
+import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,9 +26,7 @@ import {
 	templateUrl: './recurring-expense-employee.component.html',
 	styleUrls: ['./recurring-expense-employee.component.scss']
 })
-export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	selectedDateRange: IDateRangePicker;
 	recurringExpenses: IEmployeeRecurringExpense[] = [];
@@ -117,12 +106,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	 *
 	 */
 	async getSelectedEmployee(employeeId: string) {
-		this.selectedEmployee = await firstValueFrom(this.employeeService.getEmployeeById(employeeId, [
-			'user',
-			'organizationPosition',
-			'tags',
-			'skills'
-		]));
+		this.selectedEmployee = await firstValueFrom(
+			this.employeeService.getEmployeeById(employeeId, ['user', 'organizationPosition', 'tags', 'skills'])
+		);
 		this.store.selectedEmployee = {
 			id: this.selectedEmployee.id,
 			firstName: this.selectedEmployee.user.firstName,
@@ -132,9 +118,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			skills: this.selectedEmployee.skills
 		};
 		const checkUsername = this.selectedEmployee.user.username;
-		this.employeeName = checkUsername
-			? checkUsername
-			: this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
+		this.employeeName = checkUsername ? checkUsername : this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
 	}
 
 	getMonthString(month: number) {
@@ -143,9 +127,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 
 	getCategoryName(categoryName: string) {
 		return categoryName in RecurringExpenseDefaultCategoriesEnum
-			? this.getTranslation(
-					`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-			  )
+			? this.getTranslation(`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`)
 			: categoryName;
 	}
 
@@ -160,17 +142,13 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		);
 		if (result) {
 			try {
-				const employeeRecurringExpense =
-					this._recurringExpenseMutationResultTransform(result);
+				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(result);
 				await this.employeeRecurringExpenseService
 					.create(employeeRecurringExpense)
 					.then(() => {
-						this.toastrService.success(
-							'TOASTR.MESSAGE.RECURRING_EXPENSE_SET',
-							{
-								name: this.employeeName
-							}
-						);
+						this.toastrService.success('TOASTR.MESSAGE.RECURRING_EXPENSE_SET', {
+							name: this.employeeName
+						});
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
@@ -196,17 +174,13 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		if (result) {
 			try {
 				const id = this.selectedRecurringExpense.data.id;
-				const employeeRecurringExpense =
-					this._recurringExpenseMutationResultTransform(result);
+				const employeeRecurringExpense = this._recurringExpenseMutationResultTransform(result);
 				this.employeeRecurringExpenseService
 					.update(id, employeeRecurringExpense)
 					.then(() => {
-						this.toastrService.success(
-							'TOASTR.MESSAGE.RECURRING_EXPENSE_UPDATED',
-							{
-								name: this.employeeName
-							}
-						);
+						this.toastrService.success('TOASTR.MESSAGE.RECURRING_EXPENSE_UPDATED', {
+							name: this.employeeName
+						});
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
@@ -222,27 +196,16 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		const startDate = new Date(this.selectedDateRange.startDate);
 		const selectedExpense = this.selectedRecurringExpense.data;
 		const result: RecurringExpenseDeletionEnum = await firstValueFrom(
-			this.dialogService.open(
-				RecurringExpenseDeleteConfirmationComponent,
-				{
-					context: {
-						recordType: this.getTranslation(
-							'EMPLOYEES_PAGE.RECURRING_EXPENSE'
-						),
-						start: `${this.getMonthString(
-							selectedExpense.startMonth
-						)}, ${selectedExpense.startYear}`,
-						current: `${this.getMonthString(
-							startDate.getMonth()
-						)}, ${startDate.getFullYear()}`,
-						end: selectedExpense.endMonth
-							? `${this.getMonthString(
-									selectedExpense.endMonth
-							  )}, ${selectedExpense.endYear}`
-							: 'end'
-					}
+			this.dialogService.open(RecurringExpenseDeleteConfirmationComponent, {
+				context: {
+					recordType: this.getTranslation('EMPLOYEES_PAGE.RECURRING_EXPENSE'),
+					start: `${this.getMonthString(selectedExpense.startMonth)}, ${selectedExpense.startYear}`,
+					current: `${this.getMonthString(startDate.getMonth())}, ${startDate.getFullYear()}`,
+					end: selectedExpense.endMonth
+						? `${this.getMonthString(selectedExpense.endMonth)}, ${selectedExpense.endYear}`
+						: 'end'
 				}
-			).onClose
+			}).onClose
 		);
 		if (result) {
 			try {
@@ -254,12 +217,9 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 						year: startDate.getFullYear()
 					})
 					.then(() => {
-						this.toastrService.success(
-							'TOASTR.MESSAGE.RECURRING_EXPENSE_DELETED',
-							{
-								name: this.employeeName
-							}
-						);
+						this.toastrService.success('TOASTR.MESSAGE.RECURRING_EXPENSE_DELETED', {
+							name: this.employeeName
+						});
 						this._loadEmployeeRecurringExpense();
 					})
 					.catch((error) => {
@@ -271,9 +231,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		}
 	}
 
-	private _recurringExpenseMutationResultTransform(
-		result
-	): IEmployeeRecurringExpense {
+	private _recurringExpenseMutationResultTransform(result): IEmployeeRecurringExpense {
 		if (!this.organization) {
 			return;
 		}
@@ -292,9 +250,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			startDay: result.startDay || 1,
 			startMonth: result.startMonth || startDate.getMonth(),
 			startYear: result.startYear || startDate.getFullYear(),
-			startDate:
-				result.startDate ||
-				new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+			startDate: result.startDate || new Date(startDate.getFullYear(), startDate.getMonth(), 1)
 		};
 	}
 
@@ -312,16 +268,13 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		this.fetchedHistories = {};
 		if (this.selectedEmployeeId) {
 			this.recurringExpenses = (
-				await this.employeeRecurringExpenseService.getAllByRange(
-					['employee', 'employee.user'],
-					{
-						employeeId: this.selectedEmployeeId,
-						startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-						endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
-						organizationId,
-						tenantId
-					}
-				)
+				await this.employeeRecurringExpenseService.getAllByRange(['employee', 'employee.user'], {
+					employeeId: this.selectedEmployeeId,
+					startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
+					endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm'),
+					organizationId,
+					tenantId
+				})
 			).items;
 			this.loading = false;
 		} else {
@@ -352,9 +305,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			await this.employeeRecurringExpenseService.getAll(
 				[],
 				{
-					parentRecurringExpenseId:
-						this.selectedRecurringExpense.data
-							.parentRecurringExpenseId,
+					parentRecurringExpenseId: this.selectedRecurringExpense.data.parentRecurringExpenseId,
 					organizationId,
 					tenantId
 				},
@@ -363,14 +314,10 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 		).items;
 	}
 
-	selectRecurringExpense(
-		recurringExpense: IEmployeeRecurringExpense,
-		i: number
-	) {
+	selectRecurringExpense(recurringExpense: IEmployeeRecurringExpense, i: number) {
 		this.showHistory = false;
 		this.selectedRecurringExpense =
-			this.selectedRecurringExpense.data &&
-			recurringExpense.id === this.selectedRecurringExpense.data.id
+			this.selectedRecurringExpense.data && recurringExpense.id === this.selectedRecurringExpense.data.id
 				? {
 						isSelected: !this.selectedRecurringExpense.isSelected,
 						data: null,

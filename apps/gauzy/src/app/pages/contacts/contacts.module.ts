@@ -13,13 +13,9 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import {
-	InviteService,
-	OrganizationContactService,
-	OrganizationProjectsService
-} from '../../@core/services';
+import { InviteService, OrganizationContactService, OrganizationProjectsService } from '../../@core/services';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
@@ -27,7 +23,7 @@ import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploa
 import { LeafletMapModule, LocationFormModule } from '../../@shared/forms';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -37,12 +33,7 @@ import { ContactsComponent } from './contacts.component';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { ContactActionComponent } from './table-components';
 
-const COMPONENTS = [
-	ContactsComponent,
-	InviteContactComponent,
-	ContactMutationComponent,
-	ContactActionComponent
-];
+const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationComponent, ContactActionComponent];
 
 @NgModule({
 	imports: [
@@ -80,10 +71,6 @@ const COMPONENTS = [
 	],
 
 	declarations: [...COMPONENTS],
-	providers: [
-		OrganizationContactService,
-		OrganizationProjectsService,
-		InviteService
-	]
+	providers: [OrganizationContactService, OrganizationProjectsService, InviteService]
 })
-export class ContactsModule { }
+export class ContactsModule {}

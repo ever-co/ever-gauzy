@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -17,8 +11,9 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, PaymentService, Store } from '../../../@core/services';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { PaymentService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,9 +22,7 @@ import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-
 	templateUrl: './payment-report-grid.component.html',
 	styleUrls: ['./payment-report-grid.component.scss']
 })
-export class PaymentReportGridComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class PaymentReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IPaymentReportData[] = [];
 	loading: boolean = false;
 	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;

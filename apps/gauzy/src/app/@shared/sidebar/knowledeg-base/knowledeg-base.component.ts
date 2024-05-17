@@ -1,7 +1,7 @@
 import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { HelpCenterService, Store } from '../../../@core';
@@ -11,10 +11,7 @@ import { HelpCenterService, Store } from '../../../@core';
 	templateUrl: './knowledeg-base.component.html',
 	styleUrls: ['./knowledeg-base.component.scss']
 })
-export class KnowledgeBaseComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class KnowledgeBaseComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() base?: IHelpCenter;
 	@Input() editType: string;
 
@@ -22,8 +19,8 @@ export class KnowledgeBaseComponent
 	actionEnum = HelpCenterActionEnum;
 
 	/*
-	* Getter & Setter for flag (Base, Category)
-	*/
+	 * Getter & Setter for flag (Base, Category)
+	 */
 	private _flag: string;
 	get flag(): string {
 		return this._flag;
@@ -33,8 +30,8 @@ export class KnowledgeBaseComponent
 	}
 
 	/*
-	* Getter & Setter for parentId
-	*/
+	 * Getter & Setter for parentId
+	 */
 	private _parentId: string;
 	get parentId(): string {
 		return this._parentId;
@@ -45,13 +42,7 @@ export class KnowledgeBaseComponent
 
 	static buildForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
-			name: [
-				'',
-				Validators.compose([
-					Validators.required,
-					Validators.maxLength(255),
-				]),
-			],
+			name: ['', Validators.compose([Validators.required, Validators.maxLength(255)])],
 			color: ['#d53636'],
 			description: ['', Validators.maxLength(255)],
 			language: ['', Validators.required],
@@ -88,7 +79,7 @@ export class KnowledgeBaseComponent
 		{
 			label: 'Attach',
 			value: 'attach-outline'
-		},
+		}
 	];
 
 	ngOnInit() {
@@ -124,7 +115,7 @@ export class KnowledgeBaseComponent
 			color,
 			language,
 			icon: selectedIcon,
-			privacy: (privacy === 'eye-outline') ? true : false
+			privacy: privacy === 'eye-outline' ? true : false
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -141,14 +132,11 @@ export class KnowledgeBaseComponent
 			icon: icon.value,
 			organizationId,
 			tenantId,
-			privacy: privacy === true ? 'eye-outline' : 'eye-off-outline',
-		}
+			privacy: privacy === true ? 'eye-outline' : 'eye-off-outline'
+		};
 
 		if (this.editType === HelpCenterActionEnum.EDIT) {
-			this.base = await this.helpCenterService.update(
-				this.base.id,
-				{ ...contextRequest }
-			);
+			this.base = await this.helpCenterService.update(this.base.id, { ...contextRequest });
 		} else {
 			this.base = await this.helpCenterService.create({
 				...{ flag: this.flag, index: 0, children: [], parentId: this.parentId },
@@ -163,29 +151,29 @@ export class KnowledgeBaseComponent
 	}
 
 	/**
-	* Getter for privacy form control value
-	*/
+	 * Getter for privacy form control value
+	 */
 	get language() {
 		return this.form.get('language').value;
 	}
 
 	/**
-	* Getter for privacy form control value
-	*/
+	 * Getter for privacy form control value
+	 */
 	get privacy() {
 		return this.form.get('privacy').value;
 	}
 
 	/**
-	* Getter for color form control value
-	*/
+	 * Getter for color form control value
+	 */
 	get color() {
 		return this.form.get('color').value;
 	}
 
 	/**
-	* Getter for icon form control value
-	*/
+	 * Getter for icon form control value
+	 */
 	get icon() {
 		return this.form.get('icon').value;
 	}
@@ -205,5 +193,5 @@ export class KnowledgeBaseComponent
 		return this.form.get(control).touched && this.form.get(control).invalid;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

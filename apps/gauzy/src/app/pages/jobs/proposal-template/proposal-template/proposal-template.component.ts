@@ -12,7 +12,7 @@ import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
@@ -20,7 +20,7 @@ import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/
 import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
 import { API_PREFIX } from './../../../../@core/constants';
-import { ServerDataSource } from './../../../../@core/utils/smart-table/server.data-source';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -39,9 +39,7 @@ export enum ProposalTemplateTabsEnum {
 	templateUrl: './proposal-template.component.html',
 	styleUrls: ['./proposal-template.component.scss']
 })
-export class ProposalTemplateComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class ProposalTemplateComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public smartTableSettings: object;
 	public disableButton: boolean = true;
 	public loading: boolean = false;
@@ -64,7 +62,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		private readonly truncatePipe: TruncatePipe,
 		private readonly http: HttpClient,
 		private readonly route: ActivatedRoute,
-		private readonly errorHandler: ErrorHandlingService,
+		private readonly errorHandler: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -162,8 +160,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 	}
 
 	/*
-	* Register Smart Table Source Config
-	*/
+	 * Register Smart Table Source Config
+	 */
 	setSmartTableSource() {
 		// Check if 'organization' is not defined
 		if (!this.organization) {
@@ -234,7 +232,6 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		}
 	}
 
-
 	/**
 	 * Selects an item and updates properties based on the selection state.
 	 * @param isSelected - A boolean indicating whether the item is selected.
@@ -268,7 +265,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : 10,
+				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
 				employee: {
@@ -282,11 +279,11 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 						id: value?.id,
 						name: value?.user?.name,
 						fullName: value?.fullName,
-						imageUrl: value?.user?.imageUrl,
+						imageUrl: value?.user?.imageUrl
 					}),
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				name: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.NAME'),
@@ -294,7 +291,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					width: '30%',
 					filter: false,
 					sort: false,
-					valuePrepareFunction: (value: IEmployeeProposalTemplate['name']) => value.slice(0, 150),
+					valuePrepareFunction: (value: IEmployeeProposalTemplate['name']) => value.slice(0, 150)
 				},
 				content: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.DESCRIPTION'),
@@ -307,7 +304,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 							return this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500);
 						}
 						return '';
-					},
+					}
 				},
 				isDefault: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.IS_DEFAULT'),
@@ -316,10 +313,12 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					filter: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['isDefault']) => {
-						return value ? this.getTranslation('PROPOSAL_TEMPLATE.YES') : this.getTranslation('PROPOSAL_TEMPLATE.NO');
-					},
-				},
-			},
+						return value
+							? this.getTranslation('PROPOSAL_TEMPLATE.YES')
+							: this.getTranslation('PROPOSAL_TEMPLATE.NO');
+					}
+				}
+			}
 		};
 	}
 
@@ -331,8 +330,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		// Open a dialog for adding/editing a proposal template
 		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
 			context: {
-				selectedEmployee: this.selectedEmployee,
-			},
+				selectedEmployee: this.selectedEmployee
+			}
 		});
 
 		// Wait for the dialog to close and get the result
@@ -353,8 +352,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
 			context: {
 				proposalTemplate: this.selectedItem,
-				selectedEmployee: this.selectedEmployee,
-			},
+				selectedEmployee: this.selectedEmployee
+			}
 		});
 
 		// Wait for the dialog to close and get the result
@@ -374,15 +373,15 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectProposalTemplate({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
 		// Open the dialog for user confirmation
 		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
 			context: {
-				recordType: 'Proposal',
-			},
+				recordType: 'Proposal'
+			}
 		});
 
 		// Wait for the dialog to close and get the result
@@ -397,11 +396,11 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 					const { id: proposalTemplateId } = this.selectedItem;
 
 					// Delete the proposal template for specific employee
-					await this.proposalTemplateService.delete(proposalTemplateId)
+					await this.proposalTemplateService.delete(proposalTemplateId);
 
 					// Display a success message using the toastrService
 					this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE', {
-						name: this.selectedItem.name,
+						name: this.selectedItem.name
 					});
 				}
 			} catch (error) {
@@ -422,7 +421,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectProposalTemplate({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
@@ -437,11 +436,13 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 			const data = await this.proposalTemplateService.makeDefault(proposalTemplateId);
 
 			// Determine the success message based on whether the template is set as default or not
-			const successMessage = data.isDefault ? 'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE' : 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
+			const successMessage = data.isDefault
+				? 'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
+				: 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
 
 			// Display a success message using the toastrService
 			this.toastrService.success(successMessage, {
-				name: this.selectedItem.name,
+				name: this.selectedItem.name
 			});
 		} catch (error) {
 			// Handle errors during the process
@@ -486,6 +487,5 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent
 		this.nbTab$.next(tab.tabId);
 	}
 
-
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

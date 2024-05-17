@@ -1,22 +1,11 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	Output,
-	OnInit,
-	forwardRef,
-	OnDestroy
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, IEmployee, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import {
-	DateRangePickerBuilderService,
-	EmployeesService,
-	Store
-} from '../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { EmployeesService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -82,7 +71,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
-	) { }
+	) {}
 
 	set employeeId(value: string[] | string) {
 		this.changeValue$.next(value);
@@ -103,8 +92,8 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	private _allEmployees: IEmployee[];
 	val: string[] | string = null;
 	changeValue$ = new Subject<string | string[]>();
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	public organization: IOrganization = this.store.selectedOrganization;
 	public selectedDateRange: IDateRangePicker;
@@ -116,18 +105,13 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			this.loaded = true;
 		}, 500);
 
-		this.changeValue$
-			.pipe(
-				debounceTime(100),
-				untilDestroyed(this)
-			)
-			.subscribe((value) => {
-				this.checkForMultiSelectValue(value);
-				this.onChange(this.val);
-			});
+		this.changeValue$.pipe(debounceTime(100), untilDestroyed(this)).subscribe((value) => {
+			this.checkForMultiSelectValue(value);
+			this.onChange(this.val);
+		});
 		this.select.valueChanges
 			.pipe(
-				tap((value) => this.employeeId = value),
+				tap((value) => (this.employeeId = value)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -180,9 +164,7 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	 * Get working employees of the selected month
 	 */
 	private async getWorkingEmployees(): Promise<void> {
-		if (!this.store.hasAnyPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		)) {
+		if (!this.store.hasAnyPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -197,5 +179,5 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 		this.employees = items;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

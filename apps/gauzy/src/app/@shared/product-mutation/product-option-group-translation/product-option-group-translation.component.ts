@@ -1,10 +1,7 @@
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Component, Input } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import {
-	IProductCategoryTranslatable,
-	IProductOptionGroupTranslatable
-} from '@gauzy/contracts';
+import { IProductCategoryTranslatable, IProductOptionGroupTranslatable } from '@gauzy/contracts';
 
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
@@ -58,22 +55,14 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 
 		this.languages.forEach((lg) => {
 			this.form.controls[lg.value].valueChanges
-				.pipe(
-					untilDestroyed(this),
-					debounceTime(100),
-					distinctUntilChanged()
-				)
+				.pipe(untilDestroyed(this), debounceTime(100), distinctUntilChanged())
 				.subscribe((value) => {
-					let groupTranslation = this.productOptionGroup.translations.find(
-						(tr) => {
-							return tr.languageCode == lg.value;
-						}
-					);
+					let groupTranslation = this.productOptionGroup.translations.find((tr) => {
+						return tr.languageCode == lg.value;
+					});
 
 					let optionTranslation = this.activeOption
-						? this.activeOption.translations.find(
-							(tr) => tr.languageCode == lg.value
-						)
+						? this.activeOption.translations.find((tr) => tr.languageCode == lg.value)
 						: '';
 
 					if (groupTranslation && this.activeGroupValueLng) {
@@ -86,9 +75,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	}
 
 	getGroupTitleTranslation(languageCodeInput: string) {
-		let translation = this.productOptionGroup.translations.find(
-			(tr) => tr.languageCode == languageCodeInput
-		);
+		let translation = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCodeInput);
 
 		if (translation) {
 			return translation.name;
@@ -101,9 +88,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	}
 
 	getOptionNameTranslation(option, languageCodeInput: string) {
-		let translation = option.translations.find(
-			(tr) => tr.languageCode == languageCodeInput
-		);
+		let translation = option.translations.find((tr) => tr.languageCode == languageCodeInput);
 
 		if (translation) {
 			return translation.name;
@@ -120,9 +105,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeGroupValueLng = languageCode;
 		this.activeOptionValueLng = '';
 
-		let newtr = this.productOptionGroup.translations.find(
-			(tr) => tr.languageCode == languageCode
-		);
+		let newtr = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCode);
 
 		if (newtr && newtr.name) {
 			this.form.get(languageCode).setValue(newtr.name);
@@ -142,9 +125,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeOptionValueLng = languageCode;
 		this.activeOption = option;
 		this.activeGroupValueLng = '';
-		let newtr = option.translations.find(
-			(tr) => tr.languageCode == languageCode
-		);
+		let newtr = option.translations.find((tr) => tr.languageCode == languageCode);
 
 		if (newtr && newtr.name) {
 			this.form.get(languageCode).setValue(newtr.name);
@@ -159,10 +140,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 	isOptionActive(option, languageCode: string) {
 		if (!option || !this.activeOption) return;
 
-		return (
-			this.activeOption.formOptionId == option.formOptionId &&
-			this.activeOptionValueLng == languageCode
-		);
+		return this.activeOption.formOptionId == option.formOptionId && this.activeOptionValueLng == languageCode;
 	}
 
 	async onSaveRequest() {

@@ -13,17 +13,12 @@ import {
 	IEmployeeLevel,
 	IOrganization
 } from '@gauzy/contracts';
-import {
-	switchMap,
-	map,
-	tap,
-	filter,
-	catchError
-} from 'rxjs/operators';
+import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
 import { Observable, EMPTY } from 'rxjs';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../language-base';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeAwardService,
 	EmployeeLevelService,
@@ -32,17 +27,14 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { ckEditorConfig } from "../../ckeditor.config";
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-public-page-employee-mutation',
 	templateUrl: './public-page-employee-mutation.component.html',
-	styleUrls: ['./public-page-employee-mutation.component.scss'],
+	styleUrls: ['./public-page-employee-mutation.component.scss']
 })
-export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	employee: IEmployee;
 	form: UntypedFormGroup;
 	employmentTypes$: Observable<IOrganizationEmploymentType[]>;
@@ -54,7 +46,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	showAddAward: boolean;
 	ckConfig: CKEditor4.Config = {
 		...ckEditorConfig,
-		height: "200"
+		height: '200'
 	};
 
 	constructor(
@@ -137,9 +129,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 			billRateCurrency: [this.employee.billRateCurrency],
 			reWeeklyLimit: this.employee.reWeeklyLimit,
 			startedWorkOn: this.employee.startedWorkOn,
-			organizationEmploymentTypes: [
-				this.employee.organizationEmploymentTypes || null
-			],
+			organizationEmploymentTypes: [this.employee.organizationEmploymentTypes || null],
 			employeeLevel: this.employee.employeeLevel,
 			tags: this.employee.tags,
 			payPeriod: this.employee.payPeriod,
@@ -189,12 +179,9 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 					tap((award) => this.employeeAwards.push(award)),
 					tap(() => {
 						this.showAddAward = false;
-						this.toastrService.success(
-							'NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD',
-							{
-								name
-							}
-						);
+						this.toastrService.success('NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.ADD_AWARD', {
+							name
+						});
 					}),
 					catchError((err) => {
 						this.errorHandlingService.handleError(err);
@@ -215,9 +202,7 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 		this.employeeAwardService
 			.delete(award.id)
 			.pipe(
-				tap(() => (this.employeeAwards = this.employeeAwards.filter(
-					(a) => a.id !== award.id
-				))),
+				tap(() => (this.employeeAwards = this.employeeAwards.filter((a) => a.id !== award.id))),
 				tap(() => {
 					this.toastrService.success('NOTES.EMPLOYEE.EDIT_EMPLOYEE_AWARDS.REMOVE_AWARD', {
 						name: award.name
@@ -232,5 +217,5 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

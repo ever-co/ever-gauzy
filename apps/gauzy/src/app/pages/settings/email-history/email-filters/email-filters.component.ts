@@ -3,12 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { IEmailTemplate, IEmailHistory, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	EmailService,
-	EmailTemplateService,
-	Store
-} from './../../../../@core/services';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EmailService, EmailTemplateService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,13 +13,12 @@ import {
 	styleUrls: ['./email-filters.component.scss']
 })
 export class EmailFiltersComponent implements OnInit, OnDestroy {
-
 	constructor(
 		private readonly store: Store,
 		private readonly emailTemplateService: EmailTemplateService,
 		private readonly dialogRef: NbDialogRef<EmailFiltersComponent>,
 		private readonly emailService: EmailService
-	) { }
+	) {}
 
 	public organization: IOrganization;
 	selectedTemplateId: string;
@@ -56,11 +51,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 
 	formatTemplateName(name: string, languageCode: string) {
 		const formattedName = name.split('/')[0].split('-').join(' ');
-		return (
-			this._toTitleCase(formattedName) +
-			' - ' +
-			this.getEmailLanguageFullName(languageCode)
-		);
+		return this._toTitleCase(formattedName) + ' - ' + this.getEmailLanguageFullName(languageCode);
 	}
 
 	getEmailLanguageFullName(languageCode: string) {
@@ -105,10 +96,7 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		// Remove repeating template names
 		this.emailTemplates = items.filter((et) => et.name.includes('html'));
 
-		this.emailTemplates.forEach(
-			(et) =>
-				(et.name = this.formatTemplateName(et.name, et.languageCode))
-		);
+		this.emailTemplates.forEach((et) => (et.name = this.formatTemplateName(et.name, et.languageCode)));
 	}
 
 	private async _getEmails() {
@@ -124,5 +112,5 @@ export class EmailFiltersComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

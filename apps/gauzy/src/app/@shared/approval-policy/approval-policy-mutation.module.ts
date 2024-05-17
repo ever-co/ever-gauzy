@@ -1,4 +1,3 @@
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { NgModule } from '@angular/core';
 import {
 	NbIconModule,
@@ -10,11 +9,12 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
 import { Store } from '../../@core/services/store.service';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '../translate/translate.module';
+import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 
 @NgModule({
 	imports: [

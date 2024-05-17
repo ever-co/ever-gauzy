@@ -1,18 +1,12 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store, TasksService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -27,14 +21,12 @@ import { Store, TasksService } from '../../../@core/services';
 		}
 	]
 })
-export class TaskNumberFieldComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class TaskNumberFieldComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() formControl: FormControl = new FormControl();
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -44,8 +36,8 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for project
-	*/
+	 * Getter & Setter for project
+	 */
 	_projectId: string;
 	get projectId(): string {
 		return this._projectId;
@@ -56,8 +48,8 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for status
-	*/
+	 * Getter & Setter for status
+	 */
 	private _number: number;
 	set number(val: number) {
 		this._number = val;
@@ -79,7 +71,7 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 		private readonly store: Store,
 		private readonly tasksService: TasksService
 	) {
-		super(translateService)
+		super(translateService);
 	}
 
 	ngOnInit(): void {
@@ -93,7 +85,7 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.number$.next(true)),
 				untilDestroyed(this)
 			)
@@ -125,15 +117,12 @@ export class TaskNumberFieldComponent extends TranslationBaseComponent
 					organizationId,
 					...(this.projectId
 						? {
-							projectId: this.projectId
+								projectId: this.projectId
 						  }
-						: {}),
-				}).
-				pipe(
-					tap(
-						(maxNumber: number) =>
-						this.number = (maxNumber + 1)
-					),
+						: {})
+				})
+				.pipe(
+					tap((maxNumber: number) => (this.number = maxNumber + 1)),
 					untilDestroyed(this)
 				)
 				.subscribe();

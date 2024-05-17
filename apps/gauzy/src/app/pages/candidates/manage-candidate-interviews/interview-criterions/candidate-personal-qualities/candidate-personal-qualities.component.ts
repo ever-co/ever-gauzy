@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
@@ -14,9 +14,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	templateUrl: './candidate-personal-qualities.component.html',
 	styleUrls: ['./candidate-personal-qualities.component.scss']
 })
-export class CandidatePersonalQualitiesComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class CandidatePersonalQualitiesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 	personalQualitiesList: ICandidatePersonalQualities[];
 	form: UntypedFormGroup;
@@ -35,15 +33,13 @@ export class CandidatePersonalQualitiesComponent
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.organization = organization;
-					this._initializeForm();
-					this.loadQualities();
-				}
-			});
+		this.store.selectedOrganization$.pipe(takeUntil(this._ngDestroy$)).subscribe((organization: IOrganization) => {
+			if (organization) {
+				this.organization = organization;
+				this._initializeForm();
+				this.loadQualities();
+			}
+		});
 	}
 
 	cancel() {
@@ -64,10 +60,7 @@ export class CandidatePersonalQualitiesComponent
 			this.existedQualNames = [];
 			const enteredName = item.qualities[0].name;
 			this.personalQualitiesList.forEach((el) => {
-				if (
-					enteredName !== '' &&
-					el.name.toLocaleLowerCase().includes(enteredName)
-				) {
+				if (enteredName !== '' && el.name.toLocaleLowerCase().includes(enteredName)) {
 					this.existedQualNames.push(el.name);
 				}
 			});
@@ -81,9 +74,7 @@ export class CandidatePersonalQualitiesComponent
 			tenantId
 		});
 		if (res) {
-			this.personalQualitiesList = res.items.filter(
-				(item) => !item.interviewId
-			);
+			this.personalQualitiesList = res.items.filter((item) => !item.interviewId);
 			this.qualityNames = [];
 			this.personalQualitiesList.forEach((tech) => {
 				this.qualityNames.push(tech.name.toLocaleLowerCase());
@@ -110,27 +101,19 @@ export class CandidatePersonalQualitiesComponent
 	async update(formValue: ICandidatePersonalQualities) {
 		if (!this.qualityNames.includes(formValue.name.toLocaleLowerCase())) {
 			try {
-				await this.candidatePersonalQualitiesService.update(
-					this.editId,
-					{
-						...formValue
-					}
-				);
+				await this.candidatePersonalQualitiesService.update(this.editId, {
+					...formValue
+				});
 				this.editId = null;
-				this.toastrService.success(
-					'TOASTR.MESSAGE.PERSONAL_QUALITIES_UPDATED',
-					{
-						name: formValue.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.PERSONAL_QUALITIES_UPDATED', {
+					name: formValue.name
+				});
 				this.loadQualities();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
-			this.toastrService.danger(
-				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-			);
+			this.toastrService.danger('CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST');
 		}
 	}
 
@@ -140,39 +123,29 @@ export class CandidatePersonalQualitiesComponent
 				await this.candidatePersonalQualitiesService.create({
 					...formValue
 				});
-				this.toastrService.success(
-					'TOASTR.MESSAGE.PERSONAL_QUALITIES_CREATED',
-					{
-						name: formValue.name
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.PERSONAL_QUALITIES_CREATED', {
+					name: formValue.name
+				});
 				this.loadQualities();
 			} catch (error) {
 				this.toastrError(error);
 			}
 		} else {
-			this.toastrService.danger(
-				'CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST'
-			);
+			this.toastrService.danger('CANDIDATES_PAGE.CRITERIONS.TOASTR_ALREADY_EXIST');
 		}
 	}
 
 	async edit(index: number, id: string) {
 		this.editId = id;
-		this.form.controls.qualities.patchValue([
-			this.personalQualitiesList[index]
-		]);
+		this.form.controls.qualities.patchValue([this.personalQualitiesList[index]]);
 	}
 	async remove(quantity: ICandidatePersonalQualities) {
 		try {
 			await this.candidatePersonalQualitiesService.delete(quantity.id);
 			this.loadQualities();
-			this.toastrService.success(
-				'TOASTR.MESSAGE.PERSONAL_QUALITIES_DELETED',
-				{
-					name: quantity.name
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.PERSONAL_QUALITIES_DELETED', {
+				name: quantity.name
+			});
 		} catch (error) {
 			this.toastrError(error);
 		}

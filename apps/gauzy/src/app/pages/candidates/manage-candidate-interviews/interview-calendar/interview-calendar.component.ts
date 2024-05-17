@@ -10,15 +10,9 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { NbDialogService } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import {
-	ICandidate,
-	IEmployee,
-	IDateRange,
-	ICandidateInterview,
-	IOrganization
-} from '@gauzy/contracts';
+import { ICandidate, IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from './../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateInterviewService } from './../../../../@core/services/candidate-interview.service';
 import { CandidateInterviewersService } from './../../../../@core/services/candidate-interviewers.service';
 import { CandidatesService } from './../../../../@core/services/candidates.service';
@@ -37,9 +31,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	templateUrl: './interview-calendar.component.html',
 	styleUrls: ['./interview-calendar.component.scss']
 })
-export class InterviewCalendarComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class InterviewCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('calendar', { static: true })
 	calendarComponent: FullCalendarComponent;
 	calendarOptions: CalendarOptions;
@@ -90,21 +82,16 @@ export class InterviewCalendarComponent
 						.subscribe((employees) => {
 							this.employees = employees.items;
 						});
-					this.candidateStore.interviewList$
-						.pipe(untilDestroyed(this))
-						.subscribe(() => {
-							this.loadInterviews();
-						});
+					this.candidateStore.interviewList$.pipe(untilDestroyed(this)).subscribe(() => {
+						this.loadInterviews();
+					});
 				}
 			});
 	}
 
 	async loadInterviews() {
 		const { id: organizationId, tenantId } = this.organization;
-		const res = await this.candidateInterviewService.getAll(
-			['interviewers'],
-			{ organizationId, tenantId }
-		);
+		const res = await this.candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId });
 		if (res) {
 			this.interviewList = res.items;
 			this.calendarOptions = {
@@ -125,17 +112,11 @@ export class InterviewCalendarComponent
 					right: 'dayGridMonth,timeGridWeek,timeGridDay'
 				},
 				themeSystem: 'bootstrap',
-				plugins: [
-					dayGridPlugin,
-					timeGrigPlugin,
-					interactionPlugin,
-					bootstrapPlugin
-				],
+				plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin],
 				weekends: true,
 				height: 'auto',
 				selectable: true,
-				selectAllow: ({ start, end }) =>
-					moment(start).isSame(moment(end), 'day'),
+				selectAllow: ({ start, end }) => moment(start).isSame(moment(end), 'day'),
 				select: this.handleEventSelect.bind(this),
 				dateClick: this.handleDateClick.bind(this),
 				eventMouseEnter: this.handleEventMouseEnter.bind(this),
@@ -210,41 +191,29 @@ export class InterviewCalendarComponent
 	}
 	async getInterviewers() {
 		for (const event of this.calendarOptions.events as EventInput[]) {
-			return await this.candidateInterviewersService.findByInterviewId(
-				event.id as string
-			);
+			return await this.candidateInterviewersService.findByInterviewId(event.id as string);
 		}
 	}
 	async add(selectedRange?: IDateRange) {
-		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent,
-			{
-				context: {
-					headerTitle: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
-					),
-					isCalendar: true,
-					selectedRangeCalendar: selectedRange,
-					interviews: this.interviewList
-				}
+		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
+			context: {
+				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+				isCalendar: true,
+				selectedRangeCalendar: selectedRange,
+				interviews: this.interviewList
 			}
-		);
+		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
-				{
-					name: data.title
-				}
-			);
+			this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, {
+				name: data.title
+			});
 			this.loadInterviews();
 		}
 	}
 	handleDateClick(event) {
 		if (event.view.type === 'dayGridMonth') {
-			this.calendarComponent
-				.getApi()
-				.changeView('timeGridWeek', event.date);
+			this.calendarComponent.getApi().changeView('timeGridWeek', event.date);
 		}
 	}
 	handleEventSelect(event) {
@@ -273,9 +242,7 @@ export class InterviewCalendarComponent
 			el.style.overflow = 'hidden';
 		}
 
-		const isOverflowing =
-			el.clientWidth < el.scrollWidth ||
-			el.clientHeight < el.scrollHeight;
+		const isOverflowing = el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
 
 		if (el.style) {
 			el.style.overflow = curOverflow;
@@ -283,5 +250,5 @@ export class InterviewCalendarComponent
 
 		return isOverflowing;
 	}
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

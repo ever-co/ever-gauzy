@@ -1,10 +1,8 @@
 import { Component, Input } from '@angular/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import {
-	ManageVariantsQuantityFormComponent
-} from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
+import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { InventoryStore } from 'apps/gauzy/src/app/@core';
 import { firstValueFrom } from 'rxjs';
 
@@ -13,8 +11,7 @@ import { firstValueFrom } from 'rxjs';
 	templateUrl: './manage-variants-quantity.component.html',
 	styleUrls: ['./manage-variants-quantity.component.scss']
 })
-export class ManageVariantsQuantityComponent
-	extends TranslationBaseComponent {
+export class ManageVariantsQuantityComponent extends TranslationBaseComponent {
 	@Input() value: any;
 	@Input() rowData: any;
 
@@ -27,18 +24,14 @@ export class ManageVariantsQuantityComponent
 	}
 
 	onManageVariantsClick() {
-		const dialog = this.dialogService.open(
-			ManageVariantsQuantityFormComponent,
-			{
-				context: {
-					variants: this.value
-				}
+		const dialog = this.dialogService.open(ManageVariantsQuantityFormComponent, {
+			context: {
+				variants: this.value
 			}
-		);
+		});
 
-		firstValueFrom(dialog.onClose)
-			.then((res) => {
-				this.inventoryStore.warehouseProductsCountUpdate$.next();
-			});
+		firstValueFrom(dialog.onClose).then((res) => {
+			this.inventoryStore.warehouseProductsCountUpdate$.next();
+		});
 	}
 }

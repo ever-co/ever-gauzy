@@ -19,7 +19,8 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, toUTC } from '@gauzy/common-angular';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import {
 	ClickableLinkComponent,
 	ContactLinksComponent,
@@ -29,17 +30,13 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	ProposalsService,
-	Store,
-	ToastrService
-} from '../../@core/services';
-import { ServerDataSource } from '../../@core/utils/smart-table';
+import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,
@@ -53,9 +50,7 @@ import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/
 	templateUrl: './proposals.component.html',
 	styleUrls: ['./proposals.component.scss']
 })
-export class ProposalsComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ProposalsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;
 	public selectedEmployeeId: IEmployee['id'] | null;
 	public selectedDateRange: IDateRangePicker;
@@ -153,7 +148,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				// Trigger a refresh of pagination
 				tap(() => this.refreshPagination()),
 				// Reset the proposals array
-				tap(() => this.proposals = []),
+				tap(() => (this.proposals = [])),
 				// Unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -175,14 +170,15 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 	 * Sets the view based on the component layout.
 	 */
 	setView(): void {
-		this.store.componentLayout$(this.viewComponentName)
+		this.store
+			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				// If the layout style is CARDS_GRID, reset the proposals array
-				tap(() => this.proposals = []),
+				tap(() => (this.proposals = [])),
 				// Trigger a refresh of proposals
 				tap(() => this.proposals$.next(true)),
 				untilDestroyed(this)
@@ -199,7 +195,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
@@ -218,15 +214,15 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
 		// Open the dialog for user confirmation
 		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
 			context: {
-				recordType: 'Proposal',
-			},
+				recordType: 'Proposal'
+			}
 		});
 
 		// Wait for the dialog to close and get the result
@@ -266,15 +262,15 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		if (selectedItem) {
 			this.selectProposal({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
 		// Open the dialog for user confirmation
 		const dialogRef = this.dialogService.open(ActionConfirmationComponent, {
 			context: {
-				recordType: 'status',
-			},
+				recordType: 'status'
+			}
 		});
 
 		// Wait for the dialog to close and get the result
@@ -293,7 +289,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					await this.proposalsService.update(proposalId, {
 						status: ProposalStatusEnum.ACCEPTED,
 						organizationId,
-						tenantId,
+						tenantId
 					});
 
 					// TODO: Translate the success message
@@ -346,7 +342,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					await this.proposalsService.update(proposalId, {
 						status: ProposalStatusEnum.SENT,
 						organizationId,
-						tenantId,
+						tenantId
 					});
 
 					this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
@@ -380,10 +376,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 
 		return {
 			text: statusText,
-			class: badgeClass,
+			class: badgeClass
 		};
 	};
-
 
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
@@ -407,13 +402,14 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				jobTitle: {
 					title: this.getTranslation('SM_TABLE.JOB_TITLE'),
 					type: this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ? 'custom' : 'string',
 					width: '25%',
-					renderComponent: this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ? NotesWithTagsComponent : null,
+					renderComponent:
+						this.dataLayoutStyle === ComponentLayoutStyleEnum.TABLE ? NotesWithTagsComponent : null,
 					componentInitFunction: (instance: NotesWithTagsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
@@ -436,7 +432,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 						instance.href = 'jobPostUrl';
-					},
+					}
 				},
 				organizationContact: {
 					title: this.getTranslation('SM_TABLE.CONTACT_NAME'),
@@ -472,7 +468,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 					}),
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				statusBadge: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -504,7 +500,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 				},
 				filterFunction: (tags: ITag[]) => {
 					const tagIds = [];
-					for (const tag of tags) { tagIds.push(tag.id); }
+					for (const tag of tags) {
+						tagIds.push(tag.id);
+					}
 					this.setFilter({ field: 'tags', search: tagIds });
 				},
 				sort: false
@@ -540,13 +538,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,
-			relations: [
-				'organization',
-				'employee',
-				'employee.user',
-				'tags',
-				'organizationContact'
-			],
+			relations: ['organization', 'employee', 'employee.user', 'tags', 'organizationContact'],
 			join: {
 				...(this.filters.join ? this.filters.join : {})
 			},
@@ -594,7 +586,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		this.totalProposals = proposals.length;
 
 		// Calculate the success rate
-		this.successRate = this.totalProposals ? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %` : '0 %';
+		this.successRate = this.totalProposals
+			? `${((this.countAccepted / this.totalProposals) * 100).toFixed(0)} %`
+			: '0 %';
 	}
 
 	/**
@@ -606,16 +600,20 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		id: item.id,
 		valueDate: item.valueDate,
 		jobPostUrl: item.jobPostUrl,
-		jobTitle: item.jobPostContent.toString().replace(/<[^>]*(>|$)|&nbsp;/g, '').split(/[\s,\n]+/).slice(0, 3).join(' '),
+		jobTitle: item.jobPostContent
+			.toString()
+			.replace(/<[^>]*(>|$)|&nbsp;/g, '')
+			.split(/[\s,\n]+/)
+			.slice(0, 3)
+			.join(' '),
 		jobPostContent: item.jobPostContent,
 		proposalContent: item.proposalContent,
 		tags: item.tags,
 		status: item.status,
 		statusBadge: this.statusMapper(item.status),
 		author: item.employee,
-		organizationContact: item.organizationContact ? item.organizationContact : null,
+		organizationContact: item.organizationContact ? item.organizationContact : null
 	});
-
 
 	/**
 	 * Retrieves proposals, sets up smart table source, and updates component state.
@@ -687,5 +685,5 @@ export class ProposalsComponent extends PaginationFilterBaseComponent
 		this.selectProposal({ isSelected: false, data: null });
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -3,13 +3,8 @@ import { CommonModule } from '@angular/common';
 import { AppsUrlsReportRoutingModule } from './apps-urls-report-routing.module';
 import { AppsUrlsReportComponent } from './apps-urls-report/apps-urls-report.component';
 import { FormsModule } from '@angular/forms';
-import {
-	NbIconModule,
-	NbSpinnerModule,
-	NbCardModule,
-	NbSelectModule
-} from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ActivitiesReportGridModule } from '../../../@shared/report/activities-report-grid/activities-report-grid.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from './../../../@shared/shared.module';
@@ -31,7 +26,7 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		ActivitiesReportGridModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
-    	GauzyFiltersModule
+		GauzyFiltersModule
 	]
 })
 export class AppsUrlsReportModule {}

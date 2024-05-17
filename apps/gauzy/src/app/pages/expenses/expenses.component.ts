@@ -16,10 +16,11 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/common-angular';
+import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
+import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
@@ -32,18 +33,14 @@ import {
 	InputFilterComponent,
 	VendorFilterComponent
 } from '../../@shared/table-filters';
-import { IPaginationBase, PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
+import {
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	ExpensesService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 import { ReplacePipe } from '../../@shared/pipes';
 
@@ -52,9 +49,7 @@ import { ReplacePipe } from '../../@shared/pipes';
 	templateUrl: './expenses.component.html',
 	styleUrls: ['./expenses.component.scss']
 })
-export class ExpensesComponent extends PaginationFilterBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class ExpensesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;
 	public employeeId: string | null;
 	public projectId: string | null;
@@ -202,10 +197,10 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap((componentLayout) => this.dataLayoutStyle = componentLayout),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
 				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
-				tap(() => this.expenses = []),
+				tap(() => (this.expenses = [])),
 				tap(() => this.expenses$.next(true)),
 				untilDestroyed(this)
 			)
@@ -234,7 +229,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 
 		return {
 			text: this.replacePipe.transform(value, '_', ' '),
-			class: badgeClass,
+			class: badgeClass
 		};
 	};
 
@@ -259,7 +254,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				vendorName: {
 					title: this.getTranslation('SM_TABLE.VENDOR'),
@@ -269,7 +264,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 						component: VendorFilterComponent
 					},
 					filterFunction: (value: IOrganizationVendor) => {
-						this.setFilter({ field: 'vendorId', search: (value)?.id || null });
+						this.setFilter({ field: 'vendorId', search: value?.id || null });
 					},
 					sort: false
 				},
@@ -281,7 +276,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 						component: ExpenseCategoryFilterComponent
 					},
 					filterFunction: (value: IExpenseCategory) => {
-						this.setFilter({ field: 'categoryId', search: (value)?.id || null });
+						this.setFilter({ field: 'categoryId', search: value?.id || null });
 					},
 					sort: false
 				},
@@ -294,7 +289,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				projectName: {
 					title: this.getTranslation('SM_TABLE.PROJECT'),
@@ -311,7 +306,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				notes: {
 					title: this.getTranslation('SM_TABLE.NOTES'),
@@ -345,7 +340,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				}
 			}
 		};
@@ -454,9 +449,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 					});
 
 					// Refresh the date range picker and show success toast
-					this.dateRangePickerBuilderService.refreshDateRangePicker(
-						moment(editedExpense.valueDate)
-					);
+					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(editedExpense.valueDate));
 					this.toastrService.success('NOTES.EXPENSES.OPEN_EDIT_EXPENSE_DIALOG', {
 						name: this.employeeName(employee)
 					});
@@ -574,7 +567,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 	 *                        - isSelected: A boolean indicating whether the item is selected.
 	 *                        - data: The expense data associated with the selected item.
 	 */
-	selectExpense({ isSelected, data }: { isSelected: boolean, data: IExpense }): void {
+	selectExpense({ isSelected, data }: { isSelected: boolean; data: IExpense }): void {
 		// Update the disableButton property based on the isSelected value
 		this.disableButton = !isSelected;
 
@@ -598,15 +591,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		// Create a new ServerDataSource for expenses
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/expense/pagination`,
-			relations: [
-				'employee',
-				'employee.user',
-				'category',
-				'vendor',
-				'tags',
-				'project',
-				'organizationContact'
-			],
+			relations: ['employee', 'employee.user', 'category', 'vendor', 'tags', 'project', 'organizationContact'],
 			where: {
 				organizationId,
 				tenantId,
@@ -705,5 +690,5 @@ export class ExpensesComponent extends PaginationFilterBaseComponent
 		return employee && employee.id ? employee.fullName.trim() : ALL_EMPLOYEES_SELECTED.firstName;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

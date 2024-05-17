@@ -11,7 +11,7 @@ import {
 	IOrganizationProjectUpdateInput,
 	IOrganizationProjectSetting
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -20,30 +20,17 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationProjectsService {
 	private readonly API_URL = `${API_PREFIX}/organization-projects`;
 
-	constructor(
-		private readonly _http: HttpClient
-	) { }
+	constructor(private readonly _http: HttpClient) {}
 
-	create(
-		body: IOrganizationProjectCreateInput
-	): Promise<IOrganizationProject> {
-		return firstValueFrom(
-			this._http.post<IOrganizationProject>(this.API_URL, body)
-		);
+	create(body: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.post<IOrganizationProject>(this.API_URL, body));
 	}
 
-	edit(
-		body: Partial<IOrganizationProjectUpdateInput>
-	): Promise<IOrganizationProject> {
-		return firstValueFrom(
-			this._http.put<IOrganizationProject>(`${this.API_URL}/${body.id}`, body)
-		);
+	edit(body: Partial<IOrganizationProjectUpdateInput>): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.put<IOrganizationProject>(`${this.API_URL}/${body.id}`, body));
 	}
 
-	getAllByEmployee(
-		id: IEmployee['id'],
-		where?: IOrganizationProjectsFindInput
-	): Promise<IOrganizationProject[]> {
+	getAllByEmployee(id: IEmployee['id'], where?: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
 		return firstValueFrom(
 			this._http.get<IOrganizationProject[]>(`${this.API_URL}/employee/${id}`, {
 				params: toParams({ ...where })
@@ -62,15 +49,13 @@ export class OrganizationProjectsService {
 		);
 	}
 
-	getById(id: IOrganizationProject['id'], relations: string[] = [],): Observable<IOrganizationProject> {
+	getById(id: IOrganizationProject['id'], relations: string[] = []): Observable<IOrganizationProject> {
 		return this._http.get<IOrganizationProject>(`${this.API_URL}/${id}`, {
 			params: toParams({ relations })
 		});
 	}
 
-	getCount(
-		request: IOrganizationProjectsFindInput
-	): Promise<number> {
+	getCount(request: IOrganizationProjectsFindInput): Promise<number> {
 		return firstValueFrom(
 			this._http.get<number>(`${this.API_URL}/count`, {
 				params: toParams({ ...request })
@@ -79,10 +64,7 @@ export class OrganizationProjectsService {
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
-		return firstValueFrom(
-			this._http
-				.put(`${this.API_URL}/employee`, updateInput)
-		);
+		return firstValueFrom(this._http.put(`${this.API_URL}/employee`, updateInput));
 	}
 
 	updateTaskViewMode(
@@ -95,9 +77,7 @@ export class OrganizationProjectsService {
 	}
 
 	delete(id: IOrganizationProject['id']): Promise<any> {
-		return firstValueFrom(
-			this._http.delete(`${this.API_URL}/${id}`)
-		);
+		return firstValueFrom(this._http.delete(`${this.API_URL}/${id}`));
 	}
 
 	/**

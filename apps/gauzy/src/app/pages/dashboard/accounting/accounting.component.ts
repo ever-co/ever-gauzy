@@ -6,37 +6,22 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	IAggregatedEmployeeStatistic,
-	IDateRangePicker,
-	IOrganization,
-	ISelectedEmployee
-} from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import {
-	DateRangePickerBuilderService,
-	EmployeesService,
-	EmployeeStatisticsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { EmployeesService, EmployeeStatisticsService, Store, ToastrService } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-dashboard-accounting',
 	templateUrl: './accounting.component.html',
-	styleUrls: [
-		'../../organizations/edit-organization/edit-organization.component.scss',
-		'./accounting.component.scss'
-	]
+	styleUrls: ['../../organizations/edit-organization/edit-organization.component.scss', './accounting.component.scss']
 })
-export class AccountingComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;
 	public selectedDateRange: IDateRangePicker;
 	public organization: IOrganization;
@@ -146,12 +131,13 @@ export class AccountingComponent extends TranslationBaseComponent
 			this.loading = true;
 
 			// Fetch aggregate statistics from the service
-			this.aggregatedEmployeeStatistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId({
-				organizationId,
-				tenantId,
-				startDate,
-				endDate
-			});
+			this.aggregatedEmployeeStatistics =
+				await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId({
+					organizationId,
+					tenantId,
+					startDate,
+					endDate
+				});
 
 			// Continue generating charts until there is data
 			do {
@@ -180,12 +166,12 @@ export class AccountingComponent extends TranslationBaseComponent
 
 		// Common options for chart datasets
 		const commonOptions = {
-			borderWidth: 2,               // Width of the dataset border
-			pointRadius: 2,              // Radius of the data points
-			pointHoverRadius: 4,         // Radius of the data points on hover
-			pointHoverBorderWidth: 4,    // Width of the border of data points on hover
-			tension: 0.4,                // Tension of the spline curve connecting data points
-			fill: false                  // Whether to fill the area under the line or not
+			borderWidth: 2, // Width of the dataset border
+			pointRadius: 2, // Radius of the data points
+			pointHoverRadius: 4, // Radius of the data points on hover
+			pointHoverBorderWidth: 4, // Width of the border of data points on hover
+			tension: 0.4, // Tension of the spline curve connecting data points
+			fill: false // Whether to fill the area under the line or not
 		};
 
 		// Extract dates and statistics for each chart type
@@ -239,22 +225,20 @@ export class AccountingComponent extends TranslationBaseComponent
 	 */
 	async selectEmployee(employee: ISelectedEmployee) {
 		// Fetch detailed information about the selected employee from the employeesService
-		const people = await firstValueFrom(
-			this.employeesService.getEmployeeById(employee.id, ['user'])
-		);
+		const people = await firstValueFrom(this.employeesService.getEmployeeById(employee.id, ['user']));
 
 		// Set the selected employee in the store
 		this.store.selectedEmployee = employee.id
 			? ({
-				id: people.id,
-				firstName: people.user.firstName,
-				lastName: people.user.lastName,
-				imageUrl: people.user.imageUrl,
-				employeeLevel: people.employeeLevel,
-				shortDescription: people.short_description
-			} as ISelectedEmployee)
+					id: people.id,
+					firstName: people.user.firstName,
+					lastName: people.user.lastName,
+					imageUrl: people.user.imageUrl,
+					employeeLevel: people.employeeLevel,
+					shortDescription: people.short_description
+			  } as ISelectedEmployee)
 			: ALL_EMPLOYEES_SELECTED;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

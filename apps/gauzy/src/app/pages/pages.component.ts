@@ -7,15 +7,10 @@ import { filter, map, take, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
-import {
-	FeatureEnum,
-	IOrganization,
-	IRolePermission,
-	IUser,
-	IntegrationEnum,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/common-angular';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
+import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	IJobMatchingEntity,
 	IntegrationEntitySettingServiceStoreService,
@@ -25,8 +20,6 @@ import {
 } from '../@core/services';
 import { ReportService } from './reports/all-report/report.service';
 import { AuthStrategy } from '../@core/auth/auth-strategy.service';
-import { TranslationBaseComponent } from '../@shared/language-base';
-import { NavMenuBuilderService, NavMenuSectionItem } from '../@core/services/nav-builder';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,9 +32,7 @@ import { NavMenuBuilderService, NavMenuSectionItem } from '../@core/services/nav
 		</ngx-one-column-layout>
 	`
 })
-export class PagesComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
 	public user: IUser;
 	public menu: NbMenuItem[] = [];
@@ -58,7 +49,7 @@ export class PagesComponent extends TranslationBaseComponent
 		private readonly authStrategy: AuthStrategy,
 		private readonly _integrationsService: IntegrationsService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
-		private readonly _navMenuBuilderService: NavMenuBuilderService,
+		private readonly _navMenuBuilderService: NavMenuBuilderService
 	) {
 		super(translate);
 	}
@@ -81,25 +72,28 @@ export class PagesComponent extends TranslationBaseComponent
 			.subscribe();
 		await this._createEntryPoint();
 
-		this.store.selectedOrganization$.pipe(
-			filter((organization: IOrganization) => !!organization),
-			distinctUntilChange(),
-			pairwise(), // Pair each emitted value with the previous one
-			tap(([organization]: [IOrganization, IOrganization]) => {
-				// Remove the specified menu items for previous selected organization
-				this._navMenuBuilderService.removeNavMenuItems(
-					// Define the base item IDs
-					this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organization.id}`), 'reports'
-				);
-			}),
-			untilDestroyed(this)
-		).subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
+				pairwise(), // Pair each emitted value with the previous one
+				tap(([organization]: [IOrganization, IOrganization]) => {
+					// Remove the specified menu items for previous selected organization
+					this._navMenuBuilderService.removeNavMenuItems(
+						// Define the base item IDs
+						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organization.id}`),
+						'reports'
+					);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getReportsMenus()),
 				tap(() => this.getIntegrationEntitySettings()),
 				untilDestroyed(this)
@@ -115,10 +109,7 @@ export class PagesComponent extends TranslationBaseComponent
 			)
 			.subscribe();
 
-		this.reportService.menuItems$.pipe(
-			distinctUntilChange(),
-			untilDestroyed(this)
-		).subscribe((menuItems) => {
+		this.reportService.menuItems$.pipe(distinctUntilChange(), untilDestroyed(this)).subscribe((menuItems) => {
 			if (menuItems) {
 				this.reportMenuItems = chain(menuItems)
 					.values()
@@ -171,9 +162,9 @@ export class PagesComponent extends TranslationBaseComponent
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => this.addOrganizationManageMenuItem(organization))
 			)
-		).pipe(
-			untilDestroyed(this)
-		).subscribe();
+		)
+			.pipe(untilDestroyed(this))
+			.subscribe();
 	}
 
 	/**
@@ -191,7 +182,8 @@ export class PagesComponent extends TranslationBaseComponent
 		// Note: We need to remove old menus before constructing new menus for the organization.
 		this._navMenuBuilderService.removeNavMenuItems(
 			// Define the base item IDs
-			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}`), 'reports'
+			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}`),
+			'reports'
 		);
 
 		// Validate if reportMenuItems is an array and has elements
@@ -204,13 +196,16 @@ export class PagesComponent extends TranslationBaseComponent
 			this.reportMenuItems.forEach((report: NavMenuSectionItem) => {
 				// Validate the structure of each report item
 				if (report && report.id && report.title) {
-					this._navMenuBuilderService.addNavMenuItem({
-						id: report.id, // Unique identifier for the menu item
-						title: report.title, // The title of the menu item
-						icon: report.icon, // The icon class for the menu item, using FontAwesome in this case
-						link: report.link, // The link where the menu item directs
-						data: report.data,
-					}, 'reports'); // The id of the section where this item should be added
+					this._navMenuBuilderService.addNavMenuItem(
+						{
+							id: report.id, // Unique identifier for the menu item
+							title: report.title, // The title of the menu item
+							icon: report.icon, // The icon class for the menu item, using FontAwesome in this case
+							link: report.link, // The link where the menu item directs
+							data: report.data
+						},
+						'reports'
+					); // The id of the section where this item should be added
 				}
 			});
 		} catch (error) {
@@ -226,17 +221,17 @@ export class PagesComponent extends TranslationBaseComponent
 	public getReportMenuBaseItemIds() {
 		// Define the base item IDs
 		return [
-			'amounts-owed',    // Outstanding amounts
-			'apps-urls',       // Applications and URLs
-			'client-budgets',  // Budgets per client
-			'daily-limits',    // Daily spending limits
-			'expense',         // Expense reports
+			'amounts-owed', // Outstanding amounts
+			'apps-urls', // Applications and URLs
+			'client-budgets', // Budgets per client
+			'daily-limits', // Daily spending limits
+			'expense', // Expense reports
 			'manual-time-edits', // Edits in time logs
-			'payments',        // Payment transactions
+			'payments', // Payment transactions
 			'project-budgets', // Budgets per project
-			'time-activity',   // Time-based activities
-			'weekly',          // Weekly summaries
-			'weekly-limits'    // Weekly spending limits
+			'time-activity', // Time-based activities
+			'weekly', // Weekly summaries
+			'weekly-limits' // Weekly spending limits
 		];
 	}
 
@@ -244,79 +239,78 @@ export class PagesComponent extends TranslationBaseComponent
 	 * Adds navigation menu item for managing organization.
 	 */
 	private addOrganizationManageMenuItem(organization: IOrganization): void {
-		this._navMenuBuilderService.addNavMenuItem({
-			id: 'organization-manage', // Unique identifier for the menu item
-			title: 'Manage', // The title of the menu item
-			icon: 'fas fa-globe-americas', // The icon class for the menu item, using FontAwesome in this case
-			link: `/pages/organizations/edit/${organization?.id}`, // The link where the menu item directs
-			pathMatch: 'prefix',
-			data: {
-				translationKey: 'MENU.MANAGE',
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_EDIT
-				], // Key for translation (i18n)
-				featureKey: FeatureEnum.FEATURE_ORGANIZATION //
-			}
-		}, 'organization', 'organization-equipment'); // The id of the section where this item should be added
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'organization-manage', // Unique identifier for the menu item
+				title: 'Manage', // The title of the menu item
+				icon: 'fas fa-globe-americas', // The icon class for the menu item, using FontAwesome in this case
+				link: `/pages/organizations/edit/${organization?.id}`, // The link where the menu item directs
+				pathMatch: 'prefix',
+				data: {
+					translationKey: 'MENU.MANAGE',
+					permissionKeys: [PermissionsEnum.ALL_ORG_EDIT], // Key for translation (i18n)
+					featureKey: FeatureEnum.FEATURE_ORGANIZATION //
+				}
+			},
+			'organization',
+			'organization-equipment'
+		); // The id of the section where this item should be added
 	}
 
 	/**
 	 * Adds navigation menu items for tasks.
 	 */
 	private addTasksNavigationMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItem({
-			id: 'tasks-my-tasks', // Unique identifier for the menu item
-			title: 'My Tasks', // The title of the menu item
-			icon: 'fas fa-user', // The icon class for the menu item, using FontAwesome in this case
-			link: '/pages/tasks/me', // The link where the menu item directs
-			data: {
-				translationKey: 'MENU.MY_TASKS', // Key for translation (i18n)
-				permissionKeys: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_TASK_VIEW
-				], // Array of permission keys required for this item
-				featureKey: FeatureEnum.FEATURE_MY_TASK, //
-				...(this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_TASK_ADD
-				) && {
-					add: '/pages/tasks/me?openAddDialog=true' //
-				})
-			}
-		}, 'tasks', 'tasks-team'); // The id of the section where this item should be added
+		this._navMenuBuilderService.addNavMenuItem(
+			{
+				id: 'tasks-my-tasks', // Unique identifier for the menu item
+				title: 'My Tasks', // The title of the menu item
+				icon: 'fas fa-user', // The icon class for the menu item, using FontAwesome in this case
+				link: '/pages/tasks/me', // The link where the menu item directs
+				data: {
+					translationKey: 'MENU.MY_TASKS', // Key for translation (i18n)
+					permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TASK_VIEW], // Array of permission keys required for this item
+					featureKey: FeatureEnum.FEATURE_MY_TASK, //
+					...(this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD) && {
+						add: '/pages/tasks/me?openAddDialog=true' //
+					})
+				}
+			},
+			'tasks',
+			'tasks-team'
+		); // The id of the section where this item should be added
 	}
 
 	/**
 	 * Add navigation menu items for jobs browse and matching.
 	 */
 	private addJobsNavigationMenuItems(): void {
-		this._navMenuBuilderService.addNavMenuItems([
-			{
-				id: 'jobs-browse', // Unique identifier for the menu item
-				title: 'Browse', // The title of the menu item
-				icon: 'fas fa-list', // The icon class for the menu item, using FontAwesome in this case
-				link: '/pages/jobs/search', // The link where the menu item directs
-				data: {
-					translationKey: 'MENU.JOBS_SEARCH', // Key for translation (i18n)
-					permissionKeys: [
-						PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
-						PermissionsEnum.ORG_JOB_MATCHING_VIEW
-					] // Array of permission keys required for this item
+		this._navMenuBuilderService.addNavMenuItems(
+			[
+				{
+					id: 'jobs-browse', // Unique identifier for the menu item
+					title: 'Browse', // The title of the menu item
+					icon: 'fas fa-list', // The icon class for the menu item, using FontAwesome in this case
+					link: '/pages/jobs/search', // The link where the menu item directs
+					data: {
+						translationKey: 'MENU.JOBS_SEARCH', // Key for translation (i18n)
+						permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW, PermissionsEnum.ORG_JOB_MATCHING_VIEW] // Array of permission keys required for this item
+					}
+				},
+				{
+					id: 'jobs-matching', // Unique identifier for the menu item
+					title: 'Matching', // The title of the menu item
+					icon: 'fas fa-user', // The icon class for the menu item, using FontAwesome in this case
+					link: '/pages/jobs/matching', // The link where the menu item directs
+					data: {
+						translationKey: 'MENU.JOBS_MATCHING', // Key for translation (i18n)
+						permissionKeys: [PermissionsEnum.ORG_JOB_MATCHING_VIEW] // Array of permission keys required for this item
+					}
 				}
-			},
-			{
-				id: 'jobs-matching', // Unique identifier for the menu item
-				title: 'Matching', // The title of the menu item
-				icon: 'fas fa-user', // The icon class for the menu item, using FontAwesome in this case
-				link: '/pages/jobs/matching', // The link where the menu item directs
-				data: {
-					translationKey: 'MENU.JOBS_MATCHING', // Key for translation (i18n)
-					permissionKeys: [
-						PermissionsEnum.ORG_JOB_MATCHING_VIEW
-					] // Array of permission keys required for this item
-				}
-			}
-		], 'jobs', 'jobs-proposal-template'); // The id of the section where this item should be added
+			],
+			'jobs',
+			'jobs-proposal-template'
+		); // The id of the section where this item should be added
 	}
 
 	/**
@@ -378,12 +372,10 @@ export class PagesComponent extends TranslationBaseComponent
 		const id = this.store.userId;
 		if (!id) return;
 
-		this.user = await this.usersService.getMe([
-			'role.rolePermissions',
-			'tenant',
-			'tenant.featureOrganizations',
-			'tenant.featureOrganizations.feature'
-		], true);
+		this.user = await this.usersService.getMe(
+			['role.rolePermissions', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'],
+			true
+		);
 
 		this.authStrategy.electronAuthentication({
 			user: this.user,
@@ -401,15 +393,11 @@ export class PagesComponent extends TranslationBaseComponent
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant, role } = this.user;
-		this.store.featureTenant = tenant.featureOrganizations.filter(
-			(item) => !item.organizationId
-		);
+		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 
 		//only enabled permissions assign to logged in user
-		this.store.userRolePermissions = role.rolePermissions.filter(
-			(permission) => permission.enabled
-		);
+		this.store.userRolePermissions = role.rolePermissions.filter((permission) => permission.enabled);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

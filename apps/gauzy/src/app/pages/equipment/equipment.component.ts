@@ -1,18 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import {
-	IEquipment,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { IEquipment, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import {
 	IPaginationBase,
@@ -20,14 +17,10 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import {
-	PictureNameTagsComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
+import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
-import { ServerDataSource } from '../../@core/utils/smart-table';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,7 +29,6 @@ import { InputFilterComponent } from '../../@shared/table-filters';
 	styleUrls: ['./equipment.component.scss']
 })
 export class EquipmentComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	settingsSmartTable: object;
 	loading: boolean = true;
 	disableButton: boolean = true;
@@ -87,10 +79,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.equipments$.next(true)),
 				untilDestroyed(this)
@@ -98,10 +87,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.save()),
 				untilDestroyed(this)
@@ -109,11 +95,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 		this._refresh$
 			.pipe(
-				filter(
-					() =>
-						this.dataLayoutStyle ===
-						ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
 				tap(() => (this.equipments = [])),
 				untilDestroyed(this)
@@ -121,7 +103,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	setView() {
 		this.viewComponentName = ComponentEnum.EQUIPMENT;
@@ -129,15 +111,9 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.equipments = [])),
 				tap(() => this.equipments$.next(true)),
 				untilDestroyed(this)
@@ -282,9 +258,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
 			await this.equipmentService.delete(this.selectedEquipment.id);
@@ -317,9 +291,7 @@ export class EquipmentComponent extends PaginationFilterBaseComponent implements
 				...(this.filters.where ? this.filters.where : {})
 			},
 			finalize: () => {
-				if (
-					this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID
-				) {
+				if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 					this.equipments.push(...this.smartTableSource.getData());
 				}
 				this.setPagination({

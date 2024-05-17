@@ -25,9 +25,14 @@
 			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
 			"@nebular/*": ["./node_modules/@nebular/*"],
-			"ng2-completer": ["node_modules/@akveo/ng2-completer"],
+			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
+			"@ngx-translate/*": ["./apps/gauzy/node_modules/@ngx-translate/*"],
+			"ckeditor4-angular/*": ["./apps/gauzy/node_modules/ckeditor4-angular/*"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
-			"swiper_angular": ["./node_modules/swiper/angular"]
+			"swiper_angular": ["./node_modules/swiper/angular"],
+			"@gauzy/ui-sdk": ["./packages/ui-sdk/src/lib/index"],
+			"@gauzy/ui-sdk/*": ["./packages/ui-sdk/src/lib/*"],
+			"@gauzy/plugins/job-search-ui": ["./packages/plugins/job-search-ui/src/lib/index"]
 		},
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,

@@ -6,20 +6,18 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/contracts';
 import { InvoicesService, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './estimate-email.component.html'
 })
-export class EstimateEmailComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class EstimateEmailComponent extends TranslationBaseComponent implements OnInit {
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly invoicesService: InvoicesService,
 		public readonly translateService: TranslateService,
-		private readonly toastrService: ToastrService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 	}
@@ -29,18 +27,16 @@ export class EstimateEmailComponent extends TranslationBaseComponent
 	loading: boolean = true;
 
 	ngOnInit() {
-		this.route.data.pipe(
-			filter((data) => !!data && !!data.estimate),
-			tap(({ estimate }) => this.validateEstimateEmail(estimate, this.route.snapshot.queryParams)),
-			untilDestroyed(this),
-		)
-		.subscribe();
+		this.route.data
+			.pipe(
+				filter((data) => !!data && !!data.estimate),
+				tap(({ estimate }) => this.validateEstimateEmail(estimate, this.route.snapshot.queryParams)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
-	async validateEstimateEmail(
-		estimateEmail: IEstimateEmail,
-		params: Params
-	) {
+	async validateEstimateEmail(estimateEmail: IEstimateEmail, params: Params) {
 		try {
 			if (estimateEmail instanceof HttpErrorResponse) {
 				this.errorMessage = this.getTranslation('INVOICES_PAGE.ESTIMATES.ERROR');
@@ -61,12 +57,7 @@ export class EstimateEmailComponent extends TranslationBaseComponent
 		}
 	}
 
-	async updateEstimate(
-		id: string,
-		token: string,
-		isAccepted: boolean,
-		convertAcceptedEstimates: boolean
-	) {
+	async updateEstimate(id: string, token: string, isAccepted: boolean, convertAcceptedEstimates: boolean) {
 		let status: EstimateStatusTypesEnum;
 		if (isAccepted) {
 			if (convertAcceptedEstimates) {
@@ -77,7 +68,7 @@ export class EstimateEmailComponent extends TranslationBaseComponent
 		} else {
 			status = EstimateStatusTypesEnum.REJECTED;
 		}
-		await this.invoicesService.updateWithoutAuth(id, token,  {
+		await this.invoicesService.updateWithoutAuth(id, token, {
 			status,
 			isEstimate: convertAcceptedEstimates ? false : true
 		});

@@ -10,7 +10,7 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
-import { toLocal, toParams, toUTC } from '@gauzy/common-angular';
+import { toLocal, toParams, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { Store as AppStore } from '../../@core/services/store.service';

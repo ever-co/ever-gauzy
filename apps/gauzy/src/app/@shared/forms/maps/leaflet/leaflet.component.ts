@@ -1,13 +1,6 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	EventEmitter,
-	Input,
-	Output
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
-import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -16,7 +9,6 @@ import { environment } from '../../../../../environments/environment';
 	styleUrls: ['./leaflet.component.scss']
 })
 export class LeafletMapComponent implements AfterViewInit {
-
 	public loaded: boolean;
 	private _zoom: number;
 	private _icon: string;
@@ -34,10 +26,7 @@ export class LeafletMapComponent implements AfterViewInit {
 	protected options = {
 		layers: [this.layer],
 		zoom: this.zoom,
-		center: latLng(
-			environment.DEFAULT_LATITUDE,
-			environment.DEFAULT_LONGITUDE
-		)
+		center: latLng(environment.DEFAULT_LATITUDE, environment.DEFAULT_LONGITUDE)
 	};
 	markers: Layer[] = [];
 
@@ -70,12 +59,12 @@ export class LeafletMapComponent implements AfterViewInit {
 	@Output() mapClicked = new EventEmitter<LatLng>();
 	@Output() mapDoubleClicked = new EventEmitter<LatLng>();
 
-	constructor(
-		private readonly cdr: ChangeDetectorRef
-	) {}
+	constructor(private readonly cdr: ChangeDetectorRef) {}
 
 	ngAfterViewInit() {
-		setTimeout(() => { this.loaded = true; }, 200);
+		setTimeout(() => {
+			this.loaded = true;
+		}, 200);
 		this.cdr.detectChanges();
 	}
 

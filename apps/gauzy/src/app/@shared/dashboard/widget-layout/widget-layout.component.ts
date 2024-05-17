@@ -13,8 +13,7 @@ import {
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
-import { GuiDrag } from '../interfaces/gui-drag.abstract';
-import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
+import { GuiDrag, LayoutWithDraggableObject } from '@gauzy/ui-sdk/shared';
 import { WidgetComponent } from '../widget/widget.component';
 import { WidgetService } from '../widget/widget.service';
 
@@ -34,10 +33,7 @@ export class WidgetLayoutComponent
 	}
 	@ViewChildren(WidgetComponent) listWidgets: QueryList<GuiDrag>;
 
-	constructor(
-		private readonly widgetService: WidgetService,
-		private readonly cdr: ChangeDetectorRef
-	) {
+	constructor(private readonly widgetService: WidgetService, private readonly cdr: ChangeDetectorRef) {
 		super();
 	}
 	ngAfterViewChecked(): void {
@@ -47,21 +43,14 @@ export class WidgetLayoutComponent
 	ngAfterViewInit(): void {
 		this.listWidgets.changes
 			.pipe(
-				tap(
-					(listWidgets: QueryList<GuiDrag>) =>
-						(this.widgetService.widgets$ = listWidgets.toArray())
-				),
+				tap((listWidgets: QueryList<GuiDrag>) => (this.widgetService.widgets$ = listWidgets.toArray())),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	protected drop(event: CdkDragDrop<number>): void {
-		moveItemInArray(
-			this.draggableObject,
-			event.previousContainer.data,
-			event.container.data
-		);
+		moveItemInArray(this.draggableObject, event.previousContainer.data, event.container.data);
 		this.widgetService.widgetsRef = this.draggableObject;
 		this.widgetService.save();
 	}
@@ -71,10 +60,7 @@ export class WidgetLayoutComponent
 	}
 
 	get widgets() {
-		if (
-			this.widgetService.widgetsRef.length > 0 &&
-			this.draggableObject !== this.widgetService.widgetsRef
-		)
+		if (this.widgetService.widgetsRef.length > 0 && this.draggableObject !== this.widgetService.widgetsRef)
 			this.draggableObject = this.widgetService.widgetsRef;
 		return this.draggableObject;
 	}

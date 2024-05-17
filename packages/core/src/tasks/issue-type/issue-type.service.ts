@@ -1,15 +1,15 @@
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteResult, SelectQueryBuilder } from 'typeorm';
+import { DeleteResult, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import {
 	IIssueType,
 	IIssueTypeCreateInput,
 	IIssueTypeFindInput,
+	IIssueTypeUpdateInput,
 	IOrganization,
 	IPagination,
-	ITenant,
+	ITenant
 } from '@gauzy/contracts';
 import { IssueType } from './issue-type.entity';
 import { TaskStatusPrioritySizeService } from './../task-status-priority-size.service';
@@ -21,13 +21,9 @@ import { TypeOrmIssueTypeRepository } from './repository/type-orm-issue-type.rep
 @Injectable()
 export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	constructor(
-		@InjectRepository(IssueType)
 		readonly typeOrmIssueTypeRepository: TypeOrmIssueTypeRepository,
-
 		readonly mikroOrmIssueTypeRepository: MikroOrmIssueTypeRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		super(typeOrmIssueTypeRepository, mikroOrmIssueTypeRepository, knexConnection);
 	}
@@ -40,9 +36,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 	 */
 	async delete(id: IIssueType['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
-			where: {
-				isSystem: false
-			},
+			where: { isSystem: false }
 		});
 	}
 
@@ -98,26 +92,32 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			}));
 
 			// Function to generate issue types based on a source array
-			const generateIssueTypes = (source: IIssueType[]) => tenants.flatMap((tenant) =>
-				source.map(({ name, value, description, icon, color, imageId = null }: IIssueType) => ({
-					name,
-					value,
-					description,
-					icon,
-					color,
-					imageId,
-					tenant,
-					isSystem: false
-				}))
-			);
+			const generateIssueTypes = (source: IIssueType[]) =>
+				tenants.flatMap((tenant) =>
+					source.map(({ name, value, description, icon, color, isDefault, imageId = null }: IIssueType) => ({
+						name,
+						value,
+						description,
+						icon,
+						color,
+						imageId,
+						tenant,
+						isDefault,
+						isSystem: false
+					}))
+				);
 
 			// Generate the array of issue types based on existing or default values
-			const issueTypes: IIssueType[] = total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
+			const issueTypes: IIssueType[] =
+				total > 0 ? generateIssueTypes(items) : generateIssueTypes(defaultIssueTypes);
 
 			// Save the created or fetched issue types to the repository and return the result.
 			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
-			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
+			throw new BadRequestException(
+				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				error
+			);
 		}
 	}
 
@@ -132,22 +132,27 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			const { items = [] } = await super.fetchAll({ tenantId });
 
 			// Use map to generate issue types for each item.
-			const issueTypes: IIssueType[] = items.map((item: IIssueType) => (
-				new IssueType({
-					tenantId,
-					name: item.name,
-					value: item.value,
-					description: item.description,
-					icon: item.icon,
-					color: item.color,
-					imageId: item.imageId,
-					organization,
-					isSystem: false
-				})
-			));
+			const issueTypes: IIssueType[] = items.map(
+				(item: IIssueType) =>
+					new IssueType({
+						tenantId,
+						name: item.name,
+						value: item.value,
+						description: item.description,
+						icon: item.icon,
+						color: item.color,
+						imageId: item.imageId,
+						isDefault: item.isDefault,
+						organization,
+						isSystem: false
+					})
+			);
 			return await this.typeOrmRepository.save(issueTypes);
 		} catch (error) {
-			throw new BadRequestException('Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.', error);
+			throw new BadRequestException(
+				'Failed to create or fetch issue types for the specified tenants. Some required parameters are missing or incorrect.',
+				error
+			);
 		}
 	}
 
@@ -170,7 +175,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			// Wait for all issue types to be created and resolve the promises
 			const issueTypes = await Promise.all(
 				items.map(async (item: IIssueType) => {
-					const { name, value, description, icon, color, imageId } = item;
+					const { name, value, description, icon, color, imageId, isDefault } = item;
 					// Create and return the issue type
 					return await this.create({
 						...entity,
@@ -180,6 +185,7 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 						icon,
 						color,
 						imageId,
+						isDefault,
 						isSystem: false
 					});
 				})
@@ -187,7 +193,58 @@ export class IssueTypeService extends TaskStatusPrioritySizeService<IssueType> {
 			return issueTypes;
 		} catch (error) {
 			// If an error occurs, throw an HttpException with a more specific message.
-			throw new HttpException('Failed to create bulk issue types for the organization entity.', HttpStatus.BAD_REQUEST);
+			throw new HttpException(
+				'Failed to create bulk issue types for the organization entity.',
+				HttpStatus.BAD_REQUEST
+			);
+		}
+	}
+
+	/**
+	 * Marks an issue type as default and updates other issue types accordingly.
+	 *
+	 * @param id The ID of the issue type to mark as default.
+	 * @param input An object containing input parameters, including organization, team, and project IDs.
+	 * @returns A Promise that resolves to an array of updated issue types.
+	 */
+	async markAsDefault(id: IIssueType['id'], input: IIssueTypeUpdateInput): Promise<IIssueType[]> {
+		try {
+			const { organizationId, organizationTeamId, projectId } = input;
+			const tenantId = RequestContext.currentTenantId() || input.tenantId;
+
+			// Find the issue type by ID
+			const issueType: IIssueType = await this.findOneByIdString(id, { where: { isSystem: false } });
+
+			// Update the issue type to mark it as default
+			issueType.isDefault = true;
+
+			// Define options to find issue types to update
+			const findOptions: FindOptionsWhere<IssueType> = {
+				...(organizationId ? { organizationId } : {}),
+				...(organizationTeamId ? { organizationTeamId } : {}),
+				...(projectId ? { projectId } : {}),
+				tenantId,
+				isSystem: false
+			};
+
+			// Update other issue types to mark them as non-default
+			await super.update(findOptions, { isDefault: false });
+
+			// Save the updated issue type
+			await super.save(issueType);
+
+			// Fetch and return all issue types based on the specified parameters
+			const { items = [] } = await super.fetchAll({
+				tenantId,
+				organizationId,
+				organizationTeamId,
+				projectId
+			});
+
+			return items;
+		} catch (error) {
+			// If an error occurs, throw a BadRequestException
+			throw new BadRequestException(error);
 		}
 	}
 }

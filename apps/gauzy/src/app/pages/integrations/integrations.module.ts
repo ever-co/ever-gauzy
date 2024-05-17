@@ -9,16 +9,16 @@ import {
 	NbIconModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { NgxPermissionsModule } from "ngx-permissions";
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { SharedModule } from '../../@shared/shared.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from "../../@shared/gauzy-button-action/gauzy-button-action.module";
-import { TableComponentsModule } from "../../@shared/table-components";
+import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { TableComponentsModule } from '../../@shared/table-components';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
@@ -40,10 +40,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		TableComponentsModule,
 		NoDataMessageModule
 	],
-	declarations: [
-		IntegrationLayoutComponent,
-		IntegrationListComponent,
-		IntegrationsComponent,
-	],
+	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent]
 })
-export class IntegrationsModule { }
+export class IntegrationsModule {}

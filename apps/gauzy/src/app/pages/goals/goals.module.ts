@@ -44,7 +44,7 @@ import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-c
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
 import { GoalTemplateSelectModule } from '../../@shared/goal/goal-template-select/goal-template-select.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -102,4 +102,4 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NoDataMessageModule
 	]
 })
-export class GoalsModule { }
+export class GoalsModule {}

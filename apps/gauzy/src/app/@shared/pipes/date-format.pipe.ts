@@ -3,7 +3,7 @@ import { IOrganization, RegionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -15,9 +15,7 @@ export class DateFormatPipe implements PipeTransform {
 	dateFormat: string = 'd MMMM, y';
 	regionCode: string = RegionsEnum.EN;
 
-	constructor(
-		private readonly store: Store
-	) {
+	constructor(private readonly store: Store) {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -31,11 +29,7 @@ export class DateFormatPipe implements PipeTransform {
 			.subscribe();
 	}
 
-	transform(
-		value: Date | string | number | null | undefined,
-		locale?: string,
-		defaultFormat?: string
-	) {
+	transform(value: Date | string | number | null | undefined, locale?: string, defaultFormat?: string) {
 		if (!value) {
 			return;
 		}

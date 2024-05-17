@@ -1,13 +1,6 @@
 import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import {
-	Component,
-	ViewChild,
-	OnDestroy,
-	OnInit,
-	forwardRef,
-	Input
-} from '@angular/core';
+import { Component, ViewChild, OnDestroy, OnInit, forwardRef, Input } from '@angular/core';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -26,19 +19,21 @@ import {
 	IEventType,
 	IEmployee,
 	IAvailabilitySlot,
-	IOrganization
+	IOrganization,
+	WeekDaysEnum
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '../../../@core/services/store.service';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertLocalToTimezone } from '@gauzy/common-angular';
+import { convertLocalToTimezone } from '@gauzy/ui-sdk/common';
 import { ToastrService } from '../../../@core/services/toastr.service';
+import { dayOfWeekAsString } from '../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,9 +48,7 @@ import { ToastrService } from '../../../@core/services/toastr.service';
 		}
 	]
 })
-export class AppointmentComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class AppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
 
 	@Input()
@@ -132,9 +125,7 @@ export class AppointmentComponent
 					this._selectedOrganizationId = org.id;
 					if (org.timeZone && !this.selectedEventType) {
 						this.selectedTimeZoneName = org.timeZone;
-						this.selectedTimeZoneOffset = timezone
-							.tz(org.timeZone)
-							.format('Z');
+						this.selectedTimeZoneOffset = timezone.tz(org.timeZone).format('Z');
 					}
 				}
 			});
@@ -146,11 +137,7 @@ export class AppointmentComponent
 			)
 			.subscribe((employee) => {
 				// Will only call in case of public appointment booking
-				if (
-					this.employee &&
-					this.employee.id &&
-					this.selectedEventType
-				) {
+				if (this.employee && this.employee.id && this.selectedEventType) {
 					return this.renderAppointmentsAndSlots(this.employee.id);
 				}
 
@@ -168,28 +155,26 @@ export class AppointmentComponent
 	}
 
 	getCalendarOption() {
-		let currentDay = moment().day();
-		while (currentDay > 0) {
-			this.hiddenDays.push(currentDay--);
+		// Get yesterday's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+		let currentDay = moment().subtract(1, 'day').day();
+
+		// Loop to hide days from yesterday until Sunday
+		while (currentDay >= 0) {
+			this.hiddenDays.push(currentDay);
+			currentDay--;
 		}
 		this.calendarOptions = {
 			eventClick: (event) => {
 				const eventObject = event.event;
 				if (eventObject.extendedProps['type'] !== 'BookedSlot') {
-					this.router.navigate(
-						[
-							this.appointmentFormURL ||
-								this.getManageRoute(this._selectedEmployeeId)
-						],
-						{
-							state: {
-								dateStart: eventObject.start,
-								dateEnd: eventObject.end,
-								selectedEventType: this.selectedEventType,
-								timezone: this.selectedTimeZoneName
-							}
+					this.router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId)], {
+						state: {
+							dateStart: eventObject.start,
+							dateEnd: eventObject.end,
+							selectedEventType: this.selectedEventType,
+							timezone: this.selectedTimeZoneName
 						}
-					);
+					});
 				} else {
 					const config = {
 						dateStart: eventObject.start,
@@ -197,14 +182,10 @@ export class AppointmentComponent
 						timezone: this.selectedTimeZoneName
 					};
 					const prevSlot = this.calendarEvents.find(
-						(o) =>
-							new Date(o.end.toString()).getTime() ===
-							eventObject.start.getTime()
+						(o) => new Date(o.end.toString()).getTime() === eventObject.start.getTime()
 					);
 					const nextSlot = this.calendarEvents.find(
-						(o) =>
-							new Date(o.start.toString()).getTime() ===
-							eventObject.end.getTime()
+						(o) => new Date(o.start.toString()).getTime() === eventObject.end.getTime()
 					);
 
 					if (
@@ -218,12 +199,7 @@ export class AppointmentComponent
 					}
 
 					this.router.navigate(
-						[
-							this.getManageRoute(
-								this._selectedEmployeeId,
-								eventObject.extendedProps['id']
-							)
-						],
+						[this.getManageRoute(this._selectedEmployeeId, eventObject.extendedProps['id'])],
 						{ state: config }
 					);
 				}
@@ -233,28 +209,20 @@ export class AppointmentComponent
 			headerToolbar: this.headerToolbarOptions,
 			hiddenDays: this.hiddenDays,
 			themeSystem: 'bootstrap',
-			plugins: [
-				dayGridPlugin,
-				timeGrigPlugin,
-				interactionPlugin,
-				bootstrapPlugin,
-				momentTimezonePlugin
-			],
+			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin, momentTimezonePlugin],
 			weekends: true,
 			height: 'auto',
-			dayHeaderDidMount: this.headerMount.bind(this)
+			dayHeaderDidMount: this.headerMount.bind(this),
+			firstDay: dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY)
 		};
 	}
 
 	async fetchTimeOff() {
-		const data = await firstValueFrom(this.timeOffService
-			.getAllTimeOffRecords(['employees', 'employees.user'], {
+		const data = await firstValueFrom(
+			this.timeOffService.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
 				tenantId: this.organization.tenantId,
-				employeeId:
-					this._selectedEmployeeId ||
-					(this.employee && this.employee.id) ||
-					null
+				employeeId: this._selectedEmployeeId || (this.employee && this.employee.id) || null
 			})
 		);
 
@@ -263,9 +231,7 @@ export class AppointmentComponent
 
 	bookPublicAppointment() {
 		this._selectedEmployeeId
-			? this.router.navigate([
-					`/share/employee/${this._selectedEmployeeId}`
-			  ])
+			? this.router.navigate([`/share/employee/${this._selectedEmployeeId}`])
 			: this.router.navigate(['/share/employee']);
 	}
 
@@ -300,9 +266,7 @@ export class AppointmentComponent
 			this.appointmentEmployeesService.findEmployeeAppointments(employeeId).pipe(untilDestroyed(this))
 		);
 		this.renderBookedAppointments(
-			employeeAppointments
-				.map((o) => o.employeeAppointment)
-				.filter((o) => o && o.status !== 'Cancelled')
+			employeeAppointments.map((o) => o.employeeAppointment).filter((o) => o && o.status !== 'Cancelled')
 		);
 	}
 
@@ -322,10 +286,7 @@ export class AppointmentComponent
 	}
 
 	getManageRoute(employeeId: string = '', appointmentId: string = '') {
-		return (
-			`/pages/employees/appointments/manage/${employeeId}` +
-			(appointmentId ? `/${appointmentId}` : '')
-		);
+		return `/pages/employees/appointments/manage/${employeeId}` + (appointmentId ? `/${appointmentId}` : '');
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
@@ -337,26 +298,16 @@ export class AppointmentComponent
 		};
 
 		try {
-			const slots = await this.availabilitySlotsService.getAll(
-				[],
-				findObj
-			);
+			const slots = await this.availabilitySlotsService.getAll([], findObj);
 			this.slots = slots.items;
-			this.dateSpecificSlots = this.slots.filter(
-				(o) => o.type === 'Default'
-			);
-			this.recurringSlots = this.slots.filter(
-				(o) => o.type === 'Recurring'
-			);
-			const currentStart = this.calendarComponent.getApi().view
-				.currentStart;
+			this.dateSpecificSlots = this.slots.filter((o) => o.type === 'Default');
+			this.recurringSlots = this.slots.filter((o) => o.type === 'Recurring');
+			const currentStart = this.calendarComponent.getApi().view.currentStart;
 			const currentEnd = this.calendarComponent.getApi().view.currentEnd;
 			let dayDiff = moment(currentEnd).diff(currentStart, 'days');
 
 			while (dayDiff > 0) {
-				this._prepareSlots(
-					new Date(moment(currentStart).add(dayDiff, 'days').format())
-				);
+				this._prepareSlots(new Date(moment(currentStart).add(dayDiff, 'days').format()));
 				dayDiff--;
 			}
 		} catch (error) {
@@ -373,24 +324,10 @@ export class AppointmentComponent
 	headerMount(config) {
 		const currentStart = this.calendarComponent.getApi().view.currentStart;
 		const currentEnd = this.calendarComponent.getApi().view.currentEnd;
-		const hideDays = moment().isBetween(
-			currentStart,
-			currentEnd,
-			'day',
-			'[]'
-		)
-			? this.hiddenDays
-			: [];
+		const hideDays = moment().isBetween(currentStart, currentEnd, 'day', '[]') ? this.hiddenDays : [];
 		this.calendarComponent.getApi().setOption('hiddenDays', hideDays);
-		this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(
-			moment(),
-			'day'
-		)
-			? 'next'
-			: 'prev,next';
-		this.calendarComponent
-			.getApi()
-			.setOption('headerToolbar', this.headerToolbarOptions);
+		this.headerToolbarOptions.left = moment(currentStart).isSameOrBefore(moment(), 'day') ? 'next' : 'prev,next';
+		this.calendarComponent.getApi().setOption('headerToolbar', this.headerToolbarOptions);
 	}
 
 	private _prepareSlots(date: Date) {
@@ -399,9 +336,7 @@ export class AppointmentComponent
 
 		let foundDateSpecificSlot = false;
 		const slot = this.dateSpecificSlots.find(
-			(o) =>
-				moment(o.startTime).format('MMM Do YY') ===
-				moment(date).format('MMM Do YY')
+			(o) => moment(o.startTime).format('MMM Do YY') === moment(date).format('MMM Do YY')
 		);
 
 		if (slot) {
@@ -409,8 +344,7 @@ export class AppointmentComponent
 			this.getAvailabilitySlots(slot);
 		}
 
-		if (foundDateSpecificSlot)
-			return this.calendarComponent.getApi().refetchEvents();
+		if (foundDateSpecificSlot) return this.calendarComponent.getApi().refetchEvents();
 
 		for (const innerSlot of this.recurringSlots) {
 			const startDay = moment(innerSlot.startTime).day();
@@ -423,9 +357,7 @@ export class AppointmentComponent
 			const endHours = moment(innerSlot.endTime).hours();
 			const endMinutes = moment(innerSlot.endTime).minutes();
 
-			const eventStartDate = moment(date)
-				.set('hours', startHours)
-				.set('minutes', startMinutes);
+			const eventStartDate = moment(date).set('hours', startHours).set('minutes', startMinutes);
 			const eventEndDate = moment(date)
 				.add(endDay - day, 'days')
 				.set('hours', endHours)
@@ -439,12 +371,7 @@ export class AppointmentComponent
 		this.calendarComponent.getApi().refetchEvents();
 	}
 
-	checkAndAddEventToCalendar(
-		startTime: string,
-		endTime: string,
-		id: string,
-		type: string
-	) {
+	checkAndAddEventToCalendar(startTime: string, endTime: string, id: string, type: string) {
 		if (
 			startTime === endTime ||
 			new Date(startTime).getTime() < new Date().getTime() ||
@@ -460,31 +387,17 @@ export class AppointmentComponent
 		const durationCheck = type === 'AvailabilitySlot' ? true : false;
 		const find = this.calendarEvents.find(
 			(o) =>
-				new Date(o.start.toString()).getTime() ===
-					new Date(startTime).getTime() &&
-				new Date(o.end.toString()).getTime() ===
-					new Date(endTime).getTime()
+				new Date(o.start.toString()).getTime() === new Date(startTime).getTime() &&
+				new Date(o.end.toString()).getTime() === new Date(endTime).getTime()
 		);
-		const allowedDuration =
-			moment(endTime).diff(moment(startTime), 'minutes') >=
-			this.allowedDuration;
-		if (
-			!find ||
-			!durationCheck ||
-			this._selectedEmployeeId ||
-			this._selectedOrganizationId ||
-			allowedDuration
-		) {
-			const startDate = moment(
-				convertLocalToTimezone(
-					startTime,
-					null,
-					this.selectedTimeZoneName
-				)
-			).format('YYYY-MM-DD hh:mm:ss');
-			const endDate = moment(
-				convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)
-			).format('YYYY-MM-DD hh:mm:ss');
+		const allowedDuration = moment(endTime).diff(moment(startTime), 'minutes') >= this.allowedDuration;
+		if (!find || !durationCheck || this._selectedEmployeeId || this._selectedOrganizationId || allowedDuration) {
+			const startDate = moment(convertLocalToTimezone(startTime, null, this.selectedTimeZoneName)).format(
+				'YYYY-MM-DD hh:mm:ss'
+			);
+			const endDate = moment(convertLocalToTimezone(endTime, null, this.selectedTimeZoneName)).format(
+				'YYYY-MM-DD hh:mm:ss'
+			);
 
 			this.calendarEvents.push({
 				start: startDate,
@@ -502,58 +415,31 @@ export class AppointmentComponent
 		const appointmentsOnDay = this.appointments
 			.filter(
 				(o) =>
-					moment(o.startDateTime)
-						.utc()
-						.isSame(moment(slot.startTime).utc()) ||
-					moment(o.startDateTime)
-						.utc()
-						.isBetween(
-							moment(slot.startTime).utc(),
-							moment(slot.endTime).utc()
-						)
+					moment(o.startDateTime).utc().isSame(moment(slot.startTime).utc()) ||
+					moment(o.startDateTime).utc().isBetween(moment(slot.startTime).utc(), moment(slot.endTime).utc())
 			)
-			.sort((a, b) =>
-				moment(a.startDateTime)
-					.utc()
-					.isBefore(moment(b.startDateTime).utc())
-					? -1
-					: 1
-			);
+			.sort((a, b) => (moment(a.startDateTime).utc().isBefore(moment(b.startDateTime).utc()) ? -1 : 1));
 
 		for (let index = 0; index < appointmentsOnDay.length; index++) {
 			const appointmentOne = appointmentsOnDay[index];
 			const appointmentTwo = appointmentsOnDay[index + 1];
 			if (
-				moment(appointmentOne.startDateTime)
-					.utc()
-					.isSame(moment(slot.startTime).utc()) &&
+				moment(appointmentOne.startDateTime).utc().isSame(moment(slot.startTime).utc()) &&
 				(!appointmentTwo ||
-					moment(appointmentTwo.startDateTime)
-						.utc()
-						.isAfter(moment(appointmentOne.endDateTime).utc()))
+					moment(appointmentTwo.startDateTime).utc().isAfter(moment(appointmentOne.endDateTime).utc()))
 			) {
 				this.checkAndAddEventToCalendar(
 					moment(appointmentOne.endDateTime).utc().format(),
-					moment(
-						(appointmentTwo && appointmentTwo.startDateTime) ||
-							slot.endTime
-					)
+					moment((appointmentTwo && appointmentTwo.startDateTime) || slot.endTime)
 						.utc()
 						.format(),
 					slot.id,
 					'AvailabilitySlot'
 				);
-			} else if (
-				moment(appointmentOne.startDateTime)
-					.utc()
-					.isAfter(moment(slot.startTime).utc())
-			) {
+			} else if (moment(appointmentOne.startDateTime).utc().isAfter(moment(slot.startTime).utc())) {
 				const prevAppointment = appointmentsOnDay[index - 1];
 				this.checkAndAddEventToCalendar(
-					moment(
-						(prevAppointment && prevAppointment.endDateTime) ||
-							slot.startTime
-					)
+					moment((prevAppointment && prevAppointment.endDateTime) || slot.startTime)
 						.utc()
 						.format(),
 					moment(appointmentOne.startDateTime).utc().format(),
@@ -587,10 +473,7 @@ export class AppointmentComponent
 		if (appointment.bufferTimeStart) {
 			eventStartTime = new Date(
 				moment(appointment.startDateTime)
-					.add(
-						appointment.bufferTimeInMins as moment.DurationInputArg1,
-						'minutes'
-					)
+					.add(appointment.bufferTimeInMins as moment.DurationInputArg1, 'minutes')
 					.format()
 			);
 			this.calendarEvents.push({
@@ -607,10 +490,7 @@ export class AppointmentComponent
 		if (appointment.bufferTimeEnd) {
 			eventEndTime = new Date(
 				moment(appointment.endDateTime)
-					.subtract(
-						appointment.bufferTimeInMins as moment.DurationInputArg1,
-						'minutes'
-					)
+					.subtract(appointment.bufferTimeInMins as moment.DurationInputArg1, 'minutes')
 					.format()
 			);
 			this.calendarEvents.push({
@@ -637,10 +517,7 @@ export class AppointmentComponent
 
 			const afterBreakStartTime = new Date(
 				moment(breakEventStartTime)
-					.add(
-						appointment.breakTimeInMins as moment.DurationInputArg1,
-						'minutes'
-					)
+					.add(appointment.breakTimeInMins as moment.DurationInputArg1, 'minutes')
 					.format()
 			);
 			this.calendarEvents.push({

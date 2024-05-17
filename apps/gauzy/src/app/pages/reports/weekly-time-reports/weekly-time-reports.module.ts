@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { WeeklyTimeReportsRoutingModule } from './weekly-time-reports-routing.module';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-reports.component';
@@ -29,6 +29,6 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		GauzyFiltersModule,
 		NbBadgeModule,
 		NoDataMessageModule
-	],
+	]
 })
 export class WeeklyTimeReportsModule {}

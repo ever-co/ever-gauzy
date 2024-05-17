@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { EditTimeLogModalComponent } from './edit-time-log-modal.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -41,7 +41,7 @@ import { NbInputModule } from '@nebular/theme';
 		ContactSelectorModule,
 		DialogsModule,
 		NbTooltipModule,
-    	NbInputModule
+		NbInputModule
 	]
 })
 export class EditTimeLogModalModule {}

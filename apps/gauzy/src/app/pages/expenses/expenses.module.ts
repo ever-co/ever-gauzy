@@ -24,9 +24,9 @@ import { ExpenseCategoriesComponent } from './expense-categories/expense-categor
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '../../@core/services';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from "../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -62,14 +62,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NbTooltipModule,
 		InfiniteScrollModule
 	],
-	declarations: [
-		ExpensesComponent,
-		ExpenseCategoriesComponent,
-		ExpenseCategoryMutationComponent
-	],
-	providers: [
-		ExpenseCategoriesStoreService,
-		OrganizationExpenseCategoriesService
-	]
+	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
+	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]
 })
-export class ExpensesModule { }
+export class ExpensesModule {}

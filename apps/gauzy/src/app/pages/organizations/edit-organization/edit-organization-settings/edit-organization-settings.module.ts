@@ -16,9 +16,10 @@ import {
 	NbToggleModule,
 	NbBadgeModule,
 	NbTooltipModule,
-	NbAccordionModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../../@core/services/organization-departments.service';
@@ -50,8 +51,7 @@ import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker
 import { CurrencyModule } from '../../../../@shared/currency/currency.module';
 import { LocationFormModule } from '../../../../@shared/forms/location';
 import { LeafletMapModule } from '../../../../@shared/forms/maps/leaflet/leaflet.module';
-import { TranslateModule } from '../../../../@shared/translate/translate.module';
-import { TimeZoneSelectorModule } from 'apps/gauzy/src/app/@shared/selectors';
+import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 
 @NgModule({
 	imports: [
@@ -115,4 +115,4 @@ import { TimeZoneSelectorModule } from 'apps/gauzy/src/app/@shared/selectors';
 	],
 	exports: [EditOrganizationSettingsComponent]
 })
-export class EditOrganizationSettingsModule { }
+export class EditOrganizationSettingsModule {}

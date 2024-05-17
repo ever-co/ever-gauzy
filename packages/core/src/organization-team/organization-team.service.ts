@@ -67,7 +67,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		try {
 			console.time('Get Organization Team ID Query');
 			const { organizationTeamId, query } = input;
-			const { withLaskWorkedTask } = query;
+			const { withLastWorkedTask } = query;
 
 			/**
 			 * Find the organization team by ID with optional relations.
@@ -78,7 +78,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			/**
 			 * If the organization team has 'members', sync last worked tasks based on the query.
 			 */
-			if ('members' in organizationTeam && withLaskWorkedTask) {
+			if ('members' in organizationTeam && withLastWorkedTask) {
 				organizationTeam['members'] = await this.syncLastWorkedTask(
 					organizationTeamId,
 					organizationTeam['members'],
@@ -106,7 +106,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		input: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
 		try {
-			const { organizationId, startDate, endDate, withLaskWorkedTask, source } = input;
+			const { organizationId, startDate, endDate, withLastWorkedTask, source } = input;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 			const employeeIds = members.map(({ employeeId }) => employeeId);
 
@@ -117,7 +117,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				organizationId,
 				tenantId,
 				organizationTeamId,
-				...(parseToBoolean(withLaskWorkedTask) ? { relations: ['task'] } : {})
+				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {})
 			});
 
 			//
@@ -146,7 +146,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				]);
 				return {
 					...member,
-					lastWorkedTask: parseToBoolean(withLaskWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
+					lastWorkedTask: parseToBoolean(withLastWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
 					running: timerWorkedStatus?.running,
 					duration: timerWorkedStatus?.duration,
 					timerStatus: timerWorkedStatus?.timerStatus,

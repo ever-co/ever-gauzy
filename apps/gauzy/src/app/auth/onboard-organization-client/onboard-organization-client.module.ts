@@ -17,7 +17,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptClientInviteFormComponent } from './accept-client-invite-form/accept-client-invite-form.component';
 import { AcceptClientInvitePage } from './accept-client-invite.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
 
 @NgModule({

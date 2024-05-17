@@ -14,9 +14,9 @@ import {
 	IIntegrationMap,
 	IntegrationEntity,
 	IDateRangeActivityFilter,
-	IEntitySettingToSync,
+	IEntitySettingToSync
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
 import { environment } from '@env/environment';
 import { API_PREFIX } from '../constants/app.constants';
@@ -25,45 +25,36 @@ const TODAY = new Date();
 
 const DEFAULT_DATE_RANGE = {
 	start: new Date(moment().subtract(6, 'days').format('YYYY-MM-DD')),
-	end: new Date(moment().add(1, 'days').format('YYYY-MM-DD')),
+	end: new Date(moment().add(1, 'days').format('YYYY-MM-DD'))
 };
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class HubstaffService {
 	private ACCESS_TOKEN: string;
-	private _entitiesToSync$: BehaviorSubject<IEntitySettingToSync> =
-		new BehaviorSubject({
-			previousValue: [],
-			currentValue: [],
-		});
-	private _dateRangeActivity$: BehaviorSubject<IDateRangeActivityFilter> =
-		new BehaviorSubject(DEFAULT_DATE_RANGE);
+	private _entitiesToSync$: BehaviorSubject<IEntitySettingToSync> = new BehaviorSubject({
+		previousValue: [],
+		currentValue: []
+	});
+	private _dateRangeActivity$: BehaviorSubject<IDateRangeActivityFilter> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 
-	public entitiesToSync$: Observable<IEntitySettingToSync> =
-		this._entitiesToSync$.asObservable();
+	public entitiesToSync$: Observable<IEntitySettingToSync> = this._entitiesToSync$.asObservable();
 
-	public dateRangeActivity$: Observable<IDateRangeActivityFilter> =
-		this._dateRangeActivity$.asObservable();
+	public dateRangeActivity$: Observable<IDateRangeActivityFilter> = this._dateRangeActivity$.asObservable();
 
 	integrationId: string;
 
-	constructor(
-		private readonly _http: HttpClient
-	) { }
+	constructor(private readonly _http: HttpClient) {}
 
 	getIntegration(integrationId): Observable<IIntegrationEntitySetting[]> {
 		const data = JSON.stringify({
-			relations: ['integration'],
+			relations: ['integration']
 		});
 		return this._http
-			.get<any>(
-				`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`,
-				{
-					params: { data },
-				}
-			)
+			.get<any>(`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`, {
+				params: { data }
+			})
 			.pipe(tap(({ items }) => this._setSettingsValue(items)));
 	}
 
@@ -71,14 +62,14 @@ export class HubstaffService {
 		const settings = this._entitiesToSync$.getValue();
 		this._entitiesToSync$.next({
 			...settings,
-			currentValue: clone(settings.previousValue),
+			currentValue: clone(settings.previousValue)
 		});
 	}
 
 	private _setSettingsValue(items) {
 		this._entitiesToSync$.next({
 			previousValue: clone(items),
-			currentValue: items,
+			currentValue: items
 		});
 	}
 
@@ -89,30 +80,20 @@ export class HubstaffService {
 				`${API_PREFIX}/integration-entity-setting/integration/${integrationId}`,
 				currentValue
 			)
-			.pipe(
-				tap((entitySettings) => this._setSettingsValue(entitySettings))
-			);
+			.pipe(tap((entitySettings) => this._setSettingsValue(entitySettings)));
 	}
 
 	getToken(integrationId: string): Observable<IIntegrationSetting> {
 		this.integrationId = integrationId;
 		return this._http
-			.get<IIntegrationSetting>(
-				`${API_PREFIX}/integration/hubstaff/token/${integrationId}`
-			)
-			.pipe(
-				tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue))
-			);
+			.get<IIntegrationSetting>(`${API_PREFIX}/integration/hubstaff/token/${integrationId}`)
+			.pipe(tap(({ settingsValue }) => (this.ACCESS_TOKEN = settingsValue)));
 	}
 
 	refreshToken() {
 		return this._http
-			.get<any>(
-				`${API_PREFIX}/integration/hubstaff/refresh-token/${this.integrationId}`
-			)
-			.pipe(
-				tap(({ access_token }) => (this.ACCESS_TOKEN = access_token))
-			);
+			.get<any>(`${API_PREFIX}/integration/hubstaff/refresh-token/${this.integrationId}`)
+			.pipe(tap(({ access_token }) => (this.ACCESS_TOKEN = access_token)));
 	}
 
 	/**
@@ -121,17 +102,19 @@ export class HubstaffService {
 	 * @param client_id The client ID for the Hubstaff integration.
 	 */
 	authorizeClient(client_id: string): void {
-		const redirect_uri = environment.HUBSTAFF_REDIRECT_URL || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+		const redirect_uri =
+			environment.HUBSTAFF_REDIRECT_URL ||
+			`${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		// Define your query parameters
 		const queryParams = toParams({
-			'response_type': 'code',
-			'redirect_uri': `${redirect_uri}`,
-			'realm': 'hubstaff',
-			'client_id': `${client_id}`,
-			'scope': 'hubstaff:read',
-			'state': `${client_id}`,
-			'nonce': `${uuid()}`
+			response_type: 'code',
+			redirect_uri: `${redirect_uri}`,
+			realm: 'hubstaff',
+			client_id: `${client_id}`,
+			scope: 'hubstaff:read',
+			state: `${client_id}`,
+			nonce: `${uuid()}`
 		});
 
 		// Construct the external URL with the query parameters
@@ -141,14 +124,10 @@ export class HubstaffService {
 		window.location.replace(externalUrl);
 	}
 
-	addIntegration({
-		code,
-		client_secret,
-		client_id,
-		organizationId,
-	}): Observable<IIntegrationTenant> {
-
-		const redirect_uri = environment.HUBSTAFF_REDIRECT_URL || `${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+	addIntegration({ code, client_secret, client_id, organizationId }): Observable<IIntegrationTenant> {
+		const redirect_uri =
+			environment.HUBSTAFF_REDIRECT_URL ||
+			`${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/hubstaff/integration`, {
 			client_id,
@@ -180,12 +159,15 @@ export class HubstaffService {
 	 * @returns
 	 */
 	getProjects(hubstaffOrganizationId: string, integrationId: string): Observable<IHubstaffProject[]> {
-		return this._http.get<IHubstaffProject[]>(`${API_PREFIX}/integration/hubstaff/projects/${hubstaffOrganizationId}`, {
-			params: toParams({
-				integrationId,
-				token: this.ACCESS_TOKEN
-			})
-		});
+		return this._http.get<IHubstaffProject[]>(
+			`${API_PREFIX}/integration/hubstaff/projects/${hubstaffOrganizationId}`,
+			{
+				params: toParams({
+					integrationId,
+					token: this.ACCESS_TOKEN
+				})
+			}
+		);
 	}
 
 	/**
@@ -195,11 +177,7 @@ export class HubstaffService {
 	 * @param organizationId
 	 * @returns
 	 */
-	syncProjects(
-		projects: any,
-		integrationId: string,
-		organizationId: string
-	) {
+	syncProjects(projects: any, integrationId: string, organizationId: string) {
 		return this._http.post(`${API_PREFIX}/integration/hubstaff/sync-projects`, {
 			projects: this._mapProjectPayload(projects),
 			organizationId,
@@ -211,7 +189,7 @@ export class HubstaffService {
 	setActivityDateRange({ start, end }) {
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
-			end: this._setEndDate(start),
+			end: this._setEndDate(start)
 		});
 	}
 
@@ -227,55 +205,37 @@ export class HubstaffService {
 		const organizationEntityToSync = this._entitiesToSync$
 			.getValue()
 			.currentValue.filter((setting) => setting.sync)
-			.find(
-				(setting) => setting.entity === IntegrationEntity.ORGANIZATION
-			);
+			.find((setting) => setting.entity === IntegrationEntity.ORGANIZATION);
 
 		// if organization is set to true, map all entities to this organizations, else use hubstaff organizations id and map all entities to current selected gauzy organization
 		if (organizationEntityToSync && organizationEntityToSync.sync) {
-			const organizationsMap$ = this._http.post<IIntegrationMap[]>(`${API_PREFIX}/integration/hubstaff/sync-organizations`, {
-				organizations: this._mapOrganizationPayload(hubstaffOrganizations),
-				organizationId,
-				integrationId,
-				token: this.ACCESS_TOKEN
-			});
+			const organizationsMap$ = this._http.post<IIntegrationMap[]>(
+				`${API_PREFIX}/integration/hubstaff/sync-organizations`,
+				{
+					organizations: this._mapOrganizationPayload(hubstaffOrganizations),
+					organizationId,
+					integrationId,
+					token: this.ACCESS_TOKEN
+				}
+			);
 			return organizationsMap$.pipe(
 				debounceTime(1000),
-				switchMap((organizations) =>
-					this._forkEntities(organizations, integrationId, dateRange)
-				)
+				switchMap((organizations) => this._forkEntities(organizations, integrationId, dateRange))
 			);
 		}
 
-		return this._forkEntities(
-			hubstaffOrganizations,
-			integrationId,
-			dateRange,
-			organizationId
-		);
+		return this._forkEntities(hubstaffOrganizations, integrationId, dateRange, organizationId);
 	}
 
-	private _forkEntities(
-		organizations,
-		integrationId,
-		dateRange,
-		organizationId?
-	) {
+	private _forkEntities(organizations, integrationId, dateRange, organizationId?) {
 		return forkJoin(
 			organizations.map((organization) =>
-				this._http.post(
-					`${API_PREFIX}/integration/hubstaff/auto-sync/${integrationId}`,
-					{
-						dateRange,
-						gauzyId: organizationId
-							? organizationId
-							: organization.gauzyId,
-						sourceId: organization.sourceId
-							? organization.sourceId
-							: organization.id,
-						token: this.ACCESS_TOKEN,
-					}
-				)
+				this._http.post(`${API_PREFIX}/integration/hubstaff/auto-sync/${integrationId}`, {
+					dateRange,
+					gauzyId: organizationId ? organizationId : organization.gauzyId,
+					sourceId: organization.sourceId ? organization.sourceId : organization.id,
+					token: this.ACCESS_TOKEN
+				})
 			)
 		).pipe(debounceTime(2000));
 	}
@@ -287,7 +247,7 @@ export class HubstaffService {
 	 */
 	private _mapProjectPayload(data: any[]) {
 		return data.map(({ id }) => ({
-			sourceId: id,
+			sourceId: id
 		}));
 	}
 
@@ -298,7 +258,7 @@ export class HubstaffService {
 	 */
 	private _mapOrganizationPayload(data: any[]) {
 		return data.map(({ id }) => ({
-			sourceId: id,
+			sourceId: id
 		}));
 	}
 }

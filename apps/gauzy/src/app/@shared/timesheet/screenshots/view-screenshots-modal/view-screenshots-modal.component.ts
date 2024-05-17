@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { IEmployee, IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty, progressStatus, toLocal } from '@gauzy/common-angular';
+import { isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { sortBy } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,8 +23,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	private organization: IOrganization;
 
 	/*
-	* Getter & Setter for TimeSlot element
-	*/
+	 * Getter & Setter for TimeSlot element
+	 */
 	private _timeSlot: ITimeSlot;
 	get timeSlot(): ITimeSlot {
 		return this._timeSlot;
@@ -57,8 +57,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for Screenshots
-	*/
+	 * Getter & Setter for Screenshots
+	 */
 	private _screenshots: IScreenshot[] = [];
 	get screenshots(): IScreenshot[] {
 		return this._screenshots;
@@ -68,8 +68,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	}
 
 	/*
-	* Getter & Setter for Screenshots
-	*/
+	 * Getter & Setter for Screenshots
+	 */
 	private _timeLogs: ITimeLog[] = [];
 	get timeLogs(): ITimeLog[] {
 		return this._timeLogs;
@@ -90,13 +90,13 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		private readonly timesheetService: TimesheetService,
 		private readonly nbDialogService: NbDialogService,
 		private readonly toastrService: ToastrService
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getTimeSlot()),
 				untilDestroyed(this)
 			)
@@ -123,8 +123,8 @@ export class ViewScreenshotsModalComponent implements OnInit {
 					'timeLogs.project',
 					'timeLogs.task',
 					'timeLogs.organizationContact',
-					'timeLogs.employee.user',
-				],
+					'timeLogs.employee.user'
+				]
 			});
 
 			// Set the time logs property to the time logs of the retrieved time slot
@@ -153,7 +153,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 */
 	viewTimeLog(timeLog: ITimeLog): void {
 		this.nbDialogService.open(ViewTimeLogModalComponent, {
-			context: { timeLog },
+			context: { timeLog }
 		});
 	}
 
@@ -180,9 +180,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			});
 
 			// Remove the deleted screenshot from the local collection
-			this.screenshots = this.screenshots.filter(
-				(item: IScreenshot) => item.id !== screenshot.id
-			);
+			this.screenshots = this.screenshots.filter((item: IScreenshot) => item.id !== screenshot.id);
 
 			// Display success message
 			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {

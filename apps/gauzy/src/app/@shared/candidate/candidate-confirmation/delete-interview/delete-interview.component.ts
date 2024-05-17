@@ -3,7 +3,7 @@ import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
@@ -15,9 +15,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	templateUrl: 'delete-interview.component.html',
 	styleUrls: ['delete-interview.component.scss']
 })
-export class DeleteInterviewComponent
-	extends TranslationBaseComponent
-	implements OnDestroy {
+export class DeleteInterviewComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
 	private _ngDestroy$ = new Subject<void>();
 	constructor(
@@ -35,18 +33,12 @@ export class DeleteInterviewComponent
 	async delete() {
 		try {
 			if (this.interview.personalQualities.length > 0) {
-				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(
-					this.interview.id
-				);
+				await this.candidatePersonalQualitiesService.deleteBulkByInterviewId(this.interview.id);
 			}
 			if (this.interview.technologies.length > 0) {
-				await this.candidateTechnologiesService.deleteBulkByInterviewId(
-					this.interview.id
-				);
+				await this.candidateTechnologiesService.deleteBulkByInterviewId(this.interview.id);
 			}
-			await this.candidateInterviewersService.deleteBulkByInterviewId(
-				this.interview.id
-			);
+			await this.candidateInterviewersService.deleteBulkByInterviewId(this.interview.id);
 			await this.candidateInterviewService.delete(this.interview.id);
 			this.dialogRef.close(this.interview);
 		} catch (error) {

@@ -38,6 +38,8 @@ export class PublicTeamController {
 		@Param() params: FindOptionsWhere<OrganizationTeam>,
 		@Query() options: PublicTeamQueryDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(new FindPublicTeamQuery(params, options));
+		return await this._queryBus.execute(
+			new FindPublicTeamQuery(params, options)
+		);
 	}
 }

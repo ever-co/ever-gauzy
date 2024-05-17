@@ -20,7 +20,7 @@ import { HelpCenterService } from '../../@core/services/help-center.service';
 import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
 import { DeleteBaseModule } from './delete-base/delete-base.module';
-import { TranslateModule } from '../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -48,4 +48,4 @@ import { TranslateModule } from '../translate/translate.module';
 	declarations: [SidebarComponent],
 	exports: [SidebarComponent]
 })
-export class SidebarModule { }
+export class SidebarModule {}

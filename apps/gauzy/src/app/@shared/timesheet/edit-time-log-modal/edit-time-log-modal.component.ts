@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	OnDestroy,
-	AfterViewInit
-} from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, AfterViewInit } from '@angular/core';
 import {
 	IDateRange,
 	IOrganization,
@@ -16,7 +10,7 @@ import {
 	TimeLogType,
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
-import { toUTC, toLocal, distinctUntilChange } from '@gauzy/common-angular';
+import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -34,7 +28,6 @@ import { Store, ToastrService } from '../../../@core/services';
 	styleUrls: ['./edit-time-log-modal.component.scss']
 })
 export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {
-
 	PermissionsEnum = PermissionsEnum;
 	today: Date = new Date();
 	mode: 'create' | 'update' = 'create';
@@ -65,10 +58,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	 * TimeLog Mutation Form
 	 */
 	public form: UntypedFormGroup = EditTimeLogModalComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: EditTimeLogModalComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: EditTimeLogModalComponent): UntypedFormGroup {
 		return fb.group({
 			isBillable: [true],
 			employeeId: [],
@@ -102,12 +92,9 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			setTimeout(() => {
 				this.form.setValue({
 					isBillable: this._timeLog.isBillable || true,
-					employeeId:
-						this._timeLog.employeeId ||
-						this.store.selectedEmployee.id,
+					employeeId: this._timeLog.employeeId || this.store.selectedEmployee.id,
 					projectId: this._timeLog.projectId || null,
-					organizationContactId:
-						this._timeLog.organizationContactId || null,
+					organizationContactId: this._timeLog.organizationContactId || null,
 					taskId: this._timeLog.taskId || null,
 					description: this._timeLog.description || null,
 					reason: this._timeLog.reason || null,
@@ -131,10 +118,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap((organization: IOrganization) => {
 					this.futureDateAllowed = organization.futureDateAllowed;
 				}),
@@ -152,16 +136,11 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					const startMoment = moment(start);
 					const endMoment = moment(end);
 					if (!startMoment.isValid() || !endMoment.isValid()) {
-						return this.timeDiff = null;
+						return (this.timeDiff = null);
 					}
-					this.timeDiff = new Date(
-						endMoment.diff(startMoment, 'seconds')
-					);
+					this.timeDiff = new Date(endMoment.diff(startMoment, 'seconds'));
 				}),
-				filter(
-					([employeeId, selectedRange]) =>
-						!!employeeId && !!selectedRange
-				),
+				filter(([employeeId, selectedRange]) => !!employeeId && !!selectedRange),
 				tap(([employeeId, selectedRange]) => {
 					this.employee = employeeId;
 					this.selectedRange = selectedRange;
@@ -203,9 +182,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				relations: ['project', 'task']
 			};
 			try {
-				const timeLogs = await this.timesheetService.checkOverlaps(
-					request
-				);
+				const timeLogs = await this.timesheetService.checkOverlaps(request);
 				if (!timeLogs) {
 					return;
 				}
@@ -213,54 +190,24 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					const timeLogStartedAt = toLocal(timeLog.startedAt);
 					const timeLogStoppedAt = toLocal(timeLog.stoppedAt);
 					let overlapDuration = 0;
-					if (
-						moment(timeLogStartedAt).isBetween(
-							moment(startDate),
-							moment(endDate)
-						)
-					) {
-						if (
-							moment(timeLogStoppedAt).isBetween(
-								moment(startDate),
-								moment(endDate)
-							)
-						) {
-							overlapDuration = moment(timeLogStoppedAt).diff(
-								moment(timeLogStartedAt),
-								'seconds'
-							);
+					if (moment(timeLogStartedAt).isBetween(moment(startDate), moment(endDate))) {
+						if (moment(timeLogStoppedAt).isBetween(moment(startDate), moment(endDate))) {
+							overlapDuration = moment(timeLogStoppedAt).diff(moment(timeLogStartedAt), 'seconds');
 						} else {
-							overlapDuration = moment(endDate).diff(
-								moment(timeLogStartedAt),
-								'seconds'
-							);
+							overlapDuration = moment(endDate).diff(moment(timeLogStartedAt), 'seconds');
 						}
 					} else {
-						if (
-							moment(timeLogStoppedAt).isBetween(
-								moment(startDate),
-								moment(endDate)
-							)
-						) {
-							overlapDuration = moment(timeLogStoppedAt).diff(
-								moment(startDate),
-								'seconds'
-							);
+						if (moment(timeLogStoppedAt).isBetween(moment(startDate), moment(endDate))) {
+							overlapDuration = moment(timeLogStoppedAt).diff(moment(startDate), 'seconds');
 						} else {
-							overlapDuration = moment(endDate).diff(
-								moment(startDate),
-								'seconds'
-							);
+							overlapDuration = moment(endDate).diff(moment(startDate), 'seconds');
 						}
 					}
 					timeLog['overlapDuration'] = overlapDuration;
 					return timeLog;
 				});
 			} catch (error) {
-				console.log(
-					'Error while checking overlapping time log entries for employee',
-					error
-				);
+				console.log('Error while checking overlapping time log entries for employee', error);
 				this.toastrService.danger(error);
 			}
 		}
@@ -297,10 +244,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 				const timeLog = await this.timesheetService.addTime(payload);
 				this.dialogRef.close(timeLog);
 			} else {
-				const timeLog = await this.timesheetService.updateTime(
-					this.timeLog.id,
-					payload
-				);
+				const timeLog = await this.timesheetService.updateTime(this.timeLog.id, payload);
 				this.dialogRef.close(timeLog);
 			}
 
@@ -337,5 +281,5 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 		return this.form.get(control).value;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

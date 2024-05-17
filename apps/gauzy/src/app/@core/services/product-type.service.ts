@@ -7,62 +7,43 @@ import {
 	IProductTypeTranslatable,
 	IProductTypeTranslated
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class ProductTypeService {
 	PRODUCT_TYPES_URL = `${API_PREFIX}/product-types`;
 
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
 	getById(id: string = ''): Promise<IProductTypeTranslatable> {
-		return firstValueFrom(
-			this.http
-			.get<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
-		);
+		return firstValueFrom(this.http.get<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`));
 	}
 
-	getAll(
-		options,
-		params
-	): Promise<{ items: IProductTypeTranslatable[] }> {
+	getAll(options, params): Promise<{ items: IProductTypeTranslatable[] }> {
 		const data = JSON.stringify(options);
 		return firstValueFrom(
-			this.http
-			.get<{ items: IProductTypeTranslatable[] }>(
-				this.PRODUCT_TYPES_URL,
-				{ params: { data, ...params } }
-			)
+			this.http.get<{ items: IProductTypeTranslatable[] }>(this.PRODUCT_TYPES_URL, {
+				params: { data, ...params }
+			})
 		);
 	}
 
-	getAllTranslated(
-		where: IBasePerTenantAndOrganizationEntityModel
-	): Observable<IPagination<IProductTypeTranslated>> {
+	getAllTranslated(where: IBasePerTenantAndOrganizationEntityModel): Observable<IPagination<IProductTypeTranslated>> {
 		return this.http.get<IPagination<IProductTypeTranslated>>(`${this.PRODUCT_TYPES_URL}`, {
 			params: toParams({ where })
 		});
 	}
 
-	create(
-		productTypeRequest: IProductTypeTranslatable
-	): Promise<IProductTypeTranslatable> {
+	create(productTypeRequest: IProductTypeTranslatable): Promise<IProductTypeTranslatable> {
 		return firstValueFrom(
-			this.http
-			.post<IProductTypeTranslatable>(
-				`${this.PRODUCT_TYPES_URL}`,
-				productTypeRequest
-			)
+			this.http.post<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}`, productTypeRequest)
 		);
 	}
 
-	update(
-		productTypeRequest: IProductTypeTranslatable
-	): Promise<IProductTypeTranslatable> {
+	update(productTypeRequest: IProductTypeTranslatable): Promise<IProductTypeTranslatable> {
 		return firstValueFrom(
-			this.http
-			.put<IProductTypeTranslatable>(
+			this.http.put<IProductTypeTranslatable>(
 				`${this.PRODUCT_TYPES_URL}/${productTypeRequest.id}`,
 				productTypeRequest
 			)
@@ -70,9 +51,6 @@ export class ProductTypeService {
 	}
 
 	delete(id: string): Promise<IProductTypeTranslatable> {
-		return firstValueFrom(
-			this.http
-			.delete<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`)
-		);
+		return firstValueFrom(this.http.delete<IProductTypeTranslatable>(`${this.PRODUCT_TYPES_URL}/${id}`));
 	}
 }

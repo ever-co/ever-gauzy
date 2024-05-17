@@ -14,7 +14,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
@@ -26,7 +26,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { NbTabsetModule } from '@nebular/theme';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pagination-v2.module";
+import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
@@ -58,4 +58,4 @@ import { PaginationV2Module } from "../../../@shared/pagination/pagination-v2/pa
 		PaginationV2Module
 	]
 })
-export class ProposalTemplateModule { }
+export class ProposalTemplateModule {}

@@ -5,17 +5,12 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
-import {
-	IGetTimeLogInput,
-	ITimeLog,
-	IOrganizationProject,
-	ITimeLogFilters,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
-import { DateRangePickerBuilderService, Store } from './../../../../../@core/services';
+import { Store } from './../../../../../@core/services';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -32,9 +27,7 @@ interface WeeklyDayData {
 	templateUrl: './weekly.component.html',
 	styleUrls: ['./weekly.component.scss']
 })
-export class WeeklyComponent extends BaseSelectorFilterComponent
-	implements OnInit, OnDestroy {
-
+export class WeeklyComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	filters: ITimeLogFilters = this.request;
 
@@ -88,165 +81,223 @@ export class WeeklyComponent extends BaseSelectorFilterComponent
 			.subscribe();
 	}
 
+	/**
+	 * Updates the list of weekdays between the start and end dates in the request.
+	 */
 	updateWeekDayList() {
 		const { startDate, endDate } = this.request;
 
-		const start = moment(moment(startDate).format('YYYY-MM-DD'));
-		const end = moment(moment(endDate).format('YYYY-MM-DD'));
-		const range = Array.from(moment.range(start, end).by('day'));
-
-		const days: Array<string> = new Array();
-		let i = 0;
-		while (i < range.length) {
-			const date = range[i].format('YYYY-MM-DD');
-			days.push(date);
-			i++;
+		// Ensure startDate and endDate are valid dates
+		if (!startDate || !endDate) {
+			throw new Error('Both startDate and endDate must be defined');
 		}
-		this.weekDayList = days;
+
+		// Convert start and end dates to 'YYYY-MM-DD' format
+		const start = moment(startDate).startOf('day'); // Start of the day for consistency
+		const end = moment(endDate).startOf('day');
+
+		// Check that start date is before or same as end date
+		if (start.isAfter(end)) {
+			throw new Error('startDate must be before or on the same day as endDate');
+		}
+
+		// Get an array of dates within the range, inclusive
+		const dayRange = [];
+		let current = start;
+
+		while (!current.isAfter(end)) {
+			// Include end date in the range
+			dayRange.push(current.format('YYYY-MM-DD')); // Add formatted date to the list
+			current.add(1, 'day'); // Move to the next day
+		}
+
+		// Assign the list of weekdays to weekDayList
+		this.weekDayList = dayRange;
 	}
 
+	/**
+	 * Handles changes to timesheet filters and triggers data updates.
+	 *
+	 * @param {ITimeLogFilters} filters - The new set of filters to apply.
+	 */
 	filtersChange(filters: ITimeLogFilters) {
+		// Check if we should save the filters to the timesheet filter service
 		if (this.gauzyFiltersComponent.saveFilters) {
-			this.timesheetFilterService.filter = filters;
+			this.timesheetFilterService.filter = filters; // Save the new filters
 		}
-		this.filters = Object.assign({}, filters);
+
+		// Use Object.assign to create a shallow copy of the filters object
+		this.filters = { ...filters }; // Updated assignment using spread operator
+
+		// Notify subscribers that the filters have changed, triggering data updates
 		this.subject$.next(true);
 	}
 
 	/**
-	 * Prepare Unique Request Always
+	 * Prepare a unique request for timesheet data.
+	 * If the `request` or `filters` are empty, it does nothing.
+	 * Otherwise, it combines the current request and applied filters, then emits the combined result.
 	 *
-	 * @returns
+	 * @returns {void}
 	 */
-	prepareRequest() {
+	prepareRequest(): void {
+		// If `request` or `filters` are empty, do nothing
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
-			return;
+			return; // Early return to avoid further processing
 		}
-		const appliedFilter = pick(
-			this.filters,
-			'source',
-			'activityLevel',
-			'logType'
-		);
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.request),
+			...this.getFilterRequest(this.request)
 		};
 		this.payloads$.next(request);
 	}
 
 	/**
 	 * Get weekly timesheet logs
+	 *
 	 * @returns
 	 */
 	async getWeeklyTimesheetLogs() {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
+
 		const payloads = this.payloads$.getValue();
 		this.loading = true;
-		this.timesheetService
-			.getTimeLogs(payloads, ['project'])
-			.then((logs: ITimeLog[]) => {
-				this.weekData = chain(logs)
-					.groupBy('projectId')
-					.map((innerLogs: ITimeLog[], _projectId) => {
-						const byDate = chain(innerLogs)
-							.groupBy((log) =>
-								moment(log.startedAt).format('YYYY-MM-DD')
-							)
-							.mapObject((res: ITimeLog[]) => {
-								const sum = res.reduce(
-									(iteratee: any, log: any) => {
-										return iteratee + log.duration;
-									},
-									0
-								);
-								return { sum, logs: res };
-							})
-							.value();
+		try {
+			const logs = await this.timesheetService.getTimeLogs(payloads, ['project', 'employee.user']);
+			this.weekData = chain(logs)
+				.groupBy('projectId')
+				.map((innerLogs, _projectId) => {
+					const byDate = chain(innerLogs)
+						.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
+						.mapObject((res) => {
+							const sum = res.reduce((iteratee, log) => iteratee + log.duration, 0);
+							return { sum, logs: res };
+						})
+						.value();
 
-						const project =
-							innerLogs.length > 0 ? innerLogs[0].project : null;
-						const dates: any = {};
-						this.weekDayList.forEach((date) => {
-							dates[date] = byDate[date] || 0;
-						});
-						return { project, dates };
-					})
-					.value();
-			})
-			.finally(() => (this.loading = false));
+					const project = innerLogs.length > 0 ? innerLogs[0].project : null;
+					const dates = {};
+
+					this.weekDayList.forEach((date) => {
+						dates[date] = byDate[date] || 0;
+					});
+
+					return { project, dates };
+				})
+				.value();
+		} catch (error) {
+			console.error('Error fetching timesheet logs:', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 
+	/**
+	 * Definition for opening a dialog to add/edit a time log
+	 *
+	 * @param timeLog
+	 */
 	openAddEdit(timeLog?: ITimeLog) {
-		this.nbDialogService
-			.open(EditTimeLogModalComponent, { context: { timeLog } })
-			.onClose
+		if (!this.nbDialogService) {
+			throw new Error('NbDialogService is not available.');
+		}
+
+		const dialogRef = this.nbDialogService.open(EditTimeLogModalComponent, {
+			context: { timeLog }
+		});
+
+		dialogRef.onClose
 			.pipe(
-				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
-					moment(timeLog.startedAt)
-				)),
+				filter((log: ITimeLog) => !!log),
+				tap((log: ITimeLog) =>
+					this.dateRangePickerBuilderService.refreshDateRangePicker(moment(log.startedAt))
+				),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	openAddByDateProject(date, project: IOrganizationProject) {
+	/**
+	 * Open a dialog for adding a time log based on a specific date and project
+	 * @param date
+	 * @param project
+	 */
+	openAddByDateProject(date: string, project: IOrganizationProject): void {
+		// Calculate the nearest previous 10-minute mark for stoppedAt
+		const currentMoment = moment();
 		const minutes = moment().minutes();
+		const nearestTenMinutes = minutes - (minutes % 10);
+
 		const stoppedAt = new Date(
-			moment(date).format('YYYY-MM-DD') +
-				' ' +
-				moment()
-					.set('minutes', minutes - (minutes % 10))
-					.format('HH:mm')
+			moment(date).format('YYYY-MM-DD') + ' ' + currentMoment.set('minutes', nearestTenMinutes).format('HH:mm')
 		);
+
+		// Calculate startedAt by subtracting one hour from stoppedAt
 		const startedAt = moment(stoppedAt).subtract('1', 'hour').toDate();
 
-		this.nbDialogService
-			.open(EditTimeLogModalComponent, {
-				context: {
-					timeLog: {
-						startedAt,
-						stoppedAt,
-						organizationContactId: project
-							? project.organizationContactId
-							: null,
-						projectId: project ? project.id : null,
-						...(this.request.employeeIds
-							? { employeeId: this.request.employeeIds[0] }
-							: {})
-					}
+		if (!this.nbDialogService) {
+			throw new Error('NbDialogService is not available.');
+		}
+
+		// Open the dialog with calculated start and stop times
+		const dialogRef = this.nbDialogService.open(EditTimeLogModalComponent, {
+			context: {
+				timeLog: {
+					startedAt,
+					stoppedAt,
+					organizationContactId: project?.organizationContactId ?? null,
+					projectId: project?.id ?? null,
+					// Adding an employeeId if available
+					employeeId: this.request.employeeIds?.[0] ?? null
 				}
-			})
-			.onClose
+			}
+		});
+
+		// Handle the closure of the dialog
+		dialogRef.onClose
 			.pipe(
-				filter((timeLog: ITimeLog) => !!timeLog),
-				tap((timeLog: ITimeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(
-					moment(timeLog.startedAt)
-				)),
-				tap(() => this.subject$.next(true)),
-				untilDestroyed(this)
+				filter((timeLog) => !!timeLog), // Ensure valid timeLog
+				tap((timeLog) => this.dateRangePickerBuilderService.refreshDateRangePicker(moment(timeLog.startedAt))), // Refresh the date range picker
+				tap(() => this.subject$.next(true)), // Notify observers of changes
+				untilDestroyed(this) // Cleanup when the component is destroyed
 			)
-			.subscribe();
+			.subscribe(); // Activate the observable pipeline
 	}
 
+	/**
+	 * Handle the addition of a time log
+	 *
+	 * @param data
+	 */
 	addTimeCallback = (data: ITimeLog) => {
 		if (data) {
 			this.subject$.next(true);
 		}
 	};
 
+	/**
+	 * Handle the 'close' event based on a boolean trigger
+	 *
+	 * @param event
+	 */
 	onClose = (event: boolean) => {
-		if(event) this.popover.hide();
-	}
+		if (event) this.popover.hide();
+	};
 
+	/**
+	 * If an addition is allowed based on date and organization settings.
+	 *
+	 * @param date
+	 * @returns
+	 */
 	allowAdd(date: string) {
-		return this.organization.futureDateAllowed
-			? true
-			: moment(date).isSameOrBefore(moment());
+		const { futureDateAllowed } = this.organization;
+		const currentMoment = moment();
+		return futureDateAllowed || moment(date).isSameOrBefore(currentMoment);
 	}
 
 	ngOnDestroy(): void {}

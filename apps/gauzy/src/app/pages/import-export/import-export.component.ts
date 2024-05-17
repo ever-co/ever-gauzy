@@ -21,8 +21,15 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@env/environment';
 import { Environment } from '@env/model';
-import { ErrorHandlingService, ExportAllService, GauzyCloudService, Store, ToastrService, UsersOrganizationsService } from '../../@core/services';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import {
+	ErrorHandlingService,
+	ExportAllService,
+	GauzyCloudService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService
+} from '../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,7 +38,6 @@ import { TranslationBaseComponent } from '../../@shared/language-base/translatio
 	styleUrls: ['./import-export.component.scss']
 })
 export class ImportExportComponent extends TranslationBaseComponent implements OnInit {
-
 	user: IUser;
 	environment: Environment = environment;
 	permissionsEnum = PermissionsEnum;
@@ -81,8 +87,8 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	}
 
 	/*
-	* Migrate Self Hosted to Gauzy Cloud Hosted
-	*/
+	 * Migrate Self Hosted to Gauzy Cloud Hosted
+	 */
 	onMigrateIntoCloud(password: string) {
 		const {
 			id: sourceId,
@@ -111,11 +117,12 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			sourceId,
 			password,
 			confirmPassword: password
-		}
+		};
 
 		this.loading = true;
 		try {
-			this.gauzyCloudService.migrateIntoCloud(register)
+			this.gauzyCloudService
+				.migrateIntoCloud(register)
 				.pipe(
 					catchError((error) => {
 						this._errorHandlingService.handleError(error);
@@ -133,12 +140,15 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 							const { token, user } = response;
 							this.token = token;
 							this.gauzyUser = user;
-							return this.gauzyCloudService.migrateTenant({
-								name,
-								isImporting: true,
-								sourceId: tenantId,
-								userSourceId: sourceId
-							}, token);
+							return this.gauzyCloudService.migrateTenant(
+								{
+									name,
+									isImporting: true,
+									sourceId: tenantId,
+									userSourceId: sourceId
+								},
+								token
+							);
 						}
 						return EMPTY;
 					}),
@@ -147,13 +157,12 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 						if (tenant) {
 							for await (const { id: userOrganizationSourceId, organization } of this.userOrganizations) {
 								await firstValueFrom(
-									this.gauzyCloudService.migrateOrganization({
-										...this.mapOrganization(
-											organization,
-											tenant,
-											userOrganizationSourceId
-										)
-									}, this.token)
+									this.gauzyCloudService.migrateOrganization(
+										{
+											...this.mapOrganization(organization, tenant, userOrganizationSourceId)
+										},
+										this.token
+									)
 								);
 							}
 							return await firstValueFrom(observableOf(tenant));
@@ -179,14 +188,16 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 							} else {
 								redirect = externalUrl + '/#' + this.serializer.serialize(tree);
 							}
-							setTimeout(() => { this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]); }, 1500);
+							setTimeout(() => {
+								this.router.navigate(['/pages/settings/import-export/external-redirect', { redirect }]);
+							}, 1500);
 						},
 						error: (err) => {
 							this._errorHandlingService.handleError(err);
-						},
+						}
 					}),
-					finalize(() => this.loading = false),
-					untilDestroyed(this),
+					finalize(() => (this.loading = false)),
+					untilDestroyed(this)
 				)
 				.subscribe();
 		} catch (error) {
@@ -196,10 +207,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	async getOrganizations() {
 		const { id: userId, tenantId } = this.user;
-		const { items = [] } = await this.userOrganizationService.getAll([
-			'organization',
-			'organization.contact'
-		], {
+		const { items = [] } = await this.userOrganizationService.getAll(['organization', 'organization.contact'], {
 			userId,
 			tenantId
 		});
@@ -226,6 +234,6 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 			isImporting: true,
 			sourceId,
 			userOrganizationSourceId
-		}
+		};
 	}
 }

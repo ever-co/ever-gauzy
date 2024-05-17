@@ -4,7 +4,7 @@ import { Color } from '@kurkle/color';
 import { NbThemeService } from '@nebular/theme';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Rgba } from 'ngx-color-picker';
-import { TranslationBaseComponent } from '../../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -13,7 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 	styleUrls: ['./notes-with-tags.component.scss']
 })
 export class NotesWithTagsComponent extends TranslationBaseComponent implements OnInit {
-
 	@Input() rowData: any;
 	@Input() value: any;
 	@Input() layout?: ComponentLayoutStyleEnum | undefined;
@@ -22,10 +21,7 @@ export class NotesWithTagsComponent extends TranslationBaseComponent implements 
 	data$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 	data: Observable<any> = new Observable<any>(null);
 
-	constructor(
-		protected themeService: NbThemeService,
-		translateService: TranslateService
-	) {
+	constructor(protected themeService: NbThemeService, translateService: TranslateService) {
 		super(translateService);
 	}
 

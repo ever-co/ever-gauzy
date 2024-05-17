@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
 import {
 	BehaviorSubject,
@@ -14,7 +14,7 @@ import {
 	repeat,
 	Subject,
 	switchMap,
-	tap,
+	tap
 } from 'rxjs';
 import { TimeTrackerService } from '../../time-tracker.service';
 import { TimerIconFactory } from './factory';
@@ -24,27 +24,21 @@ import { Store } from '../../../../@core';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeTrackerStatusService {
-	private _icon$: BehaviorSubject<ITimerIcon> =
-		new BehaviorSubject<ITimerIcon>(null);
+	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
 	private _userUpdate$: Subject<IUser> = new Subject();
-	constructor(
-		private readonly _timeTrackerService: TimeTrackerService,
-		private readonly _store: Store
-	) {
+	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		defer(() =>
-			of<boolean>(
-				!!this._store.token && !!this._store.user?.employee
-			).pipe(
+			of<boolean>(!!this._store.token && !!this._store.user?.employee).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn
 						? from(this.status()).pipe(
-							catchError(() => EMPTY),
-							untilDestroyed(this)
-						)
+								catchError(() => EMPTY),
+								untilDestroyed(this)
+						  )
 						: EMPTY
 				),
 				untilDestroyed(this)
@@ -54,17 +48,14 @@ export class TimeTrackerStatusService {
 				tap((status: ITimerStatus) => {
 					const remoteTimer = new TimerSynced({
 						...status.lastLog,
-						duration: status.duration,
+						duration: status.duration
 					});
-					this._icon$.next(
-						TimerIconFactory.create(remoteTimer.source)
-					);
-					if (!remoteTimer.running || !remoteTimer.isExternalSource)
-						this._icon$.next(null);
+					this._icon$.next(TimerIconFactory.create(remoteTimer.source));
+					if (!remoteTimer.running || !remoteTimer.isExternalSource) this._icon$.next(null);
 					this._external$.next(remoteTimer);
 				}),
 				repeat({
-					delay: () => this._timeTrackerService.timer$,
+					delay: () => this._timeTrackerService.timer$
 				}),
 				untilDestroyed(this)
 			)
@@ -86,7 +77,7 @@ export class TimeTrackerStatusService {
 				tap((employee: IEmployee) => {
 					this._store.user = {
 						...this._store.user,
-						employee,
+						employee
 					};
 				}),
 				untilDestroyed(this)
@@ -103,8 +94,7 @@ export class TimeTrackerStatusService {
 	}
 
 	public status(): Promise<ITimerStatus> {
-		const { tenantId, organizationId } =
-			this._timeTrackerService.timerConfig;
+		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
 			organizationId,

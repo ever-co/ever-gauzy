@@ -2,12 +2,11 @@ import { Injectable, OnDestroy, TemplateRef } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core';
+import { BackupStrategy, GuiDrag } from '@gauzy/ui-sdk/shared';
+import { Store } from '../../../@core/services';
 import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
 import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
 import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';
-import { BackupStrategy } from '../interfaces/backup-strategy.interface';
-import { GuiDrag } from '../interfaces/gui-drag.abstract';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
@@ -25,9 +24,7 @@ export class WindowService implements OnDestroy {
 	constructor(private readonly store: Store) {
 		this._windowLayoutPersistance = new LayoutPersistance();
 		this._localStorage = new LocalstorageStrategy();
-		this._windowsTakers = new PersistanceTakers(
-			this._windowLayoutPersistance
-		);
+		this._windowsTakers = new PersistanceTakers(this._windowLayoutPersistance);
 		this._windows$ = new Subject();
 		this._windows$
 			.pipe(

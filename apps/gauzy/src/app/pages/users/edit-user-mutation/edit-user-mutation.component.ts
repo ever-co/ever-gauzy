@@ -1,15 +1,8 @@
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnInit,
-	Output,
-	ViewChild
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '../../../@core/services/store.service';
 import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/basic-info-form.component';
@@ -19,9 +12,7 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 	templateUrl: './edit-user-mutation.component.html',
 	styleUrls: ['./edit-user-mutation.component.scss']
 })
-export class EditUserMutationComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class EditUserMutationComponent extends TranslationBaseComponent implements OnInit {
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 	@Input()
@@ -64,23 +55,13 @@ export class EditUserMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.store.selectedOrganization;
 
-		const { items } = await this.usersOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ tenantId }
-		);
+		const { items } = await this.usersOrganizationsService.getAll(['user', 'user.role', 'user.tags'], { tenantId });
 
 		const usersVm = [];
-		const existedUsers = items
-			.filter((item) => item.organizationId === organizationId)
-			.map((item) => item.userId);
+		const existedUsers = items.filter((item) => item.organizationId === organizationId).map((item) => item.userId);
 
-		for (const orgUser of items.filter(
-			(item) => !existedUsers.includes(item.userId)
-		)) {
-			if (
-				orgUser.isActive &&
-				orgUser.user.role.name !== RolesEnum.EMPLOYEE
-			) {
+		for (const orgUser of items.filter((item) => !existedUsers.includes(item.userId))) {
+			if (orgUser.isActive && orgUser.user.role.name !== RolesEnum.EMPLOYEE) {
 				usersVm.push({
 					firstName: orgUser.user.firstName || '',
 					lastName: orgUser.user.lastName || '',
@@ -94,8 +75,7 @@ export class EditUserMutationComponent
 		}
 
 		const distinct = usersVm.reduce(
-			(acc, curr) =>
-				acc.some((user) => user.id === curr.id) ? acc : [...acc, curr],
+			(acc, curr) => (acc.some((user) => user.id === curr.id) ? acc : [...acc, curr]),
 			[]
 		);
 

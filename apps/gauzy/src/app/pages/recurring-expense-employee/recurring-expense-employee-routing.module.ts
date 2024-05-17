@@ -15,10 +15,10 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		runGuardsAndResolvers: 'always',
 		resolve: {
 			dates: DateRangePickerResolver
-		}
+		},
+		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 	}
 ];
 

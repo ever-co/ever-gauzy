@@ -6,4 +6,3 @@ export * from './interceptors';
 export * from './module-import-guard';
 export * from './sentry-error.handler';
 export * from './services';
-export * from './utils';

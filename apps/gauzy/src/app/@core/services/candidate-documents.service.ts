@@ -7,28 +7,17 @@ import {
 	ICandidateDocumentFindInput,
 	IPagination
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class CandidateDocumentsService {
+	constructor(private readonly http: HttpClient) {}
 
-	constructor(
-		private readonly http: HttpClient
-	) { }
-
-	create(
-		createInput: ICandidateDocumentCreateInput
-	): Promise<ICandidateDocument> {
-		return firstValueFrom(
-			this.http
-				.post<ICandidateDocument>(
-					`${API_PREFIX}/candidate-documents`,
-					createInput
-				)
-		);
+	create(createInput: ICandidateDocumentCreateInput): Promise<ICandidateDocument> {
+		return firstValueFrom(this.http.post<ICandidateDocument>(`${API_PREFIX}/candidate-documents`, createInput));
 	}
 
 	getAll(where: ICandidateDocumentFindInput): Promise<IPagination<ICandidateDocument>> {
@@ -40,16 +29,10 @@ export class CandidateDocumentsService {
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.put(`${API_PREFIX}/candidate-documents/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/candidate-documents/${id}`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.delete(`${API_PREFIX}/candidate-documents/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/candidate-documents/${id}`));
 	}
 }

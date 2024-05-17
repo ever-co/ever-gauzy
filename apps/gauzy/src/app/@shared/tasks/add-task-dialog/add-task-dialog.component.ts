@@ -1,4 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { NbDialogRef } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import * as moment from 'moment';
+import { firstValueFrom } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -8,35 +18,18 @@ import {
 	ITag,
 	ITask,
 	TaskParticipantEnum,
-	TaskStatusEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { firstValueFrom } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import {
-	EmployeesService,
-	OrganizationTeamsService,
-	Store,
-	TasksService,
-} from '../../../@core/services';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig } from '../../ckeditor.config';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-add-task-dialog',
 	templateUrl: './add-task-dialog.component.html',
-	styleUrls: ['./add-task-dialog.component.scss'],
+	styleUrls: ['./add-task-dialog.component.scss']
 })
-export class AddTaskDialogComponent
-	extends TranslationBaseComponent
-	implements OnInit {
+export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {
 	employees: IEmployee[] = [];
 	teams: IOrganizationTeam[] = [];
 	selectedMembers: string[] = [];
@@ -83,7 +76,7 @@ export class AddTaskDialogComponent
 			teams: [],
 			taskStatus: [],
 			taskSize: [],
-			taskPriority: [],
+			taskPriority: []
 		});
 	}
 
@@ -102,9 +95,7 @@ export class AddTaskDialogComponent
 	}
 
 	ngOnInit() {
-		this.ckConfig.editorplaceholder = this.translateService.instant(
-			'FORM.PLACEHOLDERS.DESCRIPTION'
-		);
+		this.ckConfig.editorplaceholder = this.translateService.instant('FORM.PLACEHOLDERS.DESCRIPTION');
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
@@ -112,10 +103,7 @@ export class AddTaskDialogComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadTeams()),
 				tap(() => this.initializeForm()),
@@ -125,9 +113,7 @@ export class AddTaskDialogComponent
 		storeEmployee$
 			.pipe(
 				distinctUntilChange(),
-				filter(
-					(employee: ISelectedEmployee) => !!employee && !!employee.id
-				),
+				filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
 				tap((employee: ISelectedEmployee) => {
 					if (!this.task) {
 						this.selectedMembers.push(employee.id);
@@ -139,9 +125,7 @@ export class AddTaskDialogComponent
 		storeProject$
 			.pipe(
 				distinctUntilChange(),
-				filter(
-					(project: IOrganizationProject) => !!project && !!project.id
-				),
+				filter((project: IOrganizationProject) => !!project && !!project.id),
 				tap((project: IOrganizationProject) => {
 					if (!this.task) {
 						this.form.get('project').setValue(project);
@@ -170,7 +154,7 @@ export class AddTaskDialogComponent
 				size,
 				taskStatus,
 				taskSize,
-				taskPriority,
+				taskPriority
 			} = this.selectedTask;
 			const duration = moment.duration(estimate, 'seconds');
 
@@ -197,7 +181,7 @@ export class AddTaskDialogComponent
 				teams: this.selectedTeams,
 				taskStatus,
 				taskSize,
-				taskPriority,
+				taskPriority
 			});
 		}
 	}
@@ -207,42 +191,24 @@ export class AddTaskDialogComponent
 			this.form
 				.get('members')
 				.setValue(
-					(this.selectedMembers || [])
-						.map((id) => this.employees.find((e) => e.id === id))
-						.filter((e) => !!e)
+					(this.selectedMembers || []).map((id) => this.employees.find((e) => e.id === id)).filter((e) => !!e)
 				);
 			this.form
 				.get('teams')
 				.setValue(
-					(this.selectedTeams || [])
-						.map((id) => this.teams.find((e) => e.id === id))
-						.filter((e) => !!e)
+					(this.selectedTeams || []).map((id) => this.teams.find((e) => e.id === id)).filter((e) => !!e)
 				);
-			this.form
-				.get('status')
-				.setValue(this.form.get('taskStatus').value?.name);
-			this.form
-				.get('priority')
-				.setValue(this.form.get('taskPriority').value?.name);
-			this.form
-				.get('size')
-				.setValue(this.form.get('taskSize').value?.name);
-			const { estimateDays, estimateHours, estimateMinutes } =
-				this.form.value;
+			this.form.get('status').setValue(this.form.get('taskStatus').value?.name);
+			this.form.get('priority').setValue(this.form.get('taskPriority').value?.name);
+			this.form.get('size').setValue(this.form.get('taskSize').value?.name);
+			const { estimateDays, estimateHours, estimateMinutes } = this.form.value;
 
-			const estimate =
-				estimateDays * 24 * 60 * 60 +
-				estimateHours * 60 * 60 +
-				estimateMinutes * 60;
+			const estimate = estimateDays * 24 * 60 * 60 + estimateHours * 60 * 60 + estimateMinutes * 60;
 
-			estimate
-				? (this.form.value.estimate = estimate)
-				: (this.form.value.estimate = null);
+			estimate ? (this.form.value.estimate = estimate) : (this.form.value.estimate = null);
 
 			if (this.createTask) {
-				firstValueFrom(
-					this.tasksService.createTask(this.form.value)
-				).then((task) => {
+				firstValueFrom(this.tasksService.createTask(this.form.value)).then((task) => {
 					this.dialogRef.close(task);
 				});
 			} else {
@@ -271,7 +237,7 @@ export class AddTaskDialogComponent
 		const { items = [] } = await firstValueFrom(
 			this.employeesService.getAll(['user'], {
 				organizationId,
-				tenantId,
+				tenantId
 			})
 		);
 		this.employees = items;
@@ -288,10 +254,7 @@ export class AddTaskDialogComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items = [] } = await this.organizationTeamsService.getAll(
-			['members'],
-			{ organizationId, tenantId }
-		);
+		const { items = [] } = await this.organizationTeamsService.getAll(['members'], { organizationId, tenantId });
 		this.teams = items;
 	}
 
