@@ -1,4 +1,4 @@
-import { CKEditor4 } from 'ckeditor4-angular';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 
 export const ckEditorConfig: CKEditor4.Config = {
 	width: '100%',
