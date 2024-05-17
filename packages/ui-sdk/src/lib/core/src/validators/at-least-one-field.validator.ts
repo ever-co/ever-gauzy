@@ -1,5 +1,5 @@
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { isNotNullOrUndefined } from '@gauzy/common-angular';
+import { isNotNullOrUndefined } from '@gauzy/ui-sdk/common';
 
 /**
  * Validates that at least one field in the group has a valid, non-null, and non-undefined value.
