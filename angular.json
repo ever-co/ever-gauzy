@@ -38,7 +38,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": ["packages/ui-sdk/src/lib/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -62,7 +62,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -431,7 +431,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": ["packages/ui-sdk/src/lib/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -460,7 +460,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -591,7 +591,7 @@
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
@@ -1002,7 +1002,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": ["packages/ui-sdk/src/lib/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -1025,7 +1025,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
