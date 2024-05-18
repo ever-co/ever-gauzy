@@ -1,13 +1,6 @@
-import {
-	Component,
-	Input,
-	EventEmitter,
-	Output,
-	OnInit,
-	OnDestroy
-} from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
 import { ICandidateInterview } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../../../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -15,31 +8,22 @@ import { TranslateService } from '@ngx-translate/core';
 	template: `
 		<div class="update">
 			<div class="badges">
-				<div
-					class="badge badge-primary"
-					*ngIf="isPastInterview(rowData)"
-				>
+				<div class="badge badge-primary" *ngIf="isPastInterview(rowData)">
 					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.PAST' | translate }}
 				</div>
-				<div
-					class="badge badge-warning"
-					*ngIf="rowData.isArchived && rowData.showArchive"
-				>
+				<div class="badge badge-warning" *ngIf="rowData.isArchived && rowData.showArchive">
 					{{ 'CANDIDATES_PAGE.ARCHIVED' | translate }}
 				</div>
 			</div>
 			<span class="title"> updated: </span>
 			<span class="title">
-				{{ rowData?.updatedAt | date: 'short' }}
+				{{ rowData?.updatedAt | date : 'short' }}
 			</span>
 			<div class="btn" *ngIf="!rowData.hideActions">
 				<nb-icon
 					*ngIf="isPastInterview(rowData)"
 					(click)="addFeedback()"
-					nbTooltip="{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
-							| translate
-					}}
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }}
 					({{ rowData.feedbacks.length }}/{{ rowData.interviewers.length }})"
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
@@ -48,10 +32,7 @@ import { TranslateService } from '@ngx-translate/core';
 				<nb-icon
 					*ngIf="!isPastInterview(rowData)"
 					(click)="addFeedback()"
-					nbTooltip="{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK'
-							| translate
-					}} "
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ADD_FEEDBACK' | translate }} "
 					nbTooltipPlacement="top"
 					icon="message-square-outline"
 					class="icons disabled"
@@ -59,9 +40,7 @@ import { TranslateService } from '@ngx-translate/core';
 				<nb-icon
 					(click)="editInterview()"
 					icon="edit-outline"
-					nbTooltip="{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate
-					}}"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.EDIT' | translate }}"
 					nbTooltipPlacement="top"
 					class="icons ml-2"
 					[ngClass]="{
@@ -72,9 +51,7 @@ import { TranslateService } from '@ngx-translate/core';
 				</nb-icon>
 				<nb-icon
 					(click)="archive()"
-					nbTooltip="{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate
-					}}"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.ARCHIVE' | translate }}"
 					*ngIf="rowData.showArchive"
 					nbTooltipPlacement="top"
 					icon="archive-outline"
@@ -88,9 +65,7 @@ import { TranslateService } from '@ngx-translate/core';
 					(click)="removeInterview()"
 					icon="close"
 					class="icons ml-2"
-					nbTooltip="{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate
-					}}"
+					nbTooltip="{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.DELETE' | translate }}"
 					nbTooltipPlacement="top"
 					[ngClass]="{
 						enabled: !isPastInterview(rowData),
@@ -154,10 +129,7 @@ import { TranslateService } from '@ngx-translate/core';
 		`
 	]
 })
-export class InterviewActionsTableComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+export class InterviewActionsTableComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
 	constructor(readonly translateService: TranslateService) {

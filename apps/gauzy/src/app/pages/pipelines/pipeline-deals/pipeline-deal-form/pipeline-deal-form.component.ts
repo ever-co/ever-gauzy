@@ -10,7 +10,7 @@ import { AppStore, Store } from '../../../../@core/services/store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from 'apps/gauzy/src/app/@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,9 +18,7 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	selector: 'ga-pipeline-deals-form',
 	styleUrls: ['./pipeline-deal-form.component.scss']
 })
-export class PipelineDealFormComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
+export class PipelineDealFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	form: UntypedFormGroup;
 	pipeline: IPipeline;
 	clients: IContact[];
@@ -54,9 +52,7 @@ export class PipelineDealFormComponent
 
 		appStore.akitaPreUpdate = (previous, next) => {
 			if (previous.user !== next.user) {
-				setTimeout(() =>
-					this.form.patchValue({ createdByUserId: next.user.id })
-				);
+				setTimeout(() => this.form.patchValue({ createdByUserId: next.user.id }));
 			}
 
 			return this.$akitaPreUpdate(previous, next);
@@ -130,25 +126,16 @@ export class PipelineDealFormComponent
 		const { tenantId } = this;
 		await this.dealsService
 			.getOne(this.dealId, { tenantId }, ['client'])
-			.then(
-				({
+			.then(({ title, stageId, createdBy, probability, clientId, client }) => {
+				this.form.patchValue({
 					title,
 					stageId,
 					createdBy,
 					probability,
-					clientId,
-					client
-				}) => {
-					this.form.patchValue({
-						title,
-						stageId,
-						createdBy,
-						probability,
-						clientId
-					});
-					this.selectedProbability = probability;
-				}
-			);
+					clientId
+				});
+				this.selectedProbability = probability;
+			});
 	}
 
 	async getOrganizationContact() {
@@ -170,40 +157,34 @@ export class PipelineDealFormComponent
 		this.form.disable();
 		await (this.dealId
 			? this.dealsService.update(
-				this.dealId,
-				Object.assign(
-					{
-						organizationId: this.organizationId,
-						tenantId: this.tenantId
-					},
-					value
-				)
-			)
+					this.dealId,
+					Object.assign(
+						{
+							organizationId: this.organizationId,
+							tenantId: this.tenantId
+						},
+						value
+					)
+			  )
 			: this.dealsService.create(
-				Object.assign(
-					{
-						organizationId: this.organizationId,
-						tenantId: this.tenantId
-					},
-					value
-				)
-			)
+					Object.assign(
+						{
+							organizationId: this.organizationId,
+							tenantId: this.tenantId
+						},
+						value
+					)
+			  )
 		)
 			.then(() => {
 				if (this.dealId) {
-					this.toastrService.success(
-						'PIPELINE_DEALS_PAGE.DEAL_EDITED',
-						{
-							name: value.title
-						}
-					);
+					this.toastrService.success('PIPELINE_DEALS_PAGE.DEAL_EDITED', {
+						name: value.title
+					});
 				} else {
-					this.toastrService.success(
-						'PIPELINE_DEALS_PAGE.DEAL_ADDED',
-						{
-							name: value.title
-						}
-					);
+					this.toastrService.success('PIPELINE_DEALS_PAGE.DEAL_ADDED', {
+						name: value.title
+					});
 				}
 				this.router.navigate([dealId ? '../..' : '..'], { relativeTo });
 			})

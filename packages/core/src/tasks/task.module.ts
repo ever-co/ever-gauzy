@@ -28,7 +28,7 @@ const forFeatureEntities = [Task, TaskStatus, IntegrationMap];
 		RoleModule,
 		EmployeeModule,
 		OrganizationProjectModule,
-		CqrsModule
+		CqrsModule,
 	],
 	controllers: [TaskController],
 	providers: [TaskService, TypeOrmTaskRepository, ...CommandHandlers, ...EventHandlers],

@@ -2,7 +2,7 @@ import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	CandidateCriterionsRatingService,
 	CandidateFeedbacksService,
@@ -15,9 +15,7 @@ import {
 	templateUrl: 'delete-feedback.component.html',
 	styleUrls: ['delete-feedback.component.scss']
 })
-export class DeleteFeedbackComponent extends TranslationBaseComponent 
-	implements OnDestroy {
-
+export class DeleteFeedbackComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() feedbackId: string;
 
 	constructor(
@@ -32,17 +30,10 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 
 	async delete() {
 		try {
-			const res = await this.candidateFeedbacksService.findById(
-				this.feedbackId
-			);
+			const res = await this.candidateFeedbacksService.findById(this.feedbackId);
 			if (res && res.interviewId) {
-				await this.candidateCriterionsRatingService.deleteBulkByFeedbackId(
-					this.feedbackId
-				);
-				await this.candidateFeedbacksService.delete(
-					this.feedbackId,
-					res.interviewId
-				);
+				await this.candidateCriterionsRatingService.deleteBulkByFeedbackId(this.feedbackId);
+				await this.candidateFeedbacksService.delete(this.feedbackId, res.interviewId);
 			} else {
 				await this.candidateFeedbacksService.delete(this.feedbackId);
 			}
@@ -54,16 +45,12 @@ export class DeleteFeedbackComponent extends TranslationBaseComponent
 	}
 
 	private toastrError(error) {
-		this.toastrService.danger(
-			'NOTES.CANDIDATE.EXPERIENCE.ERROR',
-			'TOASTR.TITLE.ERROR',
-			error
-		);
+		this.toastrService.danger('NOTES.CANDIDATE.EXPERIENCE.ERROR', 'TOASTR.TITLE.ERROR', error);
 	}
 
 	closeDialog() {
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
 import {
 	IOrganization,
 	IProductTypeTranslatable,
@@ -18,12 +10,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { finalize, map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	ErrorHandlingService,
-	ProductTypeService,
-	Store
-} from '../../@core/services';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ProductTypeService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,7 +27,6 @@ import {
 	]
 })
 export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
-
 	public organization: IOrganization;
 	protected subject$: Subject<any> = new Subject();
 	public hasEditProductType$: Observable<boolean>;
@@ -47,8 +34,8 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	public loading: boolean = false;
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	private _disabled: boolean = false;
 	get disabled(): boolean {
 		return this._disabled;
@@ -58,8 +45,8 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -69,8 +56,8 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	private _addTag: boolean = false;
 	get addTag(): boolean {
 		return this._addTag;
@@ -110,14 +97,12 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	constructor(
 		private readonly store: Store,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly productTypeService: ProductTypeService,
+		private readonly productTypeService: ProductTypeService
 	) {}
 
 	ngOnInit(): void {
 		this.hasEditProductType$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.ORG_PRODUCT_TYPES_EDIT))
 		);
 		this.subject$
 			.pipe(
@@ -144,15 +129,15 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-    * Register a listener for change events.
-    */
-	 registerOnChange(fn: () => void): void {
+	 * Register a listener for change events.
+	 */
+	registerOnChange(fn: () => void): void {
 		this.onChange = fn;
 	}
 
 	/**
-    * Register a listener for touched events.
-    */
+	 * Register a listener for touched events.
+	 */
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
 	}
@@ -186,13 +171,15 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 			const icons = Object.values(ProductTypesIconsEnum);
 
 			// Added latest product category translations
-			const translations = [{
-				name,
-				description,
-				languageCode,
-				tenantId,
-				organizationId,
-			}];
+			const translations = [
+				{
+					name,
+					description,
+					languageCode,
+					tenantId,
+					organizationId
+				}
+			];
 			const payload: IProductTypeTranslatable = {
 				organizationId,
 				tenantId,
@@ -200,12 +187,12 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 				icon: icons[Math.floor(Math.random() * icons.length)]
 			};
 			return await this.productTypeService.create(payload).finally(() => {
-				this.loading = false
+				this.loading = false;
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-	}
+	};
 
 	/**
 	 * GET product types
@@ -221,16 +208,17 @@ export class ProductTypeSelectorComponent implements OnInit, OnDestroy {
 			const { id: organizationId } = this.organization;
 			const { tenantId } = this.store.user;
 
-			this.productTypes$ = this.productTypeService.getAllTranslated({
-				organizationId,
-				tenantId
-			})
-			.pipe(
-				tap(({ items = []  }) => this.onLoaded.emit(items)),
-				map(({ items }) => items),
-				finalize(() => this.loading = false),
-				untilDestroyed(this)
-			);
+			this.productTypes$ = this.productTypeService
+				.getAllTranslated({
+					organizationId,
+					tenantId
+				})
+				.pipe(
+					tap(({ items = [] }) => this.onLoaded.emit(items)),
+					map(({ items }) => items),
+					finalize(() => (this.loading = false)),
+					untilDestroyed(this)
+				);
 		} catch (error) {
 			console.log('Error while retrieving product types', error);
 		}

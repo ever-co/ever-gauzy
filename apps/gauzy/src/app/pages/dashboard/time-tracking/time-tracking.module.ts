@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -56,4 +56,4 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 	exports: [TimeTrackingComponent],
 	providers: []
 })
-export class TimeTrackingModule { }
+export class TimeTrackingModule {}

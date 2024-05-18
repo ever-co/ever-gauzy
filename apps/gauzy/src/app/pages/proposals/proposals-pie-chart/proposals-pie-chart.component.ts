@@ -1,25 +1,20 @@
 import { AfterViewInit, Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ngx-proposals-pie-chart',
 	template: `<canvas baseChart [options]="options" class="echart"></canvas>`,
 	styleUrls: ['./proposals-pie-chart.component.scss']
 })
-export class ProposalsPieChartComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnDestroy {
+export class ProposalsPieChartComponent extends TranslationBaseComponent implements AfterViewInit, OnDestroy {
 	@Input() values: { name: string; value: number }[];
 
 	options: any = {};
 	themeSubscription: any;
 
-	constructor(
-		private theme: NbThemeService,
-		readonly translateService: TranslateService
-	) {
+	constructor(private theme: NbThemeService, readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -45,9 +40,7 @@ export class ProposalsPieChartComponent
 					orient: 'vertical',
 					left: 'left',
 					data: [
-						this.getTranslation(
-							'PROPOSALS_PAGE.ACCEPTED_PROPOSALS'
-						),
+						this.getTranslation('PROPOSALS_PAGE.ACCEPTED_PROPOSALS'),
 						this.getTranslation('PROPOSALS_PAGE.TOTAL_PROPOSALS')
 					],
 					textStyle: {

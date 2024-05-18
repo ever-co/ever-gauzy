@@ -1,17 +1,11 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
 import * as moment from 'moment';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
@@ -19,8 +13,8 @@ import {
 	ReportGroupFilterEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
@@ -34,9 +28,7 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 	templateUrl: './time-reports.component.html',
 	styleUrls: ['./time-reports.component.scss']
 })
-export class TimeReportsComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit, OnDestroy {
-
+export class TimeReportsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	public filters: ITimeLogFilters;
 	public loading: boolean = false;
 	public charts: IChartData;
@@ -147,12 +139,12 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 
 			// Common options for chart datasets
 			const commonOptions = {
-				borderWidth: 2,               // Width of the dataset border
-				pointRadius: 2,              // Radius of the data points
-				pointHoverRadius: 4,         // Radius of the data points on hover
-				pointHoverBorderWidth: 4,    // Width of the border of data points on hover
-				tension: 0.4,                // Tension of the spline curve connecting data points
-				fill: false                  // Whether to fill the area under the line or not
+				borderWidth: 2, // Width of the dataset border
+				pointRadius: 2, // Radius of the data points
+				pointHoverRadius: 4, // Radius of the data points on hover
+				pointHoverBorderWidth: 4, // Width of the border of data points on hover
+				tension: 0.4, // Tension of the spline curve connecting data points
+				fill: false // Whether to fill the area under the line or not
 			};
 
 			// Prepare datasets for different time log types
@@ -162,28 +154,28 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 					data: logs.map((log: any) => log.value[TimeLogType.MANUAL]),
 					borderColor: ChartUtil.CHART_COLORS.red,
 					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1),
-					...commonOptions,
+					...commonOptions
 				},
 				{
 					label: TimeLogType.TRACKED,
 					data: logs.map((log: any) => log.value[TimeLogType.TRACKED]),
 					borderColor: ChartUtil.CHART_COLORS.blue,
 					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.blue, 1),
-					...commonOptions,
+					...commonOptions
 				},
 				{
 					label: TimeLogType.IDLE,
 					data: logs.map((log: any) => log.value[TimeLogType.IDLE]),
 					borderColor: ChartUtil.CHART_COLORS.yellow,
 					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.yellow, 1),
-					...commonOptions,
+					...commonOptions
 				},
 				{
 					label: TimeLogType.RESUMED,
 					data: logs.map((log: any) => log.value[TimeLogType.RESUMED]),
 					borderColor: ChartUtil.CHART_COLORS.green,
 					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.green, 1),
-					...commonOptions,
+					...commonOptions
 				}
 			];
 
@@ -201,5 +193,5 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

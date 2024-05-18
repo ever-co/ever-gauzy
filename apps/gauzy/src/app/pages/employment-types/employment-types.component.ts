@@ -1,10 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	TemplateRef,
-	ViewChild
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -31,7 +25,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,9 +33,7 @@ import { distinctUntilChange } from '@gauzy/common-angular';
 	templateUrl: './employment-types.component.html',
 	styleUrls: ['./employment-types.component.scss']
 })
-export class EmploymentTypesComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class EmploymentTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	@ViewChild('editableTemplate') public editableTemplateRef: TemplateRef<any>;
 	form: UntypedFormGroup;
 	selectedEmployee: IEmployee;
@@ -98,10 +90,7 @@ export class EmploymentTypesComponent
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -109,10 +98,7 @@ export class EmploymentTypesComponent
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.openDialog(this.editableTemplateRef, false)),
 				untilDestroyed(this)
@@ -144,14 +130,13 @@ export class EmploymentTypesComponent
 		const { tenantId } = this.store.user;
 		const { activePage, itemsPerPage } = this.getPagination();
 
-		const res =
-			await this.organizationEmploymentTypesService.getAllWithPagination(
-				{
-					organizationId,
-					tenantId
-				},
-				['tags']
-			);
+		const res = await this.organizationEmploymentTypesService.getAllWithPagination(
+			{
+				organizationId,
+				tenantId
+			},
+			['tags']
+		);
 		if (res) {
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 			this.smartTableSource.load(res.items);
@@ -178,24 +163,18 @@ export class EmploymentTypesComponent
 	}
 
 	private get _isGridLayout(): boolean {
-		return (
-			this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle
-		);
+		return this.componentLayoutStyleEnum.CARDS_GRID === this.dataLayoutStyle;
 	}
 
 	private async _loadGridLayoutData() {
-		this.organizationEmploymentTypes.push(
-			...(await this.smartTableSource.getElements())
-		);
+		this.organizationEmploymentTypes.push(...(await this.smartTableSource.getElements()));
 	}
 
 	async _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
 			pager: {
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			actions: false,
 			columns: {
@@ -242,12 +221,9 @@ export class EmploymentTypesComponent
 					this.subject$.next(true);
 					this.cancel();
 				});
-			this.toastrService.success(
-				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE',
-				{
-					name: this.form.get('name').value
-				}
-			);
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.ADD_EMPLOYMENT_TYPE', {
+				name: this.form.get('name').value
+			});
 		} else {
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.INVALID_EMPLOYMENT_TYPE',
@@ -259,10 +235,7 @@ export class EmploymentTypesComponent
 
 	submitForm() {
 		if (this.selectedOrgEmpType) {
-			this.editOrgEmpType(
-				this.selectedOrgEmpType.id,
-				this.form.get('name').value
-			);
+			this.editOrgEmpType(this.selectedOrgEmpType.id, this.form.get('name').value);
 		} else {
 			this.addEmploymentType();
 		}
@@ -278,17 +251,14 @@ export class EmploymentTypesComponent
 		);
 
 		if (result) {
-			await this.organizationEmploymentTypesService.deleteEmploymentType(
-				id
-			);
+			await this.organizationEmploymentTypesService.deleteEmploymentType(id);
 			this.toastrService.success(
 				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.DELETE_EMPLOYMENT_TYPE',
 				{
 					name: name
 				}
 			);
-			this.organizationEmploymentTypes =
-				this.organizationEmploymentTypes.filter((t) => t['id'] !== id);
+			this.organizationEmploymentTypes = this.organizationEmploymentTypes.filter((t) => t['id'] !== id);
 
 			this.emptyListInvoke();
 		}
@@ -314,26 +284,18 @@ export class EmploymentTypesComponent
 			name: name,
 			tags: this.tags
 		};
-		await this.organizationEmploymentTypesService.editEmploymentType(
-			id,
-			orgEmpTypeForEdit
-		);
-		this.toastrService.success(
-			'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.UPDATE_EMPLOYMENT_TYPE',
-			{
-				name: name
-			}
-		);
+		await this.organizationEmploymentTypesService.editEmploymentType(id, orgEmpTypeForEdit);
+		this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EMPLOYMENT_TYPES.UPDATE_EMPLOYMENT_TYPE', {
+			name: name
+		});
 		this._refresh$.next(true);
 		this.subject$.next(true);
 		this.cancel();
 	}
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this._loadSmartTableSettings();
-			});
+		this.translateService.onLangChange.pipe(takeUntil(this._ngDestroy$)).subscribe(() => {
+			this._loadSmartTableSettings();
+		});
 	}
 	/*
 	 * if empty employment types then displayed add button
@@ -362,8 +324,7 @@ export class EmploymentTypesComponent
 	selectOrganizationEmploymentType(orgEmpType: any) {
 		if (orgEmpType.data) orgEmpType = orgEmpType.data;
 		const res =
-			this.selected.employmentType &&
-				orgEmpType.id === this.selected.employmentType.id
+			this.selected.employmentType && orgEmpType.id === this.selected.employmentType.id
 				? { state: !this.selected.state }
 				: { state: true };
 		this.disabled = !res.state;

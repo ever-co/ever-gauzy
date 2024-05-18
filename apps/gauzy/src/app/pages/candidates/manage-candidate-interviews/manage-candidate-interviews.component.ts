@@ -5,14 +5,10 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { ActivatedRoute } from '@angular/router';
-import {
-	CandidateInterviewService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { CandidateInterviewService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -59,10 +55,7 @@ export class ManageCandidateInterviewsComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.interviews$.next(true)),
 				untilDestroyed(this)
 			)
@@ -76,24 +69,18 @@ export class ManageCandidateInterviewsComponent
 	private _loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CALENDAR'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CALENDAR'),
 				responsive: true,
 				route: this.getRoute('calendar')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWS'),
 				responsive: true,
 				tabId: this.TAB_ID,
 				route: this.getRoute('interview_panel')
 			},
 			{
-				title: this.getTranslation(
-					'CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'
-				),
+				title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 				responsive: true,
 				route: this.getRoute('criterion')
 			}
@@ -107,26 +94,18 @@ export class ManageCandidateInterviewsComponent
 	}
 
 	async addInterview() {
-		const dialog = this.dialogService.open(
-			CandidateInterviewMutationComponent,
-			{
-				context: {
-					headerTitle: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'
-					),
-					isCalendar: true,
-					interviews: this.interviews
-				}
+		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
+			context: {
+				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+				isCalendar: true,
+				interviews: this.interviews
 			}
-		);
+		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`,
-				{
-					name: data.title
-				}
-			);
+			this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, {
+				name: data.title
+			});
 		}
 		this.interviews$.next(true);
 	}
@@ -137,13 +116,7 @@ export class ManageCandidateInterviewsComponent
 
 		this.interviews = (
 			await this.candidateInterviewService.getAll(
-				[
-					'feedbacks',
-					'interviewers',
-					'technologies',
-					'personalQualities',
-					'candidate'
-				],
+				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
 				{
 					organizationId,
 					tenantId

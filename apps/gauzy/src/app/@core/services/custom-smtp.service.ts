@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ICustomSmtp, ICustomSmtpFindInput } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 import { firstValueFrom } from 'rxjs';
 
@@ -12,32 +12,22 @@ export class CustomSmtpService {
 	constructor(private http: HttpClient) {}
 
 	saveSMTPSetting(request: ICustomSmtp) {
-		return firstValueFrom(
-			this.http
-			.post<ICustomSmtp>(`${this.API_URL}`, request)
-		);
+		return firstValueFrom(this.http.post<ICustomSmtp>(`${this.API_URL}`, request));
 	}
 
 	updateSMTPSetting(id, request: ICustomSmtp) {
-		return firstValueFrom(
-			this.http
-			.put<ICustomSmtp>(`${this.API_URL}/${id}`, request)
-		);
+		return firstValueFrom(this.http.put<ICustomSmtp>(`${this.API_URL}/${id}`, request));
 	}
 
 	getSMTPSetting(request: ICustomSmtpFindInput) {
 		return firstValueFrom(
-			this.http
-			.get<ICustomSmtp>(`${this.API_URL}/setting`, {
+			this.http.get<ICustomSmtp>(`${this.API_URL}/setting`, {
 				params: toParams(request)
 			})
 		);
 	}
 
 	validateSMTPSetting(request: ICustomSmtp) {
-		return firstValueFrom(
-			this.http
-			.post<boolean>(`${this.API_URL}/validate`, request)
-		);
+		return firstValueFrom(this.http.post<boolean>(`${this.API_URL}/validate`, request));
 	}
 }

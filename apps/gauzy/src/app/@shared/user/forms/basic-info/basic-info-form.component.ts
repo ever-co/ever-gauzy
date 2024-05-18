@@ -1,11 +1,4 @@
-import {
-	Component,
-	ViewChild,
-	ElementRef,
-	Input,
-	OnInit,
-	AfterViewInit
-} from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, OnInit, AfterViewInit } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
@@ -22,11 +15,11 @@ import {
 } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../language-base/translation-base.component';
+import { CompareDateValidator, UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { AuthService, CandidatesService, EmployeesService, RoleService, Store } from './../../../../@core/services';
-import { CompareDateValidator, UrlPatternValidator } from './../../../../@core/validators';
 import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
@@ -35,18 +28,15 @@ import { FormHelpers } from '../../../forms/helpers';
 	templateUrl: 'basic-info-form.component.html',
 	styleUrls: ['basic-info-form.component.scss']
 })
-export class BasicInfoFormComponent
-	extends TranslationBaseComponent
-	implements OnInit, AfterViewInit {
-
+export class BasicInfoFormComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	@ViewChild('imagePreview')
 	imagePreviewElement: ElementRef;
 
 	@Input() public selectedTags: ITag[];
 
 	/*
-	* Getter & Setter for check is for candidate mutation
-	*/
+	 * Getter & Setter for check is for candidate mutation
+	 */
 	private _isCandidate: boolean = false;
 	public get isCandidate(): boolean {
 		return this._isCandidate;
@@ -56,8 +46,8 @@ export class BasicInfoFormComponent
 	}
 
 	/*
-	* Getter & Setter for check is for employee mutation
-	*/
+	 * Getter & Setter for check is for employee mutation
+	 */
 	private _isEmployee: boolean = false;
 	public get isEmployee(): boolean {
 		return this._isEmployee;
@@ -67,8 +57,8 @@ export class BasicInfoFormComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic hide/show roles dropdown
-	*/
+	 * Getter & Setter for dynamic hide/show roles dropdown
+	 */
 	private _isShowRole: boolean = false;
 	public get isShowRole(): boolean {
 		return this._isShowRole;
@@ -84,42 +74,33 @@ export class BasicInfoFormComponent
 
 	public form: UntypedFormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): UntypedFormGroup {
-		return fb.group({
-			firstName: [],
-			lastName: [],
-			username: [],
-			email: [
-				'',
-				Validators.compose([Validators.required, Validators.email])
-			],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
-			imageId: [],
-			password: [
-				'',
-				Validators.compose([
-					Validators.required,
-					Validators.minLength(4)
-				])
-			],
-			startedWorkOn: [],
-			role: [],
-			offerDate: [],
-			acceptDate: [],
-			appliedDate: [],
-			rejectDate: [],
-			source: [],
-			tags: [self.selectedTags],
-			featureAsEmployee: [false]
-		},
+		return fb.group(
+			{
+				firstName: [],
+				lastName: [],
+				username: [],
+				email: ['', Validators.compose([Validators.required, Validators.email])],
+				imageUrl: [{ value: null, disabled: true }],
+				imageId: [],
+				password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
+				startedWorkOn: [],
+				role: [],
+				offerDate: [],
+				acceptDate: [],
+				appliedDate: [],
+				rejectDate: [],
+				source: [],
+				tags: [self.selectedTags],
+				featureAsEmployee: [false]
+			},
 			{
 				validators: [
 					CompareDateValidator.validateDate('offerDate', 'acceptDate'),
 					CompareDateValidator.validateDate('offerDate', 'rejectDate'),
 					UrlPatternValidator.imageUrlValidator('imageUrl')
 				]
-			});
+			}
+		);
 	}
 
 	constructor(
@@ -141,7 +122,7 @@ export class BasicInfoFormComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				filter(() => !!this.location.getState()),
 				tap(() => this.patchUsingLocationState(this.location.getState())),
 				untilDestroyed(this)
@@ -153,18 +134,17 @@ export class BasicInfoFormComponent
 	 * Exclude SUPER_ADMIN role, if don't have permissions
 	 */
 	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(
-			this.authService.hasRole([RolesEnum.SUPER_ADMIN])
-		);
+		const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		if (!hasSuperAdminRole) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
 	}
 
 	public enableEmployee() {
-		return this.form.get('role').value && (
-			(this.form.get('role').value).name === RolesEnum.SUPER_ADMIN ||
-			(this.form.get('role').value).name === RolesEnum.ADMIN
+		return (
+			this.form.get('role').value &&
+			(this.form.get('role').value.name === RolesEnum.SUPER_ADMIN ||
+				this.form.get('role').value.name === RolesEnum.ADMIN)
 		);
 	}
 
@@ -172,22 +152,24 @@ export class BasicInfoFormComponent
 		return this.form.get('imageUrl') && this.form.get('imageUrl').value;
 	}
 
-	async registerUser(
-		defaultRoleName: RolesEnum,
-		organizationId?: string,
-		createdById?: string
-	) {
+	async registerUser(defaultRoleName: RolesEnum, organizationId?: string, createdById?: string) {
 		if (this.form.invalid) {
 			return;
 		}
 		const { firstName, lastName, email, username, password } = this.form.value;
-		const { tags, imageUrl, imageId, featureAsEmployee, role: { name } } = this.form.value;
+		const {
+			tags,
+			imageUrl,
+			imageId,
+			featureAsEmployee,
+			role: { name }
+		} = this.form.value;
 
 		const { tenantId, tenant } = this.store.user;
 		/**
-		* Removed feature organizations from payload,
-		* which is not necessary to send into the payload
-		*/
+		 * Removed feature organizations from payload,
+		 * which is not necessary to send into the payload
+		 */
 		if (tenant.hasOwnProperty('featureOrganizations')) {
 			delete tenant['featureOrganizations'];
 		}
@@ -315,8 +297,8 @@ export class BasicInfoFormComponent
 	 */
 	onSelectionChange(role: IRole) {
 		if (this.isShowRole) {
-			this.isCandidate = (role.name === RolesEnum.CANDIDATE);
-			this.isEmployee = (role.name === RolesEnum.EMPLOYEE);
+			this.isCandidate = role.name === RolesEnum.CANDIDATE;
+			this.isEmployee = role.name === RolesEnum.EMPLOYEE;
 		}
 	}
 
@@ -358,9 +340,7 @@ export class BasicInfoFormComponent
 			rejectDate,
 			tags: tags
 		};
-		return await firstValueFrom(
-			this.employeesService.create(employee)
-		);
+		return await firstValueFrom(this.employeesService.create(employee));
 	}
 
 	/**
@@ -395,9 +375,7 @@ export class BasicInfoFormComponent
 			tenantId,
 			organizationId
 		};
-		return await firstValueFrom(
-			this.candidatesService.create(candidate)
-		);
+		return await firstValueFrom(this.candidatesService.create(candidate));
 	}
 
 	/**

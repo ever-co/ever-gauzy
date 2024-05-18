@@ -5,7 +5,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EquipmentService, ImageAssetService, Store, ToastrService } from '../../@core/services';
 import { environment as ENV } from './../../../environments/environment';
 import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
@@ -16,9 +16,7 @@ import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-
 	templateUrl: './equipment-mutation.component.html',
 	styleUrls: ['./equipment-mutation.component.scss']
 })
-export class EquipmentMutationComponent extends TranslationBaseComponent
-	implements OnInit {
-
+export class EquipmentMutationComponent extends TranslationBaseComponent implements OnInit {
 	form: UntypedFormGroup;
 	equipment: IEquipment;
 	image: IImageAsset;
@@ -52,62 +50,40 @@ export class EquipmentMutationComponent extends TranslationBaseComponent
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.newImageUploadedEvent$
-			.pipe(untilDestroyed(this))
-			.subscribe(async (resultData) => {
-				const newAsset = {
-					name: resultData['original_filename'],
-					url: resultData.url,
-					width: resultData.width,
-					height: resultData.height,
-					isFeatured: false,
-					organizationId: this.organization.id,
-					tenantId: this.store.user.tenantId
-				};
+		this.newImageUploadedEvent$.pipe(untilDestroyed(this)).subscribe(async (resultData) => {
+			const newAsset = {
+				name: resultData['original_filename'],
+				url: resultData.url,
+				width: resultData.width,
+				height: resultData.height,
+				isFeatured: false,
+				organizationId: this.organization.id,
+				tenantId: this.store.user.tenantId
+			};
 
-				let result = await this.imageAssetService.createImageAsset(
-					newAsset
-				);
-				if (result) {
-					this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
-					this.newImageStoredEvent$.next(result);
-				}
-			});
+			let result = await this.imageAssetService.createImageAsset(newAsset);
+			if (result) {
+				this.toastrService.success('INVENTORY_PAGE.IMAGE_SAVED');
+				this.newImageStoredEvent$.next(result);
+			}
+		});
 	}
 
 	async initializeForm() {
 		this.form = this.fb.group({
 			tags: [this.equipment ? this.equipment.tags : ''],
-			name: [
-				this.equipment ? this.equipment.name : '',
-				Validators.required
-			],
+			name: [this.equipment ? this.equipment.name : '', Validators.required],
 			type: [this.equipment ? this.equipment.type : ''],
 			serialNumber: [this.equipment ? this.equipment.serialNumber : ''],
-			manufacturedYear: [
-				this.equipment ? this.equipment.manufacturedYear : null,
-				[Validators.min(1000)]
-			],
-			initialCost: [
-				this.equipment ? this.equipment.initialCost : null,
-				[Validators.min(0)]
-			],
-			currency: [
-				this.equipment
-					? this.equipment.currency
-					: this.selectedCurrency,
-				Validators.required
-			],
-			maxSharePeriod: [
-				this.equipment ? this.equipment.maxSharePeriod : null
-			],
-			autoApproveShare: [
-				this.equipment ? this.equipment.autoApproveShare : false
-			],
+			manufacturedYear: [this.equipment ? this.equipment.manufacturedYear : null, [Validators.min(1000)]],
+			initialCost: [this.equipment ? this.equipment.initialCost : null, [Validators.min(0)]],
+			currency: [this.equipment ? this.equipment.currency : this.selectedCurrency, Validators.required],
+			maxSharePeriod: [this.equipment ? this.equipment.maxSharePeriod : null],
+			autoApproveShare: [this.equipment ? this.equipment.autoApproveShare : false],
 			id: [this.equipment ? this.equipment.id : null]
 		});
 	}

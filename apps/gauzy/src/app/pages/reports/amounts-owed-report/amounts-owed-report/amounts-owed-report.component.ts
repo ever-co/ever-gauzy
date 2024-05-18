@@ -1,10 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
@@ -12,9 +6,16 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
 import * as moment from 'moment';
-import { IGetExpenseInput, ReportGroupFilterEnum, ReportGroupByFilter, ITimeLogFilters, IGetTimeLogReportInput } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import {
+	IGetExpenseInput,
+	ReportGroupFilterEnum,
+	ReportGroupByFilter,
+	ITimeLogFilters,
+	IGetTimeLogReportInput
+} from '@gauzy/contracts';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
@@ -28,9 +29,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './amounts-owed-report.component.html',
 	styleUrls: ['./amounts-owed-report.component.scss']
 })
-export class AmountsOwedReportComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class AmountsOwedReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: IGetExpenseInput;
 	public loading: boolean = false;
 	public charts: IChartData;
@@ -148,18 +147,20 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent
 			const logs: any = await this.timesheetService.getOwedAmountReportChartData(payloads);
 
 			// Build datasets for the chart
-			const datasets = [{
-				label: this.getTranslation('REPORT_PAGE.AMOUNT'), // Label for the dataset
-				data: logs.map((log: any) => log.value),          // Array of data points
-				borderColor: ChartUtil.CHART_COLORS.red,           // Color of the dataset border
-				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Background color with transparency
-				borderWidth: 2,               // Width of the dataset border
-				pointRadius: 2,              // Radius of the data points
-				pointHoverRadius: 4,         // Radius of the data points on hover
-				pointHoverBorderWidth: 4,    // Width of the border of data points on hover
-				tension: 0.4,                // Tension of the spline curve connecting data points
-				fill: false                  // Whether to fill the area under the line or not
-			}];
+			const datasets = [
+				{
+					label: this.getTranslation('REPORT_PAGE.AMOUNT'), // Label for the dataset
+					data: logs.map((log: any) => log.value), // Array of data points
+					borderColor: ChartUtil.CHART_COLORS.red, // Color of the dataset border
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Background color with transparency
+					borderWidth: 2, // Width of the dataset border
+					pointRadius: 2, // Radius of the data points
+					pointHoverRadius: 4, // Radius of the data points on hover
+					pointHoverBorderWidth: 4, // Width of the border of data points on hover
+					tension: 0.4, // Tension of the spline curve connecting data points
+					fill: false // Whether to fill the area under the line or not
+				}
+			];
 
 			// Update the 'chartData' property with the processed data
 			this.charts = {

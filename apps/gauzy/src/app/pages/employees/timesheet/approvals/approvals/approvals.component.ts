@@ -12,10 +12,11 @@ import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { isEmpty } from '@gauzy/common-angular';
+import { isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { TimesheetService } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { DateRangePickerBuilderService, Store, ToastrService } from './../../../../../@core/services';
+import { Store, ToastrService } from './../../../../../@core/services';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -24,15 +25,13 @@ import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-
 	templateUrl: './approvals.component.html',
 	styleUrls: ['./approvals.component.scss']
 })
-export class ApprovalsComponent extends BaseSelectorFilterComponent implements
-	AfterViewInit, OnInit, OnDestroy {
-
+export class ApprovalsComponent extends BaseSelectorFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	timesheets: ITimesheet[] = [];
 	contextMenus: NbMenuItem[] = [];
 
 	loading: boolean = false;
 	allChecked: boolean = false;
-	disableButton: boolean = true
+	disableButton: boolean = true;
 
 	TimesheetStatus = TimesheetStatus;
 
@@ -40,8 +39,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	selectedTimesheet: {
-		data: ITimesheet,
-		isSelected: boolean
+		data: ITimesheet;
+		isSelected: boolean;
 	};
 
 	constructor(
@@ -91,19 +90,13 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 			this.timesheets = await this.timesheetService.getTimeSheets({
 				...this.getFilterRequest(this.request),
 				relations: [
-					...(
-						this.store.hasPermission(
-							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-						)
-							? ['employee', 'employee.user']
-							: []
-					)
+					...(this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+						? ['employee', 'employee.user']
+						: [])
 				]
 			});
 		} catch (error) {
-			console.log(
-				'Error while getting timesheets for selected date range'
-			);
+			console.log('Error while getting timesheets for selected date range');
 		} finally {
 			this.loading = false;
 		}
@@ -116,10 +109,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 * @param status
 	 * @returns
 	 */
-	updateStatus(
-		timesheetIds: string | string[],
-		status: TimesheetStatus
-	) {
+	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
 		if (!this.organization || isEmpty(timesheetIds)) {
 			return;
 		}
@@ -130,8 +120,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 			status,
 			organizationId,
 			tenantId
-		}
-		this.timesheetService.updateStatus(request)
+		};
+		this.timesheetService
+			.updateStatus(request)
 			.then(() => {
 				if (status === TimesheetStatus.APPROVED) {
 					this.toastrService.success('TIMESHEET.APPROVE_SUCCESS');
@@ -144,10 +135,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 			});
 	}
 
-	submitTimesheet(
-		timesheetIds: string | string[],
-		status: 'submit' | 'unsubmit'
-	) {
+	submitTimesheet(timesheetIds: string | string[], status: 'submit' | 'unsubmit') {
 		if (!this.organization || isEmpty(timesheetIds)) {
 			return;
 		}
@@ -158,7 +146,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 			status,
 			organizationId,
 			tenantId
-		}
+		};
 		this.timesheetService
 			.submitTimesheet(request)
 			.then(() => {
@@ -210,9 +198,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 */
 	checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timesheets.forEach(
-			(timesheet: any) => (timesheet.checked = checked)
-		);
+		this.timesheets.forEach((timesheet: any) => (timesheet.checked = checked));
 	}
 
 	/**
@@ -297,7 +283,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 		this.selectedTimesheet = {
 			isSelected: isSelected,
 			data: isSelected ? data : null
-		}
+		};
 	}
 
 	/*
@@ -325,9 +311,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 			});
 		} else {
 			// find the row which was previously selected.
-			const isRowSelected = this.timesheets.find(
-				(item: ITimesheet) => item['isSelected'] === true
-			);
+			const isRowSelected = this.timesheets.find((item: ITimesheet) => item['isSelected'] === true);
 			if (!!isRowSelected) {
 				// if row found successfully, mark that row as deselected
 				isRowSelected['isSelected'] = false;
@@ -364,8 +348,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements
 	 * @returns
 	 */
 	prepareTimesheetIds(timesheetIds: string | string[]): string[] {
-		return (typeof timesheetIds === 'string') ? [timesheetIds] : timesheetIds;
+		return typeof timesheetIds === 'string' ? [timesheetIds] : timesheetIds;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

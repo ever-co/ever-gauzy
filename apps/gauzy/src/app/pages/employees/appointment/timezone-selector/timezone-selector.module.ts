@@ -1,10 +1,10 @@
-import { ThemeModule } from '../../../../@theme/theme.module';
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { TimezoneSelectorComponent } from './timezone-selector.component';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
+import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../../@theme/theme.module';
+import { TimezoneSelectorComponent } from './timezone-selector.component';
 
 @NgModule({
 	imports: [

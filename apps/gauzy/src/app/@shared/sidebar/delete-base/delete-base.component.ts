@@ -2,7 +2,7 @@ import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IHelpCenter } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { HelpCenterService } from '../../../@core/services';
 
 @Component({
@@ -10,10 +10,7 @@ import { HelpCenterService } from '../../../@core/services';
 	templateUrl: 'delete-base.component.html',
 	styleUrls: ['delete-base.component.scss']
 })
-export class DeleteBaseComponent
-	extends TranslationBaseComponent
-	implements OnDestroy {
-
+export class DeleteBaseComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() base: IHelpCenter;
 
 	constructor(

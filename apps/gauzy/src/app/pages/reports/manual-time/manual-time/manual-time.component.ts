@@ -1,18 +1,6 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import {
-	IGetTimeLogReportInput,
-	ITimeLog,
-	ITimeLogFilters,
-	TimeLogType,
-	ManualTimeLogAction
-} from '@gauzy/contracts';
+import { IGetTimeLogReportInput, ITimeLog, ITimeLogFilters, TimeLogType, ManualTimeLogAction } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
@@ -20,8 +8,9 @@ import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, ErrorHandlingService, Store } from './../../../../@core/services';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -33,9 +22,7 @@ import { TimesheetFilterService } from './../../../../@shared/timesheet';
 	templateUrl: './manual-time.component.html',
 	styleUrls: ['./manual-time.component.scss']
 })
-export class ManualTimeComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class ManualTimeComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public control = new FormControl();
 
 	filters: ITimeLogFilters;

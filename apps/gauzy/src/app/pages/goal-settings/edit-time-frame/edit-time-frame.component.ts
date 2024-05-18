@@ -1,11 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDateService } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import {
-	IGoalTimeFrame,
-	IOrganization,
-	TimeFrameStatusEnum
-} from '@gauzy/contracts';
+import { IGoalTimeFrame, IOrganization, TimeFrameStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -19,7 +15,7 @@ import {
 	startOfYear,
 	endOfYear
 } from 'date-fns';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { GoalSettingsService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,10 +24,7 @@ import { GoalSettingsService, Store, ToastrService } from '../../../@core/servic
 	templateUrl: './edit-time-frame.component.html',
 	styleUrls: ['./edit-time-frame.component.scss']
 })
-export class EditTimeFrameComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditTimeFrameComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	timeFrameForm: UntypedFormGroup;
 	timeFrame: IGoalTimeFrame;
 	type: string;
@@ -70,18 +63,14 @@ export class EditTimeFrameComponent
 				endDate: new Date(this.timeFrame.endDate)
 			});
 		}
-		this.timeFrameForm.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((form) => {
-				if (form.startDate > form.endDate) {
-					this.timeFrameForm.controls['endDate'].setErrors({
-						invalid: true,
-						beforeRequestDayMsg: this.getTranslation(
-							'GOALS_PAGE.FORM.ERROR.START_DATE_GREATER'
-						)
-					});
-				}
-			});
+		this.timeFrameForm.valueChanges.pipe(untilDestroyed(this)).subscribe((form) => {
+			if (form.startDate > form.endDate) {
+				this.timeFrameForm.controls['endDate'].setErrors({
+					invalid: true,
+					beforeRequestDayMsg: this.getTranslation('GOALS_PAGE.FORM.ERROR.START_DATE_GREATER')
+				});
+			}
+		});
 	}
 
 	generateTimeFrames() {
@@ -104,35 +93,27 @@ export class EditTimeFrameComponent
 		}
 		// Annual Time Frames
 		this.preDefinedTimeFrames.push({
-			name: `${this.getTranslation(
-				'GOALS_PAGE.SETTINGS.ANNUAL'
-			)}-${getYear(today)}`,
+			name: `${this.getTranslation('GOALS_PAGE.SETTINGS.ANNUAL')}-${getYear(today)}`,
 			start: new Date(startOfYear(today)),
 			end: new Date(endOfYear(today))
 		});
 		if (year > getYear(today)) {
 			this.preDefinedTimeFrames.push({
-				name: `${this.getTranslation(
-					'GOALS_PAGE.SETTINGS.ANNUAL'
-				)}-${year}`,
+				name: `${this.getTranslation('GOALS_PAGE.SETTINGS.ANNUAL')}-${year}`,
 				start: new Date(startOfYear(addDays(lastDayOfYear(today), 1))),
 				end: new Date(endOfYear(addDays(lastDayOfYear(today), 1)))
 			});
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 
 	updateTimeFrameValues(timeFrame, event) {
 		event.stopPropagation();
 		this.timeFrameForm.patchValue({
 			name: !!timeFrame.name ? timeFrame.name : '',
-			startDate: !!timeFrame.start
-				? this.dateService.clone(timeFrame.start)
-				: null,
-			endDate: !!timeFrame.end
-				? this.dateService.clone(timeFrame.end)
-				: null,
+			startDate: !!timeFrame.start ? this.dateService.clone(timeFrame.start) : null,
+			endDate: !!timeFrame.end ? this.dateService.clone(timeFrame.end) : null,
 			status: TimeFrameStatusEnum.ACTIVE
 		});
 	}
@@ -147,29 +128,21 @@ export class EditTimeFrameComponent
 		if (this.type === 'add') {
 			await this.goalSettingsService.createTimeFrame(data).then((res) => {
 				if (res) {
-					this.toastrService.success(
-						'TOASTR.MESSAGE.TIME_FRAME_CREATED',
-						{
-							name: data.name
-						}
-					);
+					this.toastrService.success('TOASTR.MESSAGE.TIME_FRAME_CREATED', {
+						name: data.name
+					});
 					this.closeDialog(res);
 				}
 			});
 		} else {
-			await this.goalSettingsService
-				.updateTimeFrame(this.timeFrame.id, data)
-				.then((res) => {
-					if (res) {
-						this.toastrService.success(
-							'TOASTR.MESSAGE.TIME_FRAME_UPDATED',
-							{
-								name: data.name
-							}
-						);
-						this.closeDialog(res);
-					}
-				});
+			await this.goalSettingsService.updateTimeFrame(this.timeFrame.id, data).then((res) => {
+				if (res) {
+					this.toastrService.success('TOASTR.MESSAGE.TIME_FRAME_UPDATED', {
+						name: data.name
+					});
+					this.closeDialog(res);
+				}
+			});
 		}
 	}
 

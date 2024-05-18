@@ -10,7 +10,7 @@ import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IOrganization } from '@gauzy/contracts';
 import { CandidateInterviewService, Store } from '../../../@core/services';
 
@@ -21,7 +21,6 @@ import { CandidateInterviewService, Store } from '../../../@core/services';
 	styleUrls: ['./candidate-calendar-info.component.scss']
 })
 export class CandidateCalendarInfoComponent implements OnInit {
-
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 
 	calendarOptions: CalendarOptions;
@@ -48,12 +47,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 				right: 'dayGridMonth,timeGridWeek,timeGridDay'
 			},
 			themeSystem: 'bootstrap',
-			plugins: [
-				dayGridPlugin,
-				timeGrigPlugin,
-				interactionPlugin,
-				bootstrapPlugin
-			],
+			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin],
 			weekends: true,
 			height: 'auto',
 			selectable: true,
@@ -62,7 +56,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			dateClick: this.handleDateClick.bind(this),
 			eventMouseEnter: this.handleEventMouseEnter.bind(this),
 			eventMouseLeave: this.handleEventMouseLeave.bind(this)
-		}
+		};
 	}
 
 	ngOnInit(): void {
@@ -71,7 +65,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getCandidateInterviewes()),
 				untilDestroyed(this)
 			)
@@ -90,10 +84,12 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const interviews = (await this.candidateInterviewService.getAll(['interviewers'], {
-			tenantId,
-			organizationId
-		})).items;
+		const interviews = (
+			await this.candidateInterviewService.getAll(['interviewers'], {
+				tenantId,
+				organizationId
+			})
+		).items;
 
 		this.calendarEvents = [];
 		for (const interview of interviews) {
@@ -165,9 +161,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 			el.style.overflow = 'hidden';
 		}
 
-		const isOverflowing =
-			el.clientWidth < el.scrollWidth ||
-			el.clientHeight < el.scrollHeight;
+		const isOverflowing = el.clientWidth < el.scrollWidth || el.clientHeight < el.scrollHeight;
 
 		if (el.style) {
 			el.style.overflow = curOverflow;
@@ -188,6 +182,6 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		if (!this.eventStartTime) {
 			return;
 		}
-		return (moment(this.eventStartTime).diff(moment()) < 0);
+		return moment(this.eventStartTime).diff(moment()) < 0;
 	}
 }

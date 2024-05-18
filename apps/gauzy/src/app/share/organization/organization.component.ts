@@ -1,21 +1,16 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	IOrganization,
-	PermissionsEnum,
-	IOrganizationContact,
-	IEmployee
-} from '@gauzy/contracts';
+import { IOrganization, PermissionsEnum, IOrganizationContact, IEmployee } from '@gauzy/contracts';
 import { NbDialogService, NbTabComponent, NbTabsetComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of as observableOf, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
 import {
-	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeStatisticsService,
 	OrganizationsService,
@@ -29,9 +24,7 @@ import {
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss']
 })
-export class OrganizationComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class OrganizationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public hasEditPublicPage$: Observable<boolean> = observableOf(false);
 	public organization: IOrganization;
 	public organization$: Observable<IOrganization>;
@@ -56,8 +49,8 @@ export class OrganizationComponent extends TranslationBaseComponent
 	/**
 	 * Tabset Type of the ViewChild metadata.
 	 */
-	@ViewChild("tabset") tabsetEl: NbTabsetComponent;
-	@ViewChild("profileTab") profileTabEl: NbTabComponent;
+	@ViewChild('tabset') tabsetEl: NbTabsetComponent;
+	@ViewChild('profileTab') profileTabEl: NbTabComponent;
 
 	constructor(
 		private readonly router: Router,
@@ -76,17 +69,15 @@ export class OrganizationComponent extends TranslationBaseComponent
 
 	ngOnInit(): void {
 		this.hasEditPublicPage$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)
-			)
+			map(() => this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT))
 		);
 		this.organization$ = this.route.data.pipe(
 			map(({ organization }) => organization),
-			tap((organization: IOrganization) => this.organization = organization),
-			tap((organization: IOrganization) => this.imageUrl = organization.imageUrl),
+			tap((organization: IOrganization) => (this.organization = organization)),
+			tap((organization: IOrganization) => (this.imageUrl = organization.imageUrl)),
 			tap(() => this.getEmployeesAndEmployeeCounts()),
 			tap(() => this.getClientsAndClientCounts()),
-			tap(() => this.getProjectCounts()),
+			tap(() => this.getProjectCounts())
 			// tap(() => this.getEmployeeStatistics())
 		);
 	}
@@ -114,7 +105,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 		this.imageUpdateButton = true;
 	}
 
-	handleImageUploadError(event: any) { }
+	handleImageUploadError(event: any) {}
 
 	/**
 	 * GET public information of the clients in the organization
@@ -128,9 +119,9 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 		const { id: organizationId } = this.organization;
 		if (!!this.organization.show_clients) {
-			this.clients$ = this.organizationsService.getAllPublicClients({ organizationId }).pipe(
-				map(({ items }) => items),
-			);
+			this.clients$ = this.organizationsService
+				.getAllPublicClients({ organizationId })
+				.pipe(map(({ items }) => items));
 		}
 		if (!!this.organization.show_clients_count) {
 			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId });
@@ -164,14 +155,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 		const { id: organizationId } = this.organization;
 		if (!!this.organization.show_employees_count) {
-			this.employees$ = this.employeesService.getAllPublic({ organizationId }, [
-				'user',
-				'organizationPosition',
-				'skills'
-			]).pipe(
-				tap(({ total }) => this.employeeCounts$ = observableOf(total)),
-				map(({ items }) => items),
-			);
+			this.employees$ = this.employeesService
+				.getAllPublic({ organizationId }, ['user', 'organizationPosition', 'skills'])
+				.pipe(
+					tap(({ total }) => (this.employeeCounts$ = observableOf(total))),
+					map(({ items }) => items)
+				);
 		}
 	}
 
@@ -190,14 +179,12 @@ export class OrganizationComponent extends TranslationBaseComponent
 			endDate = selectedDateRange.endDate;
 		}
 
-		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId(
-			{
-				organizationId,
-				tenantId,
-				startDate,
-				endDate
-			}
-		);
+		const statistics = await this.employeeStatisticsService.getAggregateStatisticsByOrganizationId({
+			organizationId,
+			tenantId,
+			startDate,
+			endDate
+		});
 		if (!!this.organization.show_bonuses_paid) {
 			this.bonusesPaid = statistics.total.bonus;
 		}
@@ -210,10 +197,7 @@ export class OrganizationComponent extends TranslationBaseComponent
 	}
 
 	async saveImage(organization: any) {
-		await this.organizationsService.update(
-			this.organization.id,
-			organization
-		);
+		await this.organizationsService.update(this.organization.id, organization);
 		this.imageUpdateButton = false;
 		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
@@ -226,17 +210,16 @@ export class OrganizationComponent extends TranslationBaseComponent
 				}
 			})
 			.onClose.pipe(
-				tap(() =>
-					this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()
-				),
+				tap(() => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()),
 				untilDestroyed(this)
 			)
 			.subscribe(async (result) => {
 				if (!!result) {
-					await this.organizationsService.update(
-						this.organization.id,
-						{ ...result, currency: this.organization.currency, defaultValueDateType: this.organization.defaultValueDateType }
-					);
+					await this.organizationsService.update(this.organization.id, {
+						...result,
+						currency: this.organization.currency,
+						defaultValueDateType: this.organization.defaultValueDateType
+					});
 					this.toastrService.success('TOASTR.MESSAGE.ORGANIZATION_PAGE_UPDATED', {
 						name: this.organization.name
 					});
@@ -255,5 +238,5 @@ export class OrganizationComponent extends TranslationBaseComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

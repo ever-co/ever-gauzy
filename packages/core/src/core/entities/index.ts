@@ -20,6 +20,7 @@ import {
 	Country,
 	Currency,
 	CustomSmtp,
+	DailyPlan,
 	Deal,
 	EmailHistory,
 	EmailReset,
@@ -133,7 +134,7 @@ import {
 	UserOrganization,
 	Warehouse,
 	WarehouseProduct,
-	WarehouseProductVariant,
+	WarehouseProductVariant
 } from './internal';
 
 export const coreEntities = [
@@ -158,6 +159,7 @@ export const coreEntities = [
 	Country,
 	Currency,
 	CustomSmtp,
+	DailyPlan,
 	Deal,
 	EmailHistory,
 	EmailReset,

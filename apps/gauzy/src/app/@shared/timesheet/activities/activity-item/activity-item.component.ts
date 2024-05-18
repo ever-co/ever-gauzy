@@ -1,12 +1,5 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	OnDestroy,
-	Output,
-	EventEmitter
-} from '@angular/core';
-import { progressStatus } from '@gauzy/common-angular';
+import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { progressStatus } from '@gauzy/ui-sdk/common';
 import { IDailyActivity } from '@gauzy/contracts';
 
 @Component({
@@ -21,15 +14,13 @@ export class ActivityItemComponent implements OnInit, OnDestroy {
 
 	@Output() loadChild: EventEmitter<any> = new EventEmitter();
 	@Input() allowChild = false;
-	@Input() isDashboard =  false;
+	@Input() isDashboard = false;
 
 	public get item(): IDailyActivity {
 		return this._item;
 	}
 	@Input() public set item(value: IDailyActivity) {
-		value.durationPercentage = parseFloat(
-			parseInt(value.durationPercentage + '', 10).toFixed(1)
-		);
+		value.durationPercentage = parseFloat(parseInt(value.durationPercentage + '', 10).toFixed(1));
 		this._item = value;
 	}
 

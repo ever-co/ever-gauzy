@@ -30,7 +30,7 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
@@ -40,7 +40,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TableComponentsModule } from '../../@shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
-import { TeamModule } from "./team/team.module";
+import { TeamModule } from './team/team.module';
 
 @NgModule({
 	imports: [

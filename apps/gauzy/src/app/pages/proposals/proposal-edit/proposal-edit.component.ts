@@ -1,25 +1,16 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
-import {
-	ProposalsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
-import { ckEditorConfig } from "../../../@shared/ckeditor.config";
-import { UrlPatternValidator } from '../../../@core/validators';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ProposalsService, Store, ToastrService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,33 +18,29 @@ import { UrlPatternValidator } from '../../../@core/validators';
 	templateUrl: './proposal-edit.component.html',
 	styleUrls: ['./proposal-edit.component.scss']
 })
-export class ProposalEditComponent extends TranslationBaseComponent
-	implements OnInit, AfterViewInit {
-
+export class ProposalEditComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
 	proposal: IProposal;
 	ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	/*
-	* Proposal Mutation Form
-	*/
+	 * Proposal Mutation Form
+	 */
 	public form: UntypedFormGroup = ProposalEditComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: ProposalEditComponent): UntypedFormGroup {
-		return fb.group({
-			jobPostUrl: [],
-			valueDate: [
-				self.store.getDateFromOrganizationSettings(),
-				Validators.required
-			],
-			jobPostContent: [null, Validators.required],
-			proposalContent: [null, Validators.required],
-			tags: [],
-			organizationContact: [],
-			employee: []
-		}, {
-			validators: [
-				UrlPatternValidator.websiteUrlValidator('jobPostUrl'),
-			]
-		});
+		return fb.group(
+			{
+				jobPostUrl: [],
+				valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+				jobPostContent: [null, Validators.required],
+				proposalContent: [null, Validators.required],
+				tags: [],
+				organizationContact: [],
+				employee: []
+			},
+			{
+				validators: [UrlPatternValidator.websiteUrlValidator('jobPostUrl')]
+			}
+		);
 	}
 
 	constructor(
@@ -122,7 +109,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 			proposalContent: this.proposal.proposalContent,
 			organizationContact: this.proposal.organizationContact,
 			tags: this.proposal.tags,
-			employee: this.proposal.employee,
+			employee: this.proposal.employee
 		});
 
 		// Optional: Trigger form validation to ensure the form's state is consistent
@@ -148,13 +135,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 			const { organizationId, tenantId } = this.proposal; // Extract the tenant ID & organization ID from the existing proposal
 
 			// Get the necessary data from the form
-			const {
-				jobPostContent,
-				jobPostUrl,
-				proposalContent,
-				tags,
-				organizationContact
-			} = this.form.value;
+			const { jobPostContent, jobPostUrl, proposalContent, tags, organizationContact } = this.form.value;
 
 			// Update the proposal with new values
 			await this.proposalsService.update(this.proposal.id, {
@@ -164,7 +145,7 @@ export class ProposalEditComponent extends TranslationBaseComponent
 				jobPostUrl,
 				proposalContent,
 				tags,
-				organizationContact,
+				organizationContact
 			});
 
 			// Show success message upon successful update

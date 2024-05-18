@@ -135,20 +135,14 @@ export class AuthService extends SocialAuthService {
 
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
-			where: [
-				{
-					email,
-					isActive: true,
-					isArchived: false,
-					hash: Not(IsNull())
-				}
-			],
-			relations: {
-				tenant: true
-			},
-			order: {
-				createdAt: 'DESC'
-			}
+			where: [{
+				email,
+				isActive: true,
+				isArchived: false,
+				hash: Not(IsNull())
+			}],
+			relations: { tenant: true },
+			order: { createdAt: 'DESC' }
 		});
 
 		// Filter users based on password match
@@ -164,18 +158,15 @@ export class AuthService extends SocialAuthService {
 		// Update all users with a single query
 		const ids = users.map((user: IUser) => user.id);
 
-		await this.typeOrmUserRepository.update(
-			{
-				id: In(ids),
-				email,
-				isActive: true,
-				isArchived: false
-			},
-			{
-				code,
-				codeExpireAt
-			}
-		);
+		await this.typeOrmUserRepository.update({
+			id: In(ids),
+			email,
+			isActive: true,
+			isArchived: false
+		}, {
+			code,
+			codeExpireAt
+		});
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
@@ -653,9 +644,7 @@ export class AuthService extends SocialAuthService {
 		console.log('Get access token from refresh token');
 		try {
 			const user = RequestContext.currentUser();
-			return {
-				token: await this.getJwtAccessToken(user)
-			};
+			return { token: await this.getJwtAccessToken(user) };
 		} catch (error) {
 			console.log('Error while getting jwt access token from refresh token', error);
 		}
@@ -849,40 +838,44 @@ export class AuthService extends SocialAuthService {
 						isActive: true,
 						isArchived: false
 					},
-					relations: {
-						role: true
-					}
+					relations: { role: true }
 				});
 
-				await this.typeOrmUserRepository.update(
-					{
-						email,
-						id: userId,
-						tenantId,
-						code,
-						isActive: true
-					},
-					{
-						code: null,
-						codeExpireAt: null
-					}
-				);
-
-				const employee = await this.employeeService.findOneByOptions({
-					where: { userId: user.id }
+				await this.typeOrmUserRepository.update({
+					email,
+					id: userId,
+					tenantId,
+					code,
+					isActive: true,
+					isArchived: false
+				}, {
+					code: null,
+					codeExpireAt: null
 				});
 
-				// If employees are inactive
-				if (employee && (employee.isActive === false || employee.isArchived === true)) {
+				// Retrieve the employee details associated with the user.
+				const employee = await this.employeeService.findOneByUserId(user.id);
+
+				// Check if the employee is active and not archived. If not, throw an error.
+				if (employee && (!employee.isActive || employee.isArchived)) {
 					throw new UnauthorizedException();
 				}
 
-				const access_token = await this.getJwtAccessToken(user);
-				const refresh_token = await this.getJwtRefreshToken(user);
+				// Generate both access and refresh tokens concurrently for efficiency.
+				const [access_token, refresh_token] = await Promise.all([
+					this.getJwtAccessToken(user),
+					this.getJwtRefreshToken(user)
+				]);
+
+				// Store the current refresh token with the user for later validation.
 				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
+				// Return the user object with user details, tokens, and optionally employee info if it exists.
 				return {
-					user,
+					user: {
+						...user,
+						...(employee && { employee })
+					},
 					token: access_token,
 					refresh_token: refresh_token
 				};

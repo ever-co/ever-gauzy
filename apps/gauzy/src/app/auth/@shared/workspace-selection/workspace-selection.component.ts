@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { IWorkspaceResponse } from '@gauzy/contracts';
-import { TranslationBaseComponent } from './../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ngx-workspace-selection',
@@ -10,7 +10,6 @@ import { TranslationBaseComponent } from './../../../@shared/language-base';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class WorkspaceSelectionComponent extends TranslationBaseComponent implements OnInit {
-
 	/**
 	 * Private property to store the workspaces.
 	 */
@@ -55,13 +54,11 @@ export class WorkspaceSelectionComponent extends TranslationBaseComponent implem
 	 */
 	@Output() selectedWorkspace: EventEmitter<IWorkspaceResponse> = new EventEmitter();
 
-	constructor(
-		public readonly translateService: TranslateService,
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngOnInit() { }
+	ngOnInit() {}
 
 	/**
 	 *

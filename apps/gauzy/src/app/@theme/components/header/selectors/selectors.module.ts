@@ -14,8 +14,8 @@ import {
 import { OrganizationSelectorComponent } from './organization/organization.component';
 import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { TranslateModule } from 'apps/gauzy/src/app/@shared/translate/translate.module';
-import { DirectivesModule } from "../../../../@shared/directives/directives.module";
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '../../../../@shared/directives/directives.module';
 
 const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 

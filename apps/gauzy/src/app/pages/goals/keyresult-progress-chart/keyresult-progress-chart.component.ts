@@ -1,22 +1,9 @@
 import { Component, OnInit, Input } from '@angular/core';
-import {
-	IKeyResult,
-	KeyResultDeadlineEnum,
-	IKPI,
-	IOrganization
-} from '@gauzy/contracts';
+import { IKeyResult, KeyResultDeadlineEnum, IKPI, IOrganization } from '@gauzy/contracts';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import {
-	differenceInCalendarDays,
-	addMonths,
-	compareDesc,
-	addDays,
-	addWeeks,
-	addQuarters,
-	isAfter
-} from 'date-fns';
+import { differenceInCalendarDays, addMonths, compareDesc, addDays, addWeeks, addQuarters, isAfter } from 'date-fns';
 import { Store } from '../../../@core/services/store.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -24,10 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './keyresult-progress-chart.component.html',
 	styleUrls: ['./keyresult-progress-chart.component.scss']
 })
-export class KeyResultProgressChartComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class KeyResultProgressChartComponent extends TranslationBaseComponent implements OnInit {
 	data: any;
 	options: any;
 	loading = true;
@@ -48,8 +32,7 @@ export class KeyResultProgressChartComponent
 
 	public async updateChart(keyResult: IKeyResult) {
 		const findInput = {
-			name:
-				keyResult.goal.deadline === '' ? null : keyResult.goal.deadline,
+			name: keyResult.goal.deadline === '' ? null : keyResult.goal.deadline,
 			organization: {
 				id: this.store.selectedOrganization.id
 			},
@@ -62,29 +45,15 @@ export class KeyResultProgressChartComponent
 					let start;
 					let end;
 					let period;
-					if (
-						keyResult.deadline ===
-						KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE
-					) {
+					if (keyResult.deadline === KeyResultDeadlineEnum.NO_CUSTOM_DEADLINE) {
 						start = new Date(res.items[0].startDate);
 						end = new Date(res.items[0].endDate);
 					} else {
 						start = new Date(res.items[0].startDate);
-						end = new Date(
-							keyResult.hardDeadline
-								? keyResult.hardDeadline
-								: res.items[0].endDate
-						);
+						end = new Date(keyResult.hardDeadline ? keyResult.hardDeadline : res.items[0].endDate);
 					}
 					const diffInDays = differenceInCalendarDays(end, start);
-					period =
-						diffInDays > 180
-							? 'quarter'
-							: diffInDays > 30
-							? 'month'
-							: diffInDays > 7
-							? 'week'
-							: 'day';
+					period = diffInDays > 180 ? 'quarter' : diffInDays > 30 ? 'month' : diffInDays > 7 ? 'week' : 'day';
 					const labels = this.labelCalculator(start, end, period);
 					const progressParts = labels.length;
 					this.calculateData(labels, keyResult);
@@ -92,9 +61,9 @@ export class KeyResultProgressChartComponent
 						legend: {
 							position: 'bottom',
 							align: 'start',
-              labels:{
-                textAlign:'center'
-              }
+							labels: {
+								textAlign: 'center'
+							}
 						},
 						responsive: true,
 						maintainAspectRatio: false,
@@ -139,12 +108,8 @@ export class KeyResultProgressChartComponent
 				{
 					label: this.getTranslation('GOALS_PAGE.EXPECTED'),
 					data: this.expectedDataCalculation(
-						!!this.kpi
-							? this.kpi.currentValue
-							: keyResult.initialValue,
-						!!this.kpi
-							? this.kpi.targetValue + this.kpi.targetValue
-							: keyResult.targetValue,
+						!!this.kpi ? this.kpi.currentValue : keyResult.initialValue,
+						!!this.kpi ? this.kpi.targetValue + this.kpi.targetValue : keyResult.targetValue,
 						labelsData
 					),
 					borderWidth: 4,
@@ -186,9 +151,7 @@ export class KeyResultProgressChartComponent
 		sortedUpdates.forEach((val, index) => {
 			if (index === 0) {
 				update.push(val);
-			} else if (
-				val.x.getDate() === update[update.length - 1].x.getDate()
-			) {
+			} else if (val.x.getDate() === update[update.length - 1].x.getDate()) {
 				if (isAfter(val.x, update[update.length - 1].x)) {
 					update.pop();
 					update.push(val);

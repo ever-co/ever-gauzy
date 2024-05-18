@@ -14,9 +14,9 @@ import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/f
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime } from 'rxjs/operators';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { NbComponentSize } from '@nebular/theme';
-import { TranslationBaseComponent } from '../../../../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,23 +30,24 @@ import { TranslationBaseComponent } from '../../../../language-base';
 		}
 	]
 })
-export class PasswordFormFieldComponent extends TranslationBaseComponent
-	implements ControlValueAccessor, AfterViewInit, OnChanges, OnDestroy {
-
+export class PasswordFormFieldComponent
+	extends TranslationBaseComponent
+	implements ControlValueAccessor, AfterViewInit, OnChanges, OnDestroy
+{
 	showPassword: boolean = false;
 
 	//The internal data model for form control value access
 	private innerValue: any = '';
 
-	onChange = (_: any) => { }
-	onTouched = (_: any) => { }
+	onChange = (_: any) => {};
+	onTouched = (_: any) => {};
 
 	/**
 	 * Getter & Setter accessor including call the onchange callback
 	 */
 	get value(): any {
 		return this.innerValue;
-	};
+	}
 	set value(v: any) {
 		if (v !== this.innerValue) {
 			this.innerValue = v;
@@ -54,8 +55,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter accessor for dynamic form control
-	*/
+	 * Getter & Setter accessor for dynamic form control
+	 */
 	_ctrl: FormControl = new FormControl();
 	get ctrl(): FormControl {
 		return this._ctrl;
@@ -65,8 +66,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic label
-	*/
+	 * Getter & Setter for dynamic label
+	 */
 	_label: string;
 	get label(): string {
 		return this._label;
@@ -76,8 +77,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -87,8 +88,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter accessor for dynamic placeholder
-	*/
+	 * Getter & Setter accessor for dynamic placeholder
+	 */
 	_icon: boolean = true;
 	get icon(): boolean {
 		return this._icon;
@@ -107,8 +108,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic field size
-	*/
+	 * Getter & Setter for dynamic field size
+	 */
 	_fieldSize: NbComponentSize = 'medium';
 	get fieldSize(): NbComponentSize {
 		return this._fieldSize;
@@ -118,8 +119,8 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic classList
-	*/
+	 * Getter & Setter for dynamic classList
+	 */
 	_ngClass: string;
 	get ngClass(): string {
 		return this._ngClass;
@@ -136,31 +137,22 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 	// get reference to the input element
 	@ViewChild('input') inputRef: ElementRef;
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngOnChanges() { }
+	ngOnChanges() {}
 
 	ngAfterViewInit() {
-		this.ctrl.valueChanges
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				untilDestroyed(this)
-			)
-			.subscribe(() => {
-				// check condition if the form control is RESET
-				if (isEmpty(this.ctrl.value)) {
-					this.innerValue = '';
-					this.inputRef.nativeElement.value = '';
-				}
-				this.onInputChanged.emit(this.ctrl.value);
-			});
+		this.ctrl.valueChanges.pipe(debounceTime(100), distinctUntilChange(), untilDestroyed(this)).subscribe(() => {
+			// check condition if the form control is RESET
+			if (isEmpty(this.ctrl.value)) {
+				this.innerValue = '';
+				this.inputRef.nativeElement.value = '';
+			}
+			this.onInputChanged.emit(this.ctrl.value);
+		});
 	}
-
 
 	// event fired when input value is changed. later propagated up to the form control using the custom value accessor interface
 	onInputChange(e: Event, value: any) {
@@ -186,5 +178,5 @@ export class PasswordFormFieldComponent extends TranslationBaseComponent
 		this.onTouched = fn;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

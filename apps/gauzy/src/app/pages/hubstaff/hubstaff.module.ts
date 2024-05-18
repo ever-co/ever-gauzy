@@ -24,14 +24,10 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	declarations: [
-		HubstaffAuthorizeComponent,
-		HubstaffComponent,
-		SettingsDialogComponent
-	],
+	declarations: [HubstaffAuthorizeComponent, HubstaffComponent, SettingsDialogComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -57,4 +53,4 @@ import { TranslateModule } from '../../@shared/translate/translate.module';
 		TranslateModule
 	]
 })
-export class HubstaffModule { }
+export class HubstaffModule {}

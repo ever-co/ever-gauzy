@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpStatus, IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
+import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { SetLanguageBaseComponent } from '../../@shared/language-base/set-language-base.component';
+import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { InviteService, Store, ToastrService } from '../../@core/services';
@@ -12,9 +12,7 @@ import { InviteService, Store, ToastrService } from '../../@core/services';
 	styleUrls: ['./accept-invite.component.scss'],
 	templateUrl: 'accept-invite.component.html'
 })
-export class AcceptInvitePage extends SetLanguageBaseComponent
-	implements OnInit, OnDestroy {
-
+export class AcceptInvitePage extends SetLanguageBaseComponent implements OnInit, OnDestroy {
 	invitation: IInvite;
 	loading: boolean;
 	inviteLoadErrorMessage: string;
@@ -25,16 +23,15 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 		private readonly inviteService: InviteService,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly store: Store,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.route
-			.queryParams
+		this.route.queryParams
 			.pipe(
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(({ email, token }) => this.loadInvite({ email, token })),
 				untilDestroyed(this)
 			)
@@ -94,11 +91,7 @@ export class AcceptInvitePage extends SetLanguageBaseComponent
 				this.router.navigate(['/auth/login']);
 			}
 		} catch (error) {
-			this.toastrService.danger(
-				error,
-				null,
-				'Could not create your account'
-			);
+			this.toastrService.danger(error, null, 'Could not create your account');
 		}
 	};
 

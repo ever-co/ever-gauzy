@@ -10,38 +10,26 @@ import {
 	IOrganizationContact,
 	IOptionsSelect
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class OrganizationsService {
-
-	constructor(
-		private readonly http: HttpClient
-	) { }
+	constructor(private readonly http: HttpClient) {}
 
 	create(body: IOrganizationCreateInput): Promise<IOrganization> {
-		return firstValueFrom(
-			this.http.post<IOrganization>(`${API_PREFIX}/organization`, body)
-		);
+		return firstValueFrom(this.http.post<IOrganization>(`${API_PREFIX}/organization`, body));
 	}
 
 	update(id: IOrganization['id'], body: IOrganizationCreateInput): Promise<IOrganization> {
-		return firstValueFrom(
-			this.http.put<IOrganization>(`${API_PREFIX}/organization/${id}`, body)
-		);
+		return firstValueFrom(this.http.put<IOrganization>(`${API_PREFIX}/organization/${id}`, body));
 	}
 
 	delete(id: IOrganization['id']): Promise<any> {
-		return firstValueFrom(
-			this.http.delete(`${API_PREFIX}/organization/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/organization/${id}`));
 	}
 
-	getAll(
-		where: IOrganizationFindInput,
-		relations: string[] = [],
-	): Promise<IPagination<IOrganization>> {
+	getAll(where: IOrganizationFindInput, relations: string[] = []): Promise<IPagination<IOrganization>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IOrganization>>(`${API_PREFIX}/organization`, {
 				params: toParams({ where, relations })
@@ -81,12 +69,10 @@ export class OrganizationsService {
 	 * @param params
 	 * @returns
 	 */
-	getAllPublicClients(
-		params: IOrganizationContactFindInput
-	): Observable<IPagination<IOrganizationContact>> {
+	getAllPublicClients(params: IOrganizationContactFindInput): Observable<IPagination<IOrganizationContact>> {
 		return this.http.get<IPagination<IOrganizationContact>>(`${API_PREFIX}/public/organization/client`, {
 			params: toParams(params)
-		})
+		});
 	}
 
 	/**
@@ -95,12 +81,10 @@ export class OrganizationsService {
 	 * @param params
 	 * @returns
 	 */
-	getAllPublicClientCounts(
-		params: IOrganizationContactFindInput
-	): Observable<number> {
+	getAllPublicClientCounts(params: IOrganizationContactFindInput): Observable<number> {
 		return this.http.get<number>(`${API_PREFIX}/public/organization/client/count`, {
 			params: toParams(params)
-		})
+		});
 	}
 
 	/**
@@ -109,11 +93,9 @@ export class OrganizationsService {
 	 * @param params
 	 * @returns
 	 */
-	getAllPublicProjectCounts(
-		params: IOrganizationContactFindInput
-	): Observable<number> {
+	getAllPublicProjectCounts(params: IOrganizationContactFindInput): Observable<number> {
 		return this.http.get<number>(`${API_PREFIX}/public/organization/project/count`, {
 			params: toParams(params)
-		})
+		});
 	}
 }

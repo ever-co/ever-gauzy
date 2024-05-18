@@ -26,7 +26,7 @@ export enum PublicTeamRelationEnum {
 }
 
 export class PublicTeamQueryDTO extends IntersectionType(
-	PickType(OrganizationTeamStatisticDTO, ['withLaskWorkedTask']),
+	PickType(OrganizationTeamStatisticDTO, ['withLastWorkedTask']),
 	PickType(DateRangeQueryDTO, ['startDate', 'endDate']),
 	PickType(PartialType(TimerStatusQueryDTO), ['source'])
 ) implements IDateRangePicker, IOrganizationTeamStatisticInput {

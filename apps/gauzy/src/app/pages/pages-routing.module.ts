@@ -23,9 +23,7 @@ const routes: Routes = [
 			},
 			{
 				path: 'dashboard',
-				loadChildren: () => import('./dashboard/dashboard.module').then(
-					(m) => m.DashboardModule
-				)
+				loadChildren: () => import('./dashboard/dashboard.module').then((m) => m.DashboardModule)
 			},
 			{
 				path: 'accounting',
@@ -37,13 +35,11 @@ const routes: Routes = [
 					},
 					{
 						path: 'income',
-						loadChildren: () => import('./income/income.module').then(
-							(m) => m.IncomeModule
-						),
+						loadChildren: () => import('./income/income.module').then((m) => m.IncomeModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
 							},
 							datePicker: {
 								unitOfTime: 'month'
@@ -51,13 +47,12 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						}
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'expenses',
-						loadChildren: () => import('./expenses/expenses.module').then(
-							(m) => m.ExpensesModule
-						),
+						loadChildren: () => import('./expenses/expenses.module').then((m) => m.ExpensesModule),
 						data: {
 							datePicker: {
 								unitOfTime: 'month'
@@ -65,19 +60,17 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						}
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'expense-recurring',
-						loadChildren: () => import('./expense-recurring/expense-recurring.module').then(
-							(m) => m.ExpenseRecurringModule
-						)
+						loadChildren: () =>
+							import('./expense-recurring/expense-recurring.module').then((m) => m.ExpenseRecurringModule)
 					},
 					{
 						path: 'invoices',
-						loadChildren: () => import('./invoices/invoices.module').then(
-							(m) => m.InvoicesModule
-						),
+						loadChildren: () => import('./invoices/invoices.module').then((m) => m.InvoicesModule),
 						data: {
 							selectors: {
 								project: false,
@@ -91,23 +84,18 @@ const routes: Routes = [
 					},
 					{
 						path: 'payments',
-						loadChildren: () => import('./payments/payments.module').then(
-							(m) => m.PaymentsModule
-						)
+						loadChildren: () => import('./payments/payments.module').then((m) => m.PaymentsModule)
 					}
 				]
 			},
 			{
 				path: 'contacts',
-				loadChildren: () => import('./contacts/contacts.module').then(
-					(m) => m.ContactsModule
-				)
+				loadChildren: () => import('./contacts/contacts.module').then((m) => m.ContactsModule)
 			},
 			{
 				path: 'projects',
-				loadChildren: () => import('./work-in-progress/work-in-progress.module').then(
-					(m) => m.WorkInProgressModule
-				),
+				loadChildren: () =>
+					import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
 				data: {
 					selectors: {
 						project: false,
@@ -120,30 +108,23 @@ const routes: Routes = [
 			},
 			{
 				path: 'tasks',
-				loadChildren: () => import('./tasks/tasks.module').then(
-					(m) => m.TasksModule
-				)
+				loadChildren: () => import('./tasks/tasks.module').then((m) => m.TasksModule)
 			},
 			{
 				path: 'jobs',
-				loadChildren: () => import('./jobs/jobs.module').then(
-					(m) => m.JobsModule
-				)
+				loadChildren: () => import('./jobs/jobs.module').then((m) => m.JobsModule)
 			},
 			{
 				path: 'sales',
 				children: [
 					{
 						path: 'proposals',
-						loadChildren: () => import('./proposals/proposals.module').then(
-							(m) => m.ProposalsModule
-						)
+						loadChildren: () => import('./proposals/proposals.module').then((m) => m.ProposalsModule)
 					},
 					{
 						path: 'estimates',
-						loadChildren: () => import('./work-in-progress/work-in-progress.module').then(
-							(m) => m.WorkInProgressModule
-						),
+						loadChildren: () =>
+							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
@@ -156,9 +137,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'invoices',
-						loadChildren: () => import('./invoices/invoices.module').then(
-							(m) => m.InvoicesModule
-						),
+						loadChildren: () => import('./invoices/invoices.module').then((m) => m.InvoicesModule),
 						data: {
 							selectors: {
 								project: false,
@@ -171,13 +150,12 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						}
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'payments',
-						loadChildren: () => import('./payments/payments.module').then(
-							(m) => m.PaymentsModule
-						),
+						loadChildren: () => import('./payments/payments.module').then((m) => m.PaymentsModule),
 						data: {
 							selectors: {
 								employee: false
@@ -188,13 +166,12 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						}
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'pipelines',
-						loadChildren: () => import('./pipelines/pipelines.module').then(
-							(m) => m.PipelinesModule
-						),
+						loadChildren: () => import('./pipelines/pipelines.module').then((m) => m.PipelinesModule),
 						data: {
 							selectors: {
 								project: false,
@@ -211,69 +188,66 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						loadChildren: () => import('./employees/employees.module').then(
-							(m) => m.EmployeesModule
-						)
+						loadChildren: () => import('./employees/employees.module').then((m) => m.EmployeesModule)
 					},
 					{
 						path: 'schedules',
-						loadChildren: () => import('./employees/schedules/schedule.module').then(
-							(m) => m.ScheduleModule
-						),
+						loadChildren: () =>
+							import('./employees/schedules/schedule.module').then((m) => m.ScheduleModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
 							}
 						}
 					},
 					{
 						path: 'appointments',
-						loadChildren: () => import('./employees/appointment/appointment.module').then(
-							(m) => m.AppointmentModule
-						),
+						loadChildren: () =>
+							import('./employees/appointment/appointment.module').then((m) => m.AppointmentModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
+							},
+							datePicker: {
+								unitOfTime: 'week',
+								isDisablePastDate: true
 							}
-						}
+						},
+						resolve: {
+							dates: DateRangePickerResolver
+						},
+						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
 					},
 					{
 						path: 'event-types',
-						loadChildren: () => import('./employees/event-types/event-type.module').then(
-							(m) => m.EventTypeModule
-						),
+						loadChildren: () =>
+							import('./employees/event-types/event-type.module').then((m) => m.EventTypeModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
 							}
 						}
 					},
 					{
 						path: 'time-off',
-						loadChildren: () => import('./time-off/time-off.module').then(
-							(m) => m.TimeOffModule
-						)
+						loadChildren: () => import('./time-off/time-off.module').then((m) => m.TimeOffModule)
 					},
 					{
 						path: 'approvals',
-						loadChildren: () => import('./approvals/approvals.module').then(
-							(m) => m.ApprovalsModule
-						),
+						loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
 							}
 						}
 					},
 					{
 						path: 'positions',
-						loadChildren: () => import('./positions/positions.module').then(
-							(m) => m.PositionsModule
-						),
+						loadChildren: () => import('./positions/positions.module').then((m) => m.PositionsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -285,9 +259,8 @@ const routes: Routes = [
 					},
 					{
 						path: 'employee-level',
-						loadChildren: () => import('./employee-levels/employee-level.module').then(
-							(m) => m.EmployeeLevelModule
-						),
+						loadChildren: () =>
+							import('./employee-levels/employee-level.module').then((m) => m.EmployeeLevelModule),
 						data: {
 							selectors: {
 								project: false,
@@ -299,15 +272,14 @@ const routes: Routes = [
 					},
 					{
 						path: 'recurring-expenses',
-						loadChildren: () => import('./recurring-expense-employee/recurring-expense-employee.module').then(
-							(m) => m.RecurringExpensesEmployeeModule
-						)
+						loadChildren: () =>
+							import('./recurring-expense-employee/recurring-expense-employee.module').then(
+								(m) => m.RecurringExpensesEmployeeModule
+							)
 					},
 					{
 						path: 'candidates',
-						loadChildren: () => import('./candidates/candidates.module').then(
-							(m) => m.CandidatesModule
-						)
+						loadChildren: () => import('./candidates/candidates.module').then((m) => m.CandidatesModule)
 					}
 				]
 			},
@@ -316,9 +288,7 @@ const routes: Routes = [
 				children: [
 					{
 						path: 'equipment',
-						loadChildren: () => import('./equipment/equipment.module').then(
-							(m) => m.EquipmentModule
-						),
+						loadChildren: () => import('./equipment/equipment.module').then((m) => m.EquipmentModule),
 						data: {
 							selectors: {
 								project: false,
@@ -330,9 +300,10 @@ const routes: Routes = [
 					},
 					{
 						path: 'equipment-sharing',
-						loadChildren: () => import('./equipment-sharing/equipment-sharing.module').then(
-							(m) => m.EquipmentSharingModule
-						),
+						loadChildren: () =>
+							import('./equipment-sharing/equipment-sharing.module').then(
+								(m) => m.EquipmentSharingModule
+							),
 						data: {
 							selectors: {
 								project: false,
@@ -344,9 +315,10 @@ const routes: Routes = [
 					},
 					{
 						path: 'equipment-sharing-policy',
-						loadChildren: () => import('./equipment-sharing-policy/equipment-sharing-policy.module').then(
-							(m) => m.EquipmentSharingPolicyModule
-						),
+						loadChildren: () =>
+							import('./equipment-sharing-policy/equipment-sharing-policy.module').then(
+								(m) => m.EquipmentSharingPolicyModule
+							),
 						data: {
 							selectors: {
 								project: false,
@@ -358,15 +330,11 @@ const routes: Routes = [
 					},
 					{
 						path: 'inventory',
-						loadChildren: () => import('./inventory/inventory.module').then(
-							(m) => m.InventoryModule
-						)
+						loadChildren: () => import('./inventory/inventory.module').then((m) => m.InventoryModule)
 					},
 					{
 						path: 'tags',
-						loadChildren: () => import('./tags/tags.module').then(
-							(m) => m.TagsModule
-						),
+						loadChildren: () => import('./tags/tags.module').then((m) => m.TagsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -378,15 +346,12 @@ const routes: Routes = [
 					},
 					{
 						path: 'expense-recurring',
-						loadChildren: () => import('./expense-recurring/expense-recurring.module').then(
-							(m) => m.ExpenseRecurringModule
-						)
+						loadChildren: () =>
+							import('./expense-recurring/expense-recurring.module').then((m) => m.ExpenseRecurringModule)
 					},
 					{
 						path: 'help-center',
-						loadChildren: () => import('./help-center/help-center.module').then(
-							(m) => m.HelpCenterModule
-						),
+						loadChildren: () => import('./help-center/help-center.module').then((m) => m.HelpCenterModule),
 						data: {
 							selectors: {
 								project: false,
@@ -398,9 +363,8 @@ const routes: Routes = [
 					},
 					{
 						path: 'approval-policy',
-						loadChildren: () => import('./approval-policy/approval-policy.module').then(
-							(m) => m.ApprovalPolicyModule
-						),
+						loadChildren: () =>
+							import('./approval-policy/approval-policy.module').then((m) => m.ApprovalPolicyModule),
 						data: {
 							selectors: {
 								project: false,
@@ -413,9 +377,7 @@ const routes: Routes = [
 
 					{
 						path: 'documents',
-						loadChildren: () => import('./documents/documents.module').then(
-							(m) => m.DocumentsModule
-						),
+						loadChildren: () => import('./documents/documents.module').then((m) => m.DocumentsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -427,15 +389,12 @@ const routes: Routes = [
 					},
 					{
 						path: 'employment-types',
-						loadChildren: () => import('./employment-types/employment-types.module').then(
-							(m) => m.EmploymentTypesModule
-						)
+						loadChildren: () =>
+							import('./employment-types/employment-types.module').then((m) => m.EmploymentTypesModule)
 					},
 					{
 						path: 'vendors',
-						loadChildren: () => import('./vendors/vendors.module').then(
-							(m) => m.VendorsModule
-						),
+						loadChildren: () => import('./vendors/vendors.module').then((m) => m.VendorsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -447,9 +406,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'departments',
-						loadChildren: () => import('./departments/departments.module').then(
-							(m) => m.DepartmentsModule
-						),
+						loadChildren: () => import('./departments/departments.module').then((m) => m.DepartmentsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -461,9 +418,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'projects',
-						loadChildren: () => import('./projects/projects.module').then(
-							(m) => m.ProjectsModule
-						),
+						loadChildren: () => import('./projects/projects.module').then((m) => m.ProjectsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -475,9 +430,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'teams',
-						loadChildren: () => import('./teams/teams.module').then(
-							(m) => m.TeamsModule
-						),
+						loadChildren: () => import('./teams/teams.module').then((m) => m.TeamsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -494,21 +447,18 @@ const routes: Routes = [
 				children: [
 					{
 						path: '',
-						loadChildren: () => import('./goals/goals.module').then(
-							(m) => m.GoalsModule
-						),
+						loadChildren: () => import('./goals/goals.module').then((m) => m.GoalsModule),
 						data: {
 							selectors: {
 								project: false,
-								team: false,
+								team: false
 							}
 						}
 					},
 					{
 						path: 'reports',
-						loadChildren: () => import('./work-in-progress/work-in-progress.module').then(
-							(m) => m.WorkInProgressModule
-						),
+						loadChildren: () =>
+							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
@@ -521,9 +471,8 @@ const routes: Routes = [
 					},
 					{
 						path: 'settings',
-						loadChildren: () => import('./goal-settings/goal-settings.module').then(
-							(m) => m.GoalSettingsModule
-						),
+						loadChildren: () =>
+							import('./goal-settings/goal-settings.module').then((m) => m.GoalSettingsModule),
 						data: {
 							selectors: {
 								project: false,
@@ -545,9 +494,8 @@ const routes: Routes = [
 					},
 					{
 						path: 'all',
-						loadChildren: () => import('./reports/all-report/all-report.module').then(
-							(m) => m.AllReportModule
-						),
+						loadChildren: () =>
+							import('./reports/all-report/all-report.module').then((m) => m.AllReportModule),
 						data: {
 							selectors: {
 								project: false,
@@ -560,33 +508,32 @@ const routes: Routes = [
 					},
 					{
 						path: 'time-activity',
-						loadChildren: () => import('./reports/time-reports/time-reports.module').then(
-							(m) => m.TimeReportsModule
-						)
+						loadChildren: () =>
+							import('./reports/time-reports/time-reports.module').then((m) => m.TimeReportsModule)
 					},
 					{
 						path: 'weekly',
-						loadChildren: () => import('./reports/weekly-time-reports/weekly-time-reports.module').then(
-							(m) => m.WeeklyTimeReportsModule
-						)
+						loadChildren: () =>
+							import('./reports/weekly-time-reports/weekly-time-reports.module').then(
+								(m) => m.WeeklyTimeReportsModule
+							)
 					},
 					{
 						path: 'apps-urls',
-						loadChildren: () => import('./reports/apps-urls-report/apps-urls-report.module').then(
-							(m) => m.AppsUrlsReportModule
-						)
+						loadChildren: () =>
+							import('./reports/apps-urls-report/apps-urls-report.module').then(
+								(m) => m.AppsUrlsReportModule
+							)
 					},
 					{
 						path: 'manual-time-edits',
-						loadChildren: () => import('./reports/manual-time/manual-time.module').then(
-							(m) => m.ManualTimeModule
-						)
+						loadChildren: () =>
+							import('./reports/manual-time/manual-time.module').then((m) => m.ManualTimeModule)
 					},
 					{
 						path: 'accounting',
-						loadChildren: () => import('./work-in-progress/work-in-progress.module').then(
-							(m) => m.WorkInProgressModule
-						),
+						loadChildren: () =>
+							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
@@ -599,66 +546,50 @@ const routes: Routes = [
 					},
 					{
 						path: 'expense',
-						loadChildren: () => import('./reports/expenses-report/expenses-report.module').then(
-							(m) => m.ExpensesReportModule
-						)
+						loadChildren: () =>
+							import('./reports/expenses-report/expenses-report.module').then(
+								(m) => m.ExpensesReportModule
+							)
 					},
 					{
 						path: 'payments',
-						loadChildren: () => import('./reports/payment-report/payment-report.module').then(
-							(m) => m.PaymentReportModule
-						)
+						loadChildren: () =>
+							import('./reports/payment-report/payment-report.module').then((m) => m.PaymentReportModule)
 					},
 					{
 						path: 'amounts-owed',
-						loadChildren: () => import('./reports/amounts-owed-report/amounts-owed-report.module').then(
-							(m) => m.AmountsOwedReportModule
-						)
+						loadChildren: () =>
+							import('./reports/amounts-owed-report/amounts-owed-report.module').then(
+								(m) => m.AmountsOwedReportModule
+							)
 					},
 					{
 						path: 'weekly-limits',
-						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
-							(m) => m.TimeLimitReportModule
-						),
-						data: {
-							duration: 'week',
-							title: 'REPORT_PAGE.WEEKLY_LIMIT_REPORT',
-							datePicker: {
-								unitOfTime: 'week',
-								isLockDatePicker: true
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						loadChildren: () =>
+							import('./reports/time-limit-report/time-limit-report.module').then(
+								(m) => m.TimeLimitReportModule
+							)
 					},
 					{
 						path: 'daily-limits',
-						loadChildren: () => import('./reports/time-limit-report/time-limit-report.module').then(
-							(m) => m.TimeLimitReportModule
-						),
-						data: {
-							duration: 'day',
-							title: 'REPORT_PAGE.DAILY_LIMIT_REPORT',
-							datePicker: {
-								unitOfTime: 'week'
-							}
-						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						loadChildren: () =>
+							import('./reports/time-limit-report/time-limit-report.module').then(
+								(m) => m.TimeLimitReportModule
+							)
 					},
 					{
 						path: 'project-budgets',
-						loadChildren: () => import('./reports/project-budgets-report/project-budgets-report.module').then(
-							(m) => m.ProjectBudgetsReportModule
-						)
+						loadChildren: () =>
+							import('./reports/project-budgets-report/project-budgets-report.module').then(
+								(m) => m.ProjectBudgetsReportModule
+							)
 					},
 					{
 						path: 'client-budgets',
-						loadChildren: () => import('./reports/client-budgets-report/client-budgets-report.module').then(
-							(m) => m.ClientBudgetsReportModule
-						)
+						loadChildren: () =>
+							import('./reports/client-budgets-report/client-budgets-report.module').then(
+								(m) => m.ClientBudgetsReportModule
+							)
 					},
 					{
 						path: '*',
@@ -668,21 +599,15 @@ const routes: Routes = [
 			},
 			{
 				path: 'help',
-				loadChildren: () => import('./help/help.module').then(
-					(m) => m.HelpModule
-				)
+				loadChildren: () => import('./help/help.module').then((m) => m.HelpModule)
 			},
 			{
 				path: 'about',
-				loadChildren: () => import('./about/about.module').then(
-					(m) => m.AboutModule
-				)
+				loadChildren: () => import('./about/about.module').then((m) => m.AboutModule)
 			},
 			{
 				path: 'integrations',
-				loadChildren: () => import('./integrations/integrations.module').then(
-					(m) => m.IntegrationsModule
-				),
+				loadChildren: () => import('./integrations/integrations.module').then((m) => m.IntegrationsModule),
 				/** */
 				canActivate: [NgxPermissionsGuard],
 				data: {
@@ -695,21 +620,17 @@ const routes: Routes = [
 						team: false,
 						employee: false,
 						date: false,
-						organization: true,
+						organization: true
 					}
 				}
 			},
 			{
 				path: 'candidates',
-				loadChildren: () => import('./candidates/candidates.module').then(
-					(m) => m.CandidatesModule
-				)
+				loadChildren: () => import('./candidates/candidates.module').then((m) => m.CandidatesModule)
 			},
 			{
 				path: 'users',
-				loadChildren: () => import('./users/users.module').then(
-					(m) => m.UsersModule
-				),
+				loadChildren: () => import('./users/users.module').then((m) => m.UsersModule),
 				data: {
 					selectors: {
 						project: false,
@@ -721,27 +642,19 @@ const routes: Routes = [
 			},
 			{
 				path: 'organizations',
-				loadChildren: () => import('./organizations/organizations.module').then(
-					(m) => m.OrganizationsModule
-				)
+				loadChildren: () => import('./organizations/organizations.module').then((m) => m.OrganizationsModule)
 			},
 			{
 				path: 'auth',
-				loadChildren: () => import('./auth/auth.module').then(
-					(m) => m.AuthModule
-				)
+				loadChildren: () => import('./auth/auth.module').then((m) => m.AuthModule)
 			},
 			{
 				path: 'settings',
-				loadChildren: () => import('./settings/settings.module').then(
-					(m) => m.SettingsModule
-				)
+				loadChildren: () => import('./settings/settings.module').then((m) => m.SettingsModule)
 			},
 			{
 				path: 'legal',
-				loadChildren: () => import('./legal/legal.module').then(
-					(m) => m.PageLegalModule
-				)
+				loadChildren: () => import('./legal/legal.module').then((m) => m.PageLegalModule)
 			},
 			{
 				path: '**',
@@ -755,4 +668,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class PagesRoutingModule { }
+export class PagesRoutingModule {}

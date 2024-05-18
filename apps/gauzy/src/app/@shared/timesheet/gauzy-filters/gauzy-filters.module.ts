@@ -12,18 +12,14 @@ import {
 	NbPopoverModule,
 	NbSelectModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
 
 @NgModule({
-	declarations: [
-		GauzyFiltersComponent
-	],
-	exports: [
-		GauzyFiltersComponent
-	],
+	declarations: [GauzyFiltersComponent],
+	exports: [GauzyFiltersComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -38,7 +34,7 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 		SharedModule,
 		TranslateModule,
 		EmployeeMultiSelectModule,
-		ProjectSelectModule,
+		ProjectSelectModule
 	]
 })
-export class GauzyFiltersModule { }
+export class GauzyFiltersModule {}

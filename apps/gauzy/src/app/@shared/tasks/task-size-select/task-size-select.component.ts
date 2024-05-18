@@ -1,13 +1,4 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output,
-	AfterViewInit,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, AfterViewInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -19,16 +10,12 @@ import {
 	IPagination,
 	ITaskSize,
 	ITaskSizeFindInput,
-	TaskSizeEnum,
+	TaskSizeEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, sluggable } from '@gauzy/common-angular';
+import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	Store,
-	TaskSizesService,
-	ToastrService,
-} from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,14 +25,11 @@ import { TranslationBaseComponent } from '../../language-base/translation-base.c
 		{
 			provide: NG_VALUE_ACCESSOR,
 			useExisting: forwardRef(() => TaskSizeSelectComponent),
-			multi: true,
-		},
-	],
+			multi: true
+		}
+	]
 })
-export class TaskSizeSelectComponent
-	extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy
-{
+export class TaskSizeSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	private subject$: Subject<boolean> = new Subject();
 	public organization: IOrganization;
 	public sizes$: BehaviorSubject<ITaskSize[]> = new BehaviorSubject([]);
@@ -56,24 +40,24 @@ export class TaskSizeSelectComponent
 	private _sizes: Array<{ name: string; value: TaskSizeEnum & any }> = [
 		{
 			name: TaskSizeEnum.X_LARGE,
-			value: sluggable(TaskSizeEnum.X_LARGE),
+			value: sluggable(TaskSizeEnum.X_LARGE)
 		},
 		{
 			name: TaskSizeEnum.LARGE,
-			value: sluggable(TaskSizeEnum.LARGE),
+			value: sluggable(TaskSizeEnum.LARGE)
 		},
 		{
 			name: TaskSizeEnum.MEDIUM,
-			value: sluggable(TaskSizeEnum.MEDIUM),
+			value: sluggable(TaskSizeEnum.MEDIUM)
 		},
 		{
 			name: TaskSizeEnum.SMALL,
-			value: sluggable(TaskSizeEnum.SMALL),
+			value: sluggable(TaskSizeEnum.SMALL)
 		},
 		{
 			name: TaskSizeEnum.TINY,
-			value: sluggable(TaskSizeEnum.TINY),
-		},
+			value: sluggable(TaskSizeEnum.TINY)
+		}
 	];
 
 	/*
@@ -197,14 +181,12 @@ export class TaskSizeSelectComponent
 				organizationId,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			})
 			.pipe(
-				map(({ items, total }: IPagination<ITaskSize>) =>
-					total > 0 ? items : this._sizes
-				),
+				map(({ items, total }: IPagination<ITaskSize>) => (total > 0 ? items : this._sizes)),
 				tap((sizes: ITaskSize[]) => this.sizes$.next(sizes)),
 				untilDestroyed(this)
 			)
@@ -231,9 +213,9 @@ export class TaskSizeSelectComponent
 				name,
 				...(this.projectId
 					? {
-							projectId: this.projectId,
+							projectId: this.projectId
 					  }
-					: {}),
+					: {})
 			});
 			const size: ITaskSize = await firstValueFrom(source);
 			if (size.value) {

@@ -6,7 +6,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { TenantDetailsRoutingModule } from './tenant-details-routing.module';
 import { TenantDetailsComponent } from './tenant-details.component';
 import { TagsService } from '../../@core/services/tags.service';
-import { TranslateModule } from '../../@shared/translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 @NgModule({

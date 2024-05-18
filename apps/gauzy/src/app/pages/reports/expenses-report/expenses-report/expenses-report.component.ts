@@ -1,24 +1,14 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit,
-	ViewChild
-} from '@angular/core';
-import {
-	IGetExpenseInput,
-	ITimeLogFilters,
-	ReportGroupByFilter,
-	ReportGroupFilterEnum
-} from '@gauzy/contracts';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { IGetExpenseInput, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/common-angular';
-import { DateRangePickerBuilderService, ExpensesService, Store } from './../../../../@core/services';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { ExpensesService, Store } from './../../../../@core/services';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
@@ -31,9 +21,7 @@ import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-fil
 	templateUrl: './expenses-report.component.html',
 	styleUrls: ['./expenses-report.component.scss']
 })
-export class ExpensesReportComponent extends BaseSelectorFilterComponent
-	implements OnInit, AfterViewInit {
-
+export class ExpensesReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	public filters: ITimeLogFilters;
 	public loading: boolean = false;
 	public charts: IChartData;
@@ -77,7 +65,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 				// Ensures that the subscription is automatically unsubscribed when the component is destroyed
 				untilDestroyed(this)
 			)
-			.subscribe();  // Subscribes to the observable
+			.subscribe(); // Subscribes to the observable
 	}
 
 	ngAfterViewInit() {
@@ -100,7 +88,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 		const request: IGetExpenseInput = {
 			...this.getFilterRequest(this.request), // Calls a method to get additional filter request parameters
 			groupBy: this.groupBy, // Adds a "groupBy" property to the request
-			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {}), // add a "categoryId" to the request to filter with
+			...(this.filters?.categoryId ? { categoryId: this.filters?.categoryId } : {}) // add a "categoryId" to the request to filter with
 		};
 
 		// Emit the request object to the observable stream
@@ -112,10 +100,13 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 			// If true, set the timesheetFilterService's filter property to the provided filters
 			this.timesheetFilterService.filter = this.filters;
 		}
-		this.filters = Object.assign({}, {
-			...this.filters,
-			categoryId: event?.id ? event?.id : ''
-		});
+		this.filters = Object.assign(
+			{},
+			{
+				...this.filters,
+				categoryId: event?.id ? event?.id : ''
+			}
+		);
 		this.subject$.next(true);
 	}
 
@@ -155,18 +146,20 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent
 			const logs: any[] = await this.expensesService.getExpenseReportCharts(payloads);
 
 			// Define a datasets array with the fetched data
-			const datasets = [{
-				label: this.getTranslation('REPORT_PAGE.EXPENSE'), // Label for the dataset, likely representing expenses
-				data: logs.map((log) => log.value['expense']),      // An array of data points representing expenses
-				borderColor: ChartUtil.CHART_COLORS.red,            // Color of the dataset border
-				backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Background color with transparency
-				borderWidth: 2,               // Width of the dataset border
-				pointRadius: 2,              // Radius of the data points
-				pointHoverRadius: 4,         // Radius of the data points on hover
-				pointHoverBorderWidth: 4,    // Width of the border of data points on hover
-				tension: 0.4,                // Tension of the spline curve connecting data points
-				fill: false                  // Whether to fill the area under the line or not
-			}];
+			const datasets = [
+				{
+					label: this.getTranslation('REPORT_PAGE.EXPENSE'), // Label for the dataset, likely representing expenses
+					data: logs.map((log) => log.value['expense']), // An array of data points representing expenses
+					borderColor: ChartUtil.CHART_COLORS.red, // Color of the dataset border
+					backgroundColor: ChartUtil.transparentize(ChartUtil.CHART_COLORS.red, 1), // Background color with transparency
+					borderWidth: 2, // Width of the dataset border
+					pointRadius: 2, // Radius of the data points
+					pointHoverRadius: 4, // Radius of the data points on hover
+					pointHoverBorderWidth: 4, // Width of the border of data points on hover
+					tension: 0.4, // Tension of the spline curve connecting data points
+					fill: false // Whether to fill the area under the line or not
+				}
+			];
 
 			// Update the chartData property with the new data
 			this.charts = {

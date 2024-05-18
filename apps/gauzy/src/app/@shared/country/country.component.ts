@@ -8,19 +8,15 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import {
-	ControlValueAccessor,
-	FormControl,
-	NG_VALUE_ACCESSOR
-} from '@angular/forms';
+import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ICountry, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CountryService, Store } from '../../@core/services';
-import { TranslationBaseComponent } from '../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
@@ -36,12 +32,10 @@ import { environment as ENV } from './../../../environments/environment';
 		}
 	]
 })
-export class CountryComponent extends TranslationBaseComponent 
-	implements OnInit, AfterViewInit, ControlValueAccessor {
-
+export class CountryComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
 	@Input() formControl: FormControl = new FormControl();
 	@Output() optionChange = new EventEmitter<ICountry>();
-	
+
 	public organization: IOrganization;
 	loading: boolean = true;
 	countries$: Observable<ICountry[]> = this.countryService.countries$;
@@ -51,8 +45,8 @@ export class CountryComponent extends TranslationBaseComponent
 	onTouched: any = () => {};
 
 	/*
-	* Getter & Setter for dynamic selected country
-	*/
+	 * Getter & Setter for dynamic selected country
+	 */
 	private _country: string;
 	get country() {
 		return this._country;
@@ -66,8 +60,8 @@ export class CountryComponent extends TranslationBaseComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	private _placeholder: string;
 	get placeholder() {
 		return this._placeholder;
@@ -93,9 +87,9 @@ export class CountryComponent extends TranslationBaseComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
-				tap(({ contact } : IOrganization) => {
-					this.country = (contact) ? contact.country : ENV.DEFAULT_COUNTRY;
+				tap((organization: IOrganization) => (this.organization = organization)),
+				tap(({ contact }: IOrganization) => {
+					this.country = contact ? contact.country : ENV.DEFAULT_COUNTRY;
 					this.formControl.updateValueAndValidity();
 				}),
 				untilDestroyed(this)
@@ -105,7 +99,7 @@ export class CountryComponent extends TranslationBaseComponent
 			.pipe(
 				tap((countries: ICountry[]) => (this._countries = countries)),
 				tap(() => this.onSelectChange(this.country)),
-				tap(() => this.loading = false),			
+				tap(() => (this.loading = false)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -114,12 +108,10 @@ export class CountryComponent extends TranslationBaseComponent
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
 	}
-	
+
 	onSelectChange(value: string) {
 		if (value && this._countries.length > 0) {
-			const country = this._countries.find(
-				(country: ICountry) => country.isoCode === value
-			);
+			const country = this._countries.find((country: ICountry) => country.isoCode === value);
 			this.country = country.isoCode;
 			this.onOptionChange(country);
 		}

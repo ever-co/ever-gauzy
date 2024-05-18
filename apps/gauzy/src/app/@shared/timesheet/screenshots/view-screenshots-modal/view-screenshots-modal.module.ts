@@ -14,7 +14,7 @@ import { SharedModule } from '../../../shared.module';
 import { LabelModule } from '../../../components/label/label.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
-import { TranslateModule } from '../../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TableComponentsModule } from '../../../table-components/table-components.module';
 import { ViewScreenshotsModalComponent } from './view-screenshots-modal.component';
 
@@ -39,4 +39,4 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		TableComponentsModule
 	]
 })
-export class ViewScreenshotsModalModule { }
+export class ViewScreenshotsModalModule {}

@@ -1,13 +1,7 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
-import {
-	IHelpCenterArticle,
-	IHelpCenter,
-	IHelpCenterAuthor,
-	IEmployee,
-	IOrganization
-} from '@gauzy/contracts';
+import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { NbDialogService } from '@nebular/theme';
@@ -28,10 +22,7 @@ import { firstValueFrom } from 'rxjs';
 	templateUrl: './help-center.component.html',
 	styleUrls: ['./help-center.component.scss']
 })
-export class HelpCenterComponent
-	extends TranslationBaseComponent
-	implements OnDestroy, OnInit
-{
+export class HelpCenterComponent extends TranslationBaseComponent implements OnDestroy, OnInit {
 	constructor(
 		private dialogService: NbDialogService,
 		readonly translateService: TranslateService,
@@ -86,17 +77,14 @@ export class HelpCenterComponent
 						});
 				}
 			});
-		this.search.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((item) => {
-				this.filterByName(item);
-			});
+		this.search.valueChanges.pipe(untilDestroyed(this)).subscribe((item) => {
+			this.filterByName(item);
+		});
 	}
 
 	clickedNode(clickedNode: IHelpCenter) {
 		this.categoryId = clickedNode.id;
-		this.categoryName =
-			clickedNode.flag === 'category' ? clickedNode.name : '';
+		this.categoryName = clickedNode.flag === 'category' ? clickedNode.name : '';
 		this.loadArticles(this.categoryId);
 	}
 
@@ -119,11 +107,7 @@ export class HelpCenterComponent
 			this.articleList = result;
 			for (let i = 0; i < this.articleList.length; i++) {
 				this.showData.push(false);
-				this.dataArray.push(
-					this.sanitizer.bypassSecurityTrustHtml(
-						this.articleList[i].data
-					)
-				);
+				this.dataArray.push(this.sanitizer.bypassSecurityTrustHtml(this.articleList[i].data));
 			}
 		}
 		this.filteredArticles = this.articleList;
@@ -138,10 +122,7 @@ export class HelpCenterComponent
 				const employeesList = [];
 				this.authors.forEach((author) => {
 					this.employees.forEach((employee) => {
-						if (
-							employee.id === author.employeeId &&
-							author.articleId === article.id
-						)
+						if (employee.id === author.employeeId && author.articleId === article.id)
 							employeesList.push(employee);
 					});
 				});
@@ -166,31 +147,24 @@ export class HelpCenterComponent
 	filterArticles() {
 		if (!this.filterParams.authorId && this.filterParams.name)
 			this.filteredArticles = this.articleList.filter((article) =>
-				article.name
-					.toLocaleLowerCase()
-					.includes(this.filterParams.name.toLocaleLowerCase())
+				article.name.toLocaleLowerCase().includes(this.filterParams.name.toLocaleLowerCase())
 			);
-		if (!this.filterParams.authorId && !this.filterParams.name)
-			this.filteredArticles = this.articleList;
+		if (!this.filterParams.authorId && !this.filterParams.name) this.filteredArticles = this.articleList;
 		const res = [];
 		if (this.filterParams.authorId && !this.filterParams.name)
 			this.articleList.forEach((article) => {
 				article.employees.forEach((employee) => {
-					if (employee.id === this.filterParams.authorId)
-						res.push(article);
+					if (employee.id === this.filterParams.authorId) res.push(article);
 				});
 				this.filteredArticles = res;
 			});
 		if (this.filterParams.authorId && this.filterParams.name) {
 			this.filteredArticles = this.articleList.filter((article) =>
-				article.name
-					.toLocaleLowerCase()
-					.includes(this.filterParams.name.toLocaleLowerCase())
+				article.name.toLocaleLowerCase().includes(this.filterParams.name.toLocaleLowerCase())
 			);
 			this.filteredArticles.forEach((article) => {
 				article.employees.forEach((employee) => {
-					if (employee.id === this.filterParams.authorId)
-						res.push(article);
+					if (employee.id === this.filterParams.authorId) res.push(article);
 				});
 				this.filteredArticles = res;
 			});

@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import {
 	IGetTasksStatistics,
 	IOrganizationContact,
@@ -20,7 +20,7 @@ import {
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
 	TimeLogSourceEnum,
-	TimeLogType,
+	TimeLogType
 } from '@gauzy/contracts';
 import {
 	ClientCacheService,
@@ -34,14 +34,14 @@ import {
 	TeamsCacheService,
 	TimeLogCacheService,
 	TimeSlotCacheService,
-	TimeTrackerDateManager,
+	TimeTrackerDateManager
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 import { LoggerService } from '../electron/services';
 import { API_PREFIX } from '../constants';
 
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class TimeTrackerService {
 	token = '';
@@ -76,14 +76,14 @@ export class TimeTrackerService {
 				tenantId: values.tenantId,
 				...(values.projectId
 					? {
-							projectId: values.projectId,
+							projectId: values.projectId
 					  }
 					: {}),
 				...(values.organizationTeamId && {
 					teams: {
-						id: values.organizationTeamId,
-					},
-				}),
+						id: values.organizationTeamId
+					}
+				})
 			},
 			relations: [
 				'project',
@@ -96,21 +96,21 @@ export class TimeTrackerService {
 				'organizationSprint',
 				'taskStatus',
 				'taskSize',
-				'taskPriority',
+				'taskPriority'
 			],
 			join: {
 				alias: 'task',
 				leftJoinAndSelect: {
 					members: 'task.members',
-					user: 'members.user',
-				},
-			},
+					user: 'members.user'
+				}
+			}
 		};
 		let tasks$ = this._taskCacheService.getValue(request);
 		if (!tasks$) {
 			tasks$ = this.http
 				.get(`${API_PREFIX}/tasks/employee/${values.employeeId}`, {
-					params: toParams(request),
+					params: toParams(request)
 				})
 				.pipe(
 					map((response: any) => response),
@@ -132,21 +132,21 @@ export class TimeTrackerService {
 			todayEnd: TimeTrackerDateManager.endToday,
 			...(values.projectId
 				? {
-						projectId: values.projectId,
+						projectId: values.projectId
 				  }
-				: {}),
+				: {})
 		};
 		const cacheReference = {
 			taskIds: values.taskIds,
-			projectId: values.projectId,
+			projectId: values.projectId
 		};
 		let tasksStatistics$ = this._taskCacheService.getValue(cacheReference);
 		if (!tasksStatistics$) {
 			tasksStatistics$ = this.http
 				.get(`${API_PREFIX}/timesheet/statistics/tasks`, {
 					params: toParams({
-						...request,
-					}),
+						...request
+					})
 				})
 				.pipe(
 					map((response: any) => response),
@@ -163,16 +163,16 @@ export class TimeTrackerService {
 				relations: ['user'],
 				findInput: {
 					organization: {
-						id: values.organizationId,
-					},
-				},
-			}),
+						id: values.organizationId
+					}
+				}
+			})
 		};
 		let employee$ = this._employeeCacheService.getValue(params);
 		if (!employee$) {
 			employee$ = this.http
 				.get(`${API_PREFIX}/employee/${values.employeeId}`, {
-					params: toParams(params),
+					params: toParams(params)
 				})
 				.pipe(
 					map((response: any) => response),
@@ -190,22 +190,19 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			...(values.organizationContactId
 				? {
-						organizationContactId: values.organizationContactId,
+						organizationContactId: values.organizationContactId
 				  }
 				: {}),
 			...(values.organizationTeamId && {
-				organizationTeamId: values.organizationTeamId,
-			}),
+				organizationTeamId: values.organizationTeamId
+			})
 		};
 		let projects$ = this._projectCacheService.getValue(params);
 		if (!projects$) {
 			projects$ = this.http
-				.get(
-					`${API_PREFIX}/organization-projects/employee/${values.employeeId}`,
-					{
-						params: toParams(params),
-					}
-				)
+				.get(`${API_PREFIX}/organization-projects/employee/${values.employeeId}`, {
+					params: toParams(params)
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -217,17 +214,14 @@ export class TimeTrackerService {
 
 	async getClient(values) {
 		const params = {
-			organizationId: values.organizationId,
+			organizationId: values.organizationId
 		};
 		let clients$ = this._clientCacheService.getValue(params);
 		if (!clients$) {
 			clients$ = this.http
-				.get(
-					`${API_PREFIX}/organization-contact/employee/${values.employeeId}`,
-					{
-						params,
-					}
-				)
+				.get(`${API_PREFIX}/organization-contact/employee/${values.employeeId}`, {
+					params
+				})
 				.pipe(
 					map((response: any) => response),
 					shareReplay(1)
@@ -254,8 +248,8 @@ export class TimeTrackerService {
 						todayStart: TimeTrackerDateManager.startToday,
 						todayEnd: TimeTrackerDateManager.endToday,
 						startDate: TimeTrackerDateManager.startWeek,
-						endDate: TimeTrackerDateManager.endWeek,
-					}),
+						endDate: TimeTrackerDateManager.endWeek
+					})
 				})
 				.pipe(
 					map((response: any) => response),
@@ -272,13 +266,13 @@ export class TimeTrackerService {
 		const params = toParams({
 			tenantId,
 			organizationId,
-			relations: ['screenshots'],
+			relations: ['screenshots']
 		});
 		let timeSlots$ = this._timeSlotCacheService.getValue(values.timeSlotId);
 		if (!timeSlots$) {
 			timeSlots$ = this.http
 				.get(`${API_PREFIX}/timesheet/time-slot/${values.timeSlotId}`, {
-					params,
+					params
 				})
 				.pipe(
 					map((response: any) => response),
@@ -295,7 +289,7 @@ export class TimeTrackerService {
 
 	toggleApiStart(values) {
 		const options = {
-			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
 		};
 		const body = {
 			description: values.description,
@@ -311,24 +305,15 @@ export class TimeTrackerService {
 			isRunning: true,
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
-			organizationTeamId: values.organizationTeamId,
+			organizationTeamId: values.organizationTeamId
 		};
-		this._loggerService.log.info(
-			`Toggle Start Timer Request: ${moment().format()}`,
-			body
-		);
-		return firstValueFrom(
-			this.http.post(
-				`${API_PREFIX}/timesheet/timer/start`,
-				{ ...body },
-				options
-			)
-		);
+		this._loggerService.log.info(`Toggle Start Timer Request: ${moment().format()}`, body);
+		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/start`, { ...body }, options));
 	}
 
 	toggleApiStop(values) {
 		const options = {
-			headers: new HttpHeaders({ timeout: `${15 * 1000}` }),
+			headers: new HttpHeaders({ timeout: `${15 * 1000}` })
 		};
 		const body = {
 			description: values.description,
@@ -344,31 +329,22 @@ export class TimeTrackerService {
 			version: values.version,
 			startedAt: moment(values.startedAt).utc().toISOString(),
 			stoppedAt: moment(values.stoppedAt).utc().toISOString(),
-			organizationTeamId: values.organizationTeamId,
+			organizationTeamId: values.organizationTeamId
 		};
-		this._loggerService.log.info(
-			`Toggle Stop Timer Request: ${moment().format()}`,
-			body
-		);
-		return firstValueFrom(
-			this.http.post(
-				`${API_PREFIX}/timesheet/timer/stop`,
-				{ ...body },
-				options
-			)
-		);
+		this._loggerService.log.info(`Toggle Stop Timer Request: ${moment().format()}`, body);
+		return firstValueFrom(this.http.post(`${API_PREFIX}/timesheet/timer/stop`, { ...body }, options));
 	}
 
 	deleteTimeSlot(values) {
 		const params = toParams({
 			ids: [values.timeSlotId],
 			tenantId: values.tenantId,
-			organizationId: values.organizationId,
+			organizationId: values.organizationId
 		});
 
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
-				params,
+				params
 			})
 		);
 	}
@@ -377,12 +353,12 @@ export class TimeTrackerService {
 		const params = toParams({
 			ids: [...values.timeslotIds],
 			tenantId: values.tenantId,
-			organizationId: values.organizationId,
+			organizationId: values.organizationId
 		});
 
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-slot`, {
-				params,
+				params
 			})
 		);
 	}
@@ -394,20 +370,20 @@ export class TimeTrackerService {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
 					employeeId: values.employeeId,
-					source: TimeLogSourceEnum.DESKTOP,
-				},
+					source: TimeLogSourceEnum.DESKTOP
+				}
 			})
 		);
 	}
 
 	deleteInvalidTimeLog(values) {
 		const params = toParams({
-			logIds: values.timeLogIds,
+			logIds: values.timeLogIds
 		});
 
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/time-log`, {
-				params,
+				params
 			})
 		);
 	}
@@ -418,8 +394,8 @@ export class TimeTrackerService {
 				params: {
 					tenantId: values.tenantId,
 					organizationId: values.organizationId,
-					relations: ['employee', 'employee.user'],
-				},
+					relations: ['employee', 'employee.user']
+				}
 			})
 		);
 	}
@@ -440,7 +416,7 @@ export class TimeTrackerService {
 			tenantId: values.tenantId,
 			organizationContactId: values.organizationContactId,
 			recordedAt: moment(values.recordedAt).utc().toISOString(),
-			...(values.timesheetId && { timesheetId: values.timesheetId }),
+			...(values.timesheetId && { timesheetId: values.timesheetId })
 		};
 
 		console.log('Params', params);
@@ -450,7 +426,7 @@ export class TimeTrackerService {
 				catchError((error) => {
 					error.error = {
 						...error.error,
-						params: JSON.stringify(params),
+						params: JSON.stringify(params)
 					};
 					return throwError(() => new Error(error));
 				})
@@ -467,16 +443,13 @@ export class TimeTrackerService {
 		formData.append('timeSlotId', values.timeSlotId);
 		formData.append('tenantId', values.tenantId);
 		formData.append('organizationId', values.organizationId);
-		formData.append(
-			'recordedAt',
-			moment(values.recordedAt).utc().toISOString()
-		);
+		formData.append('recordedAt', moment(values.recordedAt).utc().toISOString());
 		return firstValueFrom(
 			this.http.post(`${API_PREFIX}/timesheet/screenshot`, formData).pipe(
 				catchError((error) => {
 					error.error = {
 						...error.error,
-						params: JSON.stringify(formData),
+						params: JSON.stringify(formData)
 					};
 					return throwError(() => new Error(error));
 				})
@@ -488,11 +461,7 @@ export class TimeTrackerService {
 		const byteCharacters = atob(b64Data);
 		const byteArrays = [];
 
-		for (
-			let offset = 0;
-			offset < byteCharacters.length;
-			offset += sliceSize
-		) {
+		for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
 			const slice = byteCharacters.slice(offset, offset + sliceSize);
 
 			const byteNumbers = new Array(slice.length);
@@ -540,7 +509,7 @@ export class TimeTrackerService {
 				tap(() => this._taskCacheService.clear()),
 				catchError((error) => {
 					error.error = {
-						...error.error,
+						...error.error
 					};
 					return throwError(() => new Error(error));
 				})
@@ -548,70 +517,49 @@ export class TimeTrackerService {
 		);
 	}
 
-	createNewProject(
-		createInput: IOrganizationProjectCreateInput,
-		data
-	): Promise<IOrganizationProject> {
+	createNewProject(createInput: IOrganizationProjectCreateInput, data): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this.http
-				.post<IOrganizationProject>(
-					`${API_PREFIX}/organization-projects`,
-					createInput
-				)
+				.post<IOrganizationProject>(`${API_PREFIX}/organization-projects`, createInput)
 				.pipe(tap(() => this._projectCacheService.clear()))
 		);
 	}
 
-	createNewContact(
-		input: IOrganizationContactCreateInput,
-		values
-	): Promise<IOrganizationContact> {
+	createNewContact(input: IOrganizationContactCreateInput, values): Promise<IOrganizationContact> {
 		return firstValueFrom(
-			this.http
-				.post<IOrganizationContact>(
-					`${API_PREFIX}/organization-contact`,
-					input
-				)
-				.pipe(
-					tap(() => this._clientCacheService.clear()),
-					catchError((error) => {
-						error.error = {
-							...error.error,
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.post<IOrganizationContact>(`${API_PREFIX}/organization-contact`, input).pipe(
+				tap(() => this._clientCacheService.clear()),
+				catchError((error) => {
+					error.error = {
+						...error.error
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 
 	public async updateTask(id: string, taskUpdateInput: ITaskUpdateInput) {
 		return firstValueFrom(
-			this.http
-				.put<IOrganizationContact>(
-					`${API_PREFIX}/tasks/${id}`,
-					taskUpdateInput
-				)
-				.pipe(
-					tap(() => this._taskCacheService.clear()),
-					tap(() => this._taskStatusCacheService.clear()),
-					catchError((error) => {
-						error.error = {
-							...error.error,
-						};
-						return throwError(() => new Error(error));
-					})
-				)
+			this.http.put<IOrganizationContact>(`${API_PREFIX}/tasks/${id}`, taskUpdateInput).pipe(
+				tap(() => this._taskCacheService.clear()),
+				tap(() => this._taskStatusCacheService.clear()),
+				catchError((error) => {
+					error.error = {
+						...error.error
+					};
+					return throwError(() => new Error(error));
+				})
+			)
 		);
 	}
 
-	public async statuses(
-		params: ITaskStatusFindInput
-	): Promise<ITaskStatus[]> {
+	public async statuses(params: ITaskStatusFindInput): Promise<ITaskStatus[]> {
 		let taskStatuses$ = this._taskStatusCacheService.getValue(params);
 		if (!taskStatuses$) {
 			taskStatuses$ = this.http
 				.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
-					params: toParams({ ...params }),
+					params: toParams({ ...params })
 				})
 				.pipe(
 					map((res) => res.items),
@@ -630,14 +578,9 @@ export class TimeTrackerService {
 			organizationId: values.organizationId,
 			activeTaskId: values.activeTaskId,
 			organizationTeamId: values.organizationTeamId,
-			tenantId: values.tenantId,
+			tenantId: values.tenantId
 		};
-		return firstValueFrom(
-			this.http.put(
-				`${API_PREFIX}/organization-team-employee/${employeeId}`,
-				params
-			)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-team-employee/${employeeId}`, params));
 	}
 
 	public async getTeams(values?: any): Promise<IOrganizationTeam[]> {
@@ -656,12 +599,9 @@ export class TimeTrackerService {
 		let teams$ = this._teamsCacheService.getValue(params);
 		if (!teams$) {
 			teams$ = this.http
-				.get<IPagination<IOrganizationTeam>>(
-					`${API_PREFIX}/organization-team/me`,
-					{
-						params: toParams({ ...params }),
-					}
-				)
+				.get<IPagination<IOrganizationTeam>>(`${API_PREFIX}/organization-team/me`, {
+					params: toParams({ ...params })
+				})
 				.pipe(
 					map((res) => res.items),
 					shareReplay(1)
@@ -674,13 +614,13 @@ export class TimeTrackerService {
 	public async taskSizes(): Promise<ITaskSize[]> {
 		const params: ITaskSizeFindInput = {
 			organizationId: this._store.organizationId,
-			tenantId: this._store.tenantId,
+			tenantId: this._store.tenantId
 		};
 		let taskSizes$ = this._taskSizeCacheService.getValue(params);
 		if (!taskSizes$) {
 			taskSizes$ = this.http
 				.get<IPagination<ITaskSize>>(`${API_PREFIX}/task-sizes`, {
-					params: toParams({ ...params }),
+					params: toParams({ ...params })
 				})
 				.pipe(
 					map((res) => res.items),
@@ -694,17 +634,14 @@ export class TimeTrackerService {
 	public async taskPriorities(): Promise<ITaskPriority[]> {
 		const params: ITaskSizeFindInput = {
 			organizationId: this._store.organizationId,
-			tenantId: this._store.tenantId,
+			tenantId: this._store.tenantId
 		};
 		let taskPriorities$ = this._taskPriorityCacheService.getValue(params);
 		if (!taskPriorities$) {
 			taskPriorities$ = this.http
-				.get<IPagination<ITaskPriority>>(
-					`${API_PREFIX}/task-priorities`,
-					{
-						params: toParams({ ...params }),
-					}
-				)
+				.get<IPagination<ITaskPriority>>(`${API_PREFIX}/task-priorities`, {
+					params: toParams({ ...params })
+				})
 				.pipe(
 					map((res) => res.items),
 					shareReplay(1)

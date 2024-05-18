@@ -116,6 +116,7 @@ export * from '../../role-permission/role-permission.entity';
 export * from '../../role/role.entity';
 export * from '../../skills/skill.entity';
 export * from '../../tags/tag.entity';
+export * from '../../tasks/daily-plan/daily-plan.entity';
 export * from '../../tasks/estimation/task-estimation.entity';
 export * from '../../tasks/issue-type/issue-type.entity';
 export * from '../../tasks/linked-issue/task-linked-issue.entity';

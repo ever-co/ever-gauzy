@@ -1,8 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../language-base';
-
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -11,15 +10,12 @@ import { TranslationBaseComponent } from '../language-base';
 	styleUrls: ['./no-data-message.component.scss']
 })
 export class NoDataMessageComponent extends TranslationBaseComponent implements OnInit {
-
 	@Input() title: string = this.getTranslation('SM_TABLE.NO_DATA_MESSAGE');
 	@Input() message: string;
 
-	constructor(
-		public readonly translateService: TranslateService
-	) {
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
-	ngOnInit() { }
+	ngOnInit() {}
 }

@@ -6,6 +6,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
+import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
 import { initialize as initializeUnleash, InMemStorageProvider, UnleashConfig } from 'unleash-client';
 import * as path from 'path';
@@ -15,6 +16,7 @@ import { ConfigService, environment } from '@gauzy/config';
 import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
 import { CoreModule } from './core/core.module';
+import { RequestContext } from './core/context/request-context';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { CandidateInterviewersModule } from './candidate-interviewers/candidate-interviewers.module';
@@ -140,8 +142,7 @@ import { EmailResetModule } from './email-reset/email-reset.module';
 import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.module';
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
-import { ClsModule, ClsService } from 'nestjs-cls';
-import { RequestContext } from 'core/context/request-context';
+import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 
 const { unleashConfig, github, jira } = environment;
 
@@ -422,6 +423,7 @@ if (environment.THROTTLE_ENABLED) {
 		TaskSizeModule,
 		TaskStatusModule,
 		TaskVersionModule,
+		DailyPlanModule,
 		OrganizationEmploymentTypeModule,
 		TimeTrackingModule,
 		FeatureModule,

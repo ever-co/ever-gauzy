@@ -390,9 +390,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			query.setFindOptions({
 				join: {
 					alias: 'user',
-					leftJoin: {
-						role: 'user.role'
-					}
+					leftJoin: { role: 'user.role' }
 				}
 			});
 			query.where((query: SelectQueryBuilder<User>) => {
@@ -416,6 +414,7 @@ export class UserService extends TenantAwareCrudService<User> {
 			});
 			const user = await query.getOneOrFail();
 			const isRefreshTokenMatching = await bcrypt.compare(refreshToken, user.refreshToken);
+
 			if (isRefreshTokenMatching) {
 				return user;
 			} else {

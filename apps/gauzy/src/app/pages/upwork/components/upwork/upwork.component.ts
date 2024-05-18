@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../../@shared/language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store, UpworkStoreService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -14,10 +14,7 @@ import { Store, UpworkStoreService } from './../../../../@core/services';
 	selector: 'ngx-upwork',
 	templateUrl: './upwork.component.html'
 })
-export class UpworkComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class UpworkComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	tabs: any[];
 	supportContextActions: NbMenuItem[];
 	integrationId: string;
@@ -39,16 +36,14 @@ export class UpworkComponent
 
 		this._activatedRoute.params
 			.pipe(
-				tap(
-					(params: Params) => this.integrationId = params['id']
-				),
+				tap((params: Params) => (this.integrationId = params['id'])),
 				tap(() => this._loadActions())
 			)
 			.subscribe();
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this._getConfig()),
 				untilDestroyed(this)
 			)
@@ -59,10 +54,7 @@ export class UpworkComponent
 		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 		const integrationId = this.integrationId;
-		this._upworkStore
-			.getConfig({ integrationId, organizationId, tenantId })
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this._upworkStore.getConfig({ integrationId, organizationId, tenantId }).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	getRoute(tabName: string) {
@@ -72,9 +64,7 @@ export class UpworkComponent
 	private _loadTabs() {
 		this.tabs = [
 			{
-				title: this.getTranslation(
-					'INTEGRATIONS.UPWORK_PAGE.ACTIVITIES'
-				),
+				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.ACTIVITIES'),
 				icon: 'trending-up-outline',
 				responsive: true,
 				route: this.getRoute('activities')
@@ -86,17 +76,13 @@ export class UpworkComponent
 				route: this.getRoute('reports')
 			},
 			{
-				title: this.getTranslation(
-					'INTEGRATIONS.UPWORK_PAGE.TRANSACTIONS'
-				),
+				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.TRANSACTIONS'),
 				icon: 'flip-outline',
 				responsive: true,
 				route: this.getRoute('transactions')
 			},
 			{
-				title: this.getTranslation(
-					'INTEGRATIONS.UPWORK_PAGE.CONTRACTS'
-				),
+				title: this.getTranslation('INTEGRATIONS.UPWORK_PAGE.CONTRACTS'),
 				icon: 'book-outline',
 				responsive: true,
 				route: this.getRoute('contracts')
@@ -131,7 +117,7 @@ export class UpworkComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	/**
 	 * Navigate to the "Integrations" page.

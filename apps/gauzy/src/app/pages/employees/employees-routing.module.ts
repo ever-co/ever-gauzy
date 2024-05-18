@@ -47,10 +47,7 @@ const routes: Routes = [
 		canActivate: [NgxPermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ORG_EMPLOYEES_EDIT,
-					PermissionsEnum.PROFILE_EDIT
-				],
+				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT],
 				redirectTo
 			}
 		},
@@ -107,10 +104,7 @@ const routes: Routes = [
 						date: false
 					},
 					permissions: {
-						only: [
-							PermissionsEnum.ALL_ORG_VIEW,
-							PermissionsEnum.ORG_PROJECT_VIEW
-						],
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW],
 						redirectTo
 					}
 				}
@@ -177,10 +171,7 @@ const routes: Routes = [
 		component: ManageEmployeeInviteComponent,
 		canActivate: [InviteGuard],
 		data: {
-			expectedPermissions: [
-				PermissionsEnum.ORG_INVITE_EDIT,
-				PermissionsEnum.ORG_INVITE_VIEW
-			],
+			expectedPermissions: [PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_INVITE_VIEW],
 			selectors: {
 				project: false,
 				employee: false,
@@ -190,16 +181,11 @@ const routes: Routes = [
 	},
 	{
 		path: 'timesheets',
-		loadChildren: () =>
-			import('./timesheet/timesheet.module').then(
-				(m) => m.TimesheetModule
-			)
+		loadChildren: () => import('./timesheet/timesheet.module').then((m) => m.TimesheetModule)
 	},
 	{
 		path: 'activity',
-		loadChildren: () => import('./activity/activity.module').then(
-			(m) => m.ActivityModule
-		)
+		loadChildren: () => import('./activity/activity.module').then((m) => m.ActivityModule)
 	}
 ];
 
@@ -207,4 +193,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class EmployeesRoutingModule { }
+export class EmployeesRoutingModule {}

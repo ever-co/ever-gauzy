@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { NbIconModule, NbButtonModule, NbCardModule } from '@nebular/theme';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule } from '@angular/forms';
-import { CandidateCalendarInfoComponent } from './candidate-calendar-info.component';
+import { NbIconModule, NbButtonModule, NbCardModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { TranslateModule } from '../../translate/translate.module';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../@theme/theme.module';
+import { CandidateCalendarInfoComponent } from './candidate-calendar-info.component';
 
 @NgModule({
 	imports: [

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { firstValueFrom } from 'rxjs';
 import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,9 +13,7 @@ import { EmployeesService, EventTypeService } from '../../../@core/services';
 	templateUrl: './create-appointment.component.html',
 	styleUrls: ['../public-appointments.component.scss']
 })
-export class CreateAppointmentComponent extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class CreateAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	employee: IEmployee;
 	eventType: IEventType;
 	loading: boolean = true;
@@ -35,25 +33,16 @@ export class CreateAppointmentComponent extends TranslationBaseComponent
 	}
 
 	ngOnInit(): void {
-		this.route.params
-			.pipe(
-				untilDestroyed(this)
-			)
-			.subscribe(async (params) => {
-				try {
-					this.employee = await firstValueFrom(this.employeeService.getEmployeeById(
-						params.id,
-						['user']
-					));
-					this.eventType = await this.eventTypeService.getEventTypeById(
-						params.eventId
-					);
-					this.loading = false;
-					this.appointmentFormURL = `/share/employee/${params.id}/create-appointment`;
-				} catch (error) {
-					await this.router.navigate(['/share/404']);
-				}
-			});
+		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
+			try {
+				this.employee = await firstValueFrom(this.employeeService.getEmployeeById(params.id, ['user']));
+				this.eventType = await this.eventTypeService.getEventTypeById(params.eventId);
+				this.loading = false;
+				this.appointmentFormURL = `/share/employee/${params.id}/create-appointment`;
+			} catch (error) {
+				await this.router.navigate(['/share/404']);
+			}
+		});
 	}
 
 	ngOnDestroy() {}

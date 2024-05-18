@@ -1,15 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-	Router,
-	ActivatedRoute
-} from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	IRequestApproval,
-	ComponentLayoutStyleEnum,
-	IOrganization,
-	IApprovalsData
-} from '@gauzy/contracts';
+import { IRequestApproval, ComponentLayoutStyleEnum, IOrganization, IApprovalsData } from '@gauzy/contracts';
 import { RequestApprovalService } from '../../@core/services/request-approval.service';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
@@ -24,17 +16,14 @@ import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '../../@core/services/toastr.service';
-import {
-	EmployeeWithLinksComponent,
-	TaskTeamsComponent
-} from '../../@shared/table-components';
+import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
 import { pluck } from 'underscore';
 import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject } from 'rxjs/internal/Subject';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
@@ -46,7 +35,6 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 	styleUrls: ['./approvals.component.scss']
 })
 export class ApprovalsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	public settingsSmartTable: object;
 	public loading: boolean;
 	public selectedRequestApproval: IRequestApproval;
@@ -91,15 +79,10 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
-		combineLatest([
-			this.store.selectedEmployee$,
-			this.store.selectedOrganization$
-		])
+		combineLatest([this.store.selectedEmployee$, this.store.selectedOrganization$])
 			.pipe(
 				debounceTime(300),
-				filter(
-					([employee, organization]) => !!organization && !!employee
-				),
+				filter(([employee, organization]) => !!organization && !!employee),
 				distinctUntilChange(),
 				tap(([employee, organization]) => {
 					this.selectedEmployeeId = employee.id;
@@ -112,10 +95,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 		this.route.queryParamMap
 			.pipe(
-				filter(
-					(params) =>
-						!!params && params.get('openAddDialog') === 'true'
-				),
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
 				debounceTime(1000),
 				tap(() => this.save(true)),
 				untilDestroyed(this)
@@ -140,15 +120,9 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
-				tap(
-					(componentLayout) =>
-						(this.dataLayoutStyle = componentLayout)
-				),
+				tap((componentLayout) => (this.dataLayoutStyle = componentLayout)),
 				tap(() => this.refreshPagination()),
-				filter(
-					(componentLayout) =>
-						componentLayout === ComponentLayoutStyleEnum.CARDS_GRID
-				),
+				filter((componentLayout) => componentLayout === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => (this.requestApprovalData = [])),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
@@ -176,11 +150,10 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		let items: any = [];
 		if (this.selectedEmployeeId) {
 			items = (
-				await this.approvalRequestService.getByEmployeeId(
-					this.selectedEmployeeId,
-					['requestApprovals'],
-					{ organizationId, tenantId }
-				)
+				await this.approvalRequestService.getByEmployeeId(this.selectedEmployeeId, ['requestApprovals'], {
+					organizationId,
+					tenantId
+				})
 			).items;
 		} else {
 			items = (
@@ -226,9 +199,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	}
 
 	async _loadGridLayoutData() {
-		this.requestApprovalData.push(
-			...(await this.smartTableSource.getElements())
-		);
+		this.requestApprovalData.push(...(await this.smartTableSource.getElements()));
 	}
 
 	async _loadSmartTableSettings() {
@@ -237,13 +208,9 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			actions: false,
 			pager: {
 				display: false,
-				perPage: pagination
-					? pagination.itemsPerPage
-					: this.minItemPerPage
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
-			noDataMessage: this.getTranslation(
-				'SM_TABLE.NO_DATA.APPROVAL_REQUEST'
-			),
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.APPROVAL_REQUEST'),
 			columns: {
 				name: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_NAME'),
@@ -252,7 +219,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				min_count: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'),
@@ -266,7 +233,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					renderComponent: ApprovalPolicyComponent,
 					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				createdByName: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
@@ -275,7 +242,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					renderComponent: CreateByComponent,
 					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-					},
+					}
 				},
 				createdAt: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_AT'),
@@ -285,7 +252,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
-					},
+					}
 				},
 				employees: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
@@ -295,7 +262,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				teams: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
@@ -304,7 +271,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					renderComponent: TaskTeamsComponent,
 					componentInitFunction: (instance: TaskTeamsComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				status: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'),
@@ -314,7 +281,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getValue();
-					},
+					}
 				}
 			}
 		};
@@ -343,9 +310,11 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		}
 
 		// Determine the CSS class based on the mapped status text
-		const badgeClass =
-			['approved'].includes(value.toLowerCase()) ? 'success' :
-				['requested'].includes(value.toLowerCase()) ? 'warning' : 'danger';
+		const badgeClass = ['approved'].includes(value.toLowerCase())
+			? 'success'
+			: ['requested'].includes(value.toLowerCase())
+			? 'warning'
+			: 'danger';
 
 		// Return an object with text, value, and class properties
 		return {
@@ -380,26 +349,14 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 			return;
 		}
 		if (params.isApproval) {
-			const request =
-				await this.approvalRequestService.approvalRequestByAdmin(
-					params.data.id
-				);
+			const request = await this.approvalRequestService.approvalRequestByAdmin(params.data.id);
 			if (request) {
-				this.toastrService.success(
-					'APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS',
-					{ name: params.data.name }
-				);
+				this.toastrService.success('APPROVAL_REQUEST_PAGE.APPROVAL_SUCCESS', { name: params.data.name });
 			}
 		} else {
-			const request =
-				await this.approvalRequestService.refuseRequestByAdmin(
-					params.data.id
-				);
+			const request = await this.approvalRequestService.refuseRequestByAdmin(params.data.id);
 			if (request) {
-				this.toastrService.success(
-					'APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS',
-					{ name: params.data.name }
-				);
+				this.toastrService.success('APPROVAL_REQUEST_PAGE.REFUSE_SUCCESS', { name: params.data.name });
 			}
 		}
 		this._refresh$.next(true);
@@ -407,12 +364,10 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 	}
 
 	_applyTranslationOnSmartTable() {
-		this.translateService.onLangChange
-			.pipe(untilDestroyed(this))
-			.subscribe(() => {
-				this._refresh$.next(true);
-				this.subject$.next(true);
-			});
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this._refresh$.next(true);
+			this.subject$.next(true);
+		});
 	}
 
 	manageApprovalPolicy() {
@@ -437,9 +392,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		} else {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
-		const requestApproval: any = await firstValueFrom(
-			dialog.onClose.pipe(first())
-		);
+		const requestApproval: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (requestApproval) {
 			this.toastrService.success(
 				isCreate
@@ -459,18 +412,13 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				data: selectedItem
 			});
 		}
-		const result = await firstValueFrom(
-			this.dialogService.open(DeleteConfirmationComponent).onClose
-		);
+		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 		if (result) {
-			const isSuccess = await this.approvalRequestService.delete(
-				this.selectedRequestApproval.id
-			);
+			const isSuccess = await this.approvalRequestService.delete(this.selectedRequestApproval.id);
 			if (isSuccess) {
-				this.toastrService.success(
-					'APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED',
-					{ name: this.selectedRequestApproval.name }
-				);
+				this.toastrService.success('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_DELETED', {
+					name: this.selectedRequestApproval.name
+				});
 				this._refresh$.next(true);
 				this.subject$.next(true);
 			}
@@ -487,5 +435,5 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

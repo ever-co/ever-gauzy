@@ -10,18 +10,13 @@ import {
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Options, ChangeContext } from '@angular-slider/ngx-slider';
-import {
-	ITimeLogFilters,
-	PermissionsEnum,
-	TimeLogSourceEnum,
-	TimeLogType
-} from '@gauzy/contracts';
+import { ITimeLogFilters, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, take, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
-import { TranslationBaseComponent } from '../../language-base';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +25,6 @@ import { TranslationBaseComponent } from '../../language-base';
 	styleUrls: ['./gauzy-filters.component.scss']
 })
 export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	// declaration of variables
 	public PermissionsEnum = PermissionsEnum;
 	public TimeLogType = TimeLogType;
@@ -51,8 +45,8 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	public readonly timeLogSourceSelectors = this.getTimeLogSourceSelectors();
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	private filters$: Subject<any> = new Subject();
 	private _filters: ITimeLogFilters = {
 		source: [],
@@ -76,8 +70,8 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
 	/**
-		* define constructor
-		*/
+	 * define constructor
+	 */
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly cd: ChangeDetectorRef,
@@ -92,12 +86,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 				.pipe(
 					take(1),
 					tap((filters: ITimeLogFilters) => {
-						this.filters = Object.assign({}, pick(
-							filters,
-							'source',
-							'activityLevel',
-							'logType'
-						));
+						this.filters = Object.assign({}, pick(filters, 'source', 'activityLevel', 'logType'));
 					}),
 					untilDestroyed(this)
 				)
@@ -106,7 +95,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		this.filters$
 			.pipe(
 				debounceTime(400),
-				tap(() => this.hasFilterApplies = this.hasFilter()),
+				tap(() => (this.hasFilterApplies = this.hasFilter())),
 				tap(() => this.filtersChange.emit(this.arrangedFilters())),
 				untilDestroyed(this)
 			)
@@ -146,16 +135,14 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	}
 
 	arrangedFilters(): ITimeLogFilters {
-		Object.keys(this.filters).forEach((key) =>
-			this.filters[key] === undefined ? delete this.filters[key] : {}
-		);
+		Object.keys(this.filters).forEach((key) => (this.filters[key] === undefined ? delete this.filters[key] : {}));
 		return this.filters;
 	}
 
 	/**
 	 * Generate Dynamic Timelog Source Selector
 	 */
-	getTimeLogSourceSelectors(): Array<{ label: string, value: TimeLogSourceEnum }> {
+	getTimeLogSourceSelectors(): Array<{ label: string; value: TimeLogSourceEnum }> {
 		return [
 			{
 				label: this.getTranslation('TIMESHEET.SOURCES.WEB_TIMER'),
@@ -188,5 +175,5 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		];
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

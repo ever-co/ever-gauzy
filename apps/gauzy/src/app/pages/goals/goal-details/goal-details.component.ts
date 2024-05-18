@@ -9,7 +9,7 @@ import { GoalService } from '../../../@core/services/goal.service';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
 import { ToastrService } from '../../../@core/services/toastr.service';
-import { TranslationBaseComponent } from '../../../@shared/language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -17,10 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 	templateUrl: './goal-details.component.html',
 	styleUrls: ['./goal-details.component.scss']
 })
-export class GoalDetailsComponent
-	extends TranslationBaseComponent
-	implements OnInit
-{
+export class GoalDetailsComponent extends TranslationBaseComponent implements OnInit {
 	goal: IGoal;
 	src: string;
 	ownerName: string;
@@ -39,10 +36,9 @@ export class GoalDetailsComponent
 
 	async ngOnInit() {
 		if (!!this.goal.ownerEmployee) {
-			const employee = await firstValueFrom(this.employeeService.getEmployeeById(
-				this.goal.ownerEmployee.id,
-				['user']
-			));
+			const employee = await firstValueFrom(
+				this.employeeService.getEmployeeById(this.goal.ownerEmployee.id, ['user'])
+			);
 			this.src = employee.user.imageUrl;
 			this.ownerName = employee.user.name;
 		} else if (!!this.goal.organization) {
@@ -71,19 +67,14 @@ export class GoalDetailsComponent
 		const response = await firstValueFrom(dialog.onClose);
 		if (!!response) {
 			if (response === 'yes') {
-				await this.goalService
-					.delete(this.goal.id)
-					.catch((error) => console.log(error));
+				await this.goalService.delete(this.goal.id).catch((error) => console.log(error));
 				this.dialogRef.close('deleted');
 			}
 		}
 	}
 
 	calculateKeyResultWeight(weight) {
-		const weightSum = this.goal.keyResults.reduce(
-			(a, b) => a + +b.weight,
-			0
-		);
+		const weightSum = this.goal.keyResults.reduce((a, b) => a + +b.weight, 0);
 		return Math.round(+weight * (100 / weightSum));
 	}
 
@@ -105,9 +96,7 @@ export class GoalDetailsComponent
 				);
 			} else if (!!index) {
 				this.goal.keyResults[index] = response;
-				this.goal.progress = this.calculateGoalProgress(
-					this.goal.keyResults
-				);
+				this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
 			}
 		}
 	}
@@ -125,21 +114,13 @@ export class GoalDetailsComponent
 			const keyResultData = response;
 			delete keyResultData.goal;
 			delete keyResultData.updates;
-			await this.keyResultService.update(
-				selectedKeyResult.id,
-				keyResultData
-			);
-			this.goal.progress = this.calculateGoalProgress(
-				this.goal.keyResults
-			);
+			await this.keyResultService.update(selectedKeyResult.id, keyResultData);
+			this.goal.progress = this.calculateGoalProgress(this.goal.keyResults);
 		}
 	}
 
 	calculateGoalProgress(keyResults) {
-		const progressTotal = keyResults.reduce(
-			(a: number, b: IKeyResult) => a + b.progress * +b.weight,
-			0
-		);
+		const progressTotal = keyResults.reduce((a: number, b: IKeyResult) => a + b.progress * +b.weight, 0);
 		const weightTotal = keyResults.reduce((a, b) => a + +b.weight, 0);
 		return Math.round(progressTotal / weightTotal);
 	}

@@ -9,7 +9,7 @@ import {
 	IPagination
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable({
@@ -26,9 +26,7 @@ export class EmailTemplateService {
 		);
 	}
 
-	getTemplate(
-		where?: ICustomizeEmailTemplateFindInput
-	): Promise<ICustomizableEmailTemplate> {
+	getTemplate(where?: ICustomizeEmailTemplateFindInput): Promise<ICustomizableEmailTemplate> {
 		return firstValueFrom(
 			this.http.get<ICustomizableEmailTemplate>(`${API_PREFIX}/email-template/template`, {
 				params: toParams({ ...where })
@@ -38,13 +36,9 @@ export class EmailTemplateService {
 
 	generateTemplatePreview(data: string): Promise<{ html: string }> {
 		return firstValueFrom(
-			this.http
-			.post<{ html: string }>(
-				`${API_PREFIX}/email-template/template/preview`,
-				{
-					data
-				}
-			)
+			this.http.post<{ html: string }>(`${API_PREFIX}/email-template/template/preview`, {
+				data
+			})
 		);
 	}
 

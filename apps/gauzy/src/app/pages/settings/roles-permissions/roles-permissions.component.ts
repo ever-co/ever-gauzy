@@ -1,25 +1,13 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import {
-	PermissionGroups,
-	IRolePermission,
-	RolesEnum,
-	IUser,
-	IRole,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { PermissionGroups, IRolePermission, RolesEnum, IUser, IRole, PermissionsEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '../../../@shared/language-base';
-import {
-	RolePermissionsService,
-	RoleService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { RolePermissionsService, RoleService, Store, ToastrService } from '../../../@core/services';
 import { environment } from './../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,10 +16,7 @@ import { environment } from './../../../../environments/environment';
 	templateUrl: './roles-permissions.component.html',
 	styleUrls: ['./roles-permissions.component.scss']
 })
-export class RolesPermissionsComponent
-	extends TranslationBaseComponent
-	implements OnInit, OnDestroy {
-
+export class RolesPermissionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	rolesEnum = RolesEnum;
 	permissionGroups = PermissionGroups;
 	isWantToCreate: boolean = false;
@@ -80,16 +65,15 @@ export class RolesPermissionsComponent
 	}
 
 	ngAfterViewInit() {
-		this.roles$ = this.formControl.valueChanges
-			.pipe(
-				debounceTime(300),
-				startWith(''),
-				map((value: string) => this._filter(value)),
-			);
+		this.roles$ = this.formControl.valueChanges.pipe(
+			debounceTime(300),
+			startWith(''),
+			map((value: string) => this._filter(value))
+		);
 		this.permissions$
 			.pipe(
 				debounceTime(300),
-				tap(() => this.loading = true),
+				tap(() => (this.loading = true)),
 				tap(() => this.loadPermissions()),
 				untilDestroyed(this)
 			)
@@ -113,9 +97,7 @@ export class RolesPermissionsComponent
 	 * @returns
 	 */
 	private _getFilteredOptions(value: string): Observable<IRole[]> {
-		return observableOf(value).pipe(
-		  	map((value) => this._filter(value)),
-		);
+		return observableOf(value).pipe(map((value) => this._filter(value)));
 	}
 
 	/**
@@ -135,17 +117,13 @@ export class RolesPermissionsComponent
 	onInputChange() {
 		const nativeElementValue = this.input.nativeElement.value;
 		if (nativeElementValue) {
-			const [role] = this.roles.filter(
-				(role: IRole) => role.name === nativeElementValue
-			);
+			const [role] = this.roles.filter((role: IRole) => role.name === nativeElementValue);
 			this.role = role;
 
 			/**
 			 * We want to create new role
 			 */
-			this.isWantToCreate = !this.roles.find(
-				(role: IRole) => role.name === nativeElementValue
-			);
+			this.isWantToCreate = !this.roles.find((role: IRole) => role.name === nativeElementValue);
 		}
 	}
 
@@ -160,11 +138,12 @@ export class RolesPermissionsComponent
 		const { id: roleId } = this.role;
 
 		this.permissions = (
-			await this.rolePermissionsService.getRolePermissions({
-				roleId,
-				tenantId
-			})
-			.finally(() => this.loading = false)
+			await this.rolePermissionsService
+				.getRolePermissions({
+					roleId,
+					tenantId
+				})
+				.finally(() => (this.loading = false))
 		).items;
 
 		this.permissions.forEach((p) => {
@@ -172,11 +151,7 @@ export class RolesPermissionsComponent
 		});
 	}
 
-	async permissionChanged(
-		permission: string,
-		enabled: boolean,
-		allowChange: boolean
-	) {
+	async permissionChanged(permission: string, enabled: boolean, allowChange: boolean) {
 		/**
 		 * If anyone trying to update another users permissions without enough permisison
 		 */
@@ -191,23 +166,18 @@ export class RolesPermissionsComponent
 			const { id: roleId } = this.role;
 			const { tenantId } = this.user;
 
-			const permissionToEdit = this.permissions.find(
-				(p) => p.permission === permission
-			);
+			const permissionToEdit = this.permissions.find((p) => p.permission === permission);
 
 			const payload = {
 				enabled,
 				roleId,
 				tenantId,
 				permission
-			}
+			};
 			permissionToEdit && permissionToEdit.id
-				? await this.rolePermissionsService.update(
-						permissionToEdit.id,
-						{
-							...payload
-						}
-				  )
+				? await this.rolePermissionsService.update(permissionToEdit.id, {
+						...payload
+				  })
 				: await this.rolePermissionsService.create({
 						...payload
 				  });
@@ -244,9 +214,7 @@ export class RolesPermissionsComponent
 	 * @returns
 	 */
 	getRoleByName(name: IRole['name']) {
-		return this.roles.find(
-			(role: IRole) => name === role.name
-		);
+		return this.roles.find((role: IRole) => name === role.name);
 	}
 
 	/***
@@ -254,24 +222,20 @@ export class RolesPermissionsComponent
 	 */
 	getAdministrationPermissions(): PermissionsEnum[] {
 		// removed permissions for all users in DEMO mode
-		const deniedPermissions = [
-			PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-			PermissionsEnum.ACCESS_DELETE_ALL_DATA
-		];
+		const deniedPermissions = [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA];
 
-		return this.permissionGroups.ADMINISTRATION
-			.filter((permission) => environment.DEMO ? !deniedPermissions.includes(permission) : true)
+		return this.permissionGroups.ADMINISTRATION.filter((permission) =>
+			environment.DEMO ? !deniedPermissions.includes(permission) : true
+		);
 	}
 
 	/**
 	 * GET all tenant roles
 	 */
 	async getRoles() {
-		this.roles$ = observableOf(
-			(await (this.rolesService.getAll())).items
-		).pipe(
+		this.roles$ = observableOf((await this.rolesService.getAll()).items).pipe(
 			map((roles: IRole[]) => roles),
-			tap((roles: IRole[]) => this.roles = roles),
+			tap((roles: IRole[]) => (this.roles = roles)),
 			tap(() => this.formControl.setValue(this.formControl.value || RolesEnum.EMPLOYEE))
 		);
 	}
@@ -281,11 +245,12 @@ export class RolesPermissionsComponent
 	 */
 	createRole() {
 		const value = this.input.nativeElement.value;
-		this.rolesService.create({ name: value })
+		this.rolesService
+			.create({ name: value })
 			.pipe(
 				debounceTime(100),
 				tap(() => this.roleSubject$.next(true)),
-				tap(() => this.isWantToCreate = false),
+				tap(() => (this.isWantToCreate = false)),
 				tap((role: IRole) => {
 					this.toastrService.success(
 						this.getTranslation('TOASTR.MESSAGE.ROLE_CREATED', {
@@ -301,7 +266,7 @@ export class RolesPermissionsComponent
 						}),
 						this.getTranslation('TOASTR.TITLE.ERROR')
 					);
-					throw new Error(error)
+					throw new Error(error);
 				}),
 				untilDestroyed(this)
 			)
@@ -313,7 +278,8 @@ export class RolesPermissionsComponent
 	 */
 	deleteRole() {
 		if (!this.role.isSystem) {
-			this.rolesService.delete(this.role)
+			this.rolesService
+				.delete(this.role)
 				.pipe(
 					debounceTime(100),
 					tap(() => this.formControl.setValue('')),
@@ -357,7 +323,7 @@ export class RolesPermissionsComponent
 		/**
 		 * Disabled all permissions for "SUPER_ADMIN"
 		 */
-		const excludes = [ RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN ];
+		const excludes = [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
 		if (excludes.includes(this.user.role.name as RolesEnum)) {
 			if (this.role.name === RolesEnum.SUPER_ADMIN) {
 				return true;

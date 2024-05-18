@@ -5,6 +5,7 @@ import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { DateRangePickerBuilderService, defaultDateFormat } from '@gauzy/ui-sdk/core';
 import {
 	ComponentType,
 	IRecurringExpenseModel,
@@ -14,9 +15,8 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
-	DateRangePickerBuilderService,
 	EmployeeRecurringExpenseService,
 	EmployeesService,
 	ErrorHandlingService,
@@ -25,8 +25,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
-import { defaultDateFormat } from '../../../@core/utils/date';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
@@ -36,9 +35,10 @@ import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 	templateUrl: './recurring-expense-mutation.component.html',
 	styleUrls: ['./recurring-expense-mutation.component.scss']
 })
-export class RecurringExpenseMutationComponent extends TranslationBaseComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class RecurringExpenseMutationComponent
+	extends TranslationBaseComponent
+	implements AfterViewInit, OnInit, OnDestroy
+{
 	@ViewChild('employeeSelector', { static: false })
 	employeeSelector: EmployeeSelectorComponent;
 
@@ -56,8 +56,8 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}[] = DEFAULT_CATEGORIES;
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	_recurringExpense: IRecurringExpenseModel;
 	get recurringExpense(): IRecurringExpenseModel {
 		return this._recurringExpense;
@@ -75,26 +75,17 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	public organization: IOrganization;
 
 	/*
-	* Recurring Expense Mutation Form
-	*/
+	 * Recurring Expense Mutation Form
+	 */
 	public form: UntypedFormGroup = RecurringExpenseMutationComponent.buildForm(this.fb, this);
-	static buildForm(
-		fb: UntypedFormBuilder,
-		self: RecurringExpenseMutationComponent
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder, self: RecurringExpenseMutationComponent): UntypedFormGroup {
 		const { startDate } = self.dateRangePickerBuilderService.selectedDateRange;
 		return fb.group({
 			categoryName: [null, Validators.required],
 			value: [null, Validators.required],
 			currency: [null, Validators.required],
 			splitExpense: [false],
-			startDate: [
-				new Date(
-					startDate.getFullYear(),
-					startDate.getMonth(),
-					1
-				)
-			]
+			startDate: [new Date(startDate.getFullYear(), startDate.getMonth(), 1)]
 		});
 	}
 
@@ -131,12 +122,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	formatToOrganizationDate(date: string) {
-		return date
-			? moment(date).format(
-				this.store.selectedOrganization.dateFormat ||
-				defaultDateFormat
-			)
-			: 'end';
+		return date ? moment(date).format(this.store.selectedOrganization.dateFormat || defaultDateFormat) : 'end';
 	}
 
 	previousMonth(date: string) {
@@ -153,7 +139,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 				debounceTime(200),
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getExpenseCategories()),
 				untilDestroyed(this)
 			)
@@ -173,9 +159,9 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void { }
+	ngAfterViewInit(): void {}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	/**
 	 * GET expense categories by organization
@@ -200,7 +186,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	 * @param categories
 	 */
 	mappedExpenseCategories(categories: IExpenseCategory[]) {
-		const storedCategories: { label: string; value: string; }[] = [];
+		const storedCategories: { label: string; value: string }[] = [];
 
 		for (let category of categories) {
 			storedCategories.push({
@@ -213,19 +199,19 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 		const getKey = (item: any) => `${item.label}-${item.value}`;
 
 		// Merge the storedCategories with defaultFilteredCategories and filter out duplicates
-		const mergedCategories = [
-			...this.defaultFilteredCategories,
-			...storedCategories
-		].reduce((uniqueItems, item) => {
-			// Generate a unique key for the current item
-			const key = getKey(item);
-			// If the key is not already present in the set, add the item to the set and to the result array
-			if (!uniqueItems.set.has(key)) {
-				uniqueItems.set.add(key);
-				uniqueItems.result.push(item);
-			}
-			return uniqueItems;
-		}, { set: new Set(), result: [] }).result;
+		const mergedCategories = [...this.defaultFilteredCategories, ...storedCategories].reduce(
+			(uniqueItems, item) => {
+				// Generate a unique key for the current item
+				const key = getKey(item);
+				// If the key is not already present in the set, add the item to the set and to the result array
+				if (!uniqueItems.set.has(key)) {
+					uniqueItems.set.add(key);
+					uniqueItems.result.push(item);
+				}
+				return uniqueItems;
+			},
+			{ set: new Set(), result: [] }
+		).result;
 
 		// Now, map the mergedCategories as needed
 		const uniqueFilteredCategories = mergedCategories.map((item) => {
@@ -253,9 +239,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 		let employee: IEmployee;
 		if (this.recurringExpense && this.recurringExpense.employeeId) {
-			employee = await firstValueFrom(
-				this.employeesService.getEmployeeById(this.recurringExpense.employeeId)
-			);
+			employee = await firstValueFrom(this.employeesService.getEmployeeById(this.recurringExpense.employeeId));
 		}
 		const { categoryName, startDate } = this.form.getRawValue();
 		const payload = {
@@ -276,9 +260,7 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 	}
 
 	getTranslatedExpenseCategory(categoryName) {
-		return this.getTranslation(
-			`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`
-		);
+		return this.getTranslation(`EXPENSES_PAGE.DEFAULT_CATEGORY.${categoryName}`);
 	}
 
 	addCustomCategoryName(term) {
@@ -300,9 +282,12 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 					name
 				})
 			);
-			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY', {
-				name
-			});
+			this.toastrService.success(
+				'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_EXPENSE_CATEGORIES.ADD_EXPENSE_CATEGORY',
+				{
+					name
+				}
+			);
 			return {
 				value: createdCategory.name,
 				label: createdCategory.name
@@ -319,19 +304,12 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 			value: recurringExpense ? recurringExpense.value : '',
 			currency: recurringExpense ? recurringExpense.currency : '',
 			splitExpense: recurringExpense && recurringExpense.splitExpense ? recurringExpense.splitExpense : false,
-			startDate: recurringExpense && recurringExpense.startDate ? new Date(recurringExpense.startDate) : new Date(
-				startDate.getFullYear(),
-				startDate.getMonth(),
-				1
-			)
+			startDate:
+				recurringExpense && recurringExpense.startDate
+					? new Date(recurringExpense.startDate)
+					: new Date(startDate.getFullYear(), startDate.getMonth(), 1)
 		});
-		if (
-			recurringExpense &&
-			!(
-				recurringExpense.categoryName in
-				RecurringExpenseDefaultCategoriesEnum
-			)
-		) {
+		if (recurringExpense && !(recurringExpense.categoryName in RecurringExpenseDefaultCategoriesEnum)) {
 			this.defaultFilteredCategories = [
 				{
 					value: recurringExpense.categoryName,
@@ -345,26 +323,18 @@ export class RecurringExpenseMutationComponent extends TranslationBaseComponent
 
 	async datePickerChanged(newValue: string) {
 		this.startDateChangeLoading = true;
-		if (
-			newValue &&
-			this.recurringExpense &&
-			this.recurringExpense.startDate
-		) {
+		if (newValue && this.recurringExpense && this.recurringExpense.startDate) {
 			const newStartDate = new Date(newValue);
 			const { value, conflicts } =
 				this.componentType === ComponentType.ORGANIZATION
-					? await this.organizationRecurringExpenseService.getStartDateUpdateType(
-						{
+					? await this.organizationRecurringExpenseService.getStartDateUpdateType({
 							newStartDate,
 							recurringExpenseId: this.recurringExpense.id
-						}
-					)
-					: await this.employeeRecurringExpenseService.getStartDateUpdateType(
-						{
+					  })
+					: await this.employeeRecurringExpenseService.getStartDateUpdateType({
 							newStartDate,
 							recurringExpenseId: this.recurringExpense.id
-						}
-					);
+					  });
 			this.startDateUpdateType = value;
 			this.conflicts = conflicts;
 		}

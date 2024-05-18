@@ -2,37 +2,26 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import {
-	IPipeline,
-	ComponentLayoutStyleEnum,
-	IOrganization,
-	PipelineTabsEnum
-} from '@gauzy/contracts';
+import { IPipeline, ComponentLayoutStyleEnum, IOrganization, PipelineTabsEnum } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty, isNotNullOrUndefined } from '@gauzy/common-angular';
+import { AtLeastOneFieldValidator, ServerDataSource } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, isNotEmpty, isNotNullOrUndefined } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
-	ErrorHandlingService,
-	PipelinesService,
-	Store,
-	ToastrService
-} from '../../@core/services';
-import { ServerDataSource } from '../../@core/utils/smart-table';
+import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
 import { InputFilterComponent } from '../../@shared/table-filters';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { StageComponent } from './stage/stage.component';
-import { AtLeastOneFieldValidator } from '../../@core/validators';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,7 +30,6 @@ import { AtLeastOneFieldValidator } from '../../@core/validators';
 	styleUrls: ['./pipelines.component.scss']
 })
 export class PipelinesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-
 	public smartTableSettings: object;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -146,10 +134,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				// Ensure distinct values are emitted
 				distinctUntilChange(),
 				// Perform the 'tap' action to assign the organization to the component property
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				// Perform additional actions: trigger _refresh$ and pipelines$ observables
 				tap(() => this._refresh$.next(true)),
 				tap(() => this.pipelines$.next(true)),
@@ -227,7 +212,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		this.smartTableSettings = {
 			pager: {
 				display: false,
-				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage,
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),
@@ -237,22 +222,22 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('SM_TABLE.NAME'),
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'name', search: value });
-					},
+					}
 				},
 				description: {
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					filter: {
 						type: 'custom',
-						component: InputFilterComponent,
+						component: InputFilterComponent
 					},
 					filterFunction: (value) => {
 						this.setFilter({ field: 'description', search: value });
-					},
+					}
 				},
 				stages: {
 					title: this.getTranslation('SM_TABLE.STAGE'),
@@ -261,7 +246,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					renderComponent: StageComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
+					}
 				},
 				status: {
 					filter: false,
@@ -272,9 +257,9 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
-					},
-				},
-			},
+					}
+				}
+			}
 		};
 	}
 
@@ -320,19 +305,19 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			join: {
 				alias: 'pipeline',
 				leftJoin: {
-					stages: 'pipeline.stages',
+					stages: 'pipeline.stages'
 				},
-				...(this.filters.join ? this.filters.join : {}),
+				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
 				organizationId,
 				tenantId,
-				...(this.filters.where ? this.filters.where : {}),
+				...(this.filters.where ? this.filters.where : {})
 			},
 			resultMap: (pipeline: IPipeline) => {
 				// Map the pipeline and include the status using the statusMapper
 				return Object.assign({}, pipeline, {
-					status: this.statusMapper(pipeline.isActive),
+					status: this.statusMapper(pipeline.isActive)
 				});
 			},
 			finalize: () => {
@@ -344,12 +329,12 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				// Set pagination with the total count from the Smart Table source
 				this.setPagination({
 					...this.getPagination(),
-					totalItems: this.smartTableSource.count(),
+					totalItems: this.smartTableSource.count()
 				});
 
 				// Set loading to false as data fetching is complete
 				this.loading = false;
-			},
+			}
 		});
 	}
 
@@ -363,12 +348,14 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		const badgeClass = value ? 'success' : 'warning';
 
 		// Map the status value to a translated text
-		const statusText = value ? this.getTranslation('PIPELINES_PAGE.ACTIVE') : this.getTranslation('PIPELINES_PAGE.INACTIVE');
+		const statusText = value
+			? this.getTranslation('PIPELINES_PAGE.ACTIVE')
+			: this.getTranslation('PIPELINES_PAGE.INACTIVE');
 
 		// Return an object with text and class properties
 		return {
 			text: statusText,
-			class: badgeClass,
+			class: badgeClass
 		};
 	};
 
@@ -411,7 +398,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		if (selectedItem) {
 			this.selectPipeline({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
@@ -420,11 +407,8 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			const confirmationResult: 'ok' = await firstValueFrom(
 				this.dialogService.open(DeleteConfirmationComponent, {
 					context: {
-						recordType: this.getTranslation(
-							'PIPELINES_PAGE.RECORD_TYPE',
-							this.pipeline
-						),
-					},
+						recordType: this.getTranslation('PIPELINES_PAGE.RECORD_TYPE', this.pipeline)
+					}
 				}).onClose
 			);
 
@@ -435,7 +419,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 				// Display a success message
 				this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
-					name: this.pipeline.name,
+					name: this.pipeline.name
 				});
 
 				// Trigger a refresh for the component and pipelines
@@ -483,7 +467,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		if (selectedItem) {
 			this.selectPipeline({
 				isSelected: true,
-				data: selectedItem,
+				data: selectedItem
 			});
 		}
 
@@ -527,14 +511,16 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			const data = await firstValueFrom(dialogRef.onClose);
 
 			// Extract pipeline details from the context
-			const { pipeline: { id, name } } = context;
+			const {
+				pipeline: { id, name }
+			} = context;
 
 			// If data is received, display a success message and trigger refresh
 			if (data) {
 				const successMessage = id ? `TOASTR.MESSAGE.PIPELINE_UPDATED` : `TOASTR.MESSAGE.PIPELINE_CREATED`;
 
 				this.toastrService.success(successMessage, {
-					name: id ? name : data.name,
+					name: id ? name : data.name
 				});
 			}
 		} catch (error) {
@@ -650,5 +636,5 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		this.pipelines$.next(true);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -7,7 +7,7 @@ import {
 	OnDestroy,
 	ElementRef,
 	HostListener,
-	Renderer2,
+	Renderer2
 } from '@angular/core';
 import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,7 +18,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store, TagsService } from '../../../@core/services';
 import { PictureNameTagsComponent } from '../../table-components';
 
@@ -28,9 +28,7 @@ import { PictureNameTagsComponent } from '../../table-components';
 	templateUrl: './tags-color-input.component.html',
 	styleUrls: ['./tags-color-input.component.scss']
 })
-export class TagsColorInputComponent extends PictureNameTagsComponent
-	implements OnInit, OnDestroy {
-
+export class TagsColorInputComponent extends PictureNameTagsComponent implements OnInit, OnDestroy {
 	public subject$: Subject<boolean> = new Subject();
 	public hasAddTag$: Observable<boolean>;
 	public tags: ITag[] = [];
@@ -38,8 +36,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	private organization: IOrganization;
 
 	/*
-	* Getter & Setter selected tags
-	*/
+	 * Getter & Setter selected tags
+	 */
 	_selectedTags: ITag[] = [];
 	get selectedTags(): ITag[] {
 		return this._selectedTags;
@@ -49,8 +47,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for check organization level
-	*/
+	 * Getter & Setter for check organization level
+	 */
 	_isOrgLevel: boolean = false;
 	get isOrgLevel(): boolean {
 		return this._isOrgLevel;
@@ -60,8 +58,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for check tenant level
-	*/
+	 * Getter & Setter for check tenant level
+	 */
 	_isTenantLevel: boolean = false;
 	get isTenantLevel(): boolean {
 		return this._isTenantLevel;
@@ -71,8 +69,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for multiple selection
-	*/
+	 * Getter & Setter for multiple selection
+	 */
 	_multiple: boolean = true;
 	get multiple(): boolean {
 		return this._multiple;
@@ -82,8 +80,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for display label
-	*/
+	 * Getter & Setter for display label
+	 */
 	_label: boolean = true;
 	get label(): boolean {
 		return this._label;
@@ -93,8 +91,8 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = true;
 	get addTag(): boolean {
 		return this._addTag;
@@ -119,19 +117,14 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 		public readonly themeService: NbThemeService,
 		public readonly translateService: TranslateService,
 		private readonly el: ElementRef,
-		private readonly renderer: Renderer2,
+		private readonly renderer: Renderer2
 	) {
 		super(themeService, translateService);
 	}
 
 	ngOnInit(): void {
 		this.hasAddTag$ = this.store.userRolePermissions$.pipe(
-			map(() =>
-				this.store.hasAnyPermission(
-					PermissionsEnum.ALL_ORG_EDIT,
-					PermissionsEnum.ORG_TAGS_ADD
-				)
-			)
+			map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TAGS_ADD))
 		);
 		this.subject$
 			.pipe(
@@ -143,7 +136,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
@@ -204,7 +197,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 					color: randomColor(),
 					description: '',
 					tenantId,
-					...(this.isOrgLevel ? { organizationId } : {}),
+					...(this.isOrgLevel ? { organizationId } : {})
 				})
 			);
 		} catch (error) {
@@ -215,22 +208,24 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 	};
 
 	/**
-	  * Check if selected tags fits on the screen
-	  */
+	 * Check if selected tags fits on the screen
+	 */
 	private checkTagsFit(selectedTags: ITag[]) {
-		if (!selectedTags) { this.selectedTagsOverflow = false; return; }
-		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container')
+		if (!selectedTags) {
+			this.selectedTagsOverflow = false;
+			return;
+		}
+		const selectedContainer = this.el.nativeElement.querySelector('.ng-value-container');
 		const containerWidth = selectedContainer.offsetWidth;
 		this.noOfTagsFits = 0;
 
 		const totalTagWidth = selectedTags.reduce((acc, tag, currentIndex) => {
 			const totalWidth = this.getTagWidth(tag.name) + acc;
 
-			if (totalWidth >= containerWidth && this.noOfTagsFits === 0)
-				this.noOfTagsFits = currentIndex;
+			if (totalWidth >= containerWidth && this.noOfTagsFits === 0) this.noOfTagsFits = currentIndex;
 
 			return totalWidth;
-		}, 30) // 30px is the additional buffer
+		}, 30); // 30px is the additional buffer
 
 		this.selectedTagsOverflow = totalTagWidth >= containerWidth;
 	}
@@ -247,7 +242,7 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 
 		// Add multiple classes to badge
 		const badgeClasses = ['tag-color', 'tag-label', 'status-basic', 'position-top', 'position-right'];
-		badgeClasses.forEach(badgeClass => {
+		badgeClasses.forEach((badgeClass) => {
 			this.renderer.addClass(testBadge, badgeClass);
 		});
 
@@ -258,5 +253,5 @@ export class TagsColorInputComponent extends PictureNameTagsComponent
 		return badgeWidth;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

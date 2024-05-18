@@ -13,8 +13,7 @@ import {
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
-import { GuiDrag } from '../interfaces/gui-drag.abstract';
-import { LayoutWithDraggableObject } from '../interfaces/layout-with-draggable-object.abstract';
+import { GuiDrag, LayoutWithDraggableObject } from '@gauzy/ui-sdk/shared';
 import { WindowComponent } from '../window/window.component';
 import { WindowService } from '../window/window.service';
 
@@ -28,29 +27,25 @@ export class WindowLayoutComponent
 	extends LayoutWithDraggableObject
 	implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy
 {
-	@Input()
-	set windows(value: TemplateRef<HTMLElement>[]) {
+	@Input() set windows(value: TemplateRef<HTMLElement>[]) {
 		this.draggableObject = value;
 	}
+
 	@ViewChildren(WindowComponent) listWindows: QueryList<GuiDrag>;
 
-	constructor(
-		private windowService: WindowService,
-		private readonly cdr: ChangeDetectorRef
-	) {
+	constructor(private windowService: WindowService, private readonly cdr: ChangeDetectorRef) {
 		super();
 	}
+
 	ngAfterViewInit(): void {
 		this.listWindows.changes
 			.pipe(
-				tap(
-					(listWindows: QueryList<GuiDrag>) =>
-						(this.windowService.windows$ = listWindows.toArray())
-				),
+				tap((listWindows: QueryList<GuiDrag>) => (this.windowService.windows$ = listWindows.toArray())),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
+
 	ngAfterViewChecked(): void {
 		this.cdr.detectChanges();
 	}
@@ -60,20 +55,13 @@ export class WindowLayoutComponent
 	}
 
 	protected drop(event: CdkDragDrop<number, number, any>): void {
-		moveItemInArray(
-			this.draggableObject,
-			event.previousContainer.data,
-			event.container.data
-		);
+		moveItemInArray(this.draggableObject, event.previousContainer.data, event.container.data);
 		this.windowService.windowsRef = this.draggableObject;
 		this.windowService.save();
 	}
 
 	get windows() {
-		if (
-			this.windowService.windowsRef.length > 0 &&
-			this.draggableObject !== this.windowService.windowsRef
-		)
+		if (this.windowService.windowsRef.length > 0 && this.draggableObject !== this.windowService.windowsRef)
 			this.draggableObject = this.windowService.windowsRef;
 		return this.draggableObject;
 	}

@@ -8,28 +8,27 @@ import {
 	AfterViewInit,
 	Inject,
 	Renderer2,
-	ChangeDetectorRef,
+	ChangeDetectorRef
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick, isEmpty } from 'underscore';
-import { convertPrecisionFloatDigit } from '@gauzy/common-angular';
+import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@env/environment';
 import { FormHelpers } from '../helpers';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CountryService } from '../../../@core/services/country.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-location-form',
 	styleUrls: ['./location-form.component.scss'],
-	templateUrl: 'location-form.component.html',
+	templateUrl: 'location-form.component.html'
 })
 export class LocationFormComponent extends TranslationBaseComponent implements AfterViewInit {
-
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	private _lastUsedAddressText: string;
@@ -86,8 +85,8 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 			postcode: [],
 			loc: fb.group({
 				type: ['Point'],
-				coordinates: fb.array([null, null]),
-			}),
+				coordinates: fb.array([null, null])
+			})
 		});
 		return form;
 	}
@@ -200,7 +199,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 		}
 		this.form.setValue({
 			postcode: geoLocation.postcode || '',
-			...(pick(geoLocation, Object.keys(this.getValue())) as any),
+			...(pick(geoLocation, Object.keys(this.getValue())) as any)
 		});
 		this.form.updateValueAndValidity();
 
@@ -256,8 +255,8 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 				{
 					address: `${address} ${address2}, ${city}`,
 					componentRestrictions: {
-						country: country,
-					},
+						country: country
+					}
 				},
 				(results, status) => {
 					if (status === google.maps.GeocoderStatus.OK) {
@@ -284,7 +283,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 		const geocoder = new google.maps.Geocoder();
 		geocoder.geocode(
 			{
-				location: { lng: this._lng, lat: this._lat },
+				location: { lng: this._lng, lat: this._lat }
 			},
 			(results, status) => {
 				if (status === google.maps.GeocoderStatus.OK) {
@@ -302,9 +301,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 *
 	 * @param location
 	 */
-	private _emitCoordinates(
-		location: google.maps.LatLng | google.maps.LatLngLiteral
-	) {
+	private _emitCoordinates(location: google.maps.LatLng | google.maps.LatLngLiteral) {
 		this.mapCoordinatesEmitter.emit(location);
 	}
 
@@ -312,26 +309,20 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 *
 	 * @param geometry
 	 */
-	private _emitGeometry(
-		geometry:
-			| google.maps.places.PlaceGeometry
-			| google.maps.GeocoderGeometry
-	) {
+	private _emitGeometry(geometry: google.maps.places.PlaceGeometry | google.maps.GeocoderGeometry) {
 		this.mapGeometryEmitter.emit(geometry);
 	}
 
 	/**
 	 *
 	 */
-	private _popInvalidAddressMessage() { }
+	private _popInvalidAddressMessage() {}
 
 	/**
 	 *
 	 * @param autocomplete
 	 */
-	private _setupGoogleAutocompleteOptions(
-		autocomplete: google.maps.places.Autocomplete
-	) {
+	private _setupGoogleAutocompleteOptions(autocomplete: google.maps.places.Autocomplete) {
 		autocomplete['setFields'](['address_components', 'geometry']);
 	}
 
@@ -370,12 +361,9 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 *
 	 * @param autocomplete
 	 */
-	private _listenForGoogleAutocompleteAddressChanges(
-		autocomplete: google.maps.places.Autocomplete
-	) {
+	private _listenForGoogleAutocompleteAddressChanges(autocomplete: google.maps.places.Autocomplete) {
 		autocomplete.addListener('place_changed', (_) => {
-			const place: google.maps.places.PlaceResult =
-				autocomplete.getPlace();
+			const place: google.maps.places.PlaceResult = autocomplete.getPlace();
 			this._applyNewPlaceOnTheMap(place);
 		});
 	}
@@ -384,11 +372,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 *
 	 * @param locationResult
 	 */
-	private _gatherAddressInformation(
-		locationResult:
-			| google.maps.GeocoderResult
-			| google.maps.places.PlaceResult
-	) {
+	private _gatherAddressInformation(locationResult: google.maps.GeocoderResult | google.maps.places.PlaceResult) {
 		const longName = 'long_name';
 		const shortName = 'short_name';
 
@@ -405,7 +389,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 			administrative_area_level_2: shortName,
 			administrative_area_level_3: shortName,
 			administrative_area_level_4: shortName,
-			administrative_area_level_5: shortName,
+			administrative_area_level_5: shortName
 		};
 
 		let addressInput: string = '';
@@ -449,13 +433,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 			}
 		});
 
-		this._setFormLocationValues(
-			country,
-			city,
-			addressInput,
-			address2Input,
-			postcode
-		);
+		this._setFormLocationValues(country, city, addressInput, address2Input, postcode);
 	}
 
 	/*
@@ -463,8 +441,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 */
 	private _removeGoogleAutocompleteApi() {
 		const body = this._document.body;
-		const container =
-			this._document.body.getElementsByClassName('pac-container');
+		const container = this._document.body.getElementsByClassName('pac-container');
 		if (container.length > 0) {
 			this.renderer.removeChild(body, container[0]);
 		}
@@ -475,9 +452,7 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 */
 	private _initGoogleAutocompleteApi() {
 		if (this.searchElement) {
-			const autocomplete = new google.maps.places.Autocomplete(
-				this.searchElement.nativeElement
-			);
+			const autocomplete = new google.maps.places.Autocomplete(this.searchElement.nativeElement);
 			this._setupGoogleAutocompleteOptions(autocomplete);
 			this._listenForGoogleAutocompleteAddressChanges(autocomplete);
 		}
@@ -491,17 +466,9 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 	 * @param address2
 	 * @param postcode
 	 */
-	private _setFormLocationValues(
-		country: string,
-		city: string,
-		address: string,
-		address2: string,
-		postcode: string
-	) {
+	private _setFormLocationValues(country: string, city: string, address: string, address2: string, postcode: string) {
 		if (!isEmpty(country)) {
-			const find = this.countries.find(
-				(item) => item.isoCode === country
-			);
+			const find = this.countries.find((item) => item.isoCode === country);
 			if (find) {
 				this.country = find.isoCode;
 				this.countryControl.setValue(this.country);

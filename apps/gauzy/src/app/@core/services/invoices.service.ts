@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
@@ -20,10 +20,7 @@ export class InvoicesService {
 
 	constructor(private http: HttpClient) {}
 
-	getAll(
-		where: IInvoiceFindInput,
-		relations: string[] = []
-	): Promise<IPagination<IInvoice>> {
+	getAll(where: IInvoiceFindInput, relations: string[] = []): Promise<IPagination<IInvoice>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IInvoice>>(`${API_PREFIX}/invoices`, {
 				params: toParams({ where, relations })
@@ -33,8 +30,7 @@ export class InvoicesService {
 
 	getHighestInvoiceNumber(tenantId: string): Promise<IInvoice> {
 		return firstValueFrom(
-			this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/highest`, {
+			this.http.get<IInvoice>(`${API_PREFIX}/invoices/highest`, {
 				params: toParams({ tenantId })
 			})
 		);
@@ -43,8 +39,7 @@ export class InvoicesService {
 	getById(id: string, relations?: string[], findInput?: IInvoiceFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<IInvoice>(`${API_PREFIX}/invoices/${id}`, {
+			this.http.get<IInvoice>(`${API_PREFIX}/invoices/${id}`, {
 				params: { data }
 			})
 		);
@@ -59,31 +54,19 @@ export class InvoicesService {
 	}
 
 	add(invoice: IInvoiceCreateInput): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.post<IInvoice>(`${API_PREFIX}/invoices`, invoice)
-		);
+		return firstValueFrom(this.http.post<IInvoice>(`${API_PREFIX}/invoices`, invoice));
 	}
 
 	update(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}`, updateInput));
 	}
 
 	updateEstimate(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/estimate`, updateInput)
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}/estimate`, updateInput));
 	}
 
 	updateAction(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${id}/action`, updateInput)
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}/action`, updateInput));
 	}
 
 	updateWithoutAuth(
@@ -91,30 +74,19 @@ export class InvoicesService {
 		token: IEstimateEmail['token'],
 		input: IInvoiceUpdateInput
 	): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, input)
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, input));
 	}
 
 	edit(invoice: IInvoice): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http
-			.put<IInvoice>(`${API_PREFIX}/invoices/${invoice.id}`, invoice)
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${invoice.id}`, invoice));
 	}
 
 	generateLink(id: string): Promise<IInvoice> {
-		return firstValueFrom(
-			this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {})
-		);
+		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {}));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/invoices/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/invoices/${id}`));
 	}
 
 	sendEmail(
@@ -126,8 +98,7 @@ export class InvoicesService {
 		tenantId: string
 	): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
+			this.http.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
 				params: {
 					isEstimate,
 					invoiceNumber,
@@ -150,11 +121,8 @@ export class InvoicesService {
 	}
 
 	downloadInvoicePaymentPdf(invoiceId: string) {
-		return this.http.get(
-			`${API_PREFIX}/invoices/payment/download/${invoiceId}`,
-			{
-				responseType: 'blob'
-			}
-		);
+		return this.http.get(`${API_PREFIX}/invoices/payment/download/${invoiceId}`, {
+			responseType: 'blob'
+		});
 	}
 }

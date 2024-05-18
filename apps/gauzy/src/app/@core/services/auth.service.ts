@@ -13,17 +13,15 @@ import {
 	IUserLoginInput,
 	IUserCodeInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/common-angular';
+import { toParams } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '../constants/app.constants';
 
 @Injectable()
 export class AuthService {
-	constructor(private readonly http: HttpClient) { }
+	constructor(private readonly http: HttpClient) {}
 
 	isAuthenticated(): Promise<boolean> {
-		return firstValueFrom(
-			this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`)
-		);
+		return firstValueFrom(this.http.get<boolean>(`${API_PREFIX}/auth/authenticated`));
 	}
 
 	confirmEmail(body: IUserEmailInput & IUserTokenInput): Observable<Object> {
@@ -31,10 +29,7 @@ export class AuthService {
 	}
 
 	login(loginInput: IUserLoginInput): Observable<IAuthResponse> {
-		return this.http.post<IAuthResponse>(
-			`${API_PREFIX}/auth/login`,
-			loginInput
-		);
+		return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/login`, loginInput);
 	}
 
 	/**
@@ -109,37 +104,26 @@ export class AuthService {
 	}
 
 	register(registerInput: IUserRegistrationInput): Observable<IUser> {
-		return this.http.post<IUser>(
-			`${API_PREFIX}/auth/register`,
-			registerInput
-		);
+		return this.http.post<IUser>(`${API_PREFIX}/auth/register`, registerInput);
 	}
 
-	requestPassword(
-		requestPasswordInput
-	): Observable<{ id?: string; token?: string }> {
-		return this.http.post<IAuthResponse>(
-			`${API_PREFIX}/auth/request-password`,
-			requestPasswordInput
-		);
+	requestPassword(requestPasswordInput): Observable<{ id?: string; token?: string }> {
+		return this.http.post<IAuthResponse>(`${API_PREFIX}/auth/request-password`, requestPasswordInput);
 	}
 
 	resetPassword(resetPasswordInput) {
-		return this.http.post(
-			`${API_PREFIX}/auth/reset-password`,
-			resetPasswordInput
-		);
+		return this.http.post(`${API_PREFIX}/auth/reset-password`, resetPasswordInput);
 	}
 
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/role`, {
-			params: toParams({ roles }),
+			params: toParams({ roles })
 		});
 	}
 
 	hasPermissions(...permissions: PermissionsEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/permissions`, {
-			params: toParams({ permissions }),
+			params: toParams({ permissions })
 		});
 	}
 
@@ -152,7 +136,7 @@ export class AuthService {
 	refreshToken(refresh_token: string): Promise<any> {
 		return firstValueFrom(
 			this.http.post<any>(`${API_PREFIX}/auth/refresh-token`, {
-				refresh_token: refresh_token,
+				refresh_token: refresh_token
 			})
 		);
 	}

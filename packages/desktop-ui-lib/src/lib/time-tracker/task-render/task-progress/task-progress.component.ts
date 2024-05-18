@@ -1,11 +1,6 @@
-import {
-	AfterViewInit,
-	Component,
-	EventEmitter,
-	ViewChild,
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, ViewChild } from '@angular/core';
 import { TaskRenderComponent } from '../task-render.component';
-import { progressStatus } from '@gauzy/common-angular';
+import { progressStatus } from '@gauzy/ui-sdk/common';
 import { TaskEstimateComponent } from '../task-estimate/task-estimate.component';
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,12 +10,9 @@ import { map } from 'rxjs/operators';
 @Component({
 	selector: 'gauzy-task-progress',
 	templateUrl: './task-progress.component.html',
-	styleUrls: ['./task-progress.component.scss'],
+	styleUrls: ['./task-progress.component.scss']
 })
-export class TaskProgressComponent
-	extends TaskRenderComponent
-	implements AfterViewInit
-{
+export class TaskProgressComponent extends TaskRenderComponent implements AfterViewInit {
 	public updated: EventEmitter<number>;
 
 	constructor() {
@@ -55,9 +47,7 @@ export class TaskProgressComponent
 				if (this.task?.duration > this.task?.estimate) {
 					return 100;
 				}
-				return Math.floor(
-					(this.task?.duration / this.task?.estimate) * 100
-				);
+				return Math.floor((this.task?.duration / this.task?.estimate) * 100);
 			}),
 			untilDestroyed(this)
 		);
@@ -69,7 +59,7 @@ export class TaskProgressComponent
 				tap((estimate: number) => {
 					this.rowData = {
 						...this.task,
-						estimate,
+						estimate
 					};
 					this.updated.emit(estimate);
 				}),

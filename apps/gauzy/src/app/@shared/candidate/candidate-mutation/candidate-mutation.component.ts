@@ -1,10 +1,6 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import {
-	NbDialogRef,
-	NbStepperComponent,
-	NbTagComponent
-} from '@nebular/theme';
+import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,13 +14,8 @@ import {
 	ICandidateSource,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
-import {
-	CandidatesService,
-	ErrorHandlingService,
-	RoleService,
-	Store
-} from '../../../@core/services';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { CandidatesService, ErrorHandlingService, RoleService, Store } from '../../../@core/services';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 
@@ -56,14 +47,14 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 		private readonly store: Store,
 		private readonly candidatesService: CandidatesService,
 		private readonly errorHandler: ErrorHandlingService
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -154,9 +145,7 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	async add() {
 		this.addCandidate();
 		try {
-			const candidates = await firstValueFrom(
-				this.candidatesService.createBulk(this.candidates)
-			);
+			const candidates = await firstValueFrom(this.candidatesService.createBulk(this.candidates));
 			this.closeDialog(candidates);
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -173,12 +162,10 @@ export class CandidateMutationComponent implements OnInit, AfterViewInit {
 	}
 
 	/**
- * Removed one candidate in the array of candidates.
- * @param tag
- */
+	 * Removed one candidate in the array of candidates.
+	 * @param tag
+	 */
 	onCandidateRemove(tag: NbTagComponent): void {
-		this.candidates = this.candidates.filter(
-			(t: ICandidateCreateInput) => t.user.email !== tag.text
-		);
+		this.candidates = this.candidates.filter((t: ICandidateCreateInput) => t.user.email !== tag.text);
 	}
 }

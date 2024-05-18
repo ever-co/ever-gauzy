@@ -29,7 +29,8 @@ import {
 	ICandidate,
 	IEmployeeAward,
 	IEquipmentSharing,
-	IEmployeePhone
+	IEmployeePhone,
+	IDailyPlan
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -45,6 +46,7 @@ import {
 import {
 	Candidate,
 	Contact,
+	DailyPlan,
 	EmployeeAward,
 	EmployeePhone,
 	EmployeeSetting,
@@ -508,6 +510,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@ApiPropertyOptional({ type: () => EmployeePhone, isArray: true })
 	@MultiORMOneToMany(() => EmployeePhone, (it) => it.employee)
 	phoneNumbers?: IEmployeePhone[];
+
+	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
+	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
+		cascade: true
+	})
+	dailyPlans?: IDailyPlan[];
 
 	/*
 	|--------------------------------------------------------------------------

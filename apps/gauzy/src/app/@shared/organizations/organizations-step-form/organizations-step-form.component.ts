@@ -11,12 +11,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { formatDate, Location } from '@angular/common';
-import {
-	UntypedFormBuilder,
-	FormControl,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import * as moment from 'moment';
@@ -34,7 +29,7 @@ import {
 	DEFAULT_DATE_FORMATS,
 	IImageAsset
 } from '@gauzy/contracts';
-import { retrieveNameFromEmail } from '@gauzy/common-angular';
+import { retrieveNameFromEmail } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms';
 import { LeafletMapComponent } from '../../forms/maps';
 import { LocationFormComponent } from '../../forms/location';
@@ -51,9 +46,7 @@ import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
 		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
 	]
 })
-export class OrganizationsStepFormComponent
-	implements OnInit, OnDestroy, AfterViewInit {
-
+export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterViewInit {
 	@ViewChild('locationFormDirective')
 	locationFormDirective: LocationFormComponent;
 
@@ -80,8 +73,8 @@ export class OrganizationsStepFormComponent
 	@Output() closeForm = new EventEmitter();
 
 	/*
-	* Getter & Setter for onboarding
-	*/
+	 * Getter & Setter for onboarding
+	 */
 	_isOnboarding: boolean = false;
 	get isOnboarding(): boolean {
 		return this._isOnboarding;
@@ -91,8 +84,8 @@ export class OrganizationsStepFormComponent
 	}
 
 	/*
-	* Getter & Setter for onboarding
-	*/
+	 * Getter & Setter for onboarding
+	 */
 	_closable: boolean = false;
 	get closable(): boolean {
 		return this._closable;
@@ -102,14 +95,12 @@ export class OrganizationsStepFormComponent
 	}
 
 	/*
-	* Organization Main Mutation Form
-	*/
+	 * Organization Main Mutation Form
+	 */
 	public readonly orgMainForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgMainForm(this.fb);
 	static buildOrgMainForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			imageUrl: [{ value: null, disabled: true }],
 			imageId: [],
 			currency: [ENV.DEFAULT_CURRENCY || CurrenciesEnum.USD],
 			name: [null, Validators.required],
@@ -120,60 +111,43 @@ export class OrganizationsStepFormComponent
 	}
 
 	/**
-	* Location Mutation Form
-	*/
+	 * Location Mutation Form
+	 */
 	readonly locationForm: UntypedFormGroup = LocationFormComponent.buildForm(this.fb);
 
 	/*
-	* Organization Bonus Form
-	*/
+	 * Organization Bonus Form
+	 */
 	public readonly orgBonusForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgBonusForm(this.fb);
 	static buildOrgBonusForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			bonusType: [],
-			bonusPercentage: [
-				{ value: null, disabled: true }
-			]
+			bonusPercentage: [{ value: null, disabled: true }]
 		});
 	}
 
 	/*
-	* Organization Settings Form
-	*/
+	 * Organization Settings Form
+	 */
 	public readonly orgSettingsForm: UntypedFormGroup = OrganizationsStepFormComponent.buildOrgSettingsForm(this.fb);
 	static buildOrgSettingsForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			timeZone: [],
 			startWeekOn: [],
-			defaultValueDateType: [
-				DefaultValueDateTypeEnum.TODAY,
-				Validators.required
-			],
+			defaultValueDateType: [DefaultValueDateTypeEnum.TODAY, Validators.required],
 			regionCode: [],
 			numberFormat: [],
 			dateFormat: [],
-			fiscalStartDate: [
-				formatDate(
-					new Date(`01/01/${new Date().getFullYear()}`),
-					'yyyy-MM-dd',
-					'en'
-				)
-			],
-			fiscalEndDate: [
-				formatDate(
-					new Date(`12/31/${new Date().getFullYear()}`),
-					'yyyy-MM-dd',
-					'en'
-				)
-			],
+			fiscalStartDate: [formatDate(new Date(`01/01/${new Date().getFullYear()}`), 'yyyy-MM-dd', 'en')],
+			fiscalEndDate: [formatDate(new Date(`12/31/${new Date().getFullYear()}`), 'yyyy-MM-dd', 'en')],
 			invitesAllowed: [true],
 			inviteExpiryPeriod: [7, [Validators.min(1)]]
 		});
 	}
 
 	/*
-	* Employee Feature Form
-	*/
+	 * Employee Feature Form
+	 */
 	readonly employeeFeatureForm: UntypedFormGroup = OrganizationsStepFormComponent.buildEmployeeFeatureForm(this.fb);
 	static buildEmployeeFeatureForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -189,7 +163,7 @@ export class OrganizationsStepFormComponent
 		private readonly store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly location: Location
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.store.user$
@@ -199,9 +173,7 @@ export class OrganizationsStepFormComponent
 				tap(({ email }) => (this.retrieveEmail = email)),
 				tap(() => this._setFormValues()),
 				filter(() => !!this.location.getState()),
-				tap(() =>
-					this.patchUsingLocationState(this.location.getState())
-				)
+				tap(() => this.patchUsingLocationState(this.location.getState()))
 			)
 			.subscribe();
 		this._activatedRoute.queryParams
@@ -222,11 +194,7 @@ export class OrganizationsStepFormComponent
 		const bonusPercentage = <FormControl>this.orgBonusForm.get('bonusPercentage');
 		bonusType.valueChanges.subscribe((value) => {
 			if (value) {
-				bonusPercentage.setValidators([
-					Validators.required,
-					Validators.min(0),
-					Validators.max(100)
-				]);
+				bonusPercentage.setValidators([Validators.required, Validators.min(0), Validators.max(100)]);
 			} else {
 				bonusPercentage.setValidators(null);
 			}
@@ -246,8 +214,8 @@ export class OrganizationsStepFormComponent
 		});
 
 		/**
-		* Employee feature controls value changes
-		*/
+		 * Employee feature controls value changes
+		 */
 		const registerAsEmployee = <FormControl>this.employeeFeatureForm.get('registerAsEmployee');
 		const startedWorkOn = <FormControl>this.employeeFeatureForm.get('startedWorkOn');
 
@@ -354,11 +322,9 @@ export class OrganizationsStepFormComponent
 	}
 
 	dateFormatPreview(format: string) {
-		this.orgSettingsForm.valueChanges
-			.pipe(untilDestroyed(this))
-			.subscribe((val) => {
-				this.regionCode = val.regionCode;
-			});
+		this.orgSettingsForm.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
+			this.regionCode = val.regionCode;
+		});
 
 		moment.locale(this.regionCode);
 		return moment().format(format);
@@ -379,13 +345,13 @@ export class OrganizationsStepFormComponent
 			...this.orgMainForm.value,
 			...this.orgBonusForm.value,
 			...this.orgSettingsForm.value,
-			contact,
+			contact
 		};
 		if (this.isOnboarding) {
 			consolidatedFormValues = {
 				...consolidatedFormValues,
 				...this.employeeFeatureForm.value
-			}
+			};
 		}
 		this.createOrganization.emit(consolidatedFormValues);
 	}
@@ -405,18 +371,18 @@ export class OrganizationsStepFormComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
-	onCoordinatesChanges(
-		$event: google.maps.LatLng | google.maps.LatLngLiteral
-	) {
+	onCoordinatesChanges($event: google.maps.LatLng | google.maps.LatLngLiteral) {
 		if (!this.locationFormDirective) {
 			return;
 		}
-		const { loc: { coordinates } } = this.locationFormDirective.getValue();
+		const {
+			loc: { coordinates }
+		} = this.locationFormDirective.getValue();
 		const [lat, lng] = coordinates;
 
 		if (this.leafletTemplate) {
@@ -450,9 +416,7 @@ export class OrganizationsStepFormComponent
 	 *
 	 * @param state
 	 */
-	patchUsingLocationState(state: {
-		[key: string]: any;
-	}) {
+	patchUsingLocationState(state: { [key: string]: any }) {
 		if (!this.orgMainForm) {
 			return;
 		}
@@ -463,11 +427,11 @@ export class OrganizationsStepFormComponent
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) { }
+	onGeometrySend(geometry: any) {}
 
 	close() {
 		this.closeForm.emit();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

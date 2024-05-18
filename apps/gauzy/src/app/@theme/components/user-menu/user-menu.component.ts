@@ -2,7 +2,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@env/environment';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/common-angular';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
 import { EmployeesService, ErrorHandlingService } from '../../../@core/services';
 
@@ -10,7 +10,7 @@ import { EmployeesService, ErrorHandlingService } from '../../../@core/services'
 @Component({
 	selector: 'gauzy-user-menu',
 	templateUrl: './user-menu.component.html',
-	styleUrls: ['./user-menu.component.scss'],
+	styleUrls: ['./user-menu.component.scss']
 })
 export class UserMenuComponent implements OnInit {
 	private _user$: Observable<IUser>;
@@ -25,24 +25,24 @@ export class UserMenuComponent implements OnInit {
 	public downloadApps = [
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_APPLE,
-			icon: 'fab fa-apple',
+			icon: 'fab fa-apple'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_WINDOWS,
-			icon: 'fa-brands fa-windows',
+			icon: 'fa-brands fa-windows'
 		},
 		{
 			link: environment.DESKTOP_APP_DOWNLOAD_LINK_LINUX,
-			icon: 'fa-brands fa-linux',
+			icon: 'fa-brands fa-linux'
 		},
 		{
 			link: environment.MOBILE_APP_DOWNLOAD_LINK,
-			icon: 'fas fa-mobile',
+			icon: 'fas fa-mobile'
 		},
 		{
 			link: environment.EXTENSION_DOWNLOAD_LINK,
-			icon: 'fa-brands fa-chrome',
-		},
+			icon: 'fa-brands fa-chrome'
+		}
 	];
 
 	constructor(
@@ -61,9 +61,7 @@ export class UserMenuComponent implements OnInit {
 				filter(({ employee }) => !!employee),
 				tap(async (user: IUser) => {
 					this._isSubmit$.next(true);
-					const employee = await firstValueFrom(
-						this._employeeService.getEmployeeById(user?.employee?.id)
-					);
+					const employee = await firstValueFrom(this._employeeService.getEmployeeById(user?.employee?.id));
 					this._employee$.next(employee);
 					this._isSubmit$.next(false);
 				}),
@@ -92,7 +90,7 @@ export class UserMenuComponent implements OnInit {
 			const payload: IEmployeeUpdateInput = {
 				isAway: !isAway,
 				tenantId,
-				organizationId,
+				organizationId
 			};
 			await this._employeeService.updateProfile(id, payload);
 			this._employee$.next({ ...this.employee, ...payload });
