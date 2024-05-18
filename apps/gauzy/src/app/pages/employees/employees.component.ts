@@ -29,7 +29,7 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase

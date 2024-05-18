@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ITaskStatus } from '@gauzy/contracts';
 import { CrudService } from '../crud/crud.service';
-import { API_PREFIX } from '../../constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

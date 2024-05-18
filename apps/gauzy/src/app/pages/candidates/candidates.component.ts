@@ -20,7 +20,7 @@ import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mu
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';

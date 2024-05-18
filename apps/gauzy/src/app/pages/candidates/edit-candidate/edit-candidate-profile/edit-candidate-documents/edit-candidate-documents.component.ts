@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
-import { ComponentEnum } from './../../../../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
 import { CandidateDocumentsService, CandidateStore, Store, ToastrService } from './../../../../../@core/services';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';

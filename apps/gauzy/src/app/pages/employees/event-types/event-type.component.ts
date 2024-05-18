@@ -24,7 +24,7 @@ import {
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DEFAULT_EVENT_TYPE } from './default-event-type';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 

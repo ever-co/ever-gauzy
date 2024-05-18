@@ -7,9 +7,8 @@ import {
 	IFeatureOrganizationFindInput,
 	IPagination
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-sdk/common';
 import { firstValueFrom, Observable } from 'rxjs';
-import { API_PREFIX } from '../../constants/app.constants';
 
 @Injectable()
 export class FeatureService {

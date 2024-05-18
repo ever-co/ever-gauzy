@@ -4,7 +4,7 @@ import { IKeyResultUpdate } from '@gauzy/contracts';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastrService } from './toastr.service';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -12,27 +12,20 @@ import { API_PREFIX } from '../constants/app.constants';
 export class KeyResultUpdateService {
 	private readonly API_URL = `${API_PREFIX}/key-result-updates`;
 
-	constructor(
-		private _http: HttpClient,
-		private toastrService: ToastrService
-	) {}
+	constructor(private _http: HttpClient, private toastrService: ToastrService) {}
 
 	createUpdate(keyResultUpdate): Promise<IKeyResultUpdate> {
 		return firstValueFrom(
-			this._http.post<IKeyResultUpdate>(`${this.API_URL}`, keyResultUpdate)
-			.pipe(
-				catchError(
-					(error) => this.errorHandler(error)
-				)
-			)
+			this._http
+				.post<IKeyResultUpdate>(`${this.API_URL}`, keyResultUpdate)
+				.pipe(catchError((error) => this.errorHandler(error)))
 		);
 	}
 
 	deleteBulkByKeyResultId(id: string): Promise<any> {
 		const data = JSON.stringify({ id });
 		return firstValueFrom(
-			this._http
-			.delete(`${this.API_URL}/deleteBulkByKeyResultId`, {
+			this._http.delete(`${this.API_URL}/deleteBulkByKeyResultId`, {
 				params: { data }
 			})
 		);

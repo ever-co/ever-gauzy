@@ -7,11 +7,11 @@ import {
 	ICandidateTechnologies,
 	IPagination
 } from '@gauzy/contracts';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class CandidateCriterionsRatingService {
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
 	createBulk(
 		feedbackId: string,
@@ -19,23 +19,17 @@ export class CandidateCriterionsRatingService {
 		qualities: ICandidatePersonalQualities[]
 	): Promise<ICandidateCriterionsRating[]> {
 		return firstValueFrom(
-			this.http
-				.post<ICandidateCriterionsRating[]>(
-					`${API_PREFIX}/candidate-criterions-rating/bulk`,
-					{
-						feedbackId,
-						technologies,
-						qualities
-					}
-				)
+			this.http.post<ICandidateCriterionsRating[]>(`${API_PREFIX}/candidate-criterions-rating/bulk`, {
+				feedbackId,
+				technologies,
+				qualities
+			})
 		);
 	}
 
 	getAll(): Promise<IPagination<ICandidateCriterionsRating>> {
 		return firstValueFrom(
-			this.http.get<IPagination<ICandidateCriterionsRating>>(
-				`${API_PREFIX}/candidate-criterions-rating`
-			)
+			this.http.get<IPagination<ICandidateCriterionsRating>>(`${API_PREFIX}/candidate-criterions-rating`)
 		);
 	}
 
@@ -45,19 +39,15 @@ export class CandidateCriterionsRatingService {
 		personalQualities: number[]
 	): Promise<any> {
 		return firstValueFrom(
-			this.http
-				.put(`${API_PREFIX}/candidate-criterions-rating/bulk`, {
-					criterionsRating,
-					technologies,
-					personalQualities
-				})
+			this.http.put(`${API_PREFIX}/candidate-criterions-rating/bulk`, {
+				criterionsRating,
+				technologies,
+				personalQualities
+			})
 		);
 	}
 
 	deleteBulkByFeedbackId(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.delete(`${API_PREFIX}/candidate-criterions-rating/feedback/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/candidate-criterions-rating/feedback/${id}`));
 	}
 }

@@ -13,7 +13,7 @@ import { distinctUntilChange, isNotEmpty, isNotNullOrUndefined } from '@gauzy/ui
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { ErrorHandlingService, PipelinesService, Store, ToastrService } from '../../@core/services';
 import { InputFilterComponent } from '../../@shared/table-filters';

@@ -4,7 +4,7 @@ import { ICountry, IPagination } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy()
 @Injectable()

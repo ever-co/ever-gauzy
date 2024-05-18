@@ -7,7 +7,7 @@ import {
 	IOrganizationDepartmentFindInput
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -15,24 +15,15 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationDepartmentsService {
 	constructor(private http: HttpClient) {}
 
-	create(
-		createInput: IOrganizationDepartmentCreateInput
-	): Promise<IOrganizationDepartment> {
+	create(createInput: IOrganizationDepartmentCreateInput): Promise<IOrganizationDepartment> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganizationDepartment>(
-				`${API_PREFIX}/organization-department`,
-				createInput
-			)
+			this.http.post<IOrganizationDepartment>(`${API_PREFIX}/organization-department`, createInput)
 		);
 	}
 
 	getAllByEmployee(id: string): Promise<IOrganizationDepartment[]> {
 		return firstValueFrom(
-			this.http
-			.get<IOrganizationDepartment[]>(
-				`${API_PREFIX}/organization-department/employee/${id}`
-			)
+			this.http.get<IOrganizationDepartment[]>(`${API_PREFIX}/organization-department/employee/${id}`)
 		);
 	}
 
@@ -43,8 +34,7 @@ export class OrganizationDepartmentsService {
 	): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput, order });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationDepartment[]; total: number }>(
+			this.http.get<{ items: IOrganizationDepartment[]; total: number }>(
 				`${API_PREFIX}/organization-department`,
 				{
 					params: { data }
@@ -53,27 +43,15 @@ export class OrganizationDepartmentsService {
 		);
 	}
 
-	update(
-		id: string,
-		updateInput: IOrganizationDepartmentCreateInput
-	): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization-department/${id}`, updateInput)
-		);
+	update(id: string, updateInput: IOrganizationDepartmentCreateInput): Promise<any> {
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-department/${id}`, updateInput));
 	}
 
 	updateByEmployee(updateInput: IEditEntityByMemberInput): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization-department/employee`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-department/employee`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/organization-department/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/organization-department/${id}`));
 	}
 }

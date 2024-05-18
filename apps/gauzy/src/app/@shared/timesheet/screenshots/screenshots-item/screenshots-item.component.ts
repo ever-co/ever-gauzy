@@ -9,7 +9,7 @@ import { GalleryItem } from '../../../gallery/gallery.directive';
 import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
-import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
+import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

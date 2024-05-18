@@ -58,7 +58,7 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
-import { GAUZY_ENV } from './@core/constants';
+import { GAUZY_ENV } from '@env/environment.tokens';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {

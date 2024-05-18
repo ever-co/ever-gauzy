@@ -27,7 +27,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { ComponentEnum } from '../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

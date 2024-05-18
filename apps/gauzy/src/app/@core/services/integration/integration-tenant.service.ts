@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
 import { IIntegrationTenantFindInput, IIntegrationTenant, IPagination } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '../../constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { CrudService } from '../crud/crud.service';
 
 @Injectable({

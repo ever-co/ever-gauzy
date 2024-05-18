@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, Observable } from 'rxjs';
 import { IRole, IPagination, IRoleCreateInput, IRoleFindInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class RoleService {
