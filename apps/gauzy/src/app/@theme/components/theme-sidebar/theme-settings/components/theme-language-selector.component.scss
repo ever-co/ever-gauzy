@@ -1,45 +1,45 @@
-@import './../../../../styles/themes';
+@import 'themes';
 
 @include nb-install-component() {
-    h6 {
-		margin-bottom: 0.5rem;
-		font-weight: 500;
-		font-size: 1rem;
+  h6 {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 1rem;
+  }
+  nb-select {
+    width: auto;
+  }
+  nb-select.appearance-outline ::ng-deep {
+    .select-button {
+      text-overflow: inherit;
+      box-shadow: var(--gauzy-shadow);
+      border-width: 0;
+      border-radius: nb-theme(button-rectangle-border-radius);
+      outline: none;
+      height: 2rem;
+      color: rgba($color: rgba(126, 126, 143), $alpha: 1);
     }
-    nb-select {
-      	width: auto;
+  }
+  .settings-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 0 0 1rem;
+  }
+  .title-uppercase {
+    text-transform: uppercase;
+    .settings-row select {
+      max-height: 40px;
+      padding: 0;
+      padding-left: 10px;
+      font-size: 0.9rem;
     }
-	nb-select.appearance-outline ::ng-deep {
-		.select-button {
-			text-overflow: inherit;
-			box-shadow: var(--gauzy-shadow);
-			border-width: 0;
-			border-radius: nb-theme(button-rectangle-border-radius);
-			outline: none;
-			height: 2rem;
-			color: rgba($color: rgba(126, 126, 143), $alpha: 1);
-		}
-	}
-    .settings-row {
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		flex-wrap: wrap;
-		width: 100%;
-		margin: 0 0 1rem;
-    }
-    .title-uppercase {
-		text-transform: uppercase;
-		.settings-row select {
-			max-height: 40px;
-			padding: 0;
-			padding-left: 10px;
-			font-size: 0.9rem;
-		}
-    }
+  }
 }
 
-.theme-container{
+.theme-container {
   display: flex;
   justify-content: space-between;
   align-items: center;

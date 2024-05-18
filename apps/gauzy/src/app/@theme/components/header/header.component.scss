@@ -1,7 +1,9 @@
-@import 'bootstrap/scss/mixins/breakpoints';
 @import '@nebular/theme/styles/global/breakpoints';
-@import '../../styles/themes';
+@import 'bootstrap/scss/mixins/breakpoints';
+@import 'themes';
+
 $orange: #f56d58;
+
 @include nb-install-component() {
   width: 100%;
   .notification-header {
@@ -197,14 +199,14 @@ $orange: #f56d58;
   margin: 0 24px 0 14px !important;
   gap: 2px;
   nb-icon {
-	color: var(--gauzy-text-color-1);
+    color: var(--gauzy-text-color-1);
   }
   cursor: pointer;
   span {
     width: 64px;
   }
   .status ::ng-deep svg {
-	width: 10px;
+    width: 10px;
   }
 }
 .timer-card {
@@ -251,7 +253,7 @@ $orange: #f56d58;
     }
     .ng-select .ng-select-container {
       box-shadow: var(--gauzy-shadow);
-      border-radius: var(--button-rectangle-border-radius) !important;;
+      border-radius: var(--button-rectangle-border-radius) !important;
       background-color: var(--gauzy-card-1);
     }
   }

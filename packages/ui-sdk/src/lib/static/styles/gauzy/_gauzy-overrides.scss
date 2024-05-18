@@ -3,7 +3,7 @@
 $default-box-shadow-inset: var(--gauzy-shadow) inset;
 $default-height: 42px;
 $default-radius: nb-theme(border-radius);
-$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 5.625);
+$default-button-radius: calc(nb-theme(button-rectangle-border-radius) / 1.625);
 $default-box-shadow: var(--gauzy-shadow);
 
 @mixin ng-select-overrides($height, $radius, $box-shadow) {
