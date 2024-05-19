@@ -24,6 +24,9 @@
 		"settings",
 		"library"
 	],
+	"scripts": {
+		"prebuild": "rimraf dist"
+	},
 	"dependencies": {
 		"@angular/core": "^16.2.12"
 	},
