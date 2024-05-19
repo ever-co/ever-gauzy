@@ -64,6 +64,9 @@ ormlogs.log
 /apps/gauzy/src/environments/environment.prod.ts
 /apps/gauzy/src/environments/environment.ts
 
+/packages/ui-config/src/lib/environments/environment.prod.ts
+/packages/ui-config/src/lib/environments/environment.ts
+
 /apps/desktop-timer/src/environments/environment.prod.ts
 /apps/desktop-timer/src/environments/environment.ts
 

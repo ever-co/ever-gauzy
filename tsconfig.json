@@ -20,7 +20,6 @@
 		"paths": {
 			"@angular/*": ["./node_modules/@angular/*"],
 			"@env-desktop/environment": ["apps/desktop/src/environments/environment.ts"],
-			"@env/*": ["apps/gauzy/src/environments/*"],
 			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
@@ -30,6 +29,7 @@
 			"swiper_angular": ["./node_modules/swiper/angular"],
 			"@gauzy/ui-sdk": ["./packages/ui-sdk/src/lib/index"],
 			"@gauzy/ui-sdk/*": ["./packages/ui-sdk/src/lib/*"],
+			"@gauzy/ui-config": ["./packages/ui-config/src/lib/index"],
 			"@gauzy/plugins/job-search-ui": ["./packages/plugins/job-search-ui/src/lib/index"]
 		},
 		"preserveConstEnums": true,

@@ -4,6 +4,7 @@
 
 import { env } from './env';
 import { writeFile, unlinkSync } from 'fs';
+import * as path from 'path';
 import { argv } from 'yargs';
 
 const environment = argv.environment;
@@ -22,15 +23,11 @@ import { Environment } from './model';
 
 if (!env.IS_DOCKER) {
 	if (!env.GOOGLE_MAPS_API_KEY) {
-		console.warn(
-			'WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!'
-		);
+		console.warn('WARNING: No Google Maps API Key defined in the .env file. Google Maps may not be working!');
 	}
 
 	if (!env.SENTRY_DSN) {
-		console.warn(
-			'WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!'
-		);
+		console.warn('WARNING: No Sentry DSN defined in the .env file. Sentry logging may not be working!');
 	}
 
 	if (!env.JITSU_BROWSER_URL || !env.JITSU_BROWSER_WRITE_KEY) {
@@ -326,39 +323,35 @@ if (!isProd) {
 
 // we always want first to remove old generated files (one of them is not needed for current build)
 try {
-	unlinkSync(`./apps/gauzy/src/environments/environment.ts`);
-} catch { }
+	unlinkSync(`./packages/ui-config/src/lib/environments/environment.ts`);
+} catch {}
 try {
-	unlinkSync(`./apps/gauzy/src/environments/environment.prod.ts`);
-} catch { }
+	unlinkSync(`./packages/ui-config/src/lib/environments/environment.prod.ts`);
+} catch {}
 
 const envFileDest: string = isProd ? 'environment.prod.ts' : 'environment.ts';
-const envFileDestOther: string = !isProd
-	? 'environment.prod.ts'
-	: 'environment.ts';
+const envFileDestOther: string = !isProd ? 'environment.prod.ts' : 'environment.ts';
 
-writeFile(
-	`./apps/gauzy/src/environments/${envFileDest}`,
-	envFileContent,
-	function (err) {
-		if (err) {
-			console.log(err);
-		} else {
-			console.log(`Generated Angular environment file: ${envFileDest}`);
-		}
+writeFile(`./packages/ui-config/src/lib/environments/${envFileDest}`, envFileContent, (error) => {
+	if (error) {
+		console.log(error);
+	} else {
+		// Paths to environment files
+		const envFilePath = path.resolve(__dirname, `./packages/ui-config/src/lib/environments/${envFileDest}`);
+		console.log(`Generated Angular environment file: ${envFilePath}`);
 	}
-);
+});
 
-writeFile(
-	`./apps/gauzy/src/environments/${envFileDestOther}`,
-	`export const environment = { production: ${!isProd} }`,
-	function (err) {
-		if (err) {
-			console.log(err);
-		} else {
-			console.log(
-				`Generated Second Empty Angular environment file: ${envFileDestOther}`
-			);
-		}
+let envFileDestOtherContent = `export const environment = { production: ${!isProd} }`;
+
+writeFile(`./packages/ui-config/src/lib/environments/${envFileDestOther}`, envFileDestOtherContent, (error) => {
+	if (error) {
+		console.log(error);
+	} else {
+		const envFileOtherPath = path.resolve(
+			__dirname,
+			`./packages/ui-config/src/lib/environments/${envFileDestOther}`
+		);
+		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
 	}
-);
+});
