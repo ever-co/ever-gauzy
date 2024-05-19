@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

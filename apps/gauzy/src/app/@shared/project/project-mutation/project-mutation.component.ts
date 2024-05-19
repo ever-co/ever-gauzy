@@ -45,7 +45,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms/helpers';
 @UntilDestroy({ checkProperties: true })
 @Component({

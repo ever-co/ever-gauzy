@@ -35,7 +35,7 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

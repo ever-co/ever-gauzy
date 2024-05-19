@@ -1,6 +1,6 @@
-import { Component, Input } from "@angular/core";
-import { IOrganizationProject } from "@gauzy/contracts";
-import { DEFAULT_SVG } from "../../../@core/constants";
+import { Component, Input } from '@angular/core';
+import { IOrganizationProject } from '@gauzy/contracts';
+import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-project-column-view',
@@ -8,10 +8,9 @@ import { DEFAULT_SVG } from "../../../@core/constants";
 	styleUrls: ['./project-column-view.component.scss']
 })
 export class ProjectColumnViewComponent {
-
 	fallbackSvg = DEFAULT_SVG;
 
-	@Input() project: IOrganizationProject
-	
+	@Input() project: IOrganizationProject;
+
 	constructor() {}
 }

@@ -8,7 +8,7 @@ const palette = {
 	danger: '#b00020'
 };
 
-export const baseTheme: NbJSThemeOptions = {
+export const baseLightTheme: NbJSThemeOptions = {
 	name: 'material-light',
 	base: 'default',
 	variables: {
@@ -47,7 +47,7 @@ export const baseTheme: NbJSThemeOptions = {
 	}
 };
 
-const baseThemeVariables = baseTheme.variables;
+const baseThemeVariables = baseLightTheme.variables;
 
 export const MATERIAL_LIGHT_THEME = {
 	name: 'material-light',

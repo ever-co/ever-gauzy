@@ -18,7 +18,7 @@ import {
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { EquipmentService, Store, ToastrService } from '../../@core/services';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';

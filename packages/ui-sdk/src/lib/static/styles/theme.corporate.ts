@@ -1,34 +1,34 @@
 import { NbJSThemeOptions } from '@nebular/theme';
 
 const palette = {
-	primary: '#6E49E8',
-	success: '#25B869',
-	info: '#0095ff',
-	warning: '#ffaa00',
-	danger: '#ff3d71'
+	primary: '#73a1ff',
+	success: '#5dcfe3',
+	info: '#ba7fec',
+	warning: '#ffa36b',
+	danger: '#ff6b83'
 };
 
 const theme = {
 	fontMain: 'Open Sans, sans-serif',
 	fontSecondary: 'Raleway, sans-serif',
 
-	bg: '#000000',
-	bg2: '#1a2138',
-	bg3: '#151a30',
-	bg4: '#101426',
+	bg: '#ffffff',
+	bg2: '#f7f9fc',
+	bg3: '#edf1f7',
+	bg4: '#e4e9f2',
 
-	border: '#222b45',
-	border2: '#1a2138',
-	border3: '#151a30',
-	border4: '#101426',
-	border5: '#101426',
+	border: '#ffffff',
+	border2: '#f7f9fc',
+	border3: '#edf1f7',
+	border4: '#e4e9f2',
+	border5: '#c5cee0',
 
 	fg: '#8f9bb3',
-	fgHeading: '#ffffff',
-	fgText: '#ffffff',
+	fgHeading: '#1a2138',
+	fgText: '#1a2138',
 	fgHighlight: palette.primary,
-	layoutBg: '#1b1b38',
-	separator: '#1b1b38',
+	layoutBg: '#f7f9fc',
+	separator: '#edf1f7',
 
 	primary: palette.primary,
 	success: palette.success,
@@ -43,23 +43,16 @@ const theme = {
 	dangerLight: '#ff708d'
 };
 
-export const GAUZY_DARK = {
-	name: 'gauzy-dark',
-  base: 'dark',
+export const CORPORATE_THEME = {
+	name: 'corporate',
 	variables: {
 		...theme,
 
 		temperature: {
-			arcFill: [
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary,
-				theme.primary
-			],
+			arcFill: ['#ffa36b', '#ffa36b', '#ff9e7a', '#ff9888', '#ff8ea0'],
 			arcEmpty: theme.bg2,
 			thumbBg: theme.bg2,
-			thumbBorder: theme.primary
+			thumbBorder: '#ffa36b'
 		},
 
 		solar: {
@@ -77,17 +70,17 @@ export const GAUZY_DARK = {
 			tooltipTextColor: theme.fgText,
 			tooltipFontWeight: 'normal',
 
-			yAxisSplitLine: theme.separator,
+			yAxisSplitLine: 'rgba(0, 0, 0, 0)',
 
-			lineBg: theme.border4,
-			lineShadowBlur: '1',
+			lineBg: theme.primary,
+			lineShadowBlur: '0',
 			itemColor: theme.border4,
 			itemBorderColor: theme.border4,
-			itemEmphasisBorderColor: theme.primary,
+			itemEmphasisBorderColor: theme.primaryLight,
 			shadowLineDarkBg: 'rgba(0, 0, 0, 0)',
 			shadowLineShadow: 'rgba(0, 0, 0, 0)',
-			gradFrom: theme.bg2,
-			gradTo: theme.bg2
+			gradFrom: theme.bg,
+			gradTo: theme.bg
 		},
 
 		electricity: {
@@ -110,8 +103,8 @@ export const GAUZY_DARK = {
 			lineGradTo: theme.primary,
 			lineShadow: 'rgba(0, 0, 0, 0)',
 
-			areaGradFrom: theme.bg2,
-			areaGradTo: theme.bg2,
+			areaGradFrom: 'rgba(0, 0, 0, 0)',
+			areaGradTo: 'rgba(0, 0, 0, 0)',
 			shadowLineDarkBg: 'rgba(0, 0, 0, 0)'
 		},
 
@@ -152,14 +145,14 @@ export const GAUZY_DARK = {
 
 			tooltipBg: theme.bg,
 			tooltipBorderColor: theme.border2,
-			tooltipExtraCss: 'border-radius: 10px; padding: 4px 16px;',
+			tooltipExtraCss: 'border-radius: 10px; padding: 8px 24px;',
 			tooltipTextColor: theme.fgText,
 			tooltipFontWeight: 'normal'
 		},
 
 		countryOrders: {
 			countryBorderColor: theme.border4,
-			countryFillColor: theme.bg3,
+			countryFillColor: theme.bg4,
 			countryBorderWidth: '1',
 			hoveredCountryBorderColor: theme.primary,
 			hoveredCountryFillColor: theme.primaryLight,
@@ -221,16 +214,16 @@ export const GAUZY_DARK = {
 			secondLineGradFrom: theme.primary,
 			secondLineGradTo: theme.primary,
 
-			secondAreaGradFrom: 'rgba(51, 102, 255, 0.2)',
-			secondAreaGradTo: 'rgba(51, 102, 255, 0)',
+			secondAreaGradFrom: 'rgba(0, 0, 0, 0)',
+			secondAreaGradTo: 'rgba(0, 0, 0, 0)',
 			secondShadowLineDarkBg: 'rgba(0, 0, 0, 0)',
 
 			// third line
 			thirdLineGradFrom: theme.success,
 			thirdLineGradTo: theme.successLight,
 
-			thirdAreaGradFrom: 'rgba(0, 214, 143, 0.2)',
-			thirdAreaGradTo: 'rgba(0, 214, 143, 0)',
+			thirdAreaGradFrom: 'rgba(0, 0, 0, 0)',
+			thirdAreaGradTo: 'rgba(0, 0, 0, 0)',
 			thirdShadowLineDarkBg: 'rgba(0, 0, 0, 0)'
 		},
 
@@ -256,7 +249,7 @@ export const GAUZY_DARK = {
 
 			// third bar
 			thirdLineGradFrom: theme.success,
-			thirdLineGradTo: theme.successLight,
+			thirdLineGradTo: theme.success,
 			thirdLineShadow: 'rgba(0, 0, 0, 0)'
 		},
 
@@ -269,7 +262,7 @@ export const GAUZY_DARK = {
 		visitors: {
 			tooltipBg: theme.bg,
 			tooltipLineColor: 'rgba(0, 0, 0, 0)',
-			tooltipLineWidth: '0',
+			tooltipLineWidth: '1',
 			tooltipBorderColor: theme.border2,
 			tooltipExtraCss: 'border-radius: 10px; padding: 8px 24px;',
 			tooltipTextColor: theme.fgText,
@@ -307,14 +300,14 @@ export const GAUZY_DARK = {
 			firstPieGradientLeft: theme.success,
 			firstPieGradientRight: theme.success,
 			firstPieShadowColor: 'rgba(0, 0, 0, 0)',
-			firstPieRadius: ['70%', '90%'],
+			firstPieRadius: ['65%', '90%'],
 
 			secondPieGradientLeft: theme.warning,
 			secondPieGradientRight: theme.warningLight,
 			secondPieShadowColor: 'rgba(0, 0, 0, 0)',
-			secondPieRadius: ['60%', '97%'],
-			shadowOffsetX: '0',
-			shadowOffsetY: '0'
+			secondPieRadius: ['63%', '92%'],
+			shadowOffsetX: '-4',
+			shadowOffsetY: '-4'
 		},
 
 		visitorsPieLegend: {

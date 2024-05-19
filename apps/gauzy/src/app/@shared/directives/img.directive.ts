@@ -1,6 +1,6 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { environment } from '../../../environments/environment';
-import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '../../@core/constants/app.constants';
+import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '@gauzy/ui-sdk/common';
+import { environment } from '@env/environment';
 
 @Directive({
 	// tslint:disable-next-line: directive-selector
@@ -34,7 +34,7 @@ export class ImgDirective implements OnDestroy, OnInit {
 
 	private onError() {
 		this.removeErrorEvent();
-		
+
 		this.el.style.opacity = '0';
 
 		const src = this.el.getAttribute('src');

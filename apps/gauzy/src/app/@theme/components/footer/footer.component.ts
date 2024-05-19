@@ -1,11 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { GAUZY_ENV } from '../../../@core';
-import { Environment } from '../../../../environments/model';
+import { GAUZY_ENV } from '@env/environment.tokens';
+import { Environment } from '@env/model';
+import { Store } from '../../../@core/services/store.service';
 
 @Component({
 	selector: 'ngx-footer',
@@ -26,9 +26,8 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 
 	constructor(
 		public translationService: TranslateService,
-		private store: Store,
-		@Inject(GAUZY_ENV)
-		readonly environment: Environment
+		private readonly store: Store,
+		@Inject(GAUZY_ENV) readonly environment: Environment
 	) {
 		super(translationService);
 

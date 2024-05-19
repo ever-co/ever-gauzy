@@ -32,7 +32,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	InvoiceEstimateHistoryService,

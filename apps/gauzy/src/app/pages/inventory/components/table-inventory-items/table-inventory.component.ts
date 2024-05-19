@@ -20,7 +20,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';

@@ -37,7 +37,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';

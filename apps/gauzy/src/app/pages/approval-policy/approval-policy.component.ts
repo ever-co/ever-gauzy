@@ -10,7 +10,7 @@ import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
 import {
 	PaginationFilterBaseComponent,

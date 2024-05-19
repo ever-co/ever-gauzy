@@ -11,7 +11,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { saveAs } from 'file-saver';
 import { environment } from '@env/environment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { API_PREFIX } from '../../../@core/constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { ImportService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

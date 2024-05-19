@@ -34,7 +34,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { ErrorHandlingService, ProposalsService, Store, ToastrService } from '../../@core/services';
 import {

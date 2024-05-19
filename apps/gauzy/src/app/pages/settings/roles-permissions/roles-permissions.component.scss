@@ -1,120 +1,114 @@
-@import '../../../@theme/styles/gauzy/gauzy-table';
+@import 'gauzy/gauzy-table';
 
 .main-form {
-	width: 100%;
+  width: 100%;
 }
 
 .delete,
 .create {
-	width: fit-content;
-	color: nb-theme(color-danger-default);
-	padding-right: 10px;
-	font-weight: 600px;
+  width: fit-content;
+  color: nb-theme(color-danger-default);
+  padding-right: 10px;
+  font-weight: 600px;
 }
 
 .delete {
-	color: nb-theme(color-danger-default);
+  color: nb-theme(color-danger-default);
 }
 
 .create {
-	color: nb-theme(color-success-default);
+  color: nb-theme(color-success-default);
 }
 
 .permission-items-col {
-	nb-toggle {
-		display: flex;
-		flex-direction: column;
+  nb-toggle {
+    display: flex;
+    flex-direction: column;
 
-		::ng-deep .toggle-label {
-			display: flex;
-			justify-content: space-between;
-			flex-grow: 1;
-		}
-	}
+    ::ng-deep .toggle-label {
+      display: flex;
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+  }
 }
 
 h4 {
-	font-size: 24px;
-	font-weight: 600;
-	line-height: 30px;
-	letter-spacing: 0em;
-	text-align: left;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 
-	.menu-setting {
-		font-weight: 400;
-	}
+  .menu-setting {
+    font-weight: 400;
+  }
 }
 
-:host .col-12{
- @include nb-ltr(padding-right, 8px !important);
- @include nb-rtl(padding-left, 8px !important)
+:host .col-12 {
+  @include nb-ltr(padding-right, 8px !important);
+  @include nb-rtl(padding-left, 8px !important);
 }
 
 .menu-setting {
-	font-size: 24px;
-	font-weight: 400;
-	line-height: 30px;
-	letter-spacing: 0em;
-	text-align: left;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 }
 
 .content {
-	height: calc(100vh - 18.75rem);
-	overflow: auto;
-	padding: 0;
-	border-radius: nb-theme(border-radius);
+  height: calc(100vh - 18.75rem);
+  overflow: auto;
+  padding: 0;
+  border-radius: nb-theme(border-radius);
 }
 
 .custom-permission-view {
-	display: flex;
-	flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-	strong {
-		font-size: 16px;
-		font-weight: 600;
-		line-height: 19px;
-		letter-spacing: 0em;
-		text-align: left;
-		color: nb-theme(gauzy-text-color-1);
-		margin-bottom: 5px;
+  strong {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 19px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: nb-theme(gauzy-text-color-1);
+    margin-bottom: 5px;
+  }
 
-	}
-
-	small {
-		font-size: 11px;
-		font-weight: 400;
-		line-height: 13px;
-		letter-spacing: 0em;
-		text-align: left;
-		color: nb-theme(gauzy-text-color-2);
-
-	}
+  small {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 13px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: nb-theme(gauzy-text-color-2);
+  }
 }
 
 :host {
+  nb-card,
+  nb-card-body {
+    background-color: nb-theme(gauzy-card-2);
+    overflow: unset;
 
-	nb-card,
-	nb-card-body {
-		background-color: nb-theme(gauzy-card-2);
-		overflow: unset;
+    nb-card {
+      nb-card-header {
+        background-color: nb-theme(gauzy-sidebar-background-3);
+        padding: 0.625rem;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        letter-spacing: 0em;
+      }
 
-		nb-card {
-			nb-card-header {
-				background-color: nb-theme(gauzy-sidebar-background-3);
-				padding: 0.625rem;
-				font-size: 12px;
-				font-weight: 600;
-				line-height: 15px;
-				letter-spacing: 0em;
-			}
-
-			nb-card-body {
-				background-color: nb-theme(gauzy-card-1);
-				border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-			}
-		}
-
-	}
-
-
+      nb-card-body {
+        background-color: nb-theme(gauzy-card-1);
+        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+      }
+    }
+  }
 }

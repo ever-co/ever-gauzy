@@ -8,7 +8,7 @@ import {
 	IEmployeeAppointmentFindInput,
 	IEmployeeAppointmentUpdateInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class EmployeeAppointmentService {
@@ -21,18 +21,14 @@ export class EmployeeAppointmentService {
 		findInput?: IEmployeeAppointmentFindInput
 	): Observable<{ items: IEmployeeAppointment[] }> {
 		const data = JSON.stringify({ relations, findInput });
-		return this.http.get<{ items: IEmployeeAppointment[] }>(
-			this.EMPLOYEE_APPOINTMENT_URL,
-			{
-				params: { data }
-			}
-		);
+		return this.http.get<{ items: IEmployeeAppointment[] }>(this.EMPLOYEE_APPOINTMENT_URL, {
+			params: { data }
+		});
 	}
 
 	decodeToken(token: string): Promise<string> {
 		return firstValueFrom(
-			this.http
-			.get(this.EMPLOYEE_APPOINTMENT_URL + '/decode/' + token, {
+			this.http.get(this.EMPLOYEE_APPOINTMENT_URL + '/decode/' + token, {
 				responseType: 'text'
 			})
 		);
@@ -40,46 +36,29 @@ export class EmployeeAppointmentService {
 
 	signAppointmentId(id: string): Promise<string> {
 		return firstValueFrom(
-			this.http
-			.get(this.EMPLOYEE_APPOINTMENT_URL + '/sign/' + id, {
+			this.http.get(this.EMPLOYEE_APPOINTMENT_URL + '/sign/' + id, {
 				responseType: 'text'
 			})
 		);
 	}
 
 	getById(id: string = ''): Observable<IEmployeeAppointment> {
-		return this.http.get<IEmployeeAppointment>(
-			this.EMPLOYEE_APPOINTMENT_URL + '/' + id
-		);
+		return this.http.get<IEmployeeAppointment>(this.EMPLOYEE_APPOINTMENT_URL + '/' + id);
 	}
 
 	create(employeeAppointment: IEmployeeAppointmentCreateInput): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.post<IEmployeeAppointmentCreateInput>(
-				`${this.EMPLOYEE_APPOINTMENT_URL}`,
-				employeeAppointment
-			)
+			this.http.post<IEmployeeAppointmentCreateInput>(`${this.EMPLOYEE_APPOINTMENT_URL}`, employeeAppointment)
 		);
 	}
 
-	update(
-		id: string,
-		employeeAppointment: IEmployeeAppointmentUpdateInput
-	): Promise<any> {
+	update(id: string, employeeAppointment: IEmployeeAppointmentUpdateInput): Promise<any> {
 		return firstValueFrom(
-			this.http
-			.put<IEmployeeAppointment>(
-				`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`,
-				employeeAppointment
-			)
+			this.http.put<IEmployeeAppointment>(`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`, employeeAppointment)
 		);
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${this.EMPLOYEE_APPOINTMENT_URL}/${id}`));
 	}
 }

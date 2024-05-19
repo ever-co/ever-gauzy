@@ -35,7 +35,7 @@ import { LeafletMapComponent } from '../../forms/maps';
 import { LocationFormComponent } from '../../forms/location';
 import { environment as ENV } from './../../../../environments/environment';
 import { Store, ToastrService } from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

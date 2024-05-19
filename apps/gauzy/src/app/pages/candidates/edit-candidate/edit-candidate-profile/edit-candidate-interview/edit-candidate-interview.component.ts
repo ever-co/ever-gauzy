@@ -28,7 +28,7 @@ import {
 } from '../../../../../@core/services';
 import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
-import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { InterviewActionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { InterviewDateTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';

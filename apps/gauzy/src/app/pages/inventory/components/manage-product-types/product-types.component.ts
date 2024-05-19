@@ -13,7 +13,7 @@ import { ErrorHandlingService, ProductTypeService, Store, ToastrService } from '
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from '../inventory-table-components';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

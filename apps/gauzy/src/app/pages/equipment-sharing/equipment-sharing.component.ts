@@ -26,7 +26,7 @@ import {
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 import { EquipmentSharingService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateViewComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })

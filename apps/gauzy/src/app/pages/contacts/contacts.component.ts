@@ -29,7 +29,7 @@ import {
 	Store,
 	ToastrService
 } from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';
 import {

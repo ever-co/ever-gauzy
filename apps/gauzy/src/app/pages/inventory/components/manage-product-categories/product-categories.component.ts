@@ -11,7 +11,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
 import {
 	IPaginationBase,

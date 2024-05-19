@@ -5,7 +5,7 @@ import { isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { sortBy } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TimeLogsLabel } from './../../../../@core/constants';
+import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet.service';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
 import { Store, ToastrService } from './../../../../@core/services';

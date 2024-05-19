@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store, TimeOffService, ToastrService } from '../../@core/services';
 import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';

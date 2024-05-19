@@ -1,12 +1,8 @@
-import {
-	IHelpCenterAuthor,
-	IHelpCenterAuthorCreate,
-	IHelpCenterAuthorFind
-} from '@gauzy/contracts';
+import { IHelpCenterAuthor, IHelpCenterAuthorCreate, IHelpCenterAuthorFind } from '@gauzy/contracts';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -16,43 +12,26 @@ export class HelpCenterAuthorService {
 
 	createBulk(input: IHelpCenterAuthorCreate): Promise<IHelpCenterAuthor[]> {
 		return firstValueFrom(
-			this.http
-			.post<IHelpCenterAuthor[]>(
-				`${API_PREFIX}/help-center-author/createBulk`,
-				input
-			)
+			this.http.post<IHelpCenterAuthor[]>(`${API_PREFIX}/help-center-author/createBulk`, input)
 		);
 	}
 
 	findByArticleId(articleId: string): Promise<IHelpCenterAuthor[]> {
 		return firstValueFrom(
-			this.http
-			.get<IHelpCenterAuthor[]>(
-				`${API_PREFIX}/help-center-author/article/${articleId}`
-			)
+			this.http.get<IHelpCenterAuthor[]>(`${API_PREFIX}/help-center-author/article/${articleId}`)
 		);
 	}
 
 	deleteBulkByArticleId(articleId: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/help-center-author/article/${articleId}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/help-center-author/article/${articleId}`));
 	}
 
-	getAll(
-		relations?: string[],
-		findInput?: IHelpCenterAuthorFind
-	): Promise<{ items: any[]; total: number }> {
+	getAll(relations?: string[], findInput?: IHelpCenterAuthorFind): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http
-			.get<{ items: IHelpCenterAuthor[]; total: number }>(
-				`${API_PREFIX}/help-center-author`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<{ items: IHelpCenterAuthor[]; total: number }>(`${API_PREFIX}/help-center-author`, {
+				params: { data }
+			})
 		);
 	}
 }

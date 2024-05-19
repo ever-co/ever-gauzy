@@ -5,16 +5,12 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
 import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 @UntilDestroy()
 @Injectable()
 export class CurrencyService {
-	private _currencies$: BehaviorSubject<ICurrency[]> = new BehaviorSubject(
-		[]
-	);
-	public currencies$: Observable<
-		ICurrency[]
-	> = this._currencies$.asObservable();
+	private _currencies$: BehaviorSubject<ICurrency[]> = new BehaviorSubject([]);
+	public currencies$: Observable<ICurrency[]> = this._currencies$.asObservable();
 
 	public find$: Subject<boolean> = new Subject();
 

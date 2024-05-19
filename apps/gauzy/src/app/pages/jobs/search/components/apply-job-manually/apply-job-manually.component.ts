@@ -20,11 +20,10 @@ import {
 	IUser,
 	JobPostSourceEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
 import { environment } from '@env/environment';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
-import { API_PREFIX } from './../../../../../@core/constants';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 

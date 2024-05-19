@@ -6,7 +6,7 @@ import {
 	IOrganizationLanguageFindInput
 } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -14,15 +14,9 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationLanguagesService {
 	constructor(private http: HttpClient) {}
 
-	create(
-		createInput: IOrganizationLanguageCreateInput
-	): Promise<IOrganizationLanguage> {
+	create(createInput: IOrganizationLanguageCreateInput): Promise<IOrganizationLanguage> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganizationLanguage>(
-				`${API_PREFIX}/organization-languages`,
-				createInput
-			)
+			this.http.post<IOrganizationLanguage>(`${API_PREFIX}/organization-languages`, createInput)
 		);
 	}
 
@@ -33,27 +27,17 @@ export class OrganizationLanguagesService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationLanguage[]; total: number }>(
-				`${API_PREFIX}/organization-languages`,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<{ items: IOrganizationLanguage[]; total: number }>(`${API_PREFIX}/organization-languages`, {
+				params: { data }
+			})
 		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/organization-languages/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-languages/${id}`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/organization-languages/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/organization-languages/${id}`));
 	}
 }

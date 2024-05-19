@@ -34,7 +34,7 @@ import {
 	PaginationFilterBaseComponent
 } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { JobService, Store, ToastrService } from './../../../../@core/services';
-import { API_PREFIX } from './../../../../@core/constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
