@@ -1,7 +1,6 @@
 import { ErrorHandler, Inject, Injectable } from '@angular/core';
 import * as Sentry from '@sentry/angular-ivy';
-import { GAUZY_ENV } from '@env/environment.tokens';
-import { Environment } from '@env/model';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 @Injectable()
 export class SentryErrorHandler implements ErrorHandler {

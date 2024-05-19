@@ -60,7 +60,7 @@ import { AppModuleGuard } from './app.module.guards';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular-ivy';
-import { environment as gauzyEnvironment } from '@env/environment';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { environment } from '../environments/environment';
 import { initializeSentry } from './sentry';
 

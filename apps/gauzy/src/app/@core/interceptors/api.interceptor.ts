@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 
 const baseUrl = environment.API_BASE_URL;
 

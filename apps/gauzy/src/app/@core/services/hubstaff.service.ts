@@ -18,7 +18,7 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
 import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 const TODAY = new Date();

@@ -17,7 +17,7 @@ import { tap } from 'rxjs/operators';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CurrencyService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { environment as ENV } from './../../../environments/environment';
+import { environment as ENV } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

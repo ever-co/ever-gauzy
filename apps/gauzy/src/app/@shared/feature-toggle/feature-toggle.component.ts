@@ -6,11 +6,11 @@ import { Observable, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as _ from 'underscore';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { environment } from '@gauzy/ui-config';
 import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
 import { FeatureStoreService, Store } from '../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CountdownConfirmationComponent } from '../user/forms';
-import { environment } from './../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

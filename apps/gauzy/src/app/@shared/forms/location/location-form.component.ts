@@ -17,7 +17,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick, isEmpty } from 'underscore';
 import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
-import { environment as env } from '@env/environment';
+import { environment as env } from '@gauzy/ui-config';
 import { FormHelpers } from '../helpers';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CountryService } from '../../../@core/services/country.service';

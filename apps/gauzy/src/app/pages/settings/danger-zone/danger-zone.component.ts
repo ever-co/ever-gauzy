@@ -6,9 +6,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Environment, environment } from '@gauzy/ui-config';
 import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
-import { environment } from '../../../../environments/environment';
-import { Environment } from '../../../../environments/model';
 import { Store, ToastrService, UsersService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

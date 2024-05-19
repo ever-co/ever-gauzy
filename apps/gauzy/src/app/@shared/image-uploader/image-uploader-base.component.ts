@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { Store } from './../../@core/services';
 

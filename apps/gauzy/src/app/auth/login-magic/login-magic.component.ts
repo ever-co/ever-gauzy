@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { EMPTY, Subscription, finalize, firstValueFrom, interval } from "rxjs";
+import { EMPTY, Subscription, finalize, firstValueFrom, interval } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
 import { AuthService, ErrorHandlingService } from '../../@core/services';
 
@@ -16,7 +16,6 @@ import { AuthService, ErrorHandlingService } from '../../@core/services';
 	styleUrls: ['./login-magic.component.scss']
 })
 export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
-
 	public countdown: number;
 	private timer: Subscription;
 
@@ -37,17 +36,8 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	 */
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			email: [
-				null, Validators.compose([
-					Validators.required,
-					Validators.pattern(patterns.email)
-				])
-			],
-			code: [null, Validators.compose([
-				Validators.required,
-				Validators.minLength(6),
-				Validators.maxLength(6),
-			])]
+			email: [null, Validators.compose([Validators.required, Validators.pattern(patterns.email)])],
+			code: [null, Validators.compose([Validators.required, Validators.minLength(6), Validators.maxLength(6)])]
 		});
 	}
 
@@ -87,20 +77,22 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 	 */
 	ngOnInit(): void {
 		// Create an observable to listen to query parameter changes in the current route.
-		this._activatedRoute.queryParams.pipe(
-			// Filter and ensure that query parameters are present.
-			filter((params: Params) => !!params),
+		this._activatedRoute.queryParams
+			.pipe(
+				// Filter and ensure that query parameters are present.
+				filter((params: Params) => !!params),
 
-			// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
-			tap(({ email }: Params) => {
-				if (email) {
-					this.form.patchValue({ email });
-					this.form.updateValueAndValidity();
-				}
-			}),
-			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
-			untilDestroyed(this)
-		).subscribe();
+				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
+				tap(({ email }: Params) => {
+					if (email) {
+						this.form.patchValue({ email });
+						this.form.updateValueAndValidity();
+					}
+				}),
+				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -217,16 +209,18 @@ export class NgxLoginMagicComponent extends NbLoginComponent implements OnInit {
 		this.isCodeResent = true;
 		this.countdown = 30;
 
-		this.timer = interval(1000).pipe(
-			tap(() => {
-				if (this.countdown > 0) {
-					this.countdown--;
-				} else {
-					this.stopTimer();
-				}
-			}),
-			untilDestroyed(this)
-		).subscribe();
+		this.timer = interval(1000)
+			.pipe(
+				tap(() => {
+					if (this.countdown > 0) {
+						this.countdown--;
+					} else {
+						this.stopTimer();
+					}
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

@@ -7,5 +7,6 @@
 		"inlineSources": true,
 		"types": []
 	},
-	"exclude": ["**/*.spec.ts"]
+	"include": ["src/**/*.ts", "src/**/*.json"],
+	"exclude": ["node_modules", "**/*.spec.ts"]
 }
