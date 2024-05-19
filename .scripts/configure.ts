@@ -337,7 +337,7 @@ writeFile(`./packages/ui-config/src/lib/environments/${envFileDest}`, envFileCon
 		console.log(error);
 	} else {
 		// Paths to environment files
-		const envFilePath = path.resolve(__dirname, `./packages/ui-config/src/lib/environments/${envFileDest}`);
+		const envFilePath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDest}`);
 		console.log(`Generated Angular environment file: ${envFilePath}`);
 	}
 });
@@ -348,10 +348,7 @@ writeFile(`./packages/ui-config/src/lib/environments/${envFileDestOther}`, envFi
 	if (error) {
 		console.log(error);
 	} else {
-		const envFileOtherPath = path.resolve(
-			__dirname,
-			`./packages/ui-config/src/lib/environments/${envFileDestOther}`
-		);
+		const envFileOtherPath = path.resolve(`./packages/ui-config/src/lib/environments/${envFileDestOther}`);
 		console.log(`Generated Second Empty Angular environment file: ${envFileOtherPath}`);
 	}
 });
