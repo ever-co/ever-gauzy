@@ -122,7 +122,12 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
+	/**
+	 * Retrieves daily logs if the organization and request are set.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async getLogs(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
@@ -131,7 +136,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			const payloads = this.payloads$.getValue();
 			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving daily logs report', error);
+			console.error('Error while retrieving daily logs report', error);
 		} finally {
 			this.loading = false;
 		}

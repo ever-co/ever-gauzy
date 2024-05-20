@@ -136,10 +136,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the time limit report data from the timesheetService
-			const limits: ITimeLimitReport[] = await this.timesheetService.getTimeLimit(payloads);
-
-			// Update the 'dailyData' property with the retrieved data
-			this.dailyData = limits;
+			this.dailyData = await this.timesheetService.getTimeLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
 			console.error(`Error while retrieving ${this.title} time limit report`, error);

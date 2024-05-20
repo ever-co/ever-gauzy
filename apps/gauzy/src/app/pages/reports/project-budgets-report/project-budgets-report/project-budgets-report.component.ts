@@ -133,10 +133,7 @@ export class ProjectBudgetsReportComponent extends BaseSelectorFilterComponent i
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the project budget reports from the timesheetService
-			const projects: IProjectBudgetLimitReport[] = await this.timesheetService.getProjectBudgetLimit(payloads);
-
-			// Update the 'projects' property with the retrieved data
-			this.projects = projects;
+			this.projects = await this.timesheetService.getProjectBudgetLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
 			console.error('Error while retrieving project budget chart', error);

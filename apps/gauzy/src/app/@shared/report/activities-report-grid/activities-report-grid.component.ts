@@ -100,20 +100,20 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 	/**
 	 * Get activities report
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
-	getActivitiesReport() {
+	async getActivitiesReport(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;
-		const payloads = this.payloads$.getValue();
-		this.activityService
-			.getDailyActivitiesReport(payloads)
-			.then((logs: IReportDayData[]) => {
-				this.dailyData = logs;
-			})
-			.catch((error) => {})
-			.finally(() => (this.loading = false));
+		try {
+			const payloads = this.payloads$.getValue();
+			this.dailyData = (await this.activityService.getDailyActivitiesReport(payloads)) as IReportDayData[];
+		} catch (error) {
+			console.error('Error while retrieving daily activities report', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 }
