@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsTimeZone } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -30,7 +30,8 @@ import {
 	IEmployeeAward,
 	IEquipmentSharing,
 	IEmployeePhone,
-	IDailyPlan
+	IDailyPlan,
+	TimeFormatEnum
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -74,7 +75,11 @@ import {
 	User
 } from '../core/entities/internal';
 import { HasCustomFields } from '../core/entities/custom-entity-fields';
-import { EmployeeEntityCustomFields, MikroOrmEmployeeEntityCustomFields, TypeOrmEmployeeEntityCustomFields } from '../core/entities/custom-entity-fields/employee';
+import {
+	EmployeeEntityCustomFields,
+	MikroOrmEmployeeEntityCustomFields,
+	TypeOrmEmployeeEntityCustomFields
+} from '../core/entities/custom-entity-fields/employee';
 import { ColumnNumericTransformerPipe } from '../shared/pipes';
 import { Taggable } from '../tags/tag.types';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
@@ -330,6 +335,22 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	linkedInId?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsTimeZone()
+	@MultiORMColumn({ nullable: true })
+	timeZone?: string;
+
+	@ApiPropertyOptional({ type: () => String, enum: TimeFormatEnum })
+	@IsOptional()
+	@IsEnum(TimeFormatEnum)
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: TimeFormatEnum,
+		default: TimeFormatEnum.FORMAT_12_HOURS
+	})
+	timeFormat?: TimeFormatEnum;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
