@@ -21,7 +21,7 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
 import { JobService, Store, ToastrService } from './../../../../../@core/services';
 import { FormHelpers } from './../../../../../@shared/forms';

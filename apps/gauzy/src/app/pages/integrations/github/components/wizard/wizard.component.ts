@@ -2,7 +2,7 @@ import { AfterViewInit, Component, HostListener, OnDestroy, OnInit } from '@angu
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/ui-sdk/common';
 import { Store } from '../../../../../@core/services';

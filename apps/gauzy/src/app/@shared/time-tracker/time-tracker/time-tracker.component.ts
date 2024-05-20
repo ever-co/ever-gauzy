@@ -8,8 +8,7 @@ import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { faStopwatch, faPlay, faPause } from '@fortawesome/free-solid-svg-icons';
-import { Environment } from '@env/model';
-import { environment } from '@env/environment';
+import { Environment, environment } from '@gauzy/ui-config';
 import {
 	IOrganization,
 	IUser,

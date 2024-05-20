@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"outDir": "../../../out-tsc/lib",
+		"declaration": true,
+		"declarationMap": true,
+		"inlineSources": true,
+		"types": []
+	},
+	"include": ["src/**/*.ts", "src/**/*.json"],
+	"exclude": ["node_modules", "**/*.spec.ts"]
+}

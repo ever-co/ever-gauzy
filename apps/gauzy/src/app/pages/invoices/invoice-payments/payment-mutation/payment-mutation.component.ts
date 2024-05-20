@@ -17,8 +17,8 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { NbDialogRef } from '@nebular/theme';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { environment as ENV } from '@gauzy/ui-config';
 import { InvoicesService, Store } from './../../../../@core/services';
-import { environment as ENV } from './../../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

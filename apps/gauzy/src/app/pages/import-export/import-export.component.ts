@@ -19,8 +19,7 @@ import {
 	ImportTypeEnum,
 	IUserOrganization
 } from '@gauzy/contracts';
-import { environment } from '@env/environment';
-import { Environment } from '@env/model';
+import { Environment, environment } from '@gauzy/ui-config';
 import {
 	ErrorHandlingService,
 	ExportAllService,

@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
 import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '@gauzy/ui-config';
 
 @Component({
 	selector: 'ga-leaflet-map',

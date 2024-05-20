@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';

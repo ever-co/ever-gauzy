@@ -1,7 +1,6 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Environment } from '@env/model';
-import { GAUZY_ENV } from '@env/environment.tokens';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '../@core/services/store.service';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
 

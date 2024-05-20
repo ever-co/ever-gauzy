@@ -17,7 +17,7 @@ import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { CountryService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { environment as ENV } from './../../../environments/environment';
+import { environment as ENV } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

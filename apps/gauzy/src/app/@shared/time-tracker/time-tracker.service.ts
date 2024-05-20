@@ -19,7 +19,7 @@ import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { firstValueFrom, Observable, timer } from 'rxjs';
 import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '@gauzy/ui-sdk/common';
-import { environment } from '../../../environments/environment';
+import { environment } from '@gauzy/ui-config';
 import { ITimerSynced } from './components/time-tracker-status/interfaces';
 
 export function createInitialTimerState(): TimerState {
