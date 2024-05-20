@@ -7,7 +7,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { IGetTimeLimitReportInput, ITimeLimitReport, ITimeLogFilters } from '@gauzy/contracts';
+import { IGetTimeLimitReportInput, ITimeLogFilters } from '@gauzy/contracts';
 import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -136,10 +136,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the time limit report data from the timesheetService
-			const limits: ITimeLimitReport[] = await this.timesheetService.getTimeLimit(payloads);
-
-			// Update the 'dailyData' property with the retrieved data
-			this.dailyData = limits;
+			this.dailyData = await this.timesheetService.getTimeLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
 			console.error(`Error while retrieving ${this.title} time limit report`, error);
