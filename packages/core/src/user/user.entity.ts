@@ -15,7 +15,8 @@ import {
 	ITag,
 	IUserOrganization,
 	IInvite,
-	IImageAsset
+	IImageAsset,
+	TimeFormatEnum
 } from '@gauzy/contracts';
 import { ImageAsset, Invite, Role, Tag, TenantBaseEntity, UserOrganization } from '../core/entities/internal';
 import {
@@ -80,6 +81,16 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
+
+	@ApiPropertyOptional({ type: () => String, enum: TimeFormatEnum })
+	@IsOptional()
+	@IsEnum(TimeFormatEnum)
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: TimeFormatEnum,
+		default: TimeFormatEnum.FORMAT_12_HOURS
+	})
+	timeFormat?: TimeFormatEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

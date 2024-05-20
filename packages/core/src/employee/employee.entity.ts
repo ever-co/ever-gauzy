@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsEnum, IsOptional, IsString, IsTimeZone } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -30,8 +30,7 @@ import {
 	IEmployeeAward,
 	IEquipmentSharing,
 	IEmployeePhone,
-	IDailyPlan,
-	TimeFormatEnum
+	IDailyPlan
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -335,22 +334,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	linkedInId?: string;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsTimeZone()
-	@MultiORMColumn({ nullable: true })
-	timeZone?: string;
-
-	@ApiPropertyOptional({ type: () => String, enum: TimeFormatEnum })
-	@IsOptional()
-	@IsEnum(TimeFormatEnum)
-	@MultiORMColumn({
-		type: 'simple-enum',
-		enum: TimeFormatEnum,
-		default: TimeFormatEnum.FORMAT_12_HOURS
-	})
-	timeFormat?: TimeFormatEnum;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
