@@ -6,10 +6,7 @@
 					<ng-container *ngTemplateOutlet="imageUploaderTemplate"></ng-container>
 				</div>
 				<ng-template [ngIf]="role">
-					<gauzy-role
-						class="badge"
-						[value]="role"
-					></gauzy-role>
+					<gauzy-role class="badge" [value]="role"></gauzy-role>
 				</ng-template>
 			</div>
 			<div class="employee-form">
@@ -22,13 +19,7 @@
 									for="firstName"
 									[innerText]="'PROFILE_PAGE.FIRST_NAME' | translate"
 								></label>
-								<input
-									fullWidth
-									id="firstName"
-									type="text"
-									nbInput
-									formControlName="firstName"
-								/>
+								<input fullWidth id="firstName" type="text" nbInput formControlName="firstName" />
 							</div>
 						</div>
 						<div class="col">
@@ -38,13 +29,7 @@
 									class="label"
 									[innerText]="'PROFILE_PAGE.LAST_NAME' | translate"
 								></label>
-								<input
-									fullWidth
-									id="lastName"
-									type="text"
-									nbInput
-									formControlName="lastName"
-								/>
+								<input fullWidth id="lastName" type="text" nbInput formControlName="lastName" />
 							</div>
 						</div>
 					</div>
@@ -56,7 +41,7 @@
 								[label]="'PROFILE_PAGE.PASSWORD' | translate"
 								[ctrl]="form.get('password')"
 								formControlName="password"
-                				[autocomplete]="'new-password'"
+								[autocomplete]="'new-password'"
 							></ngx-password-form-field>
 						</div>
 						<div class="col">
@@ -66,7 +51,7 @@
 								[label]="'PROFILE_PAGE.REPEAT_PASSWORD' | translate"
 								[ctrl]="form.get('repeatPassword')"
 								formControlName="repeatPassword"
-                				[autocomplete]="'new-password'"
+								[autocomplete]="'new-password'"
 							>
 								<div
 									*ngIf="FormHelpers.isInvalidControl(form, 'repeatPassword')"
@@ -82,22 +67,14 @@
 					<div class="row">
 						<div class="col-6">
 							<div class="form-group">
-								<label
-									class="label"
-									for="email"
-									[innerText]="'PROFILE_PAGE.EMAIL' | translate"
-								></label>
+								<label class="label" for="email" [innerText]="'PROFILE_PAGE.EMAIL' | translate"></label>
 								<input
 									fullWidth
 									id="email"
 									type="email"
 									nbInput
 									formControlName="email"
-									[status]="
-										FormHelpers.isInvalidControl(form, 'email')
-											? 'danger'
-											: 'basic'
-									"
+									[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
 								/>
 								<div
 									*ngIf="FormHelpers.isInvalidControl(form, 'email')"
@@ -138,7 +115,7 @@
 									[innerText]="'FORM.LABELS.PREFERRED_LANGUAGE' | translate"
 								></label>
 								<ngx-language-selector
-									[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE'| translate"
+									[placeholder]="'FORM.PLACEHOLDERS.PREFERRED_LANGUAGE' | translate"
 									class="d-block"
 									[template]="'ng-select'"
 									formControlName="preferredLanguage"
@@ -146,23 +123,30 @@
 							</div>
 						</div>
 						<div class="col-sm-6">
-							<ga-timezone-selector
-								formControlName="timeZone"
-							></ga-timezone-selector>
+							<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
 						</div>
 						<div class="col-sm-6">
-							<ngx-phone-form-input
-								formControlName="phoneNumber"
-							></ngx-phone-form-input>
+							<ngx-phone-form-input formControlName="phoneNumber"></ngx-phone-form-input>
+						</div>
+						<div class="col-6">
+							<div class="form-group">
+								<label class="label" for="timeZone">
+									{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
+								</label>
+								<ng-select
+									id="timeFormat"
+									appendTo="body"
+									[(items)]="listOfTimeFormats"
+									[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
+									[searchable]="false"
+									[clearable]="false"
+									formControlName="timeFormat"
+								></ng-select>
+							</div>
 						</div>
 					</div>
 					<div class="actions">
-						<button
-							[disabled]="form.invalid"
-							(click)="submitForm()"
-							nbButton
-							status="success"
-						>
+						<button [disabled]="form.invalid" (click)="submitForm()" nbButton status="success">
 							{{ 'PROFILE_PAGE.SAVE' | translate }}
 						</button>
 					</div>
@@ -193,28 +177,12 @@
 			/>
 		</defs>
 		<g fill="none" fill-rule="evenodd">
-			<circle
-				cx="34"
-				cy="34"
-				r="34"
-				fill="#0091FF"
-				opacity=".3"
-			/>
-			<circle
-				cx="34"
-				cy="34"
-				r="26"
-				fill="#0091FF"
-				opacity=".9"
-			/>
-			<use
-				fill="#FFF"
-				fill-rule="nonzero"
-				xlink:href="#a"
-			/>
+			<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+			<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+			<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 		</g>
 	</svg>
-	<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }" ></div>
+	<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 	<img
 		*ngIf="!!form"
 		[src]="form.get('imageUrl').value"

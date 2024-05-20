@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatchValidator } from '@gauzy/ui-sdk/core';
-import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset } from '@gauzy/contracts';
+import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_TIME_FORMATS } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -26,7 +26,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 
 	hoverState: boolean;
 	loading: boolean;
-
+	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	role: IRole;
 	user: IUser;
 
@@ -54,8 +54,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		this._allowRoleChange = value;
 	}
 
-	@Output()
-	userSubmitted = new EventEmitter<void>();
+	@Output() userSubmitted = new EventEmitter<void>();
 
 	public form: UntypedFormGroup = EditProfileFormComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
@@ -72,6 +71,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				tags: [],
 				preferredLanguage: [],
 				timeZone: [],
+				timeFormat: [],
 				phoneNumber: []
 			},
 			{
@@ -253,6 +253,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			tags: user.tags,
 			preferredLanguage: user.preferredLanguage,
 			timeZone: user.timeZone,
+			timeFormat: user.timeFormat,
 			phoneNumber: user.phoneNumber
 		});
 		this.role = user.role;

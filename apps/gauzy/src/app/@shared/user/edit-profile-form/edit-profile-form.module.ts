@@ -1,4 +1,3 @@
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
@@ -10,12 +9,14 @@ import {
 	NbBadgeModule,
 	NbFormFieldModule
 } from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ThemeModule } from '../../../@theme/theme.module';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 import { OrganizationsService, RoleService, UsersService } from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorModule } from '../../language/language-selector';
 import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule } from '../forms/fields/password';
@@ -35,6 +36,7 @@ import { PhoneFormInputModule } from '../forms/fields';
 		NbSelectModule,
 		NbBadgeModule,
 		NbFormFieldModule,
+		NgSelectModule,
 		TagsColorInputModule,
 		ThemeModule,
 		UserFormsModule,
