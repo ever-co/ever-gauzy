@@ -293,6 +293,7 @@ export enum TimeFormatEnum {
 	FORMAT_24_HOURS = 24
 }
 
+export const DEFAULT_TIME_FORMATS: number[] = [TimeFormatEnum.FORMAT_12_HOURS, TimeFormatEnum.FORMAT_24_HOURS];
 export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
 
 export interface IKeyValuePair {
