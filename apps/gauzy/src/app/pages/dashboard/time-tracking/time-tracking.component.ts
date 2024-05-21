@@ -801,15 +801,11 @@ export class TimeTrackingComponent
 	 * Handles the event when the time format is changed.
 	 * @param timeformat The new time format.
 	 */
-	timeFormatChanged(timeformat: TimeFormatEnum): void {
-		console.log(timeformat); // Placeholder for handling the time format change
-	}
+	timeFormatChanged(timeformat: TimeFormatEnum): void {}
 
 	/**
 	 * Handles the event when the time zone is changed.
 	 * @param timezone The new time zone.
 	 */
-	timeZoneChanged(timezone: string): void {
-		console.log(timezone); // Placeholder for handling the time zone change
-	}
+	timeZoneChanged(timezone: string): void {}
 }

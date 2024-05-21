@@ -180,8 +180,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
-		const { email, firstName, lastName, tags, preferredLanguage, password, timeZone, phoneNumber } =
-			this.form.getRawValue();
+		const { timeFormat, timeZone } = this.form.value;
+		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
+
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
@@ -189,6 +190,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			tags,
 			preferredLanguage,
 			timeZone,
+			timeFormat,
 			phoneNumber
 		};
 
