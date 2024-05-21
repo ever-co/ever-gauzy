@@ -23,7 +23,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { EmployeesService, EmployeeStore, Store, ToastrService } from './../../../../../@core/services';
@@ -150,8 +150,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _toastrService: ToastrService,
 		private readonly _truncatePipe: TruncatePipe,
-		private readonly _router: Router,
-		private readonly _navigationService: NavigationService
+		private readonly _router: Router
 	) {}
 
 	ngOnInit() {
@@ -276,10 +275,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
-	selectEmployee(employee: ISelectedEmployee) {
+	async selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this._store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-			this.setAttributesToParams({ employeeId: employee?.id });
+			await this.setAttributesToParams({ employeeId: employee?.id });
 		} else {
 			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		}
@@ -292,14 +291,18 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 * Sets attributes to the current navigation parameters.
 	 * @param params An object containing key-value pairs representing the parameters to set.
 	 */
-	private setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
-		this._navigationService.navigate([], params);
+	private async setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
+		await this._router.navigate([], {
+			relativeTo: this._activatedRoute,
+			queryParams: { ...params },
+			queryParamsHandling: 'merge'
+		});
 	}
 
-	selectEmployeeById(employeeId: string) {
+	async selectEmployeeById(employeeId: string) {
 		const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
 		if (employee) {
-			this.selectEmployee(employee);
+			await this.selectEmployee(employee);
 		}
 	}
 

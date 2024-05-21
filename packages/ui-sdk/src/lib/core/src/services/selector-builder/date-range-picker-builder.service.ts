@@ -63,14 +63,14 @@ export class DateRangePickerBuilderService {
 	 *
 	 * @param dates An object containing the start date, end date, and possibly other properties related to the date range picker.
 	 */
-	setDateRangePicker(dates: IDateRangePicker) {
+	async setDateRangePicker(dates: IDateRangePicker) {
 		// Check if dates object is not empty
 		if (isNotEmpty(dates)) {
 			// Update the BehaviorSubject `dates$` with the new dates
 			this.dates$.next(dates);
 
 			// Navigate to the same route with updated query parameters representing the start date and end date
-			this.navigateWithQueryParams(dates);
+			await this.navigateWithQueryParams(dates);
 		}
 	}
 
@@ -79,10 +79,10 @@ export class DateRangePickerBuilderService {
 	 *
 	 * @param queryParams The query parameters to be attached.
 	 */
-	navigateWithQueryParams(dates: IDateRangePicker): void {
+	async navigateWithQueryParams(dates: IDateRangePicker): Promise<void> {
 		if (isNotEmpty(dates)) {
 			// Navigate to the same route with updated query parameters representing the start date and end date
-			this._navigationService.navigate([], {
+			await this._navigationService.navigate([], {
 				date: moment(dates.startDate).format('YYYY-MM-DD'),
 				date_end: moment(dates.endDate).format('YYYY-MM-DD'),
 				unit_of_time: dates.unitOfTime,
