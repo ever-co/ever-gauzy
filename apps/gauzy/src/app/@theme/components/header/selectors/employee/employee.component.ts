@@ -23,7 +23,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { EmployeesService, EmployeeStore, Store, ToastrService } from './../../../../../@core/services';
@@ -120,7 +120,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 	@Input() set selectedDateRange(range: IDateRangePicker) {
 		//This will set _selectedDateRange too
-		this.subject$.next([this.store.selectedOrganization, range]);
+		this.subject$.next([this._store.selectedOrganization, range]);
 	}
 
 	/**
@@ -142,21 +142,22 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	subject$: Subject<any> = new Subject();
 
 	constructor(
-		private readonly employeesService: EmployeesService,
-		private readonly store: Store,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly activatedRoute: ActivatedRoute,
-		private readonly cdRef: ChangeDetectorRef,
+		private readonly _employeesService: EmployeesService,
+		private readonly _store: Store,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _activatedRoute: ActivatedRoute,
+		private readonly _cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore,
-		private readonly toastrService: ToastrService,
+		private readonly _toastrService: ToastrService,
 		private readonly _truncatePipe: TruncatePipe,
-		private readonly router: Router
+		private readonly _router: Router,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit() {
 		this.onSelectEmployee();
-		this.hasEditEmployee$ = this.store.userRolePermissions$.pipe(
-			map(() => this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT))
+		this.hasEditEmployee$ = this._store.userRolePermissions$.pipe(
+			map(() => this._store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT))
 		);
 		this.subject$
 			.pipe(
@@ -167,7 +168,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedEmployee$
+		this._store.selectedEmployee$
 			.pipe(
 				distinctUntilChange(),
 				filter((employee: ISelectedEmployee) => !!employee),
@@ -176,20 +177,20 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 						this.selectedEmployee = employee;
 						this.selectionChanged.emit(employee);
 					}
-					this.cdRef.detectChanges();
+					this._cdRef.detectChanges();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.activatedRoute.queryParams
+		this._activatedRoute.queryParams
 			.pipe(
 				filter((query) => !!query.employeeId),
 				tap(({ employeeId }) => this.selectEmployeeById(employeeId)),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const selectedDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$])
 			.pipe(
 				filter(([organization]) => !!organization),
@@ -204,7 +205,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	ngAfterViewInit(): void {
-		this.cdRef.detectChanges();
+		this._cdRef.detectChanges();
 		this._employeeStore.employeeAction$
 			.pipe(
 				filter(({ action, employees }) => !!action && !!employees),
@@ -227,7 +228,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	ngOnChanges() {
-		this.cdRef.detectChanges();
+		this._cdRef.detectChanges();
 	}
 
 	/*
@@ -242,7 +243,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 					firstName: employee.user.firstName,
 					lastName: employee.user.lastName,
 					fullName: employee.user.name,
-					imageUrl: employee.user.imageUrl
+					imageUrl: employee.user.imageUrl,
+					timeFormat: employee.user.timeFormat,
+					timeZone: employee.user.timeZone
 				});
 			});
 			this.people = [...people].filter(isNotEmpty);
@@ -275,7 +278,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 
 	selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
-			this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+			this._store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 			this.setAttributesToParams({ employeeId: employee?.id });
 		} else {
 			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
@@ -285,12 +288,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
-	private setAttributesToParams(params: Object) {
-		this.router.navigate([], {
-			relativeTo: this.activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge'
-		});
+	/**
+	 * Sets attributes to the current navigation parameters.
+	 * @param params An object containing key-value pairs representing the parameters to set.
+	 */
+	private setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
+		this._navigationService.navigate([], params);
 	}
 
 	selectEmployeeById(employeeId: string) {
@@ -349,10 +352,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			this.people = [];
 			return;
 		}
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const { id: organizationId } = organization;
 
-		const { items } = await this.employeesService.getWorking(organizationId, tenantId, selectedDateRange, true);
+		const { items } = await this._employeesService.getWorking(organizationId, tenantId, selectedDateRange, true);
 
 		this.people = [
 			...items.map((employee: IEmployee) => {
@@ -365,25 +368,27 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 					shortDescription: employee.short_description,
 					employeeLevel: employee.employeeLevel,
 					billRateCurrency: employee.billRateCurrency,
-					billRateValue: employee.billRateValue
+					billRateValue: employee.billRateValue,
+					timeZone: employee.user.timeZone,
+					timeFormat: employee.user.timeFormat
 				} as ISelectedEmployee;
 			})
 		];
 
 		//Insert All Employees Option
-		if (this.showAllEmployeesOption && this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (this.showAllEmployeesOption && this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			this.people.unshift(ALL_EMPLOYEES_SELECTED);
 		}
 
 		//Set selected employee if no employee selected
-		if (items.length > 0 && !this.store.selectedEmployee) {
-			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (items.length > 0 && !this._store.selectedEmployee) {
+			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
 
 	ngOnDestroy() {
-		if (this.people.length > 0 && !this.store.selectedEmployee && !this.skipGlobalChange) {
-			this.store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		if (this.people.length > 0 && !this._store.selectedEmployee && !this.skipGlobalChange) {
+			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	}
 
@@ -399,7 +404,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 					return false;
 				}
 			}
-			return !!this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+			return !!this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 		}
 	}
 
@@ -417,7 +422,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			const chunks = name.split(/\s+/);
 			const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
 
-			this.router.navigate(['/pages/employees/'], {
+			this._router.navigate(['/pages/employees/'], {
 				queryParams: {
 					openAddDialog: true
 				},
@@ -427,7 +432,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 				}
 			});
 		} catch (error) {
-			this.toastrService.error(error);
+			this._toastrService.error(error);
 		}
 	};
 }

@@ -1,12 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-	Brackets,
-	FindManyOptions,
-	FindOneOptions,
-	In,
-	SelectQueryBuilder,
-	WhereExpressionBuilder
-} from 'typeorm';
+import { Brackets, FindManyOptions, FindOneOptions, In, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
 import {
 	IBasePerTenantAndOrganizationEntityModel,
@@ -48,13 +41,15 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				userId: In(userIds), // Find employees with matching user IDs
 				isActive: true, // Only active employees
 				isArchived: false, // Exclude archived employees
-				...(tenantId && { tenantId }), // Include tenant ID if available
+				...(tenantId && { tenantId }) // Include tenant ID if available
 			};
 
 			// Execute the query based on the ORM type
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM: {
-					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>({ where: whereClause } as FindManyOptions);
+					const { where, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>({
+						where: whereClause
+					} as FindManyOptions);
 					const employees = await this.mikroOrmRepository.find(where, mikroOptions);
 					return employees.map((entity: Employee) => this.serialize(entity)) as Employee[];
 				}
@@ -127,10 +122,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
 					const { mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options as FindManyOptions);
-					const item = await this.mikroOrmRepository.findOne(
-						whereClause,
-						mikroOptions
-					);
+					const item = await this.mikroOrmRepository.findOne(whereClause, mikroOptions);
 					return this.serialize(item as Employee);
 				case MultiORMEnum.TypeORM:
 					return this.typeOrmRepository.findOne({
@@ -153,8 +145,8 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	public async findAllActive(): Promise<Employee[]> {
 		try {
 			return await super.find({
-				where: { isActive: true, isArchived: false, },
-				relations: { user: true, organization: true },
+				where: { isActive: true, isArchived: false },
+				relations: { user: true, organization: true }
 			});
 		} catch (error) {
 			// Handle any potential errors, log, and optionally rethrow or return a default value.
@@ -162,7 +154,6 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			return [];
 		}
 	}
-
 
 	/**
 	 * Find the employees working in the organization for a particular date range.
@@ -206,7 +197,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 						firstName: true,
 						lastName: true,
 						email: true,
-						imageUrl: true
+						imageUrl: true,
+						timeZone: true,
+						timeFormat: true
 					}
 				},
 				relations: {
