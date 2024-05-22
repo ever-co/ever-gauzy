@@ -8,7 +8,6 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	DEFAULT_TIME_FORMATS,
 	IOrganization,
-	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
 	TimeFormatEnum,
@@ -74,9 +73,6 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		private readonly _store: Store
 	) {}
 
-	/**
-	 *
-	 */
 	ngOnInit(): void {
 		// Extract query parameter
 		const queryParams$ = this._route.queryParams.pipe(
@@ -85,76 +81,75 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		);
 		const storeOrganization$ = this._store.selectedOrganization$.pipe(
 			filter((organization: IOrganization) => !!organization),
+			filter(() => this.hasChangeSelectedEmployeePermission()),
 			distinctUntilChange()
 		);
-		const storeEmployee$ = this._store.selectedEmployee$.pipe(
-			filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
-			filter(() => this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
-		);
-
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
-				distinctUntilChange(),
 				tap(([queryParams, organization]) => {
-					console.log('Combined query params and store organization');
-					const { time_zone, time_format } = queryParams;
-					//
-					const permission = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-
-					// Apply query parameters first
-					if (time_format) {
-						this.selectTimeFormat(time_format);
-					} else if (permission && organization.timeFormat) {
-						this.selectTimeFormat(organization.timeFormat);
-					}
-
-					// Apply query parameters first
-					if (time_zone) {
-						this.selectTimeZone(time_zone);
-					} else if (permission && organization.timeZone) {
-						this.selectTimeZone(TimeZoneEnum.ORG_TIMEZONE);
-					}
+					this.applyTimeFormat(queryParams, organization.timeFormat);
+					this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			)
-			.subscribe();
-
-		storeEmployee$
-			.pipe(
-				tap((employee: ISelectedEmployee) => {
-					console.log('route store employee');
-					console.log(employee.timeFormat, employee.timeZone);
-
-					// Only update the time format if it's not present in the query parameters
-					if (!this._route.snapshot.queryParamMap.get('time_format') && employee.timeFormat) {
-						this.selectTimeFormat(employee.timeFormat);
-					}
-				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	ngAfterViewInit() {
+		// Extract query parameter
+		const queryParams$ = this._route.queryParams.pipe(
+			filter((params: Params) => !!params),
+			distinctUntilChange()
+		);
 		const storeUser$ = this._store.user$.pipe(
 			filter((user: IUser) => !!user),
-			filter(() => !this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+			filter(() => !this.hasChangeSelectedEmployeePermission())
 		);
-		storeUser$
+		combineLatest([queryParams$, storeUser$])
 			.pipe(
-				tap((user: IUser) => {
-					console.log('route store user');
-					if (user.timeFormat) {
-						this.selectTimeFormat(user.timeFormat);
-					}
-					if (user.timeZone) {
-						this.selectTimeZone(TimeZoneEnum.MINE_TIMEZONE);
-					}
+				distinctUntilChange(),
+				tap(([queryParams, user]) => {
+					this.applyTimeFormat(queryParams, user.timeFormat);
+					this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
 				}),
+				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Applies the appropriate time format based on query parameters, organization settings, and employee settings.
+	 * @param queryParams The query parameters from the route.
+	 * @param organization The organization details.
+	 * @param employee The selected employee details.
+	 */
+	private applyTimeFormat(queryParams: Params, timeFormat: number): void {
+		const { time_format } = queryParams;
+
+		// Apply query parameters first
+		if (time_format) {
+			this.selectTimeFormat(time_format);
+		} else {
+			this.selectTimeFormat(timeFormat);
+		}
+	}
+
+	/**
+	 * Applies the appropriate time zone based on query parameters and organization settings.
+	 * @param queryParams The query parameters from the route.
+	 * @param organization The organization details.
+	 */
+	private applyTimeZone(queryParams: Params, timeZone: TimeZoneEnum): void {
+		const { time_zone } = queryParams;
+
+		// Apply query parameters first
+		if (time_zone) {
+			this.selectTimeZone(time_zone);
+		} else {
+			this.selectTimeZone(timeZone);
+		}
 	}
 
 	/**
@@ -169,6 +164,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Sets the selected timezone based on the provided timezone enum value.
+	 *
 	 * @param timeZone The timezone enum value to set.
 	 */
 	selectTimeZone(timeZone: TimeZoneEnum): void {
@@ -185,6 +181,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Updates the selected time format and updates the corresponding query parameter.
+	 *
 	 * @param timeFormat The time format to update.
 	 */
 	async updateSelectedTimeFormat(timeFormat: TimeFormatEnum): Promise<void> {
@@ -205,6 +202,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Updates the selected time zone and updates the corresponding query parameter.
+	 *
 	 * @param timeZone The time zone to update.
 	 */
 	async updateSelectedTimeZone(timeZone: TimeZoneEnum): Promise<void> {
@@ -225,6 +223,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Retrieves the timezone abbreviation with the region and city for the given zone.
+	 *
 	 * @returns
 	 */
 	getTimeZoneWithOffset(): string {
@@ -250,6 +249,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Gets the time zone based on the selected time zone.
+	 *
 	 * @returns The time zone string.
 	 */
 	getTimeZone(zone: string): string {
@@ -269,6 +269,15 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 				break;
 		}
 		return timeZone;
+	}
+
+	/**
+	 * Checks if the current user has the permission to change the selected employee.
+	 *
+	 * @returns A boolean indicating if the user has the CHANGE_SELECTED_EMPLOYEE permission.
+	 */
+	private hasChangeSelectedEmployeePermission(): boolean {
+		return this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 	}
 
 	/**
