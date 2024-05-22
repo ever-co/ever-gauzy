@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, filter, take, takeLast } from 'rxjs';
+import { combineLatest, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
@@ -22,7 +22,7 @@ import { Store } from '../../../../@core/services';
 	templateUrl: './timezone-filter.component.html',
 	styleUrls: ['./timezone-filter.component.scss']
 })
-export class TimezoneFilterComponent implements OnInit, OnDestroy {
+export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy {
 	timeZoneOptions: { value: TimeZoneEnum; label: string }[] = [
 		{ value: TimeZoneEnum.UTC_TIMEZONE, label: 'UTC' },
 		{ value: TimeZoneEnum.ORG_TIMEZONE, label: 'Org Timezone' },
@@ -87,6 +87,10 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 			filter((organization: IOrganization) => !!organization),
 			distinctUntilChange()
 		);
+		const storeEmployee$ = this._store.selectedEmployee$.pipe(
+			filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+			filter(() => this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+		);
 
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
@@ -116,15 +120,11 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 
-		const storeEmployee$ = this._store.selectedEmployee$.pipe(
-			filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
-			filter(() => this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
-		);
 		storeEmployee$
 			.pipe(
 				tap((employee: ISelectedEmployee) => {
 					console.log('route store employee');
-					console.log(employee.timeFormat);
+					console.log(employee.timeFormat, employee.timeZone);
 
 					// Only update the time format if it's not present in the query parameters
 					if (!this._route.snapshot.queryParamMap.get('time_format') && employee.timeFormat) {
@@ -134,7 +134,9 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
 
+	ngAfterViewInit() {
 		const storeUser$ = this._store.user$.pipe(
 			filter((user: IUser) => !!user),
 			filter(() => !this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
