@@ -28,6 +28,7 @@
 			"../../../packages/common",
 			"../../../packages/config",
 			"../../../packages/contracts",
+			"../../../packages/ui-config",
 			"../../../packages/plugins/integration-ai",
 			"../../../packages/plugins/integration-hubstaff",
 			"../../../packages/plugins/integration-upwork",
