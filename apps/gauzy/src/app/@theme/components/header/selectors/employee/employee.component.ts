@@ -23,7 +23,7 @@ import {
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, map, Observable, Subject } from 'rxjs';
 import { filter, debounceTime, tap, switchMap } from 'rxjs/operators';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 import { EmployeesService, EmployeeStore, Store, ToastrService } from './../../../../../@core/services';
@@ -142,6 +142,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	subject$: Subject<any> = new Subject();
 
 	constructor(
+		private readonly _router: Router,
+		private readonly _navigationService: NavigationService,
 		private readonly _employeesService: EmployeesService,
 		private readonly _store: Store,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
@@ -149,8 +151,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		private readonly _cdRef: ChangeDetectorRef,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly _toastrService: ToastrService,
-		private readonly _truncatePipe: TruncatePipe,
-		private readonly _router: Router
+		private readonly _truncatePipe: TruncatePipe
 	) {}
 
 	ngOnInit() {
@@ -230,8 +231,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		this._cdRef.detectChanges();
 	}
 
-	/*
+	/**
 	 * After create new employee pushed on header selector
+	 * @param employees
 	 */
 	createEmployee(employees: IEmployee[]) {
 		const people: ISelectedEmployee[] = this.people || [];
@@ -251,8 +253,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
-	/*
+	/**
 	 * After delete remove employee from header selector
+	 * @param employee
 	 */
 	deleteEmployee(employee: IEmployee) {
 		let people: ISelectedEmployee[] = this.people || [];
@@ -262,6 +265,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		this.people = [...people].filter(isNotEmpty);
 	}
 
+	/**
+	 *
+	 * @param term
+	 * @param item
+	 * @returns
+	 */
 	searchEmployee(term: string, item: any) {
 		if (item.firstName && item.lastName) {
 			return (
@@ -275,6 +284,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
+	/**
+	 *
+	 * @param employee
+	 */
 	async selectEmployee(employee: ISelectedEmployee) {
 		if (!this.skipGlobalChange) {
 			this._store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
@@ -292,13 +305,13 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	 * @param params An object containing key-value pairs representing the parameters to set.
 	 */
 	private async setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
-		await this._router.navigate([], {
-			relativeTo: this._activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge'
-		});
+		await this._navigationService.updateQueryParams(params);
 	}
 
+	/**
+	 *
+	 * @param employeeId
+	 */
 	async selectEmployeeById(employeeId: string) {
 		const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
 		if (employee) {
@@ -330,6 +343,9 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
+	/**
+	 *
+	 */
 	private onSelectEmployee() {
 		if (!this.selectedEmployee && isNotEmpty(this.people)) {
 			// This is so selected employee doesn't get reset when it's already set from somewhere else
@@ -340,6 +356,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		}
 	}
 
+	/**
+	 *
+	 * @param organization
+	 * @param selectedDateRange
+	 * @returns
+	 */
 	loadWorkingEmployeesIfRequired = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		//If no organization, then something is wrong
 		if (!organization) {
@@ -350,6 +372,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 		await this.getEmployees(organization, selectedDateRange);
 	};
 
+	/**
+	 *
+	 * @param organization
+	 * @param selectedDateRange
+	 * @returns
+	 */
 	private getEmployees = async (organization: IOrganization, selectedDateRange: IDateRangePicker) => {
 		if (!organization) {
 			this.people = [];
@@ -426,13 +454,8 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			const [firstName, lastName] = [chunks.shift(), chunks.join(' ')];
 
 			this._router.navigate(['/pages/employees/'], {
-				queryParams: {
-					openAddDialog: true
-				},
-				state: {
-					firstName,
-					lastName
-				}
+				queryParams: { openAddDialog: true },
+				state: { firstName, lastName }
 			});
 		} catch (error) {
 			this._toastrService.error(error);

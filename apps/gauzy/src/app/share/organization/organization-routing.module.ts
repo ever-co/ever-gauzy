@@ -7,18 +7,13 @@ const routes: Routes = [
 	{
 		path: '',
 		component: OrganizationComponent,
-		runGuardsAndResolvers: 'always',
 		data: {
-			relations: [
-				'skills',
-				'awards',
-				'languages',
-				'languages.language'
-			]
+			relations: ['skills', 'awards', 'languages', 'languages.language']
 		},
 		resolve: {
 			organization: PublicOrganizationResolver
-		}
+		},
+		runGuardsAndResolvers: 'always'
 	},
 	{
 		path: ':slug/:employeeId',
@@ -30,4 +25,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class OrganizationRoutingModule { }
+export class OrganizationRoutingModule {}

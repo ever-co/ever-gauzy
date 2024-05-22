@@ -50,6 +50,17 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
 
+	/*
+	 * Getter & Setter
+	 */
+	private _timezone: string = moment.tz.guess();
+	get timezone(): string {
+		return this._timezone;
+	}
+	@Input() set timezone(value: string) {
+		this._timezone = value;
+	}
+
 	/**
 	 * ngx-daterangepicker-material local configuration
 	 */
@@ -119,6 +130,9 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			}
 			this._selectedDateRange = range;
 			this.range$.next(range);
+
+			// Update query parameters and navigate
+			this.navigateWithQueryParams();
 		}
 	}
 
@@ -356,9 +370,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		this.selectedDateRange = { ...this.selectedDateRange, ...nextRange };
 		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
 		this.setFutureStrategy();
-
-		// Update query parameters and navigate
-		await this.navigateWithQueryParams();
 	}
 
 	/**
@@ -369,9 +380,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
 		this.selectedDateRange = { ...this.selectedDateRange, ...previousRange };
 		this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-
-		// Update query parameters and navigate
-		await this.navigateWithQueryParams();
 	}
 
 	/**
@@ -386,7 +394,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const formattedStartDate = moment(startDate).clone().format('YYYY-MM-DD');
 		const formattedEndDate = moment(endDate).clone().format('YYYY-MM-DD');
 
-		await this._navigationService.navigate([], {
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
 			date: formattedStartDate,
 			date_end: formattedEndDate,
 			unit_of_time: this.unitOfTime,
@@ -435,9 +444,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 
 			this.selectedDateRange = range;
 			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-
-			// Update query parameters and navigate
-			this.navigateWithQueryParams();
 		}
 	}
 
@@ -516,9 +522,6 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 						isCustomDate: this.isCustomDate({ startDate: start, endDate: end })
 					};
 					this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
-
-					// Update query parameters and navigate
-					this.navigateWithQueryParams();
 				}),
 				untilDestroyed(this)
 			)

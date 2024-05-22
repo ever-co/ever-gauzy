@@ -1,39 +1,27 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BackNavigationModule } from './back-navigation';
-import { Pipes } from './pipes';
-import { Components } from './components';
 import { RouterModule } from '@angular/router';
+import { BackNavigationModule } from './back-navigation';
+import { Components } from './components';
 import { AlertModalModule } from './alert-modal';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DirectivesModule } from './directives/directives.module';
+import { PipesModule } from './pipes/pipes.module';
 import { EmployeeStartWorkModule } from './employee/employee-start-work/employee-start-work.module';
 import { TaskBadgeViewComponent } from './tasks/task-badge-view/task-badge-view.component';
 
-const Modules = [
-	NgxPermissionsModule,
-	BackNavigationModule,
-	DirectivesModule,
-	EmployeeStartWorkModule,
-];
+const Modules = [NgxPermissionsModule, BackNavigationModule, DirectivesModule, PipesModule, EmployeeStartWorkModule];
 
 @NgModule({
-	declarations: [...Pipes, ...Components, TaskBadgeViewComponent],
+	declarations: [...Components, TaskBadgeViewComponent],
 	imports: [CommonModule, RouterModule, ...Modules],
-	exports: [
-		AlertModalModule,
-		...Pipes,
-		...Components,
-		...Modules,
-		TaskBadgeViewComponent,
-	],
-	providers: [...Pipes],
+	exports: [AlertModalModule, ...Components, ...Modules, TaskBadgeViewComponent]
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {
 		return {
 			ngModule: SharedModule,
-			providers: [],
+			providers: []
 		};
 	}
 }
