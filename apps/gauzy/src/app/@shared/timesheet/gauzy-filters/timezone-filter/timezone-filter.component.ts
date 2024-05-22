@@ -1,11 +1,19 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, filter } from 'rxjs';
+import { combineLatest, filter, take, takeLast } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DEFAULT_TIME_FORMATS, ISelectedEmployee, TimeFormatEnum, TimeZoneEnum } from '@gauzy/contracts';
+import {
+	DEFAULT_TIME_FORMATS,
+	IOrganization,
+	ISelectedEmployee,
+	IUser,
+	PermissionsEnum,
+	TimeFormatEnum,
+	TimeZoneEnum
+} from '@gauzy/contracts';
 import { Store } from '../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -23,6 +31,28 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	timeFormatsOptions = DEFAULT_TIME_FORMATS;
 	selectedTimeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 	selectedTimeZone: TimeZoneEnum = TimeZoneEnum.UTC_TIMEZONE;
+
+	/*
+	 * Getter & Setter
+	 */
+	private _isTimezone: boolean = true;
+	get isTimezone(): boolean {
+		return this._isTimezone;
+	}
+	@Input() set isTimezone(value: boolean) {
+		this._isTimezone = value;
+	}
+
+	/*
+	 * Getter & Setter
+	 */
+	private _isTimeformat: boolean = true;
+	get isTimeformat(): boolean {
+		return this._isTimeformat;
+	}
+	@Input() set isTimeformat(value: boolean) {
+		this._isTimeformat = value;
+	}
 
 	/*
 	 * Getter & Setter
@@ -48,42 +78,76 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	 *
 	 */
 	ngOnInit(): void {
-		const storeUser$ = this._store.user$;
-		const storeOrganization$ = this._store.selectedOrganization$;
-		const storeEmployee$ = this._store.selectedEmployee$;
+		// Extract query parameter
+		const queryParams$ = this._route.queryParams.pipe(
+			filter((params: Params) => !!params),
+			distinctUntilChange()
+		);
+		const storeOrganization$ = this._store.selectedOrganization$.pipe(
+			filter((organization: IOrganization) => !!organization),
+			distinctUntilChange()
+		);
 
-		/** */
-		combineLatest([storeUser$, storeOrganization$])
+		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
-				filter(([user, organization]) => !!user && !!organization),
 				distinctUntilChange(),
-				tap(([user, organization]) => {
-					const timeFormat = organization.timeFormat || user.timeFormat;
-					this.selectedTimeFormat = timeFormat || TimeFormatEnum.FORMAT_12_HOURS;
+				tap(([queryParams, organization]) => {
+					console.log('Combined query params and store organization');
+					const { time_zone, time_format } = queryParams;
+					//
+					const permission = this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+					// Apply query parameters first
+					if (time_format) {
+						this.selectTimeFormat(time_format);
+					} else if (permission && organization.timeFormat) {
+						this.selectTimeFormat(organization.timeFormat);
+					}
+
+					// Apply query parameters first
+					if (time_zone) {
+						this.selectTimeZone(time_zone);
+					} else if (permission && organization.timeZone) {
+						this.selectTimeZone(TimeZoneEnum.ORG_TIMEZONE);
+					}
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
 			)
 			.subscribe();
 
+		const storeEmployee$ = this._store.selectedEmployee$.pipe(
+			filter((employee: ISelectedEmployee) => !!employee && !!employee.id),
+			filter(() => this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+		);
 		storeEmployee$
 			.pipe(
-				filter((employee: ISelectedEmployee) => !!employee.id && !!employee.timeFormat),
 				tap((employee: ISelectedEmployee) => {
-					this.updateSelectedTimeFormat(employee.timeFormat);
-				})
+					console.log('route store employee');
+					console.log(employee.timeFormat);
+
+					// Only update the time format if it's not present in the query parameters
+					if (!this._route.snapshot.queryParamMap.get('time_format') && employee.timeFormat) {
+						this.selectTimeFormat(employee.timeFormat);
+					}
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 
-		// Extract query parameter
-		this._route.queryParams
+		const storeUser$ = this._store.user$.pipe(
+			filter((user: IUser) => !!user),
+			filter(() => !this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+		);
+		storeUser$
 			.pipe(
-				tap(({ time_zone, time_format }) => {
-					if (time_format) {
-						this.selectTimeFormat(time_format);
+				tap((user: IUser) => {
+					console.log('route store user');
+					if (user.timeFormat) {
+						this.selectTimeFormat(user.timeFormat);
 					}
-					if (time_zone) {
-						this.selectTimeZone(time_zone);
+					if (user.timeZone) {
+						this.selectTimeZone(TimeZoneEnum.MINE_TIMEZONE);
 					}
 				}),
 				untilDestroyed(this)
@@ -123,7 +187,9 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	 */
 	async updateSelectedTimeFormat(timeFormat: TimeFormatEnum): Promise<void> {
 		// Update the selected time format
-		this.selectedTimeFormat = timeFormat;
+		this.selectTimeFormat(timeFormat);
+
+		this.timeFormatChange.emit(timeFormat);
 
 		if (this.navigate) {
 			// Update query parameter 'time_format'
@@ -133,8 +199,6 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 				queryParamsHandling: 'merge'
 			});
 		}
-
-		this.timeFormatChange.emit(this.selectedTimeFormat);
 	}
 
 	/**
@@ -143,7 +207,9 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	 */
 	async updateSelectedTimeZone(timeZone: TimeZoneEnum): Promise<void> {
 		// Update the selected time zone
-		this.selectedTimeZone = timeZone;
+		this.selectTimeZone(timeZone);
+
+		this.timeZoneChange.emit(this.getTimeZone(this.selectedTimeZone));
 
 		if (this.navigate) {
 			// Update query parameter 'time_zone'
@@ -153,8 +219,6 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 				queryParamsHandling: 'merge'
 			});
 		}
-
-		this.timeZoneChange.emit(this.getTimeZone());
 	}
 
 	/**
@@ -162,7 +226,7 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	 * @returns
 	 */
 	getTimeZoneWithOffset(): string {
-		const zone = this.getTimeZone();
+		const zone = this.getTimeZone(this.selectedTimeZone);
 
 		let region = '';
 		let city = '';
@@ -186,13 +250,13 @@ export class TimezoneFilterComponent implements OnInit, OnDestroy {
 	 * Gets the time zone based on the selected time zone.
 	 * @returns The time zone string.
 	 */
-	getTimeZone(): string {
+	getTimeZone(zone: string): string {
 		const defaultTimeZone = 'Etc/UTC';
 		let timeZone: string;
 
-		switch (this.selectedTimeZone) {
+		switch (zone) {
 			case TimeZoneEnum.MINE_TIMEZONE:
-				timeZone = this._store.user?.timeZone || defaultTimeZone;
+				timeZone = this._store.user?.timeZone || moment.tz.guess();
 				break;
 			case TimeZoneEnum.ORG_TIMEZONE:
 				timeZone = this._store.selectedOrganization?.timeZone || defaultTimeZone;
