@@ -56,7 +56,6 @@ import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
-import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { initializeSentry } from './sentry';
 
@@ -107,10 +106,7 @@ if (environment.SENTRY_DSN) {
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
 		FeatureToggleModule,
-		NgxPermissionsModule.forRoot(),
-		NgxDaterangepickerMd.forRoot({
-			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-		})
+		NgxPermissionsModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [

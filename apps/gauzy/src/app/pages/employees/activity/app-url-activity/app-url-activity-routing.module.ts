@@ -20,8 +20,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'urls',
@@ -39,8 +38,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	}
 ];
 

@@ -43,7 +43,8 @@ import {
 	IDateRangePicker,
 	ITimeLogFilters,
 	IUser,
-	ITimeLogTodayFilters
+	ITimeLogTodayFilters,
+	TimeFormatEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/ui-sdk/common';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
@@ -795,4 +796,16 @@ export class TimeTrackingComponent
 		const window = this.windows.filter((win: GuiDrag) => win.position === position)[0];
 		return window.hide;
 	}
+
+	/**
+	 * Handles the event when the time format is changed.
+	 * @param timeformat The new time format.
+	 */
+	timeFormatChanged(timeformat: TimeFormatEnum): void {}
+
+	/**
+	 * Handles the event when the time zone is changed.
+	 * @param timezone The new time zone.
+	 */
+	timeZoneChanged(timezone: string): void {}
 }

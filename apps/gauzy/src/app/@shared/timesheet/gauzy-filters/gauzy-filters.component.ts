@@ -34,6 +34,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
+	@Input() hasTimeZoneFilter = true;
 
 	public hasFilterApplies: boolean;
 	public activityLevel = ActivityLevel;

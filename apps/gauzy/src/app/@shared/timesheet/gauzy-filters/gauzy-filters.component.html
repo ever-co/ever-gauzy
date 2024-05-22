@@ -1,6 +1,11 @@
 <div class="row col-auto main-wrapper">
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">
+			<ng-container *ngIf="hasTimeZoneFilter">
+				<div class="col-auto filter-item single-filter-wrapper">
+					<ga-timezone-filter></ga-timezone-filter>
+				</div>
+			</ng-container>
 			<ng-container *ngIf="hasSourceFilter">
 				<div class="col-auto filter-item single-filter-wrapper">
 					<nb-select
@@ -9,10 +14,7 @@
 						[(selected)]="filters.source"
 						(selectedChange)="triggerFilterChange()"
 					>
-						<nb-option
-							*ngFor="let source of timeLogSourceSelectors"
-							[value]="source.value"
-						>
+						<nb-option *ngFor="let source of timeLogSourceSelectors" [value]="source.value">
 							{{ source.label | replace : '_' : ' ' | titlecase }}
 						</nb-option>
 					</nb-select>
@@ -29,8 +31,8 @@
 						nbPopoverPlacement="bottom"
 					>
 						<span *ngIf="activityLevel?.start > 0 || activityLevel?.end < 100; else selectLabel">
-							{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} :
-							{{ activityLevel?.start }}% - {{ activityLevel?.end }}%
+							{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} : {{ activityLevel?.start }}% -
+							{{ activityLevel?.end }}%
 						</span>
 						<ng-template #selectLabel>
 							{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
@@ -57,10 +59,7 @@
 						[(selected)]="filters.logType"
 						(selectedChange)="triggerFilterChange()"
 					>
-						<nb-option
-							*ngFor="let logType of TimeLogType | keyvalue"
-							[value]="logType.key"
-						>
+						<nb-option *ngFor="let logType of TimeLogType | keyvalue" [value]="logType.key">
 							{{ logType.value | titlecase }}
 						</nb-option>
 					</nb-select>
@@ -68,11 +67,7 @@
 			</ng-container>
 			<ng-container *ngIf="hasFilterApplies">
 				<div class="col-auto single-filter-wrapper clear-fitlers">
-					<button
-						nbButton
-						status="danger"
-						(click)="clearFilters()"
-					>
+					<button nbButton status="danger" (click)="clearFilters()">
 						{{ 'BUTTONS.CLEAR' | translate }}
 					</button>
 				</div>

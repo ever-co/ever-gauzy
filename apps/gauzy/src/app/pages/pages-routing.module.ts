@@ -47,8 +47,7 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						}
 					},
 					{
 						path: 'expenses',
@@ -60,8 +59,7 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						}
 					},
 					{
 						path: 'expense-recurring',
@@ -150,8 +148,7 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						}
 					},
 					{
 						path: 'payments',
@@ -166,8 +163,7 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						}
 					},
 					{
 						path: 'pipelines',
@@ -217,8 +213,7 @@ const routes: Routes = [
 						},
 						resolve: {
 							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						}
 					},
 					{
 						path: 'event-types',

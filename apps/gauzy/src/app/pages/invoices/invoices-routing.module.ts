@@ -32,8 +32,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'add',
@@ -69,8 +68,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'view/:id',
@@ -150,8 +148,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'payments/:id',

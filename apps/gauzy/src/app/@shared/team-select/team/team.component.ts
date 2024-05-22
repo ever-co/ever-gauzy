@@ -6,6 +6,7 @@ import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { NavigationService } from '@gauzy/ui-sdk/core';
 import { ALL_TEAM_SELECTED } from './default-team';
 import { OrganizationTeamsService, Store, ToastrService } from '../../../@core/services';
 import { TruncatePipe } from '../../pipes';
@@ -115,7 +116,8 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
-		private readonly _truncatePipe: TruncatePipe
+		private readonly _truncatePipe: TruncatePipe,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
@@ -323,19 +325,19 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	selectTeam(team: IOrganizationTeam): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedTeam = team || ALL_TEAM_SELECTED;
-			this.setAttributesToParams({ teamId: team?.id || null });
+			this.setAttributesToParams({ teamId: team?.id });
 		}
 		this.selectedTeam = team || ALL_TEAM_SELECTED;
 		this.teamId = this.selectedTeam.id;
 		this.onChanged.emit(team);
 	}
 
-	private setAttributesToParams(params: Object) {
-		this._router.navigate([], {
-			relativeTo: this._activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge'
-		});
+	/**
+	 * Sets attributes to the current navigation parameters.
+	 * @param params An object containing key-value pairs representing the parameters to set.
+	 */
+	private async setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
+		await this._navigationService.updateQueryParams(params);
 	}
 
 	selectTeamById(teamId: string) {

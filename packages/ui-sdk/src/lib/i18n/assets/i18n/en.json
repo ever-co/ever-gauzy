@@ -543,6 +543,7 @@
 			"PROJECTS": "Choose Projects",
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"TIME_FORMAT": "Time Format",
 			"START_TIME": "HH:mm",
 			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Add Color",
