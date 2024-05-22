@@ -127,6 +127,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isDefault?: boolean;
 	profile_link?: string;
 	valueDate?: Date;
+	totalEmployees?: number;
 	imageUrl?: string;
 	currency: CurrenciesEnum;
 	client_focus?: string;

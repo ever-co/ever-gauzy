@@ -7,78 +7,79 @@ import { EditOrganizationLocationComponent } from './edit-organization-settings/
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationResolver } from './edit-organization.resolver';
 import { EditOrganizationComponent } from './edit-organization.component';
-import { EmployeeCountResolver } from '../../../@core/resolvers';
 import { EditOrganizationTaskSettingResolver } from './edit-organization-task-setting.resolver';
 
 export function redirectTo() {
-    return '/pages/dashboard';
+	return '/pages/dashboard';
 }
 
 const routes: Routes = [
-    {
-        path: ':id',
-        component: EditOrganizationComponent,
-        canActivate: [NgxPermissionsGuard],
-        data: {
-            permissions: {
-                only: [PermissionsEnum.ALL_ORG_EDIT],
-                redirectTo
-            }
-        },
-        resolve: {
-            organization: EditOrganizationResolver,
-            employeesCount: EmployeeCountResolver,
-            organizationTaskSetting: EditOrganizationTaskSettingResolver
-        },
-        runGuardsAndResolvers: 'always',
-        children: [
-            {
-                path: '',
-                redirectTo: 'main',
-                pathMatch: 'full'
-            },
-            {
-                path: 'main',
-                component: EditOrganizationMainComponent,
-                data: {
-                    relations: ['tags'],
-                    selectors: {
-                        project: false,
-                        employee: false,
-                        date: false
-                    }
-                }
-            },
-            {
-                path: 'location',
-                component: EditOrganizationLocationComponent,
-                data: {
-                    relations: ['contact'],
-                    selectors: {
-                        project: false,
-                        employee: false,
-                        date: false
-                    }
-                }
-            },
-            {
-                path: 'settings',
-                component: EditOrganizationOtherSettingsComponent,
-                data: {
-                    relations: ['accountingTemplates'],
-                    selectors: {
-                        project: false,
-                        employee: false,
-                        date: false
-                    }
-                }
-            }
-        ]
-    }
+	{
+		path: ':id',
+		component: EditOrganizationComponent,
+		canActivate: [NgxPermissionsGuard],
+		data: {
+			permissions: {
+				only: [PermissionsEnum.ALL_ORG_EDIT],
+				redirectTo
+			}
+		},
+		resolve: {
+			organization: EditOrganizationResolver,
+			organizationTaskSetting: EditOrganizationTaskSettingResolver
+		},
+		runGuardsAndResolvers: 'always',
+		children: [
+			{
+				path: '',
+				redirectTo: 'main',
+				pathMatch: 'full'
+			},
+			{
+				path: 'main',
+				component: EditOrganizationMainComponent,
+				data: {
+					relations: ['tags'],
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false
+					}
+				}
+			},
+			{
+				path: 'location',
+				component: EditOrganizationLocationComponent,
+				data: {
+					relations: ['contact'],
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false
+					}
+				}
+			},
+			{
+				path: 'settings',
+				component: EditOrganizationOtherSettingsComponent,
+				data: {
+					relations: ['accountingTemplates'],
+					selectors: {
+						project: false,
+						team: false,
+						employee: false,
+						date: false
+					}
+				}
+			}
+		]
+	}
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule]
+	imports: [RouterModule.forChild(routes)],
+	exports: [RouterModule]
 })
-export class EditOrganizationRoutingModule { }
+export class EditOrganizationRoutingModule {}
