@@ -14,8 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Environment } from '@env/model';
-import { environment } from '@env/environment';
+import { Environment, environment } from '@gauzy/ui-config';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
@@ -123,7 +122,12 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
+	/**
+	 * Retrieves daily logs if the organization and request are set.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async getLogs(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
@@ -132,7 +136,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			const payloads = this.payloads$.getValue();
 			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving daily logs report', error);
+			console.error('Error while retrieving daily logs report', error);
 		} finally {
 			this.loading = false;
 		}

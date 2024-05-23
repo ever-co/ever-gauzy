@@ -32,7 +32,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { CloudinaryModule } from '@cloudinary/ng';
-import { environment } from '@env/environment';
+import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ServerConnectionService } from './@core/services/server-connection.service';
 import { Store } from './@core/services/store.service';
@@ -56,9 +56,7 @@ import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { CookieService } from 'ngx-cookie-service';
-import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
-import { GAUZY_ENV } from '@env/environment.tokens';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {
@@ -108,10 +106,7 @@ if (environment.SENTRY_DSN) {
 		environment.production ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
 		FeatureToggleModule,
-		NgxPermissionsModule.forRoot(),
-		NgxDaterangepickerMd.forRoot({
-			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-		})
+		NgxPermissionsModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [

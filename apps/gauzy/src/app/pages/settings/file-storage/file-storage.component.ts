@@ -5,7 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import {
 	FileStorageProviderEnum,
 	HttpStatus,

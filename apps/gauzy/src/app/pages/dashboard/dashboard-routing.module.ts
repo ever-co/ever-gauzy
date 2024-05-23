@@ -33,8 +33,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				},
-				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+				}
 			},
 			{
 				path: 'hr',
@@ -49,8 +48,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				},
-				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+				}
 			},
 			{
 				path: 'time-tracking',
@@ -62,8 +60,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				},
-				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+				}
 			},
 			{
 				path: 'project-management',
@@ -75,8 +72,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				},
-				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+				}
 			},
 			{
 				path: 'teams',
@@ -99,8 +95,7 @@ const routes: Routes = [
 				},
 				resolve: {
 					dates: DateRangePickerResolver
-				},
-				runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+				}
 			}
 		]
 	}

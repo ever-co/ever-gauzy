@@ -22,6 +22,7 @@
 	"workspaces": {
 		"packages": [
 			"../../../packages/contracts",
+			"../../../packages/ui-config",
 			"../../../packages/desktop-window",
 			"../../../packages/desktop-libs"
 		]

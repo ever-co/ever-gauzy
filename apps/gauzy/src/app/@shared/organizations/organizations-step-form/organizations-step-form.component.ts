@@ -30,12 +30,12 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import { retrieveNameFromEmail } from '@gauzy/ui-sdk/common';
+import { environment as ENV } from '@gauzy/ui-config';
+import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms';
 import { LeafletMapComponent } from '../../forms/maps';
 import { LocationFormComponent } from '../../forms/location';
-import { environment as ENV } from './../../../../environments/environment';
 import { Store, ToastrService } from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

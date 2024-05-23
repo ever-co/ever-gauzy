@@ -135,10 +135,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the client budget reports from the timesheetService
-			const clients: IClientBudgetLimitReport[] = await this.timesheetService.getClientBudgetLimit(payloads);
-
-			// Update the 'clients' property with the retrieved data
-			this.clients = clients;
+			this.clients = await this.timesheetService.getClientBudgetLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
 			console.error('Error while retrieving client budget reports', error);

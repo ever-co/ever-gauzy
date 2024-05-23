@@ -1,44 +1,35 @@
 <nb-card class="org-edit card-scroll">
-    <nb-card-header class="header">
-        <ng-container
-            *ngIf="organization; then organizationTemplate; else selectTemplate">
-        </ng-container>
-    </nb-card-header>
-    <nb-card-body>
-        <ngx-edit-organization-settings
-            [organization]="organization"
-        ></ngx-edit-organization-settings>
-    </nb-card-body>
+	<nb-card-header class="header">
+		<ng-container *ngIf="organization; then organizationTemplate; else selectTemplate"> </ng-container>
+	</nb-card-header>
+	<nb-card-body>
+		<ngx-edit-organization-settings [organization]="organization"></ngx-edit-organization-settings>
+	</nb-card-body>
 </nb-card>
 <ng-template #organizationTemplate>
-    <div class="header-container">
-        <div class="org-info">
-            <img
-                class="org-image"
-                [src]="organization?.imageUrl"
-                alt="Organization Avatar"
-            />
-            <div class="org-details">
-                <span class="org-name">
-                    {{ organization?.name }}
-                </span>
-                <div class="org-position">
-                    {{ employeesCount }}
-                    {{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
-                </div>
-            </div>
-        </div>
-        <div>
-            <ng-template ngxPermissionsOnly="PUBLIC_PAGE_EDIT">
-                <span class="edit-public-page" (click)="editPublicPage()">
-                    <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-                    {{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
-                </span>
-            </ng-template>
-        </div>
-    </div>
+	<div class="header-container">
+		<div class="org-info">
+			<img class="org-image" [src]="organization?.imageUrl" alt="Organization Avatar" />
+			<div class="org-details">
+				<span class="org-name">
+					{{ organization?.name }}
+				</span>
+				<div class="org-position">
+					{{ organization?.totalEmployees | json }}
+					{{ 'ORGANIZATIONS_PAGE.EMPLOYEES' | translate }}
+				</div>
+			</div>
+		</div>
+		<div>
+			<ng-template ngxPermissionsOnly="PUBLIC_PAGE_EDIT">
+				<span class="edit-public-page" (click)="editPublicPage()">
+					<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+					{{ 'ORGANIZATIONS_PAGE.EDIT_PUBLIC_PAGE' | translate }}
+				</span>
+			</ng-template>
+		</div>
+	</div>
 </ng-template>
 <ng-template #selectTemplate>
-    <h6>{{ 'POP_UPS.SELECT_ORGANIZATION' | translate }}</h6>
+	<h6>{{ 'POP_UPS.SELECT_ORGANIZATION' | translate }}</h6>
 </ng-template>
-

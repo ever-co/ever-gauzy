@@ -7,8 +7,8 @@ import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { environment } from '@gauzy/ui-config';
 import { RolePermissionsService, RoleService, Store, ToastrService } from '../../../@core/services';
-import { environment } from './../../../../environments/environment';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

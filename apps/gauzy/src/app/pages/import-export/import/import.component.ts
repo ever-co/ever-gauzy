@@ -9,7 +9,7 @@ import { IImportHistory, ImportTypeEnum, ImportStatusEnum } from '@gauzy/contrac
 import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { saveAs } from 'file-saver';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { ImportService, Store } from '../../../@core/services';

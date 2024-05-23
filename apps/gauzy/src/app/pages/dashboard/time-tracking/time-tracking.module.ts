@@ -25,6 +25,7 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
 import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
 import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/window-layout.module';
+import { TimezoneFilterModule } from '../../../@shared/timesheet/gauzy-filters/timezone-filter/timezone-filter.module';
 
 @NgModule({
 	imports: [
@@ -39,6 +40,7 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		NbToggleModule,
 		NbIconModule,
 		NbBadgeModule,
+		NbPopoverModule,
 		ScreenshotsItemModule,
 		ActivityItemModule,
 		NgChartsModule,
@@ -49,8 +51,8 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		CounterPointModule,
 		WidgetLayoutModule,
 		WindowLayoutModule,
-		NbPopoverModule,
-		SwiperModule
+		SwiperModule,
+		TimezoneFilterModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

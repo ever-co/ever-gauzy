@@ -22,9 +22,7 @@ import {
 	Delete,
 	Param,
 	Put,
-	Req,
-	ValidationPipe,
-	UsePipes
+	Req
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -57,10 +55,20 @@ export class InviteController {
 		private readonly queryBus: QueryBus
 	) {}
 
+	/**
+	 * This method handles the creation of multiple email invites.
+	 * It receives the invite details and language code from the request body,
+	 * validates the input, and uses a command bus to execute the invite creation command.
+	 *
+	 * @param entity - The data transfer object containing invite details.
+	 * @param languageCode - The language code for localization purposes.
+	 * @returns A promise that resolves to the output of the email invite creation process.
+	 */
 	@ApiOperation({ summary: 'Create email invites' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'The record has been successfully created.'
+		description: 'The record has been successfully created.',
+		type: Invite
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
@@ -79,10 +87,40 @@ export class InviteController {
 	}
 
 	/**
+	 * This method handles resending an invite.
+	 * It receives the invite details and language code from the request body,
+	 * validates the input, and uses a command bus to execute the invite resend command.
+	 *
+	 * @param entity - The data transfer object containing invite details to be resent.
+	 * @param languageCode - The language code for localization purposes.
+	 * @returns A promise that resolves to either the update result or the invite entity.
+	 */
+	@ApiOperation({ summary: 'Resend invite.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'The record has been successfully updated.',
+		type: Invite
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Post('/resend')
+	@UseValidationPipe()
+	async resendInvite(
+		@Body() entity: ResendInviteDTO,
+		@LanguageDecorator() languageCode: LanguagesEnum
+	): Promise<UpdateResult | Invite> {
+		return await this.commandBus.execute(new InviteResendCommand(entity, languageCode));
+	}
+
+	/**
 	 * Validate invite by token and email
 	 *
-	 * @param options
-	 * @returns
+	 * @param options - The query parameters containing email and token.
+	 * @returns A promise that resolves to the invite if found.
 	 */
 	@ApiOperation({ summary: 'Get invite.' })
 	@ApiResponse({
@@ -109,9 +147,19 @@ export class InviteController {
 	/**
 	 * Validate invite by code and email
 	 *
-	 * @param body
-	 * @returns
+	 * @param body - The body containing email and code.
+	 * @returns A promise that resolves to the invite if found.
 	 */
+	@ApiOperation({ summary: 'Validate invite by code and email.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invite',
+		type: Invite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
 	@Public()
 	@Post('validate-by-code')
 	@UseValidationPipe({ whitelist: true })
@@ -124,6 +172,14 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Accept employee/user/candidate invite.
+	 *
+	 * @param entity - The data transfer object containing invite acceptance details.
+	 * @param origin - The origin header from the request.
+	 * @param languageCode - The language code for localization purposes.
+	 * @returns A promise that resolves to the result of the invite acceptance process.
+	 */
 	@ApiOperation({ summary: 'Accept employee/user/candidate invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -134,7 +190,7 @@ export class InviteController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Public()
-	@Post('accept')
+	@Post('/accept')
 	async acceptInvitation(
 		@Body() entity: IInviteAcceptInput,
 		@Headers('origin') origin: string,
@@ -144,29 +200,13 @@ export class InviteController {
 	}
 
 	/**
-	 * Find All Invites
+	 * Accept organization contact invite.
 	 *
-	 * @param options
-	 * @returns
+	 * @param input - The data transfer object containing invite acceptance details.
+	 * @param request - The incoming HTTP request, used to extract the origin header.
+	 * @param languageCode - The language code for localization purposes.
+	 * @returns A promise that resolves to the result of the invite acceptance process.
 	 */
-	@ApiOperation({ summary: 'Find all invites.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found invites',
-		type: Invite
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
-	@Get()
-	@UseValidationPipe()
-	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
-		return await this.inviteService.findAllInvites(options);
-	}
-
 	@ApiOperation({ summary: 'Accept organization contact invite.' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -176,7 +216,7 @@ export class InviteController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post('contact')
+	@Post('/contact')
 	@Public()
 	async acceptOrganizationContactInvite(
 		@Body() input: IOrganizationContactAcceptInviteInput,
@@ -188,49 +228,13 @@ export class InviteController {
 	}
 
 	/**
-	 * Resend invite
+	 * Update an existing record
 	 *
-	 * @param entity
-	 * @param languageCode
-	 * @returns
+	 * @param id - The ID of the organization contact to update.
+	 * @param request - The incoming HTTP request, used to extract the origin header and the inviter user.
+	 * @param languageCode - The language code for localization purposes.
+	 * @returns A promise that resolves to the updated organization contact.
 	 */
-	@ApiOperation({ summary: 'Resend invite.' })
-	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'The record has been successfully updated.'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Post('resend')
-	@UseValidationPipe()
-	async resendInvite(
-		@Body() entity: ResendInviteDTO,
-		@LanguageDecorator() languageCode: LanguagesEnum
-	): Promise<UpdateResult | Invite> {
-		return await this.commandBus.execute(new InviteResendCommand(entity, languageCode));
-	}
-
-	@ApiOperation({ summary: 'Delete record' })
-	@ApiResponse({
-		status: HttpStatus.NO_CONTENT,
-		description: 'The record has been successfully deleted'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: IInvite['id']): Promise<DeleteResult> {
-		return await this.inviteService.delete(id);
-	}
-
 	@ApiOperation({ summary: 'Update an existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -247,7 +251,7 @@ export class InviteController {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
-	@Put('organization-contact/:id')
+	@Put('/organization-contact/:id')
 	async inviteOrganizationContact(
 		@Param('id', UUIDValidationPipe) id: string,
 		@Req() request: Request,
@@ -263,32 +267,97 @@ export class InviteController {
 		);
 	}
 
+	/**
+	 * Find all invites of the current user.
+	 *
+	 * @returns Promise<IPagination<IInvite>> Invite object or NotFoundException
+	 */
 	@ApiOperation({ summary: 'Find all invites of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Found invites'
 	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No invites found for the current user'
+	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
-	@Get('me')
-	async findInviteOfCurrentUser() {
-		return await this.inviteService.findInviteOfCurrentUser();
+	@Get('/me')
+	async getCurrentUserInvites(): Promise<IPagination<IInvite>> {
+		return await this.inviteService.getCurrentUserInvites();
 	}
 
+	/**
+	 * Find all invites.
+	 *
+	 * @param options - The query parameters for pagination and filtering.
+	 * @returns A promise that resolves to a paginated list of invites.
+	 */
+	@ApiOperation({ summary: 'Find all invites.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found invites',
+		type: [Invite] // Note: Swagger expects an array of invites
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
+	@UseValidationPipe()
+	@Get()
+	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
+		return await this.inviteService.findAllInvites(options);
+	}
+
+	/**
+	 * Delete record.
+	 *
+	 * @param id - The ID of the record to delete.
+	 * @returns A promise that resolves to the delete result.
+	 */
+	@ApiOperation({ summary: 'Delete record' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Delete('/:id')
+	async delete(@Param('id', UUIDValidationPipe) id: IInvite['id']): Promise<DeleteResult> {
+		return await this.inviteService.delete(id);
+	}
+
+	/**
+	 * Handle invitation response by accepting or rejecting it.
+	 *
+	 * @param id The ID of the invitation.
+	 * @param action The action to perform (Accept or Reject).
+	 * @param request The request object.
+	 * @param languageCode The language code for internationalization.
+	 * @returns Promise<any>
+	 */
 	@ApiOperation({ summary: 'Accept or Reject invite of current user' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Invite Accepted'
 	})
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_INVITE_VIEW, PermissionsEnum.ORG_INVITE_EDIT)
-	@Put(':id/:action')
-	async acceptMyInvitation(
-		@Param('id', UUIDValidationPipe) id: string,
+	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
+	@Put('/:id/:action')
+	async handleInvitationResponse(
+		@Param('id', UUIDValidationPipe) id: IInvite['id'],
 		@Param('action') action: InviteActionEnum,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
-	) {
-		return await this.inviteService.acceptMyInvitation(id, action, request.get('Origin'), languageCode);
+	): Promise<any> {
+		return await this.inviteService.handleInvitationResponse(id, action, request.get('Origin'), languageCode);
 	}
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment as ENV } from '@env/environment';
+import { environment as ENV } from '@gauzy/ui-config';
 import { KeyResultTypeEnum, KeyResultNumberUnitsEnum } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 

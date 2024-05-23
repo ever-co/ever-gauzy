@@ -3,8 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { GAUZY_ENV } from '@env/environment.tokens';
-import { Environment } from '@env/model';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '../../../@core/services/store.service';
 
 @Component({

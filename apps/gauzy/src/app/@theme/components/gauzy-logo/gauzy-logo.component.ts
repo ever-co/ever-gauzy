@@ -15,8 +15,7 @@ import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { Environment } from '@env/model';
-import { GAUZY_ENV } from '@env/environment.tokens';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

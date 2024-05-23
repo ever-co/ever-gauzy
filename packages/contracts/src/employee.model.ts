@@ -3,7 +3,7 @@ import { IContact } from './contact.model';
 import { IEmployeeJobsStatistics } from './employee-job.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
-import { CrudActionEnum, IOrganizationFindInput } from './organization.model';
+import { CrudActionEnum, IOrganizationFindInput, TimeFormatEnum } from './organization.model';
 import { IOrganizationPosition } from './organization-positions.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
@@ -211,6 +211,8 @@ export interface ISelectedEmployee {
 	defaultType?: DEFAULT_TYPE;
 	tags?: ITag[];
 	skills?: ISkill[];
+	timeZone?: string;
+	timeFormat?: TimeFormatEnum;
 }
 
 export enum DEFAULT_TYPE {

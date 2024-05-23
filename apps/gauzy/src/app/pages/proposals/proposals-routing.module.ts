@@ -32,8 +32,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'register',
@@ -54,8 +53,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'details/:id',

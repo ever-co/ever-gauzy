@@ -1,0 +1,9 @@
+{
+	"name": "@gauzy/ui-config",
+	"version": "0.0.1",
+	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
+	"peerDependencies": {
+		"@angular/core": "^16.2.12"
+	},
+	"sideEffects": false
+}

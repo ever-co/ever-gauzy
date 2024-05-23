@@ -10,7 +10,7 @@ import {
 	NbDialogService,
 	NbLayoutModule,
 	NbMenuModule,
-	NbSidebarModule,
+	NbSidebarModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular-ivy';
 import {
@@ -21,10 +21,10 @@ import {
 	ElectronService,
 	LoggerService,
 	AboutModule,
-	GAUZY_ENV,
+	GAUZY_ENV
 } from '@gauzy/desktop-ui-lib';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { environment as gauzyEnvironment } from '@env/environment';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppService } from './app.service';
@@ -60,7 +60,7 @@ if (environment.SENTRY_DSN) {
 		SettingsModule,
 		UpdaterModule,
 		ServerDashboardModule,
-		AboutModule,
+		AboutModule
 	],
 	providers: [
 		AppService,
@@ -71,29 +71,29 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
-				showDialog: true,
-			}),
+				showDialog: true
+			})
 		},
 		{
 			provide: Sentry.TraceService,
-			deps: [Router],
+			deps: [Router]
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
-			multi: true,
+			multi: true
 		},
 		{
 			provide: GAUZY_ENV,
 			useValue: {
 				...gauzyEnvironment,
-				...environment,
-			},
-		},
+				...environment
+			}
+		}
 	],
-	bootstrap: [AppComponent],
+	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

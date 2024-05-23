@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
@@ -49,6 +49,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				debounceTime(500),
 				// Filter to ensure that the organization property is truthy
 				filter(() => !!this.organization),
 				// Perform some action when the observable emits a value
@@ -101,6 +102,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			// Set the 'timezone' property to the determined timezone
 			timezone
 		};
+
 		this.payloads$.next(request);
 	}
 
@@ -156,13 +158,10 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the weekly logs from the timesheetService
-			const logs: ReportDayData[] = await this.timesheetService.getWeeklyReportChart(payloads);
-
-			// Update the 'weekLogs' property with the retrieved logs
-			this.weekLogs = logs;
+			this.weekLogs = await this.timesheetService.getWeeklyReportChart(payloads);
 
 			// Process and map the logs for chart presentation
-			this._mapLogs(logs);
+			await this._mapLogs(this.weekLogs);
 		} catch (error) {
 			// Log any errors during the process
 			console.error('Error while retrieving weekly time logs reports', error);
@@ -178,7 +177,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	 * @param logs - An array of ReportDayData representing daily logs for employees.
 	 * @private This method is intended for internal use within the class.
 	 */
-	private _mapLogs(logs: ReportDayData[]): void {
+	private async _mapLogs(logs: ReportDayData[]): Promise<void> {
 		// Initialize arrays for employees and datasets
 		let labels = [];
 		const datasets = [];

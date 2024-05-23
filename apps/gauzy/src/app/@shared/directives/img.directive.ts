@@ -1,6 +1,6 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { AVATAR_DEFAULT_SVG, DEFAULT_SVG } from '@gauzy/ui-sdk/common';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 
 @Directive({
 	// tslint:disable-next-line: directive-selector

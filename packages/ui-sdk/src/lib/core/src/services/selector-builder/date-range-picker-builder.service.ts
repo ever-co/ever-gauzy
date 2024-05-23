@@ -4,7 +4,6 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { IDateRangePicker } from '@gauzy/contracts';
 import { IDatePickerConfig } from './selector-builder-types';
-import { NavigationService } from '../navigation/navigation.service';
 
 export const DEFAULT_DATE_PICKER_CONFIG: IDatePickerConfig = {
 	unitOfTime: 'week',
@@ -45,8 +44,6 @@ export class DateRangePickerBuilderService {
 		}
 	}
 
-	constructor(private readonly _navigationService: NavigationService) {}
-
 	/**
 	 * Override date range picker default configuration
 	 *
@@ -63,31 +60,11 @@ export class DateRangePickerBuilderService {
 	 *
 	 * @param dates An object containing the start date, end date, and possibly other properties related to the date range picker.
 	 */
-	setDateRangePicker(dates: IDateRangePicker) {
+	async setDateRangePicker(dates: IDateRangePicker) {
 		// Check if dates object is not empty
 		if (isNotEmpty(dates)) {
 			// Update the BehaviorSubject `dates$` with the new dates
 			this.dates$.next(dates);
-
-			// Navigate to the same route with updated query parameters representing the start date and end date
-			this.navigateWithQueryParams(dates);
-		}
-	}
-
-	/**
-	 * Navigates to the current route with specified query parameters, while preserving existing ones.
-	 *
-	 * @param queryParams The query parameters to be attached.
-	 */
-	navigateWithQueryParams(dates: IDateRangePicker): void {
-		if (isNotEmpty(dates)) {
-			// Navigate to the same route with updated query parameters representing the start date and end date
-			this._navigationService.navigate([], {
-				date: moment(dates.startDate).format('YYYY-MM-DD'),
-				date_end: moment(dates.endDate).format('YYYY-MM-DD'),
-				unit_of_time: dates.unitOfTime,
-				is_custom_date: dates.isCustomDate
-			});
 		}
 	}
 

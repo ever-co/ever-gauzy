@@ -4,7 +4,7 @@ import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
 import { IImageAsset, IUser } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { Store } from '../../@core/services';
 
 @UntilDestroy()

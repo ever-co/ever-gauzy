@@ -1,15 +1,9 @@
 <div *ngIf="isDemo" class="notification-header">
 	You are using a demo account. Finding our software useful?
-	<a href="https://app.gauzy.co/#/auth/register">
-		Click here to Sign Up and start using for free!
-	</a>
+	<a href="https://app.gauzy.co/#/auth/register"> Click here to Sign Up and start using for free! </a>
 </div>
 <div class="main-header">
-	<div
-		class="header-container"
-		[class.left]="position === 'normal'"
-		[class.right]="position === 'inverse'"
-	></div>
+	<div class="header-container" [class.left]="position === 'normal'" [class.right]="position === 'inverse'"></div>
 
 	<div class="header-container">
 		<ng-template [ngIf]="createQuickActionsMenu?.length > 0">
@@ -19,23 +13,12 @@
 				[class.right]="position === 'inverse'"
 				class="show-large-up"
 			>
-				<button
-					nbButton
-					class="button create"
-					status="warning"
-					size="small"
-					(click)="openQuickActions()"
-				>
+				<button nbButton class="button create" status="warning" size="small" (click)="openQuickActions()">
 					+ {{ 'BUTTONS.CREATE' | translate }}
 				</button>
 			</nb-action>
 		</ng-template>
-		<div
-			class="actions"
-			size="small"
-			[class.left]="position === 'normal'"
-			[class.right]="position === 'inverse'"
-		>
+		<div class="actions" size="small" [class.left]="position === 'normal'" [class.right]="position === 'inverse'">
 			<nb-action
 				*ngIf="showProjectsSelector && !showExtraActions && selectorsVisibility?.project"
 				class="show-large-up"
@@ -55,7 +38,10 @@
 				</ng-template>
 			</nb-action>
 
-			<nb-action *ngIf="showTeamsSelector && !showExtraActions && selectorsVisibility?.team" class="show-large-up">
+			<nb-action
+				*ngIf="showTeamsSelector && !showExtraActions && selectorsVisibility?.team"
+				class="show-large-up"
+			>
 				<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
 					<ga-team-selector [shortened]="true" class="header-selector team-selector"></ga-team-selector>
 				</ng-template>
@@ -69,39 +55,26 @@
 			</nb-action>
 
 			<nb-action
-				*ngIf="
-					showEmployeesSelector &&
-					!showExtraActions &&
-					selectorsVisibility?.employee
-				"
+				*ngIf="showEmployeesSelector && !showExtraActions && selectorsVisibility?.employee"
 				class="show-large-up"
 			>
-				<ga-employee-selector
-					class="header-selector employee-selector"
-				></ga-employee-selector>
+				<ga-employee-selector class="header-selector employee-selector"></ga-employee-selector>
+			</nb-action>
+
+			<nb-action *ngIf="showDateSelector && !showExtraActions && selectorsVisibility?.date">
+				<ng-container *ngIf="organization?.id">
+					<ngx-date-range-picker
+						[timezone]="organization.timeZone"
+						class="date-range-selector"
+					></ngx-date-range-picker>
+				</ng-container>
 			</nb-action>
 
 			<nb-action
-				*ngIf="
-					showDateSelector &&
-					!showExtraActions &&
-					selectorsVisibility?.date
-				"
-			>
-				<ngx-date-range-picker
-					class="date-range-selector"
-				></ngx-date-range-picker>
-			</nb-action>
-
-			<nb-action
-				*ngIf="
-					showOrganizationsSelector && selectorsVisibility?.organization
-				"
+				*ngIf="showOrganizationsSelector && selectorsVisibility?.organization"
 				class="show-large-up organization-selector-container"
 			>
-				<ga-organization-selector
-					class="header-selector organization-selector"
-				></ga-organization-selector>
+				<ga-organization-selector class="header-selector organization-selector"></ga-organization-selector>
 			</nb-action>
 
 			<nb-action
@@ -117,20 +90,14 @@
 				[nbContextMenu]="supportContextMenu"
 			></nb-action>
 
-			<nb-action
-				*ngIf="isEnabledTimeTracking()"
-				class="timer-action"
-				(click)="toggleTimerWindow()"
-			>
+			<nb-action *ngIf="isEnabledTimeTracking()" class="timer-action" (click)="toggleTimerWindow()">
 				<nb-icon icon="clock-outline"></nb-icon>
 				<span>{{ timerDuration }}</span>
 				<ga-time-tracker-status class="status"></ga-time-tracker-status>
 			</nb-action>
 
 			<nb-action
-				*ngFor="
-					let action of navigationBuilderService.sidebarActions$ | async
-				"
+				*ngFor="let action of navigationBuilderService.sidebarActions$ | async"
 				[icon]="action.icon"
 				[class]="action.class"
 				(click)="toggleSidebarActions(action)"
@@ -139,20 +106,13 @@
 		</div>
 	</div>
 
-	<div
-		(window:resize)="closeExtraActionsIfLarge($event)"
-		class="extra-actions"
-		*ngIf="showExtraActions"
-	>
+	<div (window:resize)="closeExtraActionsIfLarge($event)" class="extra-actions" *ngIf="showExtraActions">
 		<ng-container *ngIf="selectorsVisibility?.project">
 			<div>
 				<h6>{{ 'HEADER.SELECT_PROJECT' | translate }}</h6>
 			</div>
 			<ng-template ngxPermissionsOnly="CHANGE_SELECTED_EMPLOYEE">
-				<ga-project-selector
-					[shortened]="true"
-					class="header-selector project-selector"
-				></ga-project-selector>
+				<ga-project-selector [shortened]="true" class="header-selector project-selector"></ga-project-selector>
 			</ng-template>
 			<ng-template ngxPermissionsExcept="CHANGE_SELECTED_EMPLOYEE">
 				<ga-project-selector
@@ -193,10 +153,7 @@
 			<div>
 				<h6>{{ 'HEADER.SELECT_A_DATE' | translate }}</h6>
 			</div>
-			<ngx-date-range-picker
-				*ngIf="showDateSelector"
-				class="date-range-selector"
-			></ngx-date-range-picker>
+			<ngx-date-range-picker *ngIf="showDateSelector" class="date-range-selector"></ngx-date-range-picker>
 		</ng-container>
 
 		<ng-container *ngIf="selectorsVisibility?.organization">
@@ -215,5 +172,4 @@
 			<ngx-web-time-tracker></ngx-web-time-tracker>
 		</ng-template>
 	</ng-template>
-
 </div>
