@@ -126,7 +126,7 @@
 		"moment": "^2.29.4",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.40",
+		"moment-timezone": "^0.5.45",
 		"nebular-icons": "^1.1.0",
 		"ng2-charts": "^5.0.4",
 		"ng2-file-upload": "^5.0.0",
