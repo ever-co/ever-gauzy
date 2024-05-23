@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { NavigationService } from '@gauzy/ui-sdk/core';
 import {
 	DEFAULT_TIME_FORMATS,
 	IOrganization,
@@ -53,24 +54,13 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		this._isTimeformat = value;
 	}
 
-	/*
-	 * Getter & Setter
-	 */
-	private _navigate: boolean = true;
-	get navigate(): boolean {
-		return this._navigate;
-	}
-	@Input() set navigate(value: boolean) {
-		this._navigate = value;
-	}
-
 	@Output() timeZoneChange = new EventEmitter<string>();
 	@Output() timeFormatChange = new EventEmitter<TimeFormatEnum>();
 
 	constructor(
 		private readonly _route: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
@@ -190,14 +180,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		this.timeFormatChange.emit(timeFormat);
 
-		if (this.navigate) {
-			// Update query parameter 'time_format'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_format: timeFormat.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_format: timeFormat.toString()
+		});
 	}
 
 	/**
@@ -211,14 +197,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		this.timeZoneChange.emit(this.getTimeZone(this.selectedTimeZone));
 
-		if (this.navigate) {
-			// Update query parameter 'time_zone'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_zone: timeZone.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_zone: timeZone.toString()
+		});
 	}
 
 	/**
