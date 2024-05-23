@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { isNotNullOrUndefinedOrEmpty } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -70,7 +71,7 @@ export class NavigationService {
 		const uniqueQueryParams: { [key: string]: string | string[] | boolean } = {};
 		for (const key in finalQueryParams) {
 			const value = finalQueryParams[key];
-			if (typeof value != 'undefined') {
+			if (isNotNullOrUndefinedOrEmpty(value)) {
 				if (Array.isArray(value)) {
 					uniqueQueryParams[key] = Array.from(new Set(value));
 				} else {

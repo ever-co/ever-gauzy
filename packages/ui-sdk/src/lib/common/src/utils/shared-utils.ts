@@ -25,6 +25,15 @@ export function isNotNullOrUndefined<T>(value: T | undefined | null): value is T
 	return value !== undefined && value !== null;
 }
 
+/**
+ * Check if a value is null, undefined, or an empty string.
+ * @param value The value to check.
+ * @returns true if the value is null, undefined, or an empty string, false otherwise.
+ */
+export function isNotNullOrUndefinedOrEmpty<T>(value: T | undefined | null): boolean {
+	return isNotNullOrUndefined(value) && value !== '';
+}
+
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query: any) {
 	let params: HttpParams = new HttpParams();
