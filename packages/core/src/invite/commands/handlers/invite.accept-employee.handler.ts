@@ -268,11 +268,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		//Update team members
 		if (invite.teams) {
-			console.log(invite.teams);
-
 			invite.teams.forEach(async (team: IOrganizationTeam) => {
 				let members = team.members || [];
-				console.log(members, employee);
 
 				const member = new OrganizationTeamEmployee();
 				member.organizationId = employee.organizationId;
@@ -281,7 +278,6 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 				members = [...members, member];
 
-				console.log({ members });
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
