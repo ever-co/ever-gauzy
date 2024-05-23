@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UpdateResult } from 'typeorm';
 import {
 	IEmployee,
 	IInvite,
@@ -9,6 +10,8 @@ import {
 	IOrganizationProject,
 	IOrganizationTeam,
 	IUser,
+	IUserRegistrationInput,
+	LanguagesEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { AuthService } from '../../../auth/auth.service';
@@ -29,6 +32,8 @@ import { TypeOrmOrganizationDepartmentRepository } from '../../../organization-d
 import { TypeOrmOrganizationProjectRepository } from '../../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationTeamRepository } from '../../../organization-team/repository/type-orm-organization-team.repository';
 import { TypeOrmUserRepository } from '../../../user/repository/type-orm-user.repository';
+import { IAppIntegrationConfig } from '@gauzy/common';
+import { NotFoundException } from '@nestjs/common';
 
 /**
  * Use this command for registering employees.
@@ -52,95 +57,155 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository
 	) {}
 
+	/**
+	 * Executes the invite acceptance process for an employee.
+	 * @param command The command containing the invite acceptance data.
+	 * @returns The user associated with the invite.
+	 */
 	public async execute(command: InviteAcceptEmployeeCommand): Promise<IUser> {
 		const { input, languageCode } = command;
 		const { inviteId } = input;
 
-		const invite: IInvite = await this.inviteService.findOneByIdString(inviteId, {
+		const invite = await this.findInviteWithRelations(inviteId);
+
+		const { organization } = invite;
+		if (!organization.invitesAllowed) {
+			throw new Error('Organization no longer allows invites');
+		}
+
+		let user: IUser;
+		let employee: IEmployee;
+
+		try {
+			// Find existing employee user
+			user = await this.findExistingEmployeeUser(invite);
+
+			// Implementation to find an employee by user ID
+			employee = await this.findEmployee(user.id);
+		} catch (error) {
+			// New user registers before accepting the invitation
+			user = await this.registerNewUser(input, invite, languageCode);
+
+			// Create employee after creating user
+			employee = await this.createEmployee(invite, user);
+		}
+
+		// Implementation for updating employee memberships based on the invite details
+		await this.updateEmployeeMemberships(invite, employee);
+
+		// Accept invitation
+		await this.updateInviteStatus(inviteId, user.id);
+
+		return user;
+	}
+
+	/**
+	 * Finds an invite by its ID and loads its relations.
+	 * @param inviteId The ID of the invite to find.
+	 * @returns The found invite with its relations.
+	 * @throws NotFoundException if the invite does not exist.
+	 */
+	private async findInviteWithRelations(inviteId: string): Promise<IInvite> {
+		const invite = await this.inviteService.findOneByIdString(inviteId, {
 			relations: {
-				projects: {
-					members: true
-				},
-				departments: {
-					members: true
-				},
-				organizationContacts: {
-					members: true
-				},
-				teams: {
-					members: true
-				},
+				projects: { members: true },
+				departments: { members: true },
+				organizationContacts: { members: true },
+				teams: { members: true },
 				organization: true
 			}
 		});
 		if (!invite) {
-			throw Error('Invite does not exist');
+			throw new NotFoundException('Invite does not exist');
 		}
+		return invite;
+	}
 
-		const { organization } = invite;
-		if (!organization.invitesAllowed) {
-			throw Error('Organization no longer allows invites');
-		}
-
-		let user: IUser;
-		try {
-			const { tenantId, email } = invite;
-			user = await this.typeOrmUserRepository.findOneOrFail({
-				where: {
-					email,
-					tenantId,
-					role: {
-						name: RolesEnum.EMPLOYEE
-					}
-				},
-				order: {
-					createdAt: 'DESC'
-				}
-			});
-			await this.updateEmployeeMemberships(invite, user.employee);
-		} catch (error) {
-			const { id: organizationId, tenantId } = organization;
-			/**
-			 * User register after accept invitation
-			 */
-			user = await this.authService.register(
-				{
-					...input,
-					user: {
-						...input.user,
-						tenant: {
-							id: tenantId
-						}
-					},
-					organizationId,
-					inviteId
-				},
-				languageCode
-			);
-
-			/**
-			 * Create employee after create user
-			 */
-			const create = this.typeOrmEmployeeRepository.create({
-				user,
-				organization,
+	/**
+	 * Finds an existing employee user based on the invite details.
+	 * @param invite The invite containing the user's email and tenant ID.
+	 * @returns The found user.
+	 */
+	private async findExistingEmployeeUser(invite: IInvite): Promise<IUser> {
+		const { tenantId, email } = invite;
+		return await this.typeOrmUserRepository.findOneOrFail({
+			where: {
+				email,
 				tenantId,
-				startedWorkOn: invite.actionDate || null,
-				isActive: true
-			});
+				role: { name: RolesEnum.EMPLOYEE }
+			},
+			order: { createdAt: 'DESC' }
+		});
+	}
 
-			const employee = await this.typeOrmEmployeeRepository.save(create);
+	/**
+	 * Registers a new user based on the invite details.
+	 * @param input The user registration input and app integration config.
+	 * @param invite The invite containing the organization details.
+	 * @param languageCode The language code for localization.
+	 * @returns The registered user.
+	 */
+	private async registerNewUser(
+		input: IUserRegistrationInput & Partial<IAppIntegrationConfig>,
+		invite: IInvite,
+		languageCode: LanguagesEnum
+	): Promise<IUser> {
+		const { id: organizationId, tenantId } = invite.organization;
+		return await this.authService.register(
+			{
+				...input,
+				user: { ...input.user, tenant: { id: tenantId } },
+				organizationId,
+				inviteId: invite.id
+			},
+			languageCode
+		);
+	}
 
-			await this.updateEmployeeMemberships(invite, employee);
-		}
+	/**
+	 * Creates an employee based on the invite details and user information.
+	 * @param invite The invite containing the organization details.
+	 * @param user The user to be associated with the employee.
+	 * @returns The created employee.
+	 */
+	private async createEmployee(invite: IInvite, user: IUser): Promise<IEmployee> {
+		const { organization, tenantId, actionDate } = invite;
 
-		const { id } = user;
-		await this.inviteService.update(inviteId, {
-			status: InviteStatusEnum.ACCEPTED,
-			userId: id
+		// Create employee after creating user
+		const employee = this.typeOrmEmployeeRepository.create({
+			user,
+			organization,
+			tenantId,
+			startedWorkOn: actionDate || null,
+			isActive: true,
+			isArchived: false
 		});
 
-		return user;
+		return await this.typeOrmEmployeeRepository.save(employee);
+	}
+
+	/**
+	 * Finds an employee based on the user ID.
+	 * @param userId The ID of the user to find the employee for.
+	 * @returns The found employee.
+	 */
+	private async findEmployee(userId: string): Promise<IEmployee> {
+		return await this.typeOrmEmployeeRepository.findOneOrFail({
+			where: { userId, user: { id: userId } }
+		});
+	}
+
+	/**
+	 * Updates the status of an invite to accepted and associates it with a user.
+	 * @param inviteId The ID of the invite to update.
+	 * @param userId The ID of the user who accepted the invite.
+	 * @returns The updated invite or the update result.
+	 */
+	private async updateInviteStatus(inviteId: string, userId: string): Promise<IInvite | UpdateResult> {
+		return await this.inviteService.update(inviteId, {
+			status: InviteStatusEnum.ACCEPTED,
+			userId
+		});
 	}
 
 	/**
@@ -203,8 +268,11 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 
 		//Update team members
 		if (invite.teams) {
+			console.log(invite.teams);
+
 			invite.teams.forEach(async (team: IOrganizationTeam) => {
 				let members = team.members || [];
+				console.log(members, employee);
 
 				const member = new OrganizationTeamEmployee();
 				member.organizationId = employee.organizationId;
@@ -212,6 +280,8 @@ export class InviteAcceptEmployeeHandler implements ICommandHandler<InviteAccept
 				member.employee = employee;
 
 				members = [...members, member];
+
+				console.log({ members });
 				/**
 				 * Creates a new entity instance and copies all entity properties from this object into a new entity.
 				 */
