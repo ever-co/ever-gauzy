@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@angular/common": "^16.2.12",
 		"moment": "^2.29.4",
-		"moment-timezone": "^0.5.40",
+		"moment-timezone": "^0.5.45",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
 		"rxjs": "^7.4.0",

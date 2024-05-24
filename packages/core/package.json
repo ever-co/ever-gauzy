@@ -164,7 +164,7 @@
 		"mkdirp": "^3.0.1",
 		"moment": "^2.29.4",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.40",
+		"moment-timezone": "^0.5.45",
 		"mqtt": "^4.3.7",
 		"multer-s3": "^3.0.1",
 		"multer-storage-cloudinary": "^4.0.0",
