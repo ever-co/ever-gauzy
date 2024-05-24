@@ -38,7 +38,7 @@
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
 		"class-validator": "^0.14.0",
-		"moment": "^2.29.4",
+		"moment": "^2.30.1",
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
