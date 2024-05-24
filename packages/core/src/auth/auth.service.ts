@@ -135,12 +135,14 @@ export class AuthService extends SocialAuthService {
 
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
-			where: [{
-				email,
-				isActive: true,
-				isArchived: false,
-				hash: Not(IsNull())
-			}],
+			where: [
+				{
+					email,
+					isActive: true,
+					isArchived: false,
+					hash: Not(IsNull())
+				}
+			],
 			relations: { tenant: true },
 			order: { createdAt: 'DESC' }
 		});
@@ -158,15 +160,84 @@ export class AuthService extends SocialAuthService {
 		// Update all users with a single query
 		const ids = users.map((user: IUser) => user.id);
 
-		await this.typeOrmUserRepository.update({
-			id: In(ids),
-			email,
-			isActive: true,
-			isArchived: false
-		}, {
+		await this.typeOrmUserRepository.update(
+			{
+				id: In(ids),
+				email,
+				isActive: true,
+				isArchived: false
+			},
+			{
+				code,
+				codeExpireAt
+			}
+		);
+
+		// Determining the response based on the number of matching users
+		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
+			users,
 			code,
-			codeExpireAt
+			email,
+			includeTeams
 		});
+
+		if (response.total_workspaces > 0) {
+			return response;
+		} else {
+			console.log('Error while signin workspace: %s');
+			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * Authenticate a user by email from social media and return user workspaces.
+	 *
+	 * @param email - The user's email.
+	 * @param password - The user's password.
+	 * @returns A promise that resolves to a response with user workspaces.
+	 * @throws UnauthorizedException if authentication fails.
+	 */
+	async signinWorkspacesByEmailSocial(
+		input: { email: string },
+		includeTeams: boolean
+	): Promise<IUserSigninWorkspaceResponse> {
+		const { email } = input;
+
+		/** Fetching users matching the query */
+		let users = await this.userService.find({
+			where: [
+				{
+					email,
+					isActive: true,
+					isArchived: false
+				}
+			],
+			relations: { tenant: true },
+			order: { createdAt: 'DESC' }
+		});
+
+		if (users.length === 0) {
+			throw new UnauthorizedException();
+		}
+
+		const code = generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH);
+		const codeExpireAt = moment().add(environment.MAGIC_CODE_EXPIRATION_TIME, 'seconds').toDate();
+
+		// Update all users with a single query
+		const ids = users.map((user: IUser) => user.id);
+
+		await this.typeOrmUserRepository.update(
+			{
+				id: In(ids),
+				email,
+				isActive: true,
+				isArchived: false
+			},
+			{
+				code,
+				codeExpireAt
+			}
+		);
 
 		// Determining the response based on the number of matching users
 		const response: IUserSigninWorkspaceResponse = await this.createUserSigninWorkspaceResponse({
@@ -841,17 +912,20 @@ export class AuthService extends SocialAuthService {
 					relations: { role: true }
 				});
 
-				await this.typeOrmUserRepository.update({
-					email,
-					id: userId,
-					tenantId,
-					code,
-					isActive: true,
-					isArchived: false
-				}, {
-					code: null,
-					codeExpireAt: null
-				});
+				await this.typeOrmUserRepository.update(
+					{
+						email,
+						id: userId,
+						tenantId,
+						code,
+						isActive: true,
+						isArchived: false
+					},
+					{
+						code: null,
+						codeExpireAt: null
+					}
+				);
 
 				// Retrieve the employee details associated with the user.
 				const employee = await this.employeeService.findOneByUserId(user.id);
@@ -1069,11 +1143,13 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
-			tenant: user.tenant ? new Tenant({
-				id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-				name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-				logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-			}) : null // Sets tenant to null if user.tenant is undefined
+			tenant: user.tenant
+				? new Tenant({
+						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				  })
+				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}
 }
