@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
-import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee } from '@gauzy/contracts';
+import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -106,6 +106,8 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	set lastScreenshot(screenshot: IScreenshot) {
 		this._lastScreenshot = screenshot;
 	}
+
+	@Input() timeformat = TimeFormatEnum.FORMAT_12_HOURS;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,

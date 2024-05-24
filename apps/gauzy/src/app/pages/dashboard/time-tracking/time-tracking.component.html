@@ -279,6 +279,7 @@
 									<ng-container *ngFor="let timeSlot of employee.timeSlots">
 										<ng-template swiperSlide>
 											<ngx-screenshots-item
+												[timeformat]="filters?.timeFormat"
 												[timeSlot]="timeSlot"
 												(delete)="onDelete()"
 												[multiple]="false"
