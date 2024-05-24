@@ -1,19 +1,21 @@
 <button
-	class="timezone-filter"
-	status="basic"
-	size="small"
-	nbPopoverPlacement="bottom"
-	[nbPopover]="timezone"
-	nbPopoverTrigger="click"
+	class="popover-button"
 	nbButton
+	size="small"
+	status="basic"
+	nbPopoverPlacement="bottom"
+	[nbPopover]="nbPopoverTemplate"
+	nbPopoverTrigger="click"
 >
-	<div>{{ getTimeZoneWithOffset() }} / {{ selectedTimeFormat }} hour</div>
+	<div>
+		<ng-template [ngIf]="isTimezone"> {{ getTimeZoneWithOffset() }} </ng-template>
+		<ng-template [ngIf]="isTimeformat"> / {{ selectedTimeFormat }} hour </ng-template>
+	</div>
 	<nb-icon icon="more-vertical-outline"></nb-icon>
 </button>
 
-<!-- Manage Widgets -->
-<ng-template #timezone>
-	<div class="timezone-popover">
+<ng-template #nbPopoverTemplate>
+	<div class="popover-body">
 		<ng-container *ngIf="isTimezone">
 			<div class="category">
 				<div class="view">Time Zone</div>
@@ -33,7 +35,7 @@
 		</ng-container>
 		<ng-container *ngIf="isTimeformat">
 			<div class="category">
-				<div class="view">Time Format</div	>
+				<div class="view">Time Format</div>
 				<ng-container *ngFor="let timeFormatsOption of timeFormatsOptions">
 					<div class="title" (click)="updateSelectedTimeFormat(timeFormatsOption)">
 						<i

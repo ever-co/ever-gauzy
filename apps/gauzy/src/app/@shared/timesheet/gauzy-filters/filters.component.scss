@@ -29,7 +29,7 @@ $status: 'basic';
   }
   .filter-item-list {
     .filter-item {
-      max-width: 263px;
+      min-width: 220px;
     }
     .select-box,
     nb-select {
@@ -51,23 +51,17 @@ $status: 'basic';
     }
 
     &:focus {
-      background-color: nb-theme(
-        select-outline-#{$status}-focus-background-color
-      );
+      background-color: nb-theme(select-outline-#{$status}-focus-background-color);
       border-color: nb-theme(select-outline-#{$status}-focus-border-color);
     }
     &:hover {
-      background-color: nb-theme(
-        select-outline-#{$status}-hover-background-color
-      );
+      background-color: nb-theme(select-outline-#{$status}-hover-background-color);
       border-color: nb-theme(select-outline-#{$status}-hover-border-color);
     }
 
     &[disabled] {
       color: nb-theme(select-outline-#{$status}-disabled-text-color);
-      background-color: nb-theme(
-        select-outline-#{$status}-disabled-background-color
-      );
+      background-color: nb-theme(select-outline-#{$status}-disabled-background-color);
       border-color: nb-theme(select-outline-#{$status}-disabled-border-color);
 
       nb-icon {
@@ -81,14 +75,10 @@ $status: 'basic';
     }
 
     &.top {
-      border-top-color: nb-theme(
-        select-outline-#{$status}-adjacent-border-color
-      );
+      border-top-color: nb-theme(select-outline-#{$status}-adjacent-border-color);
     }
     &.bottom {
-      border-bottom-color: nb-theme(
-        select-outline-#{$status}-adjacent-border-color
-      );
+      border-bottom-color: nb-theme(select-outline-#{$status}-adjacent-border-color);
     }
   }
 }

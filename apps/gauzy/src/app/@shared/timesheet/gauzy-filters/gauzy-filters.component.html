@@ -1,11 +1,6 @@
 <div class="row col-auto main-wrapper">
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">
-			<ng-container *ngIf="hasTimeZoneFilter">
-				<div class="col-auto filter-item single-filter-wrapper">
-					<ga-timezone-filter></ga-timezone-filter>
-				</div>
-			</ng-container>
 			<ng-container *ngIf="hasSourceFilter">
 				<div class="col-auto filter-item single-filter-wrapper">
 					<nb-select
@@ -27,29 +22,22 @@
 						nbButton
 						status="basic"
 						outline
-						[nbPopover]="templateRef"
 						nbPopoverPlacement="bottom"
+						[nbPopover]="activityLevelSliderTemplate"
+						nbPopoverTrigger="click"
 					>
-						<span *ngIf="activityLevel?.start > 0 || activityLevel?.end < 100; else selectLabel">
+						<span
+							*ngIf="activityLevel?.start > 0 || activityLevel?.end < 100; else selectActivityLevelLabel"
+						>
 							{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} : {{ activityLevel?.start }}% -
 							{{ activityLevel?.end }}%
 						</span>
-						<ng-template #selectLabel>
-							{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
-						</ng-template>
 						<nb-icon icon="chevron-down-outline"></nb-icon>
 					</button>
-					<ng-template #templateRef>
-						<div class="p-3 slider-dropdown">
-							<ngx-slider
-								[value]="activityLevel?.start"
-								[highValue]="activityLevel?.end"
-								(userChange)="setActivityLevel($event)"
-								[options]="sliderOptions"
-							></ngx-slider>
-						</div>
-					</ng-template>
 				</div>
+				<ng-template #selectActivityLevelLabel>
+					{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
+				</ng-template>
 			</ng-container>
 			<ng-container *ngIf="hasLogTypeFilter">
 				<div class="col-auto filter-item single-filter-wrapper">
@@ -65,6 +53,15 @@
 					</nb-select>
 				</div>
 			</ng-container>
+			<ng-container *ngIf="hasTimeZoneFilter">
+				<div class="col-auto filter-item single-filter-wrapper">
+					<ga-timezone-filter
+						[isTimeformat]="isTimeformat"
+						(timeFormatChange)="timeFormatChanged($event)"
+						(timeZoneChange)="timeZoneChanged($event)"
+					></ga-timezone-filter>
+				</div>
+			</ng-container>
 			<ng-container *ngIf="hasFilterApplies">
 				<div class="col-auto single-filter-wrapper clear-fitlers">
 					<button nbButton status="danger" (click)="clearFilters()">
@@ -75,3 +72,14 @@
 		</div>
 	</div>
 </div>
+
+<ng-template #activityLevelSliderTemplate>
+	<div class="p-3 slider-dropdown">
+		<ngx-slider
+			[value]="activityLevel?.start"
+			[highValue]="activityLevel?.end"
+			(userChange)="setActivityLevel($event)"
+			[options]="sliderOptions"
+		></ngx-slider>
+	</div>
+</ng-template>

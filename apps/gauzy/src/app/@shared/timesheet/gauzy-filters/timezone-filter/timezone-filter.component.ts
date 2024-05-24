@@ -77,8 +77,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
 				tap(([queryParams, organization]) => {
-					this.applyTimeFormat(queryParams, organization.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, organization.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -100,8 +100,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 			.pipe(
 				distinctUntilChange(),
 				tap(([queryParams, user]) => {
-					this.applyTimeFormat(queryParams, user.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, user.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -120,9 +120,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		// Apply query parameters first
 		if (time_format) {
-			this.selectTimeFormat(time_format);
+			this.updateSelectedTimeFormat(parseInt(time_format, 10));
 		} else {
-			this.selectTimeFormat(timeFormat);
+			this.updateSelectedTimeFormat(timeFormat);
 		}
 	}
 
@@ -136,9 +136,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		// Apply query parameters first
 		if (time_zone) {
-			this.selectTimeZone(time_zone);
+			this.updateSelectedTimeZone(time_zone);
 		} else {
-			this.selectTimeZone(timeZone);
+			this.updateSelectedTimeZone(timeZone);
 		}
 	}
 

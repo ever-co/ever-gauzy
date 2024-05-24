@@ -1,63 +1,59 @@
-@import "gauzy/_gauzy-cards.scss";
+@import 'gauzy/_gauzy-cards.scss';
 
 :host {
-	.timezone-filter {
-		border: unset;
-		box-shadow: var(--gauzy-shadow);
-		font-size: 12px;
-		font-weight: 400;
-		line-height: 11px;
-		letter-spacing: 0em;
-		&[nbButton].appearance-filled.status-basic {
-			color: var(--gauzy-text-color-2);
-			background-color: var(--gauzy-card-1);
-		}
-		nb-icon {
-			height: 11px;
-			width: 11px;
-		}
-	}
+  .popover-button {
+    font-size: 12px;
+    font-weight: 400;
+    &[nbButton] {
+      color: var(--gauzy-text-color-1);
+      background-color: var(--gauzy-card-1);
+    }
+    nb-icon {
+      height: 11px;
+      width: 11px;
+    }
+  }
 }
-.timezone-popover {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	padding: 14px;
-	gap: 21px;
-	min-width: 219px;
-	.category {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 14px;
-		width: 100%;
-		.view {
-			font-size: 10px;
-			font-weight: 600;
-			line-height: 12px;
-			letter-spacing: 0em;
-			color: rgba(126, 126, 143, 0.5);
-			align-items: center;
-			display: flex;
-			justify-content: space-between;
-			gap: 1rem;
-			width: 100%;
-		}
-		.title {
-			font-size: 12px;
-			font-weight: 400;
-			line-height: 12px;
-			letter-spacing: 0em;
-			color: var(--gauzy-text-color-2);
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			cursor: pointer;
-			width: 100%;
-		}
-	}
-	.line {
-		border-bottom: 0.5px solid rgba(126, 126, 143, 0.25);
-		width: 100%;
-	}
+.popover-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 14px;
+  gap: 21px;
+  min-width: 219px;
+  .category {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    width: 100%;
+    .view {
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 12px;
+      letter-spacing: 0em;
+      color: rgba(126, 126, 143, 0.5);
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+    }
+    .title {
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 12px;
+      letter-spacing: 0em;
+      color: var(--gauzy-text-color-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      width: 100%;
+    }
+  }
+  .line {
+    border-bottom: 0.5px solid rgba(126, 126, 143, 0.25);
+    width: 100%;
+  }
 }
