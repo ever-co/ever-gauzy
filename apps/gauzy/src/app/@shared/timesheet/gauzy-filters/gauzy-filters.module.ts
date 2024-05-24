@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NbButtonModule, NbIconModule, NbSelectModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbPopoverModule, NbSelectModule } from '@nebular/theme';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PipesModule } from '../../pipes/pipes.module';
@@ -16,6 +16,7 @@ import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 		FormsModule,
 		NbButtonModule,
 		NbIconModule,
+		NbPopoverModule,
 		NbSelectModule,
 		NgxSliderModule,
 		PipesModule,
