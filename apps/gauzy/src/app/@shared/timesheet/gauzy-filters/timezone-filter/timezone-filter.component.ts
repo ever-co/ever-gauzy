@@ -32,27 +32,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	selectedTimeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 	selectedTimeZone: TimeZoneEnum = TimeZoneEnum.UTC_TIMEZONE;
 
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimezone: boolean = true;
-	get isTimezone(): boolean {
-		return this._isTimezone;
-	}
-	@Input() set isTimezone(value: boolean) {
-		this._isTimezone = value;
-	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimeformat: boolean = true;
-	get isTimeformat(): boolean {
-		return this._isTimeformat;
-	}
-	@Input() set isTimeformat(value: boolean) {
-		this._isTimeformat = value;
-	}
+	@Input() isTimezone: boolean = true;
+	@Input() isTimeformat: boolean = true;
 
 	@Output() timeZoneChange = new EventEmitter<string>();
 	@Output() timeFormatChange = new EventEmitter<TimeFormatEnum>();
@@ -111,9 +92,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Applies the appropriate time format based on query parameters, organization settings, and employee settings.
+	 *
 	 * @param queryParams The query parameters from the route.
 	 * @param organization The organization details.
-	 * @param employee The selected employee details.
 	 */
 	private applyTimeFormat(queryParams: Params, timeFormat: number): void {
 		const { time_format } = queryParams;

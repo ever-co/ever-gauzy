@@ -1,6 +1,15 @@
 <div class="row col-auto main-wrapper">
 	<div class="col-auto ml-auto">
 		<div class="row filter-item-list align-items-end">
+			<ng-container *ngIf="hasTimeZoneFilter">
+				<div class="col-auto single-filter-wrapper">
+					<ga-timezone-filter
+						[isTimeformat]="isTimeformat"
+						(timeFormatChange)="timeFormatChanged($event)"
+						(timeZoneChange)="timeZoneChanged($event)"
+					></ga-timezone-filter>
+				</div>
+			</ng-container>
 			<ng-container *ngIf="hasSourceFilter">
 				<div class="col-auto filter-item single-filter-wrapper">
 					<nb-select
@@ -51,15 +60,6 @@
 							{{ logType.value | titlecase }}
 						</nb-option>
 					</nb-select>
-				</div>
-			</ng-container>
-			<ng-container *ngIf="hasTimeZoneFilter">
-				<div class="col-auto filter-item single-filter-wrapper">
-					<ga-timezone-filter
-						[isTimeformat]="isTimeformat"
-						(timeFormatChange)="timeFormatChanged($event)"
-						(timeZoneChange)="timeZoneChanged($event)"
-					></ga-timezone-filter>
 				</div>
 			</ng-container>
 			<ng-container *ngIf="hasFilterApplies">

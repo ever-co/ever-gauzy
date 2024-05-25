@@ -10,12 +10,12 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
+import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import { toLocal, isEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from './../../../../../@core/services';
 import {
@@ -141,6 +141,20 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 			calendar.setOption('editable', false);
 		}
 		calendar.setOption('firstDay', dayOfWeekAsString(startWeekOn));
+
+		// Set the 24-hour time format for slot labels
+		calendar.setOption('slotLabelFormat', {
+			hour: '2-digit',
+			minute: '2-digit',
+			hour12: this.filters?.timeFormat === TimeFormatEnum.FORMAT_12_HOURS
+		});
+
+		// Set the 24-hour time format for event times
+		calendar.setOption('eventTimeFormat', {
+			hour: '2-digit',
+			minute: '2-digit',
+			hour12: this.filters?.timeFormat === TimeFormatEnum.FORMAT_12_HOURS
+		});
 	}
 
 	/**

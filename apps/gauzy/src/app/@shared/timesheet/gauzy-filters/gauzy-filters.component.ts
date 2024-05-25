@@ -68,17 +68,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		}
 		this.cd.detectChanges();
 	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimeformat: boolean = false;
-	get isTimeformat(): boolean {
-		return this._isTimeformat;
-	}
-	@Input() set isTimeformat(value: boolean) {
-		this._isTimeformat = value;
-	}
+	@Input() isTimeformat: boolean = true;
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
