@@ -177,15 +177,19 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		this.calendar.getApi().refetchEvents();
 	}
 
-	getEvents(arg: any, callback: Function) {
+	/**
+	 * Fetches events based on the provided arguments and invokes the callback with the events.
+	 * @param {Object} arg - The argument containing the start and end dates.
+	 * @param {Function} callback - The callback function to be called with the fetched events.
+	 * @returns {Promise<void>}
+	 */
+	getEvents(arg: any, callback: Function): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		const startDate = moment(arg.start).startOf('day').format('YYYY-MM-DD HH:mm:ss');
 		const endDate = moment(arg.end).subtract(1, 'days').endOf('day').format('YYYY-MM-DD HH:mm:ss');
-
 		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
-
 		const request: IGetTimeLogInput = {
 			...appliedFilter,
 			...this.getFilterRequest({
