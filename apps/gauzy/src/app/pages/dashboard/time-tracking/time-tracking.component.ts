@@ -112,12 +112,12 @@ export class TimeTrackingComponent
 	public readonly PermissionsEnum = PermissionsEnum;
 	public readonly RangePeriod = RangePeriod;
 
-	employeeIds: string[] = [];
-	projectIds: string[] = [];
-	teamIds: string[] = [];
+	public employeeIds: string[] = [];
+	public projectIds: string[] = [];
+	public teamIds: string[] = [];
 
 	private autoRefresh$: Subscription;
-	autoRefresh = true;
+	public autoRefresh = true;
 
 	private _selectedDateRange: IDateRangePicker;
 	get selectedDateRange(): IDateRangePicker {
@@ -129,7 +129,8 @@ export class TimeTrackingComponent
 		}
 	}
 
-	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
+	public filters: ITimeLogFilters = { timeFormat: TimeFormatEnum.FORMAT_12_HOURS };
+	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	@ViewChildren('widget') listOfWidgets: QueryList<TemplateRef<HTMLElement>>;
 	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
@@ -243,6 +244,10 @@ export class TimeTrackingComponent
 		this.changeRef.detectChanges();
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async getStatistics() {
 		if (!this.organization) {
 			return;
@@ -279,7 +284,8 @@ export class TimeTrackingComponent
 			todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
 			todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss'),
 			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss')
+			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
+			timeZone: this.filters.timeZone
 		};
 
 		if (isNotEmpty(employeeIds)) {
@@ -295,6 +301,11 @@ export class TimeTrackingComponent
 		this.payloads$.next(request);
 	}
 
+	/**
+	 * Sets the auto refresh functionality.
+	 *
+	 * @param value - Determines if auto refresh should be enabled.
+	 */
 	setAutoRefresh(value: boolean) {
 		if (this.autoRefresh$) {
 			this.autoRefresh$.unsubscribe();
@@ -310,37 +321,55 @@ export class TimeTrackingComponent
 		}
 	}
 
-	async getTimeSlots() {
+	/**
+	 * Fetches the time slots statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getTimeSlots(): Promise<void> {
 		if (this._isWindowHidden(Windows.RECENT_ACTIVITIES)) return;
-		const request: IGetTimeSlotStatistics = this.payloads$.getValue();
+
 		try {
 			this.timeSlotLoading = true;
+			const request: IGetTimeSlotStatistics = this.payloads$.getValue();
 			this.timeSlotEmployees = await this.timesheetStatisticsService.getTimeSlots(request);
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching time slots.');
 		} finally {
 			this.timeSlotLoading = false;
 		}
 	}
 
-	async getCounts() {
+	/**
+	 * Fetches the counts statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getCounts(): Promise<void> {
 		if (this._isAllWidgetsHidden()) return;
-		const request: IGetCountsStatistics = this.payloads$.getValue();
+
 		try {
 			this.countsLoading = true;
+			const request: IGetCountsStatistics = this.payloads$.getValue();
 			this.counts = await this.timesheetStatisticsService.getCounts(request);
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching counts.');
 		} finally {
 			this.countsLoading = false;
 		}
 	}
 
-	async getActivities() {
+	/**
+	 * Fetches the activities statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getActivities(): Promise<void> {
 		if (this._isWindowHidden(Windows.APPS_URLS)) return;
-		const request: IGetActivitiesStatistics = this.payloads$.getValue();
+
 		try {
 			this.activitiesLoading = true;
+			const request: IGetActivitiesStatistics = this.payloads$.getValue();
 			const activities = await this.timesheetStatisticsService.getActivities(request);
 			const sum = reduce(activities, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
 			this.activities = (activities || []).map((activity) => {
@@ -348,65 +377,89 @@ export class TimeTrackingComponent
 				return activity;
 			});
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching activities.');
 		} finally {
 			this.activitiesLoading = false;
 		}
 	}
 
-	async getProjects() {
+	/**
+	 * Fetches the projects statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getProjects(): Promise<void> {
 		if (this._isWindowHidden(Windows.PROJECTS)) return;
-		const request: IGetProjectsStatistics = this.payloads$.getValue();
+
 		try {
 			this.projectsLoading = true;
+			const request: IGetProjectsStatistics = this.payloads$.getValue();
 			this.projects = await this.timesheetStatisticsService.getProjects(request);
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching projects.');
 		} finally {
 			this.projectsLoading = false;
 		}
 	}
 
-	async getTasks() {
+	/**
+	 * Fetches the tasks statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getTasks(): Promise<void> {
 		if (this._isWindowHidden(Windows.TASKS)) return;
-		const request: IGetTasksStatistics = this.payloads$.getValue();
-		const take = 5;
+
 		try {
 			this.tasksLoading = true;
-			this.tasks = await this.timesheetStatisticsService.getTasks({
-				...request,
-				take
-			});
+
+			const request: IGetTasksStatistics = this.payloads$.getValue();
+			const take = 5;
+
+			this.tasks = await this.timesheetStatisticsService.getTasks({ ...request, take });
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching tasks.');
 		} finally {
 			this.tasksLoading = false;
 		}
 	}
 
-	async getManualTimes() {
+	/**
+	 * Fetches the manual times statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getManualTimes(): Promise<void> {
 		if (this._isWindowHidden(Windows.MANUAL_TIMES)) return;
-		const request: IGetManualTimesStatistics = this.payloads$.getValue();
+
 		try {
 			this.manualTimeLoading = true;
+			const request: IGetManualTimesStatistics = this.payloads$.getValue();
 			this.manualTimes = await this.timesheetStatisticsService.getManualTimes(request);
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching manual times.');
 		} finally {
 			this.manualTimeLoading = false;
 		}
 	}
 
-	async getMembers() {
+	/**
+	 * Fetches the members statistics.
+	 *
+	 * @returns Promise<void>
+	 */
+	async getMembers(): Promise<void> {
 		if (
 			!(await this.ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ||
 			this._isWindowHidden(Windows.MEMBERS)
 		) {
 			return;
 		}
-		const request: IGetMembersStatistics = this.payloads$.getValue();
+
 		try {
 			this.memberLoading = true;
+
+			const request: IGetMembersStatistics = this.payloads$.getValue();
 			const members = await this.timesheetStatisticsService.getMembers(request);
 
 			this.members = (members || []).map((member) => {
@@ -423,7 +476,7 @@ export class TimeTrackingComponent
 				return member;
 			});
 		} catch (error) {
-			this.toastrService.error(error);
+			this.toastrService.error(error.message || 'An error occurred while fetching members.');
 		} finally {
 			this.memberLoading = false;
 		}
@@ -437,6 +490,9 @@ export class TimeTrackingComponent
 		this.galleryService.clearGallery();
 	}
 
+	/**
+	 *
+	 */
 	get period() {
 		if (!this.selectedDateRange) {
 			return;
@@ -799,13 +855,19 @@ export class TimeTrackingComponent
 
 	/**
 	 * Handles the event when the time format is changed.
-	 * @param timeformat The new time format.
+	 *
+	 * @param timeFormat The new time format.
 	 */
-	timeFormatChanged(timeformat: TimeFormatEnum): void {}
+	timeFormatChanged(timeFormat: TimeFormatEnum): void {
+		this.filters.timeFormat = timeFormat;
+	}
 
 	/**
 	 * Handles the event when the time zone is changed.
-	 * @param timezone The new time zone.
+	 *
+	 * @param timeZone The new time zone.
 	 */
-	timeZoneChanged(timezone: string): void {}
+	timeZoneChanged(timeZone: string): void {
+		this.filters.timeZone = timeZone;
+	}
 }

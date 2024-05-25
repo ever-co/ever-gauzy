@@ -2,33 +2,28 @@
 @import 'gauzy/_gauzy-overrides';
 
 :host {
-    ::ng-deep {
-        .action-select button {
-            background-color: nb-theme(gauzy-card-1) !important;
-            border-radius: nb-theme(select-rectangle-border-radius);
-        }
+  ::ng-deep {
+    .action-select button {
+      background-color: nb-theme(gauzy-card-1) !important;
+      border-radius: nb-theme(select-rectangle-border-radius);
     }
+  }
 }
 
 :host {
   .filters {
     display: flex;
     justify-content: flex-end;
-    gap: 5px;
   }
 
   ::ng-deep {
     ng-select {
       min-width: 10rem;
     }
-    @include ng-select-overrides(
-      2rem,
-      $default-button-radius,
-      $default-box-shadow
-    );
+    @include ng-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 }
 
 .report-body {
-	height: calc(100% - 8rem) !important;
+  height: calc(100% - 8rem) !important;
 }

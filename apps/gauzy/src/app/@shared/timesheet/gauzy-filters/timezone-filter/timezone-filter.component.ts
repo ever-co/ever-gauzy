@@ -1,10 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { NavigationService } from '@gauzy/ui-sdk/core';
 import {
 	DEFAULT_TIME_FORMATS,
 	IOrganization,
@@ -31,46 +32,16 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	selectedTimeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 	selectedTimeZone: TimeZoneEnum = TimeZoneEnum.UTC_TIMEZONE;
 
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimezone: boolean = true;
-	get isTimezone(): boolean {
-		return this._isTimezone;
-	}
-	@Input() set isTimezone(value: boolean) {
-		this._isTimezone = value;
-	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimeformat: boolean = true;
-	get isTimeformat(): boolean {
-		return this._isTimeformat;
-	}
-	@Input() set isTimeformat(value: boolean) {
-		this._isTimeformat = value;
-	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _navigate: boolean = true;
-	get navigate(): boolean {
-		return this._navigate;
-	}
-	@Input() set navigate(value: boolean) {
-		this._navigate = value;
-	}
+	@Input() isTimezone: boolean = true;
+	@Input() isTimeformat: boolean = true;
 
 	@Output() timeZoneChange = new EventEmitter<string>();
 	@Output() timeFormatChange = new EventEmitter<TimeFormatEnum>();
 
 	constructor(
 		private readonly _route: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _store: Store
+		private readonly _store: Store,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
@@ -87,8 +58,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
 				tap(([queryParams, organization]) => {
-					this.applyTimeFormat(queryParams, organization.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, organization.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -110,8 +81,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 			.pipe(
 				distinctUntilChange(),
 				tap(([queryParams, user]) => {
-					this.applyTimeFormat(queryParams, user.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, user.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -121,18 +92,18 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Applies the appropriate time format based on query parameters, organization settings, and employee settings.
+	 *
 	 * @param queryParams The query parameters from the route.
 	 * @param organization The organization details.
-	 * @param employee The selected employee details.
 	 */
 	private applyTimeFormat(queryParams: Params, timeFormat: number): void {
 		const { time_format } = queryParams;
 
 		// Apply query parameters first
 		if (time_format) {
-			this.selectTimeFormat(time_format);
+			this.updateSelectedTimeFormat(parseInt(time_format, 10));
 		} else {
-			this.selectTimeFormat(timeFormat);
+			this.updateSelectedTimeFormat(timeFormat);
 		}
 	}
 
@@ -146,9 +117,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		// Apply query parameters first
 		if (time_zone) {
-			this.selectTimeZone(time_zone);
+			this.updateSelectedTimeZone(time_zone);
 		} else {
-			this.selectTimeZone(timeZone);
+			this.updateSelectedTimeZone(timeZone);
 		}
 	}
 
@@ -190,14 +161,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		this.timeFormatChange.emit(timeFormat);
 
-		if (this.navigate) {
-			// Update query parameter 'time_format'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_format: timeFormat.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_format: timeFormat.toString()
+		});
 	}
 
 	/**
@@ -211,14 +178,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		this.timeZoneChange.emit(this.getTimeZone(this.selectedTimeZone));
 
-		if (this.navigate) {
-			// Update query parameter 'time_zone'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_zone: timeZone.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_zone: timeZone.toString()
+		});
 	}
 
 	/**

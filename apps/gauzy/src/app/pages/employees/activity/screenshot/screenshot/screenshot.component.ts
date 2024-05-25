@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Subject } from 'rxjs/internal/Subject';
 import { chain, indexBy, pick, sortBy } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -116,7 +116,8 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 			return;
 		}
 		// Extract specific properties from filters
-		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
+		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType', 'timeZone');
+
 		// Construct request object
 		const request: IGetTimeSlotInput = {
 			...appliedFilter,
