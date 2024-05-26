@@ -38,7 +38,6 @@ import {
 	TranslateLoader,
 	TranslateService,
 	IPathWindow,
-	ReadWriteFile,
 	ServerConfig,
 	IServerConfig,
 	ILocalServer,
@@ -371,13 +370,6 @@ const contextMenu = () => {
 			label: TranslateService.instant('MENU.STOP_SERVER'),
 			click() {
 				stopServer();
-			}
-		},
-		{
-			id: 'devtools',
-			label: 'devtools',
-			click() {
-				setupWindow.webContents.toggleDevTools();
 			}
 		},
 		{
