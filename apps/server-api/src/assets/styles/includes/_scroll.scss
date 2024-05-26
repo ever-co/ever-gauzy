@@ -1,0 +1,20 @@
+.custom-scroll {
+  &::-webkit-scrollbar {
+    display: block;
+    width: 6px;
+    background-color: rgba($color: #f5f5f5, $alpha: 0.9);
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: rgba($color: #f5f5f5, $alpha: 0.9);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba($color: #000000, $alpha: 0.2);
+    border-radius: 3px;
+    &:hover {
+      cursor: pointer;
+      background-color: rgba($color: #000000, $alpha: 0.5);
+    }
+  }
+}
