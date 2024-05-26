@@ -2,6 +2,7 @@ import { CommonEnvironmentContent } from './concrete-environment-content/common-
 import { DesktopTimerEnvironmentContent } from './concrete-environment-content/desktop-timer-environment-content';
 import { DesktopEnvironmentContent } from './concrete-environment-content/desktop-environment-content';
 import { DesktopServerEnvironmentContent } from './concrete-environment-content/desktop-server-environment-content';
+import { DesktopServerApiEnvironmentContent } from './concrete-environment-content/desktop-server-api-environment-content';
 import { IDesktopEnvironment } from './interfaces/i-desktop-environment';
 
 export class DesktopEnvironmentContentFactory {
@@ -26,6 +27,11 @@ export class DesktopEnvironmentContentFactory {
 				return common
 					.generate(environment)
 					.concat(server.generate(environment));
+			case 'server-api':
+				const serverApi = new DesktopServerApiEnvironmentContent();
+				return common
+					.generate(environment)
+					.concat(serverApi.generate(environment));
 			default:
 				break;
 		}

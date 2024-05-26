@@ -4,7 +4,9 @@
 	"projects": {
 		"gauzy-e2e": {
 			"tags": [],
-			"implicitDependencies": ["gauzy"]
+			"implicitDependencies": [
+				"gauzy"
+			]
 		},
 		"@gauzy/ui-sdk": {
 			"tags": []
@@ -43,6 +45,9 @@
 			"tags": []
 		},
 		"gauzy-server-api": {
+			"tags": []
+		},
+		"desktop-server-api": {
 			"tags": []
 		}
 	}

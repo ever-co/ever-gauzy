@@ -1181,6 +1181,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		return this._environment.IS_SERVER;
 	}
 
+	public get isServerApi(): boolean {
+		return this._environment.IS_SERVER_API;
+	}
+
 	public get selectedMenu$(): Observable<string> {
 		return this._selectedMenu$.asObservable();
 	}

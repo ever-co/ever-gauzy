@@ -11,6 +11,7 @@ export class PackagerFactory {
 			case 'desktop':
 				return new DesktopPackager();
 			case 'server':
+			case 'server-api':
 				return new ServerPackager();
 			default:
 				console.warn('WARNING: Unknown application.');
