@@ -1,7 +1,7 @@
 import { IContentGenerator } from '../interfaces/i-content-generator';
 import { IDesktopEnvironment } from '../interfaces/i-desktop-environment';
 
-export class DesktopServerApiEnvironmentContent implements IContentGenerator {
+export class GauzyApiServerEnvironmentContent implements IContentGenerator {
 	public generate(variable: Partial<IDesktopEnvironment>): string {
 		return `
 			NAME: '${variable.DESKTOP_SERVER_APP_NAME || variable.NAME}',

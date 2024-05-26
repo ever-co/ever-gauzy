@@ -1199,7 +1199,7 @@
 				}
 			}
 		},
-		"desktop-server-api": {
+		"gauzy-api-server": {
 			"projectType": "application",
 			"schematics": {
 				"@nrwl/angular:component": {
@@ -1216,7 +1216,7 @@
 						"customWebpackConfig": {
 							"path": "apps/server-api/config/custom-webpack.config.js"
 						},
-						"outputPath": "dist/apps/desktop-server-api",
+						"outputPath": "dist/apps/gauzy-api-server",
 						"index": "apps/server-api/src/index.html",
 						"main": "apps/server-api/src/main.ts",
 						"polyfills": "apps/server-api/src/polyfills.ts",
@@ -1334,7 +1334,7 @@
 				"build": {
 					"builder": "@nrwl/node:webpack",
 					"options": {
-						"outputPath": "dist/apps/desktop-server-api/api",
+						"outputPath": "dist/apps/gauzy-api-server/api",
 						"main": "apps/api/src/main.ts",
 						"showCircularDependencies": false,
 						"sourceMap": true,

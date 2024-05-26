@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"outDir": "../../dist/apps/desktop-server-api",
+		"outDir": "../../dist/apps/gauzy-api-server",
 		"sourceMap": true,
 		"declaration": false,
 		"moduleResolution": "node",

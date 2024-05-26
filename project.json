@@ -47,7 +47,7 @@
 		"gauzy-server-api": {
 			"tags": []
 		},
-		"desktop-server-api": {
+		"gauzy-api-server": {
 			"tags": []
 		}
 	}
