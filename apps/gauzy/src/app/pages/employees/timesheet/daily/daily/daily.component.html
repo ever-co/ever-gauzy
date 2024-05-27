@@ -129,11 +129,19 @@
 									</div>
 									<div class="col-2">
 										<span class="start-timer">
-											{{ log.startedAt | utcToLocal | timeFormat : filters?.timeFormat : true }}
+											{{
+												log.startedAt
+													| utcToTimezone : filters?.timeZone
+													| timeFormat : filters?.timeFormat
+											}}
 										</span>
 										-
 										<span *ngIf="!log.isRunning; else runningTimer" class="end-timer">
-											{{ log.stoppedAt | utcToLocal | timeFormat : filters?.timeFormat : true }}
+											{{
+												log.stoppedAt
+													| utcToTimezone : filters?.timeZone
+													| timeFormat : filters?.timeFormat
+											}}
 										</span>
 										<ng-template #runningTimer>
 											<span class="running-timer">

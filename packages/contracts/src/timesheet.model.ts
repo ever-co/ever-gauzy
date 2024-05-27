@@ -363,7 +363,6 @@ export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityMod
 export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityModel {
 	onlyMe?: boolean;
 	timesheetId?: string;
-	timezone?: string;
 }
 
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
