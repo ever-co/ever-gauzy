@@ -221,7 +221,19 @@ export function toUtcOffset(date: string | Date | moment.Moment, timezone?: stri
 }
 
 /**
+ * Converts the given date to the specified timezone.
+ *
+ * @param date The date to convert to the specified timezone.
+ * @param timezone The IANA timezone identifier (e.g., 'America/New_York', 'Europe/London').
+ * @returns A moment object representing the date in the specified timezone.
+ */
+export function toTimezone(date: string | Date | moment.Moment, timezone: string): moment.Moment {
+	return moment.utc(date).tz(timezone);
+}
+
+/**
  * Converts the given date to the local timezone.
+ *
  * @param date The date to convert to local timezone.
  * @returns A moment object representing the date in the local timezone.
  */
