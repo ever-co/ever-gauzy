@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/common';
 import {
@@ -19,9 +18,7 @@ import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-or
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
-		@InjectRepository(OrganizationProject)
 		typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-
 		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
