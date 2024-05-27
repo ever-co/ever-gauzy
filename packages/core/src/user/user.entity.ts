@@ -16,7 +16,8 @@ import {
 	IUserOrganization,
 	IInvite,
 	IImageAsset,
-	TimeFormatEnum
+	TimeFormatEnum,
+	ISocialAccount
 } from '@gauzy/contracts';
 import { ImageAsset, Invite, Role, Tag, TenantBaseEntity, UserOrganization } from '../core/entities/internal';
 import {
@@ -251,4 +252,10 @@ export class User extends TenantBaseEntity implements IUser {
 	 */
 	@MultiORMOneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
+
+	/**
+	 * User social accounts
+	 */
+	@MultiORMOneToMany(() => Invite, (it) => it.user)
+	socialAccounts?: ISocialAccount[];
 }
