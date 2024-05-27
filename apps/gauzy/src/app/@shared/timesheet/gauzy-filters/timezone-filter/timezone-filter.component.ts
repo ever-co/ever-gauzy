@@ -15,6 +15,7 @@ import {
 	TimeZoneEnum
 } from '@gauzy/contracts';
 import { Store } from '../../../../@core/services';
+import { TimeZoneService } from './time-zone.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,7 +42,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	constructor(
 		private readonly _route: ActivatedRoute,
 		private readonly _store: Store,
-		private readonly _navigationService: NavigationService
+		private readonly _navigationService: NavigationService,
+		private readonly _timeZoneService: TimeZoneService
 	) {}
 
 	ngOnInit(): void {
@@ -101,9 +103,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		// Apply query parameters first
 		if (time_format) {
-			this.updateSelectedTimeFormat(parseInt(time_format, 10));
+			this.selectTimeFormat(parseInt(time_format, 10));
 		} else {
-			this.updateSelectedTimeFormat(timeFormat);
+			this.selectTimeFormat(timeFormat);
 		}
 	}
 
@@ -117,9 +119,9 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 		// Apply query parameters first
 		if (time_zone) {
-			this.updateSelectedTimeZone(time_zone);
+			this.selectTimeZone(time_zone);
 		} else {
-			this.updateSelectedTimeZone(timeZone);
+			this.selectTimeZone(timeZone);
 		}
 	}
 
@@ -131,6 +133,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	selectTimeFormat(timeFormat: TimeFormatEnum): void {
 		const is24Hours = timeFormat == TimeFormatEnum.FORMAT_24_HOURS;
 		this.selectedTimeFormat = is24Hours ? TimeFormatEnum.FORMAT_24_HOURS : TimeFormatEnum.FORMAT_12_HOURS;
+
+		this.timeFormatChange.emit(this.selectedTimeFormat);
 	}
 
 	/**
@@ -148,6 +152,11 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 				this.selectedTimeZone = TimeZoneEnum.UTC_TIMEZONE;
 				break;
 		}
+
+		const timezone = this.getMomentTimezone(this.selectedTimeZone);
+		this._timeZoneService.setTimeZone(timezone);
+
+		this.timeZoneChange.emit(timezone);
 	}
 
 	/**
@@ -158,8 +167,6 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	async updateSelectedTimeFormat(timeFormat: TimeFormatEnum): Promise<void> {
 		// Update the selected time format
 		this.selectTimeFormat(timeFormat);
-
-		this.timeFormatChange.emit(timeFormat);
 
 		// Updates the query parameters of the current route without navigating away.
 		await this._navigationService.updateQueryParams({
@@ -176,8 +183,6 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		// Update the selected time zone
 		this.selectTimeZone(timeZone);
 
-		this.timeZoneChange.emit(this.getTimeZone(this.selectedTimeZone));
-
 		// Updates the query parameters of the current route without navigating away.
 		await this._navigationService.updateQueryParams({
 			time_zone: timeZone.toString()
@@ -190,7 +195,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	 * @returns
 	 */
 	getTimeZoneWithOffset(): string {
-		const zone = this.getTimeZone(this.selectedTimeZone);
+		const zone = this._timeZoneService.currentTimeZone;
 
 		let region = '';
 		let city = '';
@@ -215,7 +220,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	 *
 	 * @returns The time zone string.
 	 */
-	getTimeZone(zone: string): string {
+	getMomentTimezone(zone: string): string {
 		const defaultTimeZone = 'Etc/UTC';
 		let timeZone: string;
 

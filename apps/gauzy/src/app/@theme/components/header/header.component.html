@@ -64,7 +64,7 @@
 			<nb-action *ngIf="showDateSelector && !showExtraActions && selectorsVisibility?.date">
 				<ng-container *ngIf="organization?.id">
 					<ngx-date-range-picker
-						[timezone]="organization.timeZone"
+						[firstDayOfWeek]="organization.startWeekOn"
 						class="date-range-selector"
 					></ngx-date-range-picker>
 				</ng-container>
