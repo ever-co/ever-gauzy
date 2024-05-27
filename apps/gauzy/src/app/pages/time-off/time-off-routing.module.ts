@@ -23,9 +23,7 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	},
 	{
 		path: 'settings',

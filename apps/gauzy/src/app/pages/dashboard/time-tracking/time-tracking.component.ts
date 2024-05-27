@@ -46,7 +46,7 @@ import {
 	ITimeLogTodayFilters,
 	TimeFormatEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, progressStatus, toUTC } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-sdk/common';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import { EmployeesService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
@@ -56,6 +56,7 @@ import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/select
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
+import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);
@@ -142,25 +143,26 @@ export class TimeTrackingComponent
 	public windows: GuiDrag[];
 
 	constructor(
-		private readonly timesheetStatisticsService: TimesheetStatisticsService,
-		private readonly store: Store,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly galleryService: GalleryService,
-		private readonly ngxPermissionsService: NgxPermissionsService,
 		public readonly translateService: TranslateService,
-		private readonly changeRef: ChangeDetectorRef,
+		private readonly _timesheetStatisticsService: TimesheetStatisticsService,
+		private readonly _store: Store,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _galleryService: GalleryService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _changeRef: ChangeDetectorRef,
 		private readonly _router: Router,
-		private readonly employeesService: EmployeesService,
-		private readonly projectService: OrganizationProjectsService,
-		private readonly toastrService: ToastrService,
-		private readonly widgetService: WidgetService,
-		private readonly windowService: WindowService
+		private readonly _employeesService: EmployeesService,
+		private readonly _projectService: OrganizationProjectsService,
+		private readonly _toastrService: ToastrService,
+		private readonly _widgetService: WidgetService,
+		private readonly _windowService: WindowService,
+		private readonly _timeZoneService: TimeZoneService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit() {
-		this.store.user$
+		this._store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
@@ -171,7 +173,7 @@ export class TimeTrackingComponent
 		this.logs$
 			.pipe(
 				debounceTime(200),
-				tap(() => this.galleryService.clearGallery()),
+				tap(() => this._galleryService.clearGallery()),
 				tap(async () => await this.getStatistics()),
 				untilDestroyed(this)
 			)
@@ -188,13 +190,16 @@ export class TimeTrackingComponent
 	}
 
 	ngAfterViewInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const storeTeam$ = this.store.selectedTeam$;
-		const storeProject$ = this.store.selectedProject$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		// Subscribe to the timeZone$ observable
+		const timeZone$ = this._timeZoneService.timeZone$.pipe(filter((timeZone: string) => !!timeZone));
 
-		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$, storeTeam$])
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
+		const storeTeam$ = this._store.selectedTeam$;
+		const storeProject$ = this._store.selectedProject$;
+		const selectedDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
+
+		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$, storeProject$, storeTeam$, timeZone$])
 			.pipe(
 				distinctUntilChange(),
 				debounceTime(500),
@@ -209,7 +214,7 @@ export class TimeTrackingComponent
 					this.employeeIds = employee ? [employee.id] : [];
 					this.projectIds = project ? [project.id] : [];
 					this.teamIds = team ? [team.id] : [];
-					this.widgetService.widgets.forEach((widget: GuiDrag) => {
+					this._widgetService.widgets.forEach((widget: GuiDrag) => {
 						if (widget.position === 0 && this.employeeIds[0]) {
 							widget.hide = true;
 						}
@@ -217,13 +222,13 @@ export class TimeTrackingComponent
 							widget.hide = true;
 						}
 					});
-					this.windowService.windows.forEach((windows: GuiDrag) => {
+					this._windowService.windows.forEach((windows: GuiDrag) => {
 						if (windows.position === Windows.MEMBERS && this.employeeIds[0]) {
 							windows.hide = true;
 						}
 					});
-					this.widgetService.save();
-					this.windowService.save();
+					this._widgetService.save();
+					this._windowService.save();
 				}),
 				tap(() => this.preparePayloads()),
 				tap(() => {
@@ -239,9 +244,9 @@ export class TimeTrackingComponent
 	}
 
 	ngAfterViewChecked(): void {
-		this.widgets = this.widgetService.widgets;
-		this.windows = this.windowService.windows;
-		this.changeRef.detectChanges();
+		this.widgets = this._widgetService.widgets;
+		this.windows = this._windowService.windows;
+		this._changeRef.detectChanges();
 	}
 
 	/**
@@ -274,18 +279,18 @@ export class TimeTrackingComponent
 		}
 
 		const { employeeIds, projectIds, teamIds, selectedDateRange } = this;
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
+		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(selectedDateRange);
+		const timeZone = this._timeZoneService.currentTimeZone;
 
 		const request: ITimeLogFilters & ITimeLogTodayFilters = {
 			tenantId,
 			organizationId,
-			todayStart: toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss'),
-			todayEnd: toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss'),
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm:ss'),
-			timeZone: this.filters.timeZone
+			todayStart: toUtcOffset(moment().startOf('day'), timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			todayEnd: toUtcOffset(moment().endOf('day'), timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			startDate: toUtcOffset(startDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUtcOffset(endDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			timeZone
 		};
 
 		if (isNotEmpty(employeeIds)) {
@@ -332,9 +337,9 @@ export class TimeTrackingComponent
 		try {
 			this.timeSlotLoading = true;
 			const request: IGetTimeSlotStatistics = this.payloads$.getValue();
-			this.timeSlotEmployees = await this.timesheetStatisticsService.getTimeSlots(request);
+			this.timeSlotEmployees = await this._timesheetStatisticsService.getTimeSlots(request);
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching time slots.');
+			this._toastrService.error(error.message || 'An error occurred while fetching time slots.');
 		} finally {
 			this.timeSlotLoading = false;
 		}
@@ -351,9 +356,9 @@ export class TimeTrackingComponent
 		try {
 			this.countsLoading = true;
 			const request: IGetCountsStatistics = this.payloads$.getValue();
-			this.counts = await this.timesheetStatisticsService.getCounts(request);
+			this.counts = await this._timesheetStatisticsService.getCounts(request);
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching counts.');
+			this._toastrService.error(error.message || 'An error occurred while fetching counts.');
 		} finally {
 			this.countsLoading = false;
 		}
@@ -370,14 +375,14 @@ export class TimeTrackingComponent
 		try {
 			this.activitiesLoading = true;
 			const request: IGetActivitiesStatistics = this.payloads$.getValue();
-			const activities = await this.timesheetStatisticsService.getActivities(request);
+			const activities = await this._timesheetStatisticsService.getActivities(request);
 			const sum = reduce(activities, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
 			this.activities = (activities || []).map((activity) => {
 				activity.durationPercentage = (activity.duration * 100) / sum;
 				return activity;
 			});
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching activities.');
+			this._toastrService.error(error.message || 'An error occurred while fetching activities.');
 		} finally {
 			this.activitiesLoading = false;
 		}
@@ -394,9 +399,9 @@ export class TimeTrackingComponent
 		try {
 			this.projectsLoading = true;
 			const request: IGetProjectsStatistics = this.payloads$.getValue();
-			this.projects = await this.timesheetStatisticsService.getProjects(request);
+			this.projects = await this._timesheetStatisticsService.getProjects(request);
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching projects.');
+			this._toastrService.error(error.message || 'An error occurred while fetching projects.');
 		} finally {
 			this.projectsLoading = false;
 		}
@@ -416,9 +421,9 @@ export class TimeTrackingComponent
 			const request: IGetTasksStatistics = this.payloads$.getValue();
 			const take = 5;
 
-			this.tasks = await this.timesheetStatisticsService.getTasks({ ...request, take });
+			this.tasks = await this._timesheetStatisticsService.getTasks({ ...request, take });
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching tasks.');
+			this._toastrService.error(error.message || 'An error occurred while fetching tasks.');
 		} finally {
 			this.tasksLoading = false;
 		}
@@ -435,9 +440,9 @@ export class TimeTrackingComponent
 		try {
 			this.manualTimeLoading = true;
 			const request: IGetManualTimesStatistics = this.payloads$.getValue();
-			this.manualTimes = await this.timesheetStatisticsService.getManualTimes(request);
+			this.manualTimes = await this._timesheetStatisticsService.getManualTimes(request);
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching manual times.');
+			this._toastrService.error(error.message || 'An error occurred while fetching manual times.');
 		} finally {
 			this.manualTimeLoading = false;
 		}
@@ -450,7 +455,7 @@ export class TimeTrackingComponent
 	 */
 	async getMembers(): Promise<void> {
 		if (
-			!(await this.ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ||
+			!(await this._ngxPermissionsService.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) ||
 			this._isWindowHidden(Windows.MEMBERS)
 		) {
 			return;
@@ -460,7 +465,7 @@ export class TimeTrackingComponent
 			this.memberLoading = true;
 
 			const request: IGetMembersStatistics = this.payloads$.getValue();
-			const members = await this.timesheetStatisticsService.getMembers(request);
+			const members = await this._timesheetStatisticsService.getMembers(request);
 
 			this.members = (members || []).map((member) => {
 				const week: any = indexBy(member.weekHours, 'day');
@@ -476,7 +481,7 @@ export class TimeTrackingComponent
 				return member;
 			});
 		} catch (error) {
-			this.toastrService.error(error.message || 'An error occurred while fetching members.');
+			this._toastrService.error(error.message || 'An error occurred while fetching members.');
 		} finally {
 			this.memberLoading = false;
 		}
@@ -487,7 +492,7 @@ export class TimeTrackingComponent
 	}
 
 	ngOnDestroy() {
-		this.galleryService.clearGallery();
+		this._galleryService.clearGallery();
 	}
 
 	/**
@@ -606,8 +611,8 @@ export class TimeTrackingComponent
 			return;
 		}
 		try {
-			const people = await firstValueFrom(this.employeesService.getEmployeeById(employee.id, ['user']));
-			this.store.selectedEmployee = employee.id
+			const people = await firstValueFrom(this._employeesService.getEmployeeById(employee.id, ['user']));
+			this._store.selectedEmployee = employee.id
 				? ({
 						id: people.id,
 						firstName: people.user.firstName,
@@ -618,7 +623,7 @@ export class TimeTrackingComponent
 						shortDescription: people.short_description
 				  } as ISelectedEmployee)
 				: ALL_EMPLOYEES_SELECTED;
-			if (this.store.selectedEmployee) {
+			if (this._store.selectedEmployee) {
 				this._router.navigate([`/pages/employees/activity/screenshots`]);
 			}
 		} catch (error) {
@@ -684,7 +689,7 @@ export class TimeTrackingComponent
 		const { id: organizationId, tenantId } = this.organization;
 
 		// Retrieve the count of employees for the organization
-		const count$ = this.employeesService.getCount({ organizationId, tenantId });
+		const count$ = this._employeesService.getCount({ organizationId, tenantId });
 
 		// Subscribe to the count observable, updating employeesCount when count is received
 		count$
@@ -710,7 +715,7 @@ export class TimeTrackingComponent
 			const { id: organizationId, tenantId } = this.organization;
 
 			// Retrieve the count of projects for the organization
-			this.projectCount = await this.projectService.getCount({
+			this.projectCount = await this._projectService.getCount({
 				organizationId,
 				tenantId
 			});
@@ -725,8 +730,8 @@ export class TimeTrackingComponent
 	get hideProjectBlock() {
 		const hide = this.projectIds.filter(Boolean).length;
 		if (hide) {
-			this.widgetService.hideWidget(1);
-			this.widgetService.save();
+			this._widgetService.hideWidget(1);
+			this._widgetService.save();
 		}
 		return hide;
 	}
@@ -737,10 +742,10 @@ export class TimeTrackingComponent
 	get hideEmployeeBlock() {
 		const hide = this.employeeIds.filter(Boolean).length;
 		if (hide) {
-			this.widgetService.hideWidget(0);
-			this.windowService.hideWindow(5);
-			this.widgetService.save();
-			this.windowService.save();
+			this._widgetService.hideWidget(0);
+			this._windowService.hideWindow(5);
+			this._widgetService.save();
+			this._windowService.save();
 		}
 		return hide;
 	}
@@ -786,8 +791,8 @@ export class TimeTrackingComponent
 
 	public async updateWindowVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
-		this.windowService.updateWindow(value);
-		this.windowService.save();
+		this._windowService.updateWindow(value);
+		this._windowService.save();
 		if (!value.hide) {
 			await this.recover(value.position);
 		}
@@ -795,15 +800,15 @@ export class TimeTrackingComponent
 
 	public async updateWidgetVisibility(value: GuiDrag): Promise<void> {
 		value.hide = !value.hide;
-		this.widgetService.updateWidget(value);
-		this.widgetService.save();
+		this._widgetService.updateWidget(value);
+		this._widgetService.save();
 		if (!value.hide) {
 			await this.getCounts();
 		}
 	}
 
 	public undo(isWindow?: boolean) {
-		isWindow ? this.windowService.undoDrag() : this.widgetService.undoDrag();
+		isWindow ? this._windowService.undoDrag() : this._widgetService.undoDrag();
 	}
 
 	public slideNext(swiper: SwiperComponent) {

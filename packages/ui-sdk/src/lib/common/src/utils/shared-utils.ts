@@ -196,6 +196,31 @@ export function ucFirst(str: string, force: boolean): string {
 }
 
 /**
+ * Get the UTC offset for a given timezone.
+ *
+ * @param timezone The timezone identifier (e.g., 'Europe/Paris').
+ * @returns The UTC offset in minutes.
+ */
+export function getUTCOffsetForTimezone(timezone: string = 'UTC'): number {
+	return moment.tz(timezone).utcOffset();
+}
+
+/**
+ * Converts a date to UTC using the offset of the specified timezone.
+ *
+ * @param date The date to convert, can be a string, Date object, or moment object.
+ * @param timezone (Optional) The timezone identifier (e.g., 'Europe/Paris'). If not provided, the local timezone is used.
+ * @returns A moment object representing the date in UTC.
+ */
+export function toUtcOffset(date: string | Date | moment.Moment, timezone?: string): moment.Moment {
+	// Get the UTC offset for the specified timezone
+	const utcOffset = timezone ? getUTCOffsetForTimezone(timezone) : moment().utcOffset();
+
+	// Clone the provided date to avoid mutating it, then subtract the UTC offset
+	return moment(date).clone().subtract(utcOffset, 'minutes');
+}
+
+/**
  * Converts the given date to the local timezone.
  * @param date The date to convert to local timezone.
  * @returns A moment object representing the date in the local timezone.
