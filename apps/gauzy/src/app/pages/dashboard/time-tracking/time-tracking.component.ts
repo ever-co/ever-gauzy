@@ -10,12 +10,11 @@ import {
 	ViewChildren
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, firstValueFrom, of, Subject, Subscription, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { indexBy, range, reduce } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
 import { SwiperComponent } from 'swiper/angular';
@@ -47,11 +46,11 @@ import {
 	TimeFormatEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
 import { EmployeesService, OrganizationProjectsService, Store, ToastrService } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
@@ -137,8 +136,6 @@ export class TimeTrackingComponent
 	@ViewChildren('window') listOfWindows: QueryList<TemplateRef<HTMLElement>>;
 	public widgetsRef: TemplateRef<HTMLElement>[] = [];
 	public windowsRef: TemplateRef<HTMLElement>[] = [];
-	@ViewChildren(NbPopoverDirective)
-	public popups: QueryList<NbPopoverDirective>;
 	public widgets: GuiDrag[];
 	public windows: GuiDrag[];
 

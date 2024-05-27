@@ -202,6 +202,11 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
+	/**
+	 * Retrieves the timer status using the provided parameters.
+	 * @param params The input parameters for retrieving timer status.
+	 * @returns A promise that resolves to the timer status.
+	 */
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
 		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');

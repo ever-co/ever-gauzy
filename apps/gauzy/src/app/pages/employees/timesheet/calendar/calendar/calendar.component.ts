@@ -27,6 +27,7 @@ import {
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { dayOfWeekAsString } from './../../../../../@theme/components/header/selectors/date-range-picker';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,16 +50,17 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	futureDateAllowed: boolean;
 
 	constructor(
-		private readonly timesheetService: TimesheetService,
-		protected readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly cdr: ChangeDetectorRef,
 		private readonly nbDialogService: NbDialogService,
+		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly cdr: ChangeDetectorRef,
+		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		public readonly translateService: TranslateService
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 		this.calendarOptions = {
 			initialView: 'timeGridWeek',
 			headerToolbar: {

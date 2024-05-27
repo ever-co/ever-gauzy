@@ -14,6 +14,7 @@ import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { ExpensesService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,13 +39,14 @@ export class ExpensesReportGridComponent extends BaseSelectorFilterComponent imp
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef,
 		private readonly expensesService: ExpensesService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		public readonly translateService: TranslateService,
-		private readonly cd: ChangeDetectorRef
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
