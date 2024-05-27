@@ -27,4 +27,4 @@ import { TypeOrmTimeSlotRepository } from './repository/type-orm-time-slot.repos
 	providers: [TimeSlotService, TypeOrmTimeSlotRepository, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, TimeSlotService, TypeOrmTimeSlotRepository]
 })
-export class TimeSlotModule { }
+export class TimeSlotModule {}

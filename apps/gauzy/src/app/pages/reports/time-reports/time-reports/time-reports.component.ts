@@ -4,7 +4,6 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
-import * as moment from 'moment';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import {
 	IGetTimeLogReportInput,
@@ -21,6 +20,7 @@ import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,7 +33,6 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	public loading: boolean = false;
 	public charts: IChartData;
 	public groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -41,13 +40,14 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
-		protected readonly store: Store,
-		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
+		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -103,9 +103,6 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
 			return;
 		}
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
 		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
@@ -114,9 +111,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			// Set the 'groupBy' property from the current instance's 'groupBy' property
-			groupBy: this.groupBy,
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			groupBy: this.groupBy
 		};
 
 		// Emit the request object to the observable

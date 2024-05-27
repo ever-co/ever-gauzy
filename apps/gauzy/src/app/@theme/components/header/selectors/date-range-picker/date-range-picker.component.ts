@@ -8,11 +8,11 @@ import {
 	DaterangepickerDirective as DateRangePickerDirective,
 	LocaleConfig
 } from 'ngx-daterangepicker-material';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
+import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { OrganizationsService, Store } from './../../../../../@core/services';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
@@ -20,6 +20,7 @@ import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter/time-zone.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -33,62 +34,61 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	public maxDate: string;
 	public minDate: string;
 	public futureDateAllowed: boolean;
-
-	/**
-	 * Default selected date picker ranges
-	 */
-	private readonly dates$: BehaviorSubject<IDateRangePicker> = this.dateRangePickerBuilderService.dates$;
-	/**
-	 * Local store date picker ranges
-	 */
-	private readonly range$: Subject<IDateRangePicker> = new Subject();
-
-	/**
-	 * declaration of arrow variables
-	 */
+	public ranges: DateRanges; // Define ngx-daterangepicker-material range configuration
+	private readonly dates$: BehaviorSubject<IDateRangePicker> = this._dateRangePickerBuilderService.dates$; // Default selected date picker ranges
+	private readonly range$: Subject<IDateRangePicker> = new Subject(); // Local store date picker ranges
+	// Declaration of arrow variables
 	private arrow: Arrow = new Arrow();
 	private next: Next = new Next();
 	private previous: Previous = new Previous();
 
-	/*
-	 * Getter & Setter
-	 */
-	private _timezone: string = moment.tz.guess();
-	get timezone(): string {
-		return this._timezone;
-	}
-	@Input() set timezone(value: string) {
-		this._timezone = value;
-	}
-
-	/**
-	 * ngx-daterangepicker-material local configuration
-	 */
+	// Private field to store the locale configuration
 	public _locale: LocaleConfig = {
-		displayFormat: 'DD.MM.YYYY', // could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
-		format: 'DD.MM.YYYY', // default is format value
-		direction: 'ltr',
-		firstDay:
-			dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY) ||
-			moment.localeData().firstDayOfWeek()
+		displayFormat: 'DD.MM.YYYY', // default display format could be 'YYYY-MM-DDTHH:mm:ss.SSSSZ'
+		format: 'DD.MM.YYYY', // default format
+		direction: 'ltr' // default direction
 	};
+	// Getter for the locale configuration
 	get locale(): LocaleConfig {
 		return this._locale;
 	}
+	// Setter for the locale configuration
 	set locale(locale: LocaleConfig) {
 		this._locale = locale;
 	}
 
-	/**
-	 * Define ngx-daterangepicker-material range configuration
-	 */
-	public ranges: DateRanges;
+	// Show or Hide arrows button, show by default
+	@Input() arrows: boolean = true;
 
-	/**
-	 * show or hide arrows button, show by default
+	// Private field to store the first day of the week
+	private _firstDayOfWeek: number = moment.localeData().firstDayOfWeek();
+	// Getter for the first day of the week
+	get firstDayOfWeek(): number {
+		return this._firstDayOfWeek;
+	}
+	// Setter for the first day of the week with input binding
+	@Input() set firstDayOfWeek(value: WeekDaysEnum) {
+		if (value) this._firstDayOfWeek = dayOfWeekAsString(value);
+		this.locale.firstDay = this.firstDayOfWeek;
+	}
+
+	/*
+	 * Getter & Setter
 	 */
-	@Input()
-	arrows: boolean = true;
+	private _timeZone: string = moment.tz.guess();
+	get timeZone(): string {
+		return this._timeZone;
+	}
+	@Input() set timeZone(value: string) {
+		if (value) this._timeZone = value;
+
+		if (this.isSaveDatePicker) {
+			this.onSavingFilter(this.getSelectorDates());
+		} else {
+			this.selectedDateRange = this.getSelectorDates();
+			this.rangePicker = this.selectedDateRange; // Ensure consistency between selectedDateRange and rangePicker
+		}
+	}
 
 	/*
 	 * Getter & Setter for dynamic unitOfTime
@@ -97,10 +97,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
 	}
-	@Input() set unitOfTime(unitOfTime: moment.unitOfTime.Base) {
-		if (unitOfTime) {
-			this._unitOfTime = unitOfTime;
-		}
+	@Input() set unitOfTime(value: moment.unitOfTime.Base) {
+		if (value) this._unitOfTime = value;
 
 		if (this.isSaveDatePicker) {
 			this.onSavingFilter(this.getSelectorDates());
@@ -123,8 +121,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			 * IF current route has timesheet filter save state
 			 */
 			if (this.isSaveDatePicker) {
-				this.timesheetFilterService.filter = {
-					...this.timesheetFilterService.filter,
+				this._timesheetFilterService.filter = {
+					...this._timesheetFilterService.filter,
 					...range
 				};
 			}
@@ -208,52 +206,58 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
 	constructor(
-		private readonly _route: ActivatedRoute,
-		private readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly organizationService: OrganizationsService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly timesheetFilterService: TimesheetFilterService,
-		private readonly _navigationService: NavigationService
+		private readonly _route: ActivatedRoute,
+		private readonly _store: Store,
+		private readonly _organizationService: OrganizationsService,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _timesheetFilterService: TimesheetFilterService,
+		private readonly _navigationService: NavigationService,
+		private readonly _timeZoneService: TimeZoneService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDatePickerConfig$ = this.dateRangePickerBuilderService.datePickerConfig$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeDatePickerConfig$ = this._dateRangePickerBuilderService.datePickerConfig$;
 		const queryParams$ = this._route.queryParams;
 
-		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParams$])
+		// Subscribe to the timeZone$ observable
+		const timeZone$ = this._timeZoneService.timeZone$.pipe(
+			filter((timeZone: string) => !!timeZone),
+			tap((timeZone: string) => (this.timeZone = timeZone)),
+			tap((timeZone) => {
+				// Get the set of US timezones
+				const usTimeZones = new Set(moment.tz.zonesForCountry('US'));
+				// Determine the date format based on the timezone
+				const format = usTimeZones.has(timeZone) ? 'MM.DD.YYYY' : 'DD.MM.YYYY';
+				// Update the locale configuration with the new format
+				this.locale.displayFormat = format;
+				this.locale.format = format;
+			})
+		);
+
+		combineLatest([storeOrganization$, storeDatePickerConfig$, queryParams$, timeZone$])
 			.pipe(
 				filter(([organization, datePickerConfig]) => !!organization && !!datePickerConfig),
-				switchMap(([organization, datePickerConfig, queryParams]) =>
+				switchMap(([organization, datePickerConfig, queryParams, timeZone]) =>
 					combineLatest([
-						this.organizationService.getById(organization.id, [], {
+						this._organizationService.getById(organization.id, [], {
 							id: true,
 							futureDateAllowed: true,
 							timeZone: true,
 							startWeekOn: true
 						}),
 						of(datePickerConfig),
-						of(queryParams) // Emit queryParams as part of the inner observable
+						of(queryParams), // Emit queryParams as part of the inner observable
+						of(timeZone)
 					])
 				),
-				tap(([organization]) => {
-					if (organization.timeZone) {
-						let format: string;
-						if (moment.tz.zonesForCountry('US').includes(organization.timeZone)) {
-							format = 'MM.DD.YYYY';
-						} else {
-							format = 'DD.MM.YYYY';
-						}
-						this.locale.displayFormat = format;
-						this.locale.format = format;
-					}
-				}),
-				tap(([organization, datePickerConfig, queryParams]) => {
+				tap(([organization, datePickerConfig, queryParams, timeZone]) => {
 					this.organization = organization;
 					this.futureDateAllowed = organization.futureDateAllowed;
+					this.timeZone = timeZone;
 
 					const { isLockDatePicker, isSaveDatePicker } = datePickerConfig;
 					const { isSingleDatePicker, isDisableFutureDate, isDisablePastDate } = datePickerConfig;
@@ -282,7 +286,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			.pipe(
 				distinctUntilChange(),
 				tap((range: IDateRangePicker) => {
-					this.dateRangePickerBuilderService.selectedDateRange = range;
+					this._dateRangePickerBuilderService.selectedDateRange = range;
 				}),
 				untilDestroyed(this)
 			)
@@ -505,7 +509,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param range
 	 */
 	onSavingFilter(range: IDateRangePicker) {
-		this.timesheetFilterService.filter$
+		this._timesheetFilterService.filter$
 			.pipe(
 				take(1),
 				filter(() => !!this.isSaveDatePicker),

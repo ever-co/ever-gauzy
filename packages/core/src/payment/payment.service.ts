@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
@@ -18,11 +17,8 @@ import { TypeOrmPaymentRepository } from './repository/type-orm-payment.reposito
 @Injectable()
 export class PaymentService extends TenantAwareCrudService<Payment> {
 	constructor(
-		@InjectRepository(Payment)
-		typeOrmPaymentRepository: TypeOrmPaymentRepository,
-
-		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
-
+		readonly typeOrmPaymentRepository: TypeOrmPaymentRepository,
+		readonly mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 		private readonly emailService: EmailService
 	) {
 		super(typeOrmPaymentRepository, mikroOrmPaymentRepository);
@@ -42,9 +38,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		query.setFindOptions({
 			...(request && request.limit > 0
 				? {
-					take: request.limit,
-					skip: (request.page || 0) * request.limit
-				}
+						take: request.limit,
+						skip: (request.page || 0) * request.limit
+				  }
 				: {}),
 			join: {
 				alias: `${this.tableName}`,
@@ -97,9 +93,9 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		query.setFindOptions({
 			...(request.limit > 0
 				? {
-					take: request.limit,
-					skip: (request.page || 0) * request.limit
-				}
+						take: request.limit,
+						skip: (request.page || 0) * request.limit
+				  }
 				: {}),
 			order: {
 				// Order results by the 'startedAt' field in ascending order
@@ -116,12 +112,12 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		const payments = await query.getMany();
 
 		// Gets an array of days between the given start date, end date and timezone.
-		const { startDate, endDate, timezone } = request;
-		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timezone);
+		const { startDate, endDate, timeZone } = request;
+		const days: Array<string> = getDaysBetweenDates(startDate, endDate, timeZone);
 
 		// Group payments by date and calculate sum
 		const byDate = chain(payments)
-			.groupBy((payment: IPayment) => moment.utc(payment.paymentDate).tz(timezone).format('YYYY-MM-DD'))
+			.groupBy((payment: IPayment) => moment.utc(payment.paymentDate).tz(timeZone).format('YYYY-MM-DD'))
 			.mapObject((payments: Payment[], date) => {
 				const sum = payments.reduce((iteratee: any, payment: any) => {
 					return iteratee + parseFloat(payment.amount);

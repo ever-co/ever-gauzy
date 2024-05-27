@@ -32,7 +32,7 @@ export class TimeFormatPipe implements PipeTransform, OnDestroy {
 	 * @param seconds Optional. If true, include seconds in the formatted time string. Defaults to false.
 	 * @returns A formatted time string based on the input value and format options.
 	 */
-	transform(value: any, timeFormat: number = this.format, seconds: boolean = false): any {
+	transform(value: any, timeFormat: number = this.format, seconds: boolean = true): any {
 		let format = 'HH:mm' + (seconds ? ':ss' : '');
 
 		if (timeFormat === TimeFormatEnum.FORMAT_12_HOURS) {
@@ -40,9 +40,8 @@ export class TimeFormatPipe implements PipeTransform, OnDestroy {
 		}
 
 		let date = moment(value);
-		if (!date.isValid()) {
-			date = moment.utc(value, 'HH:mm');
-		}
+		if (!date.isValid()) date = moment.utc(value, 'HH:mm');
+
 		return date.format(format);
 	}
 

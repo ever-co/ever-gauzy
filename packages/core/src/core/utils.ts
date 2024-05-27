@@ -1,8 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { SqliteDriver } from '@mikro-orm/sqlite';
-import { FindOptions as MikroORMFindOptions, FilterQuery as MikroFilterQuery, OrderDefinition, wrap } from '@mikro-orm/core';
-import { SOFT_DELETABLE_FILTER } from "mikro-orm-soft-delete";
+import {
+	FindOptions as MikroORMFindOptions,
+	FilterQuery as MikroFilterQuery,
+	OrderDefinition,
+	wrap
+} from '@mikro-orm/core';
+import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MySqlDriver } from '@mikro-orm/mysql';
@@ -16,7 +21,6 @@ import { IDBConnectionOptions } from '@gauzy/common';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
 import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
-
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -212,10 +216,7 @@ export function mergeOverlappingDateRanges(ranges: IDateRange[]): IDateRange[] {
  * @param endDate
  * @returns
  */
-export function getDateRangeFormat(
-	startDate: moment.Moment,
-	endDate: moment.Moment
-): DateRange {
+export function getDateRangeFormat(startDate: moment.Moment, endDate: moment.Moment): DateRange {
 	let start = moment(startDate);
 	let end = moment(endDate);
 
@@ -240,7 +241,9 @@ export function getDateRangeFormat(
 				end: end.toDate()
 			};
 		default:
-			throw Error(`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
+			throw Error(
+				`cannot get date range due to unsupported database type: ${getConfig().dbConnectionOptions.type}`
+			);
 	}
 }
 
@@ -254,10 +257,10 @@ export function getDateRangeFormat(
 export function getDaysBetweenDates(
 	startDate: string | Date,
 	endDate: string | Date,
-	timezone: string = moment.tz.guess()
+	timeZone: string = moment.tz.guess()
 ): string[] {
-	const start = moment.utc(startDate).tz(timezone).toDate();
-	const end = moment.utc(endDate).tz(timezone).toDate();
+	const start = moment.utc(startDate).tz(timeZone).toDate();
+	const end = moment.utc(endDate).tz(timeZone).toDate();
 	const range = Array.from(moment.range(start, end).by('days'));
 
 	return range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
@@ -426,7 +429,10 @@ export function getDBType(dbConnection?: IDBConnectionOptions): any {
  * @param {IDBConnectionOptions} [dbConnection] - The optional database connection options.
  * @returns {boolean} - Returns true if the database type matches any of the provided types.
  */
-export function isDatabaseType(types: DatabaseTypeEnum | DatabaseTypeEnum[], dbConnection?: IDBConnectionOptions): boolean {
+export function isDatabaseType(
+	types: DatabaseTypeEnum | DatabaseTypeEnum[],
+	dbConnection?: IDBConnectionOptions
+): boolean {
 	// If no connection options are provided, use the default options from the configuration
 	if (!dbConnection) {
 		dbConnection = getConfig().dbConnectionOptions;
@@ -457,14 +463,20 @@ export const flatten = (input: any): any => {
 	}
 
 	if (typeof input === 'object' && input !== null) {
-		return Object.keys(input).reduce((acc, key) => {
-			const value = input[key];
-			if (value) {
-				const nestedKeys = flatten(value);
-				const newKey = Array.isArray(value) ? key : nestedKeys.length > 0 ? `${key}.${nestedKeys.join('.')}` : key;
-				return acc.concat(newKey);
-			}
-		}, []) || [];
+		return (
+			Object.keys(input).reduce((acc, key) => {
+				const value = input[key];
+				if (value) {
+					const nestedKeys = flatten(value);
+					const newKey = Array.isArray(value)
+						? key
+						: nestedKeys.length > 0
+						? `${key}.${nestedKeys.join('.')}`
+						: key;
+					return acc.concat(newKey);
+				}
+			}, []) || []
+		);
 	}
 
 	// If input is neither an array nor an object, return an empty array
@@ -484,7 +496,7 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
 	} else {
 		where = {
 			id,
-			...(where ? where : ({} as any)),
+			...(where ? where : ({} as any))
 		};
 	}
 	return where;
@@ -500,7 +512,7 @@ export function concatIdToWhere<T>(id: any, where: MikroFilterQuery<T>): MikroFi
 export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQuery<T>): MikroFilterQuery<T> {
 	if (Array.isArray(where)) {
 		// Merge tenantId into each object of the array
-		return where.map(condition => ({ ...condition, tenantId }));
+		return where.map((condition) => ({ ...condition, tenantId }));
 	} else {
 		// Merge where with tenantId if where is an object
 		return { ...where, tenantId };
@@ -515,7 +527,7 @@ export function enhanceWhereWithTenantId<T>(tenantId: any, where: MikroFilterQue
  */
 export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 	where: MikroFilterQuery<T>;
-	mikroOptions: MikroORMFindOptions<T, any, any, any>
+	mikroOptions: MikroORMFindOptions<T, any, any, any>;
 } {
 	const mikroOptions: MikroORMFindOptions<T, any, any, any> = {
 		disableIdentityMap: true,
@@ -555,7 +567,7 @@ export function parseTypeORMFindToMikroOrm<T>(options: FindManyOptions): {
 
 	// If options contain 'withDeleted', add the SOFT_DELETABLE_FILTER to existing filters
 	if (options && options.withDeleted) {
-		mikroOptions.filters = { [SOFT_DELETABLE_FILTER]: false }
+		mikroOptions.filters = { [SOFT_DELETABLE_FILTER]: false };
 	}
 
 	return { where, mikroOptions };
@@ -610,7 +622,7 @@ export function processFindOperator<T>(operator: FindOperator<T>) {
 			};
 		}
 		case 'moreThanOrEqual': {
-			return { $gte: operator.value }
+			return { $gte: operator.value };
 		}
 		// Add additional cases for other operator types if needed
 		default: {

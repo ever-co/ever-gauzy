@@ -26,6 +26,7 @@ import { TimesheetFilterService } from './../../../../../@shared/timesheet/times
 import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -51,16 +52,17 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
-		private readonly router: Router,
 		public readonly translateService: TranslateService,
+		private readonly router: Router,
 		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly nbDialogService: NbDialogService,
-		protected readonly store: Store,
 		private readonly galleryService: GalleryService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit(): void {

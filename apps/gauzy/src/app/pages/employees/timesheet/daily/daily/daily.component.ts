@@ -8,7 +8,7 @@ import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, Store, ToastrService } from './../../../../../@core/services';
@@ -18,6 +18,7 @@ import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -58,15 +59,16 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		private readonly _timesheetService: TimesheetService,
 		private readonly _timeTrackerService: TimeTrackerService,
 		private readonly _dialogService: NbDialogService,
-		protected readonly _store: Store,
-		protected readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly _nbMenuService: NbMenuService,
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _route: ActivatedRoute,
 		private readonly _toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(_store, translateService, _dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	/**

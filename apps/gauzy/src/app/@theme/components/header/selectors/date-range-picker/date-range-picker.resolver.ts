@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import * as moment from 'moment';
+import moment from 'moment';
 import { IDatePickerConfig } from '@gauzy/ui-sdk/core';
 import { parseToBoolean } from '@gauzy/ui-sdk/common';
 import { IDateRangePicker } from '@gauzy/contracts';

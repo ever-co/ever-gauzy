@@ -8,6 +8,7 @@ import { PaymentService } from './payment.service';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { PaymentMapService } from './payment.map.service';
 import { EmailSendModule } from './../email-send/email-send.module';
+import { TypeOrmPaymentRepository } from './repository/type-orm-payment.repository';
 
 @Module({
 	imports: [
@@ -18,7 +19,7 @@ import { EmailSendModule } from './../email-send/email-send.module';
 		EmailSendModule
 	],
 	controllers: [PaymentController],
-	providers: [PaymentService, PaymentMapService],
-	exports: [TypeOrmModule, MikroOrmModule, PaymentService, PaymentMapService]
+	providers: [PaymentService, PaymentMapService, TypeOrmPaymentRepository],
+	exports: [TypeOrmModule, MikroOrmModule, PaymentService, PaymentMapService, TypeOrmPaymentRepository]
 })
-export class PaymentModule { }
+export class PaymentModule {}
