@@ -4,7 +4,6 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
-import * as moment from 'moment';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import {
 	IGetTimeLogReportInput,
