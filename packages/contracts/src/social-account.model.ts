@@ -1,9 +1,9 @@
-import { IBasePerTenantEntityModel } from 'base-entity.model';
-import { IRelationalUser } from 'user.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IRelationalUser } from './user.model';
 
 export interface ISocialAccount extends IBasePerTenantEntityModel, IRelationalUser {
 	provider: string;
-	providerAccountId: string | number;
+	providerAccountId: string;
 }
 
 export interface ISocialAccountCreateInput extends ISocialAccount {}
