@@ -4139,7 +4139,14 @@
 			"BROWSER_EXTENSION": "Browser Extension",
 			"TEAMS": "Екипи"
 		},
-		"LAST_WORKED": "Последно работеше:"
+		"LAST_WORKED": "Последно работеше:",
+		"TIME_ZONE": "Часова зона",
+		"TIME_FORMAT": "Формат на времето",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Организационна часова зона",
+			"MY_TIMEZONE": "Моята часова зона"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

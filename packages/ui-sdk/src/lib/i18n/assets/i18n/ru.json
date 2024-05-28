@@ -4138,7 +4138,14 @@
 			"BROWSER_EXTENSION": "Browser Extension",
 			"TEAMS": "Команды"
 		},
-		"LAST_WORKED": "Последнее сработало:"
+		"LAST_WORKED": "Последнее сработало:",
+		"TIME_ZONE": "Часовой пояс",
+		"TIME_FORMAT": "Формат времени",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Часовой пояс организации",
+			"MY_TIMEZONE": "Мой часовой пояс"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Скриншот",

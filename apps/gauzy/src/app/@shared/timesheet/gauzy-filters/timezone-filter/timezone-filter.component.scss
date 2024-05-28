@@ -18,14 +18,14 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 14px;
-  gap: 21px;
-  min-width: 219px;
+  padding: 10px;
+  gap: 10px;
+  min-width: 150px;
   .category {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
+    gap: 10px;
     width: 100%;
     .view {
       font-size: 10px;
