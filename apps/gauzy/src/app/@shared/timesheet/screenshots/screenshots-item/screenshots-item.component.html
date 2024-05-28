@@ -93,10 +93,10 @@
 		</ng-template>
 		<div class="slot-info text-left p-3">
 			<div class="time-span mb-4 mt-1 hour-label">
-				{{ timeSlot.localStartedAt | timeFormat : timeformat }} -
-				{{ timeSlot.localStoppedAt | timeFormat : timeformat }}
+				{{ timeSlot.startedAt | utcToTimezone : timezone | timeFormat : timeformat }} -
+				{{ timeSlot.stoppedAt | utcToTimezone : timezone | timeFormat : timeformat }}
 				<div class="text-caption caption mt-2">
-					{{ timeSlot.localStartedAt | dateFormat }}
+					{{ timeSlot.startedAt | utcToTimezone : timezone | dateFormat }}
 				</div>
 			</div>
 			<nb-progress-bar

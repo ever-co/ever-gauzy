@@ -30,6 +30,7 @@
 							<div *ngFor="let timeSlot of hourSlot.timeSlots">
 								<ngx-screenshots-item
 									[timeformat]="filters?.timeFormat"
+									[timezone]="filters?.timeZone"
 									[employees]="timeSlot?.employees"
 									[timeSlot]="timeSlot"
 									[selectionMode]="selectedIdsCount > 0"

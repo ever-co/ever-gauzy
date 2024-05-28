@@ -6,6 +6,7 @@
 	nbPopoverPlacement="bottom"
 	[nbPopover]="nbPopoverTemplate"
 	nbPopoverTrigger="click"
+	#popover="nbPopover"
 >
 	<div>
 		<ng-template [ngIf]="isTimezone"> {{ getTimeZoneWithOffset() }} </ng-template>
@@ -18,9 +19,9 @@
 	<div class="popover-body">
 		<ng-container *ngIf="isTimezone">
 			<div class="category">
-				<div class="view">Time Zone</div>
+				<div class="view">{{ 'TIMESHEET.TIME_ZONE' | translate }}</div>
 				<ng-container *ngFor="let timeZoneOption of timeZoneOptions">
-					<div class="title" (click)="updateSelectedTimeZone(timeZoneOption.value)">
+					<div class="title" (click)="updateSelectedTimeZone(timeZoneOption.value); closePopover()">
 						<i
 							[ngStyle]="{ visibility: selectedTimeZone === timeZoneOption.value ? 'visible' : 'hidden' }"
 							class="fas fa-check"
@@ -35,9 +36,9 @@
 		</ng-container>
 		<ng-container *ngIf="isTimeformat">
 			<div class="category">
-				<div class="view">Time Format</div>
+				<div class="view">{{ 'TIMESHEET.TIME_FORMAT' | translate }}</div>
 				<ng-container *ngFor="let timeFormatsOption of timeFormatsOptions">
-					<div class="title" (click)="updateSelectedTimeFormat(timeFormatsOption)">
+					<div class="title" (click)="updateSelectedTimeFormat(timeFormatsOption); closePopover()">
 						<i
 							[ngStyle]="{ visibility: selectedTimeFormat === timeFormatsOption ? 'visible' : 'hidden' }"
 							class="fas fa-check"

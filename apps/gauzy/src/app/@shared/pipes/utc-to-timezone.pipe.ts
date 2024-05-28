@@ -14,7 +14,7 @@ export class UtcToTimezone implements PipeTransform {
 	 * @param format The format to be used when parsing the date if initial parsing fails. Default is 'HH:mm'.
 	 * @returns A JavaScript Date object representing the date/time in the specified timezone.
 	 */
-	transform(value: any, timezone: string, format: string = 'HH:mm'): any {
+	transform(value: any, timezone: string, format: string = 'YYYY-MM-DD HH:mm:ss'): any {
 		let date = moment(value);
 		if (!date.isValid()) date = moment.utc(value, format);
 
