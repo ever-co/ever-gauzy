@@ -19,7 +19,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { toLocal, isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-sdk/common';
+import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-sdk/common';
 import { Store } from './../../../../../@core/services';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
@@ -288,7 +288,6 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 		const groupTimeSlots = chain(timeSlots)
 			.map((timeSlot) => {
 				this.selectedIds[timeSlot.id] = false;
-				timeSlot.localStartedAt = toTimezone(timeSlot.startedAt, this.filters?.timeZone).format();
 
 				// Concatenate screenshot URLs
 				this.screenshotsUrls = this.screenshotsUrls.concat(

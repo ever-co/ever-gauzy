@@ -5,7 +5,7 @@ import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
 import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
-import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
@@ -73,8 +73,6 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		// Assign a new object to _timeSlot with modified properties
 		this._timeSlot = {
 			...timeSlot,
-			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
-			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
 			isAllowDelete: this.isEnableDelete(timeSlot),
 			screenshots: this.screenshots
 		};

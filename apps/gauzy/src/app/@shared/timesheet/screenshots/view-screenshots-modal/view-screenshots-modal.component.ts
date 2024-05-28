@@ -13,7 +13,7 @@ import {
 	PermissionsEnum,
 	TimeFormatEnum
 } from '@gauzy/contracts';
-import { isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
+import { isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet.service';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
@@ -47,8 +47,6 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 */
 	@Input() set timeSlot(timeSlot: ITimeSlot) {
 		if (timeSlot) {
-			// Destructure the timeSlot object
-			const { ...restTimeSlot } = timeSlot;
 			const screenshots = JSON.parse(JSON.stringify(timeSlot.screenshots));
 
 			// Process and format the screenshots array
@@ -58,11 +56,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			}));
 
 			// Update the _timeSlot object with formatted timestamps and other properties
-			this._timeSlot = {
-				...restTimeSlot,
-				localStartedAt: toLocal(timeSlot.startedAt).toDate(),
-				localStoppedAt: toLocal(timeSlot.stoppedAt).toDate()
-			};
+			this._timeSlot = timeSlot;
 		}
 	}
 
@@ -92,10 +86,12 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 * Array to store unique application names associated with the current time slot.
 	 * Used in the context of time logs and screenshots.
 	 */
-	apps: string[] = [];
+	public apps: string[] = [];
 
-	timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(filter((timeZone: string) => !!timeZone));
-	timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
+	public timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(
+		filter((timeZone: string) => !!timeZone)
+	);
+	public timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
 		filter((timeFormat: TimeFormatEnum) => !!timeFormat)
 	);
 

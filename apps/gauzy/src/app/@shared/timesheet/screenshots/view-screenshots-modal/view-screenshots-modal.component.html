@@ -6,13 +6,8 @@
 		<ng-container *ngIf="timeSlot">
 			<h6>
 				{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
-				{{
-					timeSlot?.localStartedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async)
-				}}
-				-
-				{{
-					timeSlot?.localStoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async)
-				}}
+				{{ timeSlot?.startedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }} -
+				{{ timeSlot?.stoppedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async) }}
 			</h6>
 			<div class="activity mb-3">
 				<nb-progress-bar

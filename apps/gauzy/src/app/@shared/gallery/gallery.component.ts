@@ -38,8 +38,10 @@ export class GalleryComponent implements OnInit, OnDestroy {
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<HTMLElement>;
 
-	timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(filter((timeZone: string) => !!timeZone));
-	timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
+	public timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(
+		filter((timeZone: string) => !!timeZone)
+	);
+	public timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
 		filter((timeFormat: TimeFormatEnum) => !!timeFormat)
 	);
 
