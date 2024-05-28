@@ -13,7 +13,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
-import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
+import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum, ProviderEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -174,7 +174,7 @@ export class AuthController {
 	@UseValidationPipe()
 	async signinWorkspacesBySocial(
 		@Query() query: Record<string, boolean>,
-		@Body() input: { email: string }
+		@Body() input: { email: string; provider: ProviderEnum; oauthToken: string }
 	): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(query.includeTeams));
 	}

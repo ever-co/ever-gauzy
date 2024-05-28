@@ -169,8 +169,10 @@ export enum ComponentLayoutStyleEnum {
 }
 
 export enum ProviderEnum {
+	GITHUB = 'github',
 	GOOGLE = 'google',
-	FACEBOOK = 'facebook'
+	FACEBOOK = 'facebook',
+	TWITTER = 'twitter'
 }
 
 export interface IUserViewModel extends IBasePerTenantEntityModel {

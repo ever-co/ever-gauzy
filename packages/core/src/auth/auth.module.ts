@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
+import { HttpModule } from '@nestjs/axios';
 import { SocialAuthModule } from '@gauzy/auth';
 import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
 import { EmailSendModule } from './../email-send/email-send.module';
@@ -18,8 +19,10 @@ import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { SocialAccountService } from './social-account/social-account.service';
+import { SocialAccountModule } from './social-account/social-account.module';
 
-const providers = [AuthService, EmailConfirmationService, UserOrganizationService];
+const providers = [AuthService, EmailConfirmationService, SocialAccountService, UserOrganizationService];
 
 const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 
@@ -42,7 +45,9 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				EmployeeModule,
 				RoleModule,
 				PasswordResetModule,
-				CqrsModule
+				CqrsModule,
+				SocialAccountModule,
+				HttpModule
 			],
 			useClass: AuthService
 		}),
