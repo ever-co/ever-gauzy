@@ -2,12 +2,7 @@
 	<div class="gallery-header d-flex p-2">
 		<span class="spacer"></span>
 		<div class="ml-auto">
-			<button
-				*ngIf="item?.description"
-				status="info"
-				nbButton
-				[nbTooltip]="item?.description"
-			>
+			<button *ngIf="item?.description" status="info" nbButton [nbTooltip]="item?.description">
 				<nb-icon icon="info-outline"></nb-icon>
 			</button>
 			<button
@@ -19,12 +14,7 @@
 			>
 				<nb-icon icon="download-outline"></nb-icon>
 			</button>
-			<button
-				class="ml-2"
-				status="danger"
-				nbButton (click)="close()"
-				[nbTooltip]="'BUTTONS.CLOSE' | translate"
-			>
+			<button class="ml-2" status="danger" nbButton (click)="close()" [nbTooltip]="'BUTTONS.CLOSE' | translate">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
@@ -46,7 +36,7 @@
 			(click)="$event.stopPropagation()"
 			[ngClass]="{ 'danger-bordered': item?.isWorkRelated === false }"
 		>
-			<img #imageMedia [src]="item?.fullUrl"/>
+			<img #imageMedia [src]="item?.fullUrl" />
 		</div>
 		<div class="right-button">
 			<button
@@ -72,7 +62,12 @@
 					(click)="setFocus(thumb)"
 				>
 					<img *ngIf="thumb" [src]="thumb?.thumbUrl" alt="Thumbnail Image" />
-					<span>{{ thumb?.recordedAt | dateTimeFormat }}</span>
+					<span>
+						{{ thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | dateFormat }}
+						{{
+							thumb?.recordedAt | utcToTimezone : (timeZone$ | async) | timeFormat : (timeFormat$ | async)
+						}}
+					</span>
 				</div>
 			</ng-container>
 		</div>

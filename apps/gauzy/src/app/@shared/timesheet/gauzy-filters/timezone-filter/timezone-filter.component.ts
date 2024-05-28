@@ -150,7 +150,9 @@ export class TimezoneFilterComponent extends TranslationBaseComponent implements
 	selectTimeFormat(timeFormat: TimeFormatEnum): void {
 		const is24Hours = timeFormat == TimeFormatEnum.FORMAT_24_HOURS;
 		this.selectedTimeFormat = is24Hours ? TimeFormatEnum.FORMAT_24_HOURS : TimeFormatEnum.FORMAT_12_HOURS;
-
+		// Set the time format using the TimeZoneService
+		this._timeZoneService.setTimeFormat(this.selectedTimeFormat);
+		// Emit the timeFormatChange event with the new time format
 		this.timeFormatChange.emit(this.selectedTimeFormat);
 	}
 
@@ -170,9 +172,11 @@ export class TimezoneFilterComponent extends TranslationBaseComponent implements
 				break;
 		}
 
+		// Get the moment timezone string representation of the selected timezone
 		const timezone = this.getMomentTimezone(this.selectedTimeZone);
+		// Set the timezone using the TimeZoneService
 		this._timeZoneService.setTimeZone(timezone);
-
+		// Emit the timeZoneChange event with the new timezone
 		this.timeZoneChange.emit(timezone);
 	}
 

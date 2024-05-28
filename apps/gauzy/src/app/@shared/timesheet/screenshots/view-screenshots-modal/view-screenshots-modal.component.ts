@@ -1,14 +1,24 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { IEmployee, IOrganization, IScreenshot, ITimeLog, ITimeSlot, PermissionsEnum } from '@gauzy/contracts';
-import { isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
-import { sortBy } from 'underscore';
+import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { sortBy } from 'underscore';
+import {
+	IEmployee,
+	IOrganization,
+	IScreenshot,
+	ITimeLog,
+	ITimeSlot,
+	PermissionsEnum,
+	TimeFormatEnum
+} from '@gauzy/contracts';
+import { isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet.service';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
 import { Store, ToastrService } from './../../../../@core/services';
+import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -84,16 +94,23 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 */
 	apps: string[] = [];
 
+	timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(filter((timeZone: string) => !!timeZone));
+	timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
+		filter((timeFormat: TimeFormatEnum) => !!timeFormat)
+	);
+
 	constructor(
-		private readonly store: Store,
-		private readonly dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
-		private readonly timesheetService: TimesheetService,
-		private readonly nbDialogService: NbDialogService,
-		private readonly toastrService: ToastrService
+		private readonly _store: Store,
+		private readonly _dialogRef: NbDialogRef<ViewScreenshotsModalComponent>,
+		private readonly _timesheetService: TimesheetService,
+		private readonly _nbDialogService: NbDialogService,
+		private readonly _toastrService: ToastrService,
+		private readonly _timeZoneService: TimeZoneService
 	) {}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		// Subscribe to the timeZone$ observable
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
@@ -116,7 +133,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			}
 
 			// Retrieve time slot with specified relations
-			this.timeSlot = await this.timesheetService.getTimeSlot(this.timeSlot.id, {
+			this.timeSlot = await this._timesheetService.getTimeSlot(this.timeSlot.id, {
 				relations: [
 					'employee.user',
 					'screenshots',
@@ -135,7 +152,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 		} catch (error) {
 			// Handle errors by logging and displaying a toastr message
 			console.error('Error while retrieving TimeSlot:', error);
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 
@@ -143,7 +160,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 * Closes the current dialog.
 	 */
 	close(): void {
-		this.dialogRef.close();
+		this._dialogRef.close();
 	}
 
 	/**
@@ -152,7 +169,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 	 * @param timeLog - The time log to be viewed.
 	 */
 	viewTimeLog(timeLog: ITimeLog): void {
-		this.nbDialogService.open(ViewTimeLogModalComponent, {
+		this._nbDialogService.open(ViewTimeLogModalComponent, {
 			context: { timeLog }
 		});
 	}
@@ -174,7 +191,7 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			const { organizationId, tenantId } = screenshot;
 
 			// Delete the specified screenshot
-			await this.timesheetService.deleteScreenshot(screenshot.id, {
+			await this._timesheetService.deleteScreenshot(screenshot.id, {
 				organizationId,
 				tenantId
 			});
@@ -183,14 +200,14 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			this.screenshots = this.screenshots.filter((item: IScreenshot) => item.id !== screenshot.id);
 
 			// Display success message
-			this.toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
+			this._toastrService.success('TOASTR.MESSAGE.SCREENSHOT_DELETED', {
 				name: employee.fullName,
 				organization: name
 			});
 		} catch (error) {
 			// Handle errors by logging and displaying a toastr message
 			console.error('Error while deleting screenshot:', error);
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 
@@ -214,23 +231,23 @@ export class ViewScreenshotsModalComponent implements OnInit {
 			};
 
 			// Delete the specified time log
-			await this.timesheetService.deleteLogs(request);
+			await this._timesheetService.deleteLogs(request);
 
 			// Display success message
-			this.toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
+			this._toastrService.success('TOASTR.MESSAGE.TIME_LOG_DELETED', {
 				name: employee.fullName,
 				organization: organizationName
 			});
 
 			// Close the dialog and emit an event indicating time log deletion
-			this.dialogRef.close({
+			this._dialogRef.close({
 				timeLog: timeLog,
 				isDelete: true
 			});
 		} catch (error) {
 			// Handle errors by logging and displaying a toastr message
 			console.error('Error while deleting TimeLog:', error);
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 
