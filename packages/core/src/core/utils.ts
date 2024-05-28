@@ -259,11 +259,15 @@ export function getDaysBetweenDates(
 	endDate: string | Date,
 	timeZone: string = moment.tz.guess()
 ): string[] {
-	const start = moment.utc(startDate).tz(timeZone).toDate();
-	const end = moment.utc(endDate).tz(timeZone).toDate();
-	const range = Array.from(moment.range(start, end).by('days'));
+	// Convert start and end dates to the specified timezone
+	const start = moment.utc(startDate, 'YYYY-MM-DD HH:mm:ss').clone().tz(timeZone);
+	const end = moment.utc(endDate, 'YYYY-MM-DD HH:mm:ss').clone().tz(timeZone);
 
-	return range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
+	// Create a range using the moment-range library
+	const ranges = moment.range(start, end);
+
+	// Generate an array of dates within the range, formatted as 'YYYY-MM-DD'
+	return Array.from(ranges.by('day')).map((date: moment.Moment) => date.format('YYYY-MM-DD'));
 }
 
 /**
