@@ -1,28 +1,34 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.PROJECT_BUDGET_REPORTS' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="request?.startDate && request?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[hasActivityLevelFilter]="false"
-				[hasSourceFilter]="false"
-				[hasLogTypeFilter]="false"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.PROJECT_BUDGET_REPORTS' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[filters]="filters"
+						[hasActivityLevelFilter]="false"
+						[hasSourceFilter]="false"
+						[hasLogTypeFilter]="false"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -32,7 +38,7 @@
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
-				[ngClass]="{'not-found': !projects?.length}"
+				[ngClass]="{ 'not-found': !projects?.length }"
 			>
 				<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="notFound">
 					<nb-card class="card">
@@ -66,34 +72,46 @@
 											<div class="responsive-table-content day-col project-cell">
 												<ng-container
 													*ngTemplateOutlet="
-													projectEl;
-													context: { $implicit: project?.project }">
+														projectEl;
+														context: { $implicit: project?.project }
+													"
+												>
 												</ng-container>
 											</div>
 										</div>
 										<div class="responsive-table-row employees-column">
-											<div class="responsive-table-header employees-header" title="Employees/Teams">
+											<div
+												class="responsive-table-header employees-header"
+												title="Employees/Teams"
+											>
 												{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
 											</div>
-											<div class="responsive-table-content day-col">
-												No data yet....
-											</div>
+											<div class="responsive-table-content day-col">No data yet....</div>
 										</div>
 										<div class="responsive-table-row spent-column">
 											<div class="responsive-table-header">
 												{{ 'REPORT_PAGE.SPENT' | translate }}
 											</div>
 											<div class="responsive-table-content day-col">
-											<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS">
-												{{ (project?.spent * 3600) | durationFormat }}
-												{{ 'REPORT_PAGE.HOURS' | translate }}
-											</span>
-												<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.COST">
-												{{ project?.spent
-													| currency:organization?.currency:'symbol'
-													| position : organization?.currencyPosition
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+													"
+												>
+													{{ project?.spent * 3600 | durationFormat }}
+													{{ 'REPORT_PAGE.HOURS' | translate }}
+												</span>
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.COST
+													"
+												>
+													{{
+														project?.spent
+															| currency : organization?.currency : 'symbol'
+															| position : organization?.currencyPosition
 													}}
-											</span>
+												</span>
 											</div>
 										</div>
 										<div class="responsive-table-row remaining-column">
@@ -101,16 +119,25 @@
 												{{ 'REPORT_PAGE.REMAINING' | translate }}
 											</div>
 											<div class="responsive-table-content day-col">
-											<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS">
-												{{ (project.remainingBudget * 3600) | durationFormat }}
-												{{ 'REPORT_PAGE.HOURS' | translate }}
-											</span>
-												<span *ngIf="project.budgetType === OrganizationProjectBudgetTypeEnum.COST">
-												{{ project.remainingBudget
-													| currency : organization?.currency
-													| position : organization?.currencyPosition
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+													"
+												>
+													{{ project.remainingBudget * 3600 | durationFormat }}
+													{{ 'REPORT_PAGE.HOURS' | translate }}
+												</span>
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.COST
+													"
+												>
+													{{
+														project.remainingBudget
+															| currency : organization?.currency
+															| position : organization?.currencyPosition
 													}}
-											</span>
+												</span>
 											</div>
 										</div>
 										<div class="responsive-table-row budget-column">
@@ -118,21 +145,33 @@
 												{{ 'REPORT_PAGE.BUDGET' | translate }}
 											</div>
 											<div class="responsive-table-content day-col budget-row">
-											<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.HOURS" class="currency-span">
-												{{ (project?.budget * 3600) | durationFormat }}
-												{{ 'REPORT_PAGE.HOURS' | translate }}
-											</span>
-												<span *ngIf="project.budgetType ===OrganizationProjectBudgetTypeEnum.COST" class="currency-span">
-												{{ project.budget
-													| currency : organization?.currency:'symbol'
-													| position : organization?.currencyPosition
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.HOURS
+													"
+													class="currency-span"
+												>
+													{{ project?.budget * 3600 | durationFormat }}
+													{{ 'REPORT_PAGE.HOURS' | translate }}
+												</span>
+												<span
+													*ngIf="
+														project.budgetType === OrganizationProjectBudgetTypeEnum.COST
+													"
+													class="currency-span"
+												>
+													{{
+														project.budget
+															| currency : organization?.currency : 'symbol'
+															| position : organization?.currencyPosition
 													}}
-											</span>
+												</span>
 												<div class="progress-wrapper">
 													<ngx-progress-status
 														class="report-progress"
 														[percentage]="project?.spentPercentage"
-														defaultStatus="success">
+														defaultStatus="success"
+													>
 													</ngx-progress-status>
 												</div>
 											</div>
@@ -155,9 +194,7 @@
 
 <ng-template let-project #projectEl>
 	<span *ngIf="project; else noProjects">
-		<ga-project-column-view
-			[project]="project"
-		></ga-project-column-view>
+		<ga-project-column-view [project]="project"></ga-project-column-view>
 	</span>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
