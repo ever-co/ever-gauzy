@@ -111,8 +111,9 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	}
 
 	/**
+	 * Sets the activity level filter based on the provided ChangeContext.
 	 *
-	 * @param activity
+	 * @param activity - The change context containing the new activity level values.
 	 */
 	setActivityLevel(activity: ChangeContext): void {
 		this.filters.activityLevel = {
@@ -124,14 +125,14 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	}
 
 	/**
-	 *
+	 * Triggers the filter change event.
 	 */
 	triggerFilterChange(): void {
 		this.filters$.next(true);
 	}
 
 	/**
-	 *
+	 * Clears all filters and triggers a filter change.
 	 */
 	clearFilters(): void {
 		this.filters = this.timesheetFilterService.clear();
@@ -139,8 +140,9 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	}
 
 	/**
+	 * Checks if any filters are currently applied.
 	 *
-	 * @returns
+	 * @returns True if any filters are applied, otherwise false.
 	 */
 	hasFilter(): boolean {
 		return (

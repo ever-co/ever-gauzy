@@ -1,20 +1,13 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
-		<div class="header-flex">
-			<div>
+		<div class="row">
+			<div class="col-auto">
 				<h4>
 					<ngx-header-title>
 						{{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
 					</ngx-header-title>
 				</h4>
-				<ng-container
-					*ngIf="request?.startDate && request?.endDate"
-				>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
 					<ngx-date-range-title
 						[start]="request?.startDate"
 						[end]="request?.endDate"
@@ -22,7 +15,9 @@
 					></ngx-date-range-title>
 				</ng-container>
 			</div>
-			<div class="filters">
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
 				<ngx-gauzy-filters
 					[filters]="filters"
 					[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
@@ -34,22 +29,16 @@
 	<nb-card-body class="report-body">
 		<div class="report-container">
 			<div class="daily-statistics">
-				<ga-daily-statistics
-					[filters]="filters"
-				></ga-daily-statistics>
+				<ga-daily-statistics [filters]="filters"></ga-daily-statistics>
 			</div>
 			<div class="daily-time-report">
 				<nb-card>
 					<nb-card-body class="chart">
-						<ngx-line-chart
-							[data]="charts"
-						></ngx-line-chart>
+						<ngx-line-chart [data]="charts"></ngx-line-chart>
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<ga-daily-grid
-				[filters]="filters"
-			></ga-daily-grid>
+			<ga-daily-grid [filters]="filters"></ga-daily-grid>
 		</div>
 	</nb-card-body>
 </nb-card>
