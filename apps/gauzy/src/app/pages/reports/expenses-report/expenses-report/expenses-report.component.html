@@ -1,33 +1,41 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.EXPENSES_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container *ngIf="request?.startDate && request?.endDate">
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[hasActivityLevelFilter]="false"
-				[hasSourceFilter]="false"
-				[hasLogTypeFilter]="false"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+		<div class="row">
 			<div class="col-auto">
-				<ga-expense-category-select
-					class="action-select"
-					[clearable]="true"
-					[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
-					(onChanged)="filterByCategory($event)"
-				></ga-expense-category-select>
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.EXPENSES_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[filters]="filters"
+						[hasActivityLevelFilter]="false"
+						[hasSourceFilter]="false"
+						[hasLogTypeFilter]="false"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+					<div class="col-auto">
+						<ga-expense-category-select
+							class="action-select"
+							[clearable]="true"
+							[placeholder]="'POP_UPS.ALL_CATEGORIES' | translate"
+							(onChanged)="filterByCategory($event)"
+						></ga-expense-category-select>
+					</div>
+				</div>
 			</div>
 		</div>
 	</nb-card-header>

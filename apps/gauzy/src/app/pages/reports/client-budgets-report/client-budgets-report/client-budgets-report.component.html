@@ -1,28 +1,34 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="request?.startDate && request?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[hasActivityLevelFilter]="false"
-				[hasSourceFilter]="false"
-				[hasLogTypeFilter]="false"
-				[filters]="filters"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.CLIENT_BUDGET_REPORTS' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[hasActivityLevelFilter]="false"
+						[hasSourceFilter]="false"
+						[hasLogTypeFilter]="false"
+						[filters]="filters"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -32,115 +38,138 @@
 				[nbSpinner]="loading"
 				nbSpinnerSize="giant"
 				nbSpinnerStatus="primary"
-				[ngClass]="{'not-found': !clients?.length}"
+				[ngClass]="{ 'not-found': !clients?.length }"
 			>
 				<ng-template [ngIf]="clients?.length > 0" [ngIfElse]="notFound">
 					<nb-card class="card">
 						<nb-card-body class="budget-container">
 							<div class="columns-header" *ngIf="clients?.length > 0">
-							<div class="table-inner-wrapper font-weight-bold align-items-center">
-								<div class="responsive-table-row contact-column">
-									{{ 'REPORT_PAGE.CLIENT' | translate }}
-								</div>
-								<div class="responsive-table-row employees-column">
-									{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
-								</div>
-								<div class="responsive-table-row spent-column">
-									{{ 'REPORT_PAGE.SPENT' | translate }}
-								</div>
-								<div class="responsive-table-row remaining-column">
-									{{ 'REPORT_PAGE.REMAINING' | translate }}
-								</div>
-								<div class="responsive-table-row budget-column">
-									{{ 'REPORT_PAGE.BUDGET' | translate }}
-								</div>
-							</div>
-						</div>
-						<div class="cart-body client-row" *ngFor="let client of clients">
-							<div class="table-row">
-								<div class="table-inner-wrapper">
+								<div class="table-inner-wrapper font-weight-bold align-items-center">
 									<div class="responsive-table-row contact-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.CONTACT' | translate }}
-										</div>
-										<div class="responsive-table-content project-name">
-											<ng-container
-												*ngTemplateOutlet="clientEl;context: { $implicit: client?.organizationContact}">
-											</ng-container>
-										</div>
+										{{ 'REPORT_PAGE.CLIENT' | translate }}
 									</div>
 									<div class="responsive-table-row employees-column">
-										<div class="responsive-table-header employees-header" title="Employees/Teams">
-											{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
-										</div>
-										<div class="responsive-table-content day-col">
-											No data yet....
-										</div>
+										{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
 									</div>
 									<div class="responsive-table-row spent-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.SPENT' | translate }}
-										</div>
-										<div class="responsive-table-content day-col">
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client?.spent * 3600)
-													| durationFormat
-												}}
-											</span>
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
-												{{ client?.spent
-													| currency:organization?.currency
-													| position:organization?.currencyPosition
-												}}
-											</span>
-										</div>
+										{{ 'REPORT_PAGE.SPENT' | translate }}
 									</div>
 									<div class="responsive-table-row remaining-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.REMAINING' | translate }}
-										</div>
-										<div class="responsive-table-content day-col">
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS">
-												{{ (client.remainingBudget * 3600)
-													| durationFormat
-												}}
-											</span>
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST">
-												{{ client.remainingBudget
-													| currency:organization?.currency
-													| position:organization?.currencyPosition
-												}}
-											</span>
-										</div>
+										{{ 'REPORT_PAGE.REMAINING' | translate }}
 									</div>
 									<div class="responsive-table-row budget-column">
-										<div class="responsive-table-header">
-											{{ 'REPORT_PAGE.BUDGET' | translate }}
+										{{ 'REPORT_PAGE.BUDGET' | translate }}
+									</div>
+								</div>
+							</div>
+							<div class="cart-body client-row" *ngFor="let client of clients">
+								<div class="table-row">
+									<div class="table-inner-wrapper">
+										<div class="responsive-table-row contact-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.CONTACT' | translate }}
+											</div>
+											<div class="responsive-table-content project-name">
+												<ng-container
+													*ngTemplateOutlet="
+														clientEl;
+														context: { $implicit: client?.organizationContact }
+													"
+												>
+												</ng-container>
+											</div>
 										</div>
-										<div class="responsive-table-content day-col budget-row">
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.HOURS" class="currency-span">
-												{{ (client?.budget * 3600)
-													| durationFormat
-												}}
-											</span>
-											<span *ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST " class="currency-span">
-												{{ client.budget
-													| currency : organization?.currency
-													| position : organization?.currencyPosition
-												}}
-											</span>
-											<div class="progress-wrapper">
-												<ngx-progress-status
-													class="report-progress"
-													[percentage]="client?.spentPercentage"
-													defaultStatus="success">
-												</ngx-progress-status>
+										<div class="responsive-table-row employees-column">
+											<div
+												class="responsive-table-header employees-header"
+												title="Employees/Teams"
+											>
+												{{ 'REPORT_PAGE.EMPLOYEES/TEAMS' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">No data yet....</div>
+										</div>
+										<div class="responsive-table-row spent-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.SPENT' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">
+												<span
+													*ngIf="
+														client.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+													"
+												>
+													{{ client?.spent * 3600 | durationFormat }}
+												</span>
+												<span
+													*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
+												>
+													{{
+														client?.spent
+															| currency : organization?.currency
+															| position : organization?.currencyPosition
+													}}
+												</span>
+											</div>
+										</div>
+										<div class="responsive-table-row remaining-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.REMAINING' | translate }}
+											</div>
+											<div class="responsive-table-content day-col">
+												<span
+													*ngIf="
+														client.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+													"
+												>
+													{{ client.remainingBudget * 3600 | durationFormat }}
+												</span>
+												<span
+													*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
+												>
+													{{
+														client.remainingBudget
+															| currency : organization?.currency
+															| position : organization?.currencyPosition
+													}}
+												</span>
+											</div>
+										</div>
+										<div class="responsive-table-row budget-column">
+											<div class="responsive-table-header">
+												{{ 'REPORT_PAGE.BUDGET' | translate }}
+											</div>
+											<div class="responsive-table-content day-col budget-row">
+												<span
+													*ngIf="
+														client.budgetType === OrganizationContactBudgetTypeEnum.HOURS
+													"
+													class="currency-span"
+												>
+													{{ client?.budget * 3600 | durationFormat }}
+												</span>
+												<span
+													*ngIf="client.budgetType === OrganizationContactBudgetTypeEnum.COST"
+													class="currency-span"
+												>
+													{{
+														client.budget
+															| currency : organization?.currency
+															| position : organization?.currencyPosition
+													}}
+												</span>
+												<div class="progress-wrapper">
+													<ngx-progress-status
+														class="report-progress"
+														[percentage]="client?.spentPercentage"
+														defaultStatus="success"
+													>
+													</ngx-progress-status>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 						</nb-card-body>
 					</nb-card>
 				</ng-template>
