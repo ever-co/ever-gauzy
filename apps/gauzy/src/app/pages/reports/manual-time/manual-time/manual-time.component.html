@@ -1,35 +1,43 @@
 <nb-card class="card-scroll">
 	<nb-card-header>
-		<h4 class="main-page-header">
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container *ngIf="request?.startDate && request?.endDate">
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				[hasLogTypeFilter]="false"
-				[hasSourceFilter]="false"
-				[hasActivityLevelFilter]="false"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+		<div class="row">
 			<div class="col-auto">
-				<ng-select
-					[searchable]="false"
-					[clearable]="true"
-					[items]="actions"
-					[placeholder]="'REPORT_PAGE.ACTION' | translate"
-					[formControl]="control"
-					appendTo="body"
-				></ng-select>
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[filters]="filters"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						[hasLogTypeFilter]="false"
+						[hasSourceFilter]="false"
+						[hasActivityLevelFilter]="false"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+					<div class="col-auto">
+						<ng-select
+							[searchable]="false"
+							[clearable]="true"
+							[items]="actions"
+							[placeholder]="'REPORT_PAGE.ACTION' | translate"
+							[formControl]="control"
+							appendTo="body"
+						></ng-select>
+					</div>
+				</div>
 			</div>
 		</div>
 	</nb-card-header>
