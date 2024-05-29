@@ -45,9 +45,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'expenses',
@@ -57,9 +55,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'expense-recurring',
@@ -146,9 +142,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'payments',
@@ -161,9 +155,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'pipelines',
@@ -211,9 +203,7 @@ const routes: Routes = [
 								isDisablePastDate: true
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						}
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'event-types',

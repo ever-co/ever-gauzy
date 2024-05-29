@@ -16,6 +16,7 @@ import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,14 +37,15 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 
 	constructor(
-		private readonly timesheetService: TimesheetService,
 		private readonly cdr: ChangeDetectorRef,
-		protected readonly store: Store,
-		public readonly translateService: TranslateService,
+		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -90,17 +92,12 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
 		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.request),
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			...this.getFilterRequest(this.request)
 		};
 
 		this.payloads$.next(request);

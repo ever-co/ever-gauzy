@@ -1,10 +1,14 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ActivatedRoute, Params } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { NbPopoverDirective } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { NavigationService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	DEFAULT_TIME_FORMATS,
 	IOrganization,
@@ -14,6 +18,7 @@ import {
 	TimeZoneEnum
 } from '@gauzy/contracts';
 import { Store } from '../../../../@core/services';
+import { TimeZoneService } from './time-zone.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,57 +26,42 @@ import { Store } from '../../../../@core/services';
 	templateUrl: './timezone-filter.component.html',
 	styleUrls: ['./timezone-filter.component.scss']
 })
-export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy {
+export class TimezoneFilterComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	timeZoneOptions: { value: TimeZoneEnum; label: string }[] = [
-		{ value: TimeZoneEnum.UTC_TIMEZONE, label: 'UTC' },
-		{ value: TimeZoneEnum.ORG_TIMEZONE, label: 'Org Timezone' },
-		{ value: TimeZoneEnum.MINE_TIMEZONE, label: 'My Timezone' }
+		{
+			value: TimeZoneEnum.UTC_TIMEZONE,
+			label: this.getTranslation('TIMESHEET.TIME_ZONE_OPTION.UTC')
+		},
+		{
+			value: TimeZoneEnum.ORG_TIMEZONE,
+			label: this.getTranslation('TIMESHEET.TIME_ZONE_OPTION.ORG_TIMEZONE')
+		},
+		{
+			value: TimeZoneEnum.MINE_TIMEZONE,
+			label: this.getTranslation('TIMESHEET.TIME_ZONE_OPTION.MY_TIMEZONE')
+		}
 	];
 	timeFormatsOptions = DEFAULT_TIME_FORMATS;
 	selectedTimeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 	selectedTimeZone: TimeZoneEnum = TimeZoneEnum.UTC_TIMEZONE;
 
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimezone: boolean = true;
-	get isTimezone(): boolean {
-		return this._isTimezone;
-	}
-	@Input() set isTimezone(value: boolean) {
-		this._isTimezone = value;
-	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _isTimeformat: boolean = true;
-	get isTimeformat(): boolean {
-		return this._isTimeformat;
-	}
-	@Input() set isTimeformat(value: boolean) {
-		this._isTimeformat = value;
-	}
-
-	/*
-	 * Getter & Setter
-	 */
-	private _navigate: boolean = true;
-	get navigate(): boolean {
-		return this._navigate;
-	}
-	@Input() set navigate(value: boolean) {
-		this._navigate = value;
-	}
+	@Input() isTimezone: boolean = true;
+	@Input() isTimeformat: boolean = true;
 
 	@Output() timeZoneChange = new EventEmitter<string>();
 	@Output() timeFormatChange = new EventEmitter<TimeFormatEnum>();
 
+	@ViewChild('popover', { static: true }) popover: NbPopoverDirective;
+
 	constructor(
+		public translateService: TranslateService,
 		private readonly _route: ActivatedRoute,
-		private readonly _router: Router,
-		private readonly _store: Store
-	) {}
+		private readonly _store: Store,
+		private readonly _navigationService: NavigationService,
+		private readonly _timeZoneService: TimeZoneService
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		// Extract query parameter
@@ -87,8 +77,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
 				tap(([queryParams, organization]) => {
-					this.applyTimeFormat(queryParams, organization.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, organization.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -110,8 +100,8 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 			.pipe(
 				distinctUntilChange(),
 				tap(([queryParams, user]) => {
-					this.applyTimeFormat(queryParams, user.timeFormat);
-					this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
+					if (this.isTimeformat) this.applyTimeFormat(queryParams, user.timeFormat);
+					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
 				untilDestroyed(this)
@@ -121,16 +111,16 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 
 	/**
 	 * Applies the appropriate time format based on query parameters, organization settings, and employee settings.
+	 *
 	 * @param queryParams The query parameters from the route.
 	 * @param organization The organization details.
-	 * @param employee The selected employee details.
 	 */
 	private applyTimeFormat(queryParams: Params, timeFormat: number): void {
 		const { time_format } = queryParams;
 
 		// Apply query parameters first
 		if (time_format) {
-			this.selectTimeFormat(time_format);
+			this.selectTimeFormat(parseInt(time_format, 10));
 		} else {
 			this.selectTimeFormat(timeFormat);
 		}
@@ -160,6 +150,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	selectTimeFormat(timeFormat: TimeFormatEnum): void {
 		const is24Hours = timeFormat == TimeFormatEnum.FORMAT_24_HOURS;
 		this.selectedTimeFormat = is24Hours ? TimeFormatEnum.FORMAT_24_HOURS : TimeFormatEnum.FORMAT_12_HOURS;
+		// Set the time format using the TimeZoneService
+		this._timeZoneService.setTimeFormat(this.selectedTimeFormat);
+		// Emit the timeFormatChange event with the new time format
+		this.timeFormatChange.emit(this.selectedTimeFormat);
 	}
 
 	/**
@@ -177,6 +171,13 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 				this.selectedTimeZone = TimeZoneEnum.UTC_TIMEZONE;
 				break;
 		}
+
+		// Get the moment timezone string representation of the selected timezone
+		const timezone = this.getMomentTimezone(this.selectedTimeZone);
+		// Set the timezone using the TimeZoneService
+		this._timeZoneService.setTimeZone(timezone);
+		// Emit the timeZoneChange event with the new timezone
+		this.timeZoneChange.emit(timezone);
 	}
 
 	/**
@@ -188,16 +189,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		// Update the selected time format
 		this.selectTimeFormat(timeFormat);
 
-		this.timeFormatChange.emit(timeFormat);
-
-		if (this.navigate) {
-			// Update query parameter 'time_format'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_format: timeFormat.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_format: timeFormat.toString()
+		});
 	}
 
 	/**
@@ -209,16 +204,10 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 		// Update the selected time zone
 		this.selectTimeZone(timeZone);
 
-		this.timeZoneChange.emit(this.getTimeZone(this.selectedTimeZone));
-
-		if (this.navigate) {
-			// Update query parameter 'time_zone'
-			await this._router.navigate([], {
-				relativeTo: this._route,
-				queryParams: { time_zone: timeZone.toString() },
-				queryParamsHandling: 'merge'
-			});
-		}
+		// Updates the query parameters of the current route without navigating away.
+		await this._navigationService.updateQueryParams({
+			time_zone: timeZone.toString()
+		});
 	}
 
 	/**
@@ -227,7 +216,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	 * @returns
 	 */
 	getTimeZoneWithOffset(): string {
-		const zone = this.getTimeZone(this.selectedTimeZone);
+		const zone = this._timeZoneService.currentTimeZone;
 
 		let region = '';
 		let city = '';
@@ -252,7 +241,7 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	 *
 	 * @returns The time zone string.
 	 */
-	getTimeZone(zone: string): string {
+	getMomentTimezone(zone: string): string {
 		const defaultTimeZone = 'Etc/UTC';
 		let timeZone: string;
 
@@ -278,6 +267,15 @@ export class TimezoneFilterComponent implements AfterViewInit, OnInit, OnDestroy
 	 */
 	private hasChangeSelectedEmployeePermission(): boolean {
 		return this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+	}
+
+	/**
+	 * Closes the popover.
+	 * This method is triggered by a click event on the popover button
+	 * and hides the popover using the NbPopoverDirective's hide method.
+	 */
+	closePopover(): void {
+		this.popover.hide();
 	}
 
 	/**

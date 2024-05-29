@@ -15,6 +15,7 @@ import { TimesheetService, TimesheetFilterService } from './../../../../../@shar
 import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -45,14 +46,15 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly timesheetService: TimesheetService,
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly translateService: TranslateService,
 		protected readonly store: Store,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
