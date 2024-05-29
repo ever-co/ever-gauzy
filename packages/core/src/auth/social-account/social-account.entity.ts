@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ISocialAccount, IUser } from '@gauzy/contracts';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ISocialAccount, IUser, ProviderEnum } from '@gauzy/contracts';
 import { TenantBaseEntity, User } from '../../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../../core/decorators/entity';
 import { MicroOrmSocialAccountRepository } from './repository';
@@ -13,9 +13,9 @@ export class SocialAccount extends TenantBaseEntity implements ISocialAccount {
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@IsString()
+	@IsEnum(ProviderEnum, { message: 'provider `$value` must be a valid enum value' })
 	@MultiORMColumn()
-	provider: string;
+	provider: ProviderEnum;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -33,9 +33,6 @@ export class SocialAccount extends TenantBaseEntity implements ISocialAccount {
 	 * User
 	 */
 	@MultiORMManyToOne(() => User, {
-		/** Indicates if relation column value can be nullable or not. */
-		nullable: true,
-
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})

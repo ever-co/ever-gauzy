@@ -12,7 +12,7 @@ import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { TimeFormatEnum } from './organization.model';
-import { ISocialAccount } from 'social-account.model';
+import { ISocialAccount } from './social-account.model';
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {

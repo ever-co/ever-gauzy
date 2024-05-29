@@ -210,13 +210,13 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async verifyOAuthToken(provider: ProviderEnum, token: string): Promise<{ provider: string; id: string }> {
 		switch (provider) {
-			case 'google':
+			case ProviderEnum.GOOGLE:
 				return verifyGoogleToken(this.httpService, token);
-			case 'github':
+			case ProviderEnum.GITHUB:
 				return verifyGithubToken(this.httpService, token);
-			case 'twitter':
+			case ProviderEnum.TWITTER:
 				return verifyTwitterToken(this.httpService, token);
-			case 'facebook':
+			case ProviderEnum.FACEBOOK:
 				return verifyFacebookToken(this.httpService, token);
 			default:
 				throw new BadRequestException('Unsupported provider');
