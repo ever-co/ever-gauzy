@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/server-api",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Api Server",
+	"description": "Ever Gauzy API Server",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
