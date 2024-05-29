@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ISocialAccount, ISocialAccountCreateInput } from '@gauzy/contracts';
+import { DeepPartial } from 'typeorm';
+import { ISocialAccount } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud';
 import { SocialAccount } from './social-account.entity';
 import { MicroOrmSocialAccountRepository, TypeOrmSocialAccountRepository } from './repository';
@@ -14,10 +15,9 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 		super(typeOrmSocialAccountRepository, mikroOrmSocialAccountRepository);
 	}
 
-	async registerSocialAccount(partialEntity: ISocialAccountCreateInput): Promise<ISocialAccount> {
-		console.log({ partialEntity });
+	async registerSocialAccount(partialEntity: DeepPartial<ISocialAccount>): Promise<ISocialAccount> {
 		try {
-			return await this.save(partialEntity);
+			return await this.typeOrmRepository.save(partialEntity);
 		} catch (error) {
 			throw new BadRequestException('Could not create this account');
 		}

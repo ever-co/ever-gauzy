@@ -266,7 +266,8 @@ export class AuthService extends SocialAuthService {
 						providerAccountId: providerData.id,
 						userId: user.id,
 						user,
-						tenantId: user.tenantId
+						tenantId: user.tenantId,
+						tenant: user.tenant
 					});
 				})
 			);
