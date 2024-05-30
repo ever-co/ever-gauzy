@@ -173,7 +173,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 				productCategory: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY'),
 					type: 'string',
-					valuePrepareFunction: (category: string) => category || '-'
+					valuePrepareFunction: (value: string) => value || '-'
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
