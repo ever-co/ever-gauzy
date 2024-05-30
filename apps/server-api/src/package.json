@@ -1,8 +1,8 @@
 {
-    "name": "gauzy-server",
-    "productName": "Gauzy Server",
+    "name": "gauzy-api-server",
+    "productName": "Ever Gauzy API Server",
     "version": "0.1.0",
-    "description": "Gauzy Server",
+    "description": "Ever Gauzy API Server",
     "license": "AGPL-3.0",
     "homepage": "https://gauzy.co",
     "repository": {
@@ -45,9 +45,9 @@
         ]
     },
     "build": {
-        "appId": "com.ever.gauzyserver",
+        "appId": "com.ever.gauzyapiserver",
         "artifactName": "${name}-${version}.${ext}",
-        "productName": "Gauzy Server",
+        "productName": "Ever Gauzy API Server",
         "copyright": "Copyright © 2019-Present. Ever Co. LTD",
         "dmg": {
             "sign": false
@@ -67,14 +67,14 @@
         "publish": [
             {
                 "provider": "github",
-                "repo": "ever-gauzy-server",
+                "repo": "ever-gauzy-api-server",
                 "releaseType": "release"
             },
             {
                 "provider": "spaces",
                 "name": "ever",
                 "region": "sfo3",
-                "path": "/ever-gauzy-server",
+                "path": "/ever-gauzy-api-server",
                 "acl": "public-read"
             }
         ],
@@ -113,7 +113,7 @@
                 "deb",
                 "tar.gz"
             ],
-            "executableName": "gauzy-server",
+            "executableName": "gauzy-api-server",
             "artifactName": "${name}-${version}.${ext}",
             "synopsis": "Server",
             "category": "Development"
