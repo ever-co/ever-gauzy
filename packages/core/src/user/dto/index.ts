@@ -9,3 +9,4 @@ export * from './user-email.dto';
 export * from './user-password.dto';
 export * from './user-token.dto';
 export * from './user-code.dto';
+export * from './include-teams.dto';

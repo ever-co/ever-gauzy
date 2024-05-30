@@ -153,13 +153,10 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UseValidationPipe()
-	async signinWorkspacesByPassword(
-		@Query() query: Record<string, boolean>,
-		@Body() input: UserSigninWorkspaceDTO
-	): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailPassword(
 			input,
-			convertNativeParameters(query.includeTeams)
+			convertNativeParameters(input.includeTeams)
 		);
 	}
 
@@ -173,11 +170,8 @@ export class AuthController {
 	@Post('/signin.email.social')
 	@Public()
 	@UseValidationPipe()
-	async signinWorkspacesBySocial(
-		@Query() query: Record<string, boolean>,
-		@Body() input: SocialLoginBodyRequestDTO
-	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(query.includeTeams));
+	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyReqsuestDTO): Promise<IUserSigninWorkspaceResponse> {
+		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(input.includeTeams));
 	}
 
 	/**
@@ -205,10 +199,9 @@ export class AuthController {
 	@Public()
 	@UseValidationPipe({ whitelist: true })
 	async confirmWorkspaceSigninByCode(
-		@Query() query: Record<string, boolean>,
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.confirmWorkspaceSigninByCode(input, convertNativeParameters(query.includeTeams));
+		return await this.authService.confirmWorkspaceSigninByCode(input, convertNativeParameters(input.includeTeams));
 	}
 
 	/**
