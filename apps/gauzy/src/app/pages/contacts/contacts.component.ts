@@ -278,7 +278,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
 					filter: false,
-					valuePrepareFunction: (value: ICountry['isoCode']) => this.getCountry(value)
+					valuePrepareFunction: (value: string) => this.getCountry(value)
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
@@ -607,12 +607,16 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 
 	/**
 	 * Returns the country name based on the ISO code.
+	 *
 	 * @param isoCode - ISO code of the country.
 	 * @returns The country name or null if not found.
 	 */
 	getCountry(isoCode: ICountry['isoCode']): string | null {
-		const foundCountry = this.countries.find((item) => item.isoCode === isoCode);
-		return foundCountry?.country || null;
+		// Logic to find the country based on the ISO code
+		const country = this.countries.find((item) => item.isoCode === isoCode);
+
+		// Return the country name if found, otherwise return null
+		return country?.country ?? null;
 	}
 
 	ngOnDestroy(): void {}

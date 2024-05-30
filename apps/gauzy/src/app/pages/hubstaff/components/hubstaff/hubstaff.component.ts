@@ -119,9 +119,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
-					valuePrepareFunction: (value: string) => {
-						return this._titlecasePipe.transform(value);
-					}
+					valuePrepareFunction: (_: string) => this._titlecasePipe.transform(_)
 				}
 			}
 		};

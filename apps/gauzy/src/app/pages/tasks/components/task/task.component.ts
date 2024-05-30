@@ -175,8 +175,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
 					},
-					valuePrepareFunction: (data: number) => {
-						return this._hashNumberPipe.transform(data);
+					valuePrepareFunction: (value: string, cell: Cell) => {
+						return this._hashNumberPipe.transform(value);
 					}
 				},
 				description: {

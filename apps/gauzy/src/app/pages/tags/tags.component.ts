@@ -225,7 +225,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '16%',
+					width: '20%',
 					class: 'text-center',
 					renderComponent: TagsColorComponent,
 					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
@@ -235,16 +235,20 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
-					type: 'string'
+					type: 'string',
+					width: '70%'
 				},
 				counter: {
 					title: this.getTranslation('Counter'),
 					type: 'string',
-					width: '25%',
+					width: '10%',
 					filter: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
-						const item = cell.getRow().getData();
-						return this.getCounter(item);
+						if (cell instanceof Cell) {
+							const data = cell.getRow().getData();
+							return this.getCounter(data);
+						}
+						return this.getCounter(cell);
 					}
 				}
 			}
