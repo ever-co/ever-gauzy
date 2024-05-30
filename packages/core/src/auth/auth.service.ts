@@ -208,7 +208,10 @@ export class AuthService extends SocialAuthService {
 	 * @returns A promise resolved by the provider name and the account ID, both decode from the token
 	 * @throws A bad request if the provider used by user is not supported
 	 */
-	private async verifyOAuthToken(provider: ProviderEnum, token: string): Promise<{ provider: string; id: string }> {
+	private async verifyOAuthToken(
+		provider: ProviderEnum,
+		token: string
+	): Promise<{ provider: ProviderEnum; id: string; email: string }> {
 		switch (provider) {
 			case ProviderEnum.GOOGLE:
 				return verifyGoogleToken(this.httpService, token);
@@ -232,12 +235,15 @@ export class AuthService extends SocialAuthService {
 	 * @throws UnauthorizedException if authentication fails.
 	 */
 	async signinWorkspacesByEmailSocial(
-		input: { email: string; provider: ProviderEnum; oauthToken: string },
+		input: { provider: ProviderEnum; token: string },
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
-		const { email, provider, oauthToken } = input;
+		const { provider: inputProvider, token } = input;
 
-		const providerData = await this.verifyOAuthToken(provider, oauthToken);
+		const providerData = await this.verifyOAuthToken(inputProvider, token);
+
+		const { email, id: providerAccountId, provider } = providerData;
+		const socialAccount = await this.socialAccountService.findAccountByProvider({ provider, providerAccountId });
 
 		/** Fetching users matching the query */
 		let users = await this.userService.find({
@@ -255,8 +261,6 @@ export class AuthService extends SocialAuthService {
 		if (users.length === 0) {
 			throw new UnauthorizedException();
 		}
-
-		const socialAccount = await this.socialAccountService.findAccountByProvider(provider, providerData.id);
 
 		if (!socialAccount) {
 			await Promise.all(

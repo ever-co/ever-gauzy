@@ -4,7 +4,6 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SocialAccountService } from './social-account.service';
 import { RolePermissionModule } from '../../role-permission';
-import { SocialAccountController } from './social-account.controller';
 import { SocialAccount } from './social-account.entity';
 
 @Module({
@@ -14,7 +13,6 @@ import { SocialAccount } from './social-account.entity';
 		MikroOrmModule.forFeature([SocialAccount]),
 		RolePermissionModule
 	],
-	controllers: [SocialAccountController],
 	providers: [SocialAccountService],
 	exports: [TypeOrmModule, MikroOrmModule, SocialAccountService]
 })

@@ -1,10 +1,12 @@
 import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IRelationalUser, ProviderEnum } from './user.model';
 
-export interface ISocialAccount extends IBasePerTenantEntityModel, IRelationalUser {
+export interface ISocialAccountBase {
 	provider: ProviderEnum;
 	providerAccountId: string;
 }
+
+export interface ISocialAccount extends ISocialAccountBase, IBasePerTenantEntityModel, IRelationalUser {}
 
 export interface ISocialAccountCreateInput extends ISocialAccount {}
 

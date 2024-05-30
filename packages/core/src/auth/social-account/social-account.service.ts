@@ -1,10 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeepPartial } from 'typeorm';
-import { ISocialAccount, ProviderEnum } from '@gauzy/contracts';
+import { ISocialAccount, ISocialAccountBase } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud';
 import { SocialAccount } from './social-account.entity';
 import { MicroOrmSocialAccountRepository, TypeOrmSocialAccountRepository } from './repository';
+import { User } from '../../user';
 
 @Injectable()
 export class SocialAccountService extends TenantAwareCrudService<SocialAccount> {
@@ -23,9 +24,17 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 		}
 	}
 
-	async findAccountByProvider(provider: ProviderEnum, providerAccountId: string): Promise<SocialAccount> {
+	async findAccountByProvider(input: ISocialAccountBase): Promise<SocialAccount> {
+		const { provider, providerAccountId } = input;
 		return await this.typeOrmRepository.findOne({
-			where: { provider, providerAccountId, isActive: true, isArchived: false }
+			where: { provider, providerAccountId, isActive: true, isArchived: false },
+			relations: {
+				user: true
+			}
 		});
+	}
+
+	async findUserBySocialId(input: ISocialAccountBase): Promise<User> {
+		return (await this.findAccountByProvider(input)).user;
 	}
 }
