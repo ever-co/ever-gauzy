@@ -12,6 +12,7 @@ import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { TimeFormatEnum } from './organization.model';
+import { ISocialAccount } from './social-account.model';
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
@@ -56,6 +57,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
+	socialAccounts?: ISocialAccount[];
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
@@ -167,8 +169,10 @@ export enum ComponentLayoutStyleEnum {
 }
 
 export enum ProviderEnum {
+	GITHUB = 'github',
 	GOOGLE = 'google',
-	FACEBOOK = 'facebook'
+	FACEBOOK = 'facebook',
+	TWITTER = 'twitter'
 }
 
 export interface IUserViewModel extends IBasePerTenantEntityModel {
