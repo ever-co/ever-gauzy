@@ -170,7 +170,7 @@ export class AuthController {
 	@Post('/signin.email.social')
 	@Public()
 	@UseValidationPipe()
-	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyReqsuestDTO): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(input.includeTeams));
 	}
 
