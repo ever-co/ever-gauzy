@@ -118,16 +118,30 @@ export class CardGridComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	getValue(row: any, key: string) {
-		if (key in this.getColumns()) {
-			const column = this.getColumns()[key];
-			const value = row[key];
-			const valid = column['valuePrepareFunction'] instanceof Function;
-			if (valid) {
-				return column['valuePrepareFunction'].call(null, value, row);
-			} else {
+	/**
+	 * Retrieve the value of a given key from a row, optionally applying a value preparation function if defined.
+	 *
+	 * @param row - The data row object.
+	 * @param key - The key whose value needs to be retrieved.
+	 * @returns The prepared value or the raw value from the row.
+	 */
+	getValue(row: any, key: string): any {
+		try {
+			const columns = this.getColumns();
+			if (key in columns) {
+				const column = columns[key];
+				const value = row[key];
+
+				if (typeof column.valuePrepareFunction === 'function') {
+					return column.valuePrepareFunction.call(null, value, row);
+				}
+
 				return value;
 			}
+			throw new Error(`Key "${key}" not found in columns.`);
+		} catch (error) {
+			console.error('Error getting value:', error);
+			return undefined;
 		}
 	}
 

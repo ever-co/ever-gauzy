@@ -299,10 +299,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					filter: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['content']) => {
-						if (value) {
-							return this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500);
-						}
-						return '';
+						return value ? this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500) : '';
 					}
 				},
 				isDefault: {
