@@ -8,14 +8,32 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist"
 	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	"scripts": {
+		"build": "ng-packagr -p ng-package.json --config tsconfig.lib.json",
+		"build:prod": "ng-packagr -p ng-package.json --config tsconfig.lib.prod.json"
 	},
-	"homepage": "https://ever.co",
+	"resolutions": {
+		"@types/mime": "3.0.4"
+	},
+	"devDependencies": {
+		"@angular/cli": "^16.2.11",
+		"@angular/compiler-cli": "^16.2.12",
+		"@types/mime": "3.0.4",
+		"@types/node": "^17.0.33",
+		"ng-packagr": "16.2.3",
+		"rimraf": "^3.0.2",
+		"typescript": "5.1.6"
+	},
+	"peerDependencies": {
+		"@angular/core": "^16.2.12",
+		"zone.js": "^0.14.2"
+	},
 	"keywords": [
 		"gauzy",
 		"angular",
@@ -23,13 +41,7 @@
 		"environment",
 		"settings",
 		"library"
-	],	
-	"dependencies": {
-		"@angular/core": "^16.2.12"
-	},
+	],
 	"sideEffects": false,
-	"private": true,
-	"publishConfig": {
-		"access": "restricted"
-	}
+	"private": true
 }

@@ -72,6 +72,7 @@
 						],
 						"allowedCommonJsDependencies": [
 							"@gauzy/contracts",
+							"@gauzy/ui-config",
 							"@gauzy/integration-hubstaff",
 							"brace",
 							"brace/mode/handlebars",
@@ -186,7 +187,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:ng-packagr",
 					"options": {
-						"project": "packages/ui-config/src/lib/ng-package.json"
+						"project": "packages/ui-config/ng-package.json"
 					},
 					"configurations": {
 						"production": {
