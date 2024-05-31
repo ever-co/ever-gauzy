@@ -5,8 +5,6 @@ import { akitaConfig } from '@datorama/akita';
 import { environment } from '@gauzy/ui-config';
 import { AppModule } from './app/app.module';
 
-console.log(environment.production);
-
 if (environment.production) {
 	enableProdMode();
 	enableAkitaProdMode();
