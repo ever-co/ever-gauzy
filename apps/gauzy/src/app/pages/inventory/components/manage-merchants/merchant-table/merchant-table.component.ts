@@ -10,13 +10,13 @@ import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
+import { MerchantService, Store } from '../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
 

@@ -11,13 +11,13 @@ import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } 
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { Store, WarehouseService } from './../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
 import { DescriptionComponent } from '../../inventory-table-components/description/description.component';
 

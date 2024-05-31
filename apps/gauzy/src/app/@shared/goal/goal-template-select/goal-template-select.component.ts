@@ -12,20 +12,20 @@ import {
 } from '@gauzy/contracts';
 import { isFuture } from 'date-fns';
 import { NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme';
-import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
+import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	GoalService,
 	GoalSettingsService,
 	GoalTemplatesService,
 	KeyResultService,
-	Store,
-	ToastrService
+	Store
 } from '../../../@core/services';
-import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { TranslateService } from '@ngx-translate/core';
+import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

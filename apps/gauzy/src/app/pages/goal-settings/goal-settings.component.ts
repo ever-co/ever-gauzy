@@ -16,10 +16,10 @@ import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

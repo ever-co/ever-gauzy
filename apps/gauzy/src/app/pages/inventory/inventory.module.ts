@@ -31,7 +31,6 @@ import { VariantFormComponent } from './components/edit-inventory-item/variant-f
 import {
 	ImageAssetService,
 	InventoryStore,
-	OrganizationsService,
 	ProductService,
 	ProductVariantPriceService,
 	ProductVariantService,
@@ -57,6 +56,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
 import { ProductCategorySelectorModule } from '../../@shared/product-category-selector/product-category-selector.module';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 
 const NB_MODULES = [
 	NbCardModule,

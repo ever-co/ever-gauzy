@@ -9,8 +9,8 @@ import { ICandidateExperience, ComponentLayoutStyleEnum, IOrganization } from '@
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'angular2-smart-table';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',

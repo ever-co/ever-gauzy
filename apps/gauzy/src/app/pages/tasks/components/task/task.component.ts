@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -24,13 +24,7 @@ import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.compon
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import {
-	ErrorHandlingService,
-	MyTasksStoreService,
-	Store,
-	TasksStoreService,
-	TeamTasksStoreService
-} from './../../../../@core/services';
+import { MyTasksStoreService, Store, TasksStoreService, TeamTasksStoreService } from './../../../../@core/services';
 import {
 	AssignedToComponent,
 	CreateByComponent,

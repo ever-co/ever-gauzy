@@ -16,13 +16,13 @@ import {
 	IntegrationEnum
 } from '@gauzy/contracts';
 import {
-	ErrorHandlingService,
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationTenantService,
 	IntegrationsService,
 	Store
 } from './../../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })

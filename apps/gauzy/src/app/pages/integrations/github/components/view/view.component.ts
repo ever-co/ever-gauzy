@@ -23,13 +23,8 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	ErrorHandlingService,
-	GithubService,
-	OrganizationProjectsService,
-	Store,
-	ToastrService
-} from './../../../../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { GithubService, OrganizationProjectsService, Store } from './../../../../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

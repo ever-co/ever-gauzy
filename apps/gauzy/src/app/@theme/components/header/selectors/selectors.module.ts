@@ -12,9 +12,9 @@ import {
 	NbButtonModule
 } from '@nebular/theme';
 import { OrganizationSelectorComponent } from './organization/organization.component';
-import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
 import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { DirectivesModule } from '../../../../@shared/directives/directives.module';
 
 const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];

@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';

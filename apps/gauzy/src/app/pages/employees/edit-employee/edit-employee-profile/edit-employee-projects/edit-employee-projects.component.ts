@@ -11,8 +11,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { EmployeeStore, OrganizationProjectsService, Store, ToastrService } from './../../../../../@core/services';
+import { EmployeeStore, OrganizationProjectsService, Store } from './../../../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

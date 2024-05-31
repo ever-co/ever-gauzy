@@ -22,9 +22,9 @@ import {
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
 	OrganizationPositionsService,
-	Store,
-	ToastrService
+	Store
 } from './../../../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

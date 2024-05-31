@@ -16,7 +16,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
@@ -34,6 +33,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { NbToggleModule } from '@nebular/theme';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [

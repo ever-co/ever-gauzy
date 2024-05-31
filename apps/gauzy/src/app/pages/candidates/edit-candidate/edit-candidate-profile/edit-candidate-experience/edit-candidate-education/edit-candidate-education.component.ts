@@ -6,7 +6,8 @@ import { ICandidateEducation, ComponentLayoutStyleEnum, IOrganization } from '@g
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { DateViewComponent } from './../../../../../../@shared/table-components';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { CandidateEducationsService, CandidateStore, Store, ToastrService } from './../../../../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateEducationsService, CandidateStore, Store } from './../../../../../../@core/services';
 import { tap } from 'rxjs/operators';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 

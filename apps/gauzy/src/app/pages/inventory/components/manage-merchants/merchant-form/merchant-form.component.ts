@@ -10,15 +10,10 @@ import { LatLng } from 'leaflet';
 import { ITag, IMerchant, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { LocationFormComponent, LeafletMapComponent, FormHelpers } from './../../../../../@shared/forms';
-import {
-	ToastrService,
-	Store,
-	WarehouseService,
-	ImageAssetService,
-	MerchantService
-} from './../../../../../@core/services';
+import { Store, WarehouseService, ImageAssetService, MerchantService } from './../../../../../@core/services';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

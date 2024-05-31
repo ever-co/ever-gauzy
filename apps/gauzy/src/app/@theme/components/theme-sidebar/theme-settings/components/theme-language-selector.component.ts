@@ -2,17 +2,17 @@ import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
-import { LanguagesService, Store, UsersService } from './../../../../../@core/services';
+import { UsersService } from '@gauzy/ui-sdk/core';
+import { LanguagesService, Store } from './../../../../../@core/services';
 import { ThemeLanguageSelectorService } from './theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-theme-language-selector',
 	styleUrls: ['./theme-language-selector.component.scss'],
-	templateUrl: './theme-language-selector.component.html',
+	templateUrl: './theme-language-selector.component.html'
 })
 export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterViewInit {
-
 	user: IUser;
 	languages: ILanguage[] = [];
 
@@ -22,7 +22,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		private readonly _languagesService: LanguagesService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _selectorService: ThemeLanguageSelectorService
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this._store.systemLanguages$
@@ -51,21 +51,16 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		const systemLanguages = this._store.systemLanguages;
 		if (!systemLanguages) {
 			from(this._loadLanguages()).subscribe();
-		};
+		}
 		this._store.preferredLanguage$
 			.pipe(
 				debounceTime(100),
-				filter(
-					(preferredLanguage: LanguagesEnum) => !!preferredLanguage
-				),
-				tap(
-					(preferredLanguage: LanguagesEnum) =>
-						(this.preferredLanguage = preferredLanguage)
-				),
+				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+				tap((preferredLanguage: LanguagesEnum) => (this.preferredLanguage = preferredLanguage)),
 				tap(() => this._selectorService.setLanguage()),
 				concatMap((preferredLanguage: LanguagesEnum) =>
 					this.changePreferredLanguage({
-						preferredLanguage,
+						preferredLanguage
 					})
 				),
 				untilDestroyed(this)
@@ -96,7 +91,7 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 					code,
 					name,
 					is_system: true
-				})
+				});
 			}
 			this._store.systemLanguages = languages;
 		}
@@ -131,5 +126,5 @@ export class ThemeLanguageSelectorComponent implements OnInit, OnDestroy, AfterV
 		this._selectorService.preferredLanguage = value;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

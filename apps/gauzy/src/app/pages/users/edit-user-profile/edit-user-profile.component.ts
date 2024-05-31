@@ -8,7 +8,8 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { AuthService, UsersService } from '../../../@core/services';
+import { UsersService } from '@gauzy/ui-sdk/core';
+import { AuthService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

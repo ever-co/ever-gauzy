@@ -25,13 +25,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	AvailabilitySlotsService,
-	ErrorHandlingService,
-	Store,
-	TimeOffService,
-	ToastrService
-} from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { AvailabilitySlotsService, Store, TimeOffService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

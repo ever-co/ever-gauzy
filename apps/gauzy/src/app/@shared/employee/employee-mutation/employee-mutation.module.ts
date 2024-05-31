@@ -9,9 +9,10 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { EmployeeMutationComponent } from './employee-mutation.component';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
-import { EmployeesService, OrganizationsService, RoleService } from '../../../@core/services';
+import { EmployeesService, RoleService } from '../../../@core/services';
 import { ThemeModule } from '../../../@theme/theme.module';
 
 @NgModule({

@@ -21,8 +21,8 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidatesService, Store } from '../../@core/services';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,
@@ -40,7 +40,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	loading: boolean = false;
 	organizationInvitesAllowed: boolean = false;
 	disableButton: boolean = true;
-
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
@@ -49,7 +48,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	candidateStatusEnum = CandidateStatusEnum;
 	candidates: ICandidateViewModel[] = [];
-
 	public organization: IOrganization;
 	public candidates$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
