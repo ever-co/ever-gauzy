@@ -178,42 +178,6 @@
 				}
 			}
 		},
-		"@gauzy/ui-config": {
-			"projectType": "library",
-			"root": "packages/ui-config",
-			"sourceRoot": "packages/ui-config",
-			"prefix": "lib",
-			"architect": {
-				"build": {
-					"builder": "@angular-devkit/build-angular:ng-packagr",
-					"options": {
-						"project": "packages/ui-config/ng-package.json"
-					},
-					"configurations": {
-						"production": {
-							"tsConfig": "packages/ui-config/tsconfig.lib.prod.json"
-						},
-						"development": {
-							"tsConfig": "packages/ui-config/tsconfig.lib.json"
-						}
-					},
-					"defaultConfiguration": "production"
-				},
-				"test": {
-					"builder": "@angular-devkit/build-angular:karma",
-					"options": {
-						"tsConfig": "packages/ui-config/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
-					}
-				}
-			},
-			"schematics": {
-				"@nrwl/angular:component": {
-					"prefix": "ngx",
-					"style": "scss"
-				}
-			}
-		},
 		"@gauzy/ui-sdk": {
 			"projectType": "library",
 			"root": "packages/ui-sdk",

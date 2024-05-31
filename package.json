@@ -214,7 +214,7 @@
 		"pack:desktop-timer": "yarn run pack --desktop=desktop-timer",
 		"pack:desktop": "yarn run pack --desktop=desktop",
 		"pack:server": "yarn run pack --desktop=server",
-		"download:translations": "yarn ts-node .scripts/translation/translation-util.ts"
+		"download:translations": "yarn ts-node .scripts/translation/432swe345e2wq1w3e4214532453245321.ts"
 	},
 	"config": {
 		"commitizen": {
