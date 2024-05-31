@@ -53,7 +53,7 @@
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.6",
 		"@types/passport-jwt": "^3.0.6",
-		"rimraf": "^3.0.2",
+		"rimraf": "^5.0.7",
 		"typescript": "5.1.6"
 	}
 }
