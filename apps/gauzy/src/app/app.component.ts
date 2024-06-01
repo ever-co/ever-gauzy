@@ -5,6 +5,7 @@
  */
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
@@ -29,7 +30,8 @@ import { LanguagesService, Store } from './@core/services';
 	template: '<router-outlet *ngIf="!loading"></router-outlet>'
 })
 export class AppComponent implements OnInit, AfterViewInit {
-	public loading: boolean = true; //	Loading indicator
+	// Loading indicator
+	public loading: boolean = true;
 
 	constructor(
 		private readonly _jitsuService: JitsuService,
@@ -37,6 +39,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _seoService: SeoService,
 		private readonly _store: Store,
 		private readonly _languagesService: LanguagesService,
+		private readonly _translateService: TranslateService,
 		private readonly _i18nService: I18nService,
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -91,13 +94,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const systemLanguage = systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH;
 
 			// Set the selected language
-			this._i18nService.use(preferredLanguage || systemLanguage);
+			this._translateService.use(preferredLanguage || systemLanguage);
 
 			// Observable that emits when theme languages change.
-			const onLangChange$ = this._i18nService.onLangChange();
-
-			// Subscribe to changes in theme languages
-			onLangChange$.subscribe(() => {
+			this._translateService.onLangChange.subscribe(() => {
 				// Set the loading flag to false after the language change
 				this.loading = false;
 			});

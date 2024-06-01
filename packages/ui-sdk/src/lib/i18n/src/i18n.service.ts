@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
-import { TranslateService, LangChangeEvent } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
+	/**
+	 * Getter for availableLanguages
+	 * @returns An array of available languages.
+	 */
 	get availableLanguages(): LanguagesEnum[] {
 		return this._availableLanguages;
 	}
@@ -29,27 +32,29 @@ export class I18nService {
 	}
 
 	/**
+	 * Function to add a language to the available languages list.
+	 * @param language The language to add.
+	 */
+	addLanguage(language: LanguagesEnum): void {
+		if (!this._availableLanguages.includes(language)) {
+			this._availableLanguages.push(language);
+		}
+	}
+
+	/**
+	 * Function to remove a language from the available languages list.
+	 * @param language The language to remove.
+	 */
+	removeLanguage(language: LanguagesEnum): void {
+		this._availableLanguages = this._availableLanguages.filter((lang) => lang !== language);
+	}
+
+	/**
 	 * Returns the language code name from the browser, e.g., "de"
 	 * @returns The browser language code.
 	 */
 	getBrowserLang(): string | undefined {
 		return this._translateService.getBrowserLang();
-	}
-
-	/**
-	 * Changes the language currently used
-	 * @param lang The language code to switch to.
-	 */
-	use(lang: string): void {
-		this._translateService.use(lang);
-	}
-
-	/**
-	 * Returns an observable for language change events
-	 * @returns An observable that emits events when the language changes.
-	 */
-	onLangChange(): Observable<LangChangeEvent> {
-		return this._translateService.onLangChange;
 	}
 
 	/**
