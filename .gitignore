@@ -92,35 +92,42 @@ megalinter-reports/
 /apps/desktop-timer/src/assets/i18n
 /apps/desktop/src/assets/i18n
 /apps/server/src/assets/i18n
+/apps/server-api/src/assets/i18n
 
 # No need to duplicate desktop icons
 /apps/desktop-timer/src/icons
 /apps/desktop/src/icons
 /apps/server/src/icons
+/apps/server-api/src/icons
 
 # Generated platform logo
 apps/desktop-timer/src/assets/images/logos/platform_logo.*
 apps/desktop/src/assets/images/logos/platform_logo.*
 apps/server/src/assets/images/logos/platform_logo.*
+apps/server-api/src/assets/images/logos/platform_logo.*
 
 # Generated No internet logo
 apps/desktop-timer/src/assets/images/logos/no_internet_logo.*
 apps/desktop/src/assets/images/logos/no_internet_logo.*
 apps/server/src/assets/images/logos/no_internet_logo.*
+apps/server-api/src/assets/images/logos/no_internet_logo.*
 
 # Generated desktop icon tray
 apps/desktop-timer/src/assets/icons/tray
 apps/desktop/src/assets/icons/tray
 apps/server/src/assets/icons/tray
+apps/server-api/src/assets/icons/tray
 
 # Generated desktop 512x512 icon
 apps/desktop-timer/src/assets/icons/desktop_logo_512x512.png
 apps/desktop/src/assets/icons/desktop_logo_512x512.png
 apps/server/src/assets/icons/desktop_logo_512x512.png
+apps/server-api/src/assets/icons/desktop_logo_512x512.png
 
 # Generated desktop icon menu
 apps/desktop-timer/src/assets/icons/menu
 apps/desktop/src/assets/icons/menu
 apps/server/src/assets/icons/menu
+apps/server-api/src/assets/icons/menu
 
 .angular
