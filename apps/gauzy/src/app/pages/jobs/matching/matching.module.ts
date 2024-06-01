@@ -28,7 +28,7 @@ import { DialogsModule } from '../../../@shared/dialogs';
 	imports: [
 		CommonModule,
 		MatchingRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		NbIconModule,
 		NbSpinnerModule,

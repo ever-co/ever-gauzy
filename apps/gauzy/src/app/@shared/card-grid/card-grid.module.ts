@@ -14,7 +14,7 @@ import { NoDataMessageModule } from '../no-data-message/no-data-message.module';
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		InfiniteScrollModule,
 		NoDataMessageModule
 	],

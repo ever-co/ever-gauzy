@@ -32,7 +32,7 @@ import { TimeTrackerStatusModule } from './components/time-tracker-status/time-t
 		NbButtonModule,
 		NbTooltipModule,
 		FormsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbCheckboxModule,
 		NbDatepickerModule,
 		SharedModule,

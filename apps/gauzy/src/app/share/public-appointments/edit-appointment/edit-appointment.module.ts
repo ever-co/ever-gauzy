@@ -15,7 +15,7 @@ import { ManageAppointmentModule } from '../../../pages/employees/appointment/ma
 		NbCardModule,
 		EditAppointmentRoutingModule,
 		ManageAppointmentModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [EditAppointmentComponent],
 	providers: [EmployeeAppointmentService]

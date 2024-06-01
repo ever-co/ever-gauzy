@@ -10,7 +10,7 @@ import { SharedModule } from '../../shared.module';
 @NgModule({
 	declarations: [TaskSizeSelectComponent],
 	exports: [TaskSizeSelectComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule, SharedModule],
+	imports: [CommonModule, FormsModule, TranslateModule.forChild(), NgSelectModule, SharedModule],
 	providers: [TaskSizesService]
 })
 export class TaskSizeSelectModule {}

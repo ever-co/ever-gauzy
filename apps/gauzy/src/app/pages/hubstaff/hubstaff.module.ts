@@ -50,7 +50,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbDatepickerModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class HubstaffModule {}

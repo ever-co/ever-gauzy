@@ -8,6 +8,6 @@ import { ProductTypeSelectorComponent } from './product-type-selector.component'
 @NgModule({
 	declarations: [ProductTypeSelectorComponent],
 	exports: [ProductTypeSelectorComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class ProductTypeSelectorModule {}

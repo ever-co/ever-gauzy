@@ -12,7 +12,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FeatureToggleModule
 	],
 	declarations: [FeatureComponent],

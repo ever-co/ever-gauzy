@@ -66,7 +66,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		CKEditorModule,
 		NgChartsModule,
 		CardGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule,
 		HeaderTitleModule,

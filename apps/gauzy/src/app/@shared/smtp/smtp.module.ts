@@ -17,7 +17,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild()
 	],
 	exports: [SMTPComponent],

@@ -22,7 +22,7 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		DailyStatisticsModule,
 		TimeReportsRoutingModule,
 		LineChartModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

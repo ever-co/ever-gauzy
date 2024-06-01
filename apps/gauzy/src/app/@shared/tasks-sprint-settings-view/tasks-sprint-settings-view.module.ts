@@ -19,9 +19,9 @@ import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.c
 		FormsModule,
 		ReactiveFormsModule,
 		NbDatepickerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		GauzyEditableGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbInputModule,
 		SharedModule
 	]

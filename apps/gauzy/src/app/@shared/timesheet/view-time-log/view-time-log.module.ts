@@ -30,7 +30,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbIconModule,
 		NbUserModule,
 		DialogsModule,
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class ViewTimeLogModule {}

@@ -13,7 +13,7 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 		Angular2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule
 	],
 	exports: [RecurringExpenseHistoryComponent],

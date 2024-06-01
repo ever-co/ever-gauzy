@@ -38,7 +38,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		HeaderTitleModule,
 		PaginationV2Module,

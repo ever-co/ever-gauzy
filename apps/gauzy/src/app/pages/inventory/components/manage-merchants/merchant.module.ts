@@ -58,7 +58,7 @@ const NB_MODULES = [
 		MerchantRoutingModule,
 		SharedModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,
 		GauzyButtonActionModule,

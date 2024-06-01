@@ -8,6 +8,6 @@ import { PhoneFormInputComponent } from './phone.component';
 @NgModule({
 	declarations: [PhoneFormInputComponent],
 	exports: [PhoneFormInputComponent],
-	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule, NbInputModule]
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule.forChild(), NbInputModule]
 })
 export class PhoneFormInputModule {}

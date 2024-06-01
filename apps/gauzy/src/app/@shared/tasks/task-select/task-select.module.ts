@@ -8,6 +8,6 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 @NgModule({
 	declarations: [TaskSelectorComponent],
 	exports: [TaskSelectorComponent],
-	imports: [CommonModule, NgSelectModule, FormsModule, TranslateModule]
+	imports: [CommonModule, NgSelectModule, FormsModule, TranslateModule.forChild()]
 })
 export class TaskSelectModule {}

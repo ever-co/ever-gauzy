@@ -99,7 +99,7 @@ const MODULES = [
 	ProjectSelectModule,
 	TeamSelectModule,
 	TimeTrackerModule,
-	TranslateModule,
+	TranslateModule.forChild(),
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
 	WorkspacesModule,

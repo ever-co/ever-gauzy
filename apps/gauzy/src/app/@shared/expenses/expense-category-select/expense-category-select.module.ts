@@ -9,6 +9,6 @@ import { ExpenseCategorySelectComponent } from './expense-category-select.compon
 @NgModule({
 	declarations: [ExpenseCategorySelectComponent],
 	exports: [ExpenseCategorySelectComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class ExpenseCategorySelectModule {}

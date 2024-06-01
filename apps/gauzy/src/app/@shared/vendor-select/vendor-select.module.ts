@@ -9,6 +9,6 @@ import { VendorSelectComponent } from './vendor-select.component';
 @NgModule({
 	declarations: [VendorSelectComponent],
 	exports: [VendorSelectComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class VendorSelectModule {}

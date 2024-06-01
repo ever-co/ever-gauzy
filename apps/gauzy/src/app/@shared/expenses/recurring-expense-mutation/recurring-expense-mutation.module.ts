@@ -37,7 +37,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 		NbAlertModule,
 		NbSpinnerModule,
 		EmployeeSelectorsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule
 	],
 	exports: [RecurringExpenseMutationComponent],

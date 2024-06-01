@@ -28,7 +28,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		FormsModule,
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	providers: [HelpCenterArticleService],
 	declarations: [AddArticleComponent],

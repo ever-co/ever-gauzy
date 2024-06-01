@@ -13,7 +13,7 @@ import { LayoutSelectorComponent } from './layout-selector.component';
 		NbIconModule,
 		NbSelectModule,
 		NbTooltipModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [LayoutSelectorComponent],
 	declarations: [LayoutSelectorComponent],

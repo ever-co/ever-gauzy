@@ -17,7 +17,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		NbIconModule,
 		NbCardModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		PaginationV2Module
 	],
 	exports: [ProfitHistoryComponent],

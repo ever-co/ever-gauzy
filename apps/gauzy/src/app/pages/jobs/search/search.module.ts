@@ -44,7 +44,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		NbToggleModule,
 		Angular2SmartTableModule,
 		SearchRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		EmployeeMultiSelectModule,

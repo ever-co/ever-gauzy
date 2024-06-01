@@ -38,7 +38,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		NbPopoverModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		MomentModule,
 		SharedModule,
 		ApprovalsRoutingModule,

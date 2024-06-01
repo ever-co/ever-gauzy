@@ -35,7 +35,7 @@ import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/
 		EmployeeMultiSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [EventTypeMutationComponent],
 	declarations: [EventTypeMutationComponent],

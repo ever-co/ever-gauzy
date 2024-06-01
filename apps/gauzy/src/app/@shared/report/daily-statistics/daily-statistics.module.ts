@@ -13,7 +13,7 @@ import { CounterPointModule } from '../../counter-point/counter-point.module';
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

@@ -13,7 +13,7 @@ import { OnboardingComponent } from './onboarding.component';
 		OnboardingRoutingModule,
 		ThemeModule,
 		NbLayoutModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		ThemeSettingsModule
 	],

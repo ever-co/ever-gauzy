@@ -12,7 +12,7 @@ import { DirectivesModule } from '../directives/directives.module';
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FileUploadModule,
 		NbButtonModule,
 		NbSpinnerModule,

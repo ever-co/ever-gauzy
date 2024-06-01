@@ -30,7 +30,7 @@ const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 		NbDatepickerModule,
 		NbInputModule,
 		NbButtonModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		DirectivesModule
 	],
 	exports: [...COMPONENTS],

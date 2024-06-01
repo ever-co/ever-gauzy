@@ -50,7 +50,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,

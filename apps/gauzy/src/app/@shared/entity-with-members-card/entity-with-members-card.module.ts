@@ -26,7 +26,7 @@ import { TableComponentsModule } from '../table-components/table-components.modu
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [EntityWithMembersCardComponent],
 	exports: [EntityWithMembersCardComponent],

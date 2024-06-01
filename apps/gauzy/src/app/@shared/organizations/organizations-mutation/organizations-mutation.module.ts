@@ -40,7 +40,7 @@ import { OrganizationsStepFormModule } from '../organizations-step-form/organiza
 		NbToggleModule,
 		RemoveLodashModule,
 		OrganizationsStepFormModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [OrganizationsMutationComponent],
 	providers: [OrganizationDepartmentsService],

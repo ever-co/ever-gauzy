@@ -25,7 +25,7 @@ import { SelectAssetComponent } from './select-asset.component';
 		NbIconModule,
 		NbInputModule,
 		NbButtonModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbToastrModule,
 		ImageUploaderModule,
 		FileUploaderModule,

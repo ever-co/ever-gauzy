@@ -8,6 +8,6 @@ import { ContactSelectComponent } from './contact-select.component';
 @NgModule({
 	declarations: [ContactSelectComponent],
 	exports: [ContactSelectComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class ContactSelectModule {}

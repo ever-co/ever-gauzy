@@ -20,7 +20,7 @@ import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 		NbSelectModule,
 		NgxSliderModule,
 		PipesModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		TimezoneFilterModule
 	]
 })

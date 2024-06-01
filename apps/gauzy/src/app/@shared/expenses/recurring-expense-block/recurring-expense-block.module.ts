@@ -14,7 +14,7 @@ import { SharedModule } from '../../shared.module';
 		NbIconModule,
 		NbTooltipModule,
 		RecurringExpenseHistoryModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule
 	],
 	exports: [RecurringExpenseBlockComponent],

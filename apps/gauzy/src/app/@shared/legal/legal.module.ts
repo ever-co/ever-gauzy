@@ -4,7 +4,7 @@ import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.componen
 import { TermsAndConditionsComponent } from './terms-and-conditions/terms-and-conditions.component';
 
 @NgModule({
-	imports: [TranslateModule],
+	imports: [TranslateModule.forChild()],
 	declarations: [TermsAndConditionsComponent, PrivacyPolicyComponent],
 	exports: [TermsAndConditionsComponent, PrivacyPolicyComponent]
 })

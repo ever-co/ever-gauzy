@@ -58,7 +58,7 @@ const COMPONENTS = [
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		ClipboardModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		InviteMutationModule,
 		UserFormsModule,

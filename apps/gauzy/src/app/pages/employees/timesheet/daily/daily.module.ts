@@ -49,7 +49,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,

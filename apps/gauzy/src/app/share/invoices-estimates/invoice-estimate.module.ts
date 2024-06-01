@@ -8,7 +8,7 @@ import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoicesModule } from '../../pages/invoices/invoices.module';
 
 @NgModule({
-	imports: [InvoiceEstimateRoutingModule, InvoicesModule, CommonModule, NbCardModule, TranslateModule],
+	imports: [InvoiceEstimateRoutingModule, InvoicesModule, CommonModule, NbCardModule, TranslateModule.forChild()],
 	declarations: [InvoiceEstimateComponent],
 	exports: [InvoiceEstimateComponent],
 	providers: [InvoicesService]

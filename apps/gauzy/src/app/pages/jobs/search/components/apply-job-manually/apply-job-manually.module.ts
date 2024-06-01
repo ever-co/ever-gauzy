@@ -34,7 +34,7 @@ import { EmployeeSelectorsModule } from './../../../../../@theme/components/head
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,

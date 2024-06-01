@@ -15,7 +15,7 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 		ReactiveFormsModule,
 		NbSelectModule,
 		EmployeeMultiSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [GoalLevelSelectComponent]
 })

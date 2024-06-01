@@ -30,7 +30,7 @@ import { TableComponentsModule } from '../../@shared';
 		NbInputModule,
 		ImageUploaderModule,
 		PublicPageEmployeeMutationModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,

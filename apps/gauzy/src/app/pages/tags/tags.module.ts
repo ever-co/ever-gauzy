@@ -55,7 +55,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		TagsMutationModule,
 		ColorPickerModule,
 		CardGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		HeaderTitleModule,
 		GauzyButtonActionModule,

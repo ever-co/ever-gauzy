@@ -60,7 +60,7 @@ import { TeamModule } from './team/team.module';
 		NbSelectModule,
 		NbAlertModule,
 		ProfitHistoryModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

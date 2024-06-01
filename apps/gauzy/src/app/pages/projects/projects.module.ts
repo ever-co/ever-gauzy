@@ -41,7 +41,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		Angular2SmartTableModule,
 		ProjectsRoutingModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,

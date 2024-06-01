@@ -28,7 +28,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [EquipmentSharingPolicyMutationComponent],
 	providers: [EquipmentSharingPolicyService]

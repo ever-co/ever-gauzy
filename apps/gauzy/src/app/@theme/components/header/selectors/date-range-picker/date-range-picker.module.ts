@@ -17,7 +17,7 @@ import { dayOfWeekAsString } from './date-picker.utils';
 		NgxDateRangePickerMd.forRoot({
 			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 		}),
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbInputModule,
 		NbButtonModule,
 		NbIconModule

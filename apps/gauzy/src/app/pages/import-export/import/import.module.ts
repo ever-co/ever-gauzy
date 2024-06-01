@@ -37,7 +37,7 @@ import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/ga
 		FileUploadModule,
 		HttpClientModule,
 		NbToastrModule.forRoot(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		NbBadgeModule,

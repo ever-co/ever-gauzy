@@ -25,7 +25,7 @@ import { TableComponentsModule } from '../../../@shared';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbLayoutModule,
 		NbSidebarModule,
 		NbTabsetModule,

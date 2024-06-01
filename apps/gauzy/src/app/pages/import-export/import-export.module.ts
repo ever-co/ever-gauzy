@@ -17,7 +17,7 @@ import { DialogsModule } from '../../@shared/dialogs';
 		NbIconModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [ImportExportComponent],
 	providers: []

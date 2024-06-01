@@ -36,7 +36,7 @@ import { ScreenshotsItemComponent } from './screenshots-item.component';
 		NbProgressBarModule,
 		NbTooltipModule,
 		MomentModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		GalleryModule,

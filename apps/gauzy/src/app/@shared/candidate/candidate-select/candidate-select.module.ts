@@ -7,7 +7,7 @@ import { CandidateSelectComponent } from './candidate-select.component';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [ThemeModule, NbSelectModule, SharedModule, FormsModule, ReactiveFormsModule, TranslateModule],
+	imports: [ThemeModule, NbSelectModule, SharedModule, FormsModule, ReactiveFormsModule, TranslateModule.forChild()],
 	declarations: [CandidateSelectComponent],
 	exports: [CandidateSelectComponent],
 	providers: []

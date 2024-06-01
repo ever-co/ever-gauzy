@@ -23,7 +23,7 @@ import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-pick
 		NbIconModule,
 		NbTooltipModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FullCalendarModule,
 		EmployeeSelectorsModule,
 		NbDialogModule,

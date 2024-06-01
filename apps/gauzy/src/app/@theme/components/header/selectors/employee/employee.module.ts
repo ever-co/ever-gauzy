@@ -10,7 +10,7 @@ import { SharedModule } from './../../../../../@shared/shared.module';
 const COMPONENTS = [EmployeeSelectorComponent];
 
 @NgModule({
-	imports: [CommonModule, NgSelectModule, FormsModule, TranslateModule, SharedModule],
+	imports: [CommonModule, NgSelectModule, FormsModule, TranslateModule.forChild(), SharedModule],
 	exports: [...COMPONENTS],
 	declarations: [...COMPONENTS],
 	providers: [EmployeesService, EmployeeStore]

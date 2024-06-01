@@ -7,7 +7,7 @@ import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [WidgetComponent],
-	imports: [CommonModule, NbIconModule, NbPopoverModule, NbButtonModule, SharedModule, TranslateModule],
+	imports: [CommonModule, NbIconModule, NbPopoverModule, NbButtonModule, SharedModule, TranslateModule.forChild()],
 	exports: [WidgetComponent]
 })
 export class WidgetModule {}

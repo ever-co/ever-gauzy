@@ -40,7 +40,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		AceEditorModule,
 		LanguageSelectorModule,

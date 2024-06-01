@@ -34,7 +34,7 @@ import { RolesPermissionsComponent } from './roles-permissions.component';
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [RolesPermissionsComponent],
 	providers: [RolePermissionsService]

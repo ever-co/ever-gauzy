@@ -33,7 +33,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		NbToggleModule,
 		NbTabsetModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		FormsModule,
 		Angular2SmartTableModule,

@@ -7,6 +7,6 @@ import { BackNavigationComponent } from './back-navigation.component';
 @NgModule({
 	declarations: [BackNavigationComponent],
 	exports: [BackNavigationComponent],
-	imports: [NbIconModule, CommonModule, NbIconModule, NbButtonModule, TranslateModule]
+	imports: [NbIconModule, CommonModule, NbIconModule, NbButtonModule, TranslateModule.forChild()]
 })
 export class BackNavigationModule {}

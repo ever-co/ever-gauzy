@@ -28,7 +28,7 @@ import { CandidateStore, EmployeeStore } from '../../../@core/services';
 		SharedModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],

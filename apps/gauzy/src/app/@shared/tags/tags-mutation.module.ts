@@ -28,7 +28,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbInputModule,
 		NbSelectModule,
 		ColorPickerModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [TagsMutationComponent],
 	providers: [TagsService]

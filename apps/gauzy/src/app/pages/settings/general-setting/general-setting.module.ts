@@ -11,7 +11,7 @@ import { GeneralSettingComponent } from './general-setting.component';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FeatureToggleModule,
 		GeneralSettingRoutingModule
 	],

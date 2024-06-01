@@ -14,7 +14,7 @@ import { EmployeeStartWorkComponent } from './employee-start-work.component';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class EmployeeStartWorkModule {}

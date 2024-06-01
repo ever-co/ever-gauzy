@@ -67,7 +67,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		SharedModule,
 		TagsColorInputModule,
 		ThemeModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 
 	declarations: [...COMPONENTS],

@@ -14,7 +14,7 @@ import { MomentModule } from 'ngx-moment';
 		SharedModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbProgressBarModule,
 		MomentModule,
 		NbButtonModule

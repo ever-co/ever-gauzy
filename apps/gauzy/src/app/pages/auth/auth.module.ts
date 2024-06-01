@@ -6,7 +6,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { AuthRoutingModule } from './auth-routing.module';
 
 @NgModule({
-	imports: [AuthRoutingModule, ThemeModule, TranslateModule, EditProfileFormModule],
+	imports: [AuthRoutingModule, ThemeModule, TranslateModule.forChild(), EditProfileFormModule],
 	providers: [RoleService]
 })
 export class AuthModule {}

@@ -47,7 +47,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		IncomeMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,

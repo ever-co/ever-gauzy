@@ -26,7 +26,7 @@ import { KnowledgeBaseComponent } from './knowledeg-base.component';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		LanguageSelectorModule
 	],
 	declarations: [KnowledgeBaseComponent],

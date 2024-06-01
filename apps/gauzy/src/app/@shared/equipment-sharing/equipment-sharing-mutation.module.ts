@@ -32,7 +32,7 @@ import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingServic
 		NbDatepickerModule,
 		NgSelectModule,
 		NbRadioModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		EmployeeMultiSelectModule
 	],
 	declarations: [EquipmentSharingMutationComponent],

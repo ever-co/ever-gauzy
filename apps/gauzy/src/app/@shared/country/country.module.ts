@@ -8,7 +8,7 @@ import { CountryComponent } from './country.component';
 
 @NgModule({
 	declarations: [CountryComponent],
-	imports: [ThemeModule, FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule],
+	imports: [ThemeModule, FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule.forChild()],
 	providers: [CountryService],
 	exports: [CountryComponent]
 })

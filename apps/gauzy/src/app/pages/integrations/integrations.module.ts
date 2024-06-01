@@ -32,7 +32,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbTooltipModule,
 		IntegrationsRoutingModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),

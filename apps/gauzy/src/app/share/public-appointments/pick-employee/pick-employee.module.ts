@@ -18,7 +18,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 		EmployeeSelectorsModule,
 		BackNavigationModule,
 		PickEmployeeRoutingModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [PickEmployeeComponent],
 	providers: [EventTypeService]

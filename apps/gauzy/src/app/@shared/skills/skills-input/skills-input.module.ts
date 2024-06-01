@@ -7,7 +7,14 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [CommonModule, NgSelectModule, NbBadgeModule, FormsModule, ReactiveFormsModule, TranslateModule],
+	imports: [
+		CommonModule,
+		NgSelectModule,
+		NbBadgeModule,
+		FormsModule,
+		ReactiveFormsModule,
+		TranslateModule.forChild()
+	],
 	exports: [SkillsInputComponent],
 	declarations: [SkillsInputComponent]
 })

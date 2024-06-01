@@ -18,7 +18,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 		FormsModule,
 		NbInputModule,
 		CurrencyModule,
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class GoalCustomUnitModule {}

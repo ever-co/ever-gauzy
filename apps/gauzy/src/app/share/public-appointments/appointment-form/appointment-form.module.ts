@@ -16,7 +16,7 @@ import { ManageAppointmentModule } from '../../../pages/employees/appointment/ma
 		AppointmentFormRoutingModule,
 		AppointmentModule,
 		ManageAppointmentModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [AppointmentFormComponent],
 	exports: [AppointmentFormComponent],

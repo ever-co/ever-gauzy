@@ -18,7 +18,7 @@ import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-c
 	imports: [
 		CommonModule,
 		ExpensesReportRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		NbIconModule,
 		NbSpinnerModule,

@@ -30,7 +30,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbToastrModule,
 		NbDialogModule,
 		FormsModule,

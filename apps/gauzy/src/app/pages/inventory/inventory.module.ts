@@ -107,7 +107,7 @@ const NB_MODULES = [
 		InventoryTableComponentsModule,
 		TagsColorInputModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,

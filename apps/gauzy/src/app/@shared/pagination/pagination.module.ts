@@ -5,7 +5,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PaginationComponent } from './pagination.component';
 
 @NgModule({
-	imports: [CommonModule, TranslateModule, NbIconModule, NbSelectModule],
+	imports: [CommonModule, TranslateModule.forChild(), NbIconModule, NbSelectModule],
 	declarations: [PaginationComponent],
 	exports: [PaginationComponent]
 })

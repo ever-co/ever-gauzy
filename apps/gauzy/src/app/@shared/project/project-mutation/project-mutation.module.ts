@@ -43,7 +43,7 @@ import { RepositorySelectorModule } from '../../integrations/github';
 		CKEditorModule,
 		ColorPickerModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule,
 		EmployeeMultiSelectModule,
 		ImageUploaderModule,

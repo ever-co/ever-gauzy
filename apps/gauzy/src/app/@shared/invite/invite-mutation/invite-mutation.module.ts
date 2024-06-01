@@ -11,7 +11,15 @@ import { OrganizationContactService } from '../../../@core/services/organization
 import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
 
 @NgModule({
-	imports: [ThemeModule, FormsModule, NbCardModule, NbButtonModule, NbIconModule, TranslateModule, InviteFormsModule],
+	imports: [
+		ThemeModule,
+		FormsModule,
+		NbCardModule,
+		NbButtonModule,
+		NbIconModule,
+		TranslateModule.forChild(),
+		InviteFormsModule
+	],
 	exports: [InviteMutationComponent],
 	declarations: [InviteMutationComponent],
 	providers: [

@@ -4,15 +4,7 @@ import { TranslateModule as NgxTranslateModule, TranslateLoader, TranslateModule
 import { HttpLoaderFactory } from './translate-http-loader';
 
 @NgModule({
-	imports: [
-		NgxTranslateModule.forChild({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		})
-	],
+	imports: [],
 	exports: [NgxTranslateModule]
 })
 export class TranslateModule {

@@ -20,7 +20,7 @@ import { ProjectColumnViewModule } from '../../../@shared/report/project-column-
 		CommonModule,
 		TimeLimitReportRoutingModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

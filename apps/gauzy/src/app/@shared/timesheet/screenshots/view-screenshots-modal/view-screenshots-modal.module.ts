@@ -32,7 +32,7 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		NbTooltipModule,
 		MomentModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		LabelModule,
 		GalleryModule,
 		DialogsModule,

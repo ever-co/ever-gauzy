@@ -15,7 +15,7 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

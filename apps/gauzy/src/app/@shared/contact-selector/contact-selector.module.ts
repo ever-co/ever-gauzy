@@ -10,6 +10,6 @@ import { ContactSelectorComponent } from './contact-selector.component';
 @NgModule({
 	declarations: [ContactSelectorComponent],
 	exports: [ContactSelectorComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class ContactSelectorModule {}

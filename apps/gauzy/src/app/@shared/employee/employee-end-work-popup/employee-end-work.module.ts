@@ -16,7 +16,7 @@ import { EmployeeEndWorkComponent } from './employee-end-work.component';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [EmployeeEndWorkComponent],
 	declarations: [EmployeeEndWorkComponent],

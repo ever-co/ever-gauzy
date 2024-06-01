@@ -29,7 +29,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	providers: [ApprovalPolicyService, Store]

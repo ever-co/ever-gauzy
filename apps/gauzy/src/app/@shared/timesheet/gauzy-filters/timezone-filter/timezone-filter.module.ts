@@ -6,7 +6,7 @@ import { TimezoneFilterComponent } from './timezone-filter.component';
 
 @NgModule({
 	declarations: [TimezoneFilterComponent],
-	imports: [CommonModule, TranslateModule, NbIconModule, NbButtonModule, NbPopoverModule],
+	imports: [CommonModule, TranslateModule.forChild(), NbIconModule, NbButtonModule, NbPopoverModule],
 	exports: [TimezoneFilterComponent]
 })
 export class TimezoneFilterModule {}

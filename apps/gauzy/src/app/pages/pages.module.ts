@@ -20,7 +20,7 @@ import { CommonNavModule } from '../@core/components/common-nav.module';
 		NgxFeatureToggleModule,
 		ThemeModule,
 		MiscellaneousModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CommonNavModule
 	],
 	declarations: [PagesComponent],

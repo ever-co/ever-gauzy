@@ -19,7 +19,7 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		FormsModule,
 		ReactiveFormsModule,
 		NbSelectModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbButtonModule,
 		AceEditorModule,
 		HeaderTitleModule,

@@ -37,7 +37,7 @@ import { RoleFormFieldModule } from '../../user/forms/fields/role';
 		NbTooltipModule,
 		NgSelectModule,
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		ContactSelectModule,
 		RoleFormFieldModule

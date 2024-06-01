@@ -5,7 +5,7 @@ import { ThemeModule } from '../../../../@theme/theme.module';
 import { DeleteFeedbackComponent } from './delete-feedback.component';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule.forChild()],
 	declarations: [DeleteFeedbackComponent],
 	exports: [DeleteFeedbackComponent]
 })

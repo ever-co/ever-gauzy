@@ -8,6 +8,6 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 @NgModule({
 	declarations: [FileProviderComponent],
 	exports: [FileProviderComponent],
-	imports: [CommonModule, FormsModule, NbSelectModule, TranslateModule]
+	imports: [CommonModule, FormsModule, NbSelectModule, TranslateModule.forChild()]
 })
 export class FileProviderModule {}

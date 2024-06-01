@@ -15,7 +15,7 @@ import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme
 		ThemeModule,
 		NbSpinnerModule,
 		OrganizationsStepFormModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		ThemeSelectorModule
 	],
 	providers: [TenantService, TagsService],

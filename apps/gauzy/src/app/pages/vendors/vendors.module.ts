@@ -46,7 +46,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		SharedModule,
 		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbSpinnerModule,

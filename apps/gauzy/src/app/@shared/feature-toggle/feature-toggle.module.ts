@@ -26,7 +26,7 @@ import { FeatureToggleComponent } from './feature-toggle.component';
 		NbSpinnerModule,
 		NbToggleModule,
 		ThemeModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [FeatureToggleComponent],
 	exports: [FeatureToggleComponent],

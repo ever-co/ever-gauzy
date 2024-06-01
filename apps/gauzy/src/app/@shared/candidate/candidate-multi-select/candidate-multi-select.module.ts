@@ -6,7 +6,7 @@ import { CandidateMultiSelectComponent } from './candidate-multi-select.componen
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [ThemeModule, NbSelectModule, SharedModule, TranslateModule],
+	imports: [ThemeModule, NbSelectModule, SharedModule, TranslateModule.forChild()],
 	declarations: [CandidateMultiSelectComponent],
 	exports: [CandidateMultiSelectComponent],
 	providers: []

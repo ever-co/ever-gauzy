@@ -46,7 +46,7 @@ import { SharedModule } from '../../shared.module';
 		NbCheckboxModule,
 		NbTooltipModule,
 		SkillsInputModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

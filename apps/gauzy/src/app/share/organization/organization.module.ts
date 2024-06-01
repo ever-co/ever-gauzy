@@ -34,7 +34,7 @@ import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progr
 		NbIconModule,
 		NbInputModule,
 		PublicPageMutationModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,

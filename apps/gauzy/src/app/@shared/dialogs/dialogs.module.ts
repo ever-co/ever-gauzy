@@ -44,7 +44,7 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		NbSelectModule,
 		NbCardModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbFormFieldModule,
 		NbMenuModule,
 		NbBadgeModule,

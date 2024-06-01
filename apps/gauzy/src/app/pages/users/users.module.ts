@@ -85,7 +85,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

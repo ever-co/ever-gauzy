@@ -42,7 +42,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		NbTooltipModule,
 		GauzyButtonActionModule,

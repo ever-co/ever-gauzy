@@ -7,7 +7,14 @@ import { SMTPModule } from '../../../@shared/smtp/smtp.module';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [CustomSmtpRoutingModule, ThemeModule, NbCardModule, NbRouteTabsetModule, TranslateModule, SMTPModule],
+	imports: [
+		CustomSmtpRoutingModule,
+		ThemeModule,
+		NbCardModule,
+		NbRouteTabsetModule,
+		TranslateModule.forChild(),
+		SMTPModule
+	],
 	declarations: [CustomSmtpComponent],
 	providers: []
 })

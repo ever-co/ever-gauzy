@@ -21,7 +21,7 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		CommonModule,
 		ProjectBudgetsReportRoutingModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

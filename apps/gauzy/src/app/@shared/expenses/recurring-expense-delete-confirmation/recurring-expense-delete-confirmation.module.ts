@@ -13,7 +13,7 @@ import { RecurringExpenseDeleteConfirmationComponent } from './recurring-expense
 		NbRadioModule,
 		NbCardModule,
 		NbButtonModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [RecurringExpenseDeleteConfirmationComponent],
 	declarations: [RecurringExpenseDeleteConfirmationComponent]

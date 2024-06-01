@@ -19,7 +19,7 @@ import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.modul
 		GoalCustomUnitModule,
 		ReactiveFormsModule,
 		NbDialogModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [KeyresultTypeSelectComponent]
 })

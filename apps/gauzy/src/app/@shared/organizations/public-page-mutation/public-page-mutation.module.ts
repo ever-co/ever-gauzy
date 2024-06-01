@@ -44,7 +44,7 @@ import { LanguagesService } from '../../../@core/services/languages.service';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

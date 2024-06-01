@@ -15,7 +15,7 @@ import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FeatureToggleModule,
 		ThemeSelectorModule
 	],

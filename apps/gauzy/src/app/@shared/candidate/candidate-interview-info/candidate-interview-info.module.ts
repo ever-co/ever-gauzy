@@ -15,7 +15,7 @@ import { CandidateInterviewMutationModule } from '../candidate-interview-mutatio
 		NbIconModule,
 		NbTabsetModule,
 		CandidateInterviewMutationModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [CandidateInterviewInfoComponent],
 	declarations: [CandidateInterviewInfoComponent]

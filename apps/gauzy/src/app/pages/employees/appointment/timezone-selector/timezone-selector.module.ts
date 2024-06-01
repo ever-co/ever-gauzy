@@ -14,7 +14,7 @@ import { TimezoneSelectorComponent } from './timezone-selector.component';
 		FormsModule,
 		NbButtonModule,
 		NgSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [TimezoneSelectorComponent],
 	declarations: [TimezoneSelectorComponent],

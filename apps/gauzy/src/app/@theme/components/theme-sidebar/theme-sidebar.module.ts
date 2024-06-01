@@ -14,7 +14,7 @@ import { ThemeSettingsComponent } from './theme-settings/theme-settings.componen
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		ThemeSettingsModule
 	],
 	exports: [ThemeSidebarComponent, ChangelogComponent, ThemeSettingsComponent],

@@ -36,7 +36,7 @@ import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/passwor
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		OrganizationsMutationModule,
 		PasswordFormFieldModule
 	],

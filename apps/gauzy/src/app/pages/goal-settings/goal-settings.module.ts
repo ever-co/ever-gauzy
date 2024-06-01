@@ -61,7 +61,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module

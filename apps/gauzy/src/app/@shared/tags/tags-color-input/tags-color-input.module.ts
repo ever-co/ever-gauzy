@@ -8,7 +8,7 @@ import { TagsService } from '../../../@core/services/tags.service';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, TranslateModule],
+	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, TranslateModule.forChild()],
 	exports: [TagsColorInputComponent],
 	declarations: [TagsColorInputComponent],
 	providers: [TagsService]

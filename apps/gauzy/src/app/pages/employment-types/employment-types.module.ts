@@ -44,7 +44,7 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 		Angular2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationModule,

@@ -10,7 +10,15 @@ import { SharedModule } from '../../shared.module';
 @NgModule({
 	declarations: [TaskPrioritySelectComponent],
 	exports: [TaskPrioritySelectComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule, SharedModule, NgSelectModule, NgSelectModule],
+	imports: [
+		CommonModule,
+		FormsModule,
+		TranslateModule.forChild(),
+		NgSelectModule,
+		SharedModule,
+		NgSelectModule,
+		NgSelectModule
+	],
 	providers: [TaskPrioritiesService]
 })
 export class TaskPrioritySelectModule {}

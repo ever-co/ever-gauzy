@@ -20,7 +20,7 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		WeeklyTimeReportsRoutingModule,
 		LineChartModule,
 		DailyStatisticsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

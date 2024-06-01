@@ -23,7 +23,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		HeaderTitleModule
 	],

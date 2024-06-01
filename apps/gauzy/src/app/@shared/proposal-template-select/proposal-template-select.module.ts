@@ -7,7 +7,7 @@ import { ProposalTemplateSelectComponent } from './proposal-template-select/prop
 
 @NgModule({
 	declarations: [ProposalTemplateSelectComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule],
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild()],
 	exports: [ProposalTemplateSelectComponent]
 })
 export class ProposalTemplateSelectModule {}

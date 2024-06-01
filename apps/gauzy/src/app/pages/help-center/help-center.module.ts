@@ -38,7 +38,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		GauzyButtonActionModule,
 		SharedModule,
 		NoDataMessageModule

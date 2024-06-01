@@ -15,7 +15,7 @@ import { MiscellaneousModule } from '../pages/miscellaneous/miscellaneous.module
 		NbMenuModule,
 		MiscellaneousModule,
 		NbToastrModule.forRoot(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule
 	],
 	declarations: [ShareComponent],

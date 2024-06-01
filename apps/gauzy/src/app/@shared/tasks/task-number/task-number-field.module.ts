@@ -8,6 +8,6 @@ import { NbInputModule } from '@nebular/theme';
 @NgModule({
 	declarations: [TaskNumberFieldComponent],
 	exports: [TaskNumberFieldComponent],
-	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule, NbInputModule]
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule.forChild(), NbInputModule]
 })
 export class TaskNumberFieldModule {}

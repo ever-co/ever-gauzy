@@ -7,7 +7,15 @@ import { SharedModule } from './../../../@shared/shared.module';
 import { WorkspaceSelectionComponent } from './workspace-selection.component';
 
 @NgModule({
-	imports: [CommonModule, NbCardModule, NbIconModule, NbListModule, TranslateModule, ThemeModule, SharedModule],
+	imports: [
+		CommonModule,
+		NbCardModule,
+		NbIconModule,
+		NbListModule,
+		TranslateModule.forChild(),
+		ThemeModule,
+		SharedModule
+	],
 	declarations: [WorkspaceSelectionComponent],
 	exports: [WorkspaceSelectionComponent],
 	providers: []

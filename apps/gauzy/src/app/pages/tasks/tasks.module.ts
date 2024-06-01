@@ -92,7 +92,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,

@@ -10,6 +10,6 @@ import { TeamSelectorComponent } from './team/team.component';
 @NgModule({
 	declarations: [TeamSelectorComponent],
 	exports: [TeamSelectorComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule, NgSelectModule, SharedModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule, SharedModule]
 })
 export class TeamSelectModule {}

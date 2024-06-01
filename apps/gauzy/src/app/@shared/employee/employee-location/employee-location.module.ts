@@ -28,7 +28,7 @@ import { LocationFormModule } from '../../forms/location';
 		NbIconModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		LocationFormModule,
 		LeafletMapModule
 	],

@@ -20,7 +20,7 @@ import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		MomentModule,
 		DialogsModule,

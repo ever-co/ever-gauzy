@@ -9,6 +9,6 @@ import { ThemeModule } from '../../@theme/theme.module';
 @NgModule({
 	declarations: [GauzyButtonActionComponent],
 	exports: [GauzyButtonActionComponent],
-	imports: [CommonModule, SharedModule, ThemeModule, NbIconModule, NbButtonModule, TranslateModule]
+	imports: [CommonModule, SharedModule, ThemeModule, NbIconModule, NbButtonModule, TranslateModule.forChild()]
 })
 export class GauzyButtonActionModule {}

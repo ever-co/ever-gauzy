@@ -34,7 +34,7 @@ import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.
 		NgSelectModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [RequestApprovalMutationComponent],
 	providers: [RequestApprovalService, ApprovalPolicyService, Store]

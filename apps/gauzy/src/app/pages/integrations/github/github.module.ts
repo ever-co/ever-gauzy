@@ -46,7 +46,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		Angular2SmartTableModule,
 		NgSelectModule,
 		GithubRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		DirectivesModule,
 		BackNavigationModule,
 		PaginationV2Module,

@@ -5,7 +5,7 @@ import { ThemeModule } from '../../../../@theme/theme.module';
 import { EmployeeSchedulesComponent } from './employee-schedules.component';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, NbButtonModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, NbButtonModule, TranslateModule.forChild()],
 	exports: [EmployeeSchedulesComponent],
 	declarations: [EmployeeSchedulesComponent],
 	providers: []

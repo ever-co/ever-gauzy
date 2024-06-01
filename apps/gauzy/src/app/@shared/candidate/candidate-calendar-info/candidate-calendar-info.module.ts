@@ -14,7 +14,7 @@ import { CandidateCalendarInfoComponent } from './candidate-calendar-info.compon
 		NbButtonModule,
 		NbIconModule,
 		FullCalendarModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [CandidateCalendarInfoComponent],
 	declarations: [CandidateCalendarInfoComponent]

@@ -60,7 +60,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 		NbActionsModule,
 		NbContextMenuModule,
 		BackNavigationModule,
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class UpworkModule {}

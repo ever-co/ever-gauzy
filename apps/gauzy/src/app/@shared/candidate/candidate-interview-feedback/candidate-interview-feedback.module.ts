@@ -33,7 +33,7 @@ import { CandidateCriterionsRatingService } from '../../../@core/services/candid
 		StarRatingOutputModule,
 		CandidateSelectModule,
 		NbAccordionModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],

@@ -41,7 +41,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbToggleModule,
 		NbTooltipModule,
 		GauzyAIRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		BackNavigationModule,
 		WorkInProgressModule,
 		DirectivesModule,

@@ -71,7 +71,7 @@ import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		Angular2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

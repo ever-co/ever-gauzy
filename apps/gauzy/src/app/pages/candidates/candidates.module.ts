@@ -168,7 +168,7 @@ const COMPONENTS = [
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		TagsColorInputModule,

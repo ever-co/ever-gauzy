@@ -29,7 +29,7 @@ import { ImageAssetService } from '../../@core/services';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],

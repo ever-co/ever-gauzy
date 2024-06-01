@@ -6,7 +6,7 @@ import { WorkInProgressComponent } from './work-in-progress.component';
 import { WorkInProgressRoutingModule } from './work-in-progress-routing.module';
 
 @NgModule({
-	imports: [WorkInProgressRoutingModule, ThemeModule, NbCardModule, NbIconModule, TranslateModule],
+	imports: [WorkInProgressRoutingModule, ThemeModule, NbCardModule, NbIconModule, TranslateModule.forChild()],
 	declarations: [WorkInProgressComponent],
 	exports: [WorkInProgressComponent]
 })

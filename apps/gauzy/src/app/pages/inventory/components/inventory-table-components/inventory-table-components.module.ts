@@ -25,7 +25,7 @@ import { DescriptionComponent } from './description/description.component';
 		NoImageComponent,
 		DescriptionComponent
 	],
-	imports: [NbCheckboxModule, NbBadgeModule, NbIconModule, CommonModule, TranslateModule, SharedModule],
+	imports: [NbCheckboxModule, NbBadgeModule, NbIconModule, CommonModule, TranslateModule.forChild(), SharedModule],
 	exports: [NoImageComponent]
 })
 export class InventoryTableComponentsModule {}

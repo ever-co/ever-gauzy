@@ -54,7 +54,7 @@ import { StatusBadgeModule } from '../status-badge';
 		NbIconModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		StatusBadgeModule
 	],

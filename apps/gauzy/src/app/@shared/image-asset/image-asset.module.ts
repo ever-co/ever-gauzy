@@ -13,7 +13,7 @@ import { ImageAssetComponent } from './image-asset.component';
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FormsModule,
 		ReactiveFormsModule
 	]

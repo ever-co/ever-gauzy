@@ -29,7 +29,7 @@ import { FileStorageComponent } from './file-storage.component';
 		NbToggleModule,
 		NgxPermissionsModule.forChild(),
 		ThemeModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		FileProviderModule
 	],

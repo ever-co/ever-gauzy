@@ -16,7 +16,7 @@ import { PasswordFormFieldComponent } from './password.component';
 		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
-		TranslateModule
+		TranslateModule.forChild()
 	]
 })
 export class PasswordFormFieldModule {}

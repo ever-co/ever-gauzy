@@ -17,7 +17,7 @@ import { DirectivesModule } from 'apps/gauzy/src/app/@shared/directives/directiv
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		ThemeLanguageSelectorModule,
 		LayoutSelectorModule,
 		ThemeSelectorModule,

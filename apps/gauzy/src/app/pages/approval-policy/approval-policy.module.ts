@@ -49,7 +49,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
 		BackNavigationModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,

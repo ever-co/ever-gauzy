@@ -16,7 +16,7 @@ import { AvailabilitySlotsService } from '../../../@core/services/availability-s
 		NbCardModule,
 		CreateAppointmentRoutingModule,
 		AppointmentModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [CreateAppointmentComponent],
 	exports: [CreateAppointmentComponent],

@@ -7,7 +7,7 @@ import { TimeOffPolicySelectComponent } from './time-off-policy-select.component
 
 @NgModule({
 	declarations: [TimeOffPolicySelectComponent],
-	imports: [CommonModule, FormsModule, ReactiveFormsModule, NbSelectModule, TranslateModule],
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, NbSelectModule, TranslateModule.forChild()],
 	exports: [TimeOffPolicySelectComponent]
 })
 export class TimeOffPolicySelectModule {}

@@ -57,7 +57,7 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),

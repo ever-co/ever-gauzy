@@ -7,7 +7,7 @@ import { PaginationV2Component } from './pagination-v2.component';
 
 @NgModule({
 	declarations: [PaginationV2Component],
-	imports: [CommonModule, Angular2SmartTableModule, NbIconModule, NbSelectModule, TranslateModule],
+	imports: [CommonModule, Angular2SmartTableModule, NbIconModule, NbSelectModule, TranslateModule.forChild()],
 	exports: [PaginationV2Component]
 })
 export class PaginationV2Module {}

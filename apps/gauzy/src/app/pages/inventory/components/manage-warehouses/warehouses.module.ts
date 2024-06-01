@@ -66,7 +66,7 @@ const NB_MODULES = [
 		ReactiveFormsModule,
 		Angular2SmartTableModule,
 		CommonModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		...NB_MODULES,
 		SharedModule,
 		HeaderTitleModule,

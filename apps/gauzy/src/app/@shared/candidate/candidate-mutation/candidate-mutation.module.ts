@@ -20,7 +20,7 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 		NbIconModule,
 		NbStepperModule,
 		FileUploaderModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbStepperModule,
 		NbTagModule
 	],

@@ -22,7 +22,7 @@ const routes: Routes = [
 		NbSidebarModule,
 		NbLayoutModule,
 		RouterModule.forChild(routes),
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [ServerDownPage]
 })

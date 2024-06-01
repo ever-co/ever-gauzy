@@ -26,7 +26,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 		FormsModule,
 		ReactiveFormsModule,
 		NgSelectModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		TagsColorInputModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,

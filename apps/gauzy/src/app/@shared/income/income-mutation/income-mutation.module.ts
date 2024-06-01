@@ -37,7 +37,7 @@ import { IncomeMutationComponent } from './income-mutation.component';
 		NbCheckboxModule,
 		NbTooltipModule,
 		EmployeeSelectorsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule,
 		ContactSelectModule
 	],

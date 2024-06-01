@@ -5,7 +5,7 @@ import { ConfirmEmailComponent } from './confirm-email.component';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [CommonModule, TranslateModule, NbSpinnerModule],
+	imports: [CommonModule, TranslateModule.forChild(), NbSpinnerModule],
 	providers: [],
 	declarations: [ConfirmEmailComponent]
 })

@@ -31,7 +31,7 @@ import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 		NbCardModule,
 		CommonModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		LanguageSelectorModule,
 		ImageUploaderModule,
 		FormsModule,

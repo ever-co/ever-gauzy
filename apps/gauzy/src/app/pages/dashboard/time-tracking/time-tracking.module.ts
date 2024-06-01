@@ -44,7 +44,7 @@ import { TimezoneFilterModule } from '../../../@shared/timesheet/gauzy-filters/t
 		ScreenshotsItemModule,
 		ActivityItemModule,
 		NgChartsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		GalleryModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,

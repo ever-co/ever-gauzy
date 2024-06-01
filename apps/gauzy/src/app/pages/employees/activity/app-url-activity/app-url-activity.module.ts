@@ -16,7 +16,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		CommonModule,
 		AppUrlActivityRoutingModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		ActivityItemModule,
 		GauzyFiltersModule,

@@ -13,7 +13,7 @@ import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

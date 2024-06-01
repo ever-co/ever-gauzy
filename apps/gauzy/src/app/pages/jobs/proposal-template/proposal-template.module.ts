@@ -33,7 +33,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 	imports: [
 		CommonModule,
 		ProposalTemplateRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		ReactiveFormsModule,
 		FormsModule,
 		SharedModule,

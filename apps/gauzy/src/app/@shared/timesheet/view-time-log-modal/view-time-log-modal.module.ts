@@ -14,7 +14,7 @@ import { TableComponentsModule } from '../../table-components';
 	exports: [ViewTimeLogModalComponent],
 	imports: [
 		CommonModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		NbCardModule,
 		NbButtonModule,

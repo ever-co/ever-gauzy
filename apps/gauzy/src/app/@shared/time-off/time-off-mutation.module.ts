@@ -36,7 +36,7 @@ import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-pol
 		NbTooltipModule,
 		EmployeeSelectorsModule,
 		FileUploaderModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		TimeOffPolicySelectModule
 	],
 	declarations: [TimeOffSettingsMutationComponent, TimeOffRequestMutationComponent, TimeOffHolidayMutationComponent],

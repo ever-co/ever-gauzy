@@ -42,7 +42,7 @@ import { PhoneFormInputModule } from '../forms/fields';
 		ThemeModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		LanguageSelectorModule,
 		SharedModule,
 		PasswordFormFieldModule,

@@ -32,7 +32,7 @@ import { SharedModule } from '../../../@shared/shared.module';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		FormsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule
 	],
 	declarations: [ExportComponent],

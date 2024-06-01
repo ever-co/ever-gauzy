@@ -42,7 +42,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbInputModule,
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	providers: [HelpCenterService],
 	declarations: [SidebarComponent],

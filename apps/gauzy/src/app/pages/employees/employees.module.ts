@@ -119,7 +119,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,

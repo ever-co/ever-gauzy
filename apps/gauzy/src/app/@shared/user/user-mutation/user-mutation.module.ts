@@ -8,7 +8,15 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { UsersService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
-	imports: [ThemeModule, FormsModule, NbCardModule, UserFormsModule, NbButtonModule, NbIconModule, TranslateModule],
+	imports: [
+		ThemeModule,
+		FormsModule,
+		NbCardModule,
+		UserFormsModule,
+		NbButtonModule,
+		NbIconModule,
+		TranslateModule.forChild()
+	],
 	exports: [UserMutationComponent],
 	declarations: [UserMutationComponent],
 	providers: [UsersService]

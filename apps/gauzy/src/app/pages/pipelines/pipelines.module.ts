@@ -63,7 +63,7 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		PipelinesRouting,
-		TranslateModule,
+		TranslateModule.forChild(),
 		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,

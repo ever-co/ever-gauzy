@@ -6,7 +6,7 @@ import { NgxFaqComponent } from './faq.component';
 
 @NgModule({
 	declarations: [NgxFaqComponent],
-	imports: [ThemeModule, TranslateModule, NbButtonModule, NbIconModule],
+	imports: [ThemeModule, TranslateModule.forChild(), NbButtonModule, NbIconModule],
 	providers: [],
 	exports: [NgxFaqComponent]
 })

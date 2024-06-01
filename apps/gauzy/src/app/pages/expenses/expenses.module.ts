@@ -50,7 +50,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		UserFormsModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		TagsColorInputModule,

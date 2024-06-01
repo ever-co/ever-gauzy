@@ -28,7 +28,7 @@ import { NbInputModule } from '@nebular/theme';
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		FormsModule,
 		ReactiveFormsModule,

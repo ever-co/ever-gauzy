@@ -5,7 +5,7 @@ import { HeaderTitleComponent } from './header-title.component';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [CommonModule, TranslateModule, SharedModule],
+	imports: [CommonModule, TranslateModule.forChild(), SharedModule],
 	declarations: [HeaderTitleComponent],
 	exports: [HeaderTitleComponent]
 })

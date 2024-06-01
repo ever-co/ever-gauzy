@@ -8,6 +8,6 @@ import { NoDataMessageComponent } from './no-data-message.component';
 @NgModule({
 	declarations: [NoDataMessageComponent],
 	exports: [NoDataMessageComponent],
-	imports: [TranslateModule, CommonModule, NbCardModule, NbIconModule, NbEvaIconsModule]
+	imports: [TranslateModule.forChild(), CommonModule, NbCardModule, NbIconModule, NbEvaIconsModule]
 })
 export class NoDataMessageModule {}

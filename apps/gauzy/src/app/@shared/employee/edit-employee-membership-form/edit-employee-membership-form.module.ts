@@ -16,7 +16,7 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		NgSelectModule,
 		NbIconModule,
 		NbActionsModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent],

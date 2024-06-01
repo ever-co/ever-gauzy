@@ -47,7 +47,7 @@ import { TimeZoneSelectorModule } from '../../selectors';
 		NbToggleModule,
 		RemoveLodashModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,

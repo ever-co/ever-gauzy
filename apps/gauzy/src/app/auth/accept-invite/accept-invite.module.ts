@@ -35,7 +35,7 @@ import { AcceptInvitePage } from './accept-invite.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		PasswordFormFieldModule
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],

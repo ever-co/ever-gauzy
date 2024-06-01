@@ -22,7 +22,7 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbAccordionModule,
 		NbCardModule,
 		NbIconModule,
@@ -35,4 +35,4 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NoDataMessageModule
 	]
 })
-export class DailyGridModule { }
+export class DailyGridModule {}

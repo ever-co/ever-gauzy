@@ -7,7 +7,7 @@ import { EmployeeSelectComponent } from './employee-multi-select.component';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [ThemeModule, NbSelectModule, ReactiveFormsModule, FormsModule, SharedModule, TranslateModule],
+	imports: [ThemeModule, NbSelectModule, ReactiveFormsModule, FormsModule, SharedModule, TranslateModule.forChild()],
 	declarations: [EmployeeSelectComponent],
 	exports: [EmployeeSelectComponent],
 	providers: []

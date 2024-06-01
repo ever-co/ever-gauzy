@@ -29,7 +29,7 @@ import { GoalLevelSelectModule } from '../goal-level-select/goal-level-select.mo
 		NbIconModule,
 		NbStepperModule,
 		GoalLevelSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [GoalTemplateSelectComponent]
 })

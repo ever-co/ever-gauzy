@@ -38,7 +38,7 @@ import { ManageAppointmentRoutingModule } from './manage-appointment-routing.mod
 		SharedModule,
 		EmployeeMultiSelectModule,
 		NgSelectModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [ManageAppointmentComponent],
 	declarations: [ManageAppointmentComponent],

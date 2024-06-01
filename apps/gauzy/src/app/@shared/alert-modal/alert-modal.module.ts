@@ -6,6 +6,6 @@ import { AlertModalComponent } from './alert-modal.component';
 
 @NgModule({
 	declarations: [AlertModalComponent],
-	imports: [CommonModule, NbCardModule, NbButtonModule, NbDialogModule, TranslateModule]
+	imports: [CommonModule, NbCardModule, NbButtonModule, NbDialogModule, TranslateModule.forChild()]
 })
 export class AlertModalModule {}

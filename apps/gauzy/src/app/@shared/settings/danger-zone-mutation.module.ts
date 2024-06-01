@@ -32,7 +32,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbSelectModule,
 		NbToastrModule,
 		NbListModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],

@@ -32,7 +32,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		RecurringExpenseBlockModule,
 		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),

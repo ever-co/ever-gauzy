@@ -9,6 +9,6 @@ import { ThemeSelectorImageComponent } from './theme-selector-image/theme-select
 @NgModule({
 	declarations: [ThemeSelectorComponent, SwitchThemeComponent, ThemeSelectorImageComponent],
 	exports: [ThemeSelectorComponent, SwitchThemeComponent, ThemeSelectorImageComponent],
-	imports: [CommonModule, NbSelectModule, NbToggleModule, TranslateModule, NbButtonModule]
+	imports: [CommonModule, NbSelectModule, NbToggleModule, TranslateModule.forChild(), NbButtonModule]
 })
 export class ThemeSelectorModule {}

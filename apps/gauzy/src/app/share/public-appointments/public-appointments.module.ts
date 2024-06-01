@@ -17,7 +17,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbCardModule,
 		AppointmentModule,
 		CreateAppointmentModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [PublicAppointmentsComponent],
 	exports: [PublicAppointmentsComponent],

@@ -16,7 +16,7 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 	declarations: [CalendarComponent],
 	imports: [
 		CommonModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		FullCalendarModule,
 		NbButtonModule,
 		NbCardModule,

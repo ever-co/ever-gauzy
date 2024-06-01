@@ -54,7 +54,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,

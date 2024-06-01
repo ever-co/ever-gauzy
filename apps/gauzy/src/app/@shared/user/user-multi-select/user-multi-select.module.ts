@@ -5,7 +5,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { UserSelectComponent } from './user-multi-select.component';
 
 @NgModule({
-	imports: [ThemeModule, NbSelectModule, TranslateModule],
+	imports: [ThemeModule, NbSelectModule, TranslateModule.forChild()],
 	declarations: [UserSelectComponent],
 	exports: [UserSelectComponent],
 	providers: []

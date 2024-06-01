@@ -51,7 +51,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 		EquipmentSharingPolicyMutationModule,
 		BackNavigationModule,
 		EquipmentSharingPolicyRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,

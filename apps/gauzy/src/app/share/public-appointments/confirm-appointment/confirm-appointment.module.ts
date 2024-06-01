@@ -20,7 +20,7 @@ import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.modul
 		NbIconModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [ConfirmAppointmentComponent],
 	providers: [EmployeesService, EmployeeAppointmentService]

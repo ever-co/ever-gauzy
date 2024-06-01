@@ -18,7 +18,7 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		CommonModule,
 		AmountsOwedReportRoutingModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

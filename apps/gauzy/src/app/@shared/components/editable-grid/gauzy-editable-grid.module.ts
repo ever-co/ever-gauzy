@@ -11,7 +11,7 @@ const NbModules = [NbButtonModule, NbIconModule, NbCardModule, NbListModule, NbD
 const OtherModules = [GauzyButtonActionModule];
 
 @NgModule({
-	imports: [ThemeModule, ...NbModules, ...OtherModules, TranslateModule],
+	imports: [ThemeModule, ...NbModules, ...OtherModules, TranslateModule.forChild()],
 	declarations: [GauzyEditableGridComponent],
 	exports: [GauzyEditableGridComponent],
 	providers: [Store]

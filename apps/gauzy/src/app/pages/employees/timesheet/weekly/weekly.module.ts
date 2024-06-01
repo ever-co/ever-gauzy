@@ -30,7 +30,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 	imports: [
 		CommonModule,
 		WeeklyRoutingModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		ShareModule,
 		NbDatepickerModule,
 		NbIconModule,

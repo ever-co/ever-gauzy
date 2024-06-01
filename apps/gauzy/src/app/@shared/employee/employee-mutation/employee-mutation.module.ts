@@ -26,7 +26,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 		NbTagModule,
 		NbSpinnerModule,
 		UserFormsModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [EmployeeMutationComponent],
 	declarations: [EmployeeMutationComponent],

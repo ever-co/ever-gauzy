@@ -63,7 +63,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,

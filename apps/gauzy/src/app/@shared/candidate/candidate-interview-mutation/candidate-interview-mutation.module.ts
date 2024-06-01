@@ -50,7 +50,7 @@ import { CandidateTechnologiesService } from '../../../@core/services/candidate-
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [
 		CandidateInterviewMutationComponent,

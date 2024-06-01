@@ -8,7 +8,7 @@ import { CurrencyComponent } from './currency.component';
 
 @NgModule({
 	declarations: [CurrencyComponent],
-	imports: [ThemeModule, FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule],
+	imports: [ThemeModule, FormsModule, ReactiveFormsModule, NgSelectModule, TranslateModule.forChild()],
 	providers: [CurrencyService],
 	exports: [CurrencyComponent]
 })

@@ -17,7 +17,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule
 	]
 })

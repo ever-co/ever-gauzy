@@ -8,6 +8,6 @@ import { SharedModule } from '../../shared.module';
 @NgModule({
 	declarations: [WindowComponent],
 	exports: [WindowComponent],
-	imports: [CommonModule, NbIconModule, NbPopoverModule, NbButtonModule, SharedModule, TranslateModule]
+	imports: [CommonModule, NbIconModule, NbPopoverModule, NbButtonModule, SharedModule, TranslateModule.forChild()]
 })
 export class WindowModule {}

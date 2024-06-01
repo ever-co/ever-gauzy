@@ -7,7 +7,7 @@ import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [CommonModule, NbCardModule, NbSpinnerModule, TranslateModule],
+	imports: [CommonModule, NbCardModule, NbSpinnerModule, TranslateModule.forChild()],
 	providers: [InvoicesService, EstimateEmailService],
 	declarations: [EstimateEmailComponent]
 })

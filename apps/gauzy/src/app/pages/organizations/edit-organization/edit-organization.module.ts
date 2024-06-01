@@ -15,7 +15,7 @@ import { EditOrganizationSettingsModule } from './edit-organization-settings/edi
 		NbRouteTabsetModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		EditOrganizationSettingsModule
 	],
 	declarations: [EditOrganizationComponent],

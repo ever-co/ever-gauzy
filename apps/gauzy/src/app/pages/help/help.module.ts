@@ -14,7 +14,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	declarations: [HelpComponent]
 })

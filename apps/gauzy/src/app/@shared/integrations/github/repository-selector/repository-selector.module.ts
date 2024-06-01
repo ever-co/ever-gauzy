@@ -8,6 +8,6 @@ import { RepositorySelectorComponent } from './repository-selector.component';
 @NgModule({
 	declarations: [RepositorySelectorComponent],
 	exports: [RepositorySelectorComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule]
+	imports: [CommonModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
 })
 export class RepositorySelectorModule {}

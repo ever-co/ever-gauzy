@@ -128,7 +128,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		HeaderTitleModule,

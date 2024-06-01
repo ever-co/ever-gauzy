@@ -50,7 +50,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbDatepickerModule,
 		CardGridModule,
 		BackNavigationModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		HeaderTitleModule,
 		PaginationV2Module,

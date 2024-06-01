@@ -44,7 +44,7 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 		EmployeeSelectorsModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CurrencyModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,

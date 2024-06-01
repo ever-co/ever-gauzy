@@ -52,7 +52,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		Angular2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,

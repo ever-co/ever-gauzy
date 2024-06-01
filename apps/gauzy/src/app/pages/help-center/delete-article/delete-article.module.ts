@@ -5,7 +5,7 @@ import { DeleteArticleComponent } from './delete-article.component';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule.forChild()],
 	declarations: [DeleteArticleComponent],
 	exports: [DeleteArticleComponent]
 })

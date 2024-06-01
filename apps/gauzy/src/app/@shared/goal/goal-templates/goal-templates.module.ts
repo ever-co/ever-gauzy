@@ -16,7 +16,7 @@ import { GoalCustomUnitModule } from '../goal-custom-unit/goal-custom-unit.modul
 		NbSelectModule,
 		NbButtonModule,
 		GoalCustomUnitModule,
-		TranslateModule
+		TranslateModule.forChild()
 	],
 	exports: [GoalTemplatesComponent]
 })

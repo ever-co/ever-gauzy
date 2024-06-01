@@ -24,7 +24,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		SharedModule,
 		NbSpinnerModule,
 		MomentModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		ViewTimeLogModalModule,

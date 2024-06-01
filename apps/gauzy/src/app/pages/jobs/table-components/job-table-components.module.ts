@@ -16,7 +16,7 @@ import { JobStatusComponent } from './job-status/job-status.component';
 		NbTagModule,
 		NbTooltipModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		StatusBadgeModule
 	],
 	declarations: [JobTitleDescriptionDetailsComponent, JobStatusComponent],

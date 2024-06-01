@@ -20,7 +20,7 @@ import { CurrencyModule } from '../../../@shared/currency/currency.module';
 		CommonModule,
 		PaymentReportRoutingModule,
 		SharedModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

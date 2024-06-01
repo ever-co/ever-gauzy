@@ -16,7 +16,7 @@ import { NbDatepickerModule, NbIconModule } from '@nebular/theme';
 		SharedModule,
 		NgSelectModule,
 		FormsModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbDatepickerModule,
 		NbIconModule
 	]

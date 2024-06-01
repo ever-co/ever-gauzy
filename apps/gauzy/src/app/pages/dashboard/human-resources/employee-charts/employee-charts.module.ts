@@ -9,7 +9,7 @@ import { EmployeeHorizontalBarChartComponent } from './employee-horizontal-bar-c
 import { EmployeeStackedBarChartComponent } from './employee-stacked-bar-chart/employee-stacked-bar-chart.component';
 
 @NgModule({
-	imports: [ThemeModule, NgChartsModule, NbIconModule, NbSelectModule, TranslateModule],
+	imports: [ThemeModule, NgChartsModule, NbIconModule, NbSelectModule, TranslateModule.forChild()],
 	exports: [EmployeeChartsComponent],
 	declarations: [
 		EmployeeChartsComponent,

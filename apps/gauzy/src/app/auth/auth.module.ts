@@ -51,7 +51,7 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 		NbAuthModule,
 		NbIconModule,
 		NbCardModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbAccordionModule,
 		NbFormFieldModule,
 		NbSelectModule,

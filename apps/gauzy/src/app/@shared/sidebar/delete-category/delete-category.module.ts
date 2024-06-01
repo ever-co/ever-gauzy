@@ -5,7 +5,7 @@ import { DeleteCategoryComponent } from './delete-category.component';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule.forChild()],
 	declarations: [DeleteCategoryComponent],
 	exports: [DeleteCategoryComponent]
 })

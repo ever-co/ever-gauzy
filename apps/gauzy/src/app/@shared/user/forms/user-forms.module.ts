@@ -37,7 +37,7 @@ import { NbIconModule } from '@nebular/theme';
 		NbBadgeModule,
 		NbCheckboxModule,
 		TagsColorInputModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		CountdownModule,
 		SharedModule,
 		PasswordFormFieldModule,

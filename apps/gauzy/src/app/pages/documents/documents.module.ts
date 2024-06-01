@@ -50,7 +50,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		PaginationModule,
 		GauzyButtonActionModule,

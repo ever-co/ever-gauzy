@@ -94,7 +94,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule,
 		HeaderTitleModule,

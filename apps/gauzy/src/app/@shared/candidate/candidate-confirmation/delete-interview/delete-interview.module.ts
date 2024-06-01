@@ -5,7 +5,7 @@ import { DeleteInterviewComponent } from './delete-interview.component';
 import { ThemeModule } from '../../../../@theme/theme.module';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, NbIconModule, NbButtonModule, TranslateModule.forChild()],
 	declarations: [DeleteInterviewComponent],
 	exports: [DeleteInterviewComponent]
 })

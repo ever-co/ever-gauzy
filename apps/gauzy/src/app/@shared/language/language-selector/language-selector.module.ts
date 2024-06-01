@@ -8,7 +8,7 @@ import { LanguageSelectorComponent } from './language-selector.component';
 import { LanguagesService } from '../../../@core/services/languages.service';
 
 @NgModule({
-	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, TranslateModule],
+	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, TranslateModule.forChild()],
 	exports: [LanguageSelectorComponent],
 	declarations: [LanguageSelectorComponent],
 	providers: [LanguagesService]

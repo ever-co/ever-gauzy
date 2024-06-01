@@ -10,7 +10,7 @@ import { TaskStatusesService } from '../../../@core/services';
 @NgModule({
 	declarations: [TaskStatusSelectComponent],
 	exports: [TaskStatusSelectComponent],
-	imports: [CommonModule, FormsModule, TranslateModule, NgSelectModule, SharedModule],
+	imports: [CommonModule, FormsModule, TranslateModule.forChild(), NgSelectModule, SharedModule],
 	providers: [TaskStatusesService]
 })
 export class TaskStatusSelectModule {}

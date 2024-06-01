@@ -18,7 +18,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 
 @NgModule({
 	imports: [
-		TranslateModule,
+		TranslateModule.forChild(),
 		NbCardModule,
 		PaymentsRoutingModule,
 		Angular2SmartTableModule,

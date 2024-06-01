@@ -9,6 +9,6 @@ import { LeafletMapComponent } from './leaflet.component';
 @NgModule({
 	declarations: [LeafletMapComponent],
 	exports: [LeafletMapComponent],
-	imports: [CommonModule, ThemeModule, NbCardModule, TranslateModule, LeafletModule]
+	imports: [CommonModule, ThemeModule, NbCardModule, TranslateModule.forChild(), LeafletModule]
 })
 export class LeafletMapModule {}

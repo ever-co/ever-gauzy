@@ -18,7 +18,7 @@ import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
 		NbCheckboxModule,
 		NbFormFieldModule,
 		NbIconModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgMapsGoogleModule,
 		CountryModule,
 		LeafletMapModule

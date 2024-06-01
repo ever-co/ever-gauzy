@@ -52,7 +52,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbTooltipModule,
 		NbBadgeModule,
 		NbToggleModule,
-		TranslateModule,
+		TranslateModule.forChild(),
 		NgSelectModule,
 		BackNavigationModule,
 		HeaderTitleModule,

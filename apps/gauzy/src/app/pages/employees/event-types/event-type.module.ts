@@ -48,7 +48,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		CardGridModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		TranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module

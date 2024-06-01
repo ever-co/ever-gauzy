@@ -10,6 +10,6 @@ import { SharedModule } from '../shared.module';
 @NgModule({
 	declarations: [ProjectSelectorComponent],
 	exports: [ProjectSelectorComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule, NgSelectModule, SharedModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule, SharedModule]
 })
 export class ProjectSelectModule {}

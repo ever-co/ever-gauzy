@@ -7,7 +7,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
 import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
-	imports: [ThemeModule, NbCardModule, MiscellaneousRoutingModule, TranslateModule],
+	imports: [ThemeModule, NbCardModule, MiscellaneousRoutingModule, TranslateModule.forChild()],
 	declarations: [MiscellaneousComponent, NotFoundComponent]
 })
 export class MiscellaneousModule {}
