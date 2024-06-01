@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import {
 	NbToastrModule,
@@ -30,7 +30,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbToastrModule,
 		NbDialogModule,
 		FormsModule,

@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule, NbDatepickerModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeeEndWorkComponent } from './employee-end-work.component';
@@ -16,7 +16,7 @@ import { EmployeeEndWorkComponent } from './employee-end-work.component';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	exports: [EmployeeEndWorkComponent],
 	declarations: [EmployeeEndWorkComponent],

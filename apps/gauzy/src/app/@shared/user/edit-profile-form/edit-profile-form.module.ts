@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
@@ -42,7 +42,7 @@ import { PhoneFormInputModule } from '../forms/fields';
 		ThemeModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		LanguageSelectorModule,
 		SharedModule,
 		PasswordFormFieldModule,

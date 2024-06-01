@@ -19,7 +19,7 @@ import {
 	NbAccordionModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeeStore } from '../../../../@core/services/employee-store.service';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { OrganizationDepartmentsService } from '../../../../@core/services/organization-departments.service';
@@ -71,7 +71,7 @@ import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		Angular2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

@@ -11,7 +11,7 @@ import {
 	NbAlertModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
@@ -32,7 +32,7 @@ import { TimeTrackerStatusModule } from './components/time-tracker-status/time-t
 		NbButtonModule,
 		NbTooltipModule,
 		FormsModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbCheckboxModule,
 		NbDatepickerModule,
 		SharedModule,

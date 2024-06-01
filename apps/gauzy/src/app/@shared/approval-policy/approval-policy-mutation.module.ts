@@ -10,7 +10,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
 import { Store } from '../../@core/services/store.service';
@@ -29,7 +29,7 @@ import { ApprovalPolicyService } from '../../@core/services/approval-policy.serv
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	providers: [ApprovalPolicyService, Store]

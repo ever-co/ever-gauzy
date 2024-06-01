@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { ActivityRoutingModule } from './activity-routing.module';
 import { ActivityLayoutComponent } from './layout/layout.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
 import { ShareModule } from '../../../share/share.module';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
@@ -14,7 +14,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		CommonModule,
 		ActivityRoutingModule,
 		NbCardModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		ShareModule,
 		NbRouteTabsetModule,
 		HeaderTitleModule

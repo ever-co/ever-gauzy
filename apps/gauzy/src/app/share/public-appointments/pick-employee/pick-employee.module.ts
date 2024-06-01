@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { PickEmployeeComponent } from './pick-employee.component';
 import { PickEmployeeRoutingModule } from './pick-employee.routing.module';
@@ -18,7 +18,7 @@ import { EventTypeService } from '../../../@core/services/event-type.service';
 		EmployeeSelectorsModule,
 		BackNavigationModule,
 		PickEmployeeRoutingModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [PickEmployeeComponent],
 	providers: [EventTypeService]

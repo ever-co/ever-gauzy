@@ -13,7 +13,7 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '../../@core/services';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
@@ -67,7 +67,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		SharedModule,
 		TagsColorInputModule,
 		ThemeModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 
 	declarations: [...COMPONENTS],

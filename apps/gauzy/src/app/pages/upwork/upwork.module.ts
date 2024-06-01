@@ -19,7 +19,7 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
@@ -60,7 +60,7 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 		NbActionsModule,
 		NbContextMenuModule,
 		BackNavigationModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	]
 })
 export class UpworkModule {}

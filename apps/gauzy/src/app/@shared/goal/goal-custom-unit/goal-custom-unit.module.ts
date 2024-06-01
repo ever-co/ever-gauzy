@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbSelectModule, NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GoalCustomUnitSelectComponent } from './goal-custom-unit-select.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CurrencyModule } from '../../currency/currency.module';
@@ -18,7 +18,7 @@ import { CurrencyModule } from '../../currency/currency.module';
 		FormsModule,
 		NbInputModule,
 		CurrencyModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	]
 })
 export class GoalCustomUnitModule {}

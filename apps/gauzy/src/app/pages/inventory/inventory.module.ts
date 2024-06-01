@@ -40,7 +40,7 @@ import {
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
@@ -107,7 +107,7 @@ const NB_MODULES = [
 		InventoryTableComponentsModule,
 		TagsColorInputModule,
 		ThemeModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,

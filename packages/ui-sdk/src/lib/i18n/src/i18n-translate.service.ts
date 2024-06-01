@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
-export class I18nService {
+export class I18nTranslateService {
 	private _availableLanguages: LanguagesEnum[] = [];
 	/**
 	 * Getter for availableLanguages

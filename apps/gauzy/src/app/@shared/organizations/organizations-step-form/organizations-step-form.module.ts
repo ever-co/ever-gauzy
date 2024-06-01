@@ -14,7 +14,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -47,7 +47,7 @@ import { TimeZoneSelectorModule } from '../../selectors';
 		NbToggleModule,
 		RemoveLodashModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,

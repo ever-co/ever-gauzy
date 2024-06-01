@@ -10,7 +10,7 @@ import {
 	NbAccordionModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
 import { TableComponentsModule } from '../../table-components';
@@ -22,7 +22,7 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbAccordionModule,
 		NbCardModule,
 		NbIconModule,

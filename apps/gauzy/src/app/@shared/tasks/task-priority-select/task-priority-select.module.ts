@@ -4,7 +4,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { TaskPrioritiesService } from '../../../@core/services';
 import { TaskPrioritySelectComponent } from './task-priority-select.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 
 @NgModule({
@@ -13,7 +13,7 @@ import { SharedModule } from '../../shared.module';
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NgSelectModule,
 		SharedModule,
 		NgSelectModule,

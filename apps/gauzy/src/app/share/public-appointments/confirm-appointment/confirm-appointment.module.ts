@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbSpinnerModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { ConfirmAppointmentRoutingModule } from './confirm-appointment.routing.module';
 import { ConfirmAppointmentComponent } from './confirm-appointment.component';
@@ -20,7 +20,7 @@ import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.modul
 		NbIconModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [ConfirmAppointmentComponent],
 	providers: [EmployeesService, EmployeeAppointmentService]

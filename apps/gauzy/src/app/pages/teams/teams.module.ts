@@ -23,7 +23,7 @@ import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -52,7 +52,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		Angular2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,

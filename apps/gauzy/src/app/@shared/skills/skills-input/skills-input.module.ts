@@ -4,7 +4,7 @@ import { SkillsInputComponent } from './skills-input.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NbBadgeModule } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -13,7 +13,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbBadgeModule,
 		FormsModule,
 		ReactiveFormsModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	exports: [SkillsInputComponent],
 	declarations: [SkillsInputComponent]

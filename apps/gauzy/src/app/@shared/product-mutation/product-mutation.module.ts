@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import {
 	ProductCategoryService,
@@ -31,7 +31,7 @@ import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 		NbCardModule,
 		CommonModule,
 		NbIconModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		LanguageSelectorModule,
 		ImageUploaderModule,
 		FormsModule,

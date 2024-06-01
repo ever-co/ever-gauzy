@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
-import { I18nService } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateService } from '@gauzy/ui-sdk/i18n';
 import { NbToastrService } from '@nebular/theme';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ToastrService {
-	constructor(private readonly _nbToastrService: NbToastrService, private readonly _i18nService: I18nService) {}
+	constructor(
+		private readonly _nbToastrService: NbToastrService,
+		private readonly _i18nTranslateService: I18nTranslateService
+	) {}
 
 	/**
 	 * Displays a success toast message
@@ -17,8 +20,8 @@ export class ToastrService {
 	success(message: any, translationParams: Object = {}, title?: string): void {
 		const displayMessage = this.extractMessage(message);
 		this._nbToastrService.primary(
-			this._i18nService.translate(displayMessage, translationParams),
-			this._i18nService.translate(title || 'TOASTR.TITLE.SUCCESS')
+			this._i18nTranslateService.translate(displayMessage, translationParams),
+			this._i18nTranslateService.translate(title || 'TOASTR.TITLE.SUCCESS')
 		);
 	}
 
@@ -31,8 +34,8 @@ export class ToastrService {
 	warning(message: any, translationParams: Object = {}, title?: string): void {
 		const displayMessage = this.extractMessage(message);
 		this._nbToastrService.warning(
-			this._i18nService.translate(displayMessage, translationParams),
-			this._i18nService.translate(title || 'TOASTR.TITLE.WARNING')
+			this._i18nTranslateService.translate(displayMessage, translationParams),
+			this._i18nTranslateService.translate(title || 'TOASTR.TITLE.WARNING')
 		);
 	}
 
@@ -45,8 +48,8 @@ export class ToastrService {
 	danger(error: any, title: string = 'TOASTR.TITLE.ERROR', translationParams: Object = {}): void {
 		const displayMessage = this.extractErrorMessage(error);
 		this._nbToastrService.danger(
-			this._i18nService.translate(displayMessage, translationParams),
-			this._i18nService.translate(title || 'TOASTR.TITLE.ERROR')
+			this._i18nTranslateService.translate(displayMessage, translationParams),
+			this._i18nTranslateService.translate(title || 'TOASTR.TITLE.ERROR')
 		);
 	}
 
@@ -75,8 +78,8 @@ export class ToastrService {
 		}
 	): void {
 		this._nbToastrService.info(
-			this._i18nService.translate(message),
-			this._i18nService.translate(title || 'TOASTR.TITLE.INFO'),
+			this._i18nTranslateService.translate(message),
+			this._i18nTranslateService.translate(title || 'TOASTR.TITLE.INFO'),
 			options
 		);
 	}

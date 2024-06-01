@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../../@theme/theme.module';
 import { TimezoneSelectorComponent } from './timezone-selector.component';
 
@@ -14,7 +14,7 @@ import { TimezoneSelectorComponent } from './timezone-selector.component';
 		FormsModule,
 		NbButtonModule,
 		NgSelectModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	exports: [TimezoneSelectorComponent],
 	declarations: [TimezoneSelectorComponent],

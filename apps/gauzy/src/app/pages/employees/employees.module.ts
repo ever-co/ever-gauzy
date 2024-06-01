@@ -61,7 +61,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CKEditorModule } from 'ckeditor4-angular';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '../../@core/services';
@@ -119,7 +119,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,

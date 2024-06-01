@@ -17,7 +17,7 @@ import { DialogsModule } from '../../../dialogs/dialogs.module';
 import { ViewScreenshotsModalModule } from '../view-screenshots-modal/view-screenshots-modal.module';
 import { TableComponentsModule } from '../../../table-components/table-components.module';
 import { SharedModule } from '../../../shared.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ScreenshotsItemComponent } from './screenshots-item.component';
 
 @NgModule({
@@ -36,7 +36,7 @@ import { ScreenshotsItemComponent } from './screenshots-item.component';
 		NbProgressBarModule,
 		NbTooltipModule,
 		MomentModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		GalleryModule,

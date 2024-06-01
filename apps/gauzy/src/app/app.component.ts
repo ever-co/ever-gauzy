@@ -19,7 +19,7 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { I18nService } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateService } from '@gauzy/ui-sdk/i18n';
 import { environment } from '@gauzy/ui-config';
 import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import { LanguagesService, Store } from './@core/services';
@@ -40,7 +40,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _store: Store,
 		private readonly _languagesService: LanguagesService,
 		private readonly _translateService: TranslateService,
-		private readonly _i18nService: I18nService,
+		private readonly _i18nTranslateService: I18nTranslateService,
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _selectorBuilderService: SelectorBuilderService,
@@ -75,17 +75,17 @@ export class AppComponent implements OnInit, AfterViewInit {
 		// Subscribe to changes in system languages
 		systemLanguages$.subscribe((languages: ILanguage[]) => {
 			// Returns the language code name from the browser, e.g., "en", "bg", "he", "ru"
-			const browserLang = this._i18nService.getBrowserLang();
+			const browserLang = this._i18nTranslateService.getBrowserLang();
 
 			// Gets default available enum languages, e.g., "en", "bg", "he", "ru"
-			const availableLanguages: string[] = this._i18nService.availableLanguages;
+			const availableLanguages: string[] = this._i18nTranslateService.availableLanguages;
 
 			// Gets system languages
 			let systemLanguages: string[] = pluck(languages, 'code');
 			systemLanguages = union(systemLanguages, availableLanguages);
 
 			// Sets the default language to use as a fallback, e.g., "en"
-			this._i18nService.setDefaultLang(LanguagesEnum.ENGLISH);
+			this._i18nTranslateService.setDefaultLang(LanguagesEnum.ENGLISH);
 
 			// Get preferredLanguage if it exists
 			const preferredLanguage = this._store?.user?.preferredLanguage ?? this._store.preferredLanguage ?? null;

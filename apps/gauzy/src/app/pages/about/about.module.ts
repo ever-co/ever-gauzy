@@ -4,7 +4,7 @@ import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { AboutComponent } from './about.component';
 import { AboutRoutingModule } from './about-routing.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -14,7 +14,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [AboutComponent]
 })

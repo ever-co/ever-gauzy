@@ -91,7 +91,7 @@ import { InterviewActionsTableComponent } from './manage-candidate-interviews/in
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbToggleModule } from '@nebular/theme';
@@ -168,7 +168,7 @@ const COMPONENTS = [
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		TagsColorInputModule,

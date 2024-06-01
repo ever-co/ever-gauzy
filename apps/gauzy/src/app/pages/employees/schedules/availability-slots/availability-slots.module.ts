@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { AvailabilitySlotsRouteModule } from './availability-slots.routing.module';
 import { AvailabilitySlotsComponent } from './availability-slots.component';
@@ -23,7 +23,7 @@ import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-pick
 		NbIconModule,
 		NbTooltipModule,
 		ThemeModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		FullCalendarModule,
 		EmployeeSelectorsModule,
 		NbDialogModule,

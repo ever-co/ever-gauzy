@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ManualTimeRoutingModule } from './manual-time-routing.module';
 import { ManualTimeComponent } from './manual-time/manual-time.component';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -19,7 +19,7 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		CommonModule,
 		ManualTimeRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

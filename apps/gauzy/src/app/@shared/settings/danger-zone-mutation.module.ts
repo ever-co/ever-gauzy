@@ -16,7 +16,7 @@ import { AuthService } from '../../@core/services/auth.service';
 import { RoleService } from '../../@core/services/role.service';
 import { IncomeService } from '../../@core/services/income.service';
 import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -32,7 +32,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbSelectModule,
 		NbToastrModule,
 		NbListModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],

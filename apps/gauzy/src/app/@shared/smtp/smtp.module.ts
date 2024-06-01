@@ -5,7 +5,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { SMTPComponent } from './smtp.component';
 import { CustomSmtpService } from '../../@core/services/custom-smtp.service';
 import { ThemeModule } from '../../@theme/theme.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -17,7 +17,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbSpinnerModule,
 		ReactiveFormsModule,
 		ThemeModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild()
 	],
 	exports: [SMTPComponent],

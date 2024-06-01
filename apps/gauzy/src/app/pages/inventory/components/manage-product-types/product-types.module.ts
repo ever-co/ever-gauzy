@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProductTypeService } from 'apps/gauzy/src/app/@core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
@@ -25,7 +25,7 @@ const NB_MODULES = [NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule,
 		ReactiveFormsModule,
 		Angular2SmartTableModule,
 		CommonModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		...NB_MODULES,
 		SharedModule,
 		HeaderTitleModule,

@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { CreateAppointmentComponent } from './create-appointment.component';
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
@@ -16,7 +16,7 @@ import { AvailabilitySlotsService } from '../../../@core/services/availability-s
 		NbCardModule,
 		CreateAppointmentRoutingModule,
 		AppointmentModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [CreateAppointmentComponent],
 	exports: [CreateAppointmentComponent],

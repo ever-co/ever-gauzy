@@ -15,7 +15,7 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -49,7 +49,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,

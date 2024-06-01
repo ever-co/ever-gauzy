@@ -4,7 +4,7 @@ import { ClientBudgetsReportRoutingModule } from './client-budgets-report-routin
 import { ClientBudgetsReportComponent } from './client-budgets-report/client-budgets-report.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
@@ -20,7 +20,7 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		CommonModule,
 		ClientBudgetsReportRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

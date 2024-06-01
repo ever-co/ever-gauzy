@@ -45,7 +45,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
@@ -128,7 +128,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		HeaderTitleModule,

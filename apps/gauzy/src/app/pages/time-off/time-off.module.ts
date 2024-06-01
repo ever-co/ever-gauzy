@@ -28,7 +28,7 @@ import { PaidIcon } from './table-components/paid-icon';
 import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -57,7 +57,7 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),

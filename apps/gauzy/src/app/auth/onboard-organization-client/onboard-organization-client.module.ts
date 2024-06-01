@@ -17,7 +17,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptClientInviteFormComponent } from './accept-client-invite-form/accept-client-invite-form.component';
 import { AcceptClientInvitePage } from './accept-client-invite.component';
 import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
 
@@ -36,7 +36,7 @@ import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/passwor
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		OrganizationsMutationModule,
 		PasswordFormFieldModule
 	],

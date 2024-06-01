@@ -21,7 +21,7 @@ import { IncomeMutationModule } from '../../@shared/income/income-mutation/incom
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -47,7 +47,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		IncomeMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,

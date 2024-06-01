@@ -13,7 +13,7 @@ import {
 import { AddArticleComponent } from './add-article.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		FormsModule,
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	providers: [HelpCenterArticleService],
 	declarations: [AddArticleComponent],

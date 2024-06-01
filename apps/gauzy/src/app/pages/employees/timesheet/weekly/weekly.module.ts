@@ -12,7 +12,7 @@ import {
 	NbCardModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';
@@ -30,7 +30,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 	imports: [
 		CommonModule,
 		WeeklyRoutingModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		ShareModule,
 		NbDatepickerModule,
 		NbIconModule,

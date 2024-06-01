@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ExpenseCategorySelectComponent } from './expense-category-select.component';
@@ -9,6 +9,6 @@ import { ExpenseCategorySelectComponent } from './expense-category-select.compon
 @NgModule({
 	declarations: [ExpenseCategorySelectComponent],
 	exports: [ExpenseCategorySelectComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, TranslateModule.forChild(), NgSelectModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, I18nTranslateModule.forChild(), NgSelectModule]
 })
 export class ExpenseCategorySelectModule {}

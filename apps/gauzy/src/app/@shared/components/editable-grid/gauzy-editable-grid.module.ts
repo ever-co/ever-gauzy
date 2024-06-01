@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbCardModule, NbListModule, NbDialogModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Store } from '../../../@core/services/store.service';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { GauzyEditableGridComponent } from './gauzy-editable-grid.component';
@@ -11,7 +11,7 @@ const NbModules = [NbButtonModule, NbIconModule, NbCardModule, NbListModule, NbD
 const OtherModules = [GauzyButtonActionModule];
 
 @NgModule({
-	imports: [ThemeModule, ...NbModules, ...OtherModules, TranslateModule.forChild()],
+	imports: [ThemeModule, ...NbModules, ...OtherModules, I18nTranslateModule.forChild()],
 	declarations: [GauzyEditableGridComponent],
 	exports: [GauzyEditableGridComponent],
 	providers: [Store]

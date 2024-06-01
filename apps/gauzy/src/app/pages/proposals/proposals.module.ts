@@ -33,7 +33,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
@@ -66,7 +66,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		CKEditorModule,
 		NgChartsModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule,
 		HeaderTitleModule,

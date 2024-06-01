@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
 import { JobTableComponentsModule } from '../../../table-components';
 import { DirectivesModule } from './../../../../../@shared/directives/directives.module';
@@ -34,7 +34,7 @@ import { EmployeeSelectorsModule } from './../../../../../@theme/components/head
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,

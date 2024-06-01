@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { EmployeeStartWorkComponent } from './employee-start-work.component';
 
@@ -14,7 +14,7 @@ import { EmployeeStartWorkComponent } from './employee-start-work.component';
 		NbIconModule,
 		NbDatepickerModule,
 		NbInputModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	]
 })
 export class EmployeeStartWorkModule {}

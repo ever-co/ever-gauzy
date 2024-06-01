@@ -36,7 +36,7 @@ import {
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
 } from '@gauzy/ui-sdk/static/styles';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService, UsersOrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
 
 import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
@@ -99,7 +99,7 @@ const MODULES = [
 	ProjectSelectModule,
 	TeamSelectModule,
 	TimeTrackerModule,
-	TranslateModule.forChild(),
+	I18nTranslateModule.forChild(),
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
 	WorkspacesModule,

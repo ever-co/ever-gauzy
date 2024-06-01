@@ -6,7 +6,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { TenantDetailsRoutingModule } from './tenant-details-routing.module';
 import { TenantDetailsComponent } from './tenant-details.component';
 import { TagsService } from '../../@core/services/tags.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 @NgModule({
@@ -15,7 +15,7 @@ import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme
 		ThemeModule,
 		NbSpinnerModule,
 		OrganizationsStepFormModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		ThemeSelectorModule
 	],
 	providers: [TenantService, TagsService],

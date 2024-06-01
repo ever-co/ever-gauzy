@@ -16,7 +16,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -41,7 +41,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		Angular2SmartTableModule,
 		ProjectsRoutingModule,
 		ThemeModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,

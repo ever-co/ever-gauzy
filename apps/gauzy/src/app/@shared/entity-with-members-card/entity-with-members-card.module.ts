@@ -9,7 +9,7 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 import { TableComponentsModule } from '../table-components/table-components.module';
@@ -26,7 +26,7 @@ import { TableComponentsModule } from '../table-components/table-components.modu
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [EntityWithMembersCardComponent],
 	exports: [EntityWithMembersCardComponent],

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbPopoverModule, NbSelectModule } from '@nebular/theme';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PipesModule } from '../../pipes/pipes.module';
 import { GauzyFiltersComponent } from './gauzy-filters.component';
 import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
@@ -20,7 +20,7 @@ import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 		NbSelectModule,
 		NgxSliderModule,
 		PipesModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		TimezoneFilterModule
 	]
 })

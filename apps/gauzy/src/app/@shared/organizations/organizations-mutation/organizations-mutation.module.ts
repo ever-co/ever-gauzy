@@ -13,7 +13,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -40,7 +40,7 @@ import { OrganizationsStepFormModule } from '../organizations-step-form/organiza
 		NbToggleModule,
 		RemoveLodashModule,
 		OrganizationsStepFormModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	declarations: [OrganizationsMutationComponent],
 	providers: [OrganizationDepartmentsService],

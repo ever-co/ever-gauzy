@@ -13,7 +13,7 @@ import {
 	NbToggleModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
@@ -22,7 +22,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		CommonModule,
 		AllReportRoutingModule,
 		SharedModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

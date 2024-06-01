@@ -4,7 +4,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { CustomSmtpComponent } from './custom-smtp.component';
 import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
 import { SMTPModule } from '../../../@shared/smtp/smtp.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -12,7 +12,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		SMTPModule
 	],
 	declarations: [CustomSmtpComponent],

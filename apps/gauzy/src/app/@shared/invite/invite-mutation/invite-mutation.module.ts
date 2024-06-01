@@ -1,7 +1,7 @@
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationComponent } from './invite-mutation.component';
@@ -17,7 +17,7 @@ import { OrganizationDepartmentsService } from '../../../@core/services/organiza
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		InviteFormsModule
 	],
 	exports: [InviteMutationComponent],

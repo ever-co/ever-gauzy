@@ -11,7 +11,7 @@ import {
 	NbUserModule
 } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 import { LeafletMapModule } from '../../../@shared/forms';
@@ -25,7 +25,7 @@ import { TableComponentsModule } from '../../../@shared';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbLayoutModule,
 		NbSidebarModule,
 		NbTabsetModule,

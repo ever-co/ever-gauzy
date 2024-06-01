@@ -18,7 +18,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
@@ -85,7 +85,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

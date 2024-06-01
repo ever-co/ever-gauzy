@@ -17,7 +17,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
@@ -50,7 +50,7 @@ import { CandidateTechnologiesService } from '../../../@core/services/candidate-
 		EmployeeMultiSelectModule,
 		CandidateSelectModule,
 		CandidateCalendarInfoModule,
-		TranslateModule.forChild()
+		I18nTranslateModule.forChild()
 	],
 	exports: [
 		CandidateInterviewMutationComponent,

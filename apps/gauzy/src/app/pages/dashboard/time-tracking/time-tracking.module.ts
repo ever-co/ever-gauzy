@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -44,7 +44,7 @@ import { TimezoneFilterModule } from '../../../@shared/timesheet/gauzy-filters/t
 		ScreenshotsItemModule,
 		ActivityItemModule,
 		NgChartsModule,
-		TranslateModule.forChild(),
+		I18nTranslateModule.forChild(),
 		GalleryModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
