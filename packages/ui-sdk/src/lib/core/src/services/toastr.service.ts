@@ -1,79 +1,71 @@
 import { Injectable } from '@angular/core';
+import { I18nService } from '@gauzy/ui-sdk/i18n';
 import { NbToastrService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ToastrService {
-	constructor(
-		private readonly nbToastrService: NbToastrService,
-		private readonly translateService: TranslateService
-	) {}
+	constructor(private readonly _nbToastrService: NbToastrService, private readonly _i18nService: I18nService) {}
 
-	success(message: any, translationParams: Object = {}, title?: string) {
-		let displayMessage = '';
-
-		if (message && message.message && typeof message.message === 'string') {
-			displayMessage = message.message;
-		} else {
-			displayMessage = message;
-		}
-
-		this.nbToastrService.primary(
-			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title || 'TOASTR.TITLE.SUCCESS')
+	/**
+	 * Displays a success toast message
+	 * @param message The message or object containing the message to display.
+	 * @param translationParams Optional translation parameters.
+	 * @param title The title of the toast message.
+	 */
+	success(message: any, translationParams: Object = {}, title?: string): void {
+		const displayMessage = this.extractMessage(message);
+		this._nbToastrService.primary(
+			this._i18nService.translate(displayMessage, translationParams),
+			this._i18nService.translate(title || 'TOASTR.TITLE.SUCCESS')
 		);
 	}
 
-	warning(message: any, translationParams: Object = {}, title?: string) {
-		let displayMessage = '';
-
-		if (message && message.message && typeof message.message === 'string') {
-			displayMessage = message.message;
-		} else {
-			displayMessage = message;
-		}
-
-		this.nbToastrService.warning(
-			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title || 'TOASTR.TITLE.WARNING')
+	/**
+	 * Displays a warning toast message
+	 * @param message The message or object containing the message to display.
+	 * @param translationParams Optional translation parameters.
+	 * @param title The title of the toast message.
+	 */
+	warning(message: any, translationParams: Object = {}, title?: string): void {
+		const displayMessage = this.extractMessage(message);
+		this._nbToastrService.warning(
+			this._i18nService.translate(displayMessage, translationParams),
+			this._i18nService.translate(title || 'TOASTR.TITLE.WARNING')
 		);
 	}
 
-	danger(
-		error: any,
-		title: string = 'TOASTR.TITLE.ERROR',
-		translationParams: Object = {}
-	) {
-		let displayMessage = '';
-
-		if (
-			error.error &&
-			error.error.message &&
-			typeof error.error.message === 'string'
-		) {
-			displayMessage = error.error.message;
-		} else if (error.message && typeof error.message === 'string') {
-			displayMessage = error.message;
-		} else {
-			displayMessage = error;
-		}
-
-		this.nbToastrService.danger(
-			this.getTranslation(displayMessage, translationParams),
-			this.getTranslation(title || 'TOASTR.TITLE.ERROR')
+	/**
+	 * Displays a danger (error) toast message
+	 * @param error The error object or message to display.
+	 * @param title The title of the toast message.
+	 * @param translationParams Optional translation parameters.
+	 */
+	danger(error: any, title: string = 'TOASTR.TITLE.ERROR', translationParams: Object = {}): void {
+		const displayMessage = this.extractErrorMessage(error);
+		this._nbToastrService.danger(
+			this._i18nService.translate(displayMessage, translationParams),
+			this._i18nService.translate(title || 'TOASTR.TITLE.ERROR')
 		);
 	}
 
-	error(
-		message: any,
-		title: string = 'TOASTR.TITLE.ERROR',
-		translationParams: Object = {}
-	) {
+	/**
+	 * Displays an error toast message. Alias for danger method.
+	 * @param message The message or object containing the message to display.
+	 * @param title The title of the toast message.
+	 * @param translationParams Optional translation parameters.
+	 */
+	error(message: any, title: string = 'TOASTR.TITLE.ERROR', translationParams: Object = {}): void {
 		this.danger(message, title, translationParams);
 	}
 
+	/**
+	 * Displays an info toast message
+	 * @param message The message to display.
+	 * @param title The title of the toast message.
+	 * @param options Additional options for the toast message.
+	 */
 	info(
 		message: any,
 		title: string,
@@ -81,15 +73,37 @@ export class ToastrService {
 			duration: 5000,
 			preventDuplicates: true
 		}
-	) {
-		this.nbToastrService.info(
-			message,
-			this.getTranslation(title || 'TOASTR.TITLE.INFO'),
+	): void {
+		this._nbToastrService.info(
+			this._i18nService.translate(message),
+			this._i18nService.translate(title || 'TOASTR.TITLE.INFO'),
 			options
 		);
 	}
 
-	private getTranslation(prefix: string, params?: Object) {
-		return this.translateService.instant(prefix, params);
+	/**
+	 * Extracts the message from a message object or string.
+	 * @param message The message object or string.
+	 * @returns The extracted message string.
+	 */
+	private extractMessage(message: any): string {
+		if (message && message.message && typeof message.message === 'string') {
+			return message.message;
+		}
+		return message;
+	}
+
+	/**
+	 * Extracts the error message from an error object or string.
+	 * @param error The error object or string.
+	 * @returns The extracted error message string.
+	 */
+	private extractErrorMessage(error: any): string {
+		if (error.error && error.error.message && typeof error.error.message === 'string') {
+			return error.error.message;
+		} else if (error.message && typeof error.message === 'string') {
+			return error.message;
+		}
+		return error;
 	}
 }
