@@ -1,8 +1,7 @@
-import { NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateLoader, TranslateModule as NgxTranslateModule } from '@ngx-translate/core';
+import { TranslateModule as NgxTranslateModule, TranslateLoader, TranslateModuleConfig } from '@ngx-translate/core';
 import { HttpLoaderFactory } from './translate-http-loader';
-import { I18nService } from './i18n.service';
 
 @NgModule({
 	imports: [
@@ -14,7 +13,38 @@ import { I18nService } from './i18n.service';
 			}
 		})
 	],
-	providers: [I18nService],
 	exports: [NgxTranslateModule]
 })
-export class TranslateModule {}
+export class TranslateModule {
+	/**
+	 * @param config
+	 * @returns ModuleWithProviders configuration for the root module
+	 */
+	static forRoot(config?: TranslateModuleConfig): ModuleWithProviders<NgxTranslateModule> {
+		return NgxTranslateModule.forRoot(
+			config || {
+				loader: {
+					provide: TranslateLoader,
+					useFactory: HttpLoaderFactory,
+					deps: [HttpClient]
+				}
+			}
+		);
+	}
+
+	/**
+	 * @param config
+	 * @returns ModuleWithProviders configuration for child modules
+	 */
+	static forChild(config?: TranslateModuleConfig): ModuleWithProviders<NgxTranslateModule> {
+		return NgxTranslateModule.forChild(
+			config || {
+				loader: {
+					provide: TranslateLoader,
+					useFactory: HttpLoaderFactory,
+					deps: [HttpClient]
+				}
+			}
+		);
+	}
+}
