@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { I18nTranslateService, I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule, I18nTranslateService } from './i18n';
 
 @NgModule({
 	imports: [I18nTranslateModule.forRoot()]
