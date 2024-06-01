@@ -12,4 +12,5 @@ export interface IDesktopEnvironment extends Env {
 	IS_DESKTOP_TIMER: boolean;
 	IS_DESKTOP: boolean;
 	IS_SERVER: boolean;
+	IS_SERVER_API: boolean;
 }
