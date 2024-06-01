@@ -30,6 +30,7 @@
 			"@gauzy/ui-sdk": ["./packages/ui-sdk/src/lib/index"],
 			"@gauzy/ui-sdk/*": ["./packages/ui-sdk/src/lib/*"],
 			"@gauzy/ui-config": ["./packages/ui-config/src/lib/index"],
+			"@gauzy/ui-config/*": ["./packages/ui-config/src/lib/*"],
 			"@gauzy/plugins/job-search-ui": ["./packages/plugins/job-search-ui/src/lib/index"]
 		},
 		"preserveConstEnums": true,
