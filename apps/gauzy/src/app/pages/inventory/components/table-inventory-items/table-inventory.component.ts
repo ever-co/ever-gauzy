@@ -20,7 +20,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ProductService, Store, ToastrService } from '../../../../@core/services';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
@@ -173,7 +173,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 				productCategory: {
 					title: this.getTranslation('INVENTORY_PAGE.PRODUCT_CATEGORY'),
 					type: 'string',
-					valuePrepareFunction: (category: string) => category || '-'
+					valuePrepareFunction: (value: string) => value || '-'
 				},
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.TAGS'),

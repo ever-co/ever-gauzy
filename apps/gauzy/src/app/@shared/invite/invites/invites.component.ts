@@ -29,7 +29,7 @@ import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateViewComponent } from '../../table-components';
 import { PaginationFilterBaseComponent, IPaginationBase } from '../../pagination/pagination-filter-base.component';
 

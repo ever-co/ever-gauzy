@@ -5,12 +5,8 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
 import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
-import {
-	ICandidateExperience,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
+import { ICandidateExperience, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'angular2-smart-table';
 import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
@@ -21,9 +17,7 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 	templateUrl: './edit-candidate-experience-form.component.html',
 	styleUrls: ['./edit-candidate-experience-form.component.scss']
 })
-export class EditCandidateExperienceFormComponent
-	extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
+export class EditCandidateExperienceFormComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	selectedOrganization: IOrganization;
 	showAddCard: boolean;
 	disableButton = true;
@@ -50,19 +44,17 @@ export class EditCandidateExperienceFormComponent
 		this.setView();
 	}
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidate) => {
-				if (candidate) {
-					this.selectedOrganization = this.store.selectedOrganization;
+		this.candidateStore.selectedCandidate$.pipe(takeUntil(this._ngDestroy$)).subscribe((candidate) => {
+			if (candidate) {
+				this.selectedOrganization = this.store.selectedOrganization;
 
-					this.candidateId = candidate.id;
-					this._initializeForm();
-					this.loadExperience();
-					this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
-				}
-			});
+				this.candidateId = candidate.id;
+				this._initializeForm();
+				this.loadExperience();
+				this.loadSmartTable();
+				this._applyTranslationOnSmartTable();
+			}
+		});
 	}
 	private async _initializeForm() {
 		this.form = new UntypedFormGroup({
@@ -129,21 +121,15 @@ export class EditCandidateExperienceFormComponent
 		if (this.selectedExperience) {
 			//editing existing experience
 			try {
-				await this.candidateExperienceService.update(
-					this.selectedExperience.id,
-					{
-						...formValue,
-						organizationId,
-						tenantId
-					}
-				);
+				await this.candidateExperienceService.update(this.selectedExperience.id, {
+					...formValue,
+					organizationId,
+					tenantId
+				});
 				this.loadExperience();
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_UPDATED',
-					{
-						name: formValue.occupation
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_UPDATED', {
+					name: formValue.occupation
+				});
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -156,12 +142,9 @@ export class EditCandidateExperienceFormComponent
 					organizationId,
 					tenantId
 				});
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_CREATED',
-					{
-						name: formValue.occupation
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_CREATED', {
+					name: formValue.occupation
+				});
 				this.loadExperience();
 			} catch (error) {
 				this.toastrError(error);
@@ -176,12 +159,9 @@ export class EditCandidateExperienceFormComponent
 			await this.candidateExperienceService.delete(selectedItem.id);
 			this.selectedExperience = null;
 			this.disableButton = true;
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_DELETED',
-				{
-					name: selectedItem.occupation
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EXPERIENCE_DELETED', {
+				name: selectedItem.occupation
+			});
 			this.loadExperience();
 		} catch (error) {
 			this.toastrError(error);
@@ -205,36 +185,26 @@ export class EditCandidateExperienceFormComponent
 			actions: false,
 			columns: {
 				occupation: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.OCCUPATION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.OCCUPATION'),
 					type: 'string'
 				},
 				organization: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.ORGANIZATION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.ORGANIZATION'),
 					type: 'string',
 					valuePrepareFunction: (value, item) => {
 						if (item.hasOwnProperty('organization')) {
-							return item.organization
-								? item.organization.name
-								: null;
+							return item.organization ? item.organization.name : null;
 						}
 						return value;
 					}
 				},
 				duration: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.DURATION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DURATION'),
 					type: 'string',
 					filter: false
 				},
 				description: {
-					title: this.getTranslation(
-						'CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'
-					),
+					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'),
 					type: 'string',
 					filter: false
 				}
@@ -256,10 +226,7 @@ export class EditCandidateExperienceFormComponent
 			.pipe(takeUntil(this._ngDestroy$))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedExperience =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedExperience;
+				this.selectedExperience = this.dataLayoutStyle === 'CARDS_GRID' ? null : this.selectedExperience;
 			});
 	}
 

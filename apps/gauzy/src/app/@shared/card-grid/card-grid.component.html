@@ -8,11 +8,7 @@
 >
 	<nb-card *ngFor="let item of source$ | async" class="card-item">
 		<nb-card-body
-			[ngClass]="
-				selected.isSelected && selected.data.id === item.id
-					? 'card-body active'
-					: 'card-body'
-			"
+			[ngClass]="selected.isSelected && selected.data.id === item.id ? 'card-body active' : 'card-body'"
 			(click)="selectedItem(item)"
 		>
 			<div class="info-line" *ngFor="let key of getKeys()">
@@ -20,8 +16,7 @@
 					class="info-meta"
 					[ngClass]="{
 						'image-logo': settings.columns[key].title === 'Image',
-						active:
-							selected.isSelected && selected.data.id === item.id
+						active: selected.isSelected && selected.data.id === item.id
 					}"
 				>
 					{{ settings.columns[key].title }}
@@ -30,8 +25,7 @@
 					class="info-value"
 					[ngClass]="{
 						'image-logo': settings.columns[key].title === 'Image',
-						active:
-							selected.isSelected && selected.data.id === item.id
+						active: selected.isSelected && selected.data.id === item.id
 					}"
 					[ngSwitch]="settings.columns[key].type"
 				>
@@ -41,15 +35,12 @@
 					<div *ngSwitchCase="'custom'">
 						<ga-custom-component
 							#component
-							[renderComponent]="
-								settings.columns[key].renderComponent
-							"
+							[renderComponent]="settings.columns[key].renderComponent"
 							[value]="item[key]"
 							[rowData]="item"
 							class="custom"
 							(click)="selectCustomViewComponent(component)"
-						>
-						</ga-custom-component>
+						></ga-custom-component>
 					</div>
 					<div *ngSwitchDefault>{{ getValue(item, key) }}</div>
 				</div>
@@ -57,23 +48,13 @@
 		</nb-card-body>
 	</nb-card>
 	<div class="show-more-button">
-		<button
-			nbButton
-			(click)="onScroll()"
-			status="basic"
-			size="small"
-			*ngIf="showMore"
-			class="d-flex"
-		>
-			<nb-icon icon="arrowhead-down-outline"></nb-icon
-			>{{ 'BUTTONS.SHOW_MORE' | translate }}
+		<button nbButton (click)="onScroll()" status="basic" size="small" *ngIf="showMore" class="d-flex">
+			<nb-icon icon="arrowhead-down-outline"></nb-icon>{{ 'BUTTONS.SHOW_MORE' | translate }}
 		</button>
 	</div>
 </div>
 <ng-template #noDataGridLayout>
 	<div class="no-data">
-		<ngx-no-data-message
-			[message]="getNoDataMessage()"
-		></ngx-no-data-message>
+		<ngx-no-data-message [message]="getNoDataMessage()"></ngx-no-data-message>
 	</div>
 </ng-template>

@@ -25,6 +25,15 @@ export function isNotNullOrUndefined<T>(value: T | undefined | null): value is T
 	return value !== undefined && value !== null;
 }
 
+/**
+ * Check if a value is null, undefined, or an empty string.
+ * @param value The value to check.
+ * @returns true if the value is null, undefined, or an empty string, false otherwise.
+ */
+export function isNotNullOrUndefinedOrEmpty<T>(value: T | undefined | null): boolean {
+	return isNotNullOrUndefined(value) && value !== '';
+}
+
 // It will use for pass nested object or array in query params in get method.
 export function toParams(query: any) {
 	let params: HttpParams = new HttpParams();
@@ -187,7 +196,44 @@ export function ucFirst(str: string, force: boolean): string {
 }
 
 /**
+ * Get the UTC offset for a given timezone.
+ *
+ * @param timezone The timezone identifier (e.g., 'Europe/Paris').
+ * @returns The UTC offset in minutes.
+ */
+export function getUTCOffsetForTimezone(timezone: string = 'UTC'): number {
+	return moment.tz(timezone).utcOffset();
+}
+
+/**
+ * Converts a date to UTC using the offset of the specified timezone.
+ *
+ * @param date The date to convert, can be a string, Date object, or moment object.
+ * @param timezone (Optional) The timezone identifier (e.g., 'Europe/Paris'). If not provided, the local timezone is used.
+ * @returns A moment object representing the date in UTC.
+ */
+export function toUtcOffset(date: string | Date | moment.Moment, timezone?: string): moment.Moment {
+	// Get the UTC offset for the specified timezone
+	const utcOffset = timezone ? getUTCOffsetForTimezone(timezone) : moment().utcOffset();
+
+	// Clone the provided date to avoid mutating it, then subtract the UTC offset
+	return moment(date).clone().subtract(utcOffset, 'minutes');
+}
+
+/**
+ * Converts the given date to the specified timezone.
+ *
+ * @param date The date to convert to the specified timezone.
+ * @param timezone The IANA timezone identifier (e.g., 'America/New_York', 'Europe/London').
+ * @returns A moment object representing the date in the specified timezone.
+ */
+export function toTimezone(date: string | Date | moment.Moment, timezone: string): moment.Moment {
+	return moment.utc(date).tz(timezone);
+}
+
+/**
  * Converts the given date to the local timezone.
+ *
  * @param date The date to convert to local timezone.
  * @returns A moment object representing the date in the local timezone.
  */

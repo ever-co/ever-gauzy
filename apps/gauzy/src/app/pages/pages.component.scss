@@ -1,5 +1,5 @@
 @import 'themes';
-@import '../@theme/styles/gauzy/_gauzy-button-action';
+@import 'gauzy/_gauzy-button-action';
 
 @include nb-install-component() {
 	::ng-deep router-outlet + * {

@@ -9,6 +9,7 @@ export * from '../../accounting-template/accounting-template.entity';
 export * from '../../appointment-employees/appointment-employees.entity';
 export * from '../../approval-policy/approval-policy.entity';
 export * from '../../availability-slots/availability-slots.entity';
+export * from '../../auth/social-account/social-account.entity';
 export * from '../../candidate-criterions-rating/candidate-criterion-rating.entity';
 export * from '../../candidate-documents/candidate-documents.entity';
 export * from '../../candidate-education/candidate-education.entity';

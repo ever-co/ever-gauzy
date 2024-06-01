@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IEmployeeProposalTemplate, IPagination } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-sdk/common';
 import { firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../../../@core/constants';
 
 @Injectable({
 	providedIn: 'root'

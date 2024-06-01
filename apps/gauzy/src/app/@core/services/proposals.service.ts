@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IPagination, IProposal, IProposalCreateInput, IProposalFindInput, IProposalViewModel } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

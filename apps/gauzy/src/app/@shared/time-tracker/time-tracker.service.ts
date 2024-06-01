@@ -18,8 +18,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { firstValueFrom, Observable, timer } from 'rxjs';
-import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '../../@core/constants/app.constants';
-import { environment } from '../../../environments/environment';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '@gauzy/ui-sdk/common';
+import { environment } from '@gauzy/ui-config';
 import { ITimerSynced } from './components/time-tracker-status/interfaces';
 
 export function createInitialTimerState(): TimerState {
@@ -202,6 +202,11 @@ export class TimeTrackerService implements OnDestroy {
 		});
 	}
 
+	/**
+	 * Retrieves the timer status using the provided parameters.
+	 * @param params The input parameters for retrieving timer status.
+	 * @returns A promise that resolves to the timer status.
+	 */
 	getTimerStatus(params: ITimerStatusInput): Promise<ITimerStatus> {
 		const todayStart = toUTC(moment().startOf('day')).format('YYYY-MM-DD HH:mm:ss');
 		const todayEnd = toUTC(moment().endOf('day')).format('YYYY-MM-DD HH:mm:ss');

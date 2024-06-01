@@ -143,6 +143,7 @@ import { TaskLinkedIssueModule } from './tasks/linked-issue/task-linked-issue.mo
 import { OrganizationTaskSettingModule } from './organization-task-setting/organization-task-setting.module';
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
+import { SocialAccountModule } from './auth/social-account/social-account.module';
 
 const { unleashConfig, github, jira } = environment;
 
@@ -341,6 +342,7 @@ if (environment.THROTTLE_ENABLED) {
 		SharedModule,
 		AuthModule,
 		UserModule,
+		SocialAccountModule,
 		EmployeeModule,
 		EmployeeRecurringExpenseModule,
 		EmployeeAwardModule,

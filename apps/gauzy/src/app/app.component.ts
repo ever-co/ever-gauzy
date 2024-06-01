@@ -19,7 +19,7 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { AnalyticsService, JitsuService, SeoService } from './@core/services';
 import { LanguagesService, Store } from './@core/services';
 

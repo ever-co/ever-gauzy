@@ -266,14 +266,10 @@ nb-card-body > .header-widget {
 }
 
 .manage-widget {
-  border: unset;
-  box-shadow: var(--gauzy-shadow);
   font-size: 12px;
   font-weight: 400;
-  line-height: 11px;
-  letter-spacing: 0em;
-  &[nbButton].appearance-filled.status-basic {
-    color: var(--gauzy-text-color-2);
+  &[nbButton] {
+    color: var(--gauzy-text-color-1);
     background-color: var(--gauzy-card-1);
   }
   nb-icon {
@@ -346,8 +342,8 @@ nb-card-body > .header-widget {
 }
 
 :host .card-body {
-	@include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
-	@include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
-	border-radius: 0 0 $default-radius $default-radius;
-	height: calc($default-card-height + 1.5rem) !important;
+  @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+  @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  border-radius: 0 0 $default-radius $default-radius;
+  height: calc($default-card-height + 1.5rem) !important;
 }

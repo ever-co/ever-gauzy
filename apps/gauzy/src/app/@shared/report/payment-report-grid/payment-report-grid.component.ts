@@ -3,7 +3,6 @@ import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
 import {
 	IGetTimeLogReportInput,
 	IPaymentReportData,
@@ -15,6 +14,7 @@ import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { PaymentService, Store } from '../../../@core/services';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,13 +39,14 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent impl
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly paymentService: PaymentService,
+		private readonly cd: ChangeDetectorRef,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		public readonly translateService: TranslateService,
-		private readonly cd: ChangeDetectorRef
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -78,14 +79,9 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone: string = moment.tz.guess();
-
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy,
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			groupBy: this.groupBy
 		};
 		this.payloads$.next(request);
 	}

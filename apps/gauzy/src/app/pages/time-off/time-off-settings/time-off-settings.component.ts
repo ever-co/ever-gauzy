@@ -12,7 +12,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store, TimeOffService, ToastrService } from '../../../@core/services';
 import {
 	PaginationFilterBaseComponent,

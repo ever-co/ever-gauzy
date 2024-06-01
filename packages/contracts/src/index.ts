@@ -105,6 +105,7 @@ export * from './screenshot.model';
 export * from './seed.model';
 export * from './skill-entity.model';
 export * from './sms.model';
+export * from './social-account.model';
 export * from './tag.model';
 export * from './task-estimation.model';
 export * from './task-linked-issue.model';

@@ -9,7 +9,7 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
-import { ComponentEnum } from '../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
 import { ErrorHandlingService, OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
 import { ActivatedRoute } from '@angular/router';

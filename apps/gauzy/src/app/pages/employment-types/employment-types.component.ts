@@ -13,7 +13,7 @@ import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';

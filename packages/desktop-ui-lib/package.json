@@ -58,10 +58,10 @@
 		"electron-log": "^4.4.8",
 		"electron-store": "^8.1.0",
 		"hash-it": "^6.0.0",
-		"moment": "^2.29.4",
+		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
 		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.40",
+		"moment-timezone": "^0.5.45",
 		"rxjs": "^7.4.0",
 		"underscore": "^1.13.3"
 	}

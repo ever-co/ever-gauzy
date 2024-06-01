@@ -1,18 +1,12 @@
-<div class="card" [ngClass]="{ 'danger-bordered' : isShowBorder }">
+<div class="card" [ngClass]="{ 'danger-bordered': isShowBorder }">
 	<div class="activity" *ngIf="timeSlot; else noActivity">
-		<ng-template
-			[ngIf]="employees && employees.length > 1"
-			[ngIfElse]="lastScreenshotTemplate"
-		>
+		<ng-template [ngIf]="employees && employees.length > 1" [ngIfElse]="lastScreenshotTemplate">
 			<div
 				class="image-container curser-pointer"
 				[nbPopover]="workedEmployeeTemplate"
 				[nbPopoverTrigger]="'hint'"
 			>
-				<img
-					draggable="false"
-					[src]="lastScreenshot?.thumbUrl"
-				/>
+				<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
 				<span class="screenshot-count">
 					<i class="fas fa-users"></i>
 					{{ employees.length }}
@@ -46,9 +40,7 @@
 								[message]="'ACTIVITY.DELETE_CONFIRM' | translate"
 								(confirm)="deleteSlot(timeSlot)"
 							>
-								<nb-icon
-									icon="trash-2-outline"
-								></nb-icon>
+								<nb-icon icon="trash-2-outline"></nb-icon>
 							</button>
 						</ng-container>
 						<button
@@ -92,11 +84,7 @@
 					<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
 				</ng-template>
 				<ng-template #noImageEl>
-					<img
-						draggable="false"
-						[src]="fallbackSvg"
-						class="default-image"
-					/>
+					<img draggable="false" [src]="fallbackSvg" class="default-image" />
 					<span class="no-image p-3">
 						{{ 'ACTIVITY.NO_SCREENSHOT' | translate }}
 					</span>
@@ -105,10 +93,10 @@
 		</ng-template>
 		<div class="slot-info text-left p-3">
 			<div class="time-span mb-4 mt-1 hour-label">
-				{{ timeSlot.localStartedAt | timeFormat }} -
-				{{ timeSlot.localStoppedAt | timeFormat }}
+				{{ timeSlot.startedAt | utcToTimezone : timezone | timeFormat : timeformat }} -
+				{{ timeSlot.stoppedAt | utcToTimezone : timezone | timeFormat : timeformat }}
 				<div class="text-caption caption mt-2">
-					{{ timeSlot.localStartedAt | dateFormat }}
+					{{ timeSlot.startedAt | utcToTimezone : timezone | dateFormat }}
 				</div>
 			</div>
 			<nb-progress-bar
@@ -120,12 +108,7 @@
 			></nb-progress-bar>
 			<div class="activity-count hour-label mt-2">
 				{{ timeSlot.percentage || 0 }}% of
-				{{
-					timeSlot.duration
-						| amFromUnix
-						| amFromUtc
-						| amDateFormat: 'mm'
-				}}
+				{{ timeSlot.duration | amFromUnix | amFromUtc | amDateFormat : 'mm' }}
 				{{ 'ACTIVITY.MINUTES' | translate }}
 			</div>
 		</div>
@@ -138,14 +121,8 @@
 </div>
 <ng-template #workedEmployeeTemplate>
 	<nb-list>
-		<nb-list-item
-			*ngFor="let employee of employees"
-			class="row border-top align-items-center"
-		>
-			<ngx-employee-links
-				[value]="employee?.user"
-				[isNavigation]="false"
-			></ngx-employee-links>
+		<nb-list-item *ngFor="let employee of employees" class="row border-top align-items-center">
+			<ngx-employee-links [value]="employee?.user" [isNavigation]="false"></ngx-employee-links>
 		</nb-list-item>
 	</nb-list>
 </ng-template>

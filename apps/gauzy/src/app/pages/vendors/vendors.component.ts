@@ -10,7 +10,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
 import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum } from './../../@core/constants';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { ErrorHandlingService, OrganizationVendorsService, Store, ToastrService } from '../../@core/services';
@@ -18,7 +18,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
 
 @UntilDestroy({ checkProperties: true })

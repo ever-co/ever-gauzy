@@ -6,94 +6,62 @@ import {
 	ICandidatePersonalQualitiesCreateInput,
 	ICandidatePersonalQualitiesFindInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class CandidatePersonalQualitiesService {
-	constructor(private http: HttpClient) { }
+	constructor(private http: HttpClient) {}
 
-	create(
-		createInput: ICandidatePersonalQualitiesCreateInput
-	): Promise<ICandidatePersonalQualities> {
+	create(createInput: ICandidatePersonalQualitiesCreateInput): Promise<ICandidatePersonalQualities> {
 		return firstValueFrom(
-			this.http
-				.post<ICandidatePersonalQualities>(
-					`${API_PREFIX}/candidate-personal-qualities`,
-					createInput
-				)
+			this.http.post<ICandidatePersonalQualities>(`${API_PREFIX}/candidate-personal-qualities`, createInput)
 		);
 	}
 
-	createBulk(
-		interviewId: string,
-		personalQualities: string[]
-	): Promise<ICandidatePersonalQualities[]> {
+	createBulk(interviewId: string, personalQualities: string[]): Promise<ICandidatePersonalQualities[]> {
 		return firstValueFrom(
-			this.http
-				.post<ICandidatePersonalQualities[]>(
-					`${API_PREFIX}/candidate-personal-qualities/bulk`,
-					{ interviewId, personalQualities }
-				)
+			this.http.post<ICandidatePersonalQualities[]>(`${API_PREFIX}/candidate-personal-qualities/bulk`, {
+				interviewId,
+				personalQualities
+			})
 		);
 	}
 
-	getAll(
-		findInput?: ICandidatePersonalQualitiesFindInput
-	): Promise<{ items: any[]; total: number }> {
+	getAll(findInput?: ICandidatePersonalQualitiesFindInput): Promise<{ items: any[]; total: number }> {
 		const data = JSON.stringify({ findInput });
 
 		return firstValueFrom(
-			this.http
-				.get<{ items: ICandidatePersonalQualities[]; total: number }>(
-					`${API_PREFIX}/candidate-personal-qualities`,
-					{
-						params: { data }
-					}
-				)
+			this.http.get<{ items: ICandidatePersonalQualities[]; total: number }>(
+				`${API_PREFIX}/candidate-personal-qualities`,
+				{
+					params: { data }
+				}
+			)
 		);
 	}
 
-	findByInterviewId(
-		interviewId: string
-	): Promise<ICandidatePersonalQualities[]> {
+	findByInterviewId(interviewId: string): Promise<ICandidatePersonalQualities[]> {
 		return firstValueFrom(
-			this.http
-				.get<ICandidatePersonalQualities[]>(
-					`${API_PREFIX}/candidate-personal-qualities/interview/${interviewId}`
-				)
+			this.http.get<ICandidatePersonalQualities[]>(
+				`${API_PREFIX}/candidate-personal-qualities/interview/${interviewId}`
+			)
 		);
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.put(
-					`${API_PREFIX}/candidate-personal-qualities/${id}`,
-					updateInput
-				)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/candidate-personal-qualities/${id}`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-				.delete(`${API_PREFIX}/candidate-personal-qualities/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/candidate-personal-qualities/${id}`));
 	}
 
-	deleteBulkByInterviewId(
-		id: string,
-		personalQualities?: ICandidatePersonalQualities[]
-	): Promise<any> {
+	deleteBulkByInterviewId(id: string, personalQualities?: ICandidatePersonalQualities[]): Promise<any> {
 		const data = JSON.stringify({ personalQualities });
 		return firstValueFrom(
-			this.http
-				.delete(
-					`${API_PREFIX}/candidate-personal-qualities/bulk/${id}`,
-					{
-						params: { data }
-					}
-				)
+			this.http.delete(`${API_PREFIX}/candidate-personal-qualities/bulk/${id}`, {
+				params: { data }
+			})
 		);
 	}
 }

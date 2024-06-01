@@ -1,0 +1,52 @@
+<button
+	class="popover-button"
+	nbButton
+	size="small"
+	status="basic"
+	nbPopoverPlacement="bottom"
+	[nbPopover]="nbPopoverTemplate"
+	nbPopoverTrigger="click"
+	#popover="nbPopover"
+>
+	<div>
+		<ng-template [ngIf]="isTimezone"> {{ getTimeZoneWithOffset() }} </ng-template>
+		<ng-template [ngIf]="isTimeformat"> / {{ selectedTimeFormat }} hour </ng-template>
+	</div>
+	<nb-icon icon="more-vertical-outline"></nb-icon>
+</button>
+
+<ng-template #nbPopoverTemplate>
+	<div class="popover-body">
+		<ng-container *ngIf="isTimezone">
+			<div class="category">
+				<div class="view">{{ 'TIMESHEET.TIME_ZONE' | translate }}</div>
+				<ng-container *ngFor="let timeZoneOption of timeZoneOptions">
+					<div class="title" (click)="updateSelectedTimeZone(timeZoneOption.value); closePopover()">
+						<i
+							[ngStyle]="{ visibility: selectedTimeZone === timeZoneOption.value ? 'visible' : 'hidden' }"
+							class="fas fa-check"
+						></i>
+						<div>{{ timeZoneOption.label }}</div>
+					</div>
+				</ng-container>
+			</div>
+			<ng-container *ngIf="isTimeformat">
+				<div class="line"></div>
+			</ng-container>
+		</ng-container>
+		<ng-container *ngIf="isTimeformat">
+			<div class="category">
+				<div class="view">{{ 'TIMESHEET.TIME_FORMAT' | translate }}</div>
+				<ng-container *ngFor="let timeFormatsOption of timeFormatsOptions">
+					<div class="title" (click)="updateSelectedTimeFormat(timeFormatsOption); closePopover()">
+						<i
+							[ngStyle]="{ visibility: selectedTimeFormat === timeFormatsOption ? 'visible' : 'hidden' }"
+							class="fas fa-check"
+						></i>
+						<div>{{ timeFormatsOption }} hour</div>
+					</div>
+				</ng-container>
+			</div>
+		</ng-container>
+	</div>
+</ng-template>

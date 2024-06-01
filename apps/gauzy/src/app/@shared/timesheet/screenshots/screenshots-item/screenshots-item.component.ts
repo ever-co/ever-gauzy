@@ -1,16 +1,17 @@
 import { Component, OnInit, Input, OnDestroy, Output, EventEmitter } from '@angular/core';
-import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee } from '@gauzy/contracts';
+import { ITimeSlot, IScreenshot, ITimeLog, IOrganization, IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
+import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
-import { distinctUntilChange, isNotEmpty, progressStatus, toLocal } from '@gauzy/ui-sdk/common';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
-import { DEFAULT_SVG } from './../../../../@core/constants/app.constants';
 import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
+import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -72,8 +73,6 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		// Assign a new object to _timeSlot with modified properties
 		this._timeSlot = {
 			...timeSlot,
-			localStartedAt: toLocal(timeSlot.startedAt).toDate(),
-			localStoppedAt: toLocal(timeSlot.stoppedAt).toDate(),
 			isAllowDelete: this.isEnableDelete(timeSlot),
 			screenshots: this.screenshots
 		};
@@ -107,26 +106,36 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		this._lastScreenshot = screenshot;
 	}
 
+	@Input() timezone: string = this.timeZoneService.currentTimeZone;
+	@Input() timeformat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
+
 	constructor(
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetService: TimesheetService,
 		private readonly galleryService: GalleryService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly timeZoneService: TimeZoneService
 	) {}
 
 	ngOnInit(): void {
 		this.store.selectedOrganization$
 			.pipe(
-				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	/**
+	 * Toggles the selection of a time slot.
+	 * If the time slot allows deletion, it emits the time slot's ID.
+	 *
+	 * @param {ITimeSlot} timeSlot - The time slot to toggle.
+	 */
 	toggleSelect(timeSlot: ITimeSlot): void {
 		if (timeSlot.isAllowDelete) {
 			const slotId = timeSlot.id;
@@ -145,10 +154,11 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 		}
 
 		try {
-			const { id: organizationId } = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
 			const request = {
 				ids: [timeSlot.id],
-				organizationId
+				organizationId,
+				tenantId
 			};
 
 			// Delete time slots
@@ -183,14 +193,14 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	 * @param timeSlot - The time slot for which information is to be viewed.
 	 */
 	viewInfo(timeSlot: ITimeSlot): void {
-		this.nbDialogService
-			.open(ViewScreenshotsModalComponent, {
-				context: {
-					timeSlot,
-					timeLogs: timeSlot.timeLogs
-				}
-			})
-			.onClose.pipe(
+		const dialog$ = this.nbDialogService.open(ViewScreenshotsModalComponent, {
+			context: {
+				timeSlot,
+				timeLogs: timeSlot.timeLogs
+			}
+		});
+		dialog$.onClose
+			.pipe(
 				filter((data) => Boolean(data && data['isDelete'])),
 				tap(() => this.delete.emit()),
 				take(1),

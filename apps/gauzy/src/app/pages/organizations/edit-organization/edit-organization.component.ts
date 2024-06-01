@@ -16,7 +16,6 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 	styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss']
 })
 export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	employeesCount: number;
 	public organization: IOrganization;
 
 	constructor(
@@ -36,7 +35,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
-				tap(({ employeesCount }) => (this.employeesCount = employeesCount)),
 				map(({ organization }) => organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)

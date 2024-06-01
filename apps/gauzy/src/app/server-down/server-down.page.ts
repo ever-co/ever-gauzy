@@ -1,9 +1,8 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 import { Store } from '../@core/services/store.service';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
-import { GAUZY_ENV } from '../@core';
-import { Environment } from '../../environments/model';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],
@@ -14,11 +13,10 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	interval: any;
 
 	constructor(
-		private store: Store,
-		private location: Location,
-		private serverConnectionService: ServerConnectionService,
-		@Inject(GAUZY_ENV)
-		private environment: Environment
+		private readonly store: Store,
+		private readonly location: Location,
+		private readonly serverConnectionService: ServerConnectionService,
+		@Inject(GAUZY_ENV) private environment: Environment
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}

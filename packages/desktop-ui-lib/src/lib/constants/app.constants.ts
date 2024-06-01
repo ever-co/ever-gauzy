@@ -1,6 +1,6 @@
 import { InjectionToken, Injector } from '@angular/core';
 // @ts-ignore
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 
 export const API_PREFIX = '/api';
 export const BACKGROUND_SYNC_INTERVAL = 25000; // milliseconds

@@ -10,7 +10,7 @@ import { NbDialogService } from '@nebular/theme';
 import { Store } from '../../@core/services/store.service';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';

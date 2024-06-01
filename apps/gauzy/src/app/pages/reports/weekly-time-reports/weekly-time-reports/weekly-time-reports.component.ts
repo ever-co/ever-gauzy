@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
@@ -16,6 +16,7 @@ import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -36,19 +37,21 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 
 	constructor(
-		private readonly timesheetService: TimesheetService,
 		private readonly cdr: ChangeDetectorRef,
-		protected readonly store: Store,
-		public readonly translateService: TranslateService,
+		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
 		this.subject$
 			.pipe(
+				debounceTime(500),
 				// Filter to ensure that the organization property is truthy
 				filter(() => !!this.organization),
 				// Perform some action when the observable emits a value
@@ -89,18 +92,14 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
 		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.request),
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			...this.getFilterRequest(this.request)
 		};
+
 		this.payloads$.next(request);
 	}
 
@@ -156,13 +155,10 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the weekly logs from the timesheetService
-			const logs: ReportDayData[] = await this.timesheetService.getWeeklyReportChart(payloads);
-
-			// Update the 'weekLogs' property with the retrieved logs
-			this.weekLogs = logs;
+			this.weekLogs = await this.timesheetService.getWeeklyReportChart(payloads);
 
 			// Process and map the logs for chart presentation
-			this._mapLogs(logs);
+			await this._mapLogs(this.weekLogs);
 		} catch (error) {
 			// Log any errors during the process
 			console.error('Error while retrieving weekly time logs reports', error);
@@ -178,7 +174,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	 * @param logs - An array of ReportDayData representing daily logs for employees.
 	 * @private This method is intended for internal use within the class.
 	 */
-	private _mapLogs(logs: ReportDayData[]): void {
+	private async _mapLogs(logs: ReportDayData[]): Promise<void> {
 		// Initialize arrays for employees and datasets
 		let labels = [];
 		const datasets = [];

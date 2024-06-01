@@ -7,7 +7,6 @@ import { NotesWithTagsComponent } from '../../../@shared/table-components';
 	styleUrls: ['./tags-color.component.scss']
 })
 export class TagsColorComponent extends NotesWithTagsComponent {
-
 	@Input() value: string | number;
 	@Input() rowData: any;
 }

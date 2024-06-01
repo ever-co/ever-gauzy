@@ -11,6 +11,7 @@ import { SafeHtmlPipe, SafeUrlPipe } from './safe/safe.pipe';
 import { TimeFormatPipe } from './time-format.pipe';
 import { UtcToLocalPipe } from './utc-to-local.pipe';
 import { HashNumberPipe } from './hash-number.pipe';
+import { UtcToTimezone } from './utc-to-timezone.pipe';
 
 export * from './budget.pipe';
 export * from './currency-position.pipe';
@@ -24,6 +25,7 @@ export * from './safe/safe.pipe';
 export * from './text.pipe';
 export * from './time-format.pipe';
 export * from './utc-to-local.pipe';
+export * from './utc-to-timezone.pipe';
 export * from './hash-number.pipe';
 
 export const Pipes = [
@@ -41,5 +43,6 @@ export const Pipes = [
 	TimeFormatPipe,
 	TruncatePipe,
 	UtcToLocalPipe,
+	UtcToTimezone,
 	HashNumberPipe
 ];

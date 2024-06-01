@@ -1,18 +1,19 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 import {
 	NbDialogModule,
 	NbThemeModule,
 	NbToastrModule,
 	NbDialogService,
 	NbLayoutModule,
-	NbDatepickerModule,
+	NbDatepickerModule
 } from '@nebular/theme';
-import { AppService } from './app.service';
-import { HttpClientModule } from '@angular/common/http';
+import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import * as Sentry from '@sentry/angular-ivy';
+import { Router } from '@angular/router';
 import {
 	ImageViewerModule,
 	UpdaterModule,
@@ -41,13 +42,11 @@ import {
 	ActivityWatchInterceptor,
 	OrganizationInterceptor
 } from '@gauzy/desktop-ui-lib';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { RouterModule } from '@angular/router';
-import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import * as Sentry from "@sentry/angular-ivy";
-import { Router } from '@angular/router';
-import { environment as gauzyEnvironment } from '@env/environment';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { environment } from '../environments/environment';
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+import { AppService } from './app.service';
 import { initializeSentry } from './sentry';
 
 /**
@@ -102,12 +101,12 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TokenInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: TenantInterceptor,
-			multi: true,
+			multi: true
 		},
 		{
 			provide: HTTP_INTERCEPTORS,
@@ -117,18 +116,18 @@ if (environment.SENTRY_DSN) {
 		{
 			provide: ErrorHandler,
 			useValue: Sentry.createErrorHandler({
-				showDialog: true,
-			}),
+				showDialog: true
+			})
 		},
 		{
 			provide: Sentry.TraceService,
-			deps: [Router],
+			deps: [Router]
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
-			multi: true,
+			multi: true
 		},
 		{
 			provide: ErrorHandler,
@@ -164,12 +163,12 @@ if (environment.SENTRY_DSN) {
 			provide: GAUZY_ENV,
 			useValue: {
 				...gauzyEnvironment,
-				...environment,
-			},
-		},
+				...environment
+			}
+		}
 	],
-	bootstrap: [AppComponent],
+	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

@@ -1,9 +1,9 @@
 import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
-import { IOrganization } from '@gauzy/contracts';
+import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter } from 'rxjs/operators';
+import { IOrganization, TimeFormatEnum } from '@gauzy/contracts';
+import { Store } from '../../@core/services/store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({
@@ -11,28 +11,37 @@ import { filter } from 'rxjs/operators';
 	pure: false
 })
 export class TimeFormatPipe implements PipeTransform, OnDestroy {
-	private format: 12 | 24;
+	private format: TimeFormatEnum;
 
-	constructor(private store: Store) {
+	constructor(private readonly store: Store) {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.format = organization?.timeFormat ?? TimeFormatEnum.FORMAT_12_HOURS;
+				}),
 				untilDestroyed(this)
 			)
-			.subscribe((org: IOrganization) => {
-				this.format = org ? org.timeFormat : 12;
-			});
+			.subscribe();
 	}
 
-	transform(value: any, seconds: boolean = false): any {
+	/**
+	 * Transforms a given value into a formatted time string.
+	 * @param value The value to transform into a time string. This can be a string, number, Date object, or any value parsable by moment.js.
+	 * @param timeFormat The time format to use. If not provided, it defaults to `this.format`.
+	 * @param seconds Optional. If true, include seconds in the formatted time string. Defaults to false.
+	 * @returns A formatted time string based on the input value and format options.
+	 */
+	transform(value: any, timeFormat: number = this.format, seconds: boolean = true): any {
 		let format = 'HH:mm' + (seconds ? ':ss' : '');
-		if (this.format === 12) {
+
+		if (timeFormat === TimeFormatEnum.FORMAT_12_HOURS) {
 			format = 'hh:mm' + (seconds ? ':ss' : '') + ' A';
 		}
+
 		let date = moment(value);
-		if (!date.isValid()) {
-			date = moment.utc(value, 'HH:mm');
-		}
+		if (!date.isValid()) date = moment.utc(value, 'HH:mm');
+
 		return date.format(format);
 	}
 

@@ -23,7 +23,7 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	MyTasksStoreService,
@@ -175,8 +175,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
 					},
-					valuePrepareFunction: (data: number) => {
-						return this._hashNumberPipe.transform(data);
+					valuePrepareFunction: (value: string, cell: Cell) => {
+						return this._hashNumberPipe.transform(value);
 					}
 				},
 				description: {

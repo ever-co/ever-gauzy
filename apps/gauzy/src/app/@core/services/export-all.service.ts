@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class ExportAllService {
-
-	constructor(
-		private readonly http: HttpClient
-	) { }
+	constructor(private readonly http: HttpClient) {}
 
 	downloadAllData() {
 		return this.http.get(`${API_PREFIX}/download`, {

@@ -37,6 +37,7 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
+import { SocialLoginBodyRequestDTO } from './social-account/dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -45,7 +46,7 @@ export class AuthController {
 		private readonly authService: AuthService,
 		private readonly userService: UserService,
 		private readonly commandBus: CommandBus
-	) { }
+	) {}
 
 	/**
 	 * Check if the user is authenticated.
@@ -152,14 +153,25 @@ export class AuthController {
 	@Post('/signin.email.password')
 	@Public()
 	@UseValidationPipe()
-	async signinWorkspacesByPassword(
-		@Query() query: Record<string, boolean>,
-		@Body() input: UserSigninWorkspaceDTO
-	): Promise<IUserSigninWorkspaceResponse> {
+	async signinWorkspacesByPassword(@Body() input: UserSigninWorkspaceDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailPassword(
 			input,
-			convertNativeParameters(query.includeTeams)
+			convertNativeParameters(input.includeTeams)
 		);
+	}
+
+	/**
+	 * Sign in workspaces by email social media.
+	 *
+	 * @param input - User sign-in data.
+	 * @returns
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Post('/signin.email.social')
+	@Public()
+	@UseValidationPipe()
+	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
+		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(input.includeTeams));
 	}
 
 	/**
@@ -173,13 +185,8 @@ export class AuthController {
 	@Post('/signin.email')
 	@Public()
 	@UseValidationPipe({ transform: true })
-	async sendWorkspaceSigninCode(
-		@Body() entity: UserEmailDTO,
-		@I18nLang() locale: LanguagesEnum
-	): Promise<any> {
-		return await this.commandBus.execute(
-			new WorkspaceSigninSendCodeCommand(entity, locale)
-		);
+	async sendWorkspaceSigninCode(@Body() entity: UserEmailDTO, @I18nLang() locale: LanguagesEnum): Promise<any> {
+		return await this.commandBus.execute(new WorkspaceSigninSendCodeCommand(entity, locale));
 	}
 
 	/**
@@ -192,13 +199,9 @@ export class AuthController {
 	@Public()
 	@UseValidationPipe({ whitelist: true })
 	async confirmWorkspaceSigninByCode(
-		@Query() query: Record<string, boolean>,
 		@Body() input: WorkspaceSigninEmailVerifyDTO
 	): Promise<IUserSigninWorkspaceResponse> {
-		return await this.authService.confirmWorkspaceSigninByCode(
-			input,
-			convertNativeParameters(query.includeTeams)
-		);
+		return await this.authService.confirmWorkspaceSigninByCode(input, convertNativeParameters(input.includeTeams));
 	}
 
 	/**
@@ -210,12 +213,8 @@ export class AuthController {
 	@Post('/signin.workspace')
 	@Public()
 	@UseValidationPipe({ whitelist: true })
-	async signinWorkspaceByToken(
-		@Body() input: WorkspaceSigninDTO
-	): Promise<IAuthResponse | null> {
-		return await this.commandBus.execute(
-			new WorkspaceSigninVerifyTokenCommand(input)
-		);
+	async signinWorkspaceByToken(@Body() input: WorkspaceSigninDTO): Promise<IAuthResponse | null> {
+		return await this.commandBus.execute(new WorkspaceSigninVerifyTokenCommand(input));
 	}
 
 	/**

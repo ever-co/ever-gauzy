@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
@@ -45,7 +45,7 @@ import {
 	Store,
 	ToastrService
 } from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms/helpers';
 @UntilDestroy({ checkProperties: true })
 @Component({

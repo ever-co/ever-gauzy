@@ -23,7 +23,7 @@ import {
 	OrganizationTotalEmployeesCountComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { ComponentEnum } from '../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
 import {
 	IPaginationBase,

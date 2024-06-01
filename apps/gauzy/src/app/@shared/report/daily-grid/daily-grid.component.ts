@@ -4,7 +4,6 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
-import * as moment from 'moment';
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
@@ -14,11 +13,11 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Environment } from '@env/model';
-import { environment } from '@env/environment';
+import { Environment, environment } from '@gauzy/ui-config';
 import { Store } from '../../../@core/services';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -53,13 +52,14 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	}
 
 	constructor(
+		public readonly translateService: TranslateService,
+		private readonly cd: ChangeDetectorRef,
 		private readonly timesheetService: TimesheetService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		public readonly translateService: TranslateService,
-		private readonly cd: ChangeDetectorRef
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -103,9 +103,6 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Pick specific properties ('source', 'activityLevel', 'logType') from this.filters
 		const appliedFilter = pick(this.filters, 'source', 'activityLevel', 'logType');
 
@@ -114,16 +111,19 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			...appliedFilter,
 			...this.getFilterRequest(this.request),
 			// Set the 'groupBy' property from the current instance's 'groupBy' property
-			groupBy: this.groupBy,
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			groupBy: this.groupBy
 		};
 
 		// Emit the request object to the observable
 		this.payloads$.next(request);
 	}
 
-	async getLogs() {
+	/**
+	 * Retrieves daily logs if the organization and request are set.
+	 *
+	 * @returns {Promise<void>}
+	 */
+	async getLogs(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
@@ -132,7 +132,7 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			const payloads = this.payloads$.getValue();
 			this.dailyLogs = await this.timesheetService.getDailyReport(payloads);
 		} catch (error) {
-			console.log('Error while retrieving daily logs report', error);
+			console.error('Error while retrieving daily logs report', error);
 		} finally {
 			this.loading = false;
 		}

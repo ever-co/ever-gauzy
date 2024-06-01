@@ -11,6 +11,8 @@ import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
+import { TimeFormatEnum } from './organization.model';
+import { ISocialAccount } from './social-account.model';
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
@@ -32,6 +34,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	phoneNumber?: string;
 	username?: string;
 	timeZone?: string;
+	timeFormat?: TimeFormatEnum;
 	role?: IRole;
 	roleId?: IRole['id'];
 	hash?: string;
@@ -54,6 +57,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
+	socialAccounts?: ISocialAccount[];
 }
 
 export interface IUserFindInput extends IBasePerTenantEntityModel {
@@ -104,7 +108,7 @@ export interface IUserCodeInput {
 	code: string;
 }
 
-export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput { }
+export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
@@ -136,6 +140,7 @@ export interface IUserCreateInput extends IRelationalImageAsset {
 	preferredLanguage?: LanguagesEnum;
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	timeZone?: string;
+	timeFormat?: TimeFormatEnum;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {
@@ -164,8 +169,10 @@ export enum ComponentLayoutStyleEnum {
 }
 
 export enum ProviderEnum {
+	GITHUB = 'github',
 	GOOGLE = 'google',
-	FACEBOOK = 'facebook'
+	FACEBOOK = 'facebook',
+	TWITTER = 'twitter'
 }
 
 export interface IUserViewModel extends IBasePerTenantEntityModel {

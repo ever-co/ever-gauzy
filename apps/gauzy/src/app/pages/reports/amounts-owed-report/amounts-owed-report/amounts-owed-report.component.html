@@ -1,33 +1,34 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.AMOUNT_OWED' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="request?.startDate && request?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[hasActivityLevelFilter]="false"
-				[hasSourceFilter]="false"
-				[hasLogTypeFilter]="false"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				[filters]="filters"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.AMOUNT_OWED' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[hasActivityLevelFilter]="false"
+						[hasSourceFilter]="false"
+						[hasLogTypeFilter]="false"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						[filters]="filters"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -35,15 +36,11 @@
 			<div class="daily-time-report">
 				<nb-card>
 					<nb-card-body class="chart">
-						<ngx-line-chart
-							[data]="charts"
-						></ngx-line-chart>
+						<ngx-line-chart [data]="charts"></ngx-line-chart>
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<ga-amounts-owed-grid
-				[filters]="filters"
-			></ga-amounts-owed-grid>
+			<ga-amounts-owed-grid [filters]="filters"></ga-amounts-owed-grid>
 		</div>
 	</nb-card-body>
 </nb-card>

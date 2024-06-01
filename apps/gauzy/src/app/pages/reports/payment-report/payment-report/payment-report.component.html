@@ -1,45 +1,46 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
-	class="card-scroll"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
 	<nb-card-header>
-		<h4>
-			<ngx-header-title>
-				{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}
-			</ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="request?.startDate && request?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[hasActivityLevelFilter]="false"
-				[hasSourceFilter]="false"
-				[hasLogTypeFilter]="false"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
-			<ga-contact-select
-				[attr.class]="'action-select contact-select'"
-				[addTag]="false"
-				[clearable]="true"
-				[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
-				(onChanged)="contactChanged($event)"
-			></ga-contact-select>
-			<ga-currency
-				[attr.class]="'action-select currency-select'"
-				[label]="false"
-				(optionChange)="currencyChanged($event)"
-			></ga-currency>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.PAYMENT_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[filters]="filters"
+						[hasActivityLevelFilter]="false"
+						[hasSourceFilter]="false"
+						[hasLogTypeFilter]="false"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+					<ga-currency
+						[attr.class]="'action-select currency-select'"
+						[label]="false"
+						(optionChange)="currencyChanged($event)"
+					></ga-currency>
+					<ga-contact-select
+						[attr.class]="'action-select contact-select'"
+						[addTag]="false"
+						[clearable]="true"
+						[placeholder]="'CONTEXT_MENU.CONTACT' | translate"
+						(onChanged)="contactChanged($event)"
+					></ga-contact-select>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -47,15 +48,11 @@
 			<div class="daily-time-report">
 				<nb-card>
 					<nb-card-body class="chart">
-						<ngx-line-chart
-							[data]="charts"
-						></ngx-line-chart>
+						<ngx-line-chart [data]="charts"></ngx-line-chart>
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<ga-payment-report-grid
-				[filters]="filters"
-			></ga-payment-report-grid>
+			<ga-payment-report-grid [filters]="filters"></ga-payment-report-grid>
 		</div>
 	</nb-card-body>
 </nb-card>

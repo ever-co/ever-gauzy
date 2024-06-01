@@ -23,10 +23,7 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		resolve: { dates: DateRangePickerResolver }
 	},
 	{
 		path: 'settings',

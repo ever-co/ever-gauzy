@@ -1,18 +1,14 @@
-import {
-	Component,
-	OnInit,
-	ElementRef,
-	Input,
-	ViewChild,
-	OnDestroy
-} from '@angular/core';
+import { Component, OnInit, ElementRef, Input, ViewChild, OnDestroy } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 import { NbDialogRef } from '@nebular/theme';
+import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { saveAs } from 'file-saver';
-import { IEmployee } from '@gauzy/contracts';
+import { IEmployee, TimeFormatEnum } from '@gauzy/contracts';
 import { GalleryItem } from './gallery.directive';
 import { GalleryService } from './gallery.service';
+import { TimeZoneService } from '../timesheet/gauzy-filters/timezone-filter';
+import { Observable } from 'rxjs';
 
 export const fadeInOutAnimation = trigger('fadeInOut', [
 	transition(':enter', [
@@ -42,10 +38,18 @@ export class GalleryComponent implements OnInit, OnDestroy {
 
 	@ViewChild('customScroll', { static: true }) customScroll: ElementRef<HTMLElement>;
 
+	public timeZone$: Observable<string> = this._timeZoneService.timeZone$.pipe(
+		filter((timeZone: string) => !!timeZone)
+	);
+	public timeFormat$: Observable<TimeFormatEnum> = this._timeZoneService.timeFormat$.pipe(
+		filter((timeFormat: TimeFormatEnum) => !!timeFormat)
+	);
+
 	constructor(
-		private readonly dialogRef: NbDialogRef<GalleryComponent>,
-		private readonly galleryService: GalleryService
-	) { }
+		private readonly _dialogRef: NbDialogRef<GalleryComponent>,
+		private readonly _galleryService: GalleryService,
+		private readonly _timeZoneService: TimeZoneService
+	) {}
 
 	/**
 	 * Initializes the component and subscribes to changes in the items emitted by the gallery service.
@@ -54,7 +58,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	 */
 	ngOnInit() {
 		// Subscribe to changes in the items emitted by the gallery service
-		this.galleryService.items$
+		this._galleryService.items$
 			.pipe(untilDestroyed(this)) // Unsubscribe when the component is destroyed
 			.subscribe((items) => {
 				// Filter the items based on the employeeId property, if provided
@@ -74,7 +78,7 @@ export class GalleryComponent implements OnInit, OnDestroy {
 	 */
 	close() {
 		// Close the dialog
-		this.dialogRef.close();
+		this._dialogRef.close();
 	}
 
 	/**
@@ -184,11 +188,10 @@ export class GalleryComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		this.galleryService.downloadFile(url)
-			.subscribe(blob => {
-				const fileName = url.substring(url.lastIndexOf('/') + 1);
-				saveAs(blob, fileName);
-			});
+		this._galleryService.downloadFile(url).subscribe((blob) => {
+			const fileName = url.substring(url.lastIndexOf('/') + 1);
+			saveAs(blob, fileName);
+		});
 	}
 
 	/**
@@ -201,5 +204,5 @@ export class GalleryComponent implements OnInit, OnDestroy {
 		return thumb.id;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

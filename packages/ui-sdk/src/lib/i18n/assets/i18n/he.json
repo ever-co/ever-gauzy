@@ -4130,7 +4130,14 @@
 			"BROWSER_EXTENSION": "הרחבת דפדפן",
 			"TEAMS": "קבוצות"
 		},
-		"LAST_WORKED": "עבד לאחרונה:"
+		"LAST_WORKED": "עבד לאחרונה:",
+		"TIME_ZONE": "אזור זמן",
+		"TIME_FORMAT": "תבנית זמן",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "אזור הזמן של הארגון",
+			"MY_TIMEZONE": "אזור הזמן שלי"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

@@ -17,6 +17,11 @@
 				</ng-container>
 			</div>
 			<div class="mb-4 ml-auto col-auto d-flex align-items-center">
+				<ga-timezone-filter
+					(timeFormatChange)="timeFormatChanged($event)"
+					(timeZoneChange)="timeZoneChanged($event)"
+				></ga-timezone-filter>
+				<div class="mr-2"></div>
 				<button
 					class="manage-widget"
 					status="basic"
@@ -66,14 +71,8 @@
 <!-- widgets -->
 <ng-template #widget>
 	<ng-container *ngIf="!hideEmployeeBlock">
-		<ng-container
-			*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
-		>
-			<nb-card
-				[nbSpinner]="countsLoading"
-				nbSpinnerSize="giant"
-				nbSpinnerStatus="primary"
-			>
+		<ng-container *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE">
+			<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 				<nb-card-body>
 					<div class="header-widget">
 						<div class="title">
@@ -97,11 +96,7 @@
 </ng-template>
 <ng-template #widget>
 	<ng-container *ngIf="!hideProjectBlock">
-		<nb-card
-			[nbSpinner]="countsLoading"
-			nbSpinnerSize="giant"
-			nbSpinnerStatus="primary"
-		>
+		<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 			<nb-card-body>
 				<div class="header-widget">
 					<div class="title">
@@ -123,11 +118,7 @@
 	</ng-container>
 </ng-template>
 <ng-template #widget>
-	<nb-card
-		[nbSpinner]="countsLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
 				<div class="title">
@@ -136,20 +127,13 @@
 			</div>
 			<div class="h1">{{ counts?.todayActivities || 0 }}%</div>
 			<div class="counter-container">
-				<gauzy-counter-point
-					[progress]="true"
-					[value]="counts?.todayActivities || 0"
-				></gauzy-counter-point>
+				<gauzy-counter-point [progress]="true" [value]="counts?.todayActivities || 0"></gauzy-counter-point>
 			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
 <ng-template #widget>
-	<nb-card
-		[nbSpinner]="countsLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<div class="header-widget">
 				<div class="title">
@@ -170,11 +154,7 @@
 	</nb-card>
 </ng-template>
 <ng-template #widget>
-	<nb-card
-		[nbSpinner]="countsLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<ng-container [ngSwitch]="selectedPeriod">
 				<div class="header-widget">
@@ -187,10 +167,8 @@
 						</ng-template>
 						<ng-template [ngSwitchDefault]>
 							{{
-								(isCurrentWeek()
-									? 'TIMESHEET.WORKED_THIS_WEEK'
-									: 'TIMESHEET.WORKED_FOR_WEEK'
-								) | translate
+								(isCurrentWeek() ? 'TIMESHEET.WORKED_THIS_WEEK' : 'TIMESHEET.WORKED_FOR_WEEK')
+									| translate
 							}}
 						</ng-template>
 					</div>
@@ -210,11 +188,7 @@
 	</nb-card>
 </ng-template>
 <ng-template #widget>
-	<nb-card
-		[nbSpinner]="countsLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="countsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-body>
 			<ng-container [ngSwitch]="selectedPeriod">
 				<div class="header-widget">
@@ -233,29 +207,17 @@
 			</ng-container>
 			<div class="h1">{{ counts?.weekActivities || 0 }}%</div>
 			<div class="counter-container">
-				<gauzy-counter-point
-					[progress]="true"
-					[value]="counts?.weekActivities || 0"
-				></gauzy-counter-point>
+				<gauzy-counter-point [progress]="true" [value]="counts?.weekActivities || 0"></gauzy-counter-point>
 			</div>
 		</nb-card-body>
 	</nb-card>
 </ng-template>
 <!-- Windows -->
 <ng-template #window>
-	<nb-card
-		[nbSpinner]="timeSlotLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
-		<nb-card-header>{{
-			'TIMESHEET.RECENT_ACTIVITIES' | translate
-		}}</nb-card-header>
+	<nb-card [nbSpinner]="timeSlotLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+		<nb-card-header>{{ 'TIMESHEET.RECENT_ACTIVITIES' | translate }}</nb-card-header>
 		<nb-card-body class="custom-card-body-inner">
-			<ng-template
-				[ngIf]="timeSlotEmployees?.length > 0"
-				[ngIfElse]="noScreenshot"
-			>
+			<ng-template [ngIf]="timeSlotEmployees?.length > 0" [ngIfElse]="noScreenshot">
 				<div class="row" *ngFor="let employee of timeSlotEmployees">
 					<ng-container *ngIf="employee?.timeSlots?.length > 0">
 						<div class="col">
@@ -267,48 +229,33 @@
 										[name]="employee?.user?.name"
 										[src]="employee?.user?.imageUrl"
 										[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
-										[caption]="
-											(employee?.timeSlots)[0]?.startedAt
-												| utcToLocal
-												| dateFormat
-										"
+										[caption]="(employee?.timeSlots)[0]?.startedAt | utcToLocal | dateFormat"
 										[id]="employee?.id"
 									></ngx-avatar>
 								</ng-template>
 								<div></div>
 								<div class="button-container">
 									<div class="swiper-button-container">
-										<div
-											class="swiper-button"
-											(click)="slidePrev(swiper)"
-										>
+										<div class="swiper-button" (click)="slidePrev(swiper)">
 											<i class="fas fa-angle-left"></i>
 										</div>
-										<div
-											class="swiper-button"
-											(click)="slideNext(swiper)"
-										>
+										<div class="swiper-button" (click)="slideNext(swiper)">
 											<i class="fas fa-angle-right"></i>
 										</div>
 									</div>
-									<div *ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
-										 class="view-all">
+									<div
+										*ngxPermissionsOnly="PermissionsEnum.CHANGE_SELECTED_EMPLOYEE"
+										class="view-all"
+									>
 										<ng-container>
 											<button
 												nbButton
 												status="primary"
 												size="small"
 												outline
-												(click)="
-													redirectToScreenshots(
-														employee
-													)
-												"
+												(click)="redirectToScreenshots(employee)"
 											>
-												{{
-													'BUTTONS.VIEW_ALL'
-														| translate
-												}}
+												{{ 'BUTTONS.VIEW_ALL' | translate }}
 											</button>
 										</ng-container>
 									</div>
@@ -329,9 +276,11 @@
 									#swiper
 									class="m-swiper"
 								>
-									<ng-container *ngFor=" let timeSlot of employee.timeSlots">
+									<ng-container *ngFor="let timeSlot of employee.timeSlots">
 										<ng-template swiperSlide>
 											<ngx-screenshots-item
+												[timeformat]="filters?.timeFormat"
+												[timezone]="filters?.timeZone"
 												[timeSlot]="timeSlot"
 												(delete)="onDelete()"
 												[multiple]="false"
@@ -346,10 +295,7 @@
 				</div>
 			</ng-template>
 			<ng-template #noScreenshot>
-				<ng-container
-					*ngIf="!timeSlotLoading"
-					[ngSwitch]="selectedPeriod"
-				>
+				<ng-container *ngIf="!timeSlotLoading" [ngSwitch]="selectedPeriod">
 					<div class="text-center p-3">
 						<ng-template [ngSwitchCase]="RangePeriod.DAY">
 							{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
@@ -367,27 +313,14 @@
 	</nb-card>
 </ng-template>
 <ng-template #window>
-	<nb-card
-		[nbSpinner]="manualTimeLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="manualTimeLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.MANUAL_TIME' | translate }}
 		</nb-card-header>
-		<ng-template
-			[ngIf]="manualTimes?.length > 0"
-			[ngIfElse]="noManualTimes"
-		>
+		<ng-template [ngIf]="manualTimes?.length > 0" [ngIfElse]="noManualTimes">
 			<nb-card-body class="custom-card-body-inner-list">
 				<div class="custom-card-button">
-					<button
-						nbButton
-						status="primary"
-						outline
-						size="small"
-						(click)="redirectToManualTimeReport()"
-					>
+					<button nbButton status="primary" outline size="small" (click)="redirectToManualTimeReport()">
 						{{ 'BUTTONS.VIEW_REPORT' | translate }}
 					</button>
 				</div>
@@ -438,10 +371,7 @@
 			</nb-card-body>
 		</ng-template>
 		<ng-template #noManualTimes>
-			<ng-container
-				*ngIf="!manualTimeLoading"
-				[ngSwitch]="selectedPeriod"
-			>
+			<ng-container *ngIf="!manualTimeLoading" [ngSwitch]="selectedPeriod">
 				<div class="text-center p-3">
 					<ng-template [ngSwitchCase]="RangePeriod.DAY">
 						{{ 'TIMESHEET.NO_MANUAL_TIME_DAY' | translate }}
@@ -458,24 +388,14 @@
 	</nb-card>
 </ng-template>
 <ng-template #window>
-	<nb-card
-		[nbSpinner]="tasksLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="tasksLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header class="nb-card-header">
 			{{ 'TIMESHEET.TASKS' | translate }}
 		</nb-card-header>
 		<ng-template [ngIf]="tasks?.length > 0" [ngIfElse]="noTasks">
 			<nb-card-body class="custom-card-body-inner-list">
 				<div class="custom-card-button">
-					<button
-						size="small"
-						nbButton
-						status="primary"
-						outline
-						(click)="redirectToTask()"
-					>
+					<button size="small" nbButton status="primary" outline (click)="redirectToTask()">
 						{{ 'BUTTONS.VIEW_ALL' | translate }}
 					</button>
 				</div>
@@ -492,11 +412,7 @@
 										<nb-progress-bar
 											class="mb-1 ml-3 mr-3 w-100 custom-progress"
 											[value]="task.durationPercentage"
-											[status]="
-												progressStatus(
-													task.durationPercentage
-												)
-											"
+											[status]="progressStatus(task.durationPercentage)"
 											[displayValue]="true"
 											size="tiny"
 										>
@@ -530,11 +446,7 @@
 	</nb-card>
 </ng-template>
 <ng-template #window>
-	<nb-card
-		[nbSpinner]="projectsLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
+	<nb-card [nbSpinner]="projectsLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 		<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
 		<ng-template [ngIf]="projects?.length > 0" [ngIfElse]="noProjects">
 			<nb-card-body class="custom-card-body-inner-list">
@@ -551,11 +463,7 @@
 										<nb-progress-bar
 											class="mb-1 ml-3 mr-3 w-100 custom-progress"
 											[value]="project.durationPercentage"
-											[status]="
-												progressStatus(
-													project.durationPercentage
-												)
-											"
+											[status]="progressStatus(project.durationPercentage)"
 											[displayValue]="true"
 											size="tiny"
 										>
@@ -589,24 +497,12 @@
 	</nb-card>
 </ng-template>
 <ng-template #window>
-	<nb-card
-		[nbSpinner]="activitiesLoading"
-		nbSpinnerSize="giant"
-		nbSpinnerStatus="primary"
-	>
-		<nb-card-header class="nb-card-header"
-			>{{ 'TIMESHEET.APPS_URLS' | translate }}
-		</nb-card-header>
+	<nb-card [nbSpinner]="activitiesLoading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+		<nb-card-header class="nb-card-header">{{ 'TIMESHEET.APPS_URLS' | translate }} </nb-card-header>
 		<ng-template [ngIf]="activities?.length > 0" [ngIfElse]="noActivities">
 			<nb-card-body class="custom-card-body-inner-list">
 				<div class="custom-card-button">
-					<button
-						nbButton
-						status="primary"
-						size="small"
-						outline
-						(click)="redirectToAppUrlReport()"
-					>
+					<button nbButton status="primary" size="small" outline (click)="redirectToAppUrlReport()">
 						{{ 'BUTTONS.VIEW_REPORT' | translate }}
 					</button>
 				</div>
@@ -624,10 +520,7 @@
 			</nb-card-body>
 		</ng-template>
 		<ng-template #noActivities>
-			<ng-container
-				*ngIf="!activitiesLoading"
-				[ngSwitch]="selectedPeriod"
-			>
+			<ng-container *ngIf="!activitiesLoading" [ngSwitch]="selectedPeriod">
 				<div class="text-center p-3">
 					<ng-template [ngSwitchCase]="RangePeriod.DAY">
 						{{ 'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate }}
@@ -660,17 +553,14 @@
 							<div class="w-100">
 								<div class="row font-weight-bold">
 									<div class="col-3">
-										{{
-											'TIMESHEET.MEMBER_INFO' | translate
-										}}
+										{{ 'TIMESHEET.MEMBER_INFO' | translate }}
 									</div>
 									<div class="col-3 text-center">
 										{{ 'TIMESHEET.TODAY' | translate }}
 									</div>
 									<div class="col text-left">
 										{{
-											(selectedPeriod ===
-											RangePeriod.PERIOD
+											(selectedPeriod === RangePeriod.PERIOD
 												? 'TIMESHEET.OVER_PERIOD'
 												: 'TIMESHEET.THIS_WEEK'
 											) | translate
@@ -695,78 +585,35 @@
 									<div class="col-3 text-center">
 										<div class="activity">
 											<div class="duration">
-												{{
-													member?.todayTime
-														?.duration || 0
-														| durationFormat
-												}}
+												{{ member?.todayTime?.duration || 0 | durationFormat }}
 											</div>
 											<div class="activity-percentage">
 												<nb-badge
-													[status]="
-														progressStatus(
-															member?.todayTime
-																?.overall
-														)
-													"
-													[text]="
-														(member?.todayTime
-															?.overall || 0) +
-														'%'
-													"
+													[status]="progressStatus(member?.todayTime?.overall)"
+													[text]="(member?.todayTime?.overall || 0) + '%'"
 												></nb-badge>
 											</div>
 										</div>
 									</div>
 									<div class="col text-center">
-										<div
-											[ngClass]="
-												!isMoreThanWeek()
-													? 'd-flex'
-													: ''
-											"
-										>
+										<div [ngClass]="!isMoreThanWeek() ? 'd-flex' : ''">
 											<div class="activity text-center">
 												<div class="duration">
-													{{
-														member?.weekTime
-															?.duration || 0
-															| durationFormat
-													}}
+													{{ member?.weekTime?.duration || 0 | durationFormat }}
 												</div>
-												<div
-													class="activity-percentage"
-												>
+												<div class="activity-percentage">
 													<nb-badge
-														[status]="
-															progressStatus(
-																member?.weekTime
-																	?.overall
-															)
-														"
-														[text]="
-															(member?.weekTime
-																?.overall ||
-																0) + '%'
-														"
+														[status]="progressStatus(member?.weekTime?.overall)"
+														[text]="(member?.weekTime?.overall || 0) + '%'"
 													></nb-badge>
 												</div>
 											</div>
-											<ng-container
-												*ngIf="!isMoreThanWeek()"
-											>
-												<div
-													class="member-weekly-activity-graph"
-												>
+											<ng-container *ngIf="!isMoreThanWeek()">
+												<div class="member-weekly-activity-graph">
 													<div
-														*ngFor="
-															let weekHour of member.weekHours
-														"
+														*ngFor="let weekHour of member.weekHours"
 														class="bar-graph-entry"
-														[style.height]="
-															weekHour.duration +
-															'%'
-														"
+														[style.height]="weekHour.duration + '%'"
 													></div>
 												</div>
 											</ng-container>
@@ -779,24 +626,16 @@
 				</div>
 			</ng-template>
 			<ng-template #noMember>
-				<ng-container
-					*ngIf="!memberLoading"
-					[ngSwitch]="selectedPeriod"
-				>
+				<ng-container *ngIf="!memberLoading" [ngSwitch]="selectedPeriod">
 					<div class="text-center p-3">
 						<ng-template [ngSwitchCase]="RangePeriod.DAY">
 							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
 						</ng-template>
 						<ng-template [ngSwitchCase]="RangePeriod.WEEK">
-							{{
-								'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate
-							}}
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_WEEK' | translate }}
 						</ng-template>
 						<ng-template [ngSwitchCase]="RangePeriod.PERIOD">
-							{{
-								'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD'
-									| translate
-							}}
+							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_PERIOD' | translate }}
 						</ng-template>
 					</div>
 				</ng-container>
@@ -810,9 +649,7 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WIDGETS' | translate }}
-				<button class="manage-widget undo" (click)="undo()" nbButton>
-					<i class="fas fa-undo"></i>Undo
-				</button>
+				<button class="manage-widget undo" (click)="undo()" nbButton><i class="fas fa-undo"></i>Undo</button>
 			</div>
 			<ng-container *ngIf="widgets.length > 0">
 				<ng-container *ngFor="let widget of widgets">
@@ -834,11 +671,7 @@
 		<div class="category">
 			<div class="view">
 				{{ 'TIMESHEET.VIEW_WINDOWS' | translate
-				}}<button
-					class="manage-widget undo"
-					(click)="undo(true)"
-					nbButton
-				>
+				}}<button class="manage-widget undo" (click)="undo(true)" nbButton>
 					<i class="fas fa-undo"></i>Undo
 				</button>
 			</div>
@@ -852,9 +685,7 @@
 							class="fas fa-check"
 						></i>
 						<div>
-							{{
-								titleMapper(window.position, false) | translate
-							}}
+							{{ titleMapper(window.position, false) | translate }}
 						</div>
 					</div>
 				</ng-container>

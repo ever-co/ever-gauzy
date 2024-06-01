@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @NgModule({
@@ -7,4 +7,11 @@ import { CommonModule } from '@angular/common';
 	exports: [],
 	providers: []
 })
-export class UiSdkModule {}
+export class UiSdkModule {
+	static forRoot(): ModuleWithProviders<UiSdkModule> {
+		return {
+			ngModule: UiSdkModule,
+			providers: []
+		};
+	}
+}

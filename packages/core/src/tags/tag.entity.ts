@@ -58,13 +58,24 @@ import {
 	User,
 	Warehouse
 } from '../core/entities/internal';
-import { ColumnIndex, EmbeddedColumn, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../core/decorators/entity';
-import { MikroOrmTagEntityCustomFields, TagEntityCustomFields, TypeOrmTagEntityCustomFields } from '../core/entities/custom-entity-fields/tag';
+import {
+	ColumnIndex,
+	EmbeddedColumn,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../core/decorators/entity';
+import {
+	MikroOrmTagEntityCustomFields,
+	TagEntityCustomFields,
+	TypeOrmTagEntityCustomFields
+} from '../core/entities/custom-entity-fields/tag';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 
 @MultiORMEntity('tag', { mikroOrmRepository: () => MikroOrmTagRepository })
 export class Tag extends TenantOrganizationBaseEntity implements ITag {
-
 	[EntityRepositoryType]?: MikroOrmTagRepository;
 
 	@ApiProperty({ type: () => String, required: true })
@@ -117,7 +128,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		nullable: true,
 
 		/** Database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	organizationTeam?: IOrganizationTeam;
 
@@ -230,7 +241,7 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 	 */
 	@MultiORMManyToMany(() => OrganizationProject, (it) => it.tags, {
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	organizationProjects?: IOrganizationProject[];
 
@@ -359,14 +370,6 @@ export class Tag extends TenantOrganizationBaseEntity implements ITag {
 		onDelete: 'CASCADE'
 	})
 	organizations?: IOrganization[];
-
-	/*
-	|--------------------------------------------------------------------------
-	| Embeddable Columns
-	|--------------------------------------------------------------------------
-	*/
-	// @EmbeddedColumn(() => CustomTagEntityTyepOrmFields, { prefix: false })
-	// customFields?: CustomTagEntityTyepOrmFields;
 
 	/*
 	|--------------------------------------------------------------------------
