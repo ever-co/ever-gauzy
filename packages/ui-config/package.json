@@ -22,17 +22,26 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"test": "jest",
-		"test:e2e": "jest --config ./__test__/jest.config.json",
-		"build": "rimraf dist && yarn run compile",
-		"build:prod": "yarn ts-node scripts/replace-env-files.ts && yarn build",
-		"compile": "tsc -p tsconfig.build.json"
+		"lib:build": "ng build @gauzy/ui-config --configuration development",
+		"lib:build:prod": "yarn ts-node scripts/replace-env-files.ts && ng build @gauzy/ui-config --configuration production",
+		"lib:watch": "ng build @gauzy/ui-config --watch --configuration development",
+		"clean": "rimraf dist"
 	},
+	"peerDependencies": {},
+	"dependencies": {},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"keywords": [
 		"gauzy",
 		"angular",
@@ -41,5 +50,9 @@
 		"settings",
 		"library"
 	],
+	"engines": {
+		"node": ">=16.20.1",
+		"yarn": ">=1.22.19"
+	},
 	"sideEffects": false
 }

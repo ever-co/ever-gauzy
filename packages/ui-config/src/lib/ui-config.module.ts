@@ -7,10 +7,10 @@ import { CommonModule } from '@angular/common';
 	exports: [],
 	providers: []
 })
-export class UiSdkModule {
-	static forRoot(): ModuleWithProviders<UiSdkModule> {
+export class UiConfigModule {
+	static forRoot(): ModuleWithProviders<UiConfigModule> {
 		return {
-			ngModule: UiSdkModule,
+			ngModule: UiConfigModule,
 			providers: []
 		};
 	}

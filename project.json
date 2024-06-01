@@ -4,11 +4,12 @@
 	"projects": {
 		"gauzy-e2e": {
 			"tags": [],
-			"implicitDependencies": [
-				"gauzy"
-			]
+			"implicitDependencies": ["gauzy"]
 		},
 		"@gauzy/ui-sdk": {
+			"tags": []
+		},
+		"@gauzy/ui-config": {
 			"tags": []
 		},
 		"@gauzy/job-search-ui-plugin": {
