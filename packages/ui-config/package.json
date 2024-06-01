@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/ui-config",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -8,14 +8,31 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist",
+		"test": "__test__"
 	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	"publishConfig": {
+		"access": "restricted"
 	},
-	"homepage": "https://ever.co",
+	"scripts": {
+		"test": "jest",
+		"test:e2e": "jest --config ./__test__/jest.config.json",
+		"build": "rimraf dist && yarn run compile",
+		"build:prod": "yarn ts-node scripts/replace-env-files.ts && yarn build",
+		"compile": "tsc -p tsconfig.build.json"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.33",
+		"rimraf": "^3.0.2",
+		"typescript": "5.1.6"
+	},
 	"keywords": [
 		"gauzy",
 		"angular",
@@ -23,13 +40,6 @@
 		"environment",
 		"settings",
 		"library"
-	],	
-	"dependencies": {
-		"@angular/core": "^16.2.12"
-	},
-	"sideEffects": false,
-	"private": true,
-	"publishConfig": {
-		"access": "restricted"
-	}
+	],
+	"sideEffects": false
 }
