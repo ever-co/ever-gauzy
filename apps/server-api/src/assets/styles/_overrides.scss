@@ -1,0 +1,724 @@
+@import 'themes';
+@import 'var';
+
+/* Apply style on scrollbar for Firefox */
+* {
+  scrollbar-color: var(--gauzy-scrollbar) transparent;
+  scrollbar-width: thin;
+}
+
+/*  Apply style on scrollbar for Chrome */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: var(--scrollbar-width);
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--gauzy-scrollbar);
+  border-radius: 1rem;
+}
+
+body {
+  -ms-overflow-style: none;
+}
+
+.cdk-global-scrollblock {
+  overflow-y: auto;
+}
+
+.cdk-overlay-container {
+  z-index: 1050 !important;
+}
+
+.dashboard-card-scroll nb-card {
+  background: var(--background-basic-color-1);
+  box-shadow: var(--gauzy-shadow);
+}
+
+@mixin nb-overrides() {
+  nb-route-tabset .route-tab.active .tab-link {
+    background: var(--gauzy-card-2);
+    margin-bottom: 1px;
+  }
+
+  nb-tabset .tab.active .tab-link {
+    background-color: var(--gauzy-card-2);
+    margin-bottom: 1px;
+  }
+
+  nb-toggle .toggle {
+    align-items: center;
+  }
+
+  .scrollable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cdk-global-scrollblock {
+    overflow-y: auto;
+  }
+
+  .h1 {
+    color: var(--gauzy-text-color-1);
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 44px;
+    letter-spacing: 0em;
+  }
+
+  // overrides bootstrap svg style
+  nb-icon svg {
+    vertical-align: top;
+  }
+
+  nb-auth-block .links nb-icon {
+    font-size: 2.5rem;
+  }
+
+  nb-select.size-medium button {
+    padding: 0.4375rem 2.2rem 0.4375rem 1.125rem !important;
+
+    nb-icon {
+      right: 0.41rem !important;
+    }
+  }
+
+  nb-card nb-list {
+    @include nb-scrollbars(
+      var(--card-scrollbar-color),
+      var(--card-scrollbar-background-color),
+      var(--card-scrollbar-width)
+    );
+  }
+
+  nb-flip-card {
+    .front-container {
+      -webkit-backface-visibility: visible;
+    }
+
+    .back-container {
+      -webkit-backface-visibility: hidden;
+    }
+
+    .flipped {
+      .front-container {
+        -webkit-backface-visibility: hidden;
+      }
+
+      .back-container {
+        -webkit-backface-visibility: visible;
+      }
+    }
+  }
+
+  nb-layout {
+    .scrollable-container {
+      overflow-y: auto !important;
+    }
+  }
+
+  nb-layout .layout .layout-container nb-sidebar {
+    &,
+    .main-container-fixed {
+      top: var(--header-height);
+    }
+  }
+
+  //Override footer padding from 1.25rem to 0.45rem
+  nb-layout .layout .layout-container .content nb-layout-footer nav {
+    padding: 0.45rem !important;
+  }
+  //Override header padding from 1.25rem to 0.5rem
+  nb-layout .layout nb-layout-header nav {
+    padding: 0rem !important;
+    height: auto !important;
+  }
+
+  // Override default min-width for nb-select
+  nb-layout .card-scroll nb-select .select-button {
+    min-width: unset !important;
+  }
+
+  nb-select button {
+    height: 2.625rem !important;
+  }
+
+  nb-sidebar {
+    nb-menu {
+      .menu-items {
+        scrollbar-width: thin;
+
+        &::-webkit-scrollbar {
+          width: var(--scrollbar-width);
+        }
+
+        &::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: var(--gauzy-scrollbar);
+          border-radius: 1rem;
+        }
+      }
+    }
+  }
+
+  .ng-dropdown-panel {
+    background-color: var(--gauzy-card-5) !important;
+
+    .scroll-host {
+      scrollbar-width: thin;
+
+      &::-webkit-scrollbar {
+        width: var(--scrollbar-width);
+      }
+
+      &::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      &::-webkit-scrollbar-thumb {
+        background: var(--gauzy-scrollbar);
+        border-radius: 1rem;
+      }
+    }
+  }
+
+  angular2-smart-table table {
+    border-collapse: separate !important;
+
+    .angular2-smart-filter input {
+      height: 32px;
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      border: none !important;
+    }
+
+    .angular2-smart-filter .ng-select .ng-select-container {
+      background-color: var(--gauzy-sidebar-background-3) !important;
+      height: 32px;
+      min-height: auto;
+
+      input {
+        background-color: transparent !important;
+      }
+    }
+
+        .angular2-smart-filter .ng-select .ng-select-container .ng-value-container .ng-placeholder {
+      font-size: 13px;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0em;
+      color: var(--input-basic-placeholder-text-color);
+    }
+  }
+
+  .card-scroll {
+    height: calc(100vh - 157px);
+    min-height: auto !important;
+
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+
+      nb-card-body {
+        overflow: hidden;
+        height: 100%;
+      }
+    }
+  }
+  .dashboard-card-scroll {
+    height: calc(100vh - 270px);
+    min-height: auto !important;
+
+    nb-card {
+      height: auto !important;
+      min-height: auto !important;
+
+      nb-card-body {
+        overflow: hidden;
+        height: 100%;
+      }
+    }
+  }
+
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 20px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top) / 4);
+  }
+
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 150px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top) / 2);
+  }
+
+  @media screen and (min-width: calc(var(--layout-window-mode-max-width) + 300px)) {
+    @include f-window-mode(var(--layout-window-mode-padding-top));
+  }
+
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+    background: var(--background-basic-color-1);
+    color: var(--gauzy-text-color-1);
+    transition-duration: 0.15s;
+    transition-property: border, background-color, color, box-shadow;
+    transition-timing-function: ease-in;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    line-height: 1.5rem;
+  }
+
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option:hover {
+    background-color: var(--color-primary-transparent-default) !important;
+  }
+
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-marked {
+    color: var(--gauzy-text-color-1);
+    background-color: var(--background-basic-color-1) !important;
+  }
+
+  .ng-dropdown-panel .ng-dropdown-panel-items .ng-option-selected {
+    color: var(--text-primary-color) !important;
+    background-color: var(--color-primary-transparent-default) !important;
+  }
+
+  .ng-value-container .ng-input input {
+    background-color: transparent;
+    color: var(--text-basic-color);
+  }
+
+  .ng-dropdown-panel {
+    transform: translateY(10px);
+    box-shadow: var(--gauzy-shadow);
+    border-width: 0 !important;
+
+    &.ng-select-bottom {
+      border-radius: var(--border-radius);
+    }
+
+    .ng-dropdown-panel-items {
+      border-radius: var(--border-radius);
+
+      img {
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        z-index: 10000001;
+      }
+    }
+  }
+
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-input > input {
+    color: var(--gauzy-text-color-1);
+  }
+
+  .ng-select .ng-select-container {
+    color: var(--text-basic-color) !important;
+  }
+
+  .setting-block {
+    background-color: var(--background-basic-color-2) !important;
+    color: var(--text-basic-color) !important;
+  }
+  .info-block-wrapper {
+    background-color: var(--background-basic-color-2) !important;
+    color: var(--text-basic-color) !important;
+  }
+  .info-block-wrapper .info-block--highlight {
+    background: var(--background-basic-color-3) !important;
+  }
+  .info-text {
+    color: var(--text-basic-color) !important;
+  }
+  a > nb-icon {
+    color: var(--text-basic-color) !important;
+  }
+  .records {
+    box-shadow: var(--gauzy-shadow) !important;
+    background: var(--background-basic-color-1) !important;
+  }
+  .profit-history {
+    box-shadow: var(--gauzy-shadow) !important;
+    background: var(--background-basic-color-1) !important;
+  }
+  tr {
+    background-color: var(--background-basic-color-1) !important;
+  }
+  .table {
+    color: var(--text-basic-color) !important;
+  }
+  nb-accordion-item-body .item-body {
+    overflow-x: hidden;
+  }
+}
+
+@mixin f-window-mode($padding-top) {
+  nb-layout.window-mode nb-layout-header.fixed {
+    top: $padding-top;
+  }
+
+  nb-sidebar .main-container-fixed {
+    height: calc(100vh - #{var(--header-height)} - #{$padding-top}) !important;
+    top: calc(#{var(--header-height)} + #{$padding-top}) !important;
+  }
+}
+
+angular2-smart-table tbody tr {
+  background: rgba(126, 126, 143, 0.05);
+
+  &:hover {
+    background: rgba(126, 126, 143, 0.05);
+  }
+
+  &.selected {
+    box-shadow: 12.5px 0px 0px -5px rgba(126, 126, 143, 0.05) inset !important;
+
+    &:first-child {
+      border-top-left-radius: var(--border-radius);
+      border-top-right-radius: var(--border-radius);
+    }
+
+    &:last-child {
+      border-bottom-left-radius: var(--border-radius);
+      border-bottom-right-radius: var(--border-radius);
+    }
+  }
+}
+
+nb-card-header {
+  &.card-header-title,
+  .card-header-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+nb-card-body {
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-self: flex-end;
+    width: 100%;
+
+    ga-pagination {
+      width: 100%;
+    }
+  }
+}
+
+// ng smart table scroll container
+.table-scroll-container,
+.grid-scroll-container {
+  border-radius: var(--border-radius);
+  overflow-y: auto;
+  max-height: calc(100vh - 28rem);
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
+  @include respond(dsk) {
+    max-height: calc(70vh - 132px);
+  }
+
+  table thead tr:nth-of-type(1) {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+  }
+
+  table thead {
+    position: sticky;
+    z-index: 100;
+    height: 100%;
+    top: -1px;
+  }
+
+  angular2-smart-table table tr th {
+    border-top: 1px solid var(--gauzy-border-table);
+    border-bottom: 1px solid var(--gauzy-border-table);
+  }
+
+  table thead th {
+    border-left: none;
+    border-right: none;
+
+    &:first-child {
+      border-left: 1px solid var(--gauzy-border-table);
+      border-radius: var(--border-radius) 0 0 var(--border-radius);
+    }
+
+    &:last-child {
+      border-right: 1px solidvar(--gauzy-border-table);
+      border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    }
+  }
+
+  table tbody tr {
+    &:last-child td {
+      border-bottom: none;
+    }
+
+    td {
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      border-bottom: 1px solid var(--gauzy-border-table);
+    }
+  }
+
+  tr:first-child td:first-child {
+    border-top-left-radius: var(--border-radius);
+  }
+
+  tr:first-child td:last-child {
+    border-top-right-radius: var(--border-radius);
+  }
+
+  tr:last-child td:first-child {
+    border-bottom-left-radius: var(--border-radius);
+  }
+
+  tr:last-child td:last-child {
+    border-bottom-right-radius: var(--border-radius);
+  }
+
+  tbody:before {
+    content: '@';
+    display: block;
+    line-height: 4px;
+    text-indent: -99999px;
+  }
+}
+
+.grid-scroll-container {
+  max-height: 100%;
+}
+
+nb-tabset .tab.active .tab-link {
+  background-color: var(--gauzy-card-2);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+angular2-smart-table {
+  angular2-smart-table-pager {
+    nav.angular2-smart-pagination-nav .pagination {
+      border: none;
+
+      li:not(:last-child) {
+        border-right: 0px solid black;
+      }
+
+      li {
+        cursor: pointer;
+
+        &.active span {
+          color: var(--text-primary-color);
+          background-color: var(--background-basic-color-3);
+          border-radius: var(--button-rectangle-border-radius);
+        }
+
+        span {
+          font-size: 0.875rem;
+          background-color: transparent;
+          padding: 0.75rem 1rem;
+          color: var(--text-basic-color);
+        }
+      }
+
+      a {
+        margin: 3px;
+      }
+
+      .page-link-next,
+      .page-link-prev {
+        box-shadow: 1px 2px 2px var(--background-basic-color-4);
+        border-radius: 20px;
+        padding: 0rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    :host {
+      display: flex;
+      justify-content: space-between;
+
+      select {
+        margin: 1rem 0 1rem 1rem;
+      }
+
+      label {
+        margin: 1rem 0 1rem 1rem;
+        line-height: 2.5rem;
+      }
+    }
+  }
+}
+
+.tooltip-container {
+  text-align: right;
+  z-index: 1041;
+  position: fixed;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0em;
+
+  color: var(--gauzy-text-color-2);
+  width: auto;
+  box-sizing: border-box;
+  opacity: 0;
+  /* Auto layout */
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 10px;
+  gap: 10px;
+
+  position: absolute;
+
+  background: var(--gauzy-siderbar-background-5);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius);
+  transform: translate(-16.75px, -118.5%);
+  animation: tooltip-slide 0.1s ease-out 0.18s;
+  animation-fill-mode: forwards;
+  pointer-events: none;
+
+  i {
+    color: var(--gauzy-text-color-1);
+  }
+}
+
+@keyframes tooltip-slide {
+  0% {
+    opacity: 0;
+    transform: translate(-16.75px, -118.5%);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-16.75px, -118.5%);
+  }
+}
+
+.nb-theme-material-light {
+  a > nb-icon {
+    color: #ffffff !important;
+  }
+}
+
+.nb-theme-default nb-select .select-button {
+  min-width: var(--select-min-width) !important;
+}
+
+.nb-theme-default nb-accordion-item-header {
+  padding: var(--accordion-padding);
+}
+
+// TODO overrides perfectly chevron-down unicode
+.ng-select {
+  .ng-select-container {
+    border-radius: var(--border-radius);
+    box-shadow: var(--gauzy-shadow) inset;
+    height: 42px !important;
+  }
+
+  .ng-arrow {
+    font-family: 'Font Awesome\ 6 Free' !important;
+    border-color: inherit !important;
+    border-width: 0 !important;
+    font-size: 10px;
+    font-weight: 900;
+    top: 0 !important;
+    left: -4px;
+    @include nb-ltr(left, -4px);
+    @include nb-rtl(right, -4px);
+    color: var(--select-outline-basic-icon-color);
+    text-align: center;
+    transform: rotate(0deg);
+    transform-origin: 5.5px 8.6px;
+    @include nb-ltr(transform-origin, 5.5px 8.6px);
+    @include nb-rtl(transform-origin, -5.5px 8.6px);
+    transition: transform 0.2s ease;
+
+    &:before {
+      content: '\f078';
+      font-weight: 900;
+    }
+  }
+
+  &.ng-select-opened {
+    .ng-arrow {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+angular2-smart-table table tr.angular2-smart-titles .angular2-smart-sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+}
+
+angular2-smart-table table tr.angular2-smart-titles th a.sort {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 15px;
+  letter-spacing: 0em;
+  color: var(--gauzy-text-color-2) !important;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+
+  &.asc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 5 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      transform: rotate(180deg) !important;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+
+    &:after {
+      display: none;
+    }
+  }
+
+  &.desc {
+    &:before {
+      color: rgba(126, 126, 143, 0.25);
+      font-size: 10px;
+      font-family: 'Font Awesome\ 6 Free' !important;
+      content: '\f063' !important;
+      font-weight: 900;
+      top: 55% !important;
+      right: 0.625rem !important;
+    }
+
+    &:after {
+      display: none;
+    }
+  }
+}
+
+.backdrop-blur {
+  backdrop-filter: blur(4px);
+  background-color: #0000004a;
+}
+
+input {
+  height: 2.625rem !important;
+}
