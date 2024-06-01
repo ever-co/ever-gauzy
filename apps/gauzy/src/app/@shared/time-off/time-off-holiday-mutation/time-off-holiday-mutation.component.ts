@@ -8,8 +8,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { environment as ENV } from '@gauzy/ui-config';
 import { EmployeesService, Store, ToastrService } from '../../../@core/services';
-import { environment as ENV } from './../../../../environments/environment';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

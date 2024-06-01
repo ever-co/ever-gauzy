@@ -1,0 +1,24 @@
+{
+	"compilerOptions": {
+		"outDir": "../../dist/apps/gauzy-api-server",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"downlevelIteration": true,
+		"esModuleInterop": true,
+		"module": "commonjs",
+		"target": "ES2022",
+		"types": [
+			"pino-pretty"
+		]
+	},
+	"files": [
+		"global.d.ts"
+	],
+	"include": [
+		"src/index.ts",
+		"src/preload"
+	]
+}

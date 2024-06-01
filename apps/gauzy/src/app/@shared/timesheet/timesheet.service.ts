@@ -23,9 +23,9 @@ import {
 	IBasePerTenantAndOrganizationEntityModel
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable, firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../../@core/constants/app.constants';
 
 @Injectable({
 	providedIn: 'root'

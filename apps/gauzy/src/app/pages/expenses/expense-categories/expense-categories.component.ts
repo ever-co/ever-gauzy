@@ -18,7 +18,7 @@ import {
 } from '../../../@shared/pagination/pagination-filter-base.component';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	OrganizationExpenseCategoriesService,

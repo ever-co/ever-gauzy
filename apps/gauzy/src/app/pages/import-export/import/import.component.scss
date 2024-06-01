@@ -1,5 +1,5 @@
+@import 'gauzy/gauzy-table';
 @import '../export/export.component.scss';
-@import '../../../@theme/styles/gauzy/gauzy-table';
 
 .well {
   height: 180px;
@@ -28,7 +28,7 @@
 
 .import-data {
   display: flex;
-  gap: 1rem
+  gap: 1rem;
 }
 
 .import-zone {
@@ -55,7 +55,7 @@
 
     .progress-percent {
       display: flex;
-      gap: 10px
+      gap: 10px;
     }
 
     .progress {
@@ -160,7 +160,7 @@
 
   .selected {
     background-color: rgba(126, 126, 143, 0.1);
-    box-shadow: -6px 0 0 0 rgba(0, 0, 0, .15);
+    box-shadow: -6px 0 0 0 rgba(0, 0, 0, 0.15);
     border-radius: 8px 0 0 8px;
 
     &.border-bottom {
@@ -178,5 +178,4 @@ nb-badge {
   letter-spacing: 0em;
   text-align: left;
   padding: 4px 8px;
-
 }

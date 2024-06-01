@@ -1,6 +1,10 @@
 {
 	"name": "@gauzy/ui-sdk",
-	"version": "0.0.1",
+	"version": "0.1.0",
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
 	"dependencies": {
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
@@ -9,7 +13,7 @@
 		"ckeditor4-angular": "^5.1.0",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"sideEffects": false
 }

@@ -8,6 +8,7 @@ import { OrganizationProjectController } from './organization-project.controller
 import { OrganizationProjectService } from './organization-project.service';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 
 @Module({
 	imports: [
@@ -23,7 +24,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		CqrsModule
 	],
 	controllers: [OrganizationProjectController],
-	providers: [OrganizationProjectService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, OrganizationProjectService]
+	providers: [OrganizationProjectService, TypeOrmOrganizationProjectRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, OrganizationProjectService, TypeOrmOrganizationProjectRepository]
 })
 export class OrganizationProjectModule {}

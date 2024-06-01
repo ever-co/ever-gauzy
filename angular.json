@@ -7,7 +7,9 @@
 		},
 		"packageManager": "yarn",
 		"analytics": false,
-		"schematicCollections": ["@nstudio/xplat"]
+		"schematicCollections": [
+			"@nstudio/xplat"
+		]
 	},
 	"version": 1,
 	"newProjectRoot": "",
@@ -38,7 +40,9 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": [
+								"packages/ui-sdk/src/lib/static/styles"
+							]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -62,7 +66,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -72,6 +76,7 @@
 						],
 						"allowedCommonJsDependencies": [
 							"@gauzy/contracts",
+							"@gauzy/ui-config",
 							"@gauzy/integration-hubstaff",
 							"brace",
 							"brace/mode/handlebars",
@@ -90,8 +95,8 @@
 						"production": {
 							"fileReplacements": [
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -177,6 +182,45 @@
 				}
 			}
 		},
+		"@gauzy/ui-config": {
+			"projectType": "library",
+			"root": "packages/ui-config",
+			"sourceRoot": "packages/ui-config",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/ui-config/src/lib/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/ui-config/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/ui-config/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/ui-config/tsconfig.spec.json",
+						"polyfills": [
+							"zone.js",
+							"zone.js/testing"
+						]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
 		"@gauzy/ui-sdk": {
 			"projectType": "library",
 			"root": "packages/ui-sdk",
@@ -202,7 +246,10 @@
 					"builder": "@angular-devkit/build-angular:karma",
 					"options": {
 						"tsConfig": "packages/ui-sdk/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
+						"polyfills": [
+							"zone.js",
+							"zone.js/testing"
+						]
 					}
 				}
 			},
@@ -238,7 +285,10 @@
 					"builder": "@angular-devkit/build-angular:karma",
 					"options": {
 						"tsConfig": "packages/plugins/job-search-ui/tsconfig.spec.json",
-						"polyfills": ["zone.js", "zone.js/testing"]
+						"polyfills": [
+							"zone.js",
+							"zone.js/testing"
+						]
 					}
 				}
 			},
@@ -270,7 +320,9 @@
 				"lint": {
 					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"lintFilePatterns": ["apps/gauzy-e2e/**/*.{js,ts}"]
+						"lintFilePatterns": [
+							"apps/gauzy-e2e/**/*.{js,ts}"
+						]
 					}
 				}
 			}
@@ -431,7 +483,9 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": [
+								"packages/ui-sdk/src/lib/static/styles"
+							]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -441,7 +495,9 @@
 							{
 								"glob": "**/*",
 								"input": "apps/desktop/src/",
-								"ignore": ["**/*.ts"],
+								"ignore": [
+									"**/*.ts"
+								],
 								"output": ""
 							},
 							{
@@ -460,7 +516,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -477,8 +533,8 @@
 									"with": "apps/desktop/src/environments/environment.prod.ts"
 								},
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -533,7 +589,9 @@
 						"maxWorkers": 4,
 						"memoryLimit": 7000,
 						"tsConfig": "apps/api/tsconfig.app.json",
-						"assets": ["apps/api/src/assets"]
+						"assets": [
+							"apps/api/src/assets"
+						]
 					},
 					"configurations": {
 						"production": {
@@ -576,9 +634,14 @@
 						"tsConfig": "apps/desktop/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/desktop-timer/src/assets/styles"]
+							"includePaths": [
+								"apps/desktop-timer/src/assets/styles"
+							]
 						},
-						"assets": ["apps/desktop/src/favicon.ico", "apps/desktop/src/assets"],
+						"assets": [
+							"apps/desktop/src/favicon.ico",
+							"apps/desktop/src/assets"
+						],
 						"styles": [
 							"node_modules/@nebular/theme/styles/prebuilt/default.css",
 							"node_modules/bootstrap/dist/css/bootstrap.css",
@@ -591,7 +654,7 @@
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
@@ -604,8 +667,8 @@
 									"with": "apps/desktop/src/environments/environment.prod.ts"
 								},
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -676,7 +739,9 @@
 						"memoryLimit": 7000,
 						"webpackConfig": "tools/build/webpack.config.js",
 						"tsConfig": "packages/desktop-api/tsconfig.app.json",
-						"assets": ["packages/desktop-api/src/assets"]
+						"assets": [
+							"packages/desktop-api/src/assets"
+						]
 					},
 					"configurations": {
 						"production": {
@@ -760,7 +825,9 @@
 						"tsConfig": "apps/desktop-timer/tsconfig.app.json",
 						"aot": true,
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/desktop-timer/src/assets/styles"]
+							"includePaths": [
+								"apps/desktop-timer/src/assets/styles"
+							]
 						},
 						"assets": [
 							"apps/desktop-timer/src/favicon.ico",
@@ -768,7 +835,9 @@
 							{
 								"glob": "**/*",
 								"input": "apps/desktop-timer/src/",
-								"ignore": ["**/*.ts"],
+								"ignore": [
+									"**/*.ts"
+								],
 								"output": ""
 							},
 							{
@@ -801,8 +870,8 @@
 									"with": "apps/desktop-timer/src/environments/environment.prod.ts"
 								},
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -847,12 +916,17 @@
 				"lint": {
 					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"lintFilePatterns": ["apps/desktop-timer/src/**/*.ts", "apps/desktop-timer/src/**/*.html"]
+						"lintFilePatterns": [
+							"apps/desktop-timer/src/**/*.ts",
+							"apps/desktop-timer/src/**/*.html"
+						]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
-					"outputs": ["coverage/apps/desktop-timer"],
+					"outputs": [
+						"coverage/apps/desktop-timer"
+					],
 					"options": {
 						"jestConfig": "apps/desktop-timer/jest.config.js",
 						"passWithNoTests": true
@@ -889,7 +963,9 @@
 							{
 								"glob": "**/*",
 								"input": "apps/server/src/",
-								"ignore": ["**/*.ts"],
+								"ignore": [
+									"**/*.ts"
+								],
 								"output": ""
 							}
 						],
@@ -909,7 +985,9 @@
 						],
 						"scripts": [],
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/server/src/assets/styles"]
+							"includePaths": [
+								"apps/server/src/assets/styles"
+							]
 						}
 					},
 					"configurations": {
@@ -920,8 +998,8 @@
 									"with": "apps/server/src/environments/environment.prod.ts"
 								},
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -966,12 +1044,17 @@
 				"lint": {
 					"builder": "@nrwl/linter:eslint",
 					"options": {
-						"lintFilePatterns": ["apps/server/src/**/*.ts", "apps/server/src/**/*.html"]
+						"lintFilePatterns": [
+							"apps/server/src/**/*.ts",
+							"apps/server/src/**/*.html"
+						]
 					}
 				},
 				"test": {
 					"builder": "@nrwl/jest:jest",
-					"outputs": ["coverage/apps/server"],
+					"outputs": [
+						"coverage/apps/server"
+					],
 					"options": {
 						"jestConfig": "apps/server/jest.config.js",
 						"passWithNoTests": true
@@ -1002,7 +1085,9 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["apps/gauzy/src/app/@theme/styles"]
+							"includePaths": [
+								"packages/ui-sdk/src/lib/static/styles"
+							]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -1025,7 +1110,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"apps/gauzy/src/app/@theme/styles/styles.scss",
+							"packages/ui-sdk/src/lib/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -1038,8 +1123,8 @@
 						"production": {
 							"fileReplacements": [
 								{
-									"replace": "apps/gauzy/src/environments/environment.ts",
-									"with": "apps/gauzy/src/environments/environment.prod.ts"
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
 								}
 							],
 							"optimization": true,
@@ -1094,7 +1179,172 @@
 						"maxWorkers": 4,
 						"memoryLimit": 7000,
 						"tsConfig": "apps/api/tsconfig.app.json",
-						"assets": ["apps/api/src/assets"]
+						"assets": [
+							"apps/api/src/assets"
+						]
+					},
+					"configurations": {
+						"production": {
+							"optimization": true,
+							"extractLicenses": false,
+							"inspect": false,
+							"sourceMap": true,
+							"fileReplacements": [
+								{
+									"replace": "packages/config/src/environments/environment.ts",
+									"with": "packages/config/src/environments/environment.prod.ts"
+								}
+							]
+						}
+					}
+				}
+			}
+		},
+		"gauzy-api-server": {
+			"projectType": "application",
+			"schematics": {
+				"@nrwl/angular:component": {
+					"style": "scss"
+				}
+			},
+			"root": "apps/server-api",
+			"sourceRoot": "apps/server-api/src",
+			"prefix": "gauzy",
+			"architect": {
+				"build": {
+					"builder": "./apps/gauzy/node_modules/@angular-builders/custom-webpack:browser",
+					"options": {
+						"customWebpackConfig": {
+							"path": "apps/server-api/config/custom-webpack.config.js"
+						},
+						"outputPath": "dist/apps/gauzy-api-server",
+						"index": "apps/server-api/src/index.html",
+						"main": "apps/server-api/src/main.ts",
+						"polyfills": "apps/server-api/src/polyfills.ts",
+						"tsConfig": "apps/server-api/tsconfig.app.json",
+						"aot": true,
+						"assets": [
+							"apps/server-api/src/favicon.ico",
+							"apps/server-api/src/assets",
+							{
+								"glob": "**/*",
+								"input": "apps/server-api/src/",
+								"ignore": [
+									"**/*.ts"
+								],
+								"output": ""
+							}
+						],
+						"styles": [
+							"node_modules/@nebular/theme/styles/prebuilt/default.css",
+							"node_modules/bootstrap/dist/css/bootstrap.css",
+							"node_modules/typeface-exo/index.css",
+							"node_modules/roboto-fontface/css/roboto/roboto-fontface.css",
+							"node_modules/ionicons/dist/scss/ionicons.scss",
+							"node_modules/@fortawesome/fontawesome-free/css/all.css",
+							"node_modules/socicon/css/socicon.css",
+							"node_modules/nebular-icons/scss/nebular-icons.scss",
+							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
+							"node_modules/leaflet/dist/leaflet.css",
+							"apps/server-api/src/assets/styles/styles.scss",
+							"node_modules/@ng-select/ng-select/themes/default.theme.css"
+						],
+						"scripts": [],
+						"stylePreprocessorOptions": {
+							"includePaths": [
+								"apps/server-api/src/assets/styles"
+							]
+						}
+					},
+					"configurations": {
+						"production": {
+							"fileReplacements": [
+								{
+									"replace": "apps/server-api/src/environments/environment.ts",
+									"with": "apps/server-api/src/environments/environment.prod.ts"
+								},
+								{
+									"replace": "packages/ui-config/src/lib/environments/environment.ts",
+									"with": "packages/ui-config/src/lib/environments/environment.prod.ts"
+								}
+							],
+							"optimization": true,
+							"outputHashing": "all",
+							"sourceMap": true,
+							"namedChunks": false,
+							"extractLicenses": true,
+							"vendorChunk": false,
+							"buildOptimizer": true,
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "20mb",
+									"maximumError": "40mb"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "15kb",
+									"maximumError": "40kb"
+								}
+							]
+						}
+					}
+				},
+				"serve": {
+					"builder": "@angular-devkit/build-angular:dev-server",
+					"options": {
+						"browserTarget": "server-api:build"
+					},
+					"configurations": {
+						"production": {
+							"browserTarget": "server-api:build:production"
+						}
+					}
+				},
+				"extract-i18n": {
+					"builder": "@angular-devkit/build-angular:extract-i18n",
+					"options": {
+						"browserTarget": "server-api:build"
+					}
+				},
+				"lint": {
+					"builder": "@nrwl/linter:eslint",
+					"options": {
+						"lintFilePatterns": [
+							"apps/server-api/src/**/*.ts",
+							"apps/server-api/src/**/*.html"
+						]
+					}
+				},
+				"test": {
+					"builder": "@nrwl/jest:jest",
+					"options": {
+						"jestConfig": "apps/server-api/jest.config.js",
+						"passWithNoTests": true
+					}
+				}
+			}
+		},
+		"server-api": {
+			"root": "apps/api",
+			"sourceRoot": "apps/api/src",
+			"projectType": "application",
+			"prefix": "api",
+			"schematics": {},
+			"architect": {
+				"build": {
+					"builder": "@nrwl/node:webpack",
+					"options": {
+						"outputPath": "dist/apps/gauzy-api-server/api",
+						"main": "apps/api/src/main.ts",
+						"showCircularDependencies": false,
+						"sourceMap": true,
+						"maxWorkers": 4,
+						"memoryLimit": 7000,
+						"tsConfig": "apps/api/tsconfig.app.json",
+						"assets": [
+							"apps/api/src/assets"
+						]
 					},
 					"configurations": {
 						"production": {

@@ -1,4 +1,4 @@
-@import '../../../@theme/styles/themes.scss';
+@import 'themes';
 
 @include nb-install-component {
   nb-card {
@@ -174,7 +174,7 @@
         padding: 1rem 1.5rem;
         border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
 
-        >span {
+        > span {
           display: flex;
 
           .col-fixed {
@@ -221,13 +221,13 @@
 }
 
 h4 {
-	font-size: 24px;
-	font-weight: 600;
-	line-height: 30px;
-	letter-spacing: 0em;
-	text-align: left;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+  letter-spacing: 0em;
+  text-align: left;
 
-	.menu-setting {
-		font-weight: 400;
-	}
+  .menu-setting {
+    font-weight: 400;
+  }
 }

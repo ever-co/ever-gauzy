@@ -25,7 +25,7 @@ import {
 	SelectorBuilderService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {

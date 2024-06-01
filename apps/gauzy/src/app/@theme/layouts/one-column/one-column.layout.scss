@@ -1,6 +1,6 @@
-@import '../../styles/themes';
-@import 'bootstrap/scss/mixins/breakpoints';
 @import '@nebular/theme/styles/global/breakpoints';
+@import 'bootstrap/scss/mixins/breakpoints';
+@import 'themes';
 
 @include nb-install-component() {
   .menu-sidebar ::ng-deep .scrollable {
@@ -140,29 +140,17 @@ nb-sidebar[tag='menu-sidebar'] {
   }
 }
 ::ng-deep {
-  nb-layout
-    .layout
-    .layout-container
-    nb-sidebar[tag='menu-sidebar']
-    .main-container-fixed {
+  nb-layout .layout .layout-container nb-sidebar[tag='menu-sidebar'] .main-container-fixed {
     top: 0;
     height: 100vh;
     z-index: 1041;
   }
-  nb-layout
-    .layout
-    .layout-container
-    nb-sidebar[tag='user-workspace']
-    .main-container-fixed {
+  nb-layout .layout .layout-container nb-sidebar[tag='user-workspace'] .main-container-fixed {
     top: 0;
     height: 100vh;
     z-index: 1041;
   }
-  nb-layout
-    .layout
-    .layout-container
-    nb-sidebar.settings-sidebar.expanded
-    .main-container-fixed {
+  nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
     top: 10px;
     height: fit-content;
     max-height: 100vh;
@@ -176,11 +164,7 @@ nb-sidebar[tag='menu-sidebar'] {
       overflow: unset;
     }
   }
-  nb-layout
-    .layout
-    .layout-container
-    nb-sidebar.changelog-sidebar.expanded
-    .main-container-fixed {
+  nb-layout .layout .layout-container nb-sidebar.changelog-sidebar.expanded .main-container-fixed {
     top: calc(var(--header-height) - 27px);
     height: fit-content;
     max-height: 100vh;
@@ -196,11 +180,7 @@ nb-sidebar[tag='menu-sidebar'] {
   }
 
   @media screen and (min-width: 1940px) {
-    nb-layout.window-mode
-      nb-layout-header.fixed
-      ~ .layout-container
-      nb-sidebar
-      .main-container-fixed {
+    nb-layout.window-mode nb-layout-header.fixed ~ .layout-container nb-sidebar .main-container-fixed {
       top: 0;
       height: 100vh;
       z-index: 1041;
@@ -209,12 +189,7 @@ nb-sidebar[tag='menu-sidebar'] {
 }
 
 ::ng-deep {
-  nb-layout
-    .layout
-    .layout-container
-    nb-sidebar
-    .main-container-fixed
-    > .scrollable {
+  nb-layout .layout .layout-container nb-sidebar .main-container-fixed > .scrollable {
     overflow-y: auto;
   }
 }
@@ -239,13 +214,7 @@ nb-sidebar[tag='menu-sidebar'] {
 .custom-box .custom-row.button {
   flex: 0 1 auto;
 }
-:host
-  ::ng-deep
-  nb-layout
-  .layout
-  .layout-container
-  nb-sidebar.settings-sidebar.expanded
-  .main-container-fixed {
+:host ::ng-deep nb-layout .layout .layout-container nb-sidebar.settings-sidebar.expanded .main-container-fixed {
   @include nb-ltr(right, 20px);
   @include nb-rtl(left, 20px);
 }

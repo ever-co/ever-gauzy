@@ -11,7 +11,7 @@ import {
 	IOptionsSelect
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class OrganizationsService {

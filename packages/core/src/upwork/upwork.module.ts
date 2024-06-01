@@ -14,7 +14,7 @@ import { UpworkTransactionService } from './upwork-transaction.service';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationContactModule } from './../organization-contact/organization-contact.module';
 import { IntegrationMapModule } from './../integration-map/integration-map.module';
-import { TimeSlotService } from '../time-tracking/time-slot/time-slot.service';
+import { TimeSlotModule } from '../time-tracking/time-slot/time-slot.module';
 import { ExpenseModule } from './../expense/expense.module';
 import { IncomeModule } from './../income/income.module';
 import { Activity, TimeLog, TimeSlot, TimeSlotMinute } from './../core/entities/internal';
@@ -22,12 +22,7 @@ import { UpworkController } from './upwork.controller';
 import { UpworkService } from './upwork.service';
 import { UpworkAuthorizationController } from './upwork-authorization.controller';
 
-const forFeatureEntities = [
-	TimeSlot,
-	Activity,
-	TimeLog,
-	TimeSlotMinute
-];
+const forFeatureEntities = [TimeSlot, Activity, TimeLog, TimeSlotMinute];
 
 @Module({
 	imports: [
@@ -45,16 +40,10 @@ const forFeatureEntities = [
 		IncomeModule,
 		ExpenseModule,
 		ExpenseCategoriesModule,
+		TimeSlotModule,
 		CqrsModule
 	],
 	controllers: [UpworkAuthorizationController, UpworkController],
-	providers: [
-		UpworkJobService,
-		UpworkOffersService,
-		UpworkTransactionService,
-		UpworkReportService,
-		UpworkService,
-		TimeSlotService
-	]
+	providers: [UpworkJobService, UpworkOffersService, UpworkTransactionService, UpworkReportService, UpworkService]
 })
-export class UpworkModule { }
+export class UpworkModule {}

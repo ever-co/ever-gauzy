@@ -5,11 +5,6 @@ import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { getDummyImage } from '../core';
 import {
-	Contact,
-	Organization,
-	Skill
-} from '../core/entities/internal';
-import {
 	DefaultValueDateTypeEnum,
 	BonusTypeEnum,
 	WeekDaysEnum,
@@ -20,11 +15,9 @@ import {
 	DEFAULT_DATE_FORMATS
 } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/config';
+import { Contact, Organization, Skill } from '../core/entities/internal';
 
-export const getDefaultOrganization = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IOrganization> => {
+export const getDefaultOrganization = async (dataSource: DataSource, tenant: ITenant): Promise<IOrganization> => {
 	const repo = dataSource.getRepository(Organization);
 	const existedOrganization = await repo.findOne({
 		where: { tenantId: tenant.id, isDefault: true }
@@ -32,10 +25,7 @@ export const getDefaultOrganization = async (
 	return existedOrganization;
 };
 
-export const getDefaultOrganizations = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IOrganization[]> => {
+export const getDefaultOrganizations = async (dataSource: DataSource, tenant: ITenant): Promise<IOrganization[]> => {
 	const repo = dataSource.getRepository(Organization);
 	const organizations = await repo.find({
 		where: { tenantId: tenant.id }
@@ -61,9 +51,10 @@ export const createDefaultOrganizations = async (
 			.values()
 			.value();
 		const defaultOrganization: IOrganization = new Organization();
-		const { name, currency, defaultValueDateType, imageUrl, isDefault } = organization;
+		const { name, currency, defaultValueDateType, imageUrl, isDefault, totalEmployees } = organization;
 		defaultOrganization.name = name;
 		defaultOrganization.isDefault = isDefault;
+		defaultOrganization.totalEmployees = totalEmployees;
 		defaultOrganization.profile_link = generateLink(name);
 		defaultOrganization.currency = currency;
 		defaultOrganization.defaultValueDateType = defaultValueDateType;
@@ -98,31 +89,19 @@ export const createDefaultOrganizations = async (
 			timezone.tz.names().filter((zone) => zone.includes('/'))
 		);
 		defaultOrganization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
-		defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(
-			Object.keys(AlignmentOptions)
-		);
-		defaultOrganization.fiscalStartDate = moment(new Date())
-			.add(faker.number.int(10), 'days')
-			.toDate();
-		defaultOrganization.fiscalEndDate = moment(
-			defaultOrganization.fiscalStartDate
-		)
+		defaultOrganization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
+		defaultOrganization.fiscalStartDate = moment(new Date()).add(faker.number.int(10), 'days').toDate();
+		defaultOrganization.fiscalEndDate = moment(defaultOrganization.fiscalStartDate)
 			.add(faker.number.int(10), 'days')
 			.toDate();
 		defaultOrganization.futureDateAllowed = true;
 		defaultOrganization.inviteExpiryPeriod = faker.number.int(50);
-		defaultOrganization.numberFormat = faker.helpers.arrayElement([
-			'USD',
-			'BGN',
-			'ILS'
-		]);
+		defaultOrganization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
 		defaultOrganization.officialName = faker.company.name();
 		defaultOrganization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 		defaultOrganization.startWeekOn = WeekDaysEnum.MONDAY;
 		defaultOrganization.tenant = tenant;
-		defaultOrganization.valueDate = moment(new Date())
-			.add(faker.number.int(10), 'days')
-			.toDate();
+		defaultOrganization.valueDate = moment(new Date()).add(faker.number.int(10), 'days').toDate();
 
 		defaultOrganizations.push(defaultOrganization);
 	});
@@ -137,7 +116,6 @@ export const createRandomOrganizations = async (
 	tenants: ITenant[],
 	organizationsPerTenant: number
 ): Promise<Map<ITenant, IOrganization[]>> => {
-
 	const defaultDateTypes = Object.values(DefaultValueDateTypeEnum);
 	const skills = await getSkills(dataSource);
 	const contacts = await getContacts(dataSource);
@@ -160,16 +138,12 @@ export const createRandomOrganizations = async (
 				const logoAbbreviation = _extractLogoAbbreviation(companyName);
 
 				organization.name = companyName;
-				organization.isDefault = (index === 0) || false;
+				organization.isDefault = index === 0 || false;
+				organization.totalEmployees = 5; //No of random employees seeded will be (employeesPerOrganization * organizationsPerTenant * tenants)
 				organization.profile_link = generateLink(companyName);
 				organization.currency = env.defaultCurrency;
-				organization.defaultValueDateType =
-					defaultDateTypes[index % defaultDateTypes.length];
-				organization.imageUrl = getDummyImage(
-					330,
-					300,
-					logoAbbreviation
-				);
+				organization.defaultValueDateType = defaultDateTypes[index % defaultDateTypes.length];
+				organization.imageUrl = getDummyImage(330, 300, logoAbbreviation);
 				organization.invitesAllowed = true;
 				organization.overview = faker.person.jobDescriptor();
 				organization.short_description = faker.person.jobDescriptor();
@@ -204,31 +178,19 @@ export const createRandomOrganizations = async (
 					timezone.tz.names().filter((zone) => zone.includes('/'))
 				);
 				organization.dateFormat = faker.helpers.arrayElement(DEFAULT_DATE_FORMATS);
-				organization.defaultAlignmentType = faker.helpers.arrayElement(
-					Object.keys(AlignmentOptions)
-				);
-				organization.fiscalStartDate = moment(new Date())
-					.add(faker.number.int(10), 'days')
-					.toDate();
-				organization.fiscalEndDate = moment(
-					organization.fiscalStartDate
-				)
+				organization.defaultAlignmentType = faker.helpers.arrayElement(Object.keys(AlignmentOptions));
+				organization.fiscalStartDate = moment(new Date()).add(faker.number.int(10), 'days').toDate();
+				organization.fiscalEndDate = moment(organization.fiscalStartDate)
 					.add(faker.number.int(10), 'days')
 					.toDate();
 				organization.futureDateAllowed = true;
 				organization.inviteExpiryPeriod = faker.number.int(50);
-				organization.numberFormat = faker.helpers.arrayElement([
-					'USD',
-					'BGN',
-					'ILS'
-				]);
+				organization.numberFormat = faker.helpers.arrayElement(['USD', 'BGN', 'ILS']);
 				organization.officialName = faker.company.name();
 				organization.separateInvoiceItemTaxAndDiscount = faker.datatype.boolean();
 				organization.startWeekOn = WeekDaysEnum.MONDAY;
 				organization.tenant = tenant;
-				organization.valueDate = moment(new Date())
-					.add(faker.number.int(10), 'days')
-					.toDate();
+				organization.valueDate = moment(new Date()).add(faker.number.int(10), 'days').toDate();
 
 				randomOrganizations.push(organization);
 			}
@@ -239,10 +201,7 @@ export const createRandomOrganizations = async (
 	return tenantOrganizations;
 };
 
-const insertOrganizations = async (
-	dataSource: DataSource,
-	organizations: IOrganization[]
-): Promise<void> => {
+const insertOrganizations = async (dataSource: DataSource, organizations: IOrganization[]): Promise<void> => {
 	await dataSource.manager.save(organizations);
 };
 
@@ -253,12 +212,8 @@ const _extractLogoAbbreviation = (companyName: string) => {
 
 	let logoAbbreviation = logoFirstLetter;
 
-	if (
-		companyNameLastEmptyLetterIndex !== -1 &&
-		companyNameLastEmptyLetterIndex !== logoFirstWordFirstLetterIndex
-	) {
-		const logoLastWordFirstLetterIndex =
-			companyNameLastEmptyLetterIndex + 1;
+	if (companyNameLastEmptyLetterIndex !== -1 && companyNameLastEmptyLetterIndex !== logoFirstWordFirstLetterIndex) {
+		const logoLastWordFirstLetterIndex = companyNameLastEmptyLetterIndex + 1;
 		const logoSecondLetter = companyName[logoLastWordFirstLetterIndex];
 
 		logoAbbreviation += logoSecondLetter;
@@ -268,15 +223,12 @@ const _extractLogoAbbreviation = (companyName: string) => {
 };
 
 const randomBonus = () => {
-	const randomNumberBetween = (min, max) =>
-		Math.floor(Math.random() * (max - min + 1) + min);
+	const randomNumberBetween = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
 	const bonusType = Object.values(BonusTypeEnum)[randomNumberBetween(0, 1)];
 
 	const bonusPercentage =
-		bonusType === BonusTypeEnum.PROFIT_BASED_BONUS
-			? randomNumberBetween(65, 75)
-			: randomNumberBetween(5, 10);
+		bonusType === BonusTypeEnum.PROFIT_BASED_BONUS ? randomNumberBetween(65, 75) : randomNumberBetween(5, 10);
 
 	return { bonusType, bonusPercentage };
 };

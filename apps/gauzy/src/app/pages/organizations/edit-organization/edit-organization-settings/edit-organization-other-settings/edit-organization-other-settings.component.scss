@@ -1,447 +1,448 @@
-@import '../../../../../@theme/styles/themes';
-@import '../../../../../@theme/styles/var';
+@import 'themes';
+@import 'var';
 
 :host {
-	height: 100%;
+  height: 100%;
 }
 
 // !important exclusively for overriding Bootstrap and Nebular styles, which cannot be touched otherwise.
 
 // main sections
 :host .main-form {
-	width: 100%;
-	background-color: nb-theme(gauzy-card-2);
-	display: flex;
-	justify-content: space-between;
-	padding: 20px;
-	@include nb-ltr(padding-right, 8px);
-	@include nb-rtl(padding-left, 8px);
-	overflow: hidden;
-	height: calc(100vh - 19.25rem);
-	overflow-y: scroll;
+  width: 100%;
+  background-color: nb-theme(gauzy-card-2);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
+  overflow: hidden;
+  height: calc(100vh - 19.25rem);
+  overflow-y: scroll;
 }
 .aside-nav {
-	width: 180px;
-	background-color: nb-theme(gauzy-card-3);
-	padding: 13px 18px;
-	border-radius: nb-theme(border-radius);
-	height: fit-content;
-	& .settings-section-header {
-		font-size: 14px;
-		font-style: normal;
-		font-weight: 600;
-		line-height: 17px;
-		letter-spacing: 0em;
-		text-align: left;
-		margin-bottom: 18px;
-	}
-	ul {
-		padding-left: 0;
-		padding-right: 0;
-		display: inline-flex;
-		flex-direction: column;
-		height: fit-content;
-		& li {
-			display: inline-flex;
-			padding: 10px 15px;
-			margin-bottom: 10px;
-			font-size: 13px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 16px;
-			letter-spacing: 0em;
-			text-align: left;
-			background: nb-theme(gauzy-sidebar-background-3);
-			border-radius: nb-theme(button-rectangle-border-radius);
-			list-style: none;
-			cursor: pointer;
-			box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-			&.active {
-				background: nb-theme(background-basic-color-1);
-				box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
-			}
-		}
-	}
+  width: 180px;
+  background-color: nb-theme(gauzy-card-3);
+  padding: 13px 18px;
+  border-radius: nb-theme(border-radius);
+  height: fit-content;
+  & .settings-section-header {
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
+    margin-bottom: 18px;
+  }
+  ul {
+    padding-left: 0;
+    padding-right: 0;
+    display: inline-flex;
+    flex-direction: column;
+    height: fit-content;
+    & li {
+      display: inline-flex;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0em;
+      text-align: left;
+      background: nb-theme(gauzy-sidebar-background-3);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      list-style: none;
+      cursor: pointer;
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      &.active {
+        background: nb-theme(background-basic-color-1);
+        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+      }
+    }
+  }
 }
 .actions {
-	margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .fields-section {
-	width: calc(100% - 230px);
+  width: calc(100% - 230px);
 }
 :host .accordion-section {
-	overflow: auto;
-	max-height: calc(100% - 3rem);
-	@include nb-ltr(padding-right, 8px);
-	@include nb-rtl(padding-left, 8px);
+  overflow: auto;
+  max-height: calc(100% - 3rem);
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
 }
 // end of main sections.
 
 // misc
 .form-group {
-	margin-bottom: 0;
+  margin-bottom: 0;
 }
 .col-6 {
-	padding-left: 10px;
-	padding-right: 10px;
-	max-width: 49% !important;
+  padding-left: 10px;
+  padding-right: 10px;
+  max-width: 49% !important;
 }
 .active {
-	background: #ffffff;
+  background: #ffffff;
 }
 
 // start of nb-overrides
 nb-accordion {
-	box-shadow: none;
+  box-shadow: none;
 
-	& nb-accordion-item-header {
-		border-bottom: none;
-		border-radius: 0.5rem;
-		padding-left: 20px;
-		padding-right: 20px;
+  & nb-accordion-item-header {
+    border-bottom: none;
+    border-radius: 0.5rem;
+    padding-left: 20px;
+    padding-right: 20px;
 
-		& ::ng-deep nb-icon {
-			border-radius: 6px;
-			width: 23px;
-			height: 23px;
-			border: 1px solid rgba(66, 66, 66, 0.2);
-		}
-	}
-	& nb-accordion-item-header,
-	nb-accordion-item-body,
-	nb-accordion-item {
-		background-color: nb-theme(gauzy-card-3);
-	}
-	& nb-accordion-item-body {
-		padding-left: 15px;
-		padding-right: 15px;
-	}
+    & ::ng-deep nb-icon {
+      border-radius: 6px;
+      width: 23px;
+      height: 23px;
+      border: 1px solid rgba(66, 66, 66, 0.2);
+    }
+  }
+  & nb-accordion-item-header,
+  nb-accordion-item-body,
+  nb-accordion-item {
+    background-color: nb-theme(gauzy-card-3);
+  }
+  & nb-accordion-item-body {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
 
-	// separate accordion styles for each one because of input fields colors, layouts, etc.
-	// some media queries here,... too much useless nesting otherwise
-	nb-accordion-item {
-		border-radius: 0.5rem;
-		margin-bottom: 20px;
+  // separate accordion styles for each one because of input fields colors, layouts, etc.
+  // some media queries here,... too much useless nesting otherwise
+  nb-accordion-item {
+    border-radius: 0.5rem;
+    margin-bottom: 20px;
 
-		& .item-body {
-			padding: 15px;
-		}
-		&:first-of-type {
-			::ng-deep .select-button,
-			::ng-deep .ng-select-container {
-				background-color: nb-theme(background-basic-color-1) !important;
-			}
-			::ng-deep .date-picker-form ng-select {
-				width: 60%;
-			}
-			.fields {
-				width: 75%;
-				@include respond(md) {
-					width: 100%;
-				}
-			}
-			.time-format-select {
-				width: 30%;
-			}
-			.row {
-				align-items: center;
-			}
-		}
-		&:nth-of-type(2) {
-			.select-wrapper {
-				display: flex;
-			}
-			.label {
-				white-space: nowrap;
-			}
-			.design-select {
-				width: 140px;
-				margin-right: 15px;
-			}
-			@include respond(md) {
-				.color-pick {
-					width: 100%;
-				}
-			}
-		}
-		&:nth-of-type(3) {
-			.row {
-				padding-left: 0 !important;
-				padding-right: 0 !important;
+    & .item-body {
+      padding: 15px;
+    }
+    &:first-of-type {
+      ::ng-deep .select-button,
+      ::ng-deep .ng-select-container {
+        background-color: nb-theme(background-basic-color-1) !important;
+      }
+      ::ng-deep .date-picker-form ng-select {
+        width: 60%;
+      }
+      .fields {
+        width: 75%;
+        @include respond(md) {
+          width: 100%;
+        }
+      }
+      .time-format-select {
+        width: 30%;
+      }
+      .row {
+        align-items: center;
+      }
+    }
+    &:nth-of-type(2) {
+      .select-wrapper {
+        display: flex;
+      }
+      .label {
+        white-space: nowrap;
+      }
+      .design-select {
+        width: 140px;
+        margin-right: 15px;
+      }
+      @include respond(md) {
+        .color-pick {
+          width: 100%;
+        }
+      }
+    }
+    &:nth-of-type(3) {
+      .row {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
 
-				&.fiscal-years {
-					width: 400px;
-					display: flex;
-					justify-content: space-between;
-					margin-left: -5px;
-					margin-right: -5px;
+        &.fiscal-years {
+          width: 400px;
+          display: flex;
+          justify-content: space-between;
+          margin-left: -5px;
+          margin-right: -5px;
 
-					@include respond(lg) {
-						margin: 0;
-					}
-					@include respond(md) {
-						width: 100%;
-					}
-					& .year-pick {
-						width: 170px;
-						@include respond(md) {
-							width: 49%;
-						}
-					}
-				}
-				&.toggles {
-					width: 500px;
-					display: flex;
-					flex-direction: column;
-					margin-left: -5px;
-					margin-right: -5px;
+          @include respond(lg) {
+            margin: 0;
+          }
+          @include respond(md) {
+            width: 100%;
+          }
+          & .year-pick {
+            width: 170px;
+            @include respond(md) {
+              width: 49%;
+            }
+          }
+        }
+        &.toggles {
+          width: 500px;
+          display: flex;
+          flex-direction: column;
+          margin-left: -5px;
+          margin-right: -5px;
 
-					@include respond(lg) {
-						margin: 0;
-					}
-					@include respond(md) {
-						width: 100%;
-					}
-					& .toggle-switch {
-						margin-bottom: 5px;
-					}
-				}
-				&.half-width-inputs {
-					display: flex;
-					align-items: flex-end;
-					margin-bottom: 10px;
-					padding-left: 0;
-					padding-right: 0;
-					@include respond(sm) {
-						flex-direction: column;
-					}
-				}
-			}
-		}
-		&:nth-of-type(5) {
-			.row {
-				& input {
-					padding: 10px;
-				}
-			}
-		}
-		&:nth-of-type(6) {
-			.row {
-				width: 50%;
-				@include respond(md) {
-					width: 100%;
-				}
-			}
-			.form-group {
-				width: 100%;
-				padding-left: 10px;
-				padding-right: 10px;
-				@include respond(lg) {
-					padding-right: 0;
-					padding-left: 0;
-				}
-			}
-		}
-		&:nth-of-type(7) {
-			.col-6 {
-				margin-bottom: 12px;
-			}
-			@include respond(sm) {
-				.row {
-					width: 100%;
-				}
-			}
-		}
-		&:nth-of-type(8) {
-			.col-6 {
-				margin-bottom: 12px;
-			}
-			.col-12 {
-				padding: 0;
-				margin: 0;
-			}
-			@include respond(sm) {
-				.row {
-					width: 100%;
-				}
-			}
-		}
-	}
+          @include respond(lg) {
+            margin: 0;
+          }
+          @include respond(md) {
+            width: 100%;
+          }
+          & .toggle-switch {
+            margin-bottom: 5px;
+          }
+        }
+        &.half-width-inputs {
+          display: flex;
+          align-items: flex-end;
+          margin-bottom: 10px;
+          padding-left: 0;
+          padding-right: 0;
+          @include respond(sm) {
+            flex-direction: column;
+          }
+        }
+      }
+    }
+    &:nth-of-type(5) {
+      .row {
+        & input {
+          padding: 10px;
+        }
+      }
+    }
+    &:nth-of-type(6) {
+      .row {
+        width: 50%;
+        @include respond(md) {
+          width: 100%;
+        }
+      }
+      .form-group {
+        width: 100%;
+        padding-left: 10px;
+        padding-right: 10px;
+        @include respond(lg) {
+          padding-right: 0;
+          padding-left: 0;
+        }
+      }
+    }
+    &:nth-of-type(7) {
+      .col-6 {
+        margin-bottom: 12px;
+      }
+      @include respond(sm) {
+        .row {
+          width: 100%;
+        }
+      }
+    }
+    &:nth-of-type(8) {
+      .col-6 {
+        margin-bottom: 12px;
+      }
+      .col-12 {
+        padding: 0;
+        margin: 0;
+      }
+      @include respond(sm) {
+        .row {
+          width: 100%;
+        }
+      }
+    }
+  }
 }
 //end of nb-overrides
 
 //start of ::ng-deep selectors for selecting nested nebular stuff.
 :host ::ng-deep .ng-placeholder,
 ::ng-deep .ng-value {
-	z-index: 2;
+  z-index: 2;
 }
 :host ::ng-deep nb-select {
-	& ::ng-deep button {
-		margin-right: 10px;
-		background-color: nb-theme(background-basic-color-1) !important;
-		border-radius: nb-theme(border-radius) !important;
-	}
+  & ::ng-deep button {
+    margin-right: 10px;
+    background-color: nb-theme(background-basic-color-1) !important;
+    border-radius: nb-theme(border-radius) !important;
+  }
 }
 :host ::ng-deep nb-toggle {
-	padding: 10px;
-	border: 1px solid nb-theme(gauzy-border-default-color);
-	border-radius: nb-theme(border-radius);
-	& > label {
-		margin-bottom: 0;
-	}
+  padding: 10px;
+  border: 1px solid nb-theme(gauzy-border-default-color);
+  border-radius: nb-theme(border-radius);
+  & > label {
+    margin-bottom: 0;
+  }
 }
 :host ::ng-deep .toggle {
-	border: 1px solid #7e7e8f !important;
-	background-color: #7e7e8f !important;
-	&.checked {
-		background-color: nb-theme(text-primary-color) !important;
-		border: 1px solid nb-theme(text-primary-color) !important;
-		& + span {
-			color: nb-theme(text-primary-color);
-		}
-	}
+  border: 1px solid #7e7e8f !important;
+  background-color: #7e7e8f !important;
+  &.checked {
+    background-color: nb-theme(text-primary-color) !important;
+    border: 1px solid nb-theme(text-primary-color) !important;
+    & + span {
+      color: nb-theme(text-primary-color);
+    }
+  }
 }
 :host ::ng-deep .ng-trigger {
-	overflow: visible !important;
-	& .item-body {
-		overflow: visible !important;
-		overflow-x: visible !important;
-	}
+  overflow: visible !important;
+  & .item-body {
+    overflow: visible !important;
+    overflow-x: visible !important;
+  }
 }
 :host ::ng-deep .select-button {
-	margin: 0;
+  margin: 0;
 }
 //end of ::ng-deep
 
 //media queries
 @include respond(lg) {
-	.row {
-		display: flex;
-		justify-content: space-between;
-		margin-left: 0;
-		margin-right: 0;
-	}
-	.col-6 {
-		padding-right: 0;
-		padding-left: 0;
-	}
-	nb-accordion {
-		nb-accordion-item-body {
-			padding-left: 0;
-			padding-right: 0;
-		}
-		nb-accordion-item {
-			&:first-of-type {
-				::ng-deep .date-picker-form ng-select {
-					width: 100%;
-				}
-				.fields {
-					width: 100%;
-				}
-				.time-format-select {
-					width: 100%;
-				}
-			}
-			&:nth-of-type(2) {
-				.color-pick {
-					max-width: 100%;
-					min-width: 100%;
-				}
-				.select-wrapper {
-					width: 100%;
-					display: flex;
-					justify-content: space-between;
-				}
-				.design-select {
-					width: 49%;
-					margin-right: 0;
-				}
-			}
-		}
-	}
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .col-6 {
+    padding-right: 0;
+    padding-left: 0;
+  }
+  nb-accordion {
+    nb-accordion-item-body {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    nb-accordion-item {
+      &:first-of-type {
+        ::ng-deep .date-picker-form ng-select {
+          width: 100%;
+        }
+        .fields {
+          width: 100%;
+        }
+        .time-format-select {
+          width: 100%;
+        }
+      }
+      &:nth-of-type(2) {
+        .color-pick {
+          max-width: 100%;
+          min-width: 100%;
+        }
+        .select-wrapper {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+        }
+        .design-select {
+          width: 49%;
+          margin-right: 0;
+        }
+      }
+    }
+  }
 }
 
 @include respond(md) {
-	.col-6 {
-		padding-right: 0;
-	}
-	.main-form {
-		flex-direction: column;
-	}
-	.aside-nav {
-		width: 100%;
-		margin-bottom: 20px;
+  .col-6 {
+    padding-right: 0;
+  }
+  .main-form {
+    flex-direction: column;
+  }
+  .aside-nav {
+    width: 100%;
+    margin-bottom: 20px;
 
-		ul {
-			display: inline;
-			height: auto;
-			& li {
-				margin-right: 7px;
-			}
-		}
-	}
-	.fields-section {
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-	}
-	.actions {
-		order: 2;
-		margin-bottom: 0;
-	}
+    ul {
+      display: inline;
+      height: auto;
+      & li {
+        margin-right: 7px;
+      }
+    }
+  }
+  .fields-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .actions {
+    order: 2;
+    margin-bottom: 0;
+  }
 }
 
 @include respond(sm) {
-	.col-6 {
-		max-width: 100%;
-		width: 100%;
-		min-width: 100%;
-		margin-bottom: 5px;
-	}
-	.row {
-		width: 100%;
-	}
+  .col-6 {
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+    margin-bottom: 5px;
+  }
+  .row {
+    width: 100%;
+  }
 }
 
 //old  styles
 .invite-toggle {
-	nb-toggle {
-		display: flex;
-		::ng-deep .toggle-label {
-			display: flex;
-			justify-content: space-between;
-			flex-grow: 1;
-			.toggle {
-				min-width: 2rem;
-			}
-		}
-		&.start::ng-deep .toggle-label {
-			align-items: flex-start;
+  nb-toggle {
+    display: flex;
+    ::ng-deep .toggle-label {
+      display: flex;
+      justify-content: space-between;
+      flex-grow: 1;
+      .toggle {
+        min-width: 2rem;
+      }
+    }
+    &.start::ng-deep .toggle-label {
+      align-items: flex-start;
 
-			span.text {
-				width: 100%;
-			}
-		}
-	}
+      span.text {
+        width: 100%;
+      }
+    }
+  }
 }
 #temporary {
-	padding-bottom: 215px;
+  padding-bottom: 215px;
 }
 
 :host {
-	nb-card-body {
-		overflow: visible;
-	}
+  nb-card-body {
+    overflow: visible;
+  }
 }
 
-.time-tracker{
-	.row {
-		margin-left: -0.5rem;
-		margin-right: -0.5rem;
-	}
-	.col-xl-6, .col-12 {
-		padding-left: 0.5rem;
-		padding-right: 0.5rem;
-	}
+.time-tracker {
+  .row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+  .col-xl-6,
+  .col-12 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
 }

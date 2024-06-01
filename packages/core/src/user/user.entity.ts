@@ -15,9 +15,19 @@ import {
 	ITag,
 	IUserOrganization,
 	IInvite,
-	IImageAsset
+	IImageAsset,
+	TimeFormatEnum,
+	ISocialAccount
 } from '@gauzy/contracts';
-import { ImageAsset, Invite, Role, Tag, TenantBaseEntity, UserOrganization } from '../core/entities/internal';
+import {
+	ImageAsset,
+	Invite,
+	Role,
+	SocialAccount,
+	Tag,
+	TenantBaseEntity,
+	UserOrganization
+} from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -80,6 +90,16 @@ export class User extends TenantBaseEntity implements IUser {
 	@IsString()
 	@MultiORMColumn({ nullable: true })
 	timeZone?: string;
+
+	@ApiPropertyOptional({ type: () => String, enum: TimeFormatEnum })
+	@IsOptional()
+	@IsEnum(TimeFormatEnum)
+	@MultiORMColumn({
+		type: 'simple-enum',
+		enum: TimeFormatEnum,
+		default: TimeFormatEnum.FORMAT_12_HOURS
+	})
+	timeFormat?: TimeFormatEnum;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -240,4 +260,10 @@ export class User extends TenantBaseEntity implements IUser {
 	 */
 	@MultiORMOneToMany(() => Invite, (it) => it.user)
 	invites?: IInvite[];
+
+	/**
+	 * User social accounts
+	 */
+	@MultiORMOneToMany(() => SocialAccount, (it) => it.user)
+	socialAccounts?: ISocialAccount[];
 }

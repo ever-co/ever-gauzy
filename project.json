@@ -9,6 +9,9 @@
 		"@gauzy/ui-sdk": {
 			"tags": []
 		},
+		"@gauzy/ui-config": {
+			"tags": []
+		},
 		"@gauzy/job-search-ui-plugin": {
 			"tags": []
 		},
@@ -43,6 +46,9 @@
 			"tags": []
 		},
 		"gauzy-server-api": {
+			"tags": []
+		},
+		"gauzy-api-server": {
 			"tags": []
 		}
 	}

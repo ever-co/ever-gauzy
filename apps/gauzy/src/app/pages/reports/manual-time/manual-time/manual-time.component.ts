@@ -15,6 +15,7 @@ import { TimesheetService } from './../../../../@shared/timesheet/timesheet.serv
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,14 +38,15 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly timesheetService: TimesheetService,
-		protected readonly store: Store,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit(): void {

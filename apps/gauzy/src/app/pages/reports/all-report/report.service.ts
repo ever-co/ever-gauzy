@@ -10,7 +10,7 @@ import {
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
 import { Query, Store, StoreConfig } from '@datorama/akita';
-import { API_PREFIX } from '../../../@core/constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { firstValueFrom } from 'rxjs';
 
 export function initialReportFilterState(): IReport[] {

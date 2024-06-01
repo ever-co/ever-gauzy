@@ -9,7 +9,7 @@ import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum } from './../../../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { MerchantService, Store, ToastrService } from '../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {

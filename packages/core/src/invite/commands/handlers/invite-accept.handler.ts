@@ -26,41 +26,37 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 		private readonly employeeService: EmployeeService
 	) {}
 
+	/**
+	 * Accepts an invitation based on the provided command.
+	 * @param command The command containing the invite acceptance data.
+	 * @returns The authorized user.
+	 */
 	public async execute(command: InviteAcceptCommand) {
 		try {
 			const { input, languageCode } = command;
 			const { email, token, code } = input;
 
 			let invite: IInvite;
+
+			// Validate invite by token or code
 			if (typeof input === 'object' && 'email' in input && 'token' in input) {
-				invite = await this.inviteService.validateByToken({
-					email,
-					token
-				});
+				invite = await this.inviteService.validateByToken({ email, token });
 			} else if (typeof input === 'object' && 'email' in input && 'code' in input) {
-				invite = await this.inviteService.validateByCode({
-					email,
-					code
-				});
+				invite = await this.inviteService.validateByCode({ email, code });
 			}
 			if (!invite) {
 				throw Error('Invite does not exist');
 			}
-			/**
-			 * Assign role to user
-			 */
+
+			// Assign role to user
 			const { id: inviteId } = invite;
 			const { role } = await this.inviteService.findOneByIdString(inviteId, {
-				relations: {
-					role: true
-				}
+				relations: { role: true }
 			});
 			input['user']['role'] = role;
 			input['inviteId'] = inviteId;
 
-			/**
-			 * Invite accept for employee & user
-			 */
+			// Invite accept for employee, candidate & user
 			let user: IUser;
 			switch (role.name) {
 				case RolesEnum.EMPLOYEE:
@@ -87,20 +83,17 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 	private async _authorizeUser(user: IUser): Promise<Object> {
 		try {
 			const { id, email } = user;
-
 			await this.typeOrmUserRepository.findOneOrFail({
 				where: {
 					id,
-					email
+					email,
+					isActive: true,
+					isArchived: false
 				},
 				relations: {
-					role: {
-						rolePermissions: true
-					}
+					role: { rolePermissions: true }
 				},
-				order: {
-					createdAt: 'DESC'
-				}
+				order: { createdAt: 'DESC' }
 			});
 
 			// If users are inactive
@@ -108,27 +101,32 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 				throw new UnauthorizedException();
 			}
 
-			const employee = await this.employeeService.findOneByOptions({
-				where: {
-					userId: user.id
-				}
-			});
+			// Retrieve the employee details associated with the user.
+			const employee = await this.employeeService.findOneByUserId(user.id);
 
-			// If employees are inactive
-			if (employee && (employee.isActive === false || employee.isArchived === true)) {
+			// Check if the employee is active and not archived. If not, throw an error.
+			if (employee && (!employee.isActive || employee.isArchived)) {
 				throw new UnauthorizedException();
 			}
 
-			const access_token = await this.authService.getJwtAccessToken(user);
-			const refresh_token = await this.authService.getJwtRefreshToken(user);
+			// Generate both access and refresh tokens concurrently for efficiency.
+			const [access_token, refresh_token] = await Promise.all([
+				this.authService.getJwtAccessToken(user),
+				this.authService.getJwtRefreshToken(user)
+			]);
 
+			// Store the current refresh token with the user for later validation.
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
-			return new Object({
-				user,
+			// Return the user object with user details, tokens, and optionally employee info if it exists.
+			return {
+				user: {
+					...user,
+					...(employee && { employee })
+				},
 				token: access_token,
 				refresh_token: refresh_token
-			});
+			};
 		} catch (error) {
 			throw new BadRequestException(error);
 		}

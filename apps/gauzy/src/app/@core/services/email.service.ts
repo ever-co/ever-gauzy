@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { IEmailHistory, IEmailFindInput, IEmailUpdateInput, IPagination, IResendEmailInput } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-sdk/common';
 import { firstValueFrom } from 'rxjs';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

@@ -1,36 +1,44 @@
 <nb-card class="card-scroll">
-    <nb-card-header>
-        <h4 class="main-page-header">
-            <ngx-header-title>
-                {{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
-            </ngx-header-title>
-		</h4>
-		<ng-container
-			*ngIf="request?.startDate && request?.endDate"
-		>
-			<ngx-date-range-title
-				[start]="request?.startDate"
-				[end]="request?.endDate"
-				[format]="'dddd, LL'"
-			></ngx-date-range-title>
-		</ng-container>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				[hasLogTypeFilter]="false"
-				[hasSourceFilter]="false"
-				[hasActivityLevelFilter]="false"
-				(filtersChange)="filtersChange($event)"
-			></ngx-gauzy-filters>
-			<ng-select
-				[searchable]="false"
-				[clearable]="true"
-				[items]="actions"
-				[placeholder]="'REPORT_PAGE.ACTION' | translate"
-				[formControl]="control"
-				appendTo="body"
-			></ng-select>
+	<nb-card-header>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ 'REPORT_PAGE.MANUAL_TIME_EDIT_REPORT' | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<div class="filters">
+					<ngx-gauzy-filters
+						[filters]="filters"
+						[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+						[hasLogTypeFilter]="false"
+						[hasSourceFilter]="false"
+						[hasActivityLevelFilter]="false"
+						(filtersChange)="filtersChange($event)"
+					></ngx-gauzy-filters>
+					<div class="col-auto">
+						<ng-select
+							[searchable]="false"
+							[clearable]="true"
+							[items]="actions"
+							[placeholder]="'REPORT_PAGE.ACTION' | translate"
+							[formControl]="control"
+							appendTo="body"
+						></ng-select>
+					</div>
+				</div>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -49,75 +57,91 @@
 							</nb-card-header>
 							<nb-card-body class="manual-time-container">
 								<ng-container *ngTemplateOutlet="columnsHeader"></ng-container>
-								<div class="cart-body project-row" *ngFor="let timeLogRow of day.timeLogs;">
+								<div class="cart-body project-row" *ngFor="let timeLogRow of day.timeLogs">
 									<div class="table-row">
 										<div class="table-inner-wrapper">
 											<div class="responsive-table-row employee-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.EMPLOYEE' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+												</div>
 												<div class="responsive-table-content project-name">
 													<ng-container
 														*ngTemplateOutlet="
-                                                        employeeEl;
-                                                        context: { $implicit: timeLogRow?.employee }">
+															employeeEl;
+															context: { $implicit: timeLogRow?.employee }
+														"
+													>
 													</ng-container>
 												</div>
 											</div>
 											<div class="responsive-table-row project-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.PROJECT' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.PROJECT' | translate }}
+												</div>
 												<div class="responsive-table-content project-name">
 													<ng-container
 														*ngTemplateOutlet="
-                                                        projectEl;
-                                                        context: { $implicit: timeLogRow?.project }">
+															projectEl;
+															context: { $implicit: timeLogRow?.project }
+														"
+													>
 													</ng-container>
 												</div>
 											</div>
 											<div class="responsive-table-row to-do-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.TO_DO' | translate }}
+												</div>
 												<div class="responsive-table-content project-name">
 													<ng-container
 														*ngTemplateOutlet="
-                                                        taskEl;
-                                                        context: { $implicit: timeLogRow?.task }">
+															taskEl;
+															context: { $implicit: timeLogRow?.task }
+														"
+													>
 													</ng-container>
 												</div>
 											</div>
 											<div class="responsive-table-row small-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.REASON' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.REASON' | translate }}
+												</div>
 												<div class="responsive-table-content day-col">
 													{{ timeLogRow.reason || '&#8212;' }}
 												</div>
 											</div>
 											<div class="responsive-table-row small-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.FROM' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.FROM' | translate }}
+												</div>
 												<div class="responsive-table-content day-col">
 													{{ timeLogRow.createdAt | timeFormat }}
 												</div>
 											</div>
 											<div class="responsive-table-row small-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.TIME_SPAN' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
+												</div>
 												<div class="responsive-table-content day-col">
 													{{ timeLogRow.duration | durationFormat }}
 												</div>
 											</div>
 											<div class="responsive-table-row small-column">
-												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.CHANGED_AT' | translate }}</div>
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+												</div>
 												<div class="responsive-table-content day-col">
 													{{ timeLogRow.editedAt | dateTimeFormat }}
 												</div>
 											</div>
 											<div class="responsive-table-row small-column action-column">
+												<div class="responsive-table-header">
+													{{ 'REPORT_PAGE.ACTION' | translate }}
+												</div>
 												<div
-													class="responsive-table-header">{{ 'REPORT_PAGE.ACTION' | translate }}</div>
-												<div class="responsive-table-content day-col"
-													 [ngSwitch]="timeLogRow.isEdited">
+													class="responsive-table-content day-col"
+													[ngSwitch]="timeLogRow.isEdited"
+												>
 													<nb-badge
 														*ngSwitchCase="true"
 														[text]="ManualTimeLogAction.EDITED | titlecase"
@@ -142,69 +166,65 @@
 				</div>
 			</div>
 		</div>
-
 	</nb-card-body>
 </nb-card>
 
 <ng-template let-project #projectEl>
-    <ga-project-column-view
-        *ngIf="project; else noProjects"
-        [project]="project"
-    ></ga-project-column-view>
-    <ng-template #noProjects>
-        <span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
-    </ng-template>
+	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
+	<ng-template #noProjects>
+		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
+	</ng-template>
 </ng-template>
 
 <ng-template let-task #taskEl>
-    <span *ngIf="task; else noTaSK">{{ task?.title }} </span>
-    <ng-template #noTaSK>
-        <span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
-    </ng-template>
+	<span *ngIf="task; else noTaSK">{{ task?.title }} </span>
+	<ng-template #noTaSK>
+		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
+	</ng-template>
 </ng-template>
 
 <ng-template let-employee #employeeEl>
-    <div class="avatar-wrapper-outer">
-        <ngx-avatar
-            class="report-table"
-            *ngIf="employee"
-            [src]="employee?.user?.imageUrl"
-            [name]="employee?.user?.name"
-            [id]="employee?.id"
-        ></ngx-avatar>
-    </div>
-    <ng-template #noEmployee>
-        <span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
-    </ng-template>
+	<div class="avatar-wrapper-outer">
+		<ngx-avatar
+			class="report-table"
+			*ngIf="employee"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+			[id]="employee?.id"
+		></ngx-avatar>
+	</div>
+	<ng-template #noEmployee>
+		<span>{{ 'REPORT_PAGE.NO_EMPLOYEE' | translate }}</span>
+	</ng-template>
 </ng-template>
 
 <ng-template #columnsHeader>
-    <div class="columns-header" *ngIf="dailyData?.length > 0">
-        <div class="table-inner-wrapper font-weight-bold align-items-center">
-            <div class="responsive-table-row column-heading employee-column">
-                {{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading project-column">
-                {{ 'REPORT_PAGE.PROJECT' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading to-do-column">
-                {{ 'REPORT_PAGE.TO_DO' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading small-column">
-                {{ 'REPORT_PAGE.REASON' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading small-column">
-                {{ 'REPORT_PAGE.FROM' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading small-column">
-                {{ 'REPORT_PAGE.TIME_SPAN' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading small-column">
-                {{ 'REPORT_PAGE.CHANGED_AT' | translate }}
-            </div>
-            <div class="responsive-table-row column-heading small-column action-column">
-                {{ 'REPORT_PAGE.ACTION' | translate }}
-            </div>
-        </div>
-    </div>
+	<div class="columns-header" *ngIf="dailyData?.length > 0">
+		<div class="table-inner-wrapper font-weight-bold align-items-center">
+			<div class="responsive-table-row column-heading employee-column">
+				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading project-column">
+				{{ 'REPORT_PAGE.PROJECT' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading to-do-column">
+				{{ 'REPORT_PAGE.TO_DO' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading small-column">
+				{{ 'REPORT_PAGE.REASON' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading small-column">
+				{{ 'REPORT_PAGE.FROM' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading small-column">
+				{{ 'REPORT_PAGE.TIME_SPAN' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading small-column">
+				{{ 'REPORT_PAGE.CHANGED_AT' | translate }}
+			</div>
+			<div class="responsive-table-row column-heading small-column action-column">
+				{{ 'REPORT_PAGE.ACTION' | translate }}
+			</div>
+		</div>
+	</div>
 </ng-template>

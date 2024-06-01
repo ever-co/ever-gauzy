@@ -20,7 +20,7 @@ import { CandidateInterviewMutationComponent } from './../../../../@shared/candi
 import { DeleteInterviewComponent } from './../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { PictureNameTagsComponent } from './../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ComponentEnum } from './../../../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,

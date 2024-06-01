@@ -16,6 +16,7 @@ import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '../../../@core/services';
 import { ActivityService } from '../../timesheet/activity.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -44,9 +45,10 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 		public readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly cdr: ChangeDetectorRef,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		public readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -100,20 +102,20 @@ export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent i
 	/**
 	 * Get activities report
 	 *
-	 * @returns
+	 * @returns {Promise<void>}
 	 */
-	getActivitiesReport() {
+	async getActivitiesReport(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 		this.loading = true;
-		const payloads = this.payloads$.getValue();
-		this.activityService
-			.getDailyActivitiesReport(payloads)
-			.then((logs: IReportDayData[]) => {
-				this.dailyData = logs;
-			})
-			.catch((error) => {})
-			.finally(() => (this.loading = false));
+		try {
+			const payloads = this.payloads$.getValue();
+			this.dailyData = (await this.activityService.getDailyActivitiesReport(payloads)) as IReportDayData[];
+		} catch (error) {
+			console.error('Error while retrieving daily activities report', error);
+		} finally {
+			this.loading = false;
+		}
 	}
 }

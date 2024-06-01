@@ -17,7 +17,7 @@ import {
 	IDateRangePicker
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';

@@ -1,22 +1,22 @@
 <div class="form-group">
-    <label class="label" for="timeZone">
-        {{ 'FORM.LABELS.CHOOSE_TIME_ZONE' | translate }}
-    </label>
-    <ng-select
-        [(items)]="listOfZones"
-        [placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
-        [searchable]="true"
-        [clearable]="true"
-        [(ngModel)]="timeZone"
-        (change)="selectTimeZone($event)"
-        id="timeZone"
-        appendTo="body"
-    >
-        <ng-template ng-option-tmp let-item="item" let-index="index">
-            {{ getTimeZoneWithOffset(item) }}
-        </ng-template>
-        <ng-template ng-label-tmp let-item="item">
-            {{ getTimeZoneWithOffset(item) }}
-        </ng-template>
-    </ng-select>
+	<label class="label" for="timeZone">
+		{{ 'FORM.LABELS.CHOOSE_TIME_ZONE' | translate }}
+	</label>
+	<ng-select
+		[(items)]="listOfZones"
+		[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
+		[searchable]="true"
+		[clearable]="true"
+		[(ngModel)]="timeZone"
+		(change)="selectTimeZone($event)"
+		id="timeZone"
+		appendTo="body"
+	>
+		<ng-template ng-option-tmp let-item="item" let-index="index">
+			{{ getTimeZoneWithOffset(item) }}
+		</ng-template>
+		<ng-template ng-label-tmp let-item="item">
+			{{ getTimeZoneWithOffset(item) }}
+		</ng-template>
+	</ng-select>
 </div>

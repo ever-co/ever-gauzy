@@ -20,6 +20,7 @@ const routes: Routes = [
 			},
 			selectors: {
 				project: false,
+				team: false,
 				employee: false,
 				organization: false,
 				date: false
@@ -28,9 +29,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'edit',
-		loadChildren: () => import('./edit-organization/edit-organization.module').then(
-			(m) => m.EditOrganizationModule
-		)
+		loadChildren: () => import('./edit-organization/edit-organization.module').then((m) => m.EditOrganizationModule)
 	}
 ];
 

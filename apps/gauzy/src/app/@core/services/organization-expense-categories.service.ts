@@ -6,7 +6,7 @@ import {
 	IOrganizationExpenseCategory,
 	IOrganizationExpenseCategoryFindInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -14,15 +14,9 @@ import { API_PREFIX } from '../constants/app.constants';
 export class OrganizationExpenseCategoriesService {
 	constructor(private http: HttpClient) {}
 
-	create(
-		createInput: IOrganizationExpenseCategoryCreateInput
-	): Promise<IOrganizationExpenseCategory> {
+	create(createInput: IOrganizationExpenseCategoryCreateInput): Promise<IOrganizationExpenseCategory> {
 		return firstValueFrom(
-			this.http
-			.post<IOrganizationExpenseCategory>(
-				`${API_PREFIX}/expense-categories`,
-				createInput
-			)
+			this.http.post<IOrganizationExpenseCategory>(`${API_PREFIX}/expense-categories`, createInput)
 		);
 	}
 
@@ -33,8 +27,7 @@ export class OrganizationExpenseCategoriesService {
 		const data = JSON.stringify({ findInput, relations });
 
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationExpenseCategory[]; total: number }>(
+			this.http.get<{ items: IOrganizationExpenseCategory[]; total: number }>(
 				`${API_PREFIX}/expense-categories`,
 				{
 					params: { data }
@@ -44,16 +37,10 @@ export class OrganizationExpenseCategoriesService {
 	}
 
 	update(id: string, updateInput: any): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(`${API_PREFIX}/expense-categories/${id}`, updateInput)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/expense-categories/${id}`, updateInput));
 	}
 
 	delete(id: string): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${API_PREFIX}/expense-categories/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${API_PREFIX}/expense-categories/${id}`));
 	}
 }

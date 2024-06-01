@@ -3,10 +3,7 @@
 		<nb-card class="filter">
 			<nb-card-header>
 				{{ 'TAGS_PAGE.TAGS_TYPE' | translate }}
-				<ngx-search-input
-					(search)="search($event)"
-					class="search"
-				></ngx-search-input>
+				<ngx-search-input (search)="search($event)" class="search"></ngx-search-input>
 			</nb-card-header>
 			<ng-container *ngIf="filterOptions.length">
 				<div class="list">
@@ -24,12 +21,7 @@
 		</nb-card>
 	</div>
 	<div class="col-10 h-100">
-		<nb-card
-			class="tags-component h-100"
-			[nbSpinner]="loading"
-			nbSpinnerStatus="primary"
-			nbSpinnerSize="large"
-		>
+		<nb-card class="tags-component h-100" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 			<nb-card-header class="flex flex-column pb-0">
 				<h4 class="card-header-title">
 					<ngx-header-title>
@@ -46,10 +38,7 @@
 				</div>
 			</nb-card-header>
 			<nb-card-body>
-				<ng-template
-					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-					[ngIfElse]="gridLayout"
-				>
+				<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 					<div class="table-scroll-container">
 						<angular2-smart-table
 							[settings]="settingsSmartTable"
@@ -59,9 +48,7 @@
 						></angular2-smart-table>
 					</div>
 					<ng-container *ngIf="smartTableSource">
-						<ngx-pagination
-							[source]="smartTableSource"
-						></ngx-pagination>
+						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 					</ng-container>
 				</ng-template>
 				<ng-template #gridLayout>
@@ -75,11 +62,7 @@
 				</ng-template>
 			</nb-card-body>
 		</nb-card>
-		<ng-template
-			#actionButtons
-			let-buttonSize="buttonSize"
-			let-selectedItem="selectedItem"
-		>
+		<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 			<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT', 'ORG_TAGS_DELETE']">
 				<div class="actions">
 					<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_EDIT']">
@@ -115,13 +98,7 @@
 </div>
 <ng-template #visibleButton>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_TAGS_ADD']">
-		<button
-			nbButton
-			class="action"
-			status="success"
-			size="small"
-			(click)="add()"
-		>
+		<button nbButton class="action" status="success" size="small" (click)="add()">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>

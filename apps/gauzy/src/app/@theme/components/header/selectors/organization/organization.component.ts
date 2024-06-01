@@ -1,11 +1,12 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { uniq } from 'underscore';
+import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { NavigationService } from '@gauzy/ui-sdk/core';
 import {
 	OrganizationEditStore,
 	Store,
@@ -42,7 +43,8 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 		private readonly store: Store,
 		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly _organizationEditStore: OrganizationEditStore,
-		private readonly activatedRoute: ActivatedRoute
+		private readonly activatedRoute: ActivatedRoute,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit() {
@@ -75,30 +77,10 @@ export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnD
 
 	/**
 	 * Updates query parameters while preserving specified parameters.
-	 * @param newParams New query parameters to be added or updated.
+	 * @param queryParams New query parameters to be added or updated.
 	 */
-	private updateQueryParams(newParams: { [key: string]: any }): void {
-		// Preserve existing query parameters for 'date' and 'date_end'
-		const preservedQueryParams = ['date', 'date_end'];
-
-		// Get the current query parameters from the activated route snapshot
-		const currentQueryParams = { ...this.activatedRoute.snapshot.queryParams };
-
-		// Create a new object to store the query parameters to be updated
-		const updatedQueryParams: { [key: string]: any } = {};
-
-		// Loop through the preserved parameters and add them to the updatedQueryParams
-		preservedQueryParams.forEach((key) => {
-			if (currentQueryParams.hasOwnProperty(key)) {
-				updatedQueryParams[key] = currentQueryParams[key];
-			}
-		});
-
-		// Navigate to the updated route with the new query parameters
-		this.router.navigate([], {
-			relativeTo: this.activatedRoute,
-			queryParams: { ...updatedQueryParams, ...newParams }
-		});
+	private async updateQueryParams(queryParams: { [key: string]: any }): Promise<void> {
+		await this._navigationService.updateQueryParams(queryParams);
 	}
 
 	private async loadOrganizations(): Promise<void> {

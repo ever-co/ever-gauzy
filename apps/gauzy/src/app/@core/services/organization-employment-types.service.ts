@@ -7,7 +7,7 @@ import {
 	IOrganizationEmploymentTypeFindInput,
 	IOrganizationEmploymentTypeCreateInput
 } from '@gauzy/contracts';
-import { API_PREFIX } from '../constants/app.constants';
+import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'
@@ -24,16 +24,12 @@ export class OrganizationEmploymentTypesService {
 		const data = JSON.stringify({ relations, findInput });
 
 		return firstValueFrom(
-			this.http
-			.get<{ items: IOrganizationEmploymentType[]; total: number }>(
-				this.API_URL,
-				{
-					params: { data }
-				}
-			)
+			this.http.get<{ items: IOrganizationEmploymentType[]; total: number }>(this.API_URL, {
+				params: { data }
+			})
 		);
 	}
-	
+
 	getAll(
 		relations?: string[],
 		findInput?: IOrganizationEmploymentTypeFindInput
@@ -51,26 +47,14 @@ export class OrganizationEmploymentTypesService {
 	addEmploymentType(
 		employmentType: IOrganizationEmploymentTypeCreateInput
 	): Observable<IOrganizationEmploymentTypeCreateInput> {
-		return this.http.post<IOrganizationEmploymentTypeCreateInput>(
-			this.API_URL,
-			employmentType
-		);
+		return this.http.post<IOrganizationEmploymentTypeCreateInput>(this.API_URL, employmentType);
 	}
 
 	deleteEmploymentType(id: number): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.delete(`${this.API_URL}/${id}`)
-		);
+		return firstValueFrom(this.http.delete(`${this.API_URL}/${id}`));
 	}
 
 	editEmploymentType(id: string, updateInput: any): Promise<any> {
-		return firstValueFrom(
-			this.http
-			.put(
-				`${API_PREFIX}/organization-employment-type/${id}`,
-				updateInput
-			)
-		);
+		return firstValueFrom(this.http.put(`${API_PREFIX}/organization-employment-type/${id}`, updateInput));
 	}
 }

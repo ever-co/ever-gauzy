@@ -9,19 +9,18 @@ import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
 import { Tag } from './tag.entity';
 import { CommandHandlers } from './commands/handlers';
+import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/tags', module: TagModule }
-		]),
+		RouterModule.register([{ path: '/tags', module: TagModule }]),
 		TypeOrmModule.forFeature([Tag, IntegrationMap]),
 		MikroOrmModule.forFeature([Tag, IntegrationMap]),
 		RolePermissionModule,
 		CqrsModule
 	],
 	controllers: [TagController],
-	providers: [TagService, ...CommandHandlers],
-	exports: [TagService]
+	providers: [TagService, TypeOrmTagRepository, ...CommandHandlers],
+	exports: [TagService, TypeOrmTagRepository]
 })
-export class TagModule { }
+export class TagModule {}

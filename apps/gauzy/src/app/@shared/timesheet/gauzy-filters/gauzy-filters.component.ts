@@ -8,15 +8,15 @@ import {
 	OnInit,
 	Output
 } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Options, ChangeContext } from '@angular-slider/ngx-slider';
-import { ITimeLogFilters, PermissionsEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { Subject } from 'rxjs';
 import { debounceTime, take, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
+import { Options, ChangeContext } from '@angular-slider/ngx-slider';
+import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,6 +34,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	@Input() hasLogTypeFilter = true;
 	@Input() hasSourceFilter = true;
 	@Input() hasActivityLevelFilter = true;
+	@Input() hasTimeZoneFilter = true;
 
 	public hasFilterApplies: boolean;
 	public activityLevel = ActivityLevel;
@@ -49,6 +50,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	 */
 	private filters$: Subject<any> = new Subject();
 	private _filters: ITimeLogFilters = {
+		timeFormat: TimeFormatEnum.FORMAT_12_HOURS,
 		source: [],
 		logType: [],
 		activityLevel: ActivityLevel
@@ -66,6 +68,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		}
 		this.cd.detectChanges();
 	}
+	@Input() isTimeformat: boolean = false;
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
@@ -107,24 +110,40 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		this.cd.detectChanges();
 	}
 
-	setActivityLevel($event: ChangeContext): void {
+	/**
+	 * Sets the activity level filter based on the provided ChangeContext.
+	 *
+	 * @param activity - The change context containing the new activity level values.
+	 */
+	setActivityLevel(activity: ChangeContext): void {
 		this.filters.activityLevel = {
-			start: $event.value,
-			end: $event.highValue
+			start: activity.value,
+			end: activity.highValue
 		};
 		this.activityLevel = this.filters.activityLevel;
 		this.triggerFilterChange();
 	}
 
+	/**
+	 * Triggers the filter change event.
+	 */
 	triggerFilterChange(): void {
 		this.filters$.next(true);
 	}
 
+	/**
+	 * Clears all filters and triggers a filter change.
+	 */
 	clearFilters(): void {
 		this.filters = this.timesheetFilterService.clear();
 		this.triggerFilterChange();
 	}
 
+	/**
+	 * Checks if any filters are currently applied.
+	 *
+	 * @returns True if any filters are applied, otherwise false.
+	 */
 	hasFilter(): boolean {
 		return (
 			(this._filters.source && this._filters.source.length >= 1) ||
@@ -134,9 +153,33 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	arrangedFilters(): ITimeLogFilters {
 		Object.keys(this.filters).forEach((key) => (this.filters[key] === undefined ? delete this.filters[key] : {}));
 		return this.filters;
+	}
+
+	/**
+	 * Handles the event when the time format is changed.
+	 *
+	 * @param timeformat The new time format.
+	 */
+	timeFormatChanged(timeFormat: TimeFormatEnum): void {
+		this.filters.timeFormat = timeFormat;
+		this.triggerFilterChange();
+	}
+
+	/**
+	 * Handles the event when the time zone is changed.
+	 *
+	 * @param timezone The new time zone.
+	 */
+	timeZoneChanged(timeZone: string): void {
+		this.filters.timeZone = timeZone;
+		this.triggerFilterChange();
 	}
 
 	/**

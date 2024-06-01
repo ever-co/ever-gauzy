@@ -1,22 +1,16 @@
 {
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "declarationMap": true,
-        "declaration": true,
-        "inlineSources": true,
-        "lib": [
-            "es2020",
-            "es2017",
-            "es2016",
-            "dom"
-        ]
-    },
-    "angularCompilerOptions": {
-        "skipTemplateCodegen": true,
-        "strictMetadataEmit": true,
-        "enableResourceInlining": true
-    },
-    "exclude": [
-        "src/**/*.spec.ts"
-    ]
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"inlineSources": true,
+		"lib": ["es2020", "es2017", "es2016", "dom"]
+	},
+	"angularCompilerOptions": {
+		"skipTemplateCodegen": true,
+		"strictMetadataEmit": true,
+		"enableResourceInlining": true
+	},
+	"exclude": ["src/**/*.spec.ts"]
 }

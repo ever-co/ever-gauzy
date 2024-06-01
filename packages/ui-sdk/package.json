@@ -1,6 +1,6 @@
 {
 	"name": "@gauzy/ui-sdk",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "A collection of core UI components and utilities for the Gauzy framework. This library provides essential building blocks for constructing user interfaces, designed to be flexible and reusable in various Angular applications.",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -9,8 +9,21 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"directories": {
+		"lib": "dist",
+		"test": "__test__"
+	},
+	"publishConfig": {
+		"access": "restricted"
+	},
 	"scripts": {
-		"lib:build": "ng build @gauzy/ui-sdk",
+		"lib:build": "ng build @gauzy/ui-sdk --configuration development",
+		"lib:build:prod": "ng build @gauzy/ui-sdk --configuration production",
 		"lib:watch": "ng build @gauzy/ui-sdk --watch --configuration development",
 		"clean": "rimraf dist"
 	},
@@ -26,7 +39,7 @@
 		"ckeditor4-angular": "^5.1.0",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
-		"tslib": "^2.3.0"
+		"tslib": "^2.6.2"
 	},
 	"repository": {
 		"type": "git",

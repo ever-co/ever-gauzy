@@ -1,21 +1,21 @@
-@import '../../@theme/styles/themes.scss';
+@import 'themes';
 
 :host {
-    header {
-        font-size: 18px;
-        font-weight: 600;
-        line-height: 30px;
-        letter-spacing: 0em;
-    }
+  header {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+  }
 
-    nb-card {
-        background-color: nb-theme(gauzy-card-2);
-    }
+  nb-card {
+    background-color: nb-theme(gauzy-card-2);
+  }
 
-    nb-card.card-smtp {
-        height: calc(100vh - 16.5rem);
-        border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
-        padding: 0;
-        margin: 0;
-    }
+  nb-card.card-smtp {
+    height: calc(100vh - 16.5rem);
+    border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
+    padding: 0;
+    margin: 0;
+  }
 }

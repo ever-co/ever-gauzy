@@ -678,7 +678,10 @@
 												"
 											/>
 										</div>
-										<div class="col-4">
+										<div
+											class="col-4"
+											*ngIf="!isServerApi"
+										>
 											<label
 												class="integration-label"
 												>{{
