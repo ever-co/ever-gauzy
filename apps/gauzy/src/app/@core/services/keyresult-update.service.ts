@@ -3,8 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IKeyResultUpdate } from '@gauzy/contracts';
 import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'

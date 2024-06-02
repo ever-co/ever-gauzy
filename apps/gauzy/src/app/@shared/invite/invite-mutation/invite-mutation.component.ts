@@ -13,14 +13,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmailInviteFormComponent } from '../forms';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	OrganizationContactService,
 	OrganizationDepartmentsService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
-	Store,
-	ToastrService
+	Store
 } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

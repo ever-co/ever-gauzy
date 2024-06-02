@@ -3,7 +3,7 @@ name: API Server Build Prod
 on:
   workflow_run:
     workflows: ['Release Prod']
-    branches: [temp]
+    branches: [master]
     types:
       - completed
 
@@ -166,6 +166,10 @@ jobs:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.serverapi(true))
+
+      - name: Unset unused env vars to make sure we did not get to limit of env vars size
+        run: |
+          unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
 
       - name: Build Server
         run: 'yarn build:gauzy-server-api:windows:release:gh'

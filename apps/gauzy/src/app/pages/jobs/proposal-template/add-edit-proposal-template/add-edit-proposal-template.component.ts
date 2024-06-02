@@ -8,8 +8,9 @@ import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { Store, ToastrService } from './../../../../@core/services';
+import { Store } from './../../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateService } from '../proposal-template.service';
 
 @UntilDestroy()

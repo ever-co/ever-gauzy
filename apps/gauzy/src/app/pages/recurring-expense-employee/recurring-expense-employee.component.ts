@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DateRangePickerBuilderService, monthNames } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, ToastrService, monthNames } from '@gauzy/ui-sdk/core';
 import {
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
@@ -17,7 +17,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EmployeeRecurringExpenseService, EmployeesService, Store, ToastrService } from '../../@core/services';
+import { EmployeeRecurringExpenseService, EmployeesService, Store } from '../../@core/services';
 import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses';
 
 @UntilDestroy({ checkProperties: true })

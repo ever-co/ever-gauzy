@@ -8,9 +8,9 @@ import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { GoalService } from '../../../@core/services/goal.service';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-goal-details',

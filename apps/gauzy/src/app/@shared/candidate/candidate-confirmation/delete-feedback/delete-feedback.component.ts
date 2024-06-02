@@ -3,11 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	CandidateCriterionsRatingService,
-	CandidateFeedbacksService,
-	ToastrService
-} from './../../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateCriterionsRatingService, CandidateFeedbacksService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

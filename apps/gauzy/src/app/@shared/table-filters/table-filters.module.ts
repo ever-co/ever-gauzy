@@ -5,7 +5,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { ContactSelectModule } from '../contact-select/contact-select.module';
 import { ExpenseCategorySelectModule } from '../expenses/expense-category-select/expense-category-select.module';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorSelectModule } from '../vendor-select/vendor-select.module';
 import { ExpenseCategoryFilterComponent } from './expense-category-filter.component';
 import { InputFilterComponent } from './input-filter.component';
@@ -26,7 +26,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 		FormsModule,
 		ReactiveFormsModule,
 		NgSelectModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		TagsColorInputModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,

@@ -28,7 +28,8 @@ import { AvailabilitySlotsService } from '../../../../@core/services/availabilit
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
 import { EmployeeSelectComponent } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-appointment',

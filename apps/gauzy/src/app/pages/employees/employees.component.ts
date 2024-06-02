@@ -7,7 +7,7 @@ import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -34,7 +34,7 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
+import { EmployeesService, EmployeeStore, Store } from '../../@core/services';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,

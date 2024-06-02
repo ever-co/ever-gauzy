@@ -6,14 +6,8 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	EmployeesService,
-	EmployeeStore,
-	ErrorHandlingService,
-	Store,
-	ToastrService,
-	UsersService
-} from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
+import { EmployeesService, EmployeeStore, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

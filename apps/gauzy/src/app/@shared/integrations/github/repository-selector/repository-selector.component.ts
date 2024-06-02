@@ -4,8 +4,15 @@ import { Subject, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { HttpStatus, IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, GithubService, Store } from './../../../../@core/services';
+import {
+	HttpStatus,
+	IGithubRepository,
+	IGithubRepositoryResponse,
+	IIntegrationTenant,
+	IOrganization
+} from '@gauzy/contracts';
+import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { GithubService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,7 +28,6 @@ import { ErrorHandlingService, GithubService, Store } from './../../../../@core/
 	]
 })
 export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	public preSelected: boolean = false;
 	public loading: boolean = false;
 	private subject$: Subject<IIntegrationTenant> = new Subject<IIntegrationTenant>();
@@ -30,8 +36,8 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	public repositories$: Observable<IGithubRepository[]>;
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -64,8 +70,8 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	}
 
 	// Implement your onChange and onTouched methods
-	onChange: (value: IGithubRepository['id']) => void = () => { };
-	onTouched: (value: IGithubRepository['id']) => void = () => { };
+	onChange: (value: IGithubRepository['id']) => void = () => {};
+	onTouched: (value: IGithubRepository['id']) => void = () => {};
 
 	// Define the getter and setter for the repository
 	private _sourceId: IGithubRepository['id'];
@@ -92,7 +98,7 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 	constructor(
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		this.subject$
 			.pipe(
@@ -102,18 +108,16 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 			.subscribe();
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
-	ngAfterViewInit(): void { }
+	ngAfterViewInit(): void {}
 
 	/**
 	 *
 	 * @param sourceId
 	 */
 	private _preSelectedRepository(sourceId: IGithubRepository['id']) {
-		const repository = this.repositories.find(
-			(repository: IGithubRepository) => repository.id === sourceId
-		);
+		const repository = this.repositories.find((repository: IGithubRepository) => repository.id === sourceId);
 		this.selectRepository(repository);
 	}
 
@@ -131,32 +135,34 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		const { id: organizationId, tenantId } = this.organization;
 		const { id: integrationId } = this.integration;
 
-		this.repositories$ = this._githubService.getRepositories(integrationId, {
-			organizationId,
-			tenantId
-		}).pipe(
-			tap((response: IGithubRepositoryResponse) => {
-				if (response['status'] == HttpStatus.INTERNAL_SERVER_ERROR) {
-					throw new Error(`${response['message']}`);
-				}
-			}),
-			map(({ repositories }: IGithubRepositoryResponse) => repositories),
-			// Update component state with fetched repositories
-			tap((repositories: IGithubRepository[]) => {
-				this.repositories = repositories;
-				this.afterLoad.emit(this.repositories || []);
-			}),
-			catchError((error) => {
-				// Handle and log errors
-				this._errorHandlingService.handleError(error);
-				return of([]);
-			}),
-			finalize(() => {
-				this.loading = false;
-			}),
-			// Handle component lifecycle to avoid memory leaks
-			untilDestroyed(this),
-		);
+		this.repositories$ = this._githubService
+			.getRepositories(integrationId, {
+				organizationId,
+				tenantId
+			})
+			.pipe(
+				tap((response: IGithubRepositoryResponse) => {
+					if (response['status'] == HttpStatus.INTERNAL_SERVER_ERROR) {
+						throw new Error(`${response['message']}`);
+					}
+				}),
+				map(({ repositories }: IGithubRepositoryResponse) => repositories),
+				// Update component state with fetched repositories
+				tap((repositories: IGithubRepository[]) => {
+					this.repositories = repositories;
+					this.afterLoad.emit(this.repositories || []);
+				}),
+				catchError((error) => {
+					// Handle and log errors
+					this._errorHandlingService.handleError(error);
+					return of([]);
+				}),
+				finalize(() => {
+					this.loading = false;
+				}),
+				// Handle component lifecycle to avoid memory leaks
+				untilDestroyed(this)
+			);
 	}
 
 	/**
@@ -184,5 +190,5 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		this.onTouched = fn;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

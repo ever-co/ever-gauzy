@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorsComponent } from './vendors.component';
 import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
 import { VendorsRoutingModule } from './vendors-routing.module';
@@ -46,7 +46,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		SharedModule,
 		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbSpinnerModule,

@@ -7,7 +7,7 @@ import { PagesRoutingModule } from './pages-routing.module';
 import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/guards';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CommonNavModule } from '../@core/components/common-nav.module';
 
 @NgModule({
@@ -20,7 +20,7 @@ import { CommonNavModule } from '../@core/components/common-nav.module';
 		NgxFeatureToggleModule,
 		ThemeModule,
 		MiscellaneousModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		CommonNavModule
 	],
 	declarations: [PagesComponent],

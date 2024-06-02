@@ -16,7 +16,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, EventTypeService, Store, ToastrService } from '../../../@core/services';
+import { EventTypeService, Store } from '../../../@core/services';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -25,8 +25,8 @@ import { EventTypeMutationComponent } from './event-type-mutation/event-type-mut
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { DEFAULT_EVENT_TYPE } from './default-event-type';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

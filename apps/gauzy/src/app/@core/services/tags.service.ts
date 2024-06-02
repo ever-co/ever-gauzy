@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-sdk/common';
 import { CrudService } from './crud/crud.service';
 
 @Injectable()

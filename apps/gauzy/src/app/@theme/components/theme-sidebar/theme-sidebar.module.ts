@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
 import { ThemeSidebarComponent } from './theme-sidebar.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeSettingsModule } from './theme-settings/theme-settings.module';
 import { ChangelogComponent } from './changelog/changelog.component';
 import { ThemeSettingsComponent } from './theme-settings/theme-settings.component';
@@ -14,7 +14,7 @@ import { ThemeSettingsComponent } from './theme-settings/theme-settings.componen
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		ThemeSettingsModule
 	],
 	exports: [ThemeSidebarComponent, ChangelogComponent, ThemeSettingsComponent],

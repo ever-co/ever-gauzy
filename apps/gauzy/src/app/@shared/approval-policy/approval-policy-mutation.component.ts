@@ -5,9 +5,10 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
-import { ApprovalPolicyService, Store, ToastrService } from '../../@core/services';
+import { ApprovalPolicyService, Store } from '../../@core/services';
 import { FormHelpers } from '../forms/helpers';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

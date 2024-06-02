@@ -15,7 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
 import { LocationFormModule, LeafletMapModule } from './../../../../@shared/forms';
@@ -66,7 +66,7 @@ const NB_MODULES = [
 		ReactiveFormsModule,
 		Angular2SmartTableModule,
 		CommonModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		...NB_MODULES,
 		SharedModule,
 		HeaderTitleModule,

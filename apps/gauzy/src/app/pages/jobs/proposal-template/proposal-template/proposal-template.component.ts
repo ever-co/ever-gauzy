@@ -13,13 +13,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
-import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
+import { Store } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase

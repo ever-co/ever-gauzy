@@ -3,12 +3,12 @@ import { Router } from '@angular/router';
 import { IFeature, IUser } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { UsersService } from '../../@core/services';
 import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '../../@core/services/store.service';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { UsersService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

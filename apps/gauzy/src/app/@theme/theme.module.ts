@@ -36,7 +36,8 @@ import {
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
 } from '@gauzy/ui-sdk/static/styles';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService, UsersOrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
 
 import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
 import { Pipes } from './pipes';
@@ -49,7 +50,7 @@ import {
 
 import { WindowModeBlockScrollService } from './services';
 
-import { LanguagesService, OrganizationsService, UsersOrganizationsService, UsersService } from '../@core/services';
+import { LanguagesService } from '../@core/services';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { PopupComponent } from './components/popup/popup.component';
@@ -98,7 +99,7 @@ const MODULES = [
 	ProjectSelectModule,
 	TeamSelectModule,
 	TimeTrackerModule,
-	TranslateModule,
+	I18nTranslateModule.forChild(),
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
 	WorkspacesModule,

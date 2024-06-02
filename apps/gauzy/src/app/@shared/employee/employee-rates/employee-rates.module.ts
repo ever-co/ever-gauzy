@@ -8,7 +8,7 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
@@ -28,7 +28,7 @@ import { CandidateStore, EmployeeStore } from '../../../@core/services';
 		SharedModule,
 		ThemeModule,
 		NbActionsModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		CurrencyModule
 	],
 	exports: [EmployeeRatesComponent],

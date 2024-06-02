@@ -19,9 +19,10 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
-import { ErrorHandlingService, Store, ToastrService } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 

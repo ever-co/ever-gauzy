@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { UsersService } from '../../@core/services';
+import { UsersService } from '@gauzy/ui-sdk/core';
 import { AuthStrategy } from '../../@core/auth/auth-strategy.service';
 import { Store } from '../../@core/services/store.service';
 
@@ -16,19 +16,22 @@ export class AppInitService {
 		private readonly router: Router,
 		private readonly store: Store,
 		private readonly ngxPermissionsService: NgxPermissionsService
-	) { }
+	) {}
 
 	async init() {
 		try {
 			const id = this.store.userId;
 			if (id) {
-				this.user = await this.usersService.getMe([
-					'role',
-					'role.rolePermissions',
-					'tenant',
-					'tenant.featureOrganizations',
-					'tenant.featureOrganizations.feature'
-				], true);
+				this.user = await this.usersService.getMe(
+					[
+						'role',
+						'role.rolePermissions',
+						'tenant',
+						'tenant.featureOrganizations',
+						'tenant.featureOrganizations.feature'
+					],
+					true
+				);
 
 				this.authStrategy.electronAuthentication({
 					user: this.user,
@@ -46,9 +49,7 @@ export class AppInitService {
 
 				//tenant enabled/disabled features for relatives organizations
 				const { tenant } = this.user;
-				this.store.featureTenant = tenant.featureOrganizations.filter(
-					(item) => !item.organizationId
-				);
+				this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 
 				//only enabled permissions assign to logged in user
 				this.store.userRolePermissions = this.user.role.rolePermissions.filter(
