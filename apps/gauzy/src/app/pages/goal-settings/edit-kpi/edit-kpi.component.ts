@@ -16,7 +16,7 @@ import {
 } from '@gauzy/contracts';
 import { Store } from '../../../@core/services/store.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-kpi',

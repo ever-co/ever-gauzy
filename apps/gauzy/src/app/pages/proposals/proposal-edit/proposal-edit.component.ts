@@ -4,13 +4,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ProposalsService, Store, ToastrService } from '../../../@core/services';
+import { ProposalsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

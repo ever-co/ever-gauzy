@@ -6,8 +6,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EquipmentService, ImageAssetService, Store, ToastrService } from '../../@core/services';
 import { environment as ENV } from '@gauzy/ui-config';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { EquipmentService, ImageAssetService, Store } from '../../@core/services';
 import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
 
 @UntilDestroy({ checkProperties: true })

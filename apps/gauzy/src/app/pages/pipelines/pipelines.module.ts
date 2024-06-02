@@ -13,7 +13,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -63,7 +63,7 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		PipelinesRouting,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,

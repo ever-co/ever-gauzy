@@ -9,8 +9,8 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { ErrorHandlingService, Store } from './../../../../@core/services';
+import { DateRangePickerBuilderService, ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { Store } from './../../../../@core/services';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
@@ -38,7 +38,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
-		private readonly errorHandler: ErrorHandlingService,
+		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly timesheetService: TimesheetService,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly translateService: TranslateService,
@@ -147,7 +147,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		} catch (error) {
 			// Handle any exceptions or errors during the fetch
 			console.log('Error fetching manual logs:', error);
-			this.errorHandler.handleError(error);
+			this.errorHandlingService.handleError(error);
 		} finally {
 			// Set loading state to false regardless of success or failure
 			this.loading = false;

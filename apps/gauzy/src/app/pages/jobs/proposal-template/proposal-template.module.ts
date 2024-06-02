@@ -14,7 +14,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
@@ -33,7 +33,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 	imports: [
 		CommonModule,
 		ProposalTemplateRoutingModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		ReactiveFormsModule,
 		FormsModule,
 		SharedModule,

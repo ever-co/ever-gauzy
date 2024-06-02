@@ -4,7 +4,8 @@ import { debounceTime, EMPTY, Observable, of as observableOf } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationsService, Store } from '../../../@core/services';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
+import { Store } from '../../../@core/services';
 
 @Injectable({
 	providedIn: 'root'

@@ -18,7 +18,7 @@ import { EquipmentService } from '../../@core/services/equipment.service';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -38,7 +38,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		HeaderTitleModule,
 		PaginationV2Module,

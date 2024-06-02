@@ -6,8 +6,8 @@ import { tap, catchError } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'

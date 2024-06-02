@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbActionsModule, NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-form.component';
 
@@ -16,7 +16,7 @@ import { EditEmployeeMembershipFormComponent } from './edit-employee-membership-
 		NgSelectModule,
 		NbIconModule,
 		NbActionsModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	exports: [EditEmployeeMembershipFormComponent],
 	declarations: [EditEmployeeMembershipFormComponent],

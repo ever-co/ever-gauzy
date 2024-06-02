@@ -16,7 +16,7 @@ import {
 	NbBadgeModule,
 	NbTagModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AlertComponent } from './alert/alert.component';
 import { ConfirmComponent } from './confirm/confirm.component';
 import { PromptComponent } from './prompt/prompt.component';
@@ -44,7 +44,7 @@ const components = [AlertComponent, ConfirmComponent, PromptComponent];
 		NbSelectModule,
 		NbCardModule,
 		NbIconModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbFormFieldModule,
 		NbMenuModule,
 		NbBadgeModule,

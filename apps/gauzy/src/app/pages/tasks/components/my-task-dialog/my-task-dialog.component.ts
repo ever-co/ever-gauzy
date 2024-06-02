@@ -6,15 +6,9 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
-import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	EmployeesService,
-	ErrorHandlingService,
-	OrganizationProjectsService,
-	Store,
-	ToastrService
-} from '../../../../@core/services';
+import { TranslationBaseComponent, richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { EmployeesService, OrganizationProjectsService, Store } from '../../../../@core/services';
 
 const initialTaskValue = {
 	title: '',

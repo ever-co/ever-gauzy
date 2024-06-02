@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { IOrganization, IOrganizationTeam, CrudActionEnum, PermissionsEnum, IPagination } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { NavigationService } from '@gauzy/ui-sdk/core';
+import { NavigationService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ALL_TEAM_SELECTED } from './default-team';
-import { OrganizationTeamsService, Store, ToastrService } from '../../../@core/services';
+import { OrganizationTeamsService, Store } from '../../../@core/services';
 import { TruncatePipe } from '../../pipes';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 
@@ -110,7 +110,6 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	onChanged = new EventEmitter<IOrganizationTeam>();
 
 	constructor(
-		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _organizationTeamsService: OrganizationTeamsService,
 		private readonly store: Store,

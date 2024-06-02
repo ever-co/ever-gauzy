@@ -185,6 +185,10 @@ jobs:
           DESKTOP_TIMER_APP_DESCRIPTION: 'Gauzy Desktop Timer'
           DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
+      - name: Unset unused env vars to make sure we did not get to limit of env vars size
+        run: |
+          unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
+
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:windows:release:gh'
         env:

@@ -6,7 +6,8 @@ import { NbAuthService } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { sleep } from '@gauzy/ui-sdk/common';
-import { AuthService, ErrorHandlingService, Store } from '../../@core/services';
+import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { AuthService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,7 +18,6 @@ import { AuthService, ErrorHandlingService, Store } from '../../@core/services';
 export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	public error: boolean = false;
 	public success: boolean = false;
-
 	public confirmed_email: string;
 	public total_workspaces: number;
 	public show_popup: boolean = false;

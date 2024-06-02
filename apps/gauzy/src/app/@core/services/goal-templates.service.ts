@@ -3,8 +3,8 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { IGoalTemplate, IKeyResultTemplate, IGoalKPITemplate, IGoalTemplateFind } from '@gauzy/contracts';
 import { catchError } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { ToastrService } from './toastr.service';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 interface IGoalTemplateResponse {
 	items: IGoalTemplate[];

@@ -4,8 +4,9 @@ import { tap } from 'rxjs/operators';
 import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { UsersService } from '@gauzy/ui-sdk/core';
 import { WindowModeBlockScrollService } from '../../services';
-import { Store, UsersService } from '../../../@core/services';
+import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

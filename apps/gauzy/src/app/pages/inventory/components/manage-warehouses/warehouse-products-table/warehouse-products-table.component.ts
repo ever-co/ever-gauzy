@@ -7,7 +7,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
-import { InventoryStore, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { InventoryStore, Store, WarehouseService } from './../../../../../@core/services';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
@@ -15,6 +15,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

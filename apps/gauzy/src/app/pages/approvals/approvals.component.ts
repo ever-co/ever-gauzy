@@ -15,7 +15,6 @@ import { PictureNameTagsComponent } from '../../@shared/table-components/picture
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
 import { pluck } from 'underscore';
 import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
@@ -27,6 +26,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject } from 'rxjs/internal/Subject';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

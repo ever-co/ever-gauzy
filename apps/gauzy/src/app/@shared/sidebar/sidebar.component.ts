@@ -2,16 +2,15 @@ import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, IOrganization } 
 import { Component, ViewChild, OnInit, OnDestroy, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@ali-hm/angular-tree-component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { AddIconComponent } from './add-icon/add-icon.component';
 import { filter, tap } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
 import { HelpCenterService } from '../../@core/services/help-center.service';
 import { Store } from '../../@core/services/store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';
 import { firstValueFrom } from 'rxjs';

@@ -24,7 +24,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeesService } from '../../@core/services';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -50,7 +50,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbDatepickerModule,
 		CardGridModule,
 		BackNavigationModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		HeaderTitleModule,
 		PaginationV2Module,

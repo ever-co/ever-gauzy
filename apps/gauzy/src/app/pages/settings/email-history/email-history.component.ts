@@ -15,13 +15,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	EmailService,
-	EmployeesService,
-	OrganizationContactService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { EmailService, EmployeesService, OrganizationContactService, Store } from '../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

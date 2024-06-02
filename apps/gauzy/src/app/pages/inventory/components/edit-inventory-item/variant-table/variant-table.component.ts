@@ -10,10 +10,10 @@ import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { EnabledStatusComponent } from '../../inventory-table-components/enabled-row.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 export interface SelectedProductVariant {
 	data: IProductVariant;

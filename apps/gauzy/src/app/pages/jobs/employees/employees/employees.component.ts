@@ -15,9 +15,9 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { EmployeesService, Store, ToastrService } from './../../../../@core/services';
+import { EmployeesService, Store } from './../../../../@core/services';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { NumberEditorComponent } from 'apps/gauzy/src/app/@shared/table-components/editors/number-editor.component';
 

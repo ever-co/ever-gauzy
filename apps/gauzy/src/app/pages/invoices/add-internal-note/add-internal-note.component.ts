@@ -4,9 +4,9 @@ import { IInvoice } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-add-internal-note',

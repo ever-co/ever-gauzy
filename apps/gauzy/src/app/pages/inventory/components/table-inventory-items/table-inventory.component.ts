@@ -21,8 +21,8 @@ import {
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ProductService, Store, ToastrService } from '../../../../@core/services';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ProductService, Store } from '../../../../@core/services';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { TagsOnlyComponent } from './../../../../@shared/table-components';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';

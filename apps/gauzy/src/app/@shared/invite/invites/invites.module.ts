@@ -16,7 +16,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ClipboardModule } from 'ngx-clipboard';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -58,7 +58,7 @@ const COMPONENTS = [
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		ClipboardModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		InviteMutationModule,
 		UserFormsModule,

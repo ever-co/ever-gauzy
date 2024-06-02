@@ -8,7 +8,7 @@ import {
 	NbRadioModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
@@ -33,7 +33,7 @@ import { CandidateCriterionsRatingService } from '../../../@core/services/candid
 		StarRatingOutputModule,
 		CandidateSelectModule,
 		NbAccordionModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],

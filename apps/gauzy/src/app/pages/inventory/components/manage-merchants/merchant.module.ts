@@ -29,7 +29,7 @@ import { LeafletMapModule, LocationFormModule } from './../../../../@shared/form
 import { PaginationV2Module } from '../../../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 const NB_MODULES = [
@@ -58,7 +58,7 @@ const NB_MODULES = [
 		MerchantRoutingModule,
 		SharedModule,
 		ThemeModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,
 		GauzyButtonActionModule,

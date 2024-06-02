@@ -5,7 +5,8 @@ import { Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationContactService, Store, ToastrService } from '../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { OrganizationContactService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

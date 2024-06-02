@@ -9,17 +9,16 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidatesService } from '../../../../@core/services/candidates.service';
 import { CandidateStore } from '../../../../@core/services/candidate-store.service';
-import { UsersService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
 import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
 import { Store } from '../../../../@core/services/store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',

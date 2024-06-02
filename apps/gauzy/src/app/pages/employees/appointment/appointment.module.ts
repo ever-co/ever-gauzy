@@ -10,7 +10,7 @@ import { AppointmentEmployeesService } from '../../../@core/services/appointment
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 import { TimeOffService } from '../../../@core/services/time-off.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
@@ -23,7 +23,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		HeaderTitleModule
 	],

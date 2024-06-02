@@ -6,7 +6,7 @@ import { IInvoice, ITag, InvoiceStatusTypesEnum } from '@gauzy/contracts';
 import { InvoicesService } from '../../../@core/services/invoices.service';
 import { Store } from '../../../@core/services/store.service';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-invoice-send',
