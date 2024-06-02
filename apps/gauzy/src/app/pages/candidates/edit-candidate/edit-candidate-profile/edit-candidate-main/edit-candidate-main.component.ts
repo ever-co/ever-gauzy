@@ -4,7 +4,8 @@ import { IOrganization, ICandidate, IImageAsset } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { CandidateStore, Store, ToastrService } from './../../../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateStore, Store } from './../../../../../@core/services';
 
 /**
  * This component contains the properties stored within the User Entity of an candidate.
@@ -22,32 +23,27 @@ import { CandidateStore, Store, ToastrService } from './../../../../../@core/ser
 			:host {
 				overflow-y: auto;
 				max-height: calc(100vh - 24rem);
-        		height: 100%;
+				height: 100%;
 			}
 		`
 	]
 })
 export class EditCandidateMainComponent implements OnInit, OnDestroy {
-
 	hoverState: boolean;
 	selectedCandidate: ICandidate;
 	organization: IOrganization;
 
 	/*
-	* Candidate Main Mutation Form
-	*/
+	 * Candidate Main Mutation Form
+	 */
 	public form: UntypedFormGroup = EditCandidateMainComponent.buildForm(this.fb);
-	static buildForm(
-		fb: UntypedFormBuilder
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			username: [],
 			email: [null, Validators.required],
 			firstName: [],
 			lastName: [],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			imageUrl: [{ value: null, disabled: true }],
 			imageId: []
 		});
 	}
@@ -57,7 +53,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly candidateStore: CandidateStore
-	) { }
+	) {}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -95,7 +91,7 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 			firstName: candidate?.user?.firstName,
 			lastName: candidate?.user?.lastName,
 			imageUrl: candidate?.user?.imageUrl,
-			imageId: candidate?.user?.imageId,
+			imageId: candidate?.user?.imageId
 		});
 	}
 
@@ -121,5 +117,5 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 		this.toastrService.danger(error);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ComponentLayoutStyleEnum, IUser, IUserUpdateInput } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { UsersService } from './../../../../../../@core';
+import { UsersService } from '@gauzy/ui-sdk/core';
 import { Store } from './../../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
@@ -12,15 +12,11 @@ import { Store } from './../../../../../../@core/services';
 	styleUrls: ['./layout-selector.component.scss']
 })
 export class LayoutSelectorComponent implements OnInit, OnDestroy {
-
 	user: IUser;
 	componentLayouts = Object.values(ComponentLayoutStyleEnum);
 	preferredComponentLayout: ComponentLayoutStyleEnum = ComponentLayoutStyleEnum.TABLE;
 
-	constructor(
-		private readonly store: Store,
-		private readonly userService: UsersService
-	) {}
+	constructor(private readonly store: Store, private readonly userService: UsersService) {}
 
 	ngOnInit(): void {
 		this.store.user$
@@ -40,7 +36,7 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 		this.store.preferredComponentLayout$
 			.pipe(
 				filter((preferredLayout: ComponentLayoutStyleEnum) => !!preferredLayout),
-				tap((preferredLayout: ComponentLayoutStyleEnum) => this.preferredComponentLayout = preferredLayout),
+				tap((preferredLayout: ComponentLayoutStyleEnum) => (this.preferredComponentLayout = preferredLayout)),
 				untilDestroyed(this)
 			)
 			.subscribe();

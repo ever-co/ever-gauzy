@@ -9,7 +9,7 @@ import {
 	NbCheckboxModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
@@ -28,7 +28,7 @@ import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sh
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	declarations: [EquipmentSharingPolicyMutationComponent],
 	providers: [EquipmentSharingPolicyService]

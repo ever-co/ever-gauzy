@@ -9,7 +9,8 @@ import { filter } from 'rxjs/operators';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, HubstaffService, Store, ToastrService } from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { HubstaffService, Store } from './../../../../@core/services';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })

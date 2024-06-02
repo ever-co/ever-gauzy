@@ -18,7 +18,7 @@ import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -42,7 +42,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		TagsColorInputModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		NbTooltipModule,
 		GauzyButtonActionModule,

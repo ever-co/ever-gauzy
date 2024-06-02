@@ -10,8 +10,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
-import { ErrorHandlingService, OrganizationDocumentsService, Store, ToastrService } from '../../@core/services';
+import { OrganizationDocumentsService, Store } from '../../@core/services';
 import { ActivatedRoute } from '@angular/router';
 import {
 	IPaginationBase,

@@ -21,15 +21,14 @@ import { DeleteInterviewComponent } from './../../../../@shared/candidate/candid
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { PictureNameTagsComponent } from './../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
 	EmployeesService,
-	ErrorHandlingService,
-	Store,
-	ToastrService
+	Store
 } from './../../../../@core/services';
 import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';

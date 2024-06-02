@@ -10,7 +10,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { InvoicesService } from '../../@core/services/invoices.service';
 import { InvoiceEstimateHistoryService } from '../../@core/services/invoice-estimate-history.service';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
@@ -18,7 +18,7 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 
 @NgModule({
 	imports: [
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbCardModule,
 		PaymentsRoutingModule,
 		Angular2SmartTableModule,

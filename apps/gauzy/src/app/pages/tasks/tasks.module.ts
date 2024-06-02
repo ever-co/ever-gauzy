@@ -42,7 +42,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -92,7 +92,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,

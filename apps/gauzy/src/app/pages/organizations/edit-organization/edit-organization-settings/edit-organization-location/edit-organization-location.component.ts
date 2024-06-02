@@ -8,8 +8,9 @@ import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationEditStore, OrganizationsService, Store, ToastrService } from '../../../../../@core/services';
+import { OrganizationEditStore, Store } from '../../../../../@core/services';
 import { LeafletMapComponent, LocationFormComponent } from '../../../../../@shared/forms';
+import { OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

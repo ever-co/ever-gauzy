@@ -2,14 +2,13 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Component, Input } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IProductCategoryTranslatable, IProductOptionGroupTranslatable } from '@gauzy/contracts';
-
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { ProductCategoryService } from '../../../@core/services/product-category.service';
 import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

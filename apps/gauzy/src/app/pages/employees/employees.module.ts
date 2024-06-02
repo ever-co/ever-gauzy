@@ -60,15 +60,11 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import {
-	CandidatesService,
-	OrganizationEmploymentTypesService,
-	OrganizationsService,
-	SkillsService
-} from '../../@core/services';
+import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '../../@core/services';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -123,7 +119,7 @@ const COMPONENTS = [
 		NbBadgeModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,

@@ -14,7 +14,7 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../shared.module';
 import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
@@ -54,7 +54,7 @@ import { StatusBadgeModule } from '../status-badge';
 		NbIconModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		StatusBadgeModule
 	],

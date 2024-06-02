@@ -11,10 +11,15 @@ import {
 import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { IDateRangePicker, IOrganization, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { DEFAULT_DATE_PICKER_CONFIG, DateRangePickerBuilderService, NavigationService } from '@gauzy/ui-sdk/core';
+import {
+	DEFAULT_DATE_PICKER_CONFIG,
+	DateRangePickerBuilderService,
+	NavigationService,
+	OrganizationsService
+} from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationsService, Store } from './../../../../../@core/services';
+import { Store } from './../../../../../@core/services';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';

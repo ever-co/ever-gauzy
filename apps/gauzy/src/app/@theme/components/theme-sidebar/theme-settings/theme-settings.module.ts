@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
 import { ThemeSettingsComponent } from './theme-settings.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
 import { NbCardModule, NbListModule } from '@nebular/theme';
@@ -17,7 +17,7 @@ import { DirectivesModule } from 'apps/gauzy/src/app/@shared/directives/directiv
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		ThemeLanguageSelectorModule,
 		LayoutSelectorModule,
 		ThemeSelectorModule,

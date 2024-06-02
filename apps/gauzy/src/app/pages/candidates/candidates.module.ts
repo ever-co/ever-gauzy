@@ -32,7 +32,6 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
-import { OrganizationsService } from '../../@core/services/organizations.service';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { InviteGuard } from './../../@core/guards';
@@ -92,12 +91,13 @@ import { InterviewActionsTableComponent } from './manage-candidate-interviews/in
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbToggleModule } from '@nebular/theme';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -168,7 +168,7 @@ const COMPONENTS = [
 		NbRadioModule,
 		NbActionsModule,
 		NbAccordionModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		TagsColorInputModule,

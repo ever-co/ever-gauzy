@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AuthService } from '../@core/services/auth.service';
 import { RoleGuard } from '../@core/guards';
 import { ThemeModule } from '../@theme/theme.module';
@@ -15,7 +15,7 @@ import { MiscellaneousModule } from '../pages/miscellaneous/miscellaneous.module
 		NbMenuModule,
 		MiscellaneousModule,
 		NbToastrModule.forRoot(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule
 	],
 	declarations: [ShareComponent],

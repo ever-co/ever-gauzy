@@ -12,12 +12,12 @@ import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
+import { ProductCategoryService, Store } from './../../../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

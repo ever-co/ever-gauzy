@@ -15,12 +15,12 @@ import { PipelineDealCreatedByComponent } from '../table-components/pipeline-dea
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

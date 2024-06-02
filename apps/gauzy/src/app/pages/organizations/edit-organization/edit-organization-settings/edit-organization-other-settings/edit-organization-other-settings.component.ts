@@ -40,11 +40,10 @@ import {
 	AccountingTemplateService,
 	OrganizationEditStore,
 	OrganizationTaskSettingService,
-	OrganizationsService,
-	Store,
-	ToastrService
+	Store
 } from './../../../../../@core/services';
 import { NotesWithTagsComponent } from './../../../../../@shared/table-components';
+import { OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

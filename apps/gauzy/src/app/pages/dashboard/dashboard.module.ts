@@ -30,7 +30,7 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
@@ -60,7 +60,7 @@ import { TeamModule } from './team/team.module';
 		NbSelectModule,
 		NbAlertModule,
 		ProfitHistoryModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

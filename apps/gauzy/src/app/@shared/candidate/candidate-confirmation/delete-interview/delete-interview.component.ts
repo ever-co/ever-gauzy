@@ -1,15 +1,16 @@
 import { ICandidateInterview } from '@gauzy/contracts';
 import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
-import { CandidateInterviewersService } from 'apps/gauzy/src/app/@core/services/candidate-interviewers.service';
-import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { CandidateTechnologiesService } from '../../../../@core/services/candidate-technologies.service';
+import { CandidatePersonalQualitiesService } from '../../../../@core/services/candidate-personal-qualities.service';
+import { CandidateInterviewersService } from '../../../../@core/services/candidate-interviewers.service';
+import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-delete-interview',
 	templateUrl: 'delete-interview.component.html',
@@ -17,15 +18,15 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 })
 export class DeleteInterviewComponent extends TranslationBaseComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
-	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
-		protected dialogRef: NbDialogRef<DeleteInterviewComponent>,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private candidateInterviewService: CandidateInterviewService,
-		private candidateTechnologiesService: CandidateTechnologiesService,
-		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private candidateInterviewersService: CandidateInterviewersService
+		protected readonly dialogRef: NbDialogRef<DeleteInterviewComponent>,
+		public readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly candidateTechnologiesService: CandidateTechnologiesService,
+		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
+		private readonly candidateInterviewersService: CandidateInterviewersService
 	) {
 		super(translateService);
 	}
@@ -49,12 +50,10 @@ export class DeleteInterviewComponent extends TranslationBaseComponent implement
 	private toastrError(error) {
 		this.toastrService.danger(error);
 	}
+
 	closeDialog() {
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

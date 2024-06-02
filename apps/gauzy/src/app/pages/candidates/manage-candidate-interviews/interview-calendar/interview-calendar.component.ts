@@ -22,8 +22,8 @@ import { CandidateInterviewMutationComponent } from './../../../../@shared/candi
 import { CandidateStore } from './../../../../@core/services/candidate-store.service';
 import { Store } from './../../../../@core/services/store.service';
 import * as _ from 'underscore';
-import { ToastrService } from './../../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

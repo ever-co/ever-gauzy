@@ -10,7 +10,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
 
@@ -26,7 +26,7 @@ import { KnowledgeBaseComponent } from './knowledeg-base.component';
 		FormsModule,
 		ReactiveFormsModule,
 		ColorPickerModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		LanguageSelectorModule
 	],
 	declarations: [KnowledgeBaseComponent],

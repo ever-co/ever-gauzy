@@ -10,7 +10,7 @@ import {
 	NbTabsetModule,
 	NbTagModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeComponent } from './employee.component';
@@ -30,7 +30,7 @@ import { TableComponentsModule } from '../../@shared';
 		NbInputModule,
 		ImageUploaderModule,
 		PublicPageEmployeeMutationModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,

@@ -14,14 +14,9 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import {
-	InvoiceEstimateHistoryService,
-	InvoicesService,
-	PaymentService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, Store } from '../../../@core/services';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

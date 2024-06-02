@@ -14,7 +14,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InviteService } from '../../@core/services/invite.service';
 import { RoleService } from '../../@core/services/role.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
 import { ThemeModule } from '../../@theme/theme.module';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
@@ -35,7 +35,7 @@ import { AcceptInvitePage } from './accept-invite.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		PasswordFormFieldModule
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],

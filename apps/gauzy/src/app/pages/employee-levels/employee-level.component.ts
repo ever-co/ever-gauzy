@@ -14,7 +14,8 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeeLevelService, Store, ToastrService } from '../../@core/services';
+import { EmployeeLevelService, Store } from '../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

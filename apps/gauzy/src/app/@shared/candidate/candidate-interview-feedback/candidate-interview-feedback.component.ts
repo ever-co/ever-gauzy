@@ -14,10 +14,10 @@ import {
 	ICandidateInterview,
 	IOrganization
 } from '@gauzy/contracts';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, Observable } from 'rxjs';
 import {
 	IEmployee,
 	IEmployeeFindInput,
@@ -11,9 +12,7 @@ import {
 	IPagination,
 	UpdateEmployeeJobsStatistics
 } from '@gauzy/contracts';
-import { firstValueFrom, Observable } from 'rxjs';
-import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class EmployeesService {

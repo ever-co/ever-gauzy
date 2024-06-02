@@ -20,15 +20,9 @@ import {
 	IUserOrganization
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
-import {
-	ErrorHandlingService,
-	ExportAllService,
-	GauzyCloudService,
-	Store,
-	ToastrService,
-	UsersOrganizationsService
-} from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { ExportAllService, GauzyCloudService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

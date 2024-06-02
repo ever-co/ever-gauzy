@@ -16,7 +16,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HelpCenterComponent } from './help-center.component';
 import { HelpCenterRoutingModule } from './help-center-routing.module';
 import { DeleteArticleModule } from './delete-article/delete-article.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -38,7 +38,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		GauzyButtonActionModule,
 		SharedModule,
 		NoDataMessageModule

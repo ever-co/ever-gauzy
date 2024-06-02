@@ -2,12 +2,11 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { ImageAssetService } from '../../@core/services/image-asset.service';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { ImageAssetService } from '../../@core/services/image-asset.service';
 
 @UntilDestroy()
 @Component({

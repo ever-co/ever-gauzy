@@ -16,7 +16,8 @@ import {
 	endOfYear
 } from 'date-fns';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { GoalSettingsService, Store, ToastrService } from '../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { GoalSettingsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

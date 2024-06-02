@@ -6,9 +6,8 @@ import { IEngagement } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
