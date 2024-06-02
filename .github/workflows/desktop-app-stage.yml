@@ -167,6 +167,10 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(false))
 
+      - name: Unset unused env vars to make sure we did not get to limit of env vars size
+        run: |
+          unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
+
       - name: Build Desktop App
         run: 'yarn build:desktop:windows:release:gh'
         env:

@@ -167,6 +167,10 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(true))
 
+      - name: Unset unused env vars to make sure we did not get to limit of env vars size
+        run: |
+          unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
+
       - name: Build Server
         run: 'yarn build:gauzy-server:windows:release:gh'
         env:
