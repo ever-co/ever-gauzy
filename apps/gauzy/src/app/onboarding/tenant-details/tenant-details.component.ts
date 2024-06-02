@@ -2,14 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import {
-	AuthService,
-	EmployeesService,
-	OrganizationsService,
-	Store,
-	TenantService,
-	UsersService
-} from '../../@core/services';
+import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
+import { AuthService, EmployeesService, Store, TenantService } from '../../@core/services';
 
 @Component({
 	selector: 'ga-tenant-details',
@@ -28,7 +22,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly authService: AuthService,
 		private readonly employeesService: EmployeesService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.isOnboardingRequired();
@@ -72,10 +66,7 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 	/**
 	 * Register user as a employee on initial onboarding
 	 */
-	async registerEmployeeFeature(
-		organization: IOrganizationCreateInput,
-		createdOrganization: IOrganization
-	) {
+	async registerEmployeeFeature(organization: IOrganizationCreateInput, createdOrganization: IOrganization) {
 		if (!createdOrganization || !this.user) {
 			return;
 		}
@@ -109,5 +100,5 @@ export class TenantDetailsComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

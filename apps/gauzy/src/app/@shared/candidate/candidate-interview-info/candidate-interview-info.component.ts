@@ -6,11 +6,11 @@ import { EmployeesService } from '../../../@core/services';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
 
 @Component({
 	selector: 'ga-candidate-interview-info',

@@ -17,9 +17,9 @@ import {
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
 	OrganizationPositionsService,
-	Store,
-	ToastrService
+	Store
 } from '../../../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +28,6 @@ import {
 	styleUrls: ['./edit-candidate-employment.component.scss']
 })
 export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
-
 	selectedCandidate: ICandidate;
 	employmentTypes: IOrganizationEmploymentType[] = [];
 	organization: IOrganization;
@@ -38,8 +37,8 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 	selectedTags: any;
 
 	/*
-	* Edit Candidate Employment Mutation Form
-	*/
+	 * Edit Candidate Employment Mutation Form
+	 */
 	public form: UntypedFormGroup = EditCandidateEmploymentComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -60,13 +59,13 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		private readonly organizationPositionsService: OrganizationPositionsService,
 		private readonly organizationEmploymentTypeService: OrganizationEmploymentTypesService,
 		private readonly employeeLevelService: EmployeeLevelService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate: ICandidate) => !!candidate),
-				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
+				tap((candidate: ICandidate) => (this.selectedCandidate = candidate)),
 				tap((candidate: ICandidate) => this._syncEmployment(candidate)),
 				untilDestroyed(this)
 			)
@@ -95,13 +94,10 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
 
-		const { items = [] } = await this.employeeLevelService.getAll(
-			[],
-			{
-				tenantId,
-				organizationId
-			}
-		);
+		const { items = [] } = await this.employeeLevelService.getAll([], {
+			tenantId,
+			organizationId
+		});
 		this.candidateLevels = items;
 	}
 
@@ -124,12 +120,10 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 		}
 		const { id: organizationId } = this.organization;
 		const { tenantId } = this.store.user;
-		this.organizationPositionsService
-			.getAll({ organizationId, tenantId })
-			.then((data) => {
-				const { items } = data;
-				this.positions = items;
-			});
+		this.organizationPositionsService.getAll({ organizationId, tenantId }).then((data) => {
+			const { items } = data;
+			this.positions = items;
+		});
 	}
 
 	private getEmploymentTypes() {
@@ -169,9 +163,9 @@ export class EditCandidateEmploymentComponent implements OnInit, OnDestroy {
 			candidateLevel: candidate.candidateLevel || null,
 			organizationDepartments: candidate.organizationDepartments || null,
 			organizationPosition: candidate.organizationPosition || null,
-			tags: candidate.tags || [],
+			tags: candidate.tags || []
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

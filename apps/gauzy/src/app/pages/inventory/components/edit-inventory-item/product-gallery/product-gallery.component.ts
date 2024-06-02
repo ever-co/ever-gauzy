@@ -7,7 +7,6 @@ import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
@@ -15,6 +14,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

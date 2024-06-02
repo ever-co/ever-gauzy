@@ -5,9 +5,10 @@ import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } fr
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
-import { CustomSmtpService, Store, ToastrService } from '../../@core/services';
-import { FormHelpers } from '../forms/helpers';
+import { CustomSmtpService, Store } from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { FormHelpers } from '../forms/helpers';
 import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })

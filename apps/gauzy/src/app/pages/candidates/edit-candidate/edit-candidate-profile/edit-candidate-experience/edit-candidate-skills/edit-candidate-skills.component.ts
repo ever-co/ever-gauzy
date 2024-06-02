@@ -10,7 +10,7 @@ import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contract
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { LocalDataSource } from 'angular2-smart-table';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',

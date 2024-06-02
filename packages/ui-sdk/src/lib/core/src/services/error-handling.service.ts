@@ -18,10 +18,8 @@ export class ErrorHandlingService {
 	}
 
 	private getErrorDetails(err) {
-		const message: string =
-			err.error && err.error.message ? err.error.message : err.message;
-		const detail: string =
-			err.error && err.error.detail ? err.error.detail : err.detail;
+		const message: string = err.error && err.error.message ? err.error.message : err.message;
+		const detail: string = err.error && err.error.detail ? err.error.detail : err.detail;
 
 		if (message) {
 			const keywords = message.split(' ', 3).join(' ');

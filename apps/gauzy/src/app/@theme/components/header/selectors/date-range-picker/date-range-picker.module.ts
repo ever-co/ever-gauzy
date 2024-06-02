@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { NgxDaterangepickerMd as NgxDateRangePickerMd } from 'ngx-daterangepicker-material';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { WeekDaysEnum } from '@gauzy/contracts';
 import { DateRangePickerComponent } from './date-range-picker.component';
 import { dayOfWeekAsString } from './date-picker.utils';
@@ -17,7 +17,7 @@ import { dayOfWeekAsString } from './date-picker.utils';
 		NgxDateRangePickerMd.forRoot({
 			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 		}),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbInputModule,
 		NbButtonModule,
 		NbIconModule

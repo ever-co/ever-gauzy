@@ -11,7 +11,7 @@ import {
 	NbUserModule,
 	NbTagModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
@@ -34,7 +34,7 @@ import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progr
 		NbIconModule,
 		NbInputModule,
 		PublicPageMutationModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,

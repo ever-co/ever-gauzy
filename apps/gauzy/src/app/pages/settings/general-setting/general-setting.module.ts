@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FeatureToggleModule } from '../../../@shared/feature-toggle/feature-toggle.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GeneralSettingRoutingModule } from './general-setting-routing.module';
 import { GeneralSettingComponent } from './general-setting.component';
 
@@ -11,7 +11,7 @@ import { GeneralSettingComponent } from './general-setting.component';
 		ThemeModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		FeatureToggleModule,
 		GeneralSettingRoutingModule
 	],

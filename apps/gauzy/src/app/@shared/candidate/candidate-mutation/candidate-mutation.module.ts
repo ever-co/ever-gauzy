@@ -1,10 +1,10 @@
 import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule, NbStepperModule, NbTagModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
-import { OrganizationsService } from '../../../@core/services/organizations.service';
 import { RoleService } from '../../../@core/services/role.service';
 import { CandidateMutationComponent } from './candidate-mutation.component';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
@@ -20,7 +20,7 @@ import { FileUploaderModule } from '../../file-uploader-input/file-uploader-inpu
 		NbIconModule,
 		NbStepperModule,
 		FileUploaderModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbStepperModule,
 		NbTagModule
 	],

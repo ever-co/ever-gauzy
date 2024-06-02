@@ -11,7 +11,7 @@ import {
 	NbToggleModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -33,7 +33,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		NbToggleModule,
 		NbTabsetModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		FormsModule,
 		Angular2SmartTableModule,

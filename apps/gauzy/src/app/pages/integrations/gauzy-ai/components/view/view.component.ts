@@ -15,14 +15,13 @@ import {
 	IntegrationEntity
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ReplacePipe } from '../../../../../@shared/pipes';
 import {
-	ErrorHandlingService,
 	GauzyAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService,
-	Store,
-	ToastrService
+	Store
 } from '../../../../../@core/services';
 import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 

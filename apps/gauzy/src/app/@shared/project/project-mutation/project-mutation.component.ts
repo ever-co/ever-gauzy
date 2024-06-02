@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { environment } from '@gauzy/ui-config';
-import { CompareDateValidator } from '@gauzy/ui-sdk/core';
+import { CompareDateValidator, ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployee,
@@ -37,13 +37,11 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
-	ErrorHandlingService,
 	GithubService,
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
-	Store,
-	ToastrService
+	Store
 } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms/helpers';

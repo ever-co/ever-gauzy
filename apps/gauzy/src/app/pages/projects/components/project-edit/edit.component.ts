@@ -10,9 +10,10 @@ import {
 	IOrganizationProject,
 	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
-import { ProjectMutationComponent } from './../../../../@shared/project';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ProjectMutationComponent } from './../../../../@shared/project';
+import { OrganizationProjectsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

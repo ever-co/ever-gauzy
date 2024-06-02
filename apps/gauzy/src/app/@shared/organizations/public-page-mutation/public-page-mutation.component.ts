@@ -16,7 +16,8 @@ import {
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationAwardsService, OrganizationLanguagesService, Store, ToastrService } from '../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { OrganizationAwardsService, OrganizationLanguagesService, Store } from '../../../@core/services';
 
 @Component({
 	selector: 'ngx-public-page-mutation',

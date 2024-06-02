@@ -8,7 +8,7 @@ import { GithubViewComponent } from './view/view.component';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet';
 import { DialogsModule } from './../../../../@shared/dialogs';
 import { SharedModule } from './../../../../@shared/shared.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DateRangeTitleModule } from './../../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 
@@ -20,7 +20,7 @@ import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		MomentModule,
 		DialogsModule,

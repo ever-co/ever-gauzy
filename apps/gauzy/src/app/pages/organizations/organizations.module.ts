@@ -34,7 +34,7 @@ import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -63,7 +63,7 @@ import { DirectivesModule } from '../../@shared/directives/directives.module';
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,

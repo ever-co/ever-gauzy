@@ -19,12 +19,12 @@ import { Observable, combineLatest, map, switchMap, of as observableOf, Behavior
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	JobPresetService,
 	JobSearchCategoryService,
 	JobSearchOccupationService,
-	Store,
-	ToastrService
+	Store
 } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })

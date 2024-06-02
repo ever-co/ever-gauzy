@@ -6,10 +6,10 @@ import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { NavigationService } from '@gauzy/ui-sdk/core';
+import { NavigationService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ALL_PROJECT_SELECTED } from './default-project';
-import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrService } from '../../../@core/services';
-import { TruncatePipe } from '../../pipes';
+import { OrganizationProjectsService, OrganizationProjectStore, Store } from '../../../@core/services';
+import { TruncatePipe } from '../../pipes/text.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

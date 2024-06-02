@@ -1,1 +1,1 @@
-export * from './src/placeholder';
+export * from './src/theme.module';

@@ -32,8 +32,8 @@ import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector
 import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertLocalToTimezone } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { dayOfWeekAsString } from '../../../@theme/components/header/selectors/date-range-picker';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -10,11 +10,12 @@ import {
 	NbFormFieldModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
-import { OrganizationsService, RoleService, UsersService } from '../../../@core/services';
+import { RoleService } from '../../../@core/services';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
@@ -41,7 +42,7 @@ import { PhoneFormInputModule } from '../forms/fields';
 		ThemeModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		LanguageSelectorModule,
 		SharedModule,
 		PasswordFormFieldModule,

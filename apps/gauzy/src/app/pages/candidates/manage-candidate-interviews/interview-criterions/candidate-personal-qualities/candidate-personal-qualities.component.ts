@@ -7,7 +7,7 @@ import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/serv
 import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { takeUntil } from 'rxjs/operators';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-candidate-personal-qualities',

@@ -11,7 +11,8 @@ import { OrganizationContactService } from '../../../../@core/services/organizat
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',

@@ -22,7 +22,9 @@ import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	ISelectorVisibility,
-	SelectorBuilderService
+	OrganizationsService,
+	SelectorBuilderService,
+	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
@@ -36,10 +38,8 @@ import {
 	OrganizationEditStore,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
-	OrganizationsService,
 	OrganizationTeamsService,
-	Store,
-	UsersOrganizationsService
+	Store
 } from '../../../@core/services';
 import { LayoutService } from '../../../@core/services/layout.service';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';

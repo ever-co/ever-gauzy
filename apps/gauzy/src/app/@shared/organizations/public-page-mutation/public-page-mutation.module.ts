@@ -17,7 +17,7 @@ import {
 	NbTagModule
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
@@ -44,7 +44,7 @@ import { LanguagesService } from '../../../@core/services/languages.service';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

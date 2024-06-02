@@ -30,7 +30,6 @@ import {
 	InvoiceItemService,
 	InvoicesService,
 	Store,
-	ToastrService,
 	TranslatableService
 } from '../../../@core/services';
 import {
@@ -46,6 +45,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../@shared/pagination/pagination-filter-base.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

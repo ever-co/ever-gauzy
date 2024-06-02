@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { SearchRoutingModule } from './search-routing.module';
 import { SearchComponent } from './search/search.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../../@shared/shared.module';
 import {
 	NbButtonModule,
@@ -44,7 +44,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		NbToggleModule,
 		Angular2SmartTableModule,
 		SearchRoutingModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		EmployeeMultiSelectModule,

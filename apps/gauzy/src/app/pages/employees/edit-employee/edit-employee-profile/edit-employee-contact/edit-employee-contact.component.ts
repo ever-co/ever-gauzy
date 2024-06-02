@@ -3,12 +3,12 @@ import { IEditEntityByMemberInput, IEmployee, IOrganization, IOrganizationContac
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
 import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-edit-employee-contacts',
 	templateUrl: './edit-employee-contact.component.html',
@@ -34,8 +34,6 @@ import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service'
 	]
 })
 export class EditEmployeeContactComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
-
 	organizationContact: IOrganizationContact[] = [];
 	employeeContact: IOrganizationContact[] = [];
 
@@ -53,11 +51,11 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$.pipe(takeUntil(this._ngDestroy$)).subscribe((organization) => {
+		this.store.selectedOrganization$.pipe(untilDestroyed(this)).subscribe((organization) => {
 			this.organization = organization;
 		});
 
-		this.employeeStore.selectedEmployee$.pipe(takeUntil(this._ngDestroy$)).subscribe((emp) => {
+		this.employeeStore.selectedEmployee$.pipe(untilDestroyed(this)).subscribe((emp) => {
 			this.selectedEmployee = emp;
 			if (this.selectedEmployee) {
 				this.loadContacts();
@@ -65,10 +63,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		});
 	}
 
-	ngOnDestroy(): void {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 
 	async submitForm(formInput: IEditEntityByMemberInput, removed: boolean) {
 		try {

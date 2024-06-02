@@ -6,10 +6,10 @@ import { IInvoice } from '@gauzy/contracts';
 import { saveAs } from 'file-saver';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
 import { InvoicesService } from '../../../@core/services';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

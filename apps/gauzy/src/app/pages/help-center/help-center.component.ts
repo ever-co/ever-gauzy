@@ -12,9 +12,9 @@ import { HelpCenterAuthorService } from '../../@core/services/help-center-author
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
 import { Store } from '../../@core/services/store.service';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
