@@ -58,7 +58,7 @@ jobs:
             console.log(script.serverapi(true))
 
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:linux:release:gh'
+        run: 'yarn build:gauzy-api-server:linux:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -113,7 +113,7 @@ jobs:
             console.log(script.serverapi(true))
 
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:mac:release'
+        run: 'yarn build:gauzy-api-server:mac:release'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -172,7 +172,7 @@ jobs:
           unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
 
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:windows:release:gh'
+        run: 'yarn build:gauzy-api-server:windows:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
