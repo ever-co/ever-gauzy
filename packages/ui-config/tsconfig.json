@@ -1,12 +1,13 @@
 {
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"outDir": "../../../out-tsc/lib",
 		"declaration": true,
-		"declarationMap": true,
-		"inlineSources": true,
-		"types": []
+		"sourceMap": true,
+		"baseUrl": "./src",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"types": ["node", "jest"]
 	},
-	"include": ["src/**/*.ts", "src/**/*.json"],
-	"exclude": ["node_modules", "**/*.spec.ts"]
+	"include": ["./src/**/*.ts"],
+	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

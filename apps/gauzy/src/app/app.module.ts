@@ -7,6 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { UiSdkModule } from '@gauzy/ui-sdk';
+import { UiConfigModule } from '@gauzy/ui-config';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
@@ -68,6 +69,8 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
+const isProd = environment.production;
+
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
@@ -91,7 +94,8 @@ if (environment.SENTRY_DSN) {
 		}),
 		NbEvaIconsModule,
 		CoreModule.forRoot(),
-		UiSdkModule,
+		UiConfigModule.forRoot(),
+		UiSdkModule.forRoot(),
 		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {
@@ -103,7 +107,7 @@ if (environment.SENTRY_DSN) {
 		CloudinaryModule,
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
-		environment.production ? [] : AkitaNgDevtools,
+		isProd ? [] : AkitaNgDevtools,
 		SharedModule.forRoot(),
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot()

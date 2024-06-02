@@ -1,19 +1,16 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"outDir": "../../../out-tsc/lib",
 		"declaration": true,
 		"declarationMap": true,
+		"sourceMap": true,
 		"inlineSources": true,
-		"types": [],
-		"allowSyntheticDefaultImports": true
+		"lib": ["es2020", "es2017", "es2016", "dom"]
 	},
 	"angularCompilerOptions": {
-		"annotateForClosureCompiler": true,
 		"skipTemplateCodegen": true,
 		"strictMetadataEmit": true,
-		"fullTemplateTypeCheck": true,
-		"strictInjectionParameters": true
+		"enableResourceInlining": true
 	},
-	"exclude": ["**/*.spec.ts"]
+	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

@@ -4,6 +4,9 @@
 		"declarationMap": false
 	},
 	"angularCompilerOptions": {
-		"compilationMode": "partial"
+		"compilationMode": "partial",
+		"fullTemplateTypeCheck": false,
+		"strictTemplates": false,
+		"strictInjectionParameters": false
 	}
 }
