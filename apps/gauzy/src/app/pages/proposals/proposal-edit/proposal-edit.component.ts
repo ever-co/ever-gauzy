@@ -10,7 +10,7 @@ import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ProposalsService, Store } from '../../../@core/services';
+import { OrganizationSettingService, ProposalsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,7 +30,7 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 		return fb.group(
 			{
 				jobPostUrl: [],
-				valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+				valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 				jobPostContent: [null, Validators.required],
 				proposalContent: [null, Validators.required],
 				tags: [],
@@ -51,6 +51,7 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 		private readonly toastrService: ToastrService,
 		private readonly proposalsService: ProposalsService,
 		public readonly translate: TranslateService,
+		private readonly organizationSettingService: OrganizationSettingService,
 		private readonly cdRef: ChangeDetectorRef
 	) {
 		super(translate);

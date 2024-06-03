@@ -3,7 +3,6 @@ export * from './seo.service';
 export * from './app-global-ripple-options.service';
 export * from './analytics/analytics.service';
 export * from './analytics/jitsu.service';
-
 export * from './accounting-template.service';
 export * from './appointment-employees.service';
 export * from './approval-policy.service';
@@ -80,6 +79,7 @@ export * from './languages.service';
 export * from './merchant.service';
 export * from './my-tasks-store.service';
 export * from './navigation-builder';
+export * from './organization-setting.service';
 export * from './organization-awards.service';
 export * from './organization-contact.service';
 export * from './organization-departments.service';

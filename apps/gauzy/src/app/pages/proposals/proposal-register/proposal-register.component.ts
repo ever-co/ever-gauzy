@@ -19,7 +19,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ProposalsService, Store } from '../../../@core/services';
+import { OrganizationSettingService, ProposalsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,7 +43,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 		return fb.group(
 			{
 				jobPostUrl: [],
-				valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+				valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 				jobPostContent: ['', Validators.required],
 				proposalContent: ['', Validators.required],
 				tags: [],
@@ -64,6 +64,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
+		private readonly organizationSettingService: OrganizationSettingService,
 		private readonly dateService: NbDateService<Date>
 	) {
 		super(translateService);

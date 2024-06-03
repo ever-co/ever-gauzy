@@ -20,9 +20,7 @@ import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
 import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
-import * as moment from 'moment';
-import * as _ from 'underscore';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { uniq } from 'underscore';
 import { GuiDrag } from '@gauzy/ui-sdk/shared';
 import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '@gauzy/ui-sdk/common';
 
@@ -131,8 +129,7 @@ export class Store {
 		protected readonly persistStore: PersistStore,
 		protected readonly persistQuery: PersistQuery,
 		protected readonly permissionsService: NgxPermissionsService,
-		protected readonly ngxRolesService: NgxRolesService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly ngxRolesService: NgxRolesService
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
@@ -332,7 +329,7 @@ export class Store {
 	 */
 	hasFeatureEnabled(feature: FeatureEnum) {
 		const { featureTenant = [], featureOrganizations = [], featureToggles = [] } = this.appQuery.getValue();
-		const filtered = _.uniq([...featureOrganizations, ...featureTenant], (x) => x.featureId);
+		const filtered = uniq([...featureOrganizations, ...featureTenant], (x) => x.featureId);
 
 		const unleashToggle = featureToggles.find((toggle) => toggle.name === feature && toggle.enabled === false);
 		if (unleashToggle) {
@@ -378,24 +375,6 @@ export class Store {
 		return !!(userRolePermissions || []).find(
 			(p: IRolePermission) => permissions.includes(p.permission as PermissionsEnum) && p.enabled
 		);
-	}
-
-	getDateFromOrganizationSettings() {
-		let startDate = new Date();
-		if (this.dateRangePickerBuilderService.selectedDateRange) {
-			startDate = this.dateRangePickerBuilderService.selectedDateRange.startDate;
-		}
-		switch (this.selectedOrganization && this.selectedOrganization.defaultValueDateType) {
-			case DefaultValueDateTypeEnum.END_OF_MONTH: {
-				return moment(startDate).endOf('month').toDate();
-			}
-			case DefaultValueDateTypeEnum.START_OF_MONTH: {
-				return moment(startDate).startOf('month').toDate();
-			}
-			default: {
-				return moment().toDate();
-			}
-		}
 	}
 
 	get serverConnection() {

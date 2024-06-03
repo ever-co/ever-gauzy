@@ -26,12 +26,14 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	ExpensesService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
 	OrganizationProjectsService,
+	OrganizationSettingService,
 	ProductService,
 	Store,
 	TasksStoreService,
@@ -50,7 +52,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../@shared/pagination/pagination-filter-base.component';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -124,7 +125,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		private readonly dialogService: NbDialogService,
 		private readonly expensesService: ExpensesService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private readonly translatableService: TranslatableService
+		private readonly translatableService: TranslatableService,
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translateService);
 	}
@@ -177,7 +179,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 	initializeForm() {
 		this.form = this.fb.group({
-			invoiceDate: [this.store.getDateFromOrganizationSettings(), Validators.required],
+			invoiceDate: [this.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			invoiceNumber: [this.formInvoiceNumber, Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: [this.getNextMonth(), Validators.required],
 			currency: ['', Validators.required],
