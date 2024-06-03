@@ -1,4 +1,4 @@
-import { Store } from './store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { HttpClient } from '@angular/common/http';
 import { Service } from './service';
 import { IDeal, IPipeline, IPipelineCreateInput, IPipelineFindInput } from '@gauzy/contracts';

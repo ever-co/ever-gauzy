@@ -4,7 +4,7 @@ import moment from 'moment';
 import { IOrganization, RegionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({

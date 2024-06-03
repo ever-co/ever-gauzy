@@ -13,7 +13,7 @@ import {
 import { toLocal, toParams, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
-import { Store as AppStore } from '../../@core/services/store.service';
+import { Store as AppStore } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';

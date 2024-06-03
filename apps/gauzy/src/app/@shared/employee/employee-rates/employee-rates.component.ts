@@ -3,7 +3,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
-import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateStore, EmployeeStore } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,7 +39,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly employeeStore: EmployeeStore,
 		private readonly candidateStore: CandidateStore
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
@@ -91,7 +92,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 
 	public get reWeeklyLimit() {
 		return this.form.get('reWeeklyLimit');
@@ -109,5 +110,5 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 		return this.form.get('minimumBillingRate');
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

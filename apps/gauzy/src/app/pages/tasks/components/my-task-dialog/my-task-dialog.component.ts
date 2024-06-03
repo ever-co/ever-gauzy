@@ -8,7 +8,8 @@ import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent, richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, OrganizationProjectsService, Store } from '../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService, OrganizationProjectsService } from '../../../../@core/services';
 
 const initialTaskValue = {
 	title: '',

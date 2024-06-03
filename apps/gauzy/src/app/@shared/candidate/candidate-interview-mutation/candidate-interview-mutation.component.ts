@@ -21,13 +21,13 @@ import {
 	CandidatesService,
 	CandidateStore,
 	CandidateTechnologiesService,
-	EmployeesService,
-	Store
+	EmployeesService
 } from '../../../@core/services';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

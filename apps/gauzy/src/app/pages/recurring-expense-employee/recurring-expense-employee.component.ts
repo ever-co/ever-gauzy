@@ -17,7 +17,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EmployeeRecurringExpenseService, EmployeesService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeRecurringExpenseService, EmployeesService } from '../../@core/services';
 import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses';
 
 @UntilDestroy({ checkProperties: true })

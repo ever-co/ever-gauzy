@@ -22,7 +22,7 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';

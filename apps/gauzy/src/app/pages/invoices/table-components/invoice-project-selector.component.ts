@@ -3,7 +3,8 @@ import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { DefaultEditor } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { OrganizationProjectsService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationProjectsService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,7 +23,6 @@ import { OrganizationProjectsService, Store } from '../../../@core/services';
 	styles: []
 })
 export class InvoiceProjectsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
-
 	public project: IOrganizationProject;
 	public projects: IOrganizationProject[];
 	public organization: IOrganization;
@@ -48,17 +48,13 @@ export class InvoiceProjectsSelectorComponent extends DefaultEditor implements O
 	private _loadProjects() {
 		const tenantId = this.store.user.tenantId;
 		const { id: organizationId } = this.organization;
-		this.organizationProjectsService
-			.getAll([], { organizationId, tenantId })
-			.then(({ items }) => {
-				this.projects = items;
-				//
-				const project: any = this.cell.getValue();
-				//
-				this.project = this.projects.find(
-					(p) => p.id === project['id']
-				);
-			});
+		this.organizationProjectsService.getAll([], { organizationId, tenantId }).then(({ items }) => {
+			this.projects = items;
+			//
+			const project: any = this.cell.getValue();
+			//
+			this.project = this.projects.find((p) => p.id === project['id']);
+		});
 	}
 
 	/**
@@ -69,5 +65,5 @@ export class InvoiceProjectsSelectorComponent extends DefaultEditor implements O
 		this.cell.setValue($event);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

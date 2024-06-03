@@ -17,7 +17,7 @@ import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import {
 	EditTimeLogModalComponent,
 	TimesheetFilterService,

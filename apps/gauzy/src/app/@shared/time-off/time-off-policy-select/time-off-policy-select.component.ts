@@ -5,7 +5,8 @@ import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
-import { Store, TimeOffService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TimeOffService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

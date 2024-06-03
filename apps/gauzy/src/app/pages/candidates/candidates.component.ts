@@ -22,7 +22,8 @@ import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidatesService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidatesService } from '../../@core/services';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,

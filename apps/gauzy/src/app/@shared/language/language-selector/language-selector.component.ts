@@ -3,7 +3,7 @@ import { LanguagesService } from '../../../@core/services/languages.service';
 import { ILanguage } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { filter, tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

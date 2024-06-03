@@ -8,7 +8,8 @@ import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { NbThemeService } from '@nebular/theme';
 import { AccountingTemplateTypeEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { AccountingTemplateService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { AccountingTemplateService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

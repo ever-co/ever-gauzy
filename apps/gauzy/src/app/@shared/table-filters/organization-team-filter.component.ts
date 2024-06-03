@@ -5,7 +5,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, IOrganizationTeam, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { OrganizationTeamsService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationTeamsService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

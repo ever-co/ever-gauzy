@@ -17,15 +17,14 @@ import {
 } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import {
 	CandidateCriterionsRatingService,
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
-	EmployeesService,
-	Store
+	EmployeesService
 } from './../../../../../@core/services';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';

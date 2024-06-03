@@ -3,7 +3,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
 import { BackupStrategy, GuiDrag } from '@gauzy/ui-sdk/shared';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
 import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
 import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';

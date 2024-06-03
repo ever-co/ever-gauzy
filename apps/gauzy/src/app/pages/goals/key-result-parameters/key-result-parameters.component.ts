@@ -16,8 +16,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { Store } from '../../../@core/services/store.service';
-
+import { Store } from '@gauzy/ui-sdk/common';
 @Component({
 	selector: 'ga-key-result-parameters',
 	templateUrl: './key-result-parameters.component.html',
@@ -46,7 +45,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 		private taskService: TasksService,
 		private goalSettingsService: GoalSettingsService,
 		private store: Store
-	) { }
+	) {}
 
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -65,11 +64,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 
 		await this.getKPI();
 		if (!!this.data.selectedKeyResult) {
-			if (
-				!this.numberUnitsEnum.find(
-					(unit) => unit === this.data.selectedKeyResult.unit
-				)
-			) {
+			if (!this.numberUnitsEnum.find((unit) => unit === this.data.selectedKeyResult.unit)) {
 				this.numberUnitsEnum.push(this.data.selectedKeyResult.unit);
 			}
 			this.typeForm.patchValue({
@@ -84,62 +79,42 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			this.weightForm.patchValue({
 				weight: this.data.selectedKeyResult.weight
 			});
-			const allKeyResult = JSON.parse(
-				JSON.stringify(this.data.allKeyResults)
-			);
-			let weightSum = this.data.allKeyResults.reduce(
-				(a, b) => a + +b.weight,
-				0
-			);
-			this.keyResultWeight = Math.round(
-				+this.weightForm.value.weight * (100 / weightSum)
-			);
-			this.weightForm.controls['weight'].valueChanges
-				.pipe(takeUntil(this._ngDestroy$))
-				.subscribe((weight) => {
-					allKeyResult.find(
-						(element) =>
-							element.id === this.data.selectedKeyResult.id
-					).weight = weight;
-					weightSum = allKeyResult.reduce((a, b) => a + +b.weight, 0);
-					this.keyResultWeight = Math.round(
-						+weight * (100 / weightSum)
-					);
-				});
+			const allKeyResult = JSON.parse(JSON.stringify(this.data.allKeyResults));
+			let weightSum = this.data.allKeyResults.reduce((a, b) => a + +b.weight, 0);
+			this.keyResultWeight = Math.round(+this.weightForm.value.weight * (100 / weightSum));
+			this.weightForm.controls['weight'].valueChanges.pipe(takeUntil(this._ngDestroy$)).subscribe((weight) => {
+				allKeyResult.find((element) => element.id === this.data.selectedKeyResult.id).weight = weight;
+				weightSum = allKeyResult.reduce((a, b) => a + +b.weight, 0);
+				this.keyResultWeight = Math.round(+weight * (100 / weightSum));
+			});
 		}
 	}
 
 	async getKPI() {
 		const { id: organizationId, tenantId } = this.organization;
-		await this.goalSettingsService
-			.getAllKPI({ organization: { id: organizationId }, tenantId })
-			.then((kpi) => {
-				const { items } = kpi;
-				this.KPIs = items;
-			});
+		await this.goalSettingsService.getAllKPI({ organization: { id: organizationId }, tenantId }).then((kpi) => {
+			const { items } = kpi;
+			this.KPIs = items;
+		});
 	}
 
 	async updateKeyResult() {
 		if (this.typeForm.value.type === this.keyResultTypeEnum.TASK) {
-			await this.taskService
-				.getById(this.typeForm.value.taskId)
-				.then((task) => {
-					if (!!task.dueDate) {
-						this.typeForm.patchValue({
-							deadline: KeyResultDeadlineEnum.HARD_DEADLINE,
-							hardDeadline: task.dueDate
-						});
-					}
-				});
+			await this.taskService.getById(this.typeForm.value.taskId).then((task) => {
+				if (!!task.dueDate) {
+					this.typeForm.patchValue({
+						deadline: KeyResultDeadlineEnum.HARD_DEADLINE,
+						hardDeadline: task.dueDate
+					});
+				}
+			});
 		}
 		if (this.typeForm.value.type === this.keyResultTypeEnum.KPI) {
 			this.data.selectedKeyResult.kpiId = this.typeForm.value.kpiId;
 		}
 		this.data.selectedKeyResult.type = this.typeForm.value.type;
-		this.data.selectedKeyResult.targetValue =
-			this.typeForm.value.targetValue;
-		this.data.selectedKeyResult.initialValue =
-			this.typeForm.value.initialValue;
+		this.data.selectedKeyResult.targetValue = this.typeForm.value.targetValue;
+		this.data.selectedKeyResult.initialValue = this.typeForm.value.initialValue;
 		this.data.selectedKeyResult.weight = this.weightForm.value.weight;
 		this.keyResultService.update(this.data.selectedKeyResult.id, {
 			...this.data.selectedKeyResult

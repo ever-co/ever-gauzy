@@ -13,7 +13,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 
 @NgModule({

@@ -15,7 +15,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../../../@shared/pagination/pagination-filter-base.component';
-import { Store } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 export interface SelectedRowEvent {
 	data: IProductTranslated;

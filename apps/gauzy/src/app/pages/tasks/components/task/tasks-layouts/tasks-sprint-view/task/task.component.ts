@@ -14,9 +14,10 @@ import { combineLatest, debounceTime, Subject } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskStatusesService } from '../../../../../../../@core';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Store } from '@gauzy/ui-sdk/common';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TaskStatusesService } from '../../../../../../../@core';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UpworkService } from 'apps/gauzy/src/app/@core/services/upwork.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization } from '@gauzy/contracts';

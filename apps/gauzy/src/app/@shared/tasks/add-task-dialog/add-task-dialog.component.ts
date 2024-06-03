@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -21,7 +21,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '../../../@core/services';
+import { EmployeesService, OrganizationTeamsService, TasksService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

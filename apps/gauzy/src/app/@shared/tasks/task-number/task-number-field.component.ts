@@ -6,8 +6,9 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store, TasksService } from '../../../@core/services';
+import { TasksService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

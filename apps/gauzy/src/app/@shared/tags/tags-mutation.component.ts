@@ -4,7 +4,8 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { firstValueFrom } from 'rxjs';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { Store, TagsService } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TagsService } from '../../@core/services';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({
@@ -13,7 +14,6 @@ import { NotesWithTagsComponent } from '../table-components';
 	styleUrls: ['./tags-mutation.component.scss']
 })
 export class TagsMutationComponent extends NotesWithTagsComponent implements OnInit {
-
 	/**
 	 * Tag mutation form
 	 */
@@ -28,8 +28,8 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 	}
 
 	/*
-	* Getter & Setter for tag to edit
-	*/
+	 * Getter & Setter for tag to edit
+	 */
 	_tag: ITag;
 	get tag(): ITag {
 		return this._tag;
@@ -57,7 +57,7 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 		super(themeService, translateService);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	async addTag() {
 		if (!this.store.selectedOrganization) {
@@ -75,11 +75,11 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				tenantId,
 				...(isTenantLevel
 					? {
-						organizationId: null
-					}
+							organizationId: null
+					  }
 					: {
-						organizationId
-					})
+							organizationId
+					  })
 			})
 		);
 		this.closeDialog(tag);
@@ -103,11 +103,11 @@ export class TagsMutationComponent extends NotesWithTagsComponent implements OnI
 				tenantId,
 				...(isTenantLevel
 					? {
-						organizationId: null
-					}
+							organizationId: null
+					  }
 					: {
-						organizationId
-					})
+							organizationId
+					  })
 			})
 		);
 		this.closeDialog(tag);

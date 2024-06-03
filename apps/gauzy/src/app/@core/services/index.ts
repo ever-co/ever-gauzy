@@ -112,7 +112,6 @@ export * from './route-utils';
 export * from './server-connection.service';
 export * from './service';
 export * from './skills.service';
-export * from './store.service';
 export * from './tags.service';
 export * from './tasks-store.service';
 export * from './tasks.service';

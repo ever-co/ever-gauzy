@@ -9,7 +9,7 @@ import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { moment } from './../../../../@core/moment-extend';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';

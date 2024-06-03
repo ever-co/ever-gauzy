@@ -5,7 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { IImageAsset, IUser } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { environment } from '@gauzy/ui-config';
-import { Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy()
 @Component({

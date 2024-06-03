@@ -18,7 +18,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { Store, TasksService } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TasksService } from './../../../../@core/services';
 import { PaginationFilterBaseComponent } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { AddTaskDialogComponent } from './../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';

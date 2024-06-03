@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ThemeModule } from '../../@theme/theme.module';
 import { CardGridComponent } from './card-grid.component';
 import { CustomViewComponent } from './card-grid-custom.component';

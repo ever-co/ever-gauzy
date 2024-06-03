@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import moment from 'moment';
 import { DefaultValueDateTypeEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from './store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

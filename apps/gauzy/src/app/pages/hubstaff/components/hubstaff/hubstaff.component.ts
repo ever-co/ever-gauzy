@@ -10,7 +10,8 @@ import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { HubstaffService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { HubstaffService } from './../../../../@core/services';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })

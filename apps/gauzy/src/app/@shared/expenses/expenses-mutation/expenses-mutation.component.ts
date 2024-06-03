@@ -20,7 +20,8 @@ import { filter, tap } from 'rxjs/operators';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store, OrganizationSettingService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationSettingService } from '../../../@core/services';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

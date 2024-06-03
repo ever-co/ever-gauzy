@@ -5,7 +5,8 @@ import { ICustomSmtp, IOrganization, IUser, PermissionsEnum, SMTPSecureEnum } fr
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
-import { CustomSmtpService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CustomSmtpService } from '../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../forms/helpers';

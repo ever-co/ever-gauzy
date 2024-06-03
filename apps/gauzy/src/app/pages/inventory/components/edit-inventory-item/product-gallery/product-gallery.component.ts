@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset.service';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
@@ -15,6 +14,7 @@ import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-mo
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

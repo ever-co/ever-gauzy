@@ -7,7 +7,7 @@ import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { TimesheetService } from '../timesheet.service';
 import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })

@@ -26,6 +26,7 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
@@ -39,7 +40,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InvoiceEstimateHistoryService, PaymentService, Store } from '../../@core/services';
+import { InvoiceEstimateHistoryService, PaymentService } from '../../@core/services';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

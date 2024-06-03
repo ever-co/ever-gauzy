@@ -4,7 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { HelpCenterService, Store } from '../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { HelpCenterService } from '../../../@core';
 
 @Component({
 	selector: 'ga-knowledeg-base-mutation',

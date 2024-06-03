@@ -10,7 +10,8 @@ import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationSettingService, ProposalsService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationSettingService, ProposalsService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

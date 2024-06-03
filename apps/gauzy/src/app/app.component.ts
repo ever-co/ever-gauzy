@@ -21,8 +21,9 @@ import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { I18nTranslateService } from '@gauzy/ui-sdk/i18n';
 import { environment } from '@gauzy/ui-config';
+import { Store } from '@gauzy/ui-sdk/common';
 import { AnalyticsService, JitsuService, SeoService } from './@core/services';
-import { LanguagesService, Store } from './@core/services';
+import { LanguagesService } from './@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

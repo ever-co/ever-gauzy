@@ -7,7 +7,7 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';

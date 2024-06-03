@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
-import {
-	ActivatedRouteSnapshot,
-	CanActivate,
-	Router,
-	RouterStateSnapshot,
-} from '@angular/router';
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { AuthStrategy } from './auth-strategy.service';
-import { Store } from '../services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ElectronService } from './electron.service';
 
 @Injectable()
@@ -21,10 +16,7 @@ export class AuthGuard implements CanActivate {
 		private readonly electronService: ElectronService
 	) {}
 
-	async canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	) {
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
 		const token = route.queryParamMap.get('token');
 		const userId = route.queryParamMap.get('userId');
 		if (token && userId) {
@@ -49,7 +41,7 @@ export class AuthGuard implements CanActivate {
 		await firstValueFrom(this.authStrategy.logout());
 
 		this.router.navigate(['/auth/login'], {
-			queryParams: { returnUrl: state.url },
+			queryParams: { returnUrl: state.url }
 		});
 		return false;
 	}

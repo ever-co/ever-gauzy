@@ -8,9 +8,10 @@ import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
 import { IncomeExpenseAmountComponent } from './../../../../@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from './../../../../@shared/table-components/date-view/date-view.component';
-import { Store, UpworkStoreService } from './../../../../@core/services';
+import { UpworkStoreService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

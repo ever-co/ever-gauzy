@@ -16,7 +16,7 @@ import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -6,7 +6,8 @@ import { tap } from 'rxjs/operators';
 import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { InviteService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InviteService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

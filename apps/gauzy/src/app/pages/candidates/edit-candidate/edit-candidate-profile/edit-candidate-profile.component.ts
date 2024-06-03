@@ -16,7 +16,7 @@ import { CandidateStore } from '../../../../@core/services/candidate-store.servi
 import { NbDialogService } from '@nebular/theme';
 import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
-import { Store } from '../../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })

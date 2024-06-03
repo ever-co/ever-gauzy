@@ -11,7 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';

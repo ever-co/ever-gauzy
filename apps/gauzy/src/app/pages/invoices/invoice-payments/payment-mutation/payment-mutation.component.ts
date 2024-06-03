@@ -18,7 +18,8 @@ import { NbDialogRef } from '@nebular/theme';
 import moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
-import { InvoicesService, OrganizationSettingService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InvoicesService, OrganizationSettingService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

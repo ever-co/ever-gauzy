@@ -19,7 +19,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { AuthService, CandidatesService, EmployeesService, RoleService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { AuthService, CandidatesService, EmployeesService, RoleService } from './../../../../@core/services';
 import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

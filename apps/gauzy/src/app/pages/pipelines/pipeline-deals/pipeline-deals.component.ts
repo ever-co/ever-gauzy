@@ -8,7 +8,7 @@ import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { DealsService } from '../../../@core/services/deals.service';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';

@@ -12,17 +12,12 @@ import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import {
-	IEmployee,
-	IDateRange,
-	ICandidateInterview,
-	IOrganization
-} from '@gauzy/contracts';
+import { IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { CandidateCalendarInfoComponent } from '../../candidate-calendar-info/candidate-calendar-info.component';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { firstValueFrom } from "rxjs";
+import { firstValueFrom } from 'rxjs';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,16 +25,14 @@ import { firstValueFrom } from "rxjs";
 	templateUrl: 'candidate-interview-form.component.html',
 	styleUrls: ['candidate-interview-form.component.scss']
 })
-export class CandidateInterviewFormComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class CandidateInterviewFormComponent implements AfterViewInit, OnInit, OnDestroy {
 	@Input() editData: ICandidateInterview;
 	@Input() isCalendar: boolean;
 	@Output() titleExist = new EventEmitter<any>();
 
 	/*
-	* Getter & Setter for interviews
-	*/
+	 * Getter & Setter for interviews
+	 */
 	_interviews: ICandidateInterview[] = [];
 	get interviews(): ICandidateInterview[] {
 		return this._interviews;
@@ -65,13 +58,13 @@ export class CandidateInterviewFormComponent
 		private readonly employeeService: EmployeesService,
 		private readonly cdRef: ChangeDetectorRef,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.loadEmployees()),
 				tap(() => this.loadInterviewNames()),
 				untilDestroyed(this)
@@ -91,10 +84,7 @@ export class CandidateInterviewFormComponent
 		this.form.get('title').valueChanges.subscribe((title: string) => {
 			for (let i = 0; i < this.interviewNames.length; i++) {
 				if (this.interviewNames[i] === title.toLocaleLowerCase()) {
-					if (
-						this.editData &&
-						this.editData.title === this.form.get('title').value
-					) {
+					if (this.editData && this.editData.title === this.form.get('title').value) {
 						this.isTitleExisted = false;
 						this.titleExist.emit(false);
 						break;
@@ -117,7 +107,7 @@ export class CandidateInterviewFormComponent
 		this.employeeService
 			.getAll(['user'], { organizationId, tenantId })
 			.pipe(
-				tap(({ items }) => this.employees = items),
+				tap(({ items }) => (this.employees = items)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -168,5 +158,5 @@ export class CandidateInterviewFormComponent
 		}
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

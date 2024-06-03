@@ -24,7 +24,7 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';

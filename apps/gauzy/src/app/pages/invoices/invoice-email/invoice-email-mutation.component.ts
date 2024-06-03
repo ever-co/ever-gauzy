@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

@@ -7,7 +7,7 @@ import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
-import { Store } from '../../services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
 
 @UntilDestroy()

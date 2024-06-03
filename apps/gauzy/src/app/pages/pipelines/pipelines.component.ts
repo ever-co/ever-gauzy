@@ -14,8 +14,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { PipelinesService, Store } from '../../@core/services';
+import { PipelinesService } from '../../@core/services';
 import { InputFilterComponent } from '../../@shared/table-filters';
 import {
 	IPaginationBase,

@@ -5,7 +5,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-sdk/common';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Injectable({
 	providedIn: 'root'

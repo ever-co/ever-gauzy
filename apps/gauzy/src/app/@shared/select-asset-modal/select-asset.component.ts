@@ -6,7 +6,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
-import { ImageAssetService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ImageAssetService } from '../../@core/services';
 
 export interface SelectAssetSettings {
 	uploadImageEnabled?: boolean;

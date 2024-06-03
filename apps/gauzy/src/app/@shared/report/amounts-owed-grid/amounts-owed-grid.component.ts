@@ -12,7 +12,7 @@ import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from '../../timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';

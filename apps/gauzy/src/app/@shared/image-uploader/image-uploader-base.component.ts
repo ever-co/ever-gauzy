@@ -6,7 +6,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
 import { environment } from '@gauzy/ui-config';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { Store } from './../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

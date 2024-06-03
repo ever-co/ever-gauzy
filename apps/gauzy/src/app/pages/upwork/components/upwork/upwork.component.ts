@@ -7,7 +7,8 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store, UpworkStoreService } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { UpworkStoreService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

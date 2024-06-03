@@ -10,7 +10,7 @@ import { TimesheetService } from '../../timesheet.service';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 

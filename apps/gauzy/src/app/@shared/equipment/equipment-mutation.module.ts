@@ -11,7 +11,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { EquipmentService } from '../../@core/services/equipment.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';

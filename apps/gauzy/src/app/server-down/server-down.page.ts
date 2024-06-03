@@ -1,7 +1,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ServerConnectionService } from '../@core/services/server-connection.service';
 
 @Component({

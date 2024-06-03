@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimesheetFilterService } from './../../../../@shared/timesheet';

@@ -9,7 +9,8 @@ import * as moment from 'moment';
 import { CompareDateValidator, ToastrService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { environment as ENV } from '@gauzy/ui-config';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService } from '../../../@core/services';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

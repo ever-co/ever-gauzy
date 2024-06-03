@@ -1,13 +1,12 @@
 import { Observable, from, of, tap, Subject } from 'rxjs';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, filter, map, switchMap } from 'rxjs/operators';
+import { catchError, map, switchMap } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
 import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
 import { AuthService } from '../services/auth.service';
-import { Store } from '../services/store.service';
 import { TimeTrackerService } from '../../@shared/time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../../@shared/timesheet/timesheet-filter.service';
 import { CookieService } from 'ngx-cookie-service';

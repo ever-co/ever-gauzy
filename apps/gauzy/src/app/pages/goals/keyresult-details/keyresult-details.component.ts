@@ -21,7 +21,7 @@ import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.co
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TasksService } from '../../../@core/services/tasks.service';
 import { TasksStoreService } from '../../../@core/services/tasks-store.service';
 import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';

@@ -19,7 +19,7 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';

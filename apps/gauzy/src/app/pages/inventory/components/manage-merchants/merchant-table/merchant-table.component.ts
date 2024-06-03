@@ -10,7 +10,8 @@ import { NbDialogService } from '@nebular/theme';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { MerchantService, Store } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { MerchantService } from '../../../../../@core/services';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,

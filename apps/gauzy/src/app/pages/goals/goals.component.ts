@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';

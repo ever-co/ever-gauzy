@@ -10,7 +10,7 @@ import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, Perm
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { moment } from './../../../../../@core/moment-extend';
-import { Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';

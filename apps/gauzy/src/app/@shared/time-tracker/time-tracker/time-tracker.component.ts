@@ -22,7 +22,7 @@ import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { TimeTrackerService } from '../time-tracker.service';
 import { TimesheetService } from '../../timesheet/timesheet.service';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ITimerSynced } from '../components/time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 

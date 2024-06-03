@@ -17,7 +17,8 @@ import {
 	IOrganizationProject
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationProjectStore, Store } from '../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationProjectsService, OrganizationProjectStore } from '../../../../@core/services';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	ContactLinksComponent,

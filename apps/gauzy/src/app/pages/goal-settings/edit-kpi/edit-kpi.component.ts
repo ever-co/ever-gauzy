@@ -14,7 +14,7 @@ import {
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

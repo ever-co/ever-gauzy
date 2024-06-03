@@ -19,7 +19,8 @@ import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebula
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { EmailValidator } from '@gauzy/ui-sdk/core';
-import { AuthService, InviteService, RoleService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { AuthService, InviteService, RoleService } from './../../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FormHelpers } from '../../../forms/helpers';
 

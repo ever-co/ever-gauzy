@@ -14,7 +14,8 @@ import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ProductTypeService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ProductTypeService } from '../../../@core/services';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

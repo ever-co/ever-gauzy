@@ -11,8 +11,9 @@ import { finalize, map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { ProductTypeService, Store } from '../../@core/services';
+import { ProductTypeService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

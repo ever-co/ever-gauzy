@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
+import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
+import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
+import { merge, Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { uniq } from 'underscore';
 import {
-	DefaultValueDateTypeEnum,
 	IOrganization,
 	PermissionsEnum,
 	IRolePermission,
@@ -16,13 +20,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganizationTeam
 } from '@gauzy/contracts';
-import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
-import { merge, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { uniq } from 'underscore';
 import { GuiDrag } from '@gauzy/ui-sdk/shared';
-import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../../constants';
 
 export interface AppState {
 	user: IUser;

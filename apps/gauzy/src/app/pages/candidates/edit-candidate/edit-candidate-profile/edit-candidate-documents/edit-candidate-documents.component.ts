@@ -8,8 +8,9 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import { CandidateDocumentsService, CandidateStore, Store } from './../../../../../@core/services';
+import { CandidateDocumentsService, CandidateStore } from './../../../../../@core/services';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

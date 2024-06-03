@@ -4,7 +4,8 @@ import { IEmailTemplate, IEmailHistory, IOrganization, LanguagesEnum } from '@ga
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmailService, EmailTemplateService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmailService, EmailTemplateService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

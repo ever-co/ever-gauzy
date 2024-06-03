@@ -13,8 +13,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
+import { Store } from '@gauzy/ui-sdk/common';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, Store } from '../../../@core/services';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService } from '../../../@core/services';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

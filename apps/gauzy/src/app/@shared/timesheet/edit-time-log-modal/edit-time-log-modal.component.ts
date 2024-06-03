@@ -20,7 +20,7 @@ import * as _ from 'underscore';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
 import { TimesheetService } from '../timesheet.service';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

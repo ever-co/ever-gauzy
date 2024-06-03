@@ -3,7 +3,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
 import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
 import { UsersService } from '@gauzy/ui-sdk/core';
-import { LanguagesService, Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { LanguagesService } from './../../../../../@core/services';
 import { ThemeLanguageSelectorService } from './theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })

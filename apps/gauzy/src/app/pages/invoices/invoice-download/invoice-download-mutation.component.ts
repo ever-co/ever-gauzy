@@ -5,7 +5,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IInvoice } from '@gauzy/contracts';
 import { saveAs } from 'file-saver';
 import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { InvoicesService } from '../../../@core/services';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

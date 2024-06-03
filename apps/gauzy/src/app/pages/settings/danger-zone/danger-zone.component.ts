@@ -9,7 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Environment, environment } from '@gauzy/ui-config';
 import { ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 import { DangerZoneMutationComponent } from '../../../@shared/settings/danger-zone-mutation/danger-zone-mutation.component';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

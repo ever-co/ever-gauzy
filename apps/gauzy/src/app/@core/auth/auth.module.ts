@@ -5,7 +5,7 @@ import { environment } from '@gauzy/ui-config';
 import { AuthGuard } from './auth.guard';
 import { AuthStrategy } from './auth-strategy.service';
 import { AuthService } from '../services/auth.service';
-import { Store } from '../services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { NoAuthGuard } from './no-auth.guard';
 import { ElectronService } from './electron.service';
 

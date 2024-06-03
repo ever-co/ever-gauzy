@@ -10,8 +10,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService, ToastrService } from '@gauzy/ui-sdk/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { EmployeesService, EmployeeStatisticsService, Store } from '../../../@core/services';
+import { EmployeesService, EmployeeStatisticsService } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
 

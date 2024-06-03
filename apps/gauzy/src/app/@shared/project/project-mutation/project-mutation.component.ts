@@ -33,15 +33,14 @@ import {
 	IOrganizationGithubRepository,
 	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
 	GithubService,
 	OrganizationContactService,
 	OrganizationProjectsService,
-	OrganizationTeamsService,
-	Store
+	OrganizationTeamsService
 } from '../../../@core/services';
 import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms/helpers';

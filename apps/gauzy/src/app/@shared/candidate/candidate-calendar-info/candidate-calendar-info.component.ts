@@ -12,7 +12,8 @@ import * as moment from 'moment';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IOrganization } from '@gauzy/contracts';
-import { CandidateInterviewService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateInterviewService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

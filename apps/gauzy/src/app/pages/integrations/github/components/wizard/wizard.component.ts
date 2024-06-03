@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, toParams } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { GITHUB_AUTHORIZATION_URL } from '../../github.config';
 
 @UntilDestroy({ checkProperties: true })

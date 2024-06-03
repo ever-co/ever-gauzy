@@ -1,14 +1,9 @@
-import {
-	ICandidateTechnologies,
-	ICandidatePersonalQualities,
-	IOrganization
-} from '@gauzy/contracts';
+import { ICandidateTechnologies, ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy, Input } from '@angular/core';
-import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
-import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from '../../../../@core/services';
 
 @Component({
 	selector: 'ga-candidate-criterions-form',
@@ -32,7 +27,7 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 		private candidateTechnologiesService: CandidateTechnologiesService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		protected readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.organization = this.store.selectedOrganization;
@@ -73,15 +68,9 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 			tenantId
 		});
 		if (technologies) {
-			this.technologiesList = technologies.items.filter(
-				(item) => !item.interviewId
-			);
+			this.technologiesList = technologies.items.filter((item) => !item.interviewId);
 			if (this.editSelectedTechnologies) {
-				this.isChecked(
-					this.editSelectedTechnologies,
-					this.technologiesList,
-					true
-				);
+				this.isChecked(this.editSelectedTechnologies, this.technologiesList, true);
 			}
 		}
 		const qualities = await this.candidatePersonalQualitiesService.getAll({
@@ -89,15 +78,9 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 			tenantId
 		});
 		if (qualities) {
-			this.personalQualitiesList = qualities.items.filter(
-				(item) => !item.interviewId
-			);
+			this.personalQualitiesList = qualities.items.filter((item) => !item.interviewId);
 			if (this.editSelectedQualities) {
-				this.isChecked(
-					this.editSelectedQualities,
-					this.personalQualitiesList,
-					false
-				);
+				this.isChecked(this.editSelectedQualities, this.personalQualitiesList, false);
 			}
 		}
 	}
@@ -116,8 +99,8 @@ export class CandidateCriterionsFormComponent implements OnInit, OnDestroy {
 					? this.checkedTech.push(1)
 					: this.checkedQual.push(1)
 				: isTech
-					? this.checkedTech.push(0)
-					: this.checkedQual.push(0);
+				? this.checkedTech.push(0)
+				: this.checkedQual.push(0);
 		});
 	}
 	ngOnDestroy() {

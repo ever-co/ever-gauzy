@@ -14,11 +14,8 @@ import {
 	IOrganization,
 	IUser
 } from '@gauzy/contracts';
-import {
-	GoalSettingsService,
-	OrganizationTeamsService,
-	Store
-} from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { GoalSettingsService, OrganizationTeamsService } from '../../../@core/services';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
 import { isFuture } from 'date-fns';
@@ -31,7 +28,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['./edit-objective.component.scss']
 })
 export class EditObjectiveComponent implements OnInit, OnDestroy {
-
 	employees: IEmployee[] = [];
 	data: IGoal;
 	timeFrames: IGoalTimeFrame[] = [];
@@ -48,8 +44,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	public organization: IOrganization;
 
 	/*
-	* Objective Mutation Form
-	*/
+	 * Objective Mutation Form
+	 */
 	public form: UntypedFormGroup = EditObjectiveComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -69,14 +65,14 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly organizationTeamsService: OrganizationTeamsService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				debounceTime(200),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.getTimeFrames()),
 				tap(() => this.patchValueAndValidity()),
 				untilDestroyed(this)
@@ -92,11 +88,7 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 	}
 
 	selectorsVisibility(user: IUser) {
-		const roles = [
-			RolesEnum.SUPER_ADMIN,
-			RolesEnum.MANAGER,
-			RolesEnum.ADMIN
-		];
+		const roles = [RolesEnum.SUPER_ADMIN, RolesEnum.MANAGER, RolesEnum.ADMIN];
 		this.hideOrg = !roles.includes(user.role.name as RolesEnum);
 		this.hideEmployee = this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.TEAMS;
 		this.hideTeam = this.settings && this.settings.canOwnObjectives === GoalOwnershipEnum.EMPLOYEES;
@@ -110,8 +102,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				ownerId: !!this.data.ownerEmployee
 					? this.data.ownerEmployee.id
 					: !!this.data.ownerTeam
-						? this.data.ownerTeam.id
-						: this.data.organization.id
+					? this.data.ownerTeam.id
+					: this.data.organization.id
 			});
 			if (this.data.level === GoalLevelEnum.TEAM) {
 				this.getTeams();
@@ -146,17 +138,12 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 				let timeFrames = [];
 				timeFrames = items.filter(
 					(timeFrame) =>
-						timeFrame.status === TimeFrameStatusEnum.ACTIVE &&
-						isFuture(new Date(timeFrame.endDate))
+						timeFrame.status === TimeFrameStatusEnum.ACTIVE && isFuture(new Date(timeFrame.endDate))
 				);
 				if (!!this.data) {
-					timeFrames.push(
-						items.find(
-							(timeFrame) => this.data.deadline === timeFrame.name
-						)
-					);
+					timeFrames.push(items.find((timeFrame) => this.data.deadline === timeFrame.name));
 				}
-				this.timeFrames = timeFrames.filter(elm => elm);
+				this.timeFrames = timeFrames.filter((elm) => elm);
 			}
 		});
 	}
@@ -184,8 +171,8 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 			this.form.value.level === GoalLevelEnum.EMPLOYEE
 				? 'ownerEmployee'
 				: this.form.value.level === GoalLevelEnum.TEAM
-					? 'ownerTeam'
-					: 'organization'
+				? 'ownerTeam'
+				: 'organization'
 		] = this.form.value.owner;
 		delete objectiveData.owner;
 		delete objectiveData.organization;
@@ -197,5 +184,5 @@ export class EditObjectiveComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

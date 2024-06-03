@@ -7,8 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
 import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

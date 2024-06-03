@@ -6,8 +6,9 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { OrganizationContactService, Store } from '../../@core/services';
+import { OrganizationContactService } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

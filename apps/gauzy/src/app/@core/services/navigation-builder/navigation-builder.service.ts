@@ -2,7 +2,7 @@ import { Injectable, Type } from '@angular/core';
 import { Observable, of as ObservableOf } from 'rxjs';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '../store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 export interface ISidebarActionConfig {
 	id: string;

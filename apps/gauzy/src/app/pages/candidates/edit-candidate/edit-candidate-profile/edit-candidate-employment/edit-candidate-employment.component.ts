@@ -16,10 +16,10 @@ import {
 	EmployeeLevelService,
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
-	OrganizationPositionsService,
-	Store
+	OrganizationPositionsService
 } from '../../../../../@core/services';
 import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

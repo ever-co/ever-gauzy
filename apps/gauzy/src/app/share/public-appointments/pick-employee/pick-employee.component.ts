@@ -3,7 +3,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { EventTypeService } from '../../../@core/services/event-type.service';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

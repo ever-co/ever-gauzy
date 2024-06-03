@@ -4,7 +4,8 @@ import { EMPTY, Observable, of as observableOf } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IOrganizationTaskSetting } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationTaskSettingService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationTaskSettingService } from '../../../@core/services';
 
 @Injectable({
 	providedIn: 'root'

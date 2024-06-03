@@ -12,7 +12,7 @@ import { HelpCenterArticleService } from '../../../@core/services/help-center-ar
 import { EmployeesService } from '../../../@core/services';
 import { takeUntil } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-add-article',

@@ -36,7 +36,7 @@ import { CloudinaryModule } from '@cloudinary/ng';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ServerConnectionService } from './@core/services/server-connection.service';
-import { Store } from './@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
 import * as Sentry from '@sentry/angular-ivy';

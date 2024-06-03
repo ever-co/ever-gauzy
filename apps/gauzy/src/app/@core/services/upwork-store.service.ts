@@ -1,14 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
-import {
-	IEngagement,
-	IOrganization,
-	IUpworkApiConfig,
-	IUpworkDateRange
-} from '@gauzy/contracts';
+import { IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
 import { UpworkService } from './upwork.service';
 import { tap, switchMap, map } from 'rxjs/operators';
-import { Store } from './store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 
 const TODAY = new Date();
@@ -57,40 +52,25 @@ const contractSettings = {
 	providedIn: 'root'
 })
 export class UpworkStoreService {
-	private _config$: BehaviorSubject<IUpworkApiConfig> = new BehaviorSubject(
-		null
-	);
+	private _config$: BehaviorSubject<IUpworkApiConfig> = new BehaviorSubject(null);
 
-	private _contracts$: BehaviorSubject<IEngagement[]> = new BehaviorSubject(
-		null
-	);
-	public contracts$: Observable<
-		IEngagement[]
-	> = this._contracts$.asObservable();
+	private _contracts$: BehaviorSubject<IEngagement[]> = new BehaviorSubject(null);
+	public contracts$: Observable<IEngagement[]> = this._contracts$.asObservable();
 
-	private _selectedIntegrationId$: BehaviorSubject<string> = new BehaviorSubject(
-		null
-	);
+	private _selectedIntegrationId$: BehaviorSubject<string> = new BehaviorSubject(null);
 
-	private _contractsSettings$: BehaviorSubject<any> = new BehaviorSubject(
-		contractSettings
-	);
+	private _contractsSettings$: BehaviorSubject<any> = new BehaviorSubject(contractSettings);
 	public contractsSettings$: Observable<any> = this._contractsSettings$.asObservable();
 
 	private employeeId: string;
 
-	private _dateRangeActivity$: BehaviorSubject<IUpworkDateRange> = new BehaviorSubject(
-		DEFAULT_DATE_RANGE
-	);
+	private _dateRangeActivity$: BehaviorSubject<IUpworkDateRange> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 	public dateRangeActivity$: Observable<IUpworkDateRange> = this._dateRangeActivity$.asObservable();
 
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
 	public reports$: Observable<any> = this._reports$.asObservable();
 
-	constructor(
-		private _upworkService: UpworkService,
-		private _storeService: Store
-	) { }
+	constructor(private _upworkService: UpworkService, private _storeService: Store) {}
 
 	getContracts(): Observable<IEngagement[]> {
 		const contracts$ = this._contracts$.getValue();
@@ -98,9 +78,7 @@ export class UpworkStoreService {
 			return EMPTY;
 		}
 		return this._config$.pipe(
-			switchMap((config) =>
-				config ? this._upworkService.getContracts(config) : EMPTY
-			),
+			switchMap((config) => (config ? this._upworkService.getContracts(config) : EMPTY)),
 			tap((contracts) => this._contracts$.next(contracts))
 		);
 	}
@@ -148,9 +126,7 @@ export class UpworkStoreService {
 		if (settings.onlyContracts) {
 			return this.syncContracts(contracts);
 		}
-		const entitiesToSync = settings.entitiesToSync.filter(
-			(entity) => entity.sync
-		);
+		const entitiesToSync = settings.entitiesToSync.filter((entity) => entity.sync);
 		if (!entitiesToSync.length) {
 			return;
 		}
@@ -159,10 +135,9 @@ export class UpworkStoreService {
 		const { id: organizationId } = this.getSelectedOrganization();
 
 		//map contract provider to get authorize info
-		const {
-			provider__reference: providerReferenceId,
-			provider__id: providerId
-		} = contracts.find((contract: IEngagement) => true);
+		const { provider__reference: providerReferenceId, provider__id: providerId } = contracts.find(
+			(contract: IEngagement) => true
+		);
 
 		return this._upworkService.syncContractsRelatedData({
 			integrationId,
@@ -197,9 +172,7 @@ export class UpworkStoreService {
 		const data = JSON.stringify({
 			filter: { ...{ organizationId, tenantId } }
 		});
-		return this._upworkService
-			.getConfig({ integrationId, data })
-			.pipe(tap((config) => this._config$.next(config)));
+		return this._upworkService.getConfig({ integrationId, data }).pipe(tap((config) => this._config$.next(config)));
 	}
 
 	/*

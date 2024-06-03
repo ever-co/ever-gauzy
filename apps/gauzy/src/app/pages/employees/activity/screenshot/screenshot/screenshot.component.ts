@@ -20,7 +20,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';

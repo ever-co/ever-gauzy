@@ -19,9 +19,9 @@ import {
 	OrganizationContactService,
 	OrganizationDepartmentsService,
 	OrganizationProjectsService,
-	OrganizationTeamsService,
-	Store
+	OrganizationTeamsService
 } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

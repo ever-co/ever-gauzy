@@ -5,7 +5,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

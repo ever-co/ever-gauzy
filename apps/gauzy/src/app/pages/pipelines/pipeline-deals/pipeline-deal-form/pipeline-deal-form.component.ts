@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/contracts';
 import { PipelinesService } from '../../../../@core/services/pipelines.service';
 import { DealsService } from '../../../../@core/services/deals.service';
-import { AppStore, Store } from '../../../../@core/services/store.service';
+import { AppStore, Store } from '@gauzy/ui-sdk/common';
 import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';

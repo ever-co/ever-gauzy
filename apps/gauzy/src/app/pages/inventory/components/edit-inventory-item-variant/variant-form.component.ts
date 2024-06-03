@@ -10,11 +10,11 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
 import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 export interface IOptionCreateInput {
 	name: string;

@@ -1,22 +1,17 @@
-import {
-	ICandidate,
-	ICandidateInterview,
-	IEmployee,
-	IOrganization
-} from '@gauzy/contracts';
+import { ICandidate, ICandidateInterview, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CandidatesService } from '../../../@core/services/candidates.service';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
 import { EmployeesService } from '../../../@core/services';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-statistic',
 	templateUrl: './candidate-statistic.component.html',
-  styleUrls:['./candidate-statistic.component.scss']
+	styleUrls: ['./candidate-statistic.component.scss']
 })
 export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	candidateRating: number;
@@ -50,8 +45,8 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	async loadData() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const { items } = await firstValueFrom(this.candidatesService
-			.getAll(['user', 'interview', 'feedbacks'], {
+		const { items } = await firstValueFrom(
+			this.candidatesService.getAll(['user', 'interview', 'feedbacks'], {
 				organizationId,
 				tenantId
 			})
@@ -71,9 +66,7 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	async loadEmployee() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], { organizationId, tenantId })
-		);
+		const { items } = await firstValueFrom(this.employeesService.getAll(['user'], { organizationId, tenantId }));
 		this.employeeList = items;
 	}
 	ngOnDestroy() {}

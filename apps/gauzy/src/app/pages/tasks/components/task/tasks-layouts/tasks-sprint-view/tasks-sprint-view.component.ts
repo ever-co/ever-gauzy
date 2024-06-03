@@ -1,45 +1,22 @@
-import {
-	Component,
-	OnInit,
-	Input,
-	Output,
-	EventEmitter,
-	SimpleChanges,
-	OnChanges,
-} from '@angular/core';
-import {
-	ITask,
-	IOrganizationSprint,
-	IOrganizationProject,
-	IOrganization,
-} from '@gauzy/contracts';
+import { Component, OnInit, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
+import { ITask, IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, filter, take } from 'rxjs/operators';
-import {
-	CdkDragDrop,
-	moveItemInArray,
-	transferArrayItem,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Store } from '@gauzy/ui-sdk/common';
 import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-import {
-	SprintStoreService,
-	Store,
-	TasksStoreService,
-} from './../../../../../../@core/services';
+import { SprintStoreService, TasksStoreService } from './../../../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-tasks-sprint-view',
 	templateUrl: './tasks-sprint-view.component.html',
-	styleUrls: ['./tasks-sprint-view.component.scss'],
+	styleUrls: ['./tasks-sprint-view.component.scss']
 })
-export class TasksSprintViewComponent
-	extends GauzyEditableGridComponent<ITask>
-	implements OnInit, OnChanges
-{
+export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> implements OnInit, OnChanges {
 	sprints: IOrganizationSprint[] = [];
 	backlogTasks: ITask[] = [];
 
@@ -53,16 +30,10 @@ export class TasksSprintViewComponent
 
 	sprints$: Observable<IOrganizationSprint[]> = this.store$.sprints$.pipe(
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
-			sprints.filter(
-				(sprint: IOrganizationSprint) =>
-					sprint.projectId === this.project.id
-			)
+			sprints.filter((sprint: IOrganizationSprint) => sprint.projectId === this.project.id)
 		),
 		tap((sprints: IOrganizationSprint[]) => {
-			this.sprintIds = [
-				...sprints.map((sprint: IOrganizationSprint) => sprint.id),
-				'backlog',
-			];
+			this.sprintIds = [...sprints.map((sprint: IOrganizationSprint) => sprint.id), 'backlog'];
 		})
 	);
 
@@ -87,7 +58,7 @@ export class TasksSprintViewComponent
 		this.backlogTasks = this.tasks;
 		this.sprintActions = [
 			{ title: this.getTranslation('TASKS_PAGE.EDIT_SPRINT') },
-			{ title: this.getTranslation('TASKS_PAGE.DELETE_SPRINT') },
+			{ title: this.getTranslation('TASKS_PAGE.DELETE_SPRINT') }
 		];
 	}
 
@@ -102,7 +73,7 @@ export class TasksSprintViewComponent
 					this.store$.fetchSprints({
 						organizationId,
 						projectId: project.id,
-						tenantId,
+						tenantId
 					});
 				}),
 				untilDestroyed(this)
@@ -111,32 +82,27 @@ export class TasksSprintViewComponent
 	}
 
 	reduceTasks(tasks: ITask[]): void {
-		this.sprints$
-			.pipe(untilDestroyed(this))
-			.subscribe((availableSprints: IOrganizationSprint[]) => {
-				const sprints = availableSprints.reduce(
-					(
-						acc: { [key: string]: IOrganizationSprint },
-						sprint: IOrganizationSprint
-					) => {
-						acc[sprint.id] = {
-							...sprint,
-							tasks: sprint.tasks || [],
-						};
-						return acc;
-					},
-					{}
-				);
-				this.sprints = Object.values(sprints);
+		this.sprints$.pipe(untilDestroyed(this)).subscribe((availableSprints: IOrganizationSprint[]) => {
+			const sprints = availableSprints.reduce(
+				(acc: { [key: string]: IOrganizationSprint }, sprint: IOrganizationSprint) => {
+					acc[sprint.id] = {
+						...sprint,
+						tasks: sprint.tasks || []
+					};
+					return acc;
+				},
+				{}
+			);
+			this.sprints = Object.values(sprints);
 
-				const backlog = [];
-				tasks.forEach((task) => {
-					if (!task.organizationSprint) {
-						backlog.push(task);
-					}
-				});
-				this.backlogTasks = backlog;
+			const backlog = [];
+			tasks.forEach((task) => {
+				if (!task.organizationSprint) {
+					backlog.push(task);
+				}
 			});
+			this.backlogTasks = backlog;
+		});
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -162,33 +128,23 @@ export class TasksSprintViewComponent
 	}
 
 	toggleItemSelection(task: ITask) {
-		this.isSelected =
-			this.isSelected && task === this.selectedTask
-				? !this.isSelected
-				: true;
+		this.isSelected = this.isSelected && task === this.selectedTask ? !this.isSelected : true;
 		this.selectedTask = task === this.selectedTask ? null : task;
 		this.selectedTaskEvent.emit({
 			data: task,
-			isSelected: this.isSelected,
+			isSelected: this.isSelected
 		});
 	}
 
 	drop(event: CdkDragDrop<string[]>) {
 		if (event.previousContainer === event.container) {
-			moveItemInArray(
-				event.container.data,
-				event.previousIndex,
-				event.currentIndex
-			);
+			moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
 		} else {
 			this.taskStore
 				.editTask({
 					id: event.item.data.id,
 					title: event.item.data.title,
-					organizationSprint:
-						this.sprints.find(
-							(sprint) => sprint.id === event.container.id
-						) || null,
+					organizationSprint: this.sprints.find((sprint) => sprint.id === event.container.id) || null
 				})
 				.pipe(untilDestroyed(this))
 				.subscribe();
@@ -220,7 +176,7 @@ export class TasksSprintViewComponent
 				status,
 				title,
 				organizationId: this.organizationId,
-				taskStatus,
+				taskStatus
 			})
 			.pipe(untilDestroyed(this))
 			.subscribe();
@@ -231,7 +187,7 @@ export class TasksSprintViewComponent
 		this.store$
 			.updateSprint({
 				...sprint,
-				isActive: false,
+				isActive: false
 			})
 			.pipe(take(1), untilDestroyed(this))
 			.subscribe();

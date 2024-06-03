@@ -11,7 +11,7 @@ import { filter } from 'rxjs/operators';
 import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
 import { EmployeesService } from '../../@core/services';
 import { FormControl } from '@angular/forms';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
 import { ToastrService } from '@gauzy/ui-sdk/core';

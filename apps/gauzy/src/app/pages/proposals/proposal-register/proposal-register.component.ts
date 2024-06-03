@@ -19,7 +19,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationSettingService, ProposalsService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationSettingService, ProposalsService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

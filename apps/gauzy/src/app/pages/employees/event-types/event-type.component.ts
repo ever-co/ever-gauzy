@@ -16,7 +16,8 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EventTypeService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EventTypeService } from '../../../@core/services';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase

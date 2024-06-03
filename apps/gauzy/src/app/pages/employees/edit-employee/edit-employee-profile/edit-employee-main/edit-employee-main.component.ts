@@ -4,7 +4,8 @@ import { IEmployee, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { EmployeeStore, Store } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeStore } from '../../../../../@core/services';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 /**

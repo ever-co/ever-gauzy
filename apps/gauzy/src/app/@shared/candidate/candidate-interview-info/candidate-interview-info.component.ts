@@ -10,7 +10,7 @@ import { ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-candidate-interview-info',

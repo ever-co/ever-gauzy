@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UsersService } from '@gauzy/ui-sdk/core';
 import { AuthStrategy } from '../../@core/auth/auth-strategy.service';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Injectable({ providedIn: 'root' })
 export class AppInitService {

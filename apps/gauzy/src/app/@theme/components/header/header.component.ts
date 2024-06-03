@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	CrudActionEnum,
 	IDateRangePicker,
@@ -38,8 +38,7 @@ import {
 	OrganizationEditStore,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
-	OrganizationTeamsService,
-	Store
+	OrganizationTeamsService
 } from '../../../@core/services';
 import { LayoutService } from '../../../@core/services/layout.service';
 import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';

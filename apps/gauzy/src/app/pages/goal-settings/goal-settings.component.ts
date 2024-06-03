@@ -8,7 +8,7 @@ import { tap } from 'rxjs/operators';
 import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
 import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';

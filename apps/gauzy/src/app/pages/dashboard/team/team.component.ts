@@ -13,7 +13,8 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { OrganizationTeamsService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationTeamsService } from '../../../@core/services';
 import { TimesheetService, TimesheetStatisticsService } from '../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';

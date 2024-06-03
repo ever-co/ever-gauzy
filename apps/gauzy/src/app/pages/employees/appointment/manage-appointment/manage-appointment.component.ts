@@ -22,7 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EmployeesService } from '../../../../@core/services';
 import { NbDialogService } from '@nebular/theme';
 import { AppointmentEmployeesService } from '../../../../@core/services/appointment-employees.service';
-import { Store } from '../../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { AlertModalComponent } from '../../../../@shared/alert-modal/alert-modal.component';
 import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';

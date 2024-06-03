@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { UsersService } from '@gauzy/ui-sdk/core';

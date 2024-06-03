@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { RouteUtil } from './../../../../@core/services/route-utils';
 
 @UntilDestroy({ checkProperties: true })

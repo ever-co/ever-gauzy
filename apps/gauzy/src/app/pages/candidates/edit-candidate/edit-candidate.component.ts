@@ -3,7 +3,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { PermissionsEnum, ICandidate, ICandidateInterview } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { takeUntil } from 'rxjs/operators';
 import { CandidatesService } from '../../../@core/services/candidates.service';

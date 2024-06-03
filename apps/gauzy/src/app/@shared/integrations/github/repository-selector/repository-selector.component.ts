@@ -12,7 +12,8 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { GithubService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { GithubService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

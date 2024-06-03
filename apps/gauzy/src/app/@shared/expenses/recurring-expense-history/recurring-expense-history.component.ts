@@ -5,7 +5,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { monthNames } from '@gauzy/ui-sdk/core';
 import { IOrganization, IRecurringExpenseModel } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })

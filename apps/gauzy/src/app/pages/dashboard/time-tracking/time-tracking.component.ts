@@ -48,8 +48,9 @@ import {
 import { distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, ToastrService } from '@gauzy/ui-sdk/core';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { EmployeesService, OrganizationProjectsService, Store } from '../../../@core/services';
+import { EmployeesService, OrganizationProjectsService } from '../../../@core/services';
 import { GalleryService } from '../../../@shared/gallery';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';

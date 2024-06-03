@@ -11,7 +11,7 @@ import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } f
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { months } from './../../../../../@core/moment-extend';
 
 @UntilDestroy({ checkProperties: true })

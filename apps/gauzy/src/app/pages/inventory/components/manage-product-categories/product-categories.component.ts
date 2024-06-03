@@ -12,7 +12,8 @@ import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ProductCategoryService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ProductCategoryService } from './../../../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

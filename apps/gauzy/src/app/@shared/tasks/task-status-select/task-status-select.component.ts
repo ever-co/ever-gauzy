@@ -14,7 +14,8 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskStatusesService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TaskStatusesService } from '../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

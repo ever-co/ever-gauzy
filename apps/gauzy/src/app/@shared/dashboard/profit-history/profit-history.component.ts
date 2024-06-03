@@ -7,7 +7,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { IEmployeeStatisticsHistory, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { DateViewComponent } from '../../table-components/date-view/date-view.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';

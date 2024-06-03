@@ -9,7 +9,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { RolePermissionsService, RoleService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { RolePermissionsService, RoleService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

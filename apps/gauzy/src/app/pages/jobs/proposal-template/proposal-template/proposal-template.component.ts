@@ -18,7 +18,7 @@ import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ProposalTemplateService } from '../proposal-template.service';
 import {
 	PaginationFilterBaseComponent,

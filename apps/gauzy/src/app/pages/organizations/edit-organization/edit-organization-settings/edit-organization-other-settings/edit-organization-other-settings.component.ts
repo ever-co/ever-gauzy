@@ -35,12 +35,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap, debounceTime, map } from 'rxjs/operators';
 import { NbAccordionComponent, NbAccordionItemComponent, NbThemeService } from '@nebular/theme';
-import { isEmpty } from '@gauzy/ui-sdk/common';
+import { Store, isEmpty } from '@gauzy/ui-sdk/common';
 import {
 	AccountingTemplateService,
 	OrganizationEditStore,
-	OrganizationTaskSettingService,
-	Store
+	OrganizationTaskSettingService
 } from './../../../../../@core/services';
 import { NotesWithTagsComponent } from './../../../../../@shared/table-components';
 import { OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';

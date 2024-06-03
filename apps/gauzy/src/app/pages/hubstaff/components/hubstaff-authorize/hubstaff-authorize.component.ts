@@ -4,16 +4,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { IIntegration, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { HubstaffService, IntegrationsService, Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { HubstaffService, IntegrationsService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-hubstaff-authorize',
 	templateUrl: './hubstaff-authorize.component.html',
-	styleUrls: ['./hubstaff-authorize.component.scss'],
+	styleUrls: ['./hubstaff-authorize.component.scss']
 })
 export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
-
 	public hubStaffAuthorizeCode: string;
 	public organization: IOrganization;
 
@@ -21,7 +21,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	public clientIdForm: UntypedFormGroup = HubstaffAuthorizeComponent.buildClientIdForm(this._fb);
 	static buildClientIdForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
-			client_id: ['', Validators.required],
+			client_id: ['', Validators.required]
 		});
 	}
 
@@ -30,7 +30,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 	static buildClientSecretForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			client_secret: ['', Validators.required],
-			authorization_code: ['', Validators.required],
+			authorization_code: ['', Validators.required]
 		});
 	}
 
@@ -41,16 +41,13 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -65,7 +62,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				tap(({ code, state }) => {
 					this.clientIdForm.patchValue({ client_id: state });
 					this.clientSecretForm.patchValue({
-						authorization_code: code,
+						authorization_code: code
 					});
 				}),
 				untilDestroyed(this)
@@ -101,13 +98,15 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			organizationId,
 			tenantId
 		});
-		state$.pipe(
-			filter((integration: IIntegrationTenant) => !!integration.id),
-			tap((integration: IIntegrationTenant) => {
-				this._redirectToHubstaffIntegration(integration.id);
-			}),
-			untilDestroyed(this)
-		).subscribe();
+		state$
+			.pipe(
+				filter((integration: IIntegrationTenant) => !!integration.id),
+				tap((integration: IIntegrationTenant) => {
+					this._redirectToHubstaffIntegration(integration.id);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -136,7 +135,7 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 				code: this.hubStaffAuthorizeCode,
 				client_secret,
 				client_id,
-				organizationId,
+				organizationId
 			})
 			.pipe(
 				tap(({ id }) => {
@@ -147,5 +146,5 @@ export class HubstaffAuthorizeComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

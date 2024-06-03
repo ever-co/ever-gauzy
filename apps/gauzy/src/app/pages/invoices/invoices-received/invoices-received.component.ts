@@ -23,7 +23,8 @@ import {
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { InvoicesService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InvoicesService } from '../../../@core/services';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,

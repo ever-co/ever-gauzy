@@ -18,14 +18,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
-import {
-	GoalService,
-	GoalSettingsService,
-	GoalTemplatesService,
-	KeyResultService,
-	Store
-} from '../../../@core/services';
+import { GoalService, GoalSettingsService, GoalTemplatesService, KeyResultService } from '../../../@core/services';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

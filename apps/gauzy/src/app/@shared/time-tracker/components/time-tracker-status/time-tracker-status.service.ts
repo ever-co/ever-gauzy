@@ -20,7 +20,7 @@ import { TimeTrackerService } from '../../time-tracker.service';
 import { TimerIconFactory } from './factory';
 import { ITimerIcon, ITimerSynced } from './interfaces';
 import { TimerSynced } from './concretes';
-import { Store } from '../../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({

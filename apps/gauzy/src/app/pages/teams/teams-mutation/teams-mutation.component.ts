@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
 import { DUMMY_PROFILE_IMAGE, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

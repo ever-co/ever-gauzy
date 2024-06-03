@@ -40,8 +40,9 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ProposalsService, Store } from '../../@core/services';
+import { ProposalsService } from '../../@core/services';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

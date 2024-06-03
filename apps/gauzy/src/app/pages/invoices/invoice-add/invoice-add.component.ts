@@ -19,7 +19,7 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
@@ -35,7 +35,6 @@ import {
 	OrganizationProjectsService,
 	OrganizationSettingService,
 	ProductService,
-	Store,
 	TasksStoreService,
 	TranslatableService
 } from '../../../@core/services';

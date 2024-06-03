@@ -6,7 +6,8 @@ import { tap } from 'rxjs/operators';
 import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store, TranslatableService } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TranslatableService } from './../../../../@core/services';
 import { CurrencyPositionPipe } from './../../../../@shared/pipes';
 import { UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 
