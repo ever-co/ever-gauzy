@@ -9,8 +9,16 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "src/index.ts",
+	"main": "dist/fesm2022/gauzy-ui-config.mjs",
+	"module": "dist/fesm2022/gauzy-ui-config.mjs",
+	"es2022": "dist/fesm2022/gauzy-ui-config.mjs",
+	"esm2022": "dist/esm2022/gauzy-ui-config.mjs",
+	"fesm2022": "dist/fesm2022/gauzy-ui-config.mjs",
+	"typings": "dist/index.d.ts",
 	"files": [
+		"fesm2022",
+		"esm2022",
+		"lib",
 		"dist"
 	],
 	"directories": {
