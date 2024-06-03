@@ -9,14 +9,12 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
+	"main": "src/index.ts",
 	"files": [
 		"dist"
 	],
 	"directories": {
-		"lib": "dist",
-		"test": "__test__"
+		"lib": "dist"
 	},
 	"publishConfig": {
 		"access": "restricted"
@@ -27,12 +25,18 @@
 		"lib:watch": "ng build @gauzy/ui-config --watch --configuration development",
 		"clean": "rimraf dist"
 	},
-	"peerDependencies": {},
-	"dependencies": {},
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
+	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
 		"rimraf": "^3.0.2",
-		"typescript": "5.1.6"
+		"typescript": "5.1.6",
+		"ng-packagr": "16.2.3"
 	},
 	"repository": {
 		"type": "git",
