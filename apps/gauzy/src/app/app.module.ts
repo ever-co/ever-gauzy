@@ -8,6 +8,7 @@ import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { UiSdkModule } from '@gauzy/ui-sdk';
 import { UiConfigModule } from '@gauzy/ui-config';
+import { APIInterceptor } from '@gauzy/ui-sdk/core';
 import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
@@ -24,7 +25,6 @@ import {
 	NbCalendarKitModule
 } from '@nebular/theme';
 import {
-	APIInterceptor,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	TenantInterceptor,
