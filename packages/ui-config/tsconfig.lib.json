@@ -12,5 +12,6 @@
 		"strictMetadataEmit": true,
 		"enableResourceInlining": true
 	},
+	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }

@@ -111,7 +111,8 @@ const timeTrackerUIPath = path.join(__dirname, 'index.html');
 const pathWindow: IPathWindow = {
 	ui: uiPath,
 	dir: dirPath,
-	timeTrackerUi: timeTrackerUIPath
+	timeTrackerUi: timeTrackerUIPath,
+	gauzyUi: ''
 };
 
 
