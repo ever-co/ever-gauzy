@@ -2,17 +2,12 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
+import { Router } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { UiSdkModule } from '@gauzy/ui-sdk';
-import { UiConfigModule } from '@gauzy/ui-config';
-import { APIInterceptor } from '@gauzy/ui-sdk/core';
-import { CoreModule } from './@core/core.module';
-import { ThemeModule } from './@theme/theme.module';
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
+import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
 	NbDatepickerModule,
@@ -24,39 +19,43 @@ import {
 	NbCalendarModule,
 	NbCalendarKitModule
 } from '@nebular/theme';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { CloudinaryModule } from '@cloudinary/ng';
+import { FileUploadModule } from 'ng2-file-upload';
+import { CookieService } from 'ngx-cookie-service';
+import { FeatureToggleModule } from 'ngx-feature-toggle';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { ColorPickerService } from 'ngx-color-picker';
+import * as Sentry from '@sentry/angular-ivy';
+import moment from 'moment';
+import { UiSdkModule } from '@gauzy/ui-sdk';
+import { UiConfigModule } from '@gauzy/ui-config';
+import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
+	APIInterceptor,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
 	TenantInterceptor,
 	TokenInterceptor
-} from './@core/interceptors';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import { CloudinaryModule } from '@cloudinary/ng';
-import { GAUZY_ENV, environment } from '@gauzy/ui-config';
-import { FileUploadModule } from 'ng2-file-upload';
-import { ServerConnectionService } from './@core/services/server-connection.service';
+} from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
+import { GAUZY_ENV, environment } from '@gauzy/ui-config';
+import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
+import { CoreModule } from './@core/core.module';
+import { ThemeModule } from './@theme/theme.module';
+import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+import { ServerConnectionService } from './@core/services/server-connection.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import * as Sentry from '@sentry/angular-ivy';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
-import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { ColorPickerService } from 'ngx-color-picker';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
-import * as moment from 'moment';
 import { LegalModule } from './legal/legal.module';
-import { Router } from '@angular/router';
-import { FeatureToggleModule } from 'ngx-feature-toggle';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
 import { FeatureService, GoogleMapsLoaderService } from './@core/services';
 import { AppInitService } from './@core/services/app-init-service';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
-import { CookieService } from 'ngx-cookie-service';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { initializeSentry } from './sentry';
 

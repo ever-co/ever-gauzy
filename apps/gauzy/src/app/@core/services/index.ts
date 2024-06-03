@@ -58,7 +58,6 @@ export * from './google-maps-loader.service';
 export * from './help-center-article.service';
 export * from './help-center-author.service';
 export * from './help-center.service';
-export * from './hubstaff.service';
 export * from './image-asset.service';
 export * from './import.service';
 export * from './income.service';

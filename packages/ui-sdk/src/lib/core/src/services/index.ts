@@ -6,3 +6,4 @@ export * from './selector-builder';
 export * from './toastr.service';
 export * from './users/users-organizations.service';
 export * from './users/users.service';
+export * from './hubstaff.service';

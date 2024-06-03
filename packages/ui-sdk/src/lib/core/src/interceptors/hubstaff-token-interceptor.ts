@@ -1,28 +1,25 @@
 import { Injectable, Injector } from '@angular/core';
-import {
-	HttpRequest,
-	HttpHandler,
-	HttpEvent,
-	HttpInterceptor,
-	HttpErrorResponse
-} from '@angular/common/http';
+import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { HubstaffService } from './../services/hubstaff.service';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { HttpStatus } from '@gauzy/contracts';
+import { HubstaffService } from './../services/hubstaff.service';
 
 @Injectable()
 export class HubstaffTokenInterceptor implements HttpInterceptor {
 	private refreshTokenInProgress = false;
-	private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(
-		null
-	);
+	private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
-	constructor(private injector: Injector) { }
-	intercept(
-		req: HttpRequest<any>,
-		next: HttpHandler
-	): Observable<HttpEvent<any>> {
+	constructor(private readonly injector: Injector) {}
+
+	/**
+	 * Intercepts HTTP requests and handles authentication token refresh if necessary.
+	 *
+	 * @param {HttpRequest<any>} req - The HTTP request to be intercepted.
+	 * @param {HttpHandler} next - The next HTTP handler in the chain.
+	 * @return {Observable<HttpEvent<any>>} - The intercepted HTTP request or an error.
+	 */
+	intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		if (!req.url.includes('/integration/hubstaff/')) {
 			return next.handle(req);
 		}
@@ -38,14 +35,7 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 						return this.refreshTokenSubject.pipe(
 							filter((result) => result !== null),
 							take(1),
-							switchMap(({ access_token }) =>
-								next.handle(
-									this.addAuthenticationToken(
-										req,
-										access_token
-									)
-								)
-							)
+							switchMap(({ access_token }) => next.handle(this.addAuthenticationToken(req, access_token)))
 						);
 					} else {
 						this.refreshTokenInProgress = true;
@@ -56,18 +46,11 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 						return this.refreshAccessToken().pipe(
 							switchMap(({ access_token }) => {
 								this.refreshTokenSubject.next(access_token);
-								return next.handle(
-									this.addAuthenticationToken(
-										req,
-										access_token
-									)
-								);
+								return next.handle(this.addAuthenticationToken(req, access_token));
 							}),
 							// When the call to refreshToken completes we reset the refreshTokenInProgress to false
 							// for the next time the token needs to be refreshed
-							finalize(
-								() => (this.refreshTokenInProgress = false)
-							)
+							finalize(() => (this.refreshTokenInProgress = false))
 						);
 					}
 				} else {
@@ -77,15 +60,22 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 		);
 	}
 
+	/**
+	 * Refreshes the access token by calling the HubstaffService.
+	 * @returns An Observable that emits the response of the token refresh request.
+	 */
 	private refreshAccessToken(): Observable<any> {
-		const hubstaffService = this.injector.get(HubstaffService);
-		return hubstaffService.refreshToken();
+		const service = this.injector.get(HubstaffService);
+		return service.refreshToken();
 	}
 
-	private addAuthenticationToken(
-		request: HttpRequest<any>,
-		token
-	): HttpRequest<any> {
+	/**
+	 * Adds an authentication token to the HTTP request body.
+	 * @param request The outgoing HTTP request.
+	 * @param token The authentication token to be added.
+	 * @returns A new HttpRequest object with the token added to the body.
+	 */
+	private addAuthenticationToken(request: HttpRequest<any>, token): HttpRequest<any> {
 		return request.clone({
 			body: {
 				token

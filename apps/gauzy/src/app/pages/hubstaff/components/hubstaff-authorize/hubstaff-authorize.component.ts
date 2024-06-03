@@ -5,7 +5,8 @@ import { filter, tap } from 'rxjs/operators';
 import { IIntegration, IIntegrationTenant, IOrganization, IntegrationEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
-import { HubstaffService, IntegrationsService } from './../../../../@core/services';
+import { HubstaffService } from '@gauzy/ui-sdk/core';
+import { IntegrationsService } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

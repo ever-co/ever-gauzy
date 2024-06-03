@@ -25,7 +25,6 @@ export class TenantInterceptor implements HttpInterceptor {
 			.pipe(
 				// Take only the first emission to avoid multiple subscriptions
 				take(1),
-				//
 				tap(([user, organization]) => {
 					if (!!user) {
 						// Bind tenantId for DELETE http method
