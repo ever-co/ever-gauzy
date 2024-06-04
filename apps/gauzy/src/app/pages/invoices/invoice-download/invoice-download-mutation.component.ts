@@ -5,10 +5,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IInvoice } from '@gauzy/contracts';
 import { saveAs } from 'file-saver';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InvoiceEstimateHistoryService, InvoicesService } from '@gauzy/ui-sdk/core';
+import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

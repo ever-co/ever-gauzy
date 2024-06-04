@@ -12,8 +12,7 @@ import {
 	ReportGroupFilterEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';

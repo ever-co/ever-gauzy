@@ -5,14 +5,11 @@ import { tap } from 'rxjs/operators';
 import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import { CandidateDocumentsService, CandidateStore } from '@gauzy/ui-sdk/core';
-import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { PaginationFilterBaseComponent } from '../../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

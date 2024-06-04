@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
 import * as moment from 'moment';
-import { ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { OrganizationSettingService, ProposalsService, ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	ITag,
@@ -17,10 +17,8 @@ import {
 	IOrganizationContact,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationSettingService, ProposalsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

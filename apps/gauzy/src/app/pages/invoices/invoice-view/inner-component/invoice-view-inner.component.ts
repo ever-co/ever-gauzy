@@ -7,9 +7,8 @@ import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-tab
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslatableService } from '@gauzy/ui-sdk/core';
+import { TranslatableService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { CurrencyPositionPipe } from './../../../../@shared/pipes';
-import { UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

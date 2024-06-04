@@ -14,13 +14,11 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, PaymentService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { PaymentService } from '@gauzy/ui-sdk/core';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 

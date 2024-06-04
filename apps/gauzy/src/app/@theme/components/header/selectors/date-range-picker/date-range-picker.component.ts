@@ -19,8 +19,7 @@ import {
 	TimesheetFilterService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';

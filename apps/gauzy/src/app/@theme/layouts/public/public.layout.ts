@@ -3,10 +3,9 @@ import { isPlatformBrowser } from '@angular/common';
 import { tap } from 'rxjs/operators';
 import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UsersService } from '@gauzy/ui-sdk/core';
 import { WindowModeBlockScrollService } from '../../services';
-import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -6,9 +6,9 @@ import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/dr
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { SprintStoreService, TasksStoreService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { GauzyEditableGridComponent } from '../../../../../../@shared/components/editable-grid/gauzy-editable-grid.component';
-import { SprintStoreService, TasksStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

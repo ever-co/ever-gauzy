@@ -12,9 +12,8 @@ import {
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ProjectMutationComponent } from './../../../../@shared/project';
-import { OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

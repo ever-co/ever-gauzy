@@ -3,15 +3,12 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { OrganizationSettingService, ProposalsService, ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IProposal, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationSettingService, ProposalsService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent, ckEditorConfig } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +43,6 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 
 	constructor(
 		private readonly route: ActivatedRoute,
-		private readonly store: Store,
 		private readonly fb: UntypedFormBuilder,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,

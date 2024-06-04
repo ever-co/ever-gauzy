@@ -8,10 +8,9 @@ import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
+import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
 import { months } from './../../../../../@core/moment-extend';
 
 @UntilDestroy({ checkProperties: true })

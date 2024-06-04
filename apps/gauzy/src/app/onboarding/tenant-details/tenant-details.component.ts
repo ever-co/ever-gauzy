@@ -2,9 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
-import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
+import { AuthService, EmployeesService, OrganizationsService, TenantService, UsersService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService, EmployeesService, TenantService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-tenant-details',

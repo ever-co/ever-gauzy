@@ -5,11 +5,9 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { NavigationService, OrganizationTeamStore, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { NavigationService, OrganizationTeamStore, OrganizationTeamsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ALL_TEAM_SELECTED } from './default-team';
-import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { TruncatePipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })

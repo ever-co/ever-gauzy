@@ -8,7 +8,6 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployeeJobApplication,
 	IEmployee,
@@ -20,13 +19,11 @@ import {
 	IUser,
 	JobPostSourceEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent, ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { JobService, ToastrService } from '@gauzy/ui-sdk/core';
 import { environment } from '@gauzy/ui-config';
-import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
-import { JobService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from './../../../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })

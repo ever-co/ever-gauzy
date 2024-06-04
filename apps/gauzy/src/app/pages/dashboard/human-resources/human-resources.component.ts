@@ -13,10 +13,8 @@ import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { EmployeeStatisticsService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, EmployeeStatisticsService } from '@gauzy/ui-sdk/core';
 import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
 
 @UntilDestroy({ checkProperties: true })
@@ -51,7 +49,6 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 	bonusPercentage: number;
 	salary: number;
 	averageBonus: number;
-
 	statistics$: Subject<any> = new Subject();
 
 	constructor(
