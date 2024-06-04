@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TagsService } from '../../@core/services';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { NotesWithTagsComponent } from '../table-components';
 
 @Component({

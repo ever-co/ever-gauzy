@@ -8,7 +8,7 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationTeamsService } from '../../../../@core/services';
+import { OrganizationProjectsService, OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 
 const initialTaskValue = {

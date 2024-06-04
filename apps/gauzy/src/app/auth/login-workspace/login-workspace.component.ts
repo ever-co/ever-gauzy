@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService } from './../../@core/services';
+import { AuthService } from '@gauzy/ui-sdk/core';
 import { PasswordFormFieldComponent } from './../../@shared/user/forms/fields/password';
 
 @UntilDestroy({ checkProperties: true })

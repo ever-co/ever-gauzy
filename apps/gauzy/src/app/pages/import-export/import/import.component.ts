@@ -13,7 +13,7 @@ import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ImportService } from '../../../@core/services';
+import { ImportService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

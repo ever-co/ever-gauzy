@@ -16,7 +16,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { PipelinesService } from '../../@core/services';
+import { PipelinesService } from '@gauzy/ui-sdk/core';
 import { InputFilterComponent } from '../../@shared/table-filters';
 import {
 	IPaginationBase,

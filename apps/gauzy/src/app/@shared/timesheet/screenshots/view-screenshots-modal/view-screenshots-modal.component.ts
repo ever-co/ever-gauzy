@@ -15,11 +15,10 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
 import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
-import { TimesheetService } from '../../timesheet.service';
-import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
 import { Store } from '@gauzy/ui-sdk/common';
+import { TimesheetService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
 import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

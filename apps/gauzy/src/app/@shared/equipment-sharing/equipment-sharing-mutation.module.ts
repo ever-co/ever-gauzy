@@ -16,7 +16,7 @@ import { Store } from '@gauzy/ui-sdk/common';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
-import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService } from '../../@core/services';
+import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [

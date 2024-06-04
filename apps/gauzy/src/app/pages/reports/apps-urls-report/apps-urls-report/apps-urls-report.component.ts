@@ -3,10 +3,9 @@ import { Observable } from 'rxjs/internal/Observable';
 import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 

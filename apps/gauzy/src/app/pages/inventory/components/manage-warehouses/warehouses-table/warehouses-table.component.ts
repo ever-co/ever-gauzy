@@ -12,7 +12,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { WarehouseService } from './../../../../../@core/services';
+import { WarehouseService } from '@gauzy/ui-sdk/core';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,

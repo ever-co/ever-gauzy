@@ -14,7 +14,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { SharedModule } from '../../@shared/shared.module';
-import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';

@@ -12,7 +12,7 @@ import {
 	IntegrationEnum
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { IntegrationsService, UpworkService } from './../../../../@core/services';
+import { IntegrationsService, UpworkService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

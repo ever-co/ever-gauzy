@@ -3,9 +3,6 @@ import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { ImageAssetService } from 'apps/gauzy/src/app/@core/services/image-asset.service';
-import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
-import { ProductService } from 'apps/gauzy/src/app/@core/services/product.service';
 import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
 import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
 import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
@@ -13,7 +10,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
@@ -43,15 +40,15 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 	}
 
 	constructor(
-		readonly translationService: TranslateService,
-		private dialogService: NbDialogService,
-		private imageAssetService: ImageAssetService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private productService: ProductService,
-		private nbDialogService: NbDialogService,
-		private galleryService: GalleryService,
-		private inventoryStore: InventoryStore
+		public readonly translationService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly imageAssetService: ImageAssetService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly productService: ProductService,
+		private readonly nbDialogService: NbDialogService,
+		private readonly galleryService: GalleryService,
+		private readonly inventoryStore: InventoryStore
 	) {
 		super(translationService);
 	}

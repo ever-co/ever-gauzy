@@ -15,7 +15,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmailTemplateService } from '../../@core/services';
+import { EmailTemplateService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

@@ -11,12 +11,11 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { KeyResultService } from '../../../@core/services/keyresult.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { GoalSettingsService, KeyResultService, TasksService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
+@UntilDestroy()
 @Component({
 	selector: 'ga-key-result-parameters',
 	templateUrl: './key-result-parameters.component.html',
@@ -36,15 +35,15 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 	keyResultWeight: any;
 	KPIs: IKPI[];
 	numberUnitsEnum: string[] = Object.values(KeyResultNumberUnitsEnum);
-	private _ngDestroy$ = new Subject<void>();
 	organization: IOrganization;
+
 	constructor(
-		private fb: UntypedFormBuilder,
-		private dialogRef: NbDialogRef<KeyResultParametersComponent>,
-		private keyResultService: KeyResultService,
-		private taskService: TasksService,
-		private goalSettingsService: GoalSettingsService,
-		private store: Store
+		private readonly fb: UntypedFormBuilder,
+		private readonly dialogRef: NbDialogRef<KeyResultParametersComponent>,
+		private readonly keyResultService: KeyResultService,
+		private readonly taskService: TasksService,
+		private readonly goalSettingsService: GoalSettingsService,
+		private readonly store: Store
 	) {}
 
 	async ngOnInit() {
@@ -82,7 +81,7 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 			const allKeyResult = JSON.parse(JSON.stringify(this.data.allKeyResults));
 			let weightSum = this.data.allKeyResults.reduce((a, b) => a + +b.weight, 0);
 			this.keyResultWeight = Math.round(+this.weightForm.value.weight * (100 / weightSum));
-			this.weightForm.controls['weight'].valueChanges.pipe(takeUntil(this._ngDestroy$)).subscribe((weight) => {
+			this.weightForm.controls['weight'].valueChanges.pipe(untilDestroyed(this)).subscribe((weight) => {
 				allKeyResult.find((element) => element.id === this.data.selectedKeyResult.id).weight = weight;
 				weightSum = allKeyResult.reduce((a, b) => a + +b.weight, 0);
 				this.keyResultWeight = Math.round(+weight * (100 / weightSum));
@@ -126,8 +125,5 @@ export class KeyResultParametersComponent implements OnInit, OnDestroy {
 		this.dialogRef.close(data);
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

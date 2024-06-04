@@ -15,7 +15,7 @@ import {
 	IUser
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GoalSettingsService, OrganizationTeamsService } from '../../../@core/services';
+import { GoalSettingsService, OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { EditTimeFrameComponent } from '../../goal-settings/edit-time-frame/edit-time-frame.component';
 import { isFuture } from 'date-fns';

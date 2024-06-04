@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { OrganizationContactService } from '../../@core/services';
+import { OrganizationContactService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

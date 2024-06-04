@@ -11,7 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { IncomeExpenseAmountComponent } from './../../../../@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from './../../../../@shared/table-components/date-view/date-view.component';
-import { UpworkStoreService } from './../../../../@core/services';
+import { UpworkStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

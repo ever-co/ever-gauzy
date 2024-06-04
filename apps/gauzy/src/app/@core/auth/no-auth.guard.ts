@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '@gauzy/ui-sdk/core';
 /**
  * Use for routes which only need to be displayed if user is NOT logged in
  */

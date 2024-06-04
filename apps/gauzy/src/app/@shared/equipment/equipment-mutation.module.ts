@@ -12,10 +12,9 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EquipmentService } from '../../@core/services/equipment.service';
+import { EquipmentService, ImageAssetService } from '@gauzy/ui-sdk/core';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../currency/currency.module';
-import { ImageAssetService } from '../../@core/services';
 
 @NgModule({
 	imports: [

@@ -15,9 +15,8 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { CandidatesService, ErrorHandlingService, RoleService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CandidatesService, RoleService } from '../../../@core/services';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 

@@ -3,8 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
-import { UserIdService } from '../../../../../@core/services/edit-user-data.service';
+import { OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({

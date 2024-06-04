@@ -16,7 +16,7 @@ import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CurrencyService } from '../../@core/services';
+import { CurrencyService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from '@gauzy/ui-config';
 

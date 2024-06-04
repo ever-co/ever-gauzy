@@ -39,7 +39,7 @@ import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-em
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
-import { UserIdService } from '../../@core/services/edit-user-data.service';
+import { UserIdService } from '@gauzy/ui-sdk/core';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';

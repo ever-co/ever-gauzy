@@ -19,7 +19,7 @@ import {
 	EmployeesService,
 	OrganizationTeamsService,
 	RequestApprovalService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

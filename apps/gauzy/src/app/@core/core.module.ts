@@ -4,9 +4,8 @@ import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
 import { NbAuthModule } from '@nebular/auth';
 import { NbSecurityModule, NbRoleProvider } from '@nebular/security';
 import { Observable, of as observableOf } from 'rxjs';
-
+import { AnalyticsService, JitsuService, LayoutService, AppGlobalRippleOptions, SeoService } from '@gauzy/ui-sdk/core';
 import { throwIfAlreadyLoaded } from './module-import-guard';
-import { AnalyticsService, JitsuService, LayoutService, AppGlobalRippleOptions, SeoService } from './services';
 import { AuthModule } from './auth/auth.module';
 
 const DATA_SERVICES = [];

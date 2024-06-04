@@ -13,7 +13,7 @@ import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
-import { OrganizationDocumentsService } from '../../@core/services';
+import { OrganizationDocumentsService } from '@gauzy/ui-sdk/core';
 import { ActivatedRoute } from '@angular/router';
 import {
 	IPaginationBase,

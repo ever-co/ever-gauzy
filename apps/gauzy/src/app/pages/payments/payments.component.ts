@@ -40,7 +40,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InvoiceEstimateHistoryService, PaymentService } from '../../@core/services';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

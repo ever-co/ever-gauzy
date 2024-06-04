@@ -28,7 +28,7 @@ import {
 	CandidatesService,
 	CandidateStore,
 	EmployeesService
-} from './../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import {

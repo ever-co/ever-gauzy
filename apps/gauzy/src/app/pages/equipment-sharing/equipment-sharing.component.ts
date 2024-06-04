@@ -26,7 +26,7 @@ import {
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EquipmentSharingService } from '../../@core/services';
+import { EquipmentSharingService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateViewComponent } from '../../@shared/table-components';
 

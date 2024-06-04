@@ -14,7 +14,7 @@ import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } fr
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import { OrganizationVendorsService } from '../../@core/services';
+import { OrganizationVendorsService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

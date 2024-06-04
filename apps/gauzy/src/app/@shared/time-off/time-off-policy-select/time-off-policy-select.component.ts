@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TimeOffService } from '../../../@core/services';
+import { TimeOffService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

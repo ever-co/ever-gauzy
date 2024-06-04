@@ -3,8 +3,7 @@ import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
-import { CandidateInterviewService } from 'apps/gauzy/src/app/@core/services/candidate-interview.service';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidateFeedbacksService, CandidateInterviewService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-interview-rating-chart',
@@ -38,16 +37,11 @@ export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 		this.currentInterview = interview;
 		this.rating = [];
 		this.labels = [];
-		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer'],
-			{
-				candidateId: interview.candidateId
-			}
-		);
+		const res = await this.candidateFeedbacksService.getAll(['interviewer'], {
+			candidateId: interview.candidateId
+		});
 		if (res) {
-			const feedbacks = res.items.filter(
-				(item) => item.interviewId && item.interviewId === interview.id
-			);
+			const feedbacks = res.items.filter((item) => item.interviewId && item.interviewId === interview.id);
 			for (const item of feedbacks) {
 				this.rating.push(parseFloat((+item.rating).toFixed(2)));
 				this.employeeList.forEach((employee) => {
@@ -99,14 +93,9 @@ export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 
 	async loadData() {
 		for (let i = 0; i < this.candidates.length; i++) {
-			const interview = await this.candidateInterviewService.findByCandidateId(
-				this.candidates[i].id
-			);
+			const interview = await this.candidateInterviewService.findByCandidateId(this.candidates[i].id);
 			this.candidates[i].interview = interview ? interview : null;
-			const color =
-				i % 2 === 0
-					? 'rgba(153, 102, 255, 0.2)'
-					: 'rgba(255, 159, 64, 0.2)';
+			const color = i % 2 === 0 ? 'rgba(153, 102, 255, 0.2)' : 'rgba(255, 159, 64, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}

@@ -25,7 +25,7 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { GithubService, OrganizationProjectsService } from './../../../../../@core/services';
+import { GithubService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

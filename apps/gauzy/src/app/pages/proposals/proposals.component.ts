@@ -42,7 +42,7 @@ import {
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ProposalsService } from '../../@core/services';
+import { ProposalsService } from '@gauzy/ui-sdk/core';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

@@ -5,7 +5,7 @@ import { ThemeModule } from '../@theme/theme.module';
 import { PagesComponent } from './pages.component';
 import { PagesRoutingModule } from './pages-routing.module';
 import { MiscellaneousModule } from './miscellaneous/miscellaneous.module';
-import { AuthService } from '../@core/services/auth.service';
+import { AuthService } from '@gauzy/ui-sdk/core';
 import { RoleGuard } from '../@core/guards';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CommonNavModule } from '../@core/components/common-nav.module';

@@ -4,15 +4,12 @@ import { NbDialogService } from '@nebular/theme';
 import { filter, take, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { sortBy } from 'underscore';
-import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
-import { distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
-import { TimesheetService } from '../../timesheet.service';
+import { DEFAULT_SVG, Store, distinctUntilChange, isNotEmpty, progressStatus } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, TimesheetService, ToastrService } from '@gauzy/ui-sdk/core';
 import { GalleryItem } from '../../../gallery/gallery.directive';
 import { ViewScreenshotsModalComponent } from '../view-screenshots-modal/view-screenshots-modal.component';
 import { GalleryService } from '../../../gallery/gallery.service';
-import { Store } from '@gauzy/ui-sdk/common';
 import { TimeZoneService } from '../../gauzy-filters/timezone-filter';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

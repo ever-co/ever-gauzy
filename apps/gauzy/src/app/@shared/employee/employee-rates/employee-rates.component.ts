@@ -4,7 +4,7 @@ import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contract
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CandidateStore, EmployeeStore } from '../../../@core/services';
+import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

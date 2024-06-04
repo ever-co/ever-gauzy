@@ -23,7 +23,7 @@ import { Environment, environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ExportAllService, GauzyCloudService } from '../../@core/services';
+import { ExportAllService, GauzyCloudService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

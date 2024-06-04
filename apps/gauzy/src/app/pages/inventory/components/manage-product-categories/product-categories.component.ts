@@ -13,7 +13,7 @@ import { ProductCategoryMutationComponent } from '../../../../@shared/product-mu
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ProductCategoryService } from './../../../../@core/services';
+import { ProductCategoryService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

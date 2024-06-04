@@ -55,7 +55,7 @@ import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InvoiceEstimateHistoryService, InvoiceItemService, InvoicesService } from '../../@core/services';
+import { InvoiceEstimateHistoryService, InvoiceItemService, InvoicesService } from '@gauzy/ui-sdk/core';
 import { DateRangePickerBuilderService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 

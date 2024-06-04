@@ -12,7 +12,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TagsService } from '../../@core/services';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	IPaginationBase,

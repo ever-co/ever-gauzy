@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { SprintStoreService } from '../../@core/services/organization-sprint-store.service';
+import { SprintStoreService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ItemActionType } from '../components/editable-grid/gauzy-editable-grid.component';
 

@@ -7,7 +7,7 @@ import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InviteService } from '../../@core/services';
+import { InviteService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

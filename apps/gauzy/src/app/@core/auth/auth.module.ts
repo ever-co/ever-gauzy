@@ -1,13 +1,11 @@
 import { NgModule } from '@angular/core';
-import { NbAuthModule } from '@nebular/auth';
 import { CommonModule } from '@angular/common';
+import { NbAuthModule } from '@nebular/auth';
 import { environment } from '@gauzy/ui-config';
-import { AuthGuard } from './auth.guard';
-import { AuthStrategy } from './auth-strategy.service';
-import { AuthService } from '../services/auth.service';
 import { Store } from '@gauzy/ui-sdk/common';
+import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
-import { ElectronService } from './electron.service';
+import { AuthService, AuthStrategy, ElectronService } from '@gauzy/ui-sdk/core';
 
 const socialLinks = [
 	{

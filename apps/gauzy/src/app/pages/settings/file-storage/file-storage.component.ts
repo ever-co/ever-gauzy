@@ -17,7 +17,7 @@ import {
 import { isNotEmpty, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { FileStorageService, TenantService } from '../../../@core/services';
+import { FileStorageService, TenantService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

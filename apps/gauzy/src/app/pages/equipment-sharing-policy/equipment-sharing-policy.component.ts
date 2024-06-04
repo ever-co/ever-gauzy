@@ -11,7 +11,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { IEquipmentSharing, ComponentLayoutStyleEnum, IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EquipmentSharingPolicyService } from '../../@core/services';
+import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
 import {

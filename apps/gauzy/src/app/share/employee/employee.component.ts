@@ -9,7 +9,7 @@ import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService } from '../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
 import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 

@@ -3,7 +3,7 @@ import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { HttpStatus } from '@gauzy/contracts';
-import { HubstaffService } from './../services/hubstaff.service';
+import { HubstaffService } from '../services';
 
 @Injectable()
 export class HubstaffTokenInterceptor implements HttpInterceptor {
@@ -53,8 +53,6 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 							finalize(() => (this.refreshTokenInProgress = false))
 						);
 					}
-				} else {
-					return throwError(error);
 				}
 			})
 		);

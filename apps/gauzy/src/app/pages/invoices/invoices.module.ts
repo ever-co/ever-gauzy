@@ -72,7 +72,7 @@ import {
 	TasksService,
 	TasksStoreService,
 	TranslatableService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import {
 	EstimateAddComponent,
 	EstimateEditComponent,

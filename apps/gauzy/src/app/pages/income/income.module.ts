@@ -14,7 +14,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { IncomeService } from '../../@core/services/income.service';
+import { IncomeService } from '@gauzy/ui-sdk/core';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';

@@ -15,7 +15,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { InviteService, OrganizationContactService, OrganizationProjectsService } from '../../@core/services';
+import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';

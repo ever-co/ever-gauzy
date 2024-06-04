@@ -16,7 +16,7 @@ import {
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService } from './../../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
 import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';

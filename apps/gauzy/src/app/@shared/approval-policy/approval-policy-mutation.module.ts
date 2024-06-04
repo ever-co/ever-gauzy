@@ -14,7 +14,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [

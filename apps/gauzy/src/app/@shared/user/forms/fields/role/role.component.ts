@@ -6,7 +6,7 @@ import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { RoleService } from './../../../../../@core/services';
+import { RoleService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

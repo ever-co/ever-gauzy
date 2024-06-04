@@ -5,7 +5,7 @@ import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth'
 import { RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { CookieService } from 'ngx-cookie-service';
-import { ElectronService } from '../../@core/auth/electron.service';
+import { ElectronService } from '@gauzy/ui-sdk/core';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
 
 @Component({

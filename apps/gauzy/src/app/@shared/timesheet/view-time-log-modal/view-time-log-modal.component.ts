@@ -4,11 +4,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
-import { TimesheetService } from '../timesheet.service';
-import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { Router } from '@angular/router';
+import { TimeTrackerService, TimesheetService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -3,10 +3,8 @@ import { IEditEntityByMemberInput, IEmployee, IOrganization, IOrganizationContac
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { EmployeeStore, OrganizationContactService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeeStore } from '../../../../../@core/services/employee-store.service';
-import { OrganizationContactService } from '../../../../../@core/services/organization-contact.service';
 
 @UntilDestroy()
 @Component({

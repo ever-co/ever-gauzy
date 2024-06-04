@@ -8,7 +8,7 @@ import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorksp
 import { sleep } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { AuthService } from '../../@core/services';
+import { AuthService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

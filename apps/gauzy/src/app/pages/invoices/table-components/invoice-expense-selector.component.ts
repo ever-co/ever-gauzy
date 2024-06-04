@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { ExpenseTypesEnum, IExpense, IOrganization } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ExpensesService } from '../../../@core/services';
+import { ExpensesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

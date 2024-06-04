@@ -4,7 +4,7 @@ import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contra
 import { debounceTime, filter, tap, from, concatMap } from 'rxjs';
 import { UsersService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { LanguagesService } from './../../../../../@core/services';
+import { LanguagesService } from '@gauzy/ui-sdk/core';
 import { ThemeLanguageSelectorService } from './theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })

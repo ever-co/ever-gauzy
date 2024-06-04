@@ -3,13 +3,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
-import { CandidateExperienceService } from 'apps/gauzy/src/app/@core/services/candidate-experience.service';
 import { ICandidateExperience, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateExperienceService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',
@@ -31,6 +29,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 	sourceSmartTable = new LocalDataSource();
 	loading: boolean;
 	@ViewChild('experienceTable') experienceTable;
+
 	constructor(
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
@@ -42,6 +41,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 		super(translateService);
 		this.setView();
 	}
+
 	ngOnInit() {
 		this.candidateStore.selectedCandidate$.pipe(takeUntil(this._ngDestroy$)).subscribe((candidate) => {
 			if (candidate) {
@@ -55,6 +55,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			}
 		});
 	}
+
 	private async _initializeForm() {
 		this.form = new UntypedFormGroup({
 			experiences: this.fb.array([])
@@ -69,6 +70,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			})
 		);
 	}
+
 	private async loadExperience() {
 		this.loading = true;
 		const { id: organizationId, tenantId } = this.selectedOrganization;
@@ -88,16 +90,19 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 		});
 		this.loading = false;
 	}
+
 	editExperience(experience: ICandidateExperience) {
 		const selectedItem = experience ? experience : this.selectedExperience;
 		this.showAddCard = true;
 		this.experiences.patchValue([selectedItem]);
 		this.selectedExperience = selectedItem;
 	}
+
 	showCard() {
 		this.showAddCard = !this.showAddCard;
 		this.experiences.reset();
 	}
+
 	cancel() {
 		this.showAddCard = false;
 		this.experiences.value.length = 0;
@@ -166,6 +171,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			this.toastrError(error);
 		}
 	}
+
 	selectExperience({ isSelected, data }) {
 		const selectedExperience = isSelected ? data : null;
 		if (this.experienceTable) {
@@ -174,11 +180,13 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 		this.disableButton = !isSelected;
 		this.selectedExperience = selectedExperience;
 	}
+
 	add() {
 		this.showAddCard = true;
 		this.selectedExperience = null;
 		this.form.reset();
 	}
+
 	async loadSmartTable() {
 		this.settingsSmartTable = {
 			actions: false,
@@ -210,6 +218,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			}
 		};
 	}
+
 	private toastrError(error) {
 		this.toastrService.danger(
 			this.getTranslation('NOTES.CANDIDATE.EXPERIENCE.ERROR', {
@@ -218,6 +227,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			this.getTranslation('TOASTR.TITLE.ERROR')
 		);
 	}
+
 	setView() {
 		this.viewComponentName = ComponentEnum.EXPERIENCE;
 		this.store
@@ -234,6 +244,7 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 			this.loadSmartTable();
 		});
 	}
+
 	ngOnDestroy() {
 		this._ngDestroy$.next();
 		this._ngDestroy$.complete();

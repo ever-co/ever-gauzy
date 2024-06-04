@@ -5,8 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeeStore } from '../../../../../@core/services';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { EmployeeStore, ToastrService } from '@gauzy/ui-sdk/core';
 
 /**
  * This component contains the properties stored within the User Entity of an Employee.

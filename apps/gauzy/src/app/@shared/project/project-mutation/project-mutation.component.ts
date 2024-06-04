@@ -41,7 +41,7 @@ import {
 	OrganizationContactService,
 	OrganizationProjectsService,
 	OrganizationTeamsService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../../forms/helpers';
 @UntilDestroy({ checkProperties: true })

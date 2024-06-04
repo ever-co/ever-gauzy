@@ -20,7 +20,7 @@ import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationExpenseCategoriesService } from '../../../@core/services';
+import { OrganizationExpenseCategoriesService } from '@gauzy/ui-sdk/core';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 

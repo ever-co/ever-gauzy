@@ -22,7 +22,7 @@ import {
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
 	OrganizationPositionsService
-} from './../../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

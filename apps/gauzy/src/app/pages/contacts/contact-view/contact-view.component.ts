@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService, OrganizationContactService } from '../../../@core/services';
+import { EmployeesService, OrganizationContactService } from '@gauzy/ui-sdk/core';
 import { LeafletMapComponent } from '../../../@shared/forms';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FilterArrayPipe } from '../../../@shared/pipes';

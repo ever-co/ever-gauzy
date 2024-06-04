@@ -3,8 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { InviteService } from '../../@core/services/invite.service';
+import { InviteService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	styleUrls: ['accept-client-invite.component.scss'],
@@ -19,7 +18,7 @@ export class AcceptClientInvitePage extends SetLanguageBaseComponent implements 
 		private readonly router: Router,
 		private readonly route: ActivatedRoute,
 		private readonly toastrService: ToastrService,
-		private readonly translate: TranslateService,
+		public readonly translate: TranslateService,
 		private readonly inviteService: InviteService
 	) {
 		super(translate);

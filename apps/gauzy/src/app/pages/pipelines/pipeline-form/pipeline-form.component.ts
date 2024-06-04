@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { IOrganization, IPipeline, IPipelineCreateInput } from '@gauzy/contracts';
-import { PipelinesService } from '../../../@core/services/pipelines.service';
+import { PipelinesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	templateUrl: './pipeline-form.component.html',
@@ -21,17 +21,14 @@ export class PipelineFormComponent implements OnInit {
 		public readonly dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
 		private readonly pipelinesService: PipelinesService,
 		private readonly fb: UntypedFormBuilder
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		const { id, isActive } = this.pipeline;
 		isActive === undefined ? (this.isActive = true) : (this.isActive = isActive);
 
 		this.form = this.fb.group({
-			organizationId: [
-				this.pipeline.organizationId || '',
-				Validators.required
-			],
+			organizationId: [this.pipeline.organizationId || '', Validators.required],
 			tenantId: [this.pipeline.tenantId || ''],
 			name: [this.pipeline.name || '', Validators.required],
 			...(id ? { id: [id, Validators.required] } : {}),
@@ -53,7 +50,10 @@ export class PipelineFormComponent implements OnInit {
 	 */
 	async persist(): Promise<void> {
 		try {
-			const { value, value: { id } } = this.form;
+			const {
+				value,
+				value: { id }
+			} = this.form;
 			let entity: IPipeline;
 
 			// Determine whether to create or update based on the presence of an ID

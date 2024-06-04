@@ -37,7 +37,7 @@ import {
 	ProductService,
 	TasksStoreService,
 	TranslatableService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import {

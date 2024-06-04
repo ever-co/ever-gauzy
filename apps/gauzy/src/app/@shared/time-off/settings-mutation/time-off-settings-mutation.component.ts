@@ -4,7 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization, IOrganizationTeam, ITimeOffPolicy } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

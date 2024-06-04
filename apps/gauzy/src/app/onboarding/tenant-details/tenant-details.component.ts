@@ -4,7 +4,7 @@ import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts
 import { firstValueFrom } from 'rxjs';
 import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService, EmployeesService, TenantService } from '../../@core/services';
+import { AuthService, EmployeesService, TenantService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-tenant-details',

@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TaskStatusSelectComponent } from './task-status-select.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
-import { TaskStatusesService } from '../../../@core/services';
+import { TaskStatusesService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	declarations: [TaskStatusSelectComponent],

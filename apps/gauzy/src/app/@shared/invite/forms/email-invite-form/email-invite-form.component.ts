@@ -18,9 +18,8 @@ import { filter, tap } from 'rxjs/operators';
 import { NbTagComponent, NbTagInputAddEvent, NbTagInputDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { EmailValidator } from '@gauzy/ui-sdk/core';
+import { AuthService, EmailValidator, InviteService, RoleService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService, InviteService, RoleService } from './../../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FormHelpers } from '../../../forms/helpers';
 

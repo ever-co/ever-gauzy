@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { CrudActionEnum, IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationProjectStore } from '../../../../../../@core/services';
+import { OrganizationProjectsService, OrganizationProjectStore } from '@gauzy/ui-sdk/core';
 
 export interface TaskViewMode {
 	type: TaskListTypeEnum;

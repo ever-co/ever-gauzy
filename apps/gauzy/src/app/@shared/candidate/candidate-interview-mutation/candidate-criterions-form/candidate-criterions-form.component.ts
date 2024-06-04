@@ -3,7 +3,7 @@ import { Component, OnInit, OnDestroy, Input } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from '../../../../@core/services';
+import { CandidatePersonalQualitiesService, CandidateTechnologiesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-candidate-criterions-form',

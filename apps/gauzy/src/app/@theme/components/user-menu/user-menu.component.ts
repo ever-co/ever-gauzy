@@ -5,7 +5,7 @@ import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

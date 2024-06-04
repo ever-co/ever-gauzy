@@ -11,7 +11,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { MerchantService } from '../../../../../@core/services';
+import { MerchantService } from '@gauzy/ui-sdk/core';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import {
 	IPaginationBase,

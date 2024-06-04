@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../services/auth.service';
-import { AuthStrategy } from './auth-strategy.service';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ElectronService } from './electron.service';
+import { AuthService, AuthStrategy, ElectronService } from '@gauzy/ui-sdk/core';
 
 @Injectable()
 export class AuthGuard implements CanActivate {

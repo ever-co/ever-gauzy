@@ -15,7 +15,7 @@ import { CompareDateValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { OrganizationDocumentsService } from '../../../@core/services';
+import { OrganizationDocumentsService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

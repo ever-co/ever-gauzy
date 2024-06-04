@@ -4,9 +4,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, OrganizationExpenseCategoriesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationExpenseCategoriesService } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -15,7 +15,7 @@ import {
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationEditStore } from '../../@core/services';
+import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
 import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {

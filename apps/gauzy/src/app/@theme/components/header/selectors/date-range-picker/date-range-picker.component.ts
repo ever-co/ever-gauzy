@@ -15,12 +15,12 @@ import {
 	DEFAULT_DATE_PICKER_CONFIG,
 	DateRangePickerBuilderService,
 	NavigationService,
-	OrganizationsService
+	OrganizationsService,
+	TimesheetFilterService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';

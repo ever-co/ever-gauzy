@@ -12,7 +12,7 @@ import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyService } from '../../@core/services';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase

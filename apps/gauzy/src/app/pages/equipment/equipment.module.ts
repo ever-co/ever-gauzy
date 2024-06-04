@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { EquipmentComponent } from './equipment.component';
-import { EquipmentService } from '../../@core/services/equipment.service';
+import { EquipmentService } from '@gauzy/ui-sdk/core';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';

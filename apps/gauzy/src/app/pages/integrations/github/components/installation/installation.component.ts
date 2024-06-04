@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GithubService } from '../../../../../@core/services';
+import { GithubService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

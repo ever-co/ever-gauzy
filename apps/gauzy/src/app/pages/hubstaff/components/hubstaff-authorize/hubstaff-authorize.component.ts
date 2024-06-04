@@ -6,7 +6,7 @@ import { IIntegration, IIntegrationTenant, IOrganization, IntegrationEnum } from
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
 import { HubstaffService } from '@gauzy/ui-sdk/core';
-import { IntegrationsService } from './../../../../@core/services';
+import { IntegrationsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

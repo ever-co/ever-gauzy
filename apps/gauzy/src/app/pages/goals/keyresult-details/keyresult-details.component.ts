@@ -1,6 +1,14 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
-import { EmployeesService } from '../../../@core/services';
+import {
+	EmployeesService,
+	GoalSettingsService,
+	KeyResultService,
+	KeyResultUpdateService,
+	OrganizationProjectsService,
+	TasksService,
+	TasksStoreService
+} from '@gauzy/ui-sdk/core';
 import {
 	IKeyResult,
 	IKeyResultUpdate,
@@ -15,17 +23,11 @@ import {
 } from '@gauzy/contracts';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { takeUntil } from 'rxjs/operators';
-import { KeyResultService } from '../../../@core/services/keyresult.service';
 import { Subject, firstValueFrom } from 'rxjs';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { TasksStoreService } from '../../../@core/services/tasks-store.service';
-import { OrganizationProjectsService } from '../../../@core/services/organization-projects.service';
-import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';

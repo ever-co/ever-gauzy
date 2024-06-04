@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ElectronService } from '../../../../../@core/auth/electron.service';
 import { filter, from, tap } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
 import { NbLayoutDirection, NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { ElectronService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({

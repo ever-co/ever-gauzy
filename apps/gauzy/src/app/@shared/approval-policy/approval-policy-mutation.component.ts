@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyService } from '../../@core/services';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../forms/helpers';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';

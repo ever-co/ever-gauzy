@@ -8,7 +8,13 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Router } from '@angular/router';
 import { debounceTime, filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
+import {
+	AppointmentEmployeesService,
+	AvailabilitySlotsService,
+	EmployeeAppointmentService,
+	TimeOffService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
@@ -25,15 +31,11 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { AppointmentEmployeesService } from '../../../@core/services/appointment-employees.service';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
-import { TimeOffService } from '../../../@core/services/time-off.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertLocalToTimezone } from '@gauzy/ui-sdk/common';
 import { dayOfWeekAsString } from '../../../@theme/components/header/selectors/date-range-picker';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

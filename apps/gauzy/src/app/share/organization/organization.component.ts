@@ -11,7 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
-import { EmployeesService, EmployeeStatisticsService } from '../../@core/services';
+import { EmployeesService, EmployeeStatisticsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

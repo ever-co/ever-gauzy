@@ -19,7 +19,7 @@ import moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InvoicesService, OrganizationSettingService } from './../../../../@core/services';
+import { InvoicesService, OrganizationSettingService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

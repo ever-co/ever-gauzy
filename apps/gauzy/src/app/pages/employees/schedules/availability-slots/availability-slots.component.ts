@@ -26,7 +26,7 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { AvailabilitySlotsService, TimeOffService } from './../../../../@core/services';
+import { AvailabilitySlotsService, TimeOffService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

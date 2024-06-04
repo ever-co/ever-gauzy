@@ -9,7 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from '@gauzy/ui-config';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EquipmentService, ImageAssetService } from '../../@core/services';
+import { EquipmentService, ImageAssetService } from '@gauzy/ui-sdk/core';
 import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
 
 @UntilDestroy({ checkProperties: true })

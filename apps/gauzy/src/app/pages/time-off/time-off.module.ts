@@ -21,7 +21,7 @@ import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 import { TimeOffMutationModule } from '../../@shared/time-off/time-off-mutation.module';
-import { TimeOffService } from '../../@core/services/time-off.service';
+import { TimeOffService } from '@gauzy/ui-sdk/core';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';

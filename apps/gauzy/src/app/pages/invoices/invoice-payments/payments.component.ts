@@ -15,7 +15,7 @@ import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
 import { Store } from '@gauzy/ui-sdk/common';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import { InvoiceEstimateHistoryService, InvoicesService, PaymentService } from '../../../@core/services';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService } from '@gauzy/ui-sdk/core';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

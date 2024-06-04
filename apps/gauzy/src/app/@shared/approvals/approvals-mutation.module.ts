@@ -11,12 +11,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ApprovalPolicyService, RequestApprovalService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ThemeModule } from '../../@theme/theme.module';
 import { RequestApprovalMutationComponent } from './approvals-mutation.component';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
-import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
 
 @NgModule({

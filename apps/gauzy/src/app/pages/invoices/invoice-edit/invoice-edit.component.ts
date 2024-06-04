@@ -32,7 +32,7 @@ import {
 	InvoicesService,
 	OrganizationSettingService,
 	TranslatableService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,

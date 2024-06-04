@@ -9,7 +9,7 @@ import {
 	NbCheckboxModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TagsService } from '../../@core/services/tags.service';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';

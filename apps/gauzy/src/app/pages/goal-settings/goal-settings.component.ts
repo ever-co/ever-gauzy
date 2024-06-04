@@ -6,7 +6,7 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { tap } from 'rxjs/operators';
 import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
-import { GoalSettingsService } from '../../@core/services/goal-settings.service';
+import { GoalSettingsService } from '@gauzy/ui-sdk/core';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';

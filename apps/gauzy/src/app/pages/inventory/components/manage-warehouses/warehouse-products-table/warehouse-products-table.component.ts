@@ -7,7 +7,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
-import { InventoryStore, WarehouseService } from './../../../../../@core/services';
+import { InventoryStore, WarehouseService } from '@gauzy/ui-sdk/core';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';

@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GauzyAIService } from './../../../../../@core/services';
+import { GauzyAIService } from '@gauzy/ui-sdk/core';
 import { ReplacePipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })

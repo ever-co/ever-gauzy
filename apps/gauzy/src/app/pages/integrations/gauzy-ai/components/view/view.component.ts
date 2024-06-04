@@ -22,7 +22,7 @@ import {
 	GauzyAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService
-} from '../../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 
 @UntilDestroy({ checkProperties: true })

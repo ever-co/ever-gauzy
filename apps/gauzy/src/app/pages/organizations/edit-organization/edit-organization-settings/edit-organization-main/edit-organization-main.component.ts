@@ -10,7 +10,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { OrganizationEditStore } from '../../../../../@core/services';
+import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

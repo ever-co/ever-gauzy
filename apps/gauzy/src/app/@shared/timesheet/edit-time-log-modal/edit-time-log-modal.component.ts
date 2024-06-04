@@ -11,7 +11,7 @@ import {
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
 import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { TimesheetService, ToastrService } from '@gauzy/ui-sdk/core';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,7 +19,6 @@ import * as moment from 'moment';
 import * as _ from 'underscore';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject } from 'rxjs';
-import { TimesheetService } from '../timesheet.service';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })

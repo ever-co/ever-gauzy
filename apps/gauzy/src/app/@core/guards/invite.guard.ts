@@ -1,9 +1,9 @@
-import { Store } from '@gauzy/ui-sdk/common';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { first } from 'rxjs/operators';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { first } from 'rxjs/operators';
+import { Store } from '@gauzy/ui-sdk/common';
+import { PermissionsEnum } from '@gauzy/contracts';
 
 @UntilDestroy()
 @Injectable()

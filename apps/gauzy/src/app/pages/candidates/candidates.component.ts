@@ -23,7 +23,7 @@ import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } fr
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CandidatesService } from '../../@core/services';
+import { CandidatesService } from '@gauzy/ui-sdk/core';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,

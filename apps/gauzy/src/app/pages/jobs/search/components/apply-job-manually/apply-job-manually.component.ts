@@ -26,7 +26,7 @@ import { ToastrService } from '@gauzy/ui-sdk/core';
 import { environment } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
-import { JobService } from './../../../../../@core/services';
+import { JobService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from './../../../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })

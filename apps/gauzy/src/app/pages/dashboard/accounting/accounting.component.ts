@@ -7,12 +7,15 @@ import { Subject } from 'rxjs/internal/Subject';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { DateRangePickerBuilderService, ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	DateRangePickerBuilderService,
+	EmployeeStatisticsService,
+	EmployeesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { EmployeesService, EmployeeStatisticsService } from '../../../@core/services';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
 

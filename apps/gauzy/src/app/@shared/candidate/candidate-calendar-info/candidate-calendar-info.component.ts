@@ -1,5 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput, DateSelectArg, EventHoveringArg } from '@fullcalendar/core';
 import { disableCursor } from '@fullcalendar/core/internal';
@@ -8,12 +9,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
-import { CandidateInterviewService } from '../../../@core/services';
+import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
+import { CandidateInterviewService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

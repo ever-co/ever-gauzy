@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { NbMenuModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { AuthService } from '../@core/services/auth.service';
+import { AuthService } from '@gauzy/ui-sdk/core';
 import { RoleGuard } from '../@core/guards';
 import { ThemeModule } from '../@theme/theme.module';
 import { ShareComponent } from './share.component';

@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { IOrganization, IProduct, IProductTranslatable } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ProductService, TranslatableService } from '../../../@core/services';
+import { ProductService, TranslatableService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

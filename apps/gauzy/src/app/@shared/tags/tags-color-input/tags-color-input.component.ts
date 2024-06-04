@@ -19,7 +19,7 @@ import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TagsService } from '../../../@core/services';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })

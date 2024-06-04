@@ -64,7 +64,7 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '../../@core/services';
+import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';

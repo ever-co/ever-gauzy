@@ -17,10 +17,10 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator, UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { AuthService, CandidatesService, EmployeesService, RoleService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService, CandidatesService, EmployeesService, RoleService } from './../../../../@core/services';
 import { FormHelpers } from '../../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

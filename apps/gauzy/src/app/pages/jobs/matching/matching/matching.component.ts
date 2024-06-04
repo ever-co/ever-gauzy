@@ -20,7 +20,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
 import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { JobPresetService, JobSearchCategoryService, JobSearchOccupationService } from './../../../../@core/services';
+import { JobPresetService, JobSearchCategoryService, JobSearchOccupationService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

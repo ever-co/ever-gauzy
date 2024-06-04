@@ -20,7 +20,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EquipmentService } from '../../@core/services';
+import { EquipmentService } from '@gauzy/ui-sdk/core';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';
 

@@ -19,13 +19,14 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
 import {
 	EmployeeAwardService,
 	EmployeeLevelService,
-	OrganizationEmploymentTypesService
-} from '../../../@core/services';
+	ErrorHandlingService,
+	OrganizationEmploymentTypesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -18,7 +18,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationAwardsService, OrganizationLanguagesService } from '../../../@core/services';
+import { OrganizationAwardsService, OrganizationLanguagesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-public-page-mutation',

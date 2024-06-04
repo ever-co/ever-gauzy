@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ImageAssetService } from '../../@core/services/image-asset.service';
+import { ImageAssetService } from '@gauzy/ui-sdk/core';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { ImageAssetComponent } from './img-asset/img-asset.component';

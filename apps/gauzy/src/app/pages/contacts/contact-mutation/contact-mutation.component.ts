@@ -21,7 +21,7 @@ import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { LocationFormComponent } from '../../../@shared/forms/location';
 import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
-import { OrganizationProjectsService } from '../../../@core/services';
+import { OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })

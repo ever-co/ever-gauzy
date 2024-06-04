@@ -21,7 +21,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EmployeesService, OrganizationTeamsService, TasksService } from '../../../@core/services';
+import { EmployeesService, OrganizationTeamsService, TasksService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

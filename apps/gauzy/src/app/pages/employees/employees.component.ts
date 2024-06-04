@@ -35,7 +35,7 @@ import {
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService, EmployeeStore } from '../../@core/services';
+import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,

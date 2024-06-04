@@ -6,15 +6,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
-import { HelpCenterArticleService } from '../../@core/services/help-center-article.service';
+import { HelpCenterArticleService, HelpCenterAuthorService, ToastrService } from '@gauzy/ui-sdk/core';
 import { filter } from 'rxjs/operators';
-import { HelpCenterAuthorService } from '../../@core/services/help-center-author.service';
-import { EmployeesService } from '../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { FormControl } from '@angular/forms';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

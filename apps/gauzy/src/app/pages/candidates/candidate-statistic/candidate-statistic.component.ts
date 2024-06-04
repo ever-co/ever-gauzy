@@ -1,12 +1,11 @@
 import { ICandidate, ICandidateInterview, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CandidatesService } from '../../../@core/services/candidates.service';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
-import { EmployeesService } from '../../../@core/services';
+import { CandidateInterviewService, CandidatesService, EmployeesService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-statistic',
@@ -21,11 +20,12 @@ export class CandidateStatisticComponent implements OnInit, OnDestroy {
 	rating: number[] = [];
 	interviewList: ICandidateInterview[];
 	employeeList: IEmployee[];
+
 	constructor(
-		private candidatesService: CandidatesService,
-		private candidateInterviewService: CandidateInterviewService,
-		private employeesService: EmployeesService,
-		private store: Store
+		private readonly candidatesService: CandidatesService,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly employeesService: EmployeesService,
+		private readonly store: Store
 	) {}
 
 	ngOnInit() {

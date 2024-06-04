@@ -16,8 +16,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InventoryStore, ProductService, ProductVariantService } from '../../../../@core/services';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { InventoryStore, ProductService, ProductVariantService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

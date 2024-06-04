@@ -23,7 +23,7 @@ import {
 	EquipmentSharingPolicyService,
 	EquipmentSharingService,
 	OrganizationTeamsService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })

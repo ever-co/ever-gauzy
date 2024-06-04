@@ -3,10 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { IInvoice, ITag, InvoiceStatusTypesEnum } from '@gauzy/contracts';
-import { InvoicesService } from '../../../@core/services/invoices.service';
+import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-invoice-send',

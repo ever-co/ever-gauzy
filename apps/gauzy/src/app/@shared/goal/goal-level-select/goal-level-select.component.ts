@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationTeamsService } from '../../../@core';
+import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-goal-level-select',

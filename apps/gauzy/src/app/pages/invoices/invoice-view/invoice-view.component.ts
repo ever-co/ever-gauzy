@@ -8,7 +8,7 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { saveAs } from 'file-saver';
 import { Store } from '@gauzy/ui-sdk/common';
-import { InvoicesService } from '../../../@core/services';
+import { InvoicesService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NbDialogService } from '@nebular/theme';
 import { ToastrService } from '@gauzy/ui-sdk/core';

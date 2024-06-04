@@ -7,7 +7,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DateRangePickerBuilderService,
+	EmployeeRecurringExpenseService,
+	EmployeesService,
 	ErrorHandlingService,
+	ExpenseCategoriesStoreService,
+	OrganizationRecurringExpenseService,
 	ToastrService,
 	defaultDateFormat
 } from '@gauzy/ui-sdk/core';
@@ -21,12 +25,6 @@ import {
 	IExpenseCategory
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	EmployeeRecurringExpenseService,
-	EmployeesService,
-	ExpenseCategoriesStoreService,
-	OrganizationRecurringExpenseService
-} from '../../../@core/services';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
@@ -98,7 +96,7 @@ export class RecurringExpenseMutationComponent
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
-		private readonly translate: TranslateService,
+		public readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,

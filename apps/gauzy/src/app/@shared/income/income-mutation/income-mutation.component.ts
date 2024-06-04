@@ -7,7 +7,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationSettingService } from '../../../@core/services';
+import { OrganizationSettingService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { FormHelpers } from '../../forms/helpers';
 

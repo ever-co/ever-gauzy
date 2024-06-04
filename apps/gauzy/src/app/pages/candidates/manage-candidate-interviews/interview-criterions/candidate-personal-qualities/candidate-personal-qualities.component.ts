@@ -3,10 +3,9 @@ import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidatePersonalQualitiesService } from 'apps/gauzy/src/app/@core/services/candidate-personal-qualities.service';
 import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidatePersonalQualitiesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({

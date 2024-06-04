@@ -6,9 +6,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
-import { TimesheetService } from './../timesheet.service';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
+import { TimeTrackerService, TimesheetService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

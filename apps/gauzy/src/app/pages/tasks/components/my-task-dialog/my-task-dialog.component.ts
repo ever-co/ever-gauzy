@@ -9,7 +9,7 @@ import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent, richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService, OrganizationProjectsService } from '../../../../@core/services';
+import { EmployeesService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 
 const initialTaskValue = {
 	title: '',

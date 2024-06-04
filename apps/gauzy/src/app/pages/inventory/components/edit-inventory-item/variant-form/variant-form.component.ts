@@ -1,23 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { IProductOptionTranslatable, LanguagesEnum } from '@gauzy/contracts';
+import { IProductOptionTranslatable, LanguagesEnum, VariantCreateInput } from '@gauzy/contracts';
 import { Router } from '@angular/router';
-import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
+import { InventoryStore, TranslatableService } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslatableService } from 'apps/gauzy/src/app/@core';
-
-export interface OptionCreateInput {
-	name: string;
-	code: string;
-}
-
-export interface VariantCreateInput {
-	options: string[];
-	optionsFull: IProductOptionTranslatable[];
-	isStored: boolean;
-	id?: string;
-	productId?: string;
-}
 
 @UntilDestroy()
 @Component({

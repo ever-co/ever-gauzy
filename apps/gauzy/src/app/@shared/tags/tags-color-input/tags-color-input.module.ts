@@ -4,7 +4,7 @@ import { TagsColorInputComponent } from './tags-color-input.component';
 import { NbBadgeModule, NbSelectModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TagsService } from '../../../@core/services/tags.service';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({

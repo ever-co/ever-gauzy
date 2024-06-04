@@ -1,7 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormControl } from '@angular/forms';
-import { EmployeesService } from '../../../@core/services';
+import {
+	EmployeesService,
+	GoalService,
+	GoalSettingsService,
+	KeyResultUpdateService,
+	OrganizationTeamsService,
+	TasksService
+} from '@gauzy/ui-sdk/core';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
@@ -19,12 +26,7 @@ import {
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { TasksService } from '../../../@core/services/tasks.service';
-import { OrganizationTeamsService } from '../../../@core/services/organization-teams.service';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GoalService } from '../../../@core/services/goal.service';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { KeyResultUpdateService } from '../../../@core/services/keyresult-update.service';
 import { endOfTomorrow } from 'date-fns';
 
 @Component({

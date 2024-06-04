@@ -15,7 +15,7 @@ import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { ImageAssetService, WarehouseService } from './../../../../../@core/services';
+import { ImageAssetService, WarehouseService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

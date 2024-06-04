@@ -1,7 +1,6 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimeTrackerComponent } from './time-tracker/time-tracker.component';
-import { TimeTrackerService } from './time-tracker.service';
 import {
 	NbIconModule,
 	NbButtonModule,
@@ -12,6 +11,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { TimeTrackerService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../shared.module';
 import { RouterModule } from '@angular/router';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';

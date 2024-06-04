@@ -2,13 +2,8 @@ import { Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import {
-	ICandidate,
-	ICandidateInterview,
-	IEmployee,
-	ICandidateFeedback
-} from '@gauzy/contracts';
-import { CandidateFeedbacksService } from '../../../../../@core/services/candidate-feedbacks.service';
+import { ICandidate, ICandidateInterview, IEmployee, ICandidateFeedback } from '@gauzy/contracts';
+import { CandidateFeedbacksService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-criterions-rating-chart',
@@ -32,26 +27,18 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	isResetSelect: boolean;
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(
-		private themeService: NbThemeService,
-		private candidateFeedbacksService: CandidateFeedbacksService
-	) {}
+	constructor(private themeService: NbThemeService, private candidateFeedbacksService: CandidateFeedbacksService) {}
 
 	async onMembersSelected(id: string) {
 		this.isResetSelect = false;
 		const ratings = [];
-		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer', 'criterionsRating'],
-			{
-				candidateId: this.currentInterview.candidateId
-			}
-		);
+		const res = await this.candidateFeedbacksService.getAll(['interviewer', 'criterionsRating'], {
+			candidateId: this.currentInterview.candidateId
+		});
 
 		if (res) {
 			this.feedbacks = res.items.filter(
-				(item) =>
-					item.interviewId &&
-					item.interviewId === this.currentInterview.id
+				(item) => item.interviewId && item.interviewId === this.currentInterview.id
 			);
 			this.feedbacks.forEach((feedback) => {
 				if (id === 'all') {
@@ -80,18 +67,14 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			this.currentInterview.technologies.forEach((techItem) => {
 				if (techItem.id === crItem.technologyId) {
 					techItem.rating = crItem.rating;
-					rating
-						? rating.push(techItem.rating)
-						: this.rating.push(techItem.rating);
+					rating ? rating.push(techItem.rating) : this.rating.push(techItem.rating);
 					this.labels.push(techItem.name);
 				}
 			});
 			this.currentInterview.personalQualities.forEach((qualItem) => {
 				if (qualItem.id === crItem.personalQualityId) {
 					qualItem.rating = crItem.rating;
-					rating
-						? rating.push(qualItem.rating)
-						: this.rating.push(qualItem.rating);
+					rating ? rating.push(qualItem.rating) : this.rating.push(qualItem.rating);
 					this.labels.push(qualItem.name);
 				}
 			});
@@ -102,9 +85,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 		const sumArr = [];
 		ratings.forEach((x: number[]) => (sumArr.length = x.length));
 		sumArr.fill(0);
-		ratings.forEach((x: number[]) =>
-			x.forEach((item, index) => (sumArr[index] += item))
-		);
+		ratings.forEach((x: number[]) => x.forEach((item, index) => (sumArr[index] += item)));
 		const result = [];
 		sumArr.forEach((x) => result.push((x / ratings.length).toFixed(2)));
 		return result;
@@ -114,24 +95,17 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 		this.rating = [];
 		this.labels = [];
 		this.interviewList.forEach((interviewItem) =>
-			interviewItem.id === interview.id
-				? (this.currentInterview = interviewItem)
-				: null
+			interviewItem.id === interview.id ? (this.currentInterview = interviewItem) : null
 		);
 		this.isResetSelect = true;
 		this.currentEmployee = [];
 		const allIds = [];
 		const allFbIds = [];
-		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer', 'criterionsRating'],
-			{
-				candidateId: interview.candidateId
-			}
-		);
+		const res = await this.candidateFeedbacksService.getAll(['interviewer', 'criterionsRating'], {
+			candidateId: interview.candidateId
+		});
 		if (res) {
-			const feedbacks = res.items.filter(
-				(item) => item.interviewId && item.interviewId === interview.id
-			);
+			const feedbacks = res.items.filter((item) => item.interviewId && item.interviewId === interview.id);
 			if (feedbacks.length > 0) {
 				feedbacks.forEach((feedback) => {
 					if (feedback.interviewer) {
@@ -147,8 +121,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 						this.employeeList.forEach((item) => {
 							if (interviewer.employeeId === item.id) {
 								interviewer.employeeName = item.user.name;
-								interviewer.employeeImageUrl =
-									item.user.imageUrl;
+								interviewer.employeeImageUrl = item.user.imageUrl;
 								this.currentEmployee.push(item);
 							}
 						});
@@ -198,10 +171,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	}
 	loadColor(feedback: ICandidateFeedback) {
 		for (let i = 0; i < feedback.criterionsRating.length; i++) {
-			const color =
-				i % 2 === 0
-					? 'rgba(255, 206, 86, 0.2)'
-					: 'rgba(255, 99, 132, 0.2)';
+			const color = i % 2 === 0 ? 'rgba(255, 206, 86, 0.2)' : 'rgba(255, 99, 132, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}

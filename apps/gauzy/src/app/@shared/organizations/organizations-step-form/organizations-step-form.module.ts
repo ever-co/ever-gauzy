@@ -18,7 +18,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
-import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { CurrencyModule } from '../../currency/currency.module';

@@ -46,11 +46,10 @@ import {
 	TimeFormatEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, ToastrService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetStatisticsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { GuiDrag, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TimesheetStatisticsService } from '../../../@shared/timesheet/timesheet-statistics.service';
-import { EmployeesService, OrganizationProjectsService } from '../../../@core/services';
+import { EmployeesService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import { GalleryService } from '../../../@shared/gallery';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';

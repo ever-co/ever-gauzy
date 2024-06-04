@@ -9,7 +9,7 @@ import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { NavigationService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ALL_PROJECT_SELECTED } from './default-project';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationProjectStore } from '../../../@core/services';
+import { OrganizationProjectsService, OrganizationProjectStore } from '@gauzy/ui-sdk/core';
 import { TruncatePipe } from '../../pipes/text.pipe';
 
 @UntilDestroy({ checkProperties: true })

@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, EmployeeStore } from './../../../../@core/services';
+import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

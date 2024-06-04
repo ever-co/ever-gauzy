@@ -10,7 +10,7 @@ import { CandidateCvComponent } from './../../../../../@shared/candidate/candida
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import { CandidateDocumentsService, CandidateStore } from './../../../../../@core/services';
+import { CandidateDocumentsService, CandidateStore } from '@gauzy/ui-sdk/core';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

@@ -22,14 +22,15 @@ import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	ISelectorVisibility,
+	LayoutService,
+	OrganizationTeamStore,
 	OrganizationsService,
 	SelectorBuilderService,
+	TimeTrackerService,
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
-import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -39,9 +40,8 @@ import {
 	OrganizationProjectsService,
 	OrganizationProjectStore,
 	OrganizationTeamsService
-} from '../../../@core/services';
-import { LayoutService } from '../../../@core/services/layout.service';
-import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
+} from '@gauzy/ui-sdk/core';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
 
 @UntilDestroy({ checkProperties: true })

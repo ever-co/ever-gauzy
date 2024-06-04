@@ -29,7 +29,7 @@ import {
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { EmployeeWithLinksComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { EmployeesService, OrganizationProjectsService, OrganizationTeamsService } from '../../@core/services';
+import { EmployeesService, OrganizationProjectsService, OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })

@@ -19,7 +19,7 @@ import {
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationTenantService,
 	IntegrationsService
-} from './../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';

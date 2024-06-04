@@ -4,9 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { IOrganization, IOrganizationContact } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { InviteService } from '../../../@core/services/invite.service';
-import { ToastrService, UsersService } from '@gauzy/ui-sdk/core';
+import { InviteService, OrganizationContactService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-invite-contact',

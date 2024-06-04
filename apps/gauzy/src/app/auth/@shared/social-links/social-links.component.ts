@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { IAppConfig } from '@gauzy/contracts';
-import { AppService } from '../../../@core/services';
+import { AppService } from '@gauzy/ui-sdk/core';
 
 /**
  * Interface representing a social link.

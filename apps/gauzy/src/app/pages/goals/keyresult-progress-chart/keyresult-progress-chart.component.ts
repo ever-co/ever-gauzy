@@ -1,6 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { IKeyResult, KeyResultDeadlineEnum, IKPI, IOrganization } from '@gauzy/contracts';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { GoalSettingsService } from '@gauzy/ui-sdk/core';
 import { differenceInCalendarDays, addMonths, compareDesc, addDays, addWeeks, addQuarters, isAfter } from 'date-fns';
 import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';

@@ -15,7 +15,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ProductTypeService } from '../../../@core/services';
+import { ProductTypeService } from '@gauzy/ui-sdk/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

@@ -34,8 +34,12 @@ import { UiConfigModule } from '@gauzy/ui-config';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	APIInterceptor,
+	AppInitService,
+	FeatureService,
+	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
+	ServerConnectionService,
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-sdk/core';
@@ -46,7 +50,6 @@ import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
-import { ServerConnectionService } from './@core/services/server-connection.service';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
 import { SentryErrorHandler } from './@core/sentry-error.handler';
@@ -54,8 +57,6 @@ import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import { LegalModule } from './legal/legal.module';
-import { FeatureService, GoogleMapsLoaderService } from './@core/services';
-import { AppInitService } from './@core/services/app-init-service';
 import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { initializeSentry } from './sentry';
 

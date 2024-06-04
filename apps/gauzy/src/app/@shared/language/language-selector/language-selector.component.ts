@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
-import { LanguagesService } from '../../../@core/services/languages.service';
+import { LanguagesService } from '@gauzy/ui-sdk/core';
 import { ILanguage } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';

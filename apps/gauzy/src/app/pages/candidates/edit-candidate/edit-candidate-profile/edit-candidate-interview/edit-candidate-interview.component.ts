@@ -23,7 +23,7 @@ import {
 	CandidatesService,
 	CandidateStore,
 	EmployeesService
-} from '../../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';

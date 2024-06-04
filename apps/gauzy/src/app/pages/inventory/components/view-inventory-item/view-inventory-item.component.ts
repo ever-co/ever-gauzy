@@ -6,7 +6,7 @@ import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest } from 'rxjs';
 import { IImageAsset, IProductOptionTranslatable, IProductTranslatable, LanguagesEnum } from '@gauzy/contracts';
-import { ProductService, TranslatableService } from './../../../../@core/services';
+import { ProductService, TranslatableService } from '@gauzy/ui-sdk/core';
 import { GalleryComponent, GalleryService } from './../../../../@shared/gallery';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';

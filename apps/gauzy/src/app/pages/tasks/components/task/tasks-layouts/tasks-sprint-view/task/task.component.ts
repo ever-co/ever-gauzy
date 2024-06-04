@@ -16,8 +16,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TaskStatusesService } from '../../../../../../../@core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { TaskStatusesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,8 +42,8 @@ export class SprintTaskComponent extends TranslationBaseComponent implements OnI
 	public statuses$: BehaviorSubject<ITaskStatus[]> = new BehaviorSubject([]);
 
 	constructor(
-		private nbMenuService: NbMenuService,
-		readonly translate: TranslateService,
+		private readonly nbMenuService: NbMenuService,
+		public readonly translate: TranslateService,
 		private readonly store: Store,
 		private readonly taskStatusesService: TaskStatusesService
 	) {

@@ -10,7 +10,7 @@ import { CompareDateValidator, ToastrService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { environment as ENV } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

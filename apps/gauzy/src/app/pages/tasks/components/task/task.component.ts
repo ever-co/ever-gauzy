@@ -24,7 +24,7 @@ import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.compon
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { MyTasksStoreService, TasksStoreService, TeamTasksStoreService } from './../../../../@core/services';
+import { MyTasksStoreService, TasksStoreService, TeamTasksStoreService } from '@gauzy/ui-sdk/core';
 import {
 	AssignedToComponent,
 	CreateByComponent,

@@ -9,7 +9,7 @@ import { AddIconComponent } from './add-icon/add-icon.component';
 import { filter, tap } from 'rxjs/operators';
 import { DeleteCategoryComponent } from './delete-category/delete-category.component';
 import { DeleteBaseComponent } from './delete-base/delete-base.component';
-import { HelpCenterService } from '../../@core/services/help-center.service';
+import { HelpCenterService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { KnowledgeBaseComponent } from './knowledeg-base/knowledeg-base.component';

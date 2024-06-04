@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationEditStore } from '../../../../../@core/services';
+import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
 import { LeafletMapComponent, LocationFormComponent } from '../../../../../@shared/forms';
 import { OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 

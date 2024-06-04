@@ -6,7 +6,7 @@ import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AppointmentComponent } from '../../../pages/employees/appointment/appointment.component';
-import { EmployeesService, EventTypeService } from '../../../@core/services';
+import { EmployeesService, EventTypeService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
