@@ -39,6 +39,7 @@ import {
 	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
 	LanguageInterceptor,
+	SentryErrorHandler,
 	ServerConnectionService,
 	TenantInterceptor,
 	TokenInterceptor
@@ -52,7 +53,6 @@ import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppModuleGuard } from './app.module.guards';
 import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import { SentryErrorHandler } from './@core/sentry-error.handler';
 import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';

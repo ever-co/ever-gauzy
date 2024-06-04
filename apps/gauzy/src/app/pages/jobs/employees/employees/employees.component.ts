@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, Store } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,

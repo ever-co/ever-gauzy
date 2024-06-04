@@ -10,8 +10,8 @@ import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { months } from '@gauzy/ui-sdk/core';
 import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
-import { months } from './../../../../../@core/moment-extend';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

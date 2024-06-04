@@ -31,7 +31,6 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ThemeModule } from '../../@theme/theme.module';
-import { InviteGuard } from './../../@core/guards';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { CandidatesComponent } from './candidates.component';
@@ -97,6 +96,7 @@ import {
 	CandidatePersonalQualitiesService,
 	CandidateTechnologiesService,
 	CandidatesService,
+	InviteGuard,
 	OrganizationEmploymentTypesService,
 	OrganizationsService
 } from '@gauzy/ui-sdk/core';

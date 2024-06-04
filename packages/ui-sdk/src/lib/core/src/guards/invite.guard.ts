@@ -1,12 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { first } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
 
-@UntilDestroy()
 @Injectable()
 export class InviteGuard implements CanActivate {
 	hasPermission = false;
@@ -31,7 +28,7 @@ export class InviteGuard implements CanActivate {
 		}
 
 		// Retrieve selected organization
-		const organization = await firstValueFrom(this.store.selectedOrganization$);
+		const organization: IOrganization = await firstValueFrom(this.store.selectedOrganization$);
 		const organizationInvitesAllowed = organization ? organization.invitesAllowed : false;
 
 		// Check conditions

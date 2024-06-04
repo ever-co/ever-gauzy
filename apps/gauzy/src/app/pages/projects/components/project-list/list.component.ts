@@ -16,7 +16,7 @@ import {
 	ITag,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,

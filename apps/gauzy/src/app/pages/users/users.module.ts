@@ -19,7 +19,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
@@ -31,7 +31,6 @@ import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { InviteGuard } from '../../@core/guards';
 import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
