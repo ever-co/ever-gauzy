@@ -11,13 +11,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ProductTypeService } from '@gauzy/ui-sdk/core';
+import { ProductTypeService, ToastrService } from '@gauzy/ui-sdk/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

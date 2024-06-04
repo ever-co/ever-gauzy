@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbCardModule,
@@ -8,13 +9,12 @@ import {
 	NbCheckboxModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [

@@ -16,11 +16,16 @@ import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { TranslateService } from '@ngx-translate/core';
-import { GoalService, GoalSettingsService, GoalTemplatesService, KeyResultService } from '@gauzy/ui-sdk/core';
-import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
+import {
+	GoalService,
+	GoalSettingsService,
+	GoalTemplatesService,
+	KeyResultService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
+import { TranslateService } from '@ngx-translate/core';
+import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

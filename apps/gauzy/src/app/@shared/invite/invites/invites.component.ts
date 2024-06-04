@@ -10,7 +10,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import moment from 'moment';
 import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { InviteService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -21,9 +21,7 @@ import {
 	IInvite,
 	InviteStatusEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { InviteService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';

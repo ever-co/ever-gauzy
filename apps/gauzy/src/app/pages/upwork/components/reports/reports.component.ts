@@ -7,11 +7,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
+import { UpworkStoreService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { IncomeExpenseAmountComponent } from './../../../../@shared/table-components/income-amount/income-amount.component';
 import { DateViewComponent } from './../../../../@shared/table-components/date-view/date-view.component';
-import { UpworkStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -13,15 +13,20 @@ export class NoAuthGuard implements CanActivate {
 		private readonly store: Store
 	) {}
 
-	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+	/**
+	 * Checks if the user is authenticated before allowing navigation to a route.
+	 *
+	 * @param {ActivatedRouteSnapshot} route - The route to navigate to.
+	 * @param {RouterStateSnapshot} state - The current state of the router.
+	 * @return {Promise<boolean>} A promise that resolves to true if the user is authenticated, false otherwise.
+	 */
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
 		if (!this.store.token) {
 			// not logged in so return true
 			return true;
 		}
 
-		const isAuthenticated = await this.authService.isAuthenticated();
-
-		if (!isAuthenticated) {
+		if (!(await this.authService.isAuthenticated())) {
 			// not logged in so return true
 			return true;
 		}

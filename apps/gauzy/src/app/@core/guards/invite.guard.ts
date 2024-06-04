@@ -4,6 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { first } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy()
 @Injectable()
@@ -13,21 +14,33 @@ export class InviteGuard implements CanActivate {
 
 	constructor(private readonly router: Router, private readonly store: Store) {}
 
-	async canActivate(route: ActivatedRouteSnapshot) {
+	/**
+	 * Checks if the user has the required permissions and if invites are allowed for the selected organization.
+	 *
+	 * @param {ActivatedRouteSnapshot} route - The route snapshot containing the expected permissions.
+	 * @return {Promise<boolean>} Returns true if the user has the required permissions and invites are allowed, otherwise false.
+	 */
+	async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
+		let hasPermission = false;
 		const expectedPermissions: PermissionsEnum[] = route.data.expectedPermissions;
-		this.store.userRolePermissions$.pipe(first()).subscribe(() => {
-			this.hasPermission = expectedPermissions.some((permission) => this.store.hasPermission(permission));
-		});
-		this.store.selectedOrganization$.pipe(first(), untilDestroyed(this)).subscribe((organization) => {
-			if (organization) {
-				this.organizationInvitesAllowed = organization.invitesAllowed;
-			}
-		});
-		if (this.organizationInvitesAllowed && this.hasPermission) {
+
+		// Retrieve user role permissions
+		const userRolePermissions = await firstValueFrom(this.store.userRolePermissions$);
+		if (userRolePermissions) {
+			hasPermission = expectedPermissions.some((permission) => this.store.hasPermission(permission));
+		}
+
+		// Retrieve selected organization
+		const organization = await firstValueFrom(this.store.selectedOrganization$);
+		const organizationInvitesAllowed = organization ? organization.invitesAllowed : false;
+
+		// Check conditions
+		if (organizationInvitesAllowed && hasPermission) {
 			return true;
 		}
 
-		this.router.navigate(['/']);
-		return false;
+		// Redirect to home if conditions are not met
+		await this.router.navigate(['/']);
+		return hasPermission;
 	}
 }

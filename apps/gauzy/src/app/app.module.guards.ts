@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
 import { environment } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-sdk/common';
 
@@ -7,7 +7,13 @@ import { Store } from '@gauzy/ui-sdk/common';
 export class AppModuleGuard implements CanActivate {
 	constructor(private readonly router: Router, private store: Store) {}
 
-	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+	/**
+	 * Checks if the user can activate the route.
+	 *
+	 * @param {ActivatedRouteSnapshot} route - The route being activated.
+	 * @return {boolean} Returns true if the user can activate the route, false otherwise.
+	 */
+	canActivate(route: ActivatedRouteSnapshot): boolean {
 		const serverConnection = Number(this.store.serverConnection);
 
 		if (serverConnection === 0) {
