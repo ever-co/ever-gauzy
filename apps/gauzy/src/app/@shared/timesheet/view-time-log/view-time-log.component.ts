@@ -6,9 +6,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
-import { TimesheetService } from './../timesheet.service';
-import { Store } from './../../../@core/services';
-import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TimeTrackerService, TimesheetService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,7 +16,6 @@ import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
 	styleUrls: ['./view-time-log.component.scss']
 })
 export class ViewTimeLogComponent implements OnInit, OnDestroy {
-
 	organization: IOrganization;
 	PermissionsEnum = PermissionsEnum;
 	@Input() timeLogs: ITimeLog[] = [];
@@ -28,7 +26,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetService: TimesheetService,
 		private readonly store: Store,
-		private readonly timeTrackerService: TimeTrackerService,
+		private readonly timeTrackerService: TimeTrackerService
 	) {}
 
 	ngOnInit(): void {
@@ -42,7 +40,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 	}
 
 	openAddByDateProject($event: MouseEvent) {
-		const [ timeLog ] = this.timeLogs;
+		const [timeLog] = this.timeLogs;
 		const minutes = moment().minutes();
 		const stoppedAt = new Date(
 			moment(timeLog.startedAt).format('YYYY-MM-DD') +
@@ -60,12 +58,15 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	openEdit($event: MouseEvent, timeLog: {
-		startedAt: Date,
-		stoppedAt: Date,
-		projectId: string,
-		isRunning: boolean
-	}) {
+	openEdit(
+		$event: MouseEvent,
+		timeLog: {
+			startedAt: Date;
+			stoppedAt: Date;
+			projectId: string;
+			isRunning: boolean;
+		}
+	) {
 		if (timeLog.isRunning) {
 			return;
 		}
@@ -100,7 +101,7 @@ export class ViewTimeLogComponent implements OnInit, OnDestroy {
 		const request = {
 			logIds: [timeLog.id],
 			organizationId
-		}
+		};
 		this.timesheetService.deleteLogs(request).then((res) => {
 			this.callback(res);
 			this.checkTimerStatus();

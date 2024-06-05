@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
-import { TenantService } from '../../@core/services/tenant.service';
+import { TenantService } from '@gauzy/ui-sdk/core';
 import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';

@@ -3,4 +3,8 @@ export * from './src/utils';
 export * from './src/services';
 export * from './src/interceptors';
 export * from './src/resolvers';
+export * from './src/module-import-guard';
+export * from './src/guards';
+export * from './src/moment-extend';
+export * from './src/sentry-error.handler';
 export * from './src/core.module';

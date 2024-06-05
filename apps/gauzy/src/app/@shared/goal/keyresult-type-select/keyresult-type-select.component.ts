@@ -4,7 +4,7 @@ import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
 import { firstValueFrom } from 'rxjs';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
+import { GoalSettingsService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-keyresult-type-select',
@@ -21,22 +21,12 @@ export class KeyresultTypeSelectComponent {
 
 	keyResultTypeEnum = KeyResultTypeEnum;
 
-	constructor(
-		private dialogService: NbDialogService,
-		private goalSettingsService: GoalSettingsService
-	) { }
+	constructor(private dialogService: NbDialogService, private goalSettingsService: GoalSettingsService) {}
 
 	taskTypeValidators() {
-		if (
-			this.parentFormGroup.get('type').value ===
-			this.keyResultTypeEnum.TASK
-		) {
-			this.parentFormGroup.controls['projectId'].setValidators([
-				Validators.required
-			]);
-			this.parentFormGroup.controls['taskId'].setValidators([
-				Validators.required
-			]);
+		if (this.parentFormGroup.get('type').value === this.keyResultTypeEnum.TASK) {
+			this.parentFormGroup.controls['projectId'].setValidators([Validators.required]);
+			this.parentFormGroup.controls['taskId'].setValidators([Validators.required]);
 		} else {
 			this.parentFormGroup.controls['projectId'].clearValidators();
 			this.parentFormGroup.patchValue({ projectId: undefined });
@@ -48,12 +38,10 @@ export class KeyresultTypeSelectComponent {
 	}
 
 	async getKPI() {
-		await this.goalSettingsService
-			.getAllKPI({ organization: { id: this.orgId } })
-			.then((kpi) => {
-				const { items } = kpi;
-				this.KPIs = items;
-			});
+		await this.goalSettingsService.getAllKPI({ organization: { id: this.orgId } }).then((kpi) => {
+			const { items } = kpi;
+			this.KPIs = items;
+		});
 	}
 
 	async openEditKPI() {

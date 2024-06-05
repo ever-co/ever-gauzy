@@ -5,7 +5,8 @@ import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_T
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { AuthService, RoleService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { AuthService, RoleService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

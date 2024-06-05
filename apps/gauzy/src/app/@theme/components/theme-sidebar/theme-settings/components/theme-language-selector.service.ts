@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ElectronService } from '../../../../../@core/auth/electron.service';
 import { filter, from, tap } from 'rxjs';
-import { Store } from '../../../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { NbLayoutDirection, NbLayoutDirectionService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { ElectronService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
-	providedIn: 'root',
+	providedIn: 'root'
 })
 export class ThemeLanguageSelectorService {
 	private _preferredLanguage: LanguagesEnum;
@@ -26,20 +26,12 @@ export class ThemeLanguageSelectorService {
 	public initialize(): void {
 		this._store.preferredLanguage$
 			.pipe(
-				filter(
-					(preferredLanguage: LanguagesEnum) => !!preferredLanguage
-				),
-				tap(
-					(preferredLanguage: LanguagesEnum) =>
-						(this.preferredLanguage = preferredLanguage)
-				),
+				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+				tap((preferredLanguage: LanguagesEnum) => (this.preferredLanguage = preferredLanguage)),
 				tap(() => this.setLanguage()),
 				tap((preferredLanguage: LanguagesEnum) => {
 					if (this._electronService.isElectron) {
-						this._electronService.ipcRenderer.send(
-							'preferred_language_change',
-							preferredLanguage
-						);
+						this._electronService.ipcRenderer.send('preferred_language_change', preferredLanguage);
 					}
 				}),
 				untilDestroyed(this)
@@ -58,10 +50,7 @@ export class ThemeLanguageSelectorService {
 	}
 
 	public setLanguage(): void {
-		if (
-			this.preferredLanguage === LanguagesEnum.HEBREW ||
-			this.preferredLanguage === LanguagesEnum.ARABIC
-		) {
+		if (this.preferredLanguage === LanguagesEnum.HEBREW || this.preferredLanguage === LanguagesEnum.ARABIC) {
 			this._directionService.setDirection(NbLayoutDirection.RTL);
 		} else {
 			this._directionService.setDirection(NbLayoutDirection.LTR);

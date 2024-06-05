@@ -16,11 +16,10 @@ import {
 	switchMap,
 	tap
 } from 'rxjs';
-import { TimeTrackerService } from '../../time-tracker.service';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ITimerIcon, ITimerSynced, TimeTrackerService } from '@gauzy/ui-sdk/core';
 import { TimerIconFactory } from './factory';
-import { ITimerIcon, ITimerSynced } from './interfaces';
 import { TimerSynced } from './concretes';
-import { Store } from '../../../../@core';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({

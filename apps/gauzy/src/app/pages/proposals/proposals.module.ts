@@ -16,7 +16,7 @@ import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
-import { ProposalsService } from '../../@core/services/proposals.service';
+import { ProposalsService } from '@gauzy/ui-sdk/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';

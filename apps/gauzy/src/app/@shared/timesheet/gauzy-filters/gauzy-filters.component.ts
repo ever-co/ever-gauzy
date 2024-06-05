@@ -16,7 +16,7 @@ import { pick } from 'underscore';
 import { Options, ChangeContext } from '@angular-slider/ngx-slider';
 import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ActivityLevel, TimesheetFilterService } from '../timesheet-filter.service';
+import { ActivityLevel, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

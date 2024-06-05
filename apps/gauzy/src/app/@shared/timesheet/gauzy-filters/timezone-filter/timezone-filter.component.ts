@@ -17,7 +17,7 @@ import {
 	TimeFormatEnum,
 	TimeZoneEnum
 } from '@gauzy/contracts';
-import { Store } from '../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TimeZoneService } from './time-zone.service';
 
 @UntilDestroy({ checkProperties: true })

@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ngx-employee-with-links',
@@ -18,10 +18,7 @@ export class EmployeeWithLinksComponent implements OnInit {
 
 	employees: any[] = [];
 
-	constructor(
-		private store: Store,
-		private readonly router: Router
-	) { }
+	constructor(private store: Store, private readonly router: Router) {}
 
 	ngOnInit(): void {
 		this.initializeGrouping();
@@ -48,12 +45,7 @@ export class EmployeeWithLinksComponent implements OnInit {
 		}
 	}
 
-	selectEmployee(
-		employee: ISelectedEmployee,
-		firstName: string,
-		lastName: string,
-		imageUrl: string
-	) {
+	selectEmployee(employee: ISelectedEmployee, firstName: string, lastName: string, imageUrl: string) {
 		this.store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
 		this.store.selectedEmployee.firstName = firstName;
 		this.store.selectedEmployee.lastName = lastName;

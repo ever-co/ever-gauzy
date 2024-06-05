@@ -14,16 +14,11 @@ import moment from 'moment';
 import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { Store } from './../../../../../@core/services';
-import {
-	EditTimeLogModalComponent,
-	TimesheetFilterService,
-	TimesheetService,
-	ViewTimeLogModalComponent
-} from './../../../../../@shared/timesheet';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { dayOfWeekAsString } from './../../../../../@theme/components/header/selectors/date-range-picker';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';

@@ -19,8 +19,14 @@ import { combineLatest, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import {
+	EmployeesService,
+	OrganizationProjectsService,
+	OrganizationTeamsService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
@@ -28,8 +34,6 @@ import {
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { EmployeeWithLinksComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { EmployeesService, OrganizationProjectsService, OrganizationTeamsService, Store } from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

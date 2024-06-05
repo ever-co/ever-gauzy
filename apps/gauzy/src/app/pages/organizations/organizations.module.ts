@@ -29,7 +29,7 @@ import {
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components';

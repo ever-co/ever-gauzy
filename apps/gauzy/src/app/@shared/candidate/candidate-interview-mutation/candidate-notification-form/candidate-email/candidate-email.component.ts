@@ -3,7 +3,7 @@ import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { CandidatesService } from '../../../../../@core/services/candidates.service';
+import { CandidatesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-candidate-email',

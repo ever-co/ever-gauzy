@@ -1,12 +1,7 @@
-import {
-	Component,
-	ViewChild,
-	ElementRef,
-	AfterViewInit
-} from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { WarehouseService } from './../../../../../@core/services';
+import { WarehouseService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-manage-warehouse-quantity-selector',
@@ -19,9 +14,7 @@ export class ManageQuantityComponent implements AfterViewInit {
 
 	@ViewChild('quantity', { static: true }) quantity: ElementRef;
 
-	constructor(
-		private readonly warehouseService: WarehouseService
-	) { }
+	constructor(private readonly warehouseService: WarehouseService) {}
 
 	ngAfterViewInit() {
 		// Using 'fromEvent' to create an observable from the 'change' event of the quantity input field
@@ -37,15 +30,9 @@ export class ManageQuantityComponent implements AfterViewInit {
 
 				// Depending on the type of rowData, update the warehouse product count or variant count
 				if (this.rowData.type == 'variant') {
-					await this.warehouseService.updateWarehouseProductVariantCount(
-						this.rowData.id,
-						+ev.target.value
-					);
+					await this.warehouseService.updateWarehouseProductVariantCount(this.rowData.id, +ev.target.value);
 				} else {
-					await this.warehouseService.updateWarehouseProductCount(
-						this.rowData.id,
-						+ev.target.value
-					);
+					await this.warehouseService.updateWarehouseProductCount(this.rowData.id, +ev.target.value);
 				}
 			});
 	}

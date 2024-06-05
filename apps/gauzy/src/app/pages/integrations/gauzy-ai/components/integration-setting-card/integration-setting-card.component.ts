@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { IIntegrationSetting } from '@gauzy/contracts';
-import { IntegrationSettingService } from '../../../../../@core/services';
+import { IntegrationSettingService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 
 export enum SettingTitlesEnum {

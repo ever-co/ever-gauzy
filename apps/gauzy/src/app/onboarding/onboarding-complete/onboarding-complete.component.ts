@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { IFeature, IUser } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '../../@core/services/store.service';
 import { Observable } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { UsersService } from '@gauzy/ui-sdk/core';
+import { NgxPermissionsService } from 'ngx-permissions';
+import { IFeature, IUser } from '@gauzy/contracts';
+import { FeatureStoreService, UsersService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

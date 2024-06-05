@@ -21,7 +21,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
-import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '../../@core/services';
+import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-sdk/core';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';

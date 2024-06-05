@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateCriterionsRatingService, CandidateFeedbacksService } from './../../../../@core/services';
+import { CandidateCriterionsRatingService, CandidateFeedbacksService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

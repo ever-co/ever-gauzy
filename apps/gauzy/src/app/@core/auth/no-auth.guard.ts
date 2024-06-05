@@ -1,13 +1,7 @@
 import { Injectable } from '@angular/core';
-import {
-	ActivatedRouteSnapshot,
-	CanActivate,
-	Router,
-	RouterStateSnapshot
-} from '@angular/router';
-import { AuthService } from '../services/auth.service';
-import { Store } from '../services/store.service';
-
+import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { Store } from '@gauzy/ui-sdk/common';
+import { AuthService } from '@gauzy/ui-sdk/core';
 /**
  * Use for routes which only need to be displayed if user is NOT logged in
  */
@@ -19,18 +13,20 @@ export class NoAuthGuard implements CanActivate {
 		private readonly store: Store
 	) {}
 
-	async canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	) {
+	/**
+	 * Checks if the user is authenticated before allowing navigation to a route.
+	 *
+	 * @param {ActivatedRouteSnapshot} route - The route to navigate to.
+	 * @param {RouterStateSnapshot} state - The current state of the router.
+	 * @return {Promise<boolean>} A promise that resolves to true if the user is authenticated, false otherwise.
+	 */
+	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
 		if (!this.store.token) {
 			// not logged in so return true
 			return true;
 		}
 
-		const isAuthenticated = await this.authService.isAuthenticated();
-
-		if (!isAuthenticated) {
+		if (!(await this.authService.isAuthenticated())) {
 			// not logged in so return true
 			return true;
 		}

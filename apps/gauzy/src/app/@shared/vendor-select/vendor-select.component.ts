@@ -5,7 +5,8 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { OrganizationVendorsService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationVendorsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

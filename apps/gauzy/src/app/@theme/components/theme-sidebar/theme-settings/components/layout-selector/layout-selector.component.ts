@@ -3,7 +3,7 @@ import { ComponentLayoutStyleEnum, IUser, IUserUpdateInput } from '@gauzy/contra
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { UsersService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

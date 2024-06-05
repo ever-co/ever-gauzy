@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbIconLibraries, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { TimeLogType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TimeTrackerService } from '../../time-tracker/time-tracker.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TimeTrackerService } from '@gauzy/ui-sdk/core';
 
 type GroupType = {
 	groupTitle: string;

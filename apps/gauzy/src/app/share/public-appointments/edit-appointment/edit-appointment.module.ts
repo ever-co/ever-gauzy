@@ -4,7 +4,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditAppointmentComponent } from './edit-appointment.component';
 import { EditAppointmentRoutingModule } from './edit-appointment.routing.module';
-import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
+import { EmployeeAppointmentService } from '@gauzy/ui-sdk/core';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
 
 @NgModule({

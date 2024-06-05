@@ -10,12 +10,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import moment from 'moment';
 import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../../@core/services';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	TimeTrackerService,
+	TimesheetFilterService,
+	TimesheetService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { ConfirmComponent } from './../../../../../@shared/dialogs';
-import { TimeTrackerService } from './../../../../../@shared/time-tracker/time-tracker.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';

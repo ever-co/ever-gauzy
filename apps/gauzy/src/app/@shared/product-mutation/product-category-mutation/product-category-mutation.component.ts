@@ -16,7 +16,8 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { ProductCategoryService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ProductCategoryService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

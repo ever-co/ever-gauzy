@@ -22,10 +22,11 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeAwardService,
 	EmployeeLevelService,
+	ErrorHandlingService,
 	OrganizationEmploymentTypesService,
-	Store
-} from '../../../@core/services';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

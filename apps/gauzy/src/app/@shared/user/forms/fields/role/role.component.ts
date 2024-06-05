@@ -1,19 +1,12 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
 import { FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { filter, map, Observable, of as observableOf } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
-import { RoleService, Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { RoleService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -29,7 +22,6 @@ import { RoleService, Store } from './../../../../../@core/services';
 	]
 })
 export class RoleFormFieldComponent implements OnInit, OnDestroy {
-
 	roles: IRole[] = [];
 	roles$: Observable<IRole[]> = observableOf([]);
 	onChange: any = () => {};
@@ -56,8 +48,8 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic field size
-	*/
+	 * Getter & Setter for dynamic field size
+	 */
 	private _size: NbComponentSize = 'medium';
 	get size(): NbComponentSize {
 		return this._size;
@@ -67,8 +59,8 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for placeholder
-	*/
+	 * Getter & Setter for placeholder
+	 */
 	private _placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -76,10 +68,10 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	@Input() set placeholder(value: string) {
 		this._placeholder = value;
 	}
-	
+
 	/*
-	* Getter & Setter for label
-	*/
+	 * Getter & Setter for label
+	 */
 	private _label: string;
 	get label(): string {
 		return this._label;
@@ -89,16 +81,16 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter accessor for form control
-	*/
-	private _ctrl: FormControl = new FormControl(); 
+	 * Getter & Setter accessor for form control
+	 */
+	private _ctrl: FormControl = new FormControl();
 	get ctrl(): FormControl {
 		return this._ctrl;
 	}
 	@Input() set ctrl(value: FormControl) {
 		this._ctrl = value;
 	}
-	
+
 	private _role: IRole;
 	set role(value: IRole) {
 		this._role = value;
@@ -123,10 +115,7 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	@Output()
 	selectedChange = new EventEmitter<IRole>();
 
-	constructor(
-		private readonly store: Store,
-		private readonly rolesService: RoleService
-	) {}
+	constructor(private readonly store: Store, private readonly rolesService: RoleService) {}
 
 	ngOnInit() {
 		this.store.user$
@@ -139,21 +128,19 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	* GET all tenant roles
-	* Excludes role if needed
-	*/
+	 * GET all tenant roles
+	 * Excludes role if needed
+	 */
 	async renderRoles() {
-		this.roles$ = observableOf((await (this.rolesService.getAll())).items ).pipe(
-			map((roles: IRole[]) => roles.filter(
-				(role: IRole) => !this.excludes.includes(role.name as RolesEnum)
-			)),
-			tap((roles: IRole[]) => this.roles = roles)
+		this.roles$ = observableOf((await this.rolesService.getAll()).items).pipe(
+			map((roles: IRole[]) => roles.filter((role: IRole) => !this.excludes.includes(role.name as RolesEnum))),
+			tap((roles: IRole[]) => (this.roles = roles))
 		);
 	}
 
 	/**
 	 * Write Value
-	 * @param value 
+	 * @param value
 	 */
 	writeValue(value: IRole) {
 		if (value) {
@@ -171,7 +158,7 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 
 	/**
 	 * On Selection Change
-	 * @param role 
+	 * @param role
 	 */
 	onSelectionChange(roleId: IRole['id']) {
 		if (roleId) {
@@ -184,14 +171,12 @@ export class RoleFormFieldComponent implements OnInit, OnDestroy {
 
 	/**
 	 * GET role by ID
-	 * 
-	 * @param value 
-	 * @returns 
+	 *
+	 * @param value
+	 * @returns
 	 */
 	getRoleById(value: IRole['id']) {
-		return this.roles.find(
-			(role: IRole) => value === role.id
-		);
+		return this.roles.find((role: IRole) => value === role.id);
 	}
 
 	ngOnDestroy() {}

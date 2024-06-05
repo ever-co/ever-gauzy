@@ -3,7 +3,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
-import { CurrencyService } from '../../@core/services';
+import { CurrencyService } from '@gauzy/ui-sdk/core';
 import { CurrencyComponent } from './currency.component';
 
 @NgModule({

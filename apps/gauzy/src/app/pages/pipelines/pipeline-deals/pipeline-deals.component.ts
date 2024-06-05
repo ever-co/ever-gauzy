@@ -1,14 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { IDeal, IPipeline, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { PipelinesService } from '../../../@core/services/pipelines.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { DealsService } from '../../../@core/services/deals.service';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services/store.service';
+import { ComponentEnum, distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
+import { DealsService, PipelinesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
@@ -19,8 +17,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

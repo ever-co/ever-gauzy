@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetService, TimesheetStatisticsService } from '@gauzy/ui-sdk/core';
 import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
@@ -13,8 +13,8 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { OrganizationTeamsService, Store } from '../../../@core/services';
-import { TimesheetService, TimesheetStatisticsService } from '../../../@shared/timesheet';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
 

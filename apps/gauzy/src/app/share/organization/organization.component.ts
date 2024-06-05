@@ -8,9 +8,15 @@ import { Observable, of as observableOf, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { DateRangePickerBuilderService, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	EmployeeStatisticsService,
+	EmployeesService,
+	OrganizationsService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
-import { EmployeesService, EmployeeStatisticsService, Store } from '../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

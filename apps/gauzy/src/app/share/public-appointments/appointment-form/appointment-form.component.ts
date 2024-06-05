@@ -5,7 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IEventType, IEmployee } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	templateUrl: './appointment-form.component.html'

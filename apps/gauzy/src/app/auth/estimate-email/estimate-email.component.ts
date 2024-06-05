@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/contracts';
-import { InvoicesService } from '../../@core/services';
+import { InvoicesService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

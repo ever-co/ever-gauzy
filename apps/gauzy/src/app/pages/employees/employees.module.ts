@@ -26,8 +26,7 @@ import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { ThemeModule } from '../../@theme';
-import { InviteGuard } from './../../@core/guards';
+import { ThemeModule } from '../../@theme/theme.module';
 import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,
@@ -60,11 +59,11 @@ import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/emplo
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { OrganizationsService } from '@gauzy/ui-sdk/core';
+import { InviteGuard, OrganizationsService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '../../@core/services';
+import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NbTabsetModule, NbToggleModule } from '@nebular/theme';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';

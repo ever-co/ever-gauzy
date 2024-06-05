@@ -12,8 +12,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { InviteService } from '../../@core/services/invite.service';
-import { RoleService } from '../../@core/services/role.service';
+import { InviteService, RoleService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PasswordFormFieldModule } from '../../@shared/user/forms/fields/password';
 import { ThemeModule } from '../../@theme/theme.module';

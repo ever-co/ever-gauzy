@@ -4,12 +4,11 @@ import { ActivatedRoute, Data, Router } from '@angular/router';
 import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { OrganizationEditStore, Store } from '../../../../../@core/services';
+import { DUMMY_PROFILE_IMAGE, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

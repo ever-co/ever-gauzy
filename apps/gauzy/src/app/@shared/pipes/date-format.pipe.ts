@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import * as moment from 'moment';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({

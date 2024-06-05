@@ -10,7 +10,7 @@ import {
 	ViewChild,
 	ViewContainerRef
 } from '@angular/core';
-import { ISidebarConfig } from '../../../@core/services';
+import { ISidebarConfig } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-theme-sidebar',
@@ -38,14 +38,9 @@ export class ThemeSidebarComponent implements AfterViewInit, OnDestroy {
 
 	private async loadComponent() {
 		const renderComponent = this.config.loadComponent();
-		const component =
-			renderComponent instanceof Promise
-				? await renderComponent
-				: renderComponent;
+		const component = renderComponent instanceof Promise ? await renderComponent : renderComponent;
 
-		const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
-			component
-		);
+		const componentFactory = this.componentFactoryResolver.resolveComponentFactory(component);
 
 		this.componentRef = this.container.createComponent(componentFactory);
 		this.componentRef.changeDetectorRef.markForCheck();

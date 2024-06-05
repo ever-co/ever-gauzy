@@ -17,7 +17,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
-import { OrganizationDepartmentsService } from '../../../@core/services/organization-departments.service';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { OrganizationsStepFormModule } from '../organizations-step-form/organizations-step-form.module';
 

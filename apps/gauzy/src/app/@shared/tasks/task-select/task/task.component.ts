@@ -1,12 +1,11 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { IOrganization, ITask, PermissionsEnum, TaskStatusEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { AuthService, Store, TasksService } from './../../../../@core/services';
+import { AuthService, TasksService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,4 +1,4 @@
-import { ISidebarConfig } from '../../../@core/services';
+import { ISidebarConfig } from '@gauzy/ui-sdk/core';
 import { ChangelogComponent } from './changelog/changelog.component';
 import { ThemeSettingsComponent } from './theme-settings/theme-settings.component';
 

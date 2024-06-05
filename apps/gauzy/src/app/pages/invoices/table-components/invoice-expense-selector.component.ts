@@ -3,7 +3,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { ExpenseTypesEnum, IExpense, IOrganization } from '@gauzy/contracts';
-import { ExpensesService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ExpensesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,15 +23,11 @@ import { ExpensesService, Store } from '../../../@core/services';
 	styles: []
 })
 export class InvoiceExpensesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
-
 	public expense: IExpense;
 	public expenses: IExpense[];
 	public organization: IOrganization;
 
-	constructor(
-		private readonly store: Store,
-		private readonly expensesService: ExpensesService
-	) {
+	constructor(private readonly store: Store, private readonly expensesService: ExpensesService) {
 		super();
 	}
 
@@ -71,5 +68,5 @@ export class InvoiceExpensesSelectorComponent extends DefaultEditor implements O
 		this.cell.setValue($event);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

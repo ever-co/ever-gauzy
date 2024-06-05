@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ProductCategoryService } from '../../../../@core/services/product-category.service';
+import { ProductCategoryService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../../../@shared/shared.module';
 import {
 	NbCardModule,

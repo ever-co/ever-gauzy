@@ -12,14 +12,14 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ApprovalPolicyService,
 	EmployeesService,
 	OrganizationTeamsService,
-	RequestApprovalService,
-	Store
-} from '../../@core/services';
+	RequestApprovalService
+} from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })

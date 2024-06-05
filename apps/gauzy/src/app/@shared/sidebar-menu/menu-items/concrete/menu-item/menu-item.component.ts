@@ -1,28 +1,17 @@
 import { Location } from '@angular/common';
-import {
-	AfterViewChecked,
-	ChangeDetectorRef,
-	Component,
-	EventEmitter,
-	Input,
-	OnInit,
-	Output,
-} from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
 import { IUser } from '@gauzy/contracts';
-import JitsuAnalyticsEvents, {
-	JitsuAnalyticsEventsEnum,
-} from './../../../../../@core/services/analytics/event.type';
-import { JitsuService } from './../../../../../@core/services/analytics/jitsu.service';
-import { Store } from './../../../../../@core/services/store.service';
+import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { IMenuItem } from '../../interface/menu-item.interface';
 
 @Component({
 	selector: 'ga-menu-item',
 	templateUrl: './menu-item.component.html',
-	styleUrls: ['./menu-item.component.scss'],
+	styleUrls: ['./menu-item.component.scss']
 })
 export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _user: IUser;
@@ -93,7 +82,7 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		private readonly _location: Location,
 		private readonly _jitsuService: JitsuService,
 		private readonly _store: Store
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		// Get the user data from the store
@@ -146,21 +135,21 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 			url: this.item.url ?? this.item.link, // Use either item.url or item.link
 			userId: this._user.id,
 			userEmail: this._user.email,
-			menuItemName: this.item.title,
+			menuItemName: this.item.title
 		};
 
 		// Identify the user with Jitsu
 		await this._jitsuService.identify(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
-			timeZone: this._user.timeZone,
+			timeZone: this._user.timeZone
 		});
 
 		// Group the user with Jitsu
 		await this._jitsuService.group(this._user.id, {
 			email: this._user.email,
 			fullName: this._user.name,
-			timeZone: this._user.timeZone,
+			timeZone: this._user.timeZone
 		});
 
 		// Track the click event using Jitsu

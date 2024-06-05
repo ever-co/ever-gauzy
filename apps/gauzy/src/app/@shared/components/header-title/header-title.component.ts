@@ -1,14 +1,9 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	Input
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Store } from './../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +11,8 @@ import { Store } from './../../../@core';
 	templateUrl: './header-title.component.html',
 	styles: [
 		`
-			.name, .org-name {
+			.name,
+			.org-name {
 				font-size: 24px;
 				font-weight: 400;
 				line-height: 30px;
@@ -34,8 +30,7 @@ import { Store } from './../../../@core';
 	]
 })
 export class HeaderTitleComponent implements AfterViewInit {
-
-	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum
+	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
 	user: IUser;
 	organization: IOrganization;
 	employee: ISelectedEmployee;
@@ -48,10 +43,7 @@ export class HeaderTitleComponent implements AfterViewInit {
 		this._allowEmployee = value;
 	}
 
-	constructor(
-		private readonly store: Store,
-		private readonly crd: ChangeDetectorRef
-	) {
+	constructor(private readonly store: Store, private readonly crd: ChangeDetectorRef) {
 		this.store.user$
 			.pipe(
 				filter((user) => !!user),

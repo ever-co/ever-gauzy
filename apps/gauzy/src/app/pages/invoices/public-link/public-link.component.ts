@@ -5,7 +5,7 @@ import { IInvoice } from '@gauzy/contracts';
 import { __prepareExternalUrlLocation } from '@gauzy/ui-sdk/common';
 import { NbDialogRef } from '@nebular/theme';
 import { ClipboardService } from 'ngx-clipboard';
-import { InvoicesService } from '../../../@core/services';
+import { InvoicesService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'public-invoice-link',

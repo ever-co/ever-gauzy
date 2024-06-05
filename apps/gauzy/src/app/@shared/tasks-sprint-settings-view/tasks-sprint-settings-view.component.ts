@@ -3,14 +3,10 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import {
-	IOrganizationSprint,
-	IOrganizationProject,
-	IOrganization
-} from '@gauzy/contracts';
+import { IOrganizationSprint, IOrganizationProject, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { SprintStoreService } from '../../@core/services/organization-sprint-store.service';
-import { Store } from '../../@core/services/store.service';
+import { SprintStoreService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ItemActionType } from '../components/editable-grid/gauzy-editable-grid.component';
 
 @UntilDestroy()
@@ -23,24 +19,16 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 	@Input() project: IOrganizationProject;
 	sprints$: Observable<IOrganizationSprint[]> = this.store.sprints$.pipe(
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] =>
-			sprints.filter(
-				(sprint: IOrganizationSprint) =>
-					sprint.projectId === this.project?.id
-			)
+			sprints.filter((sprint: IOrganizationSprint) => sprint.projectId === this.project?.id)
 		),
 		map((sprints: IOrganizationSprint[]): IOrganizationSprint[] => {
-			return sprints.sort((sprint, nextSprint) =>
-				sprint.startDate < nextSprint.startDate ? -1 : 1
-			);
+			return sprints.sort((sprint, nextSprint) => (sprint.startDate < nextSprint.startDate ? -1 : 1));
 		})
 	);
 	moment: any = moment;
 	organization: IOrganization;
 
-	constructor(
-		private store: SprintStoreService,
-		private storeService: Store
-	) {}
+	constructor(private store: SprintStoreService, private storeService: Store) {}
 
 	ngOnInit(): void {
 		this.storeService.selectedOrganization$
@@ -59,13 +47,7 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
-	sprintAction({
-		actionType,
-		data
-	}: {
-		actionType: ItemActionType;
-		data: IOrganizationSprint;
-	}): void {
+	sprintAction({ actionType, data }: { actionType: ItemActionType; data: IOrganizationSprint }): void {
 		switch (actionType) {
 			case 'create':
 				const createSprintInput: IOrganizationSprint = {
@@ -74,24 +56,15 @@ export class TasksSprintSettingsViewComponent implements OnInit, OnDestroy {
 					tenantId: this.storeService.user.tenantId,
 					projectId: this.project.id
 				};
-				this.store
-					.createSprint(createSprintInput)
-					.pipe(untilDestroyed(this))
-					.subscribe();
+				this.store.createSprint(createSprintInput).pipe(untilDestroyed(this)).subscribe();
 				break;
 
 			case 'edit':
-				this.store
-					.updateSprint(data)
-					.pipe(untilDestroyed(this))
-					.subscribe();
+				this.store.updateSprint(data).pipe(untilDestroyed(this)).subscribe();
 				break;
 
 			case 'delete':
-				this.store
-					.deleteSprint(data.id)
-					.pipe(untilDestroyed(this))
-					.subscribe();
+				this.store.deleteSprint(data.id).pipe(untilDestroyed(this)).subscribe();
 				break;
 		}
 	}

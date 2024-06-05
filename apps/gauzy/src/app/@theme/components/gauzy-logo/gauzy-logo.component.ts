@@ -13,10 +13,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { tap, debounceTime, filter } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

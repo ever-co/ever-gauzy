@@ -4,9 +4,9 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ProjectMutationComponent } from './../../../../@shared/project/project-mutation/project-mutation.component';
-import { OrganizationProjectsService, Store } from './../../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
