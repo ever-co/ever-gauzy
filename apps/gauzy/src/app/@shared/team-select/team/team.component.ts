@@ -7,8 +7,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { NavigationService, OrganizationTeamStore, OrganizationTeamsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { ALL_TEAM_SELECTED } from './default-team';
-import { TruncatePipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

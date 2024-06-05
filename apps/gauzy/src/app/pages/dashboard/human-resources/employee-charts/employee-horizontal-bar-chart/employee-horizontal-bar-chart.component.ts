@@ -9,9 +9,8 @@ import { ChartConfiguration, ChartType } from 'chart.js';
 import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { CurrencyPositionPipe, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { months } from '@gauzy/ui-sdk/core';
-import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

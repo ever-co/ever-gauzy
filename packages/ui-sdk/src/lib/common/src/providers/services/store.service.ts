@@ -20,7 +20,7 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganizationTeam
 } from '@gauzy/contracts';
-import { GuiDrag } from '@gauzy/ui-sdk/shared';
+import { GuiDrag } from '../../interfaces';
 import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../../constants';
 
 export interface AppState {

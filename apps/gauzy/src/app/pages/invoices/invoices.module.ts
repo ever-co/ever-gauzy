@@ -74,6 +74,7 @@ import {
 	TranslatableService
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
 import {
 	EstimateAddComponent,
 	EstimateEditComponent,
@@ -89,7 +90,6 @@ import {
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
-import { CurrencyPositionPipe } from '../../@shared/pipes';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 

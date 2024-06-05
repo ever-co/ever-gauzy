@@ -1,4 +1,4 @@
-import { BackupStrategy, GuiDrag } from '@gauzy/ui-sdk/shared';
+import { BackupStrategy, GuiDrag } from '@gauzy/ui-sdk/common';
 
 export class LocalstorageStrategy implements BackupStrategy {
 	private _serializables: Partial<GuiDrag>[];

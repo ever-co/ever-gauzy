@@ -7,7 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import {
+	ErrorHandlingService,
+	MyTasksStoreService,
+	ServerDataSource,
+	TasksStoreService,
+	TeamTasksStoreService
+} from '@gauzy/ui-sdk/core';
+import { HashNumberPipe } from '@gauzy/ui-sdk/shared';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -17,14 +24,11 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { HashNumberPipe } from './../../../../@shared/pipes';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { MyTasksStoreService, TasksStoreService, TeamTasksStoreService } from '@gauzy/ui-sdk/core';
 import {
 	AssignedToComponent,
 	CreateByComponent,

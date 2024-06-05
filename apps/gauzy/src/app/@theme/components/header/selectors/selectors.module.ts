@@ -11,10 +11,10 @@ import {
 	NbInputModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { OrganizationSelectorComponent } from './organization/organization.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { OrganizationSelectorComponent } from './organization/organization.component';
 import { OrganizationEditStore, OrganizationsService } from '@gauzy/ui-sdk/core';
-import { DirectivesModule } from '../../../../@shared/directives/directives.module';
 
 const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 

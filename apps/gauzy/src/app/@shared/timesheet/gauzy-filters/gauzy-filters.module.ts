@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbIconModule, NbPopoverModule, NbSelectModule } from '@nebular/theme';
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { PipesModule } from '../../pipes/pipes.module';
+import { PipesModule } from '@gauzy/ui-sdk/shared';
 import { GauzyFiltersComponent } from './gauzy-filters.component';
 import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 

@@ -3,7 +3,7 @@ import { IEmployee, IOrganizationProject, IOrganizationTeam, ITag, ITask, TaskSt
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { richTextCKEditorConfig, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';

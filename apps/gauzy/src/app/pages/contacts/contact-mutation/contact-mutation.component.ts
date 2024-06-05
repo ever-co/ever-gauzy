@@ -14,14 +14,11 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { FilterArrayPipe, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { LocationFormComponent } from '../../../@shared/forms/location';
-import { FilterArrayPipe } from '../../../@shared/pipes/filter-array.pipe';
 import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
-import { OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })
