@@ -1,10 +1,9 @@
 import { NgModule } from '@angular/core';
-import { EstimateEmailComponent } from './estimate-email.component';
-import { InvoicesService } from '../../@core/services/invoices.service';
 import { CommonModule } from '@angular/common';
-import { EstimateEmailService } from '../../@core/services/estimate-email.service';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
+import { EstimateEmailService, InvoicesService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { EstimateEmailComponent } from './estimate-email.component';
 
 @NgModule({
 	imports: [CommonModule, NbCardModule, NbSpinnerModule, I18nTranslateModule.forChild()],

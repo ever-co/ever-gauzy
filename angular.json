@@ -80,8 +80,9 @@
 							"file-saver",
 							"leaflet",
 							"mobx",
-							"moment-timezone",
 							"moment",
+							"moment-range",
+							"moment-timezone",
 							"randomcolor",
 							"underscore.string",
 							"slugify"

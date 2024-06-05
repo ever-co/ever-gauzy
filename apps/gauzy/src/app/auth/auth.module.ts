@@ -15,10 +15,11 @@ import {
 	NbLayoutModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ElectronService } from '@gauzy/ui-sdk/core';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgxWhatsNewComponent } from './@shared/whats-new/whats-new.component';
 import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { NgxRegisterSideFeaturesComponent } from './register/register-side-features/register-side-features.component';
@@ -29,7 +30,6 @@ import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-se
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
-import { ElectronService } from '../@core/auth/electron.service';
 import { SharedModule } from '../@shared/shared.module';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';

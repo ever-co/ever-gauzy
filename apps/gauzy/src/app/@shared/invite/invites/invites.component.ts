@@ -8,9 +8,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import * as moment from 'moment';
+import moment from 'moment';
 import { ClipboardService, IClipboardResponse } from 'ngx-clipboard';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { InviteService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	RolesEnum,
@@ -21,15 +21,13 @@ import {
 	IInvite,
 	InviteStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { InviteService, Store } from '../../../@core/services';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { DateViewComponent } from '../../table-components';
 import { PaginationFilterBaseComponent, IPaginationBase } from '../../pagination/pagination-filter-base.component';
 

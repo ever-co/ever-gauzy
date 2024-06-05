@@ -1,35 +1,29 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { Subject } from 'rxjs';
 import { ICandidate } from '@gauzy/contracts';
-import { takeUntil } from 'rxjs/operators';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { CandidateStore } from '@gauzy/ui-sdk/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-edit-candidate-hiring',
 	templateUrl: './edit-candidate-hiring.component.html',
 	styleUrls: ['./edit-candidate-hiring.component.scss']
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {
-	private _ngDestroy$ = new Subject<void>();
 	form: UntypedFormGroup;
 	selectedCandidate: ICandidate;
 
-	constructor(
-		private fb: UntypedFormBuilder,
-		private candidateStore: CandidateStore
-	) { }
+	constructor(private readonly fb: UntypedFormBuilder, private readonly candidateStore: CandidateStore) {}
 
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe((candidate) => {
-				this.selectedCandidate = candidate;
+		this.candidateStore.selectedCandidate$.pipe(untilDestroyed(this)).subscribe((candidate) => {
+			this.selectedCandidate = candidate;
 
-				if (this.selectedCandidate) {
-					this._initializeForm(this.selectedCandidate);
-				}
-			});
+			if (this.selectedCandidate) {
+				this._initializeForm(this.selectedCandidate);
+			}
+		});
 	}
 
 	async submitForm() {
@@ -48,7 +42,5 @@ export class EditCandidateHiringComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-	}
+	ngOnDestroy() {}
 }

@@ -18,8 +18,8 @@ import { Subject } from 'rxjs/internal/Subject';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store, TagsService } from '../../../@core/services';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { PictureNameTagsComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })

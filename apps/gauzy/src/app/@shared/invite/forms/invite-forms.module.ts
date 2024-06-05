@@ -16,7 +16,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
-import { InviteService, RoleService } from '../../../@core/services';
+import { InviteService, RoleService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../shared.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
 import { RoleFormFieldModule } from '../../user/forms/fields/role';

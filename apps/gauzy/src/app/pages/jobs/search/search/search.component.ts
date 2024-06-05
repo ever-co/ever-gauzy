@@ -8,7 +8,12 @@ import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { AtLeastOneFieldValidator, DateRangePickerBuilderService, ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	AtLeastOneFieldValidator,
+	DateRangePickerBuilderService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -27,15 +32,13 @@ import {
 	IIntegrationEntitySetting,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
+import { JobService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { JobService, Store } from './../../../../@core/services';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';

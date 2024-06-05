@@ -4,7 +4,8 @@ import { IEmployee } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator } from '@gauzy/ui-sdk/core';
-import { EmployeeStore, Store } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

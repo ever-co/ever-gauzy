@@ -2,13 +2,9 @@ import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IEmployee,
-	IOrganization,
-	IOrganizationTeam,
-	ITimeOffPolicy
-} from '@gauzy/contracts';
-import { EmployeesService, Store } from '../../../@core/services';
+import { IEmployee, IOrganization, IOrganizationTeam, ITimeOffPolicy } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -17,12 +13,11 @@ import { EmployeesService, Store } from '../../../@core/services';
 	styleUrls: ['../time-off-mutation.components.scss']
 })
 export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
-
 	constructor(
 		protected readonly dialogRef: NbDialogRef<TimeOffSettingsMutationComponent>,
 		private readonly employeesService: EmployeesService,
 		private readonly store: Store
-	) { }
+	) {}
 
 	@Input() team?: IOrganizationTeam;
 
@@ -55,8 +50,8 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 		if (!this.organizationId) {
 			return;
 		}
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], {
+		const { items } = await firstValueFrom(
+			this.employeesService.getAll(['user'], {
 				organization: { id: this.organizationId },
 				tenantId: this.organization.tenantId
 			})
@@ -125,6 +120,5 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() {
-	}
+	ngOnDestroy() {}
 }

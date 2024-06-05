@@ -14,7 +14,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { VendorsComponent } from './vendors.component';
-import { OrganizationVendorsService } from '../../@core/services/organization-vendors.service';
+import { OrganizationVendorsService } from '@gauzy/ui-sdk/core';
 import { VendorsRoutingModule } from './vendors-routing.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';

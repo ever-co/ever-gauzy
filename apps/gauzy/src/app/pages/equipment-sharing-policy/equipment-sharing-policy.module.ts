@@ -20,7 +20,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
-import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
+import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
 import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';

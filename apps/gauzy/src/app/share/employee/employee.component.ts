@@ -5,12 +5,12 @@ import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauzy/contracts';
-import * as moment from 'moment';
+import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EmployeesService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService, ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
-import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

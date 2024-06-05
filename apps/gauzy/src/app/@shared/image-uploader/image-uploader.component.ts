@@ -3,9 +3,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
 import { IImageAsset, IUser } from '@gauzy/contracts';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, Store } from '@gauzy/ui-sdk/common';
 import { environment } from '@gauzy/ui-config';
-import { Store } from '../../@core/services';
 
 @UntilDestroy()
 @Component({

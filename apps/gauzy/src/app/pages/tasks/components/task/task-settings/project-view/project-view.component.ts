@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 import { CrudActionEnum, IOrganizationProject, TaskListTypeEnum } from '@gauzy/contracts';
-import { OrganizationProjectsService, OrganizationProjectStore, Store } from '../../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationProjectsService, OrganizationProjectStore } from '@gauzy/ui-sdk/core';
 
 export interface TaskViewMode {
 	type: TaskListTypeEnum;
@@ -14,7 +15,6 @@ export interface TaskViewMode {
 	styleUrls: ['./project-view.component.scss']
 })
 export class ProjectViewComponent implements OnInit {
-
 	@Input() project: IOrganizationProject;
 	@Output() changeEvent: EventEmitter<Partial<IOrganizationProject>> = new EventEmitter();
 

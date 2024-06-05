@@ -7,10 +7,10 @@ import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { saveAs } from 'file-saver';
-import { InvoicesService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NbDialogService } from '@nebular/theme';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

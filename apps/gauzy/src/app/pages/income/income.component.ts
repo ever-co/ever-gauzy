@@ -44,7 +44,8 @@ import {
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { IncomeService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { IncomeService } from '@gauzy/ui-sdk/core';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 

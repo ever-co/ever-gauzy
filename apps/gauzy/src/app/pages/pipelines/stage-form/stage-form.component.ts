@@ -1,17 +1,11 @@
 import { Component, Input, OnInit } from '@angular/core';
-import {
-	ControlContainer,
-	FormArray,
-	UntypedFormBuilder,
-	UntypedFormGroup,
-	Validators
-} from '@angular/forms';
+import { ControlContainer, FormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IPipelineStageUpdateInput } from '@gauzy/contracts';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	templateUrl: './stage-form.component.html',
@@ -33,7 +27,7 @@ export class StageFormComponent implements OnInit {
 		private dialogService: NbDialogService,
 		private fb: UntypedFormBuilder,
 		private store: Store
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.control = this.controlContainer.control as FormArray;
@@ -49,22 +43,14 @@ export class StageFormComponent implements OnInit {
 		this.control.insert(event.currentIndex, event.item.data);
 	}
 
-	pushNewStage(
-		{
-			id,
-			name,
-			description
-		}: Omit<IPipelineStageUpdateInput, 'pipelineId'> = {} as any
-	): void {
+	pushNewStage({ id, name, description }: Omit<IPipelineStageUpdateInput, 'pipelineId'> = {} as any): void {
 		const { pipelineId } = this;
 		const tenantId = this.store.user.tenantId;
 		const organizationId = this.store.selectedOrganization.id;
 
 		this.control.push(
 			this.fb.group({
-				...(pipelineId
-					? { pipelineId: [pipelineId, Validators.required] }
-					: {}),
+				...(pipelineId ? { pipelineId: [pipelineId, Validators.required] } : {}),
 				...(id ? { id: [id, Validators.required] } : {}),
 				name: [name, Validators.required],
 				description: [description],

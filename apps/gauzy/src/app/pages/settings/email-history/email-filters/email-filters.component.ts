@@ -3,8 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { IEmailTemplate, IEmailHistory, IOrganization, LanguagesEnum } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmailService, EmailTemplateService, Store } from './../../../../@core/services';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EmailService, EmailTemplateService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

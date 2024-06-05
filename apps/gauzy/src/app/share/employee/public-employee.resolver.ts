@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Resolve, Router, ActivatedRouteSnapshot } from '@angular/router';
-import { EmployeesService } from '../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { catchError } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
 import { IEmployee } from '@gauzy/contracts';

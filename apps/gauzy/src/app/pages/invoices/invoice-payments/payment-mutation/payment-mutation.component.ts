@@ -2,7 +2,6 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	IInvoice,
 	IPayment,
@@ -15,10 +14,11 @@ import {
 } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { environment as ENV } from '@gauzy/ui-config';
-import { InvoicesService, Store } from './../../../../@core/services';
+import { environment } from '@gauzy/ui-config';
+import { Store, compareDate, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { InvoicesService, OrganizationSettingService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -46,7 +46,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent implement
 		return fb.group({
 			amount: [null, Validators.compose([Validators.required, Validators.min(1)])],
 			currency: [],
-			paymentDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+			paymentDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			note: [],
 			paymentMethod: [null, Validators.required],
 			invoice: [],
@@ -63,7 +63,8 @@ export class PaymentMutationComponent extends TranslationBaseComponent implement
 		private readonly fb: UntypedFormBuilder,
 		protected readonly dialogRef: NbDialogRef<PaymentMutationComponent>,
 		private readonly store: Store,
-		private readonly invoicesService: InvoicesService
+		private readonly invoicesService: InvoicesService,
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translateService);
 	}
@@ -73,7 +74,7 @@ export class PaymentMutationComponent extends TranslationBaseComponent implement
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(({ currency }) => (this.currencyString = currency || ENV.DEFAULT_CURRENCY)),
+				tap(({ currency }) => (this.currencyString = currency || environment.DEFAULT_CURRENCY)),
 				tap(() => this.initializeForm()),
 				untilDestroyed(this)
 			)

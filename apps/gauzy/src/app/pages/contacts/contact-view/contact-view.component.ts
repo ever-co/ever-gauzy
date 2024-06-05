@@ -5,11 +5,11 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
-import { EmployeesService, OrganizationContactService, Store } from '../../../@core/services';
-import { LeafletMapComponent } from '../../../@shared/forms';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeesService, OrganizationContactService } from '@gauzy/ui-sdk/core';
+import { LeafletMapComponent } from '../../../@shared/forms';
 import { FilterArrayPipe } from '../../../@shared/pipes';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,7 +32,6 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		readonly translateService: TranslateService,
 		private activatedRoute: ActivatedRoute,
 		private readonly organizationContactService: OrganizationContactService,
-		private readonly toastrService: ToastrService,
 		private readonly store: Store,
 		private readonly cd: ChangeDetectorRef,
 		private readonly employeesService: EmployeesService,

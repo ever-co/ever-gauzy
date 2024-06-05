@@ -36,7 +36,7 @@ import {
 	ProductVariantService,
 	ProductVariantSettingService,
 	TranslatableService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { CurrencyModule } from '../../@shared/currency/currency.module';

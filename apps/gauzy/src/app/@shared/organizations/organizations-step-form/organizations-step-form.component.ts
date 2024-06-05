@@ -35,7 +35,7 @@ import { ToastrService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../forms';
 import { LeafletMapComponent } from '../../forms/maps';
 import { LocationFormComponent } from '../../forms/location';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

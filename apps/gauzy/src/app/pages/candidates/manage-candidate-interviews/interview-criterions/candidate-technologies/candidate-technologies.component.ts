@@ -4,10 +4,9 @@ import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@an
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ICandidateTechnologies, IOrganization } from '@gauzy/contracts';
-import { CandidateTechnologiesService } from 'apps/gauzy/src/app/@core/services/candidate-technologies.service';
 import { takeUntil } from 'rxjs/operators';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateTechnologiesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-candidate-technologies',

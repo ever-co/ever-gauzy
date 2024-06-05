@@ -1,10 +1,6 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
-import {
-	RequestApprovalStatusTypesEnum,
-	ComponentLayoutStyleEnum,
-	RolesEnum
-} from '@gauzy/contracts';
-import { Store } from 'apps/gauzy/src/app/@core/services';
+import { RequestApprovalStatusTypesEnum, ComponentLayoutStyleEnum, RolesEnum } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ngx-request-approval-action',
@@ -25,14 +21,12 @@ export class RequestApprovalActionComponent implements OnInit {
 	@Input()
 	value: string | number;
 
-	constructor(
-		private store: Store,
-	) { }
+	constructor(private readonly store: Store) {}
 
 	ngOnInit(): void {
 		const { role } = this.store.user;
 		if (role && role.name === RolesEnum.SUPER_ADMIN) {
-			this.isSuperAdmin = true
+			this.isSuperAdmin = true;
 		}
 		if (this.rowData && this.rowData.status) {
 			if (this.isSuperAdmin) {

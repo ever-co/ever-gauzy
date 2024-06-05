@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { RoleService } from '../../../@core/services/role.service';
+import { RoleService } from '@gauzy/ui-sdk/core';
 import { StarRatingOutputComponent } from './star-rating-output.component';
 
 @NgModule({

@@ -4,8 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
-import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
+import { HelpCenterArticleService, HelpCenterAuthorService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-article-category',

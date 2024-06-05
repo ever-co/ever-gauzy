@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
@@ -13,12 +13,10 @@ export class SignInSuccessComponent {
 		private readonly _route: ActivatedRoute,
 		private readonly _router: Router
 	) {
-		this._route.queryParams
-			.pipe(filter((params) => params.jwt))
-			.subscribe(async ({ jwt, userId }) => {
-				this._store.token = jwt;
-				this._store.userId = userId;
-				await this._router.navigate(['/']);
-			});
+		this._route.queryParams.pipe(filter((params) => params.jwt)).subscribe(async ({ jwt, userId }) => {
+			this._store.token = jwt;
+			this._store.userId = userId;
+			await this._router.navigate(['/']);
+		});
 	}
 }

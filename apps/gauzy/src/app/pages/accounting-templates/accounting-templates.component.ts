@@ -7,8 +7,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { NbThemeService } from '@nebular/theme';
 import { AccountingTemplateTypeEnum, IOrganization, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { AccountingTemplateService, Store } from '../../@core/services';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { AccountingTemplateService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

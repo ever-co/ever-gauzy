@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { EMPTY, Observable, catchError, of } from 'rxjs';
 import { IOrganizationProject } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService } from '../../@core/services';
+import { OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'

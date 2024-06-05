@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
 	CrudActionEnum,
 	IDateRangePicker,
@@ -22,14 +22,15 @@ import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	ISelectorVisibility,
+	LayoutService,
+	OrganizationTeamStore,
 	OrganizationsService,
 	SelectorBuilderService,
+	TimeTrackerService,
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
-import { TimeTrackerService } from '../../../@shared/time-tracker/time-tracker.service';
 import {
 	EmployeesService,
 	EmployeeStore,
@@ -38,11 +39,9 @@ import {
 	OrganizationEditStore,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
-	OrganizationTeamsService,
-	Store
-} from '../../../@core/services';
-import { LayoutService } from '../../../@core/services/layout.service';
-import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
+	OrganizationTeamsService
+} from '@gauzy/ui-sdk/core';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
 import { QuickActionsComponent } from '../../../@shared/dialogs/quick-actions/quick-actions.component';
 
 @UntilDestroy({ checkProperties: true })

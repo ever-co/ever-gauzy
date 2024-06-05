@@ -7,8 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent, richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, OrganizationProjectsService, Store } from '../../../../@core/services';
+import { EmployeesService, ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 const initialTaskValue = {
 	title: '',

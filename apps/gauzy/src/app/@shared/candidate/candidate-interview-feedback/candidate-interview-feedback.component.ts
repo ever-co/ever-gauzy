@@ -1,10 +1,8 @@
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormBuilder, Validators, FormArray } from '@angular/forms';
-import { CandidateFeedbacksService } from '../../../@core/services/candidate-feedbacks.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidatesService } from '../../../@core/services/candidates.service';
 import {
 	CandidateStatusEnum,
 	ICandidateFeedback,
@@ -14,10 +12,14 @@ import {
 	ICandidateInterview,
 	IOrganization
 } from '@gauzy/contracts';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	CandidateCriterionsRatingService,
+	CandidateFeedbacksService,
+	CandidatesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
-import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',

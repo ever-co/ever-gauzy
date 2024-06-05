@@ -12,7 +12,7 @@ import {
 	ProductVariantPriceService,
 	ProductVariantService,
 	ProductVariantSettingService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { ProductTypeMutationComponent } from './product-type-mutation/product-type-mutation.component';
 import { ProductCategoryMutationComponent } from './product-category-mutation/product-category-mutation.component';
 import { ProductOptionGroupTranslationsComponent } from './product-option-group-translation/product-option-group-translation.component';

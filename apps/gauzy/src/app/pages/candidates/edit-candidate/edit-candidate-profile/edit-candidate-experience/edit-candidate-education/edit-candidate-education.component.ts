@@ -4,12 +4,11 @@ import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@an
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidateEducation, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
-import { DateViewComponent } from './../../../../../../@shared/table-components';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateEducationsService, CandidateStore, Store } from './../../../../../../@core/services';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
+import { CandidateEducationsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import { tap } from 'rxjs/operators';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { DateViewComponent } from './../../../../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

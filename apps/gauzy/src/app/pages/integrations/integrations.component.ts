@@ -1,19 +1,7 @@
-import {
-	Component,
-	ElementRef,
-	OnInit,
-	Renderer2,
-	ViewChild
-} from '@angular/core';
+import { Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
-import {
-	IIntegrationViewModel,
-	IntegrationFilterEnum
-} from '@gauzy/contracts';
-import {
-	InitialFilter,
-	IntegrationsStoreService
-} from '../../@core/services';
+import { IIntegrationViewModel, IntegrationFilterEnum } from '@gauzy/contracts';
+import { InitialFilter, IntegrationsStoreService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-integrations',
@@ -21,7 +9,6 @@ import {
 	styleUrls: ['./integrations.component.scss']
 })
 export class IntegrationsComponent implements OnInit {
-
 	integrations$: Observable<IIntegrationViewModel[]> = this._integrationsStore.integrations$;
 	integrationGroups$: Observable<any[]> = this._integrationsStore.integrationGroups$;
 	selectedIntegrationTypeId$: Observable<string> = this._integrationsStore.selectedIntegrationTypeId$;
@@ -44,12 +31,9 @@ export class IntegrationsComponent implements OnInit {
 		}
 	];
 
-	constructor(
-		private readonly _integrationsStore: IntegrationsStoreService,
-		private readonly renderer: Renderer2
-	) { }
+	constructor(private readonly _integrationsStore: IntegrationsStoreService, private readonly renderer: Renderer2) {}
 
-	ngOnInit() { }
+	ngOnInit() {}
 
 	setSelectedIntegrationType(integrationTypeId) {
 		this._integrationsStore.setSelectedIntegrationTypeId(integrationTypeId);
@@ -65,10 +49,6 @@ export class IntegrationsComponent implements OnInit {
 
 	clearFilter() {
 		this._integrationsStore.clearFilters();
-		this.renderer.setProperty(
-			this.searchElement.nativeElement,
-			'value',
-			InitialFilter.searchQuery
-		);
+		this.renderer.setProperty(this.searchElement.nativeElement, 'value', InitialFilter.searchQuery);
 	}
 }

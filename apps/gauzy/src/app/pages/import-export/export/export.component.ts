@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { IEntityModel } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ExportAllService } from '../../../@core/services';
+import { ExportAllService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

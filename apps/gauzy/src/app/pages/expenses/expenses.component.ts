@@ -44,8 +44,9 @@ import {
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { ExpensesService, Store } from '../../@core/services';
+import { ExpensesService } from '@gauzy/ui-sdk/core';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 import { ReplacePipe } from '../../@shared/pipes';
 

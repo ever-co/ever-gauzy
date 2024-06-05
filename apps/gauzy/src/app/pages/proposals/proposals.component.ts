@@ -22,10 +22,11 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
+	ProposalsService,
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import {
 	ClickableLinkComponent,
 	ContactLinksComponent,
@@ -39,9 +40,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ProposalsService, Store } from '../../@core/services';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

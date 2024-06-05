@@ -5,8 +5,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { ConfirmAppointmentRoutingModule } from './confirm-appointment.routing.module';
 import { ConfirmAppointmentComponent } from './confirm-appointment.component';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
-import { EmployeesService } from '../../../@core/services';
-import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
+import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-sdk/core';
 import { AlertModalModule } from '../../../@shared/alert-modal/alert-modal.module';
 
 @NgModule({

@@ -20,7 +20,8 @@ import { filter, tap } from 'rxjs/operators';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationSettingService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../../forms/helpers';
 
 @UntilDestroy({ checkProperties: true })
@@ -71,7 +72,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 			category: [],
 			notes: [],
 			currency: ['', Validators.required],
-			valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+			valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			purpose: [],
 			organizationContact: [],
 			organizationContactId: [],
@@ -93,7 +94,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		private readonly dialogService: NbDialogService,
 		private readonly fb: UntypedFormBuilder,
 		private readonly store: Store,
-		public readonly translateService: TranslateService
+		public readonly translateService: TranslateService,
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translateService);
 	}

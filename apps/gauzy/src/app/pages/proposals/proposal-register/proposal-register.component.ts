@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
 import * as moment from 'moment';
-import { ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
+import { OrganizationSettingService, ProposalsService, ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	ITag,
@@ -17,9 +17,8 @@ import {
 	IOrganizationContact,
 	ISelectedEmployee
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ProposalsService, Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,7 +42,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 		return fb.group(
 			{
 				jobPostUrl: [],
-				valueDate: [self.store.getDateFromOrganizationSettings(), Validators.required],
+				valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 				jobPostContent: ['', Validators.required],
 				proposalContent: ['', Validators.required],
 				tags: [],
@@ -64,6 +63,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private readonly cdRef: ChangeDetectorRef,
+		private readonly organizationSettingService: OrganizationSettingService,
 		private readonly dateService: NbDateService<Date>
 	) {
 		super(translateService);

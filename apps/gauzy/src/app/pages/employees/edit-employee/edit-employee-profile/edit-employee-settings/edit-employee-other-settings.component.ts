@@ -5,7 +5,7 @@ import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { DEFAULT_TIME_FORMATS, IEmployee } from '@gauzy/contracts';
-import { EmployeeStore } from './../../../../../@core/services';
+import { EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

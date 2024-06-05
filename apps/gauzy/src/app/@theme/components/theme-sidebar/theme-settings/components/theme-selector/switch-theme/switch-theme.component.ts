@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
-import { Store } from '../../../../../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { SwitchThemeService } from './switch-theme.service';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
@@ -30,17 +30,15 @@ export class SwitchThemeComponent extends ThemeSelectorComponent {
 	) {
 		super(themeService, store);
 		// Listerning event and switching to current OS color theme
-		window
-			.matchMedia(this.DARK_OS_SCHEME)
-			.addEventListener('change', (event) => {
-				if (event.matches) {
-					// If OS theme is dark and the current theme is light does switched, else don't.
-					if (!this.isDark.state) this.switchTheme();
-				} else {
-					// If OS theme is light and the current theme is dark does switched, else don't.
-					if (this.isDark.state) this.switchTheme();
-				}
-			});
+		window.matchMedia(this.DARK_OS_SCHEME).addEventListener('change', (event) => {
+			if (event.matches) {
+				// If OS theme is dark and the current theme is light does switched, else don't.
+				if (!this.isDark.state) this.switchTheme();
+			} else {
+				// If OS theme is light and the current theme is dark does switched, else don't.
+				if (this.isDark.state) this.switchTheme();
+			}
+		});
 		// This part of code should load only one time.
 		if (!this.switchService.isAlreadyLoaded) {
 			this.ngOnInit();
