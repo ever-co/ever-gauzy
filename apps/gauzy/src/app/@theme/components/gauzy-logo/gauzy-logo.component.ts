@@ -13,10 +13,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { tap, debounceTime, filter } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '../../../@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -208,8 +207,8 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
-				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)

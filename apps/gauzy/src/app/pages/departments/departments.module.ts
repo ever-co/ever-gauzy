@@ -20,7 +20,7 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { DepartmentsComponent } from './departments.component';
 import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';
-import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';

@@ -1,14 +1,7 @@
-import {
-	Component,
-	Input,
-	Output,
-	EventEmitter,
-	AfterViewInit,
-	OnInit
-} from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
-import { Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-base.component';
 
 @Component({
@@ -17,13 +10,12 @@ import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-bas
 	styleUrls: ['./file-uploader-input.component.scss']
 })
 export class FileUploaderInputComponent extends ImageUploaderBaseComponent implements AfterViewInit, OnInit {
-
 	public inputControl = new FormControl();
 	public loading: boolean = false;
 
 	/*
-	* Getter & Setter for dynamic locale
-	*/
+	 * Getter & Setter for dynamic locale
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -33,8 +25,8 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	}
 
 	/*
-	* Getter & Setter for dynamic locale
-	*/
+	 * Getter & Setter for dynamic locale
+	 */
 	_locale: string;
 	get locale(): string {
 		return this._locale;
@@ -44,8 +36,8 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	}
 
 	/*
-	* Getter & Setter for full url
-	*/
+	 * Getter & Setter for full url
+	 */
 	_fileUrl: string;
 	get fileUrl(): string {
 		return this._fileUrl;
@@ -61,13 +53,11 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	@Output() uploadedImgUrl: EventEmitter<string> = new EventEmitter<string>();
 	@Output() uploadedImgData: EventEmitter<any> = new EventEmitter<any>();
 
-	constructor(
-		protected readonly store: Store
-	) {
-		super(store)
+	constructor(protected readonly store: Store) {
+		super(store);
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	ngAfterViewInit(): void {
 		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {

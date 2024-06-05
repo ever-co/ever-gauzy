@@ -5,7 +5,7 @@ import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
 import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { LayoutComponent } from './layout/layout.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { AvailabilitySlotsService } from '../../../@core/services/availability-slots.service';
+import { AvailabilitySlotsService } from '@gauzy/ui-sdk/core';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({

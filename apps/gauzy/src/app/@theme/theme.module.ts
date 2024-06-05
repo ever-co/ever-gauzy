@@ -37,7 +37,14 @@ import {
 	MATERIAL_LIGHT_THEME
 } from '@gauzy/ui-sdk/static/styles';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsService, UsersOrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
+import {
+	CommonNavModule,
+	LanguagesService,
+	OrganizationsService,
+	SelectorService,
+	UsersOrganizationsService,
+	UsersService
+} from '@gauzy/ui-sdk/core';
 
 import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
 import { Pipes } from './pipes';
@@ -50,12 +57,10 @@ import {
 
 import { WindowModeBlockScrollService } from './services';
 
-import { LanguagesService } from '../@core/services';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { PopupComponent } from './components/popup/popup.component';
 import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector.service';
-import { SelectorService } from '../@core/services/selector.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
@@ -66,7 +71,6 @@ import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-se
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
-import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 import { DirectivesModule } from '../@shared/directives/directives.module';
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 import { TeamSelectModule } from '../@shared/team-select/team-select.module';
@@ -104,7 +108,7 @@ const MODULES = [
 	ThemeSelectorModule,
 	WorkspacesModule,
 	NgxPermissionsModule.forChild(),
-	SidebarMenuModule,
+	CommonNavModule,
 	DirectivesModule,
 	TimeTrackerStatusModule
 ];

@@ -15,7 +15,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '../../../@core/services';
+import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../shared.module';
 import { COMPONENTS } from './index';
 import { PasswordFormFieldModule } from './fields/password';

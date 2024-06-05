@@ -58,7 +58,7 @@ jobs:
             console.log(script.serverapi(true))
 
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:linux:release:gh'
+        run: 'yarn build:gauzy-api-server:linux:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -113,7 +113,7 @@ jobs:
             console.log(script.serverapi(true))
 
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:mac:release'
+        run: 'yarn build:gauzy-api-server:mac:release'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -167,12 +167,8 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.serverapi(true))
 
-      - name: Unset unused env vars to make sure we did not get to limit of env vars size
-        run: |
-          unset $(printenv | grep -E '^(STATS_|ANDROID_)' | cut -d= -f1)
-
       - name: Build Server
-        run: 'yarn build:gauzy-server-api:windows:release:gh'
+        run: 'yarn build:gauzy-api-server:windows:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -186,3 +182,21 @@ jobs:
           DO_KEY_ID: ${{ secrets.DO_KEY_ID }}
           DO_SECRET_KEY: ${{ secrets.DO_SECRET_KEY }}
           NX_NO_CLOUD: true
+          # Override unwanted environment variables
+          STATS_D: ''
+          STATS_D_D: ''
+          STATS_EXT: ''
+          STATS_EXTP: ''
+          STATS_RDCL: ''
+          STATS_TIS: ''
+          STATS_TRP: ''
+          STATS_UE: ''
+          STATS_V3PS: ''
+          STATS_VMD: ''
+          STATS_VMFE: ''
+          ANDROID_HOME: ''
+          ANDROID_NDK: ''
+          ANDROID_NDK_HOME: ''
+          ANDROID_NDK_LATEST_HOME: ''
+          ANDROID_NDK_ROOT: ''
+          ANDROID_SDK_ROOT: ''

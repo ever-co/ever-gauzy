@@ -7,7 +7,6 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
 import {
 	DateRangePickerBuilderService,
@@ -15,7 +14,7 @@ import {
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { environment as ENV } from '@gauzy/ui-config';
 import {
 	IPayment,
@@ -39,7 +38,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InvoiceEstimateHistoryService, PaymentService, Store } from '../../@core/services';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,

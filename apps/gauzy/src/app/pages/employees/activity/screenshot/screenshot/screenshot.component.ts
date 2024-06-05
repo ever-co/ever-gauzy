@@ -10,7 +10,7 @@ import moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
@@ -19,11 +19,8 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../../@core/services';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
+import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone, Store } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';

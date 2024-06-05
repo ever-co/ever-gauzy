@@ -19,7 +19,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
@@ -31,7 +31,6 @@ import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { InviteGuard } from '../../@core/guards';
 import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
@@ -39,7 +38,7 @@ import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-em
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
-import { UserIdService } from '../../@core/services/edit-user-data.service';
+import { UserIdService } from '@gauzy/ui-sdk/core';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';

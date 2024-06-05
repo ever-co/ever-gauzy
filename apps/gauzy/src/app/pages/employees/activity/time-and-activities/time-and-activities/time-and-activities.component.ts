@@ -1,9 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs/internal/Observable';
 import { ITimeLogFilters } from '@gauzy/contracts';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimesheetFilterService } from './../../../../../@shared/timesheet/timesheet-filter.service';
 
 @Component({
 	selector: 'gauzy-time-and-activities',

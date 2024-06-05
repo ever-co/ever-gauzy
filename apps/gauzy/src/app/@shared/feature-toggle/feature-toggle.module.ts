@@ -11,8 +11,7 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
-import { FeatureService } from '../../@core/services/feature/feature.service';
-import { FeatureStoreService } from '../../@core/services/feature/feature-store.service';
+import { FeatureService, FeatureStoreService } from '@gauzy/ui-sdk/core';
 import { FeatureToggleComponent } from './feature-toggle.component';
 
 @NgModule({

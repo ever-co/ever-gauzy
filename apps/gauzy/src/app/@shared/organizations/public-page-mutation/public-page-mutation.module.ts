@@ -23,8 +23,7 @@ import { ThemeModule } from '../../../@theme/theme.module';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
-import { SkillsService } from '../../../@core/services/skills.service';
-import { LanguagesService } from '../../../@core/services/languages.service';
+import { LanguagesService, SkillsService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [

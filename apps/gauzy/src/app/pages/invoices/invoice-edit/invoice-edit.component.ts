@@ -22,16 +22,17 @@ import {
 	IProduct,
 	IExpense
 } from '@gauzy/contracts';
-import { compareDate, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, compareDate, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import {
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
-	Store,
+	OrganizationSettingService,
 	TranslatableService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
@@ -45,7 +46,6 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../@shared/pagination/pagination-filter-base.component';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -102,7 +102,8 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 		private readonly route: ActivatedRoute,
 		private readonly dialogService: NbDialogService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private readonly translatableService: TranslatableService
+		private readonly translatableService: TranslatableService,
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translate);
 	}
@@ -198,7 +199,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	initializeForm() {
 		this.form = this.fb.group({
 			id: ['', Validators.required],
-			invoiceDate: [this.store.getDateFromOrganizationSettings(), Validators.required],
+			invoiceDate: [this.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			invoiceNumber: ['', Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: ['', Validators.required],
 			discountValue: ['', Validators.compose([Validators.required, Validators.min(0)])],

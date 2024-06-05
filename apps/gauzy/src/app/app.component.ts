@@ -10,19 +10,21 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
 import {
+	AnalyticsService,
 	DEFAULT_DATE_PICKER_CONFIG,
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
 	IDatePickerConfig,
 	ISelectorVisibility,
-	SelectorBuilderService
+	JitsuService,
+	LanguagesService,
+	SelectorBuilderService,
+	SeoService
 } from '@gauzy/ui-sdk/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-sdk/common';
 import { I18nTranslateService } from '@gauzy/ui-sdk/i18n';
 import { environment } from '@gauzy/ui-config';
-import { AnalyticsService, JitsuService, SeoService } from './@core/services';
-import { LanguagesService, Store } from './@core/services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

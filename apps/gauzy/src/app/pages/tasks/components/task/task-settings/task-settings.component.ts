@@ -1,16 +1,11 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {
-	IOrganizationProject,
-	TaskListTypeEnum,
-	PermissionsEnum,
-	IPagination,
-	ITask
-} from '@gauzy/contracts';
+import { IOrganizationProject, TaskListTypeEnum, PermissionsEnum, IPagination, ITask } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TasksService, TasksStoreService } from './../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TasksService, TasksStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -19,7 +14,6 @@ import { Store, TasksService, TasksStoreService } from './../../../../../@core/s
 	styleUrls: ['./task-settings.component.scss']
 })
 export class TaskSettingsComponent {
-
 	projects$: Observable<IOrganizationProject[]>;
 	project$: Observable<IOrganizationProject>;
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
@@ -35,30 +29,32 @@ export class TaskSettingsComponent {
 				const { id: organizationId } = this._store.selectedOrganization;
 				const { tenantId } = this._store.user;
 
-				return this._taskService.getAllTasks(
-					{
-						organizationId,
-						tenantId,
-						...(currentProjectId
-							? {
-								projectId: currentProjectId
+				return this._taskService
+					.getAllTasks(
+						{
+							organizationId,
+							tenantId,
+							...(currentProjectId
+								? {
+										projectId: currentProjectId
+								  }
+								: {})
+						},
+						['project']
+					)
+					.pipe(
+						map(({ items, total }: IPagination<ITask>) => {
+							const projectTasks = items;
+							if (total > 0) {
+								return {
+									...projectTasks[0].project,
+									tasks: projectTasks
+								};
 							}
-							: {}),
-					},
-					['project']
-				).pipe(
-					map(({ items, total }: IPagination<ITask>) => {
-						const projectTasks = items;
-						if (total > 0) {
-							return {
-								...projectTasks[0].project,
-								tasks: projectTasks
-							};
-						}
-						return null;
-					}),
-					untilDestroyed(this)
-				);
+							return null;
+						}),
+						untilDestroyed(this)
+					);
 			})
 		);
 	}

@@ -18,6 +18,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CandidateTechnologiesService } from '@gauzy/ui-sdk/core';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
@@ -26,7 +27,6 @@ import { CandidateCalendarInfoModule } from '../candidate-calendar-info/candidat
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
-import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 
 @NgModule({
 	imports: [

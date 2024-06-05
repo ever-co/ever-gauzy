@@ -16,9 +16,14 @@ import {
 	ITag,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationProjectStore, Store } from '../../../../@core/services';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import {
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	OrganizationProjectStore,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
@@ -29,7 +34,6 @@ import {
 	TagsOnlyComponent
 } from '../../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { VisibilityComponent } from '../../../../@shared/table-components/visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from '../../../../@shared/table-components';

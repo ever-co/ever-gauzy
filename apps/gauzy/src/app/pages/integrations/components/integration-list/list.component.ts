@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	HttpStatus,
 	IIntegration,
@@ -18,9 +18,8 @@ import {
 import {
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationTenantService,
-	IntegrationsService,
-	Store
-} from './../../../../@core/services';
+	IntegrationsService
+} from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';

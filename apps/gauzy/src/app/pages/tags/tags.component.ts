@@ -7,12 +7,11 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { distinctUntilChange, splitCamelCase } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange, splitCamelCase } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
-import { Store, TagsService } from '../../@core/services';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

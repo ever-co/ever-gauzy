@@ -18,7 +18,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
+import { RequestApprovalService } from '@gauzy/ui-sdk/core';
 import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';

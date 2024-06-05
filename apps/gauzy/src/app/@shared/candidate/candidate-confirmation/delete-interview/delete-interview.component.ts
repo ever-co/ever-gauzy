@@ -3,12 +3,14 @@ import { Component, OnDestroy, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	CandidateInterviewService,
+	CandidateInterviewersService,
+	CandidatePersonalQualitiesService,
+	CandidateTechnologiesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidateTechnologiesService } from '../../../../@core/services/candidate-technologies.service';
-import { CandidatePersonalQualitiesService } from '../../../../@core/services/candidate-personal-qualities.service';
-import { CandidateInterviewersService } from '../../../../@core/services/candidate-interviewers.service';
-import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
 
 @UntilDestroy()
 @Component({

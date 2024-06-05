@@ -1,16 +1,18 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { ICandidateInterview, ICandidate, IOrganization } from '@gauzy/contracts';
-import { CandidateInterviewersService } from '../../../@core/services/candidate-interviewers.service';
-import { EmployeesService } from '../../../@core/services';
-import { CandidateInterviewService } from '../../../@core/services/candidate-interview.service';
-import { CandidatesService } from '../../../@core/services/candidates.service';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	CandidateInterviewService,
+	CandidateInterviewersService,
+	CandidatesService,
+	EmployeesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-candidate-interview-info',

@@ -20,7 +20,7 @@ import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/ui-config';
 import { FormHelpers } from '../helpers';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CountryService } from '../../../@core/services/country.service';
+import { CountryService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

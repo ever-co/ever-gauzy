@@ -14,10 +14,10 @@ import {
 	PermissionsEnum,
 	SMTPSecureEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/ui-sdk/common';
+import { isNotEmpty, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { FileStorageService, Store, TenantService } from '../../../@core/services';
+import { FileStorageService, TenantService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

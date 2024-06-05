@@ -19,7 +19,7 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
@@ -29,12 +29,11 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeesService, EmployeeStore, Store } from '../../@core/services';
+import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,

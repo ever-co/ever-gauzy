@@ -3,7 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { IEmployee, IOrganization, IOrganizationDepartment, ITag } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,8 +13,8 @@ import { Store } from '../../../@core/services';
 })
 export class DepartmentsMutationComponent implements OnInit {
 	/*
-	* Getter & Setter for dynamic department element
-	*/
+	 * Getter & Setter for dynamic department element
+	 */
 	_department: IOrganizationDepartment;
 	get department(): IOrganizationDepartment {
 		return this._department;
@@ -31,8 +31,8 @@ export class DepartmentsMutationComponent implements OnInit {
 	addOrEditDepartment = new EventEmitter();
 
 	/*
-	* Department Mutation Form
-	*/
+	 * Department Mutation Form
+	 */
 	public form: UntypedFormGroup = DepartmentsMutationComponent.buildForm(this.fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
@@ -45,17 +45,14 @@ export class DepartmentsMutationComponent implements OnInit {
 	employees: IEmployee[] = [];
 	organization: IOrganization;
 
-	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly store: Store
-	) { }
+	constructor(private readonly fb: UntypedFormBuilder, private readonly store: Store) {}
 
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(200),
 				filter((organization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -69,10 +66,8 @@ export class DepartmentsMutationComponent implements OnInit {
 			this.form.setValue({
 				name: this.department.name,
 				tags: this.department.tags,
-				members: this.department.members.map(
-					(member: IEmployee) => member.id
-				)
-			})
+				members: this.department.members.map((member: IEmployee) => member.id)
+			});
 		}
 	}
 
@@ -102,11 +97,7 @@ export class DepartmentsMutationComponent implements OnInit {
 			tags,
 			name,
 			organizationId,
-			members: members.map((id: string) => this.employees.find(
-				(e) => e.id === id)
-			).filter(
-				(e: IEmployee) => !!e
-			)
+			members: members.map((id: string) => this.employees.find((e) => e.id === id)).filter((e: IEmployee) => !!e)
 		});
 	}
 

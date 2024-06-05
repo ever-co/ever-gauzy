@@ -8,7 +8,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment as ENV } from '@gauzy/ui-config';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { EquipmentService, ImageAssetService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EquipmentService, ImageAssetService } from '@gauzy/ui-sdk/core';
 import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
 
 @UntilDestroy({ checkProperties: true })

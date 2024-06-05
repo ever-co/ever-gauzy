@@ -1,8 +1,9 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {UntilDestroy} from "@ngneat/until-destroy";
-import {OrganizationProjectsService, Store} from "../../../../@core";
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 
-@UntilDestroy({checkProperties: true})
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-all-team',
 	templateUrl: './all-team.component.html',
@@ -12,12 +13,9 @@ export class AllTeamComponent implements OnInit {
 	@Input()
 	public teams: any[];
 	@Output()
-	public selectedTeam: EventEmitter<any> = new EventEmitter()
+	public selectedTeam: EventEmitter<any> = new EventEmitter();
 
-	constructor(
-		private readonly _store: Store,
-		private readonly _projectService: OrganizationProjectsService
-	) {
+	constructor(private readonly _store: Store, private readonly _projectService: OrganizationProjectsService) {
 		this._projectCount = 0;
 		this._organization = null;
 	}
@@ -40,8 +38,8 @@ export class AllTeamComponent implements OnInit {
 
 	@Input()
 	public set organization(value: any) {
-		this._organization = value
-	};
+		this._organization = value;
+	}
 
 	ngOnInit(): void {
 		(async () => await this.loadProjectsCount())();
@@ -51,18 +49,15 @@ export class AllTeamComponent implements OnInit {
 		this.selectedTeam.emit(team);
 	}
 
-
 	private async loadProjectsCount() {
-		const {tenantId} = this._store.user;
-		const {id: organizationId} = this.organization;
+		const { tenantId } = this._store.user;
+		const { id: organizationId } = this.organization;
 
 		try {
 			this.projectCount = await this._projectService.getCount({
 				organizationId,
 				tenantId
 			});
-		} catch (e) {
-
-		}
+		} catch (e) {}
 	}
 }

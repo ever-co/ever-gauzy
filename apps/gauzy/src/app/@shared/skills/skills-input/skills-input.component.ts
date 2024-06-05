@@ -1,13 +1,6 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	Input,
-	Output,
-	EventEmitter
-} from '@angular/core';
+import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { NgModel, UntypedFormGroup } from '@angular/forms';
-import { SkillsService } from '../../../@core/services/skills.service';
+import { SkillsService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-skills-input',
@@ -33,15 +26,13 @@ export class SkillsInputComponent implements OnInit {
 	@Output()
 	selectedSkillsEvent: EventEmitter<any> = new EventEmitter<any>();
 
-	constructor(private readonly skillsService: SkillsService) { }
+	constructor(private readonly skillsService: SkillsService) {}
 
 	async onChange() {
 		const skills = [];
 
 		for (const skill of this.selectedSkills) {
-			const skillToCheck = await this.skillsService.findByName(
-				skill.name
-			);
+			const skillToCheck = await this.skillsService.findByName(skill.name);
 			if (!skillToCheck) {
 				const skillNew = await this.skillsService.insertSkill({
 					name: skill.name,

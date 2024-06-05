@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
@@ -10,12 +10,12 @@ import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
 import { FormHelpers } from './../../../../../@shared/forms';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { ImageAssetService, Store, WarehouseService } from './../../../../../@core/services';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { ImageAssetService, WarehouseService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,15 +1,10 @@
-import {
-	AfterViewInit,
-	ChangeDetectorRef,
-	Component,
-	OnInit
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Observable } from 'rxjs';
-import * as moment from 'moment';
+import moment from 'moment';
 import { tap } from 'rxjs/operators';
 import { IDateRangeActivityFilter, IntegrationEntity } from '@gauzy/contracts';
-import { HubstaffService } from './../../../../@core/services/hubstaff.service';
+import { HubstaffService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-hubstaff-settings-dialog',
@@ -17,7 +12,6 @@ import { HubstaffService } from './../../../../@core/services/hubstaff.service';
 	styleUrls: ['./settings-dialog.component.scss']
 })
 export class SettingsDialogComponent implements OnInit, AfterViewInit {
-	
 	entitiesToSync$: Observable<any> = this._hubstaffService.entitiesToSync$;
 	expandOptions: boolean;
 
@@ -29,9 +23,9 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 	IntegrationEntity = IntegrationEntity;
 
 	constructor(
-		private _hubstaffService: HubstaffService,
-		public dialogRef: NbDialogRef<SettingsDialogComponent>,
-		private cdRef: ChangeDetectorRef
+		private readonly _hubstaffService: HubstaffService,
+		public readonly dialogRef: NbDialogRef<SettingsDialogComponent>,
+		private readonly cdRef: ChangeDetectorRef
 	) {}
 
 	ngOnInit() {
@@ -39,9 +33,9 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 			tap(() => (this.expandOptions = false)),
 			tap(
 				(displayDate) =>
-					(this.dispayDate = `${moment(displayDate.start).format(
-						'MMM D, YYYY'
-					)} - ${moment(displayDate.end).format('MMM D, YYYY')}`)
+					(this.dispayDate = `${moment(displayDate.start).format('MMM D, YYYY')} - ${moment(
+						displayDate.end
+					).format('MMM D, YYYY')}`)
 			)
 		);
 	}

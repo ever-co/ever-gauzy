@@ -12,8 +12,8 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store, TimeOffService } from '../../../@core/services';
+import { API_PREFIX, ComponentEnum, Store } from '@gauzy/ui-sdk/common';
+import { TimeOffService } from '@gauzy/ui-sdk/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase

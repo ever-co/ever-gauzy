@@ -5,8 +5,8 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, OrganizationsService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, EmployeeStore, Store } from '../../../@core/services';
+import { EmployeeStore, EmployeesService, ErrorHandlingService, OrganizationsService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 
 @UntilDestroy({ checkProperties: true })

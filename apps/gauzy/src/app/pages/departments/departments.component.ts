@@ -19,7 +19,8 @@ import {
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { OrganizationDepartmentsService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent

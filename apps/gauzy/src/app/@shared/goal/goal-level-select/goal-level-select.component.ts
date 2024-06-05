@@ -1,7 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { OrganizationTeamsService, Store } from '../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-goal-level-select',
@@ -9,7 +10,6 @@ import { OrganizationTeamsService, Store } from '../../../@core';
 	styleUrls: ['./goal-level-select.component.scss']
 })
 export class GoalLevelSelectComponent {
-
 	@Input() parentFormGroup: UntypedFormGroup;
 	@Input() orgId: string;
 	@Input() teams: IOrganizationTeam[] = [];
@@ -24,10 +24,7 @@ export class GoalLevelSelectComponent {
 
 	goalLevelEnum = GoalLevelEnum;
 
-	constructor(
-		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly store: Store
-	) { }
+	constructor(private readonly organizationTeamsService: OrganizationTeamsService, private readonly store: Store) {}
 
 	async getTeams() {
 		const { tenantId } = this.store.user;

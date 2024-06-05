@@ -6,8 +6,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { uniq } from 'underscore';
 import { IOrganization, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { NavigationService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
-import { OrganizationEditStore, Store } from './../../../../../@core/services';
+import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

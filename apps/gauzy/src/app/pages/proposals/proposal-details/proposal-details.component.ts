@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IEmployee, IProposal, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,7 +13,6 @@ import { Store } from '../../../@core/services';
 	styleUrls: ['./proposal-details.component.scss']
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	user: IUser;
 	employee: IEmployee;
 	proposal: IProposal;
@@ -26,7 +25,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
 		private readonly router: Router
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this.store.user$
@@ -78,5 +77,5 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		}
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

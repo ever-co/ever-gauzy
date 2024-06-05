@@ -4,7 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { IOrganization, IProduct, IProductTranslatable } from '@gauzy/contracts';
-import { ProductService, Store, TranslatableService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ProductService, TranslatableService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +24,6 @@ import { ProductService, Store, TranslatableService } from '../../../@core/servi
 	styles: []
 })
 export class InvoiceProductsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
-
 	public product: IProductTranslatable;
 	public products: IProductTranslatable[];
 	public selectedLanguage: string;
@@ -59,11 +59,7 @@ export class InvoiceProductsSelectorComponent extends DefaultEditor implements O
 		const organizationId = this.organization.id;
 		const tenantId = this.store.user.tenantId;
 		this.productService
-			.getAll(
-				['translations'],
-				{ organizationId, tenantId },
-				this.selectedLanguage
-			)
+			.getAll(['translations'], { organizationId, tenantId }, this.selectedLanguage)
 			.then(({ items }) => {
 				this.products = items;
 				const product: IProduct = this.cell.getNewRawValue();
@@ -79,5 +75,5 @@ export class InvoiceProductsSelectorComponent extends DefaultEditor implements O
 		this.cell.setValue($event);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

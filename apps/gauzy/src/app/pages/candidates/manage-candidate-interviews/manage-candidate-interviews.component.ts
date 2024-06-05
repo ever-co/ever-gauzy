@@ -8,7 +8,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { ActivatedRoute } from '@angular/router';
-import { CandidateInterviewService, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateInterviewService } from '@gauzy/ui-sdk/core';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

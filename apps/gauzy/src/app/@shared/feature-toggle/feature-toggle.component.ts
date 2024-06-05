@@ -9,7 +9,8 @@ import * as _ from 'underscore';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
 import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
-import { FeatureStoreService, Store } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { FeatureStoreService } from '@gauzy/ui-sdk/core';
 import { CountdownConfirmationComponent } from '../user/forms';
 
 @UntilDestroy({ checkProperties: true })

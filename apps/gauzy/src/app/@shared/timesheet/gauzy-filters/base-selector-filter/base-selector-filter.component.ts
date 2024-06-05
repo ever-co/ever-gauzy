@@ -9,7 +9,7 @@ import { pick } from 'underscore';
 import { toUtcOffset } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 import { TimeZoneService } from '../timezone-filter';
 

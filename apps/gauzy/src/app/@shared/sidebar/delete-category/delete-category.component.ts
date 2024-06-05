@@ -3,7 +3,7 @@ import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { HelpCenterService } from '../../../@core/services';
+import { HelpCenterService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-delete-category',

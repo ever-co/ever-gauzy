@@ -12,7 +12,7 @@ import {
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
 } from '@gauzy/ui-sdk/static/styles';
-import { Store } from '../../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

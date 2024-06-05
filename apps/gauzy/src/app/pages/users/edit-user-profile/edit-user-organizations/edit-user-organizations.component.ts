@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { OrganizationsService, ToastrService, UsersOrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
-import { Store } from '../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })

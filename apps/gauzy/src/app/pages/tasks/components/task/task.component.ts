@@ -17,14 +17,14 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { HashNumberPipe } from './../../../../@shared/pipes';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { MyTasksStoreService, Store, TasksStoreService, TeamTasksStoreService } from './../../../../@core/services';
+import { MyTasksStoreService, TasksStoreService, TeamTasksStoreService } from '@gauzy/ui-sdk/core';
 import {
 	AssignedToComponent,
 	CreateByComponent,

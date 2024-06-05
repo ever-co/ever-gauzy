@@ -19,7 +19,7 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
-import { ApprovalPolicyService } from '../../@core/services/approval-policy.service';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { NgxPermissionsModule } from 'ngx-permissions';

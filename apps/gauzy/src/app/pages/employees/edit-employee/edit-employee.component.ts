@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 

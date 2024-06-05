@@ -4,7 +4,7 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms
 import { IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { EquipmentSharingPolicyService } from '../../@core/services/equipment-sharing-policy.service';
+import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ngx-equipment-sharing-policy-mutation',

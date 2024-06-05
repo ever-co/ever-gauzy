@@ -12,11 +12,9 @@ import {
 	NbToastrModule,
 	NbListModule
 } from '@nebular/theme';
-import { AuthService } from '../../@core/services/auth.service';
-import { RoleService } from '../../@core/services/role.service';
-import { IncomeService } from '../../@core/services/income.service';
-import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
+import { AuthService, IncomeService, RoleService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
 
 @NgModule({
 	imports: [

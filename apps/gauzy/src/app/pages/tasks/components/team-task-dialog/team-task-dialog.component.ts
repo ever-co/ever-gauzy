@@ -5,10 +5,14 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationProjectsService, OrganizationTeamsService, Store } from '../../../../@core/services';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { richTextCKEditorConfig, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
+import {
+	ErrorHandlingService,
+	OrganizationProjectsService,
+	OrganizationTeamsService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 
 const initialTaskValue = {
 	title: '',

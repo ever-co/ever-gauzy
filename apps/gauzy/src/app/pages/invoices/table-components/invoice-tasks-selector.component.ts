@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
-import { Store, TasksStoreService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TasksStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,16 +24,12 @@ import { Store, TasksStoreService } from '../../../@core/services';
 	styles: []
 })
 export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
-
 	public tasks: ITask[] = [];
 	public task: ITask;
 	public tasks$: Observable<ITask[]> = this.tasksStore.tasks$;
 	public organization: IOrganization;
 
-	constructor(
-		private readonly tasksStore: TasksStoreService,
-		private readonly store: Store
-	) {
+	constructor(private readonly tasksStore: TasksStoreService, private readonly store: Store) {
 		super();
 	}
 
@@ -47,10 +44,11 @@ export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnIn
 			.subscribe();
 		this.tasks$
 			.pipe(
-				tap((tasks) => this.tasks = tasks),
+				tap((tasks) => (this.tasks = tasks)),
 				// tap(() => this.task = this.tasks.find((t) => t.id === this.cell.newValue.id)),
 				untilDestroyed(this)
-			).subscribe();
+			)
+			.subscribe();
 	}
 
 	/**
@@ -59,10 +57,7 @@ export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnIn
 	private _loadTasks() {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
-		this.tasksStore
-			.fetchTasks(tenantId, organizationId)
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		this.tasksStore.fetchTasks(tenantId, organizationId).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	/**
@@ -73,5 +68,5 @@ export class InvoiceTasksSelectorComponent extends DefaultEditor implements OnIn
 		// this.cell.newValue = task;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

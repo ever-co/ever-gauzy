@@ -1,8 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IOrganizationTeamEmployee } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-sdk/common';
-import * as moment from 'moment';
-import { TimesheetStatisticsService } from '../../../../@shared/timesheet';
+import moment from 'moment';
 
 @Component({
 	selector: 'gauzy-team-member',
@@ -10,7 +9,7 @@ import { TimesheetStatisticsService } from '../../../../@shared/timesheet';
 	styleUrls: ['./team-member.component.scss']
 })
 export class TeamMemberComponent implements OnInit {
-	constructor(private readonly _timesheetStatisticsService: TimesheetStatisticsService) {
+	constructor() {
 		this._isClassic = false;
 	}
 

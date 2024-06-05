@@ -5,10 +5,8 @@ import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/contracts
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { InvoicesService } from '../../../@core/services/invoices.service';
-import { Store } from '../../../@core/services/store.service';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-invoice-email',

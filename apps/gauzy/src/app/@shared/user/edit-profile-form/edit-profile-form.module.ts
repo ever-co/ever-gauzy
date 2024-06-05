@@ -15,7 +15,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
-import { RoleService } from '../../../@core/services';
+import { RoleService } from '@gauzy/ui-sdk/core';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { LanguageSelectorModule } from '../../language/language-selector';

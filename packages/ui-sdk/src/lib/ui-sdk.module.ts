@@ -1,9 +1,12 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { I18nTranslateModule, I18nTranslateService } from './i18n';
+import { CommonModule } from './common';
 
 @NgModule({
-	imports: [I18nTranslateModule.forRoot()]
+	declarations: [],
+	imports: [I18nTranslateModule.forRoot(), CommonModule],
+	exports: []
 })
 export class UiSdkModule {
 	/**

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { RolesEnum, IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 
 @Component({

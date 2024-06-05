@@ -8,17 +8,18 @@ import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { NavMenuBuilderService, NavMenuSectionItem, UsersService } from '@gauzy/ui-sdk/core';
-import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import {
+	AuthStrategy,
 	IJobMatchingEntity,
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationsService,
-	Store
-} from '../@core/services';
+	NavMenuBuilderService,
+	NavMenuSectionItem,
+	UsersService
+} from '@gauzy/ui-sdk/core';
+import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ReportService } from './reports/all-report/report.service';
-import { AuthStrategy } from '../@core/auth/auth-strategy.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

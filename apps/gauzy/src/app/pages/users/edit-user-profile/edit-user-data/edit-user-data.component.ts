@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { AuthService, UserIdService } from '../../../../@core/services';
+import { AuthService, UserIdService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { UsersService } from '@gauzy/ui-sdk/core';
 
