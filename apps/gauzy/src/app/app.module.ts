@@ -35,6 +35,7 @@ import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	APIInterceptor,
 	AppInitService,
+	CoreModule,
 	FeatureService,
 	GoogleMapsLoaderService,
 	HubstaffTokenInterceptor,
@@ -47,7 +48,6 @@ import {
 import { Store } from '@gauzy/ui-sdk/common';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
-import { CoreModule } from './@core/core.module';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -93,9 +93,9 @@ const isProd = environment.production;
 			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		NbEvaIconsModule,
-		CoreModule.forRoot(),
 		UiConfigModule.forRoot(),
 		UiSdkModule.forRoot(),
+		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {

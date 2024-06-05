@@ -38,6 +38,7 @@ import {
 } from '@gauzy/ui-sdk/static/styles';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CommonNavModule,
 	LanguagesService,
 	OrganizationsService,
 	SelectorService,
@@ -70,7 +71,6 @@ import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-se
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
 import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
-import { SidebarMenuModule } from '../@shared/sidebar-menu/sidebar-menu.module';
 import { DirectivesModule } from '../@shared/directives/directives.module';
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 import { TeamSelectModule } from '../@shared/team-select/team-select.module';
@@ -108,7 +108,7 @@ const MODULES = [
 	ThemeSelectorModule,
 	WorkspacesModule,
 	NgxPermissionsModule.forChild(),
-	SidebarMenuModule,
+	CommonNavModule,
 	DirectivesModule,
 	TimeTrackerStatusModule
 ];

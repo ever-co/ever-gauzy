@@ -1,6 +1,6 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, Input } from '@angular/core';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
-import { SidebarMenuService } from './sidebar-menu.service';
+import { SidebarMenuService } from '../../services';
 
 @Component({
 	selector: 'ga-sidebar-menu',

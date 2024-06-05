@@ -9,13 +9,12 @@ import { IMenuItem } from '../../interface/menu-item.interface';
 @Component({
 	selector: 'ga-children-menu-item',
 	templateUrl: './children-menu-item.component.html',
-	styleUrls: ['./children-menu-item.component.scss'],
+	styleUrls: ['./children-menu-item.component.scss']
 })
 export class ChildrenMenuItemComponent implements OnInit {
-
 	/**
- * Represents a menu item component.
- */
+	 * Represents a menu item component.
+	 */
 	private _item: IMenuItem;
 	get item(): IMenuItem {
 		return this._item;
@@ -70,23 +69,22 @@ export class ChildrenMenuItemComponent implements OnInit {
 
 	@Output() public focusItemChange: EventEmitter<any> = new EventEmitter();
 
-	constructor(
-		private readonly router: Router,
-		private readonly location: Location
-	) { }
+	constructor(private readonly router: Router, private readonly location: Location) {}
 
 	ngOnInit(): void {
 		// Log and check the current URL
 		this.checkUrl(this.router.url);
 
 		// Subscribe to router events and handle NavigationEnd
-		this.router.events.pipe(
-			filter((event) => event instanceof NavigationEnd),
-			untilDestroyed(this)
-		).subscribe((event: NavigationEnd) => {
-			// Log and check the URL when navigation ends
-			this.checkUrl(event.url);
-		});
+		this.router.events
+			.pipe(
+				filter((event) => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
+			.subscribe((event: NavigationEnd) => {
+				// Log and check the URL when navigation ends
+				this.checkUrl(event.url);
+			});
 	}
 
 	/**
@@ -104,7 +102,7 @@ export class ChildrenMenuItemComponent implements OnInit {
 		// Emit an event to focus on the item
 		this.focusItemChange.emit({
 			children: this.item,
-			parent: this.parent,
+			parent: this.parent
 		});
 
 		// Redirect to the specified link

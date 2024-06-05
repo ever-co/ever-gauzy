@@ -1,3 +1,6 @@
+export * from './src/core.module';
+export * from './src/components';
+export * from './src/auth';
 export * from './src/validators';
 export * from './src/utils';
 export * from './src/services';
@@ -7,4 +10,3 @@ export * from './src/module-import-guard';
 export * from './src/guards';
 export * from './src/moment-extend';
 export * from './src/sentry-error.handler';
-export * from './src/core.module';
