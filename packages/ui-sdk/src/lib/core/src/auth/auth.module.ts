@@ -5,7 +5,7 @@ import { environment } from '@gauzy/ui-config';
 import { Store } from '@gauzy/ui-sdk/common';
 import { AuthGuard } from './auth.guard';
 import { NoAuthGuard } from './no-auth.guard';
-import { AuthService, AuthStrategy, ElectronService } from '@gauzy/ui-sdk/core';
+import { AuthService, AuthStrategy, ElectronService } from '../services';
 
 const socialLinks = [
 	{

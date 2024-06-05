@@ -6,8 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { NavMenuBuilderService, NavMenuSectionItem } from '@gauzy/ui-sdk/core';
-import { SidebarMenuService } from '../../../@shared/sidebar-menu/sidebar-menu.service';
+import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService } from '../../services';
 
 @UntilDestroy()
 @Directive({
@@ -18,9 +17,9 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 		protected readonly _navMenuBuilderService: NavMenuBuilderService,
 		protected readonly _store: Store,
 		protected readonly _sidebarMenuService: SidebarMenuService,
-		protected readonly _translate: TranslateService
+		protected readonly _translateService: TranslateService
 	) {
-		super(_translate);
+		super(_translateService);
 	}
 
 	ngOnInit(): void {
@@ -29,7 +28,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 
 	ngAfterViewInit() {
 		merge(
-			this.translateService.onLangChange.pipe(tap(() => this.defineBaseNavMenus())),
+			this._translateService.onLangChange.pipe(tap(() => this.defineBaseNavMenus())),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization) => !!organization),
 				distinctUntilChange(),

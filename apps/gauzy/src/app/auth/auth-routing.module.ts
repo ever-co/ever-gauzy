@@ -1,15 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { NbLogoutComponent } from '@nebular/auth';
+import { NoAuthGuard } from '@gauzy/ui-sdk/core';
 import { NgxLoginComponent } from './login/login.component';
 import { NgxRegisterComponent } from './register/register.component';
-import { NgxAuthComponent } from "./auth/auth.component";
-import { NgxForgotPasswordComponent } from "./forgot-password/forgot-password.component";
-import { NoAuthGuard } from '../@core/auth/no-auth.guard';
-import { NbLogoutComponent } from '@nebular/auth';
+import { NgxAuthComponent } from './auth/auth.component';
+import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { AcceptInvitePage } from './accept-invite/accept-invite.component';
 import { AcceptClientInvitePage } from './onboard-organization-client';
 import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email';
-import { NgxResetPasswordComponent } from "./reset-password/reset-password.component";
+import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { ConfirmEmailComponent } from './confirm-email';
 import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
@@ -91,13 +91,13 @@ export const routes: Routes = [
 			{
 				path: 'logout',
 				component: NbLogoutComponent
-			},
+			}
 		]
 	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule],
+	exports: [RouterModule]
 })
-export class NgxAuthRoutingModule { }
+export class NgxAuthRoutingModule {}

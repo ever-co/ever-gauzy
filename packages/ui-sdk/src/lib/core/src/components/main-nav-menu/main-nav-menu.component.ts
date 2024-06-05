@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { NavMenuSectionItem } from '@gauzy/ui-sdk/core';
+import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
 
 @Component({
