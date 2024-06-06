@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { TimeTrackerService, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
@@ -13,17 +13,16 @@ import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSo
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
-	TimeTrackerService,
 	TimesheetFilterService,
 	TimesheetService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { ConfirmComponent } from './../../../../../@shared/dialogs';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
 import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { ConfirmComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -396,15 +395,14 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	 * @returns An Observable that emits `true` when the user confirms the deletion, and completes.
 	 */
 	private _confirmDeleteDialog(): Observable<boolean> {
-		return this._dialogService
-			.open(ConfirmComponent, {
-				context: {
-					data: {
-						message: this.translateService.instant('TIMESHEET.DELETE_TIMELOG')
-					}
+		const confirmDialog$ = this._dialogService.open(ConfirmComponent, {
+			context: {
+				data: {
+					message: this.translateService.instant('TIMESHEET.DELETE_TIMELOG')
 				}
-			})
-			.onClose.pipe(filter(Boolean), untilDestroyed(this));
+			}
+		});
+		return confirmDialog$.onClose.pipe(filter(Boolean), untilDestroyed(this));
 	}
 
 	/**

@@ -2,8 +2,8 @@ import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from 
 import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({
@@ -82,7 +82,13 @@ export class PromptDirective extends TranslationBaseComponent implements OnDestr
 		super(translateService);
 	}
 
-	@HostListener('click', ['$event']) onClick($event: any) {
+	/**
+	 * Handles the click event for the onClick function.
+	 *
+	 * @param {any} $event - The click event object.
+	 * @return {void} This function does not return anything.
+	 */
+	@HostListener('click', ['$event']) onClick($event: any): void {
 		$event.stopPropagation();
 		const { cancelText, inputType, label, okText, placeholder, title } = this;
 		const dialogRef = this.dialogService.open(PromptComponent, {

@@ -14,7 +14,8 @@ export interface AlertDialogOptions {
 })
 export class AlertComponent implements OnInit {
 	@Input() data: AlertDialogOptions;
-	constructor(private dialogRef: NbDialogRef<AlertComponent>) {}
+
+	constructor(private readonly dialogRef: NbDialogRef<AlertComponent>) {}
 
 	ngOnInit() {}
 

@@ -2,8 +2,8 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NbDialogRef, NbIconLibraries, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { TimeLogType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { TimeTrackerService } from '@gauzy/ui-sdk/core';
+import { TimeTrackerService } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '../../language-base/translation-base.component';
 
 type GroupType = {
 	groupTitle: string;
@@ -98,11 +98,11 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	};
 
 	constructor(
+		public readonly translate: TranslateService,
 		private readonly dialogRef: NbDialogRef<QuickActionsComponent>,
 		private readonly nbMenuService: NbMenuService,
 		private readonly timeTrackerService: TimeTrackerService,
-		private readonly translate: TranslateService,
-		private iconLibraries: NbIconLibraries
+		private readonly iconLibraries: NbIconLibraries
 	) {
 		super(translate);
 		this.iconLibraries.registerFontPack('font-awesome', {

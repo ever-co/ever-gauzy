@@ -17,7 +17,7 @@ import {
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
-import { DialogsModule } from '../../dialogs';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { NbInputModule } from '@nebular/theme';
 
 @NgModule({

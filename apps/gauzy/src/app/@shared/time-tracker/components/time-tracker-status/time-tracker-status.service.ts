@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
 import {
 	BehaviorSubject,
 	catchError,
@@ -16,8 +14,8 @@ import {
 	switchMap,
 	tap
 } from 'rxjs';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ITimerIcon, ITimerSynced, TimeTrackerService } from '@gauzy/ui-sdk/core';
+import { ITimerIcon, ITimerSynced, Store, TimeTrackerService, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IEmployee, ITimerStatus, IUser } from '@gauzy/contracts';
 import { TimerIconFactory } from './factory';
 import { TimerSynced } from './concretes';
 
@@ -29,6 +27,7 @@ export class TimeTrackerStatusService {
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
 	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
 	private _userUpdate$: Subject<IUser> = new Subject();
+
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		defer(() =>
 			of<boolean>(!!this._store.token && !!this._store.user?.employee).pipe(

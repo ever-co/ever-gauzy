@@ -17,41 +17,37 @@ import {
 	NbTagModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { AlertDirective, ConfirmDirective, PromptDirective } from './directive';
 import { AlertComponent } from './alert/alert.component';
 import { ConfirmComponent } from './confirm/confirm.component';
 import { PromptComponent } from './prompt/prompt.component';
-import { AlertDirective } from './directive/alert.directive';
-import { ConfirmDirective } from './directive/confirm.directive';
-import { PromptDirective } from './directive/prompt.directive';
-
 import { QuickActionsComponent } from './quick-actions/quick-actions.component';
 
-const directives = [AlertDirective, ConfirmDirective, PromptDirective];
-
-const components = [AlertComponent, ConfirmComponent, PromptComponent];
+const Directives = [AlertDirective, ConfirmDirective, PromptDirective];
+const Components = [AlertComponent, ConfirmComponent, PromptComponent, QuickActionsComponent];
 
 @NgModule({
 	imports: [
 		CommonModule,
-		NbDialogModule,
-		NbCheckboxModule,
-		NbRadioModule,
-		NbListModule,
-		NbButtonModule,
 		FormsModule,
-		NbInputModule,
 		ReactiveFormsModule,
-		NbSelectModule,
-		NbCardModule,
-		NbIconModule,
-		I18nTranslateModule.forChild(),
-		NbFormFieldModule,
-		NbMenuModule,
 		NbBadgeModule,
-		NbTagModule
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbDialogModule,
+		NbFormFieldModule,
+		NbIconModule,
+		NbInputModule,
+		NbListModule,
+		NbMenuModule,
+		NbRadioModule,
+		NbSelectModule,
+		NbTagModule,
+		I18nTranslateModule.forChild()
 	],
-	declarations: [...components, ...directives, QuickActionsComponent],
-	exports: [...directives],
+	declarations: [...Components, ...Directives],
+	exports: [...Directives],
 	providers: []
 })
 export class DialogsModule {}

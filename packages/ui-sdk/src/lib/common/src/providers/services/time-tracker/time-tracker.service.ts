@@ -1,11 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom, Observable, timer } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import moment from 'moment';
 import { StoreConfig, Store, Query } from '@datorama/akita';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { firstValueFrom, Observable, timer } from 'rxjs';
+import { environment } from '@gauzy/ui-config';
 import {
 	ITimeLog,
 	ITimerToggleInput,
@@ -16,16 +17,10 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
-import { environment } from '@gauzy/ui-config';
-import {
-	Store as AppStore,
-	API_PREFIX,
-	BACKGROUND_SYNC_INTERVAL,
-	toLocal,
-	toParams,
-	toUTC
-} from '@gauzy/ui-sdk/common';
+import { Store as AppStore } from '../store/store.service';
 import { ITimerSynced } from './interfaces';
+import { toLocal, toParams, toUTC } from '../../../utils/shared-utils';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '../../../constants';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {

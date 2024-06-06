@@ -17,7 +17,7 @@ export interface ConfirmDialogOptions {
 export class ConfirmComponent implements OnInit {
 	@Input() data: ConfirmDialogOptions;
 
-	constructor(private dialogRef: NbDialogRef<AlertComponent>) {}
+	constructor(private readonly dialogRef: NbDialogRef<AlertComponent>) {}
 
 	ngOnInit() {}
 

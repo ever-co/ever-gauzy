@@ -20,8 +20,8 @@ import {
 	ComponentLayoutStyleEnum,
 	IOrganizationTeam
 } from '@gauzy/contracts';
-import { GuiDrag } from '../../interfaces';
-import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../../constants';
+import { GuiDrag } from '../../../interfaces';
+import { ComponentEnum, SYSTEM_DEFAULT_LAYOUT } from '../../../constants';
 
 export interface AppState {
 	user: IUser;

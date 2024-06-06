@@ -8,15 +8,7 @@ export interface InputOptions {
 }
 
 export interface PromptDialogOptions {
-	inputType?:
-	| 'text'
-	| 'email'
-	| 'number'
-	| 'checkbox'
-	| 'radio'
-	| 'password'
-	| 'textarea'
-	| 'select';
+	inputType?: 'text' | 'email' | 'number' | 'checkbox' | 'radio' | 'password' | 'textarea' | 'select';
 	title?: string;
 	label?: string;
 	okText?: string;
@@ -36,16 +28,13 @@ export class PromptComponent implements OnInit {
 	form: UntypedFormGroup;
 	showPassword = false;
 
-	constructor(
-		private dialogRef: NbDialogRef<PromptComponent>,
-		private fb: UntypedFormBuilder
-	) {
+	constructor(private readonly dialogRef: NbDialogRef<PromptComponent>, private readonly fb: UntypedFormBuilder) {
 		this.form = this.fb.group({
 			input: ['', Validators.required]
 		});
 	}
 
-	ngOnInit() { }
+	ngOnInit() {}
 
 	close() {
 		this.dialogRef.close();
