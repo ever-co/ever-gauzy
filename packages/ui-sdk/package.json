@@ -9,6 +9,7 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
+	"typings": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
@@ -32,22 +33,28 @@
 	"dependencies": {
 		"@angular/material": "^16.2.12",
 		"@angular/router": "^16.2.12",
+		"@asymmetrik/ngx-leaflet": "^16.0.1",
 		"@gauzy/ui-config": "^0.1.0",
 		"@nebular/auth": "^12.0.0",
 		"@nebular/security": "^12.0.0",
 		"@nebular/theme": "^12.0.0",
+		"@ng-maps/google": "5.0.4",
+		"@ng-select/ng-select": "^11.2.0",
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^14.0.0",
 		"@ngx-translate/http-loader": "^7.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
 		"angular2-smart-table": "^3.2.0",
 		"ckeditor4-angular": "^5.1.0",
+		"leaflet": "^1.8.0",
 		"moment": "^2.30.1",
 		"moment-range": "^4.0.2",
 		"ngx-cookie-service": "^16.1.0",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"underscore": "^1.13.3",
+		"underscore.string": "^3.3.6"
 	},
 	"repository": {
 		"type": "git",

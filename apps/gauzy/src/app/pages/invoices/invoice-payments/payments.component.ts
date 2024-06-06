@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';

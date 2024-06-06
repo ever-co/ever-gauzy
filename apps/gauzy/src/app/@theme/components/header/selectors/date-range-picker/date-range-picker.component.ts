@@ -18,7 +18,7 @@ import {
 	OrganizationsService,
 	TimesheetFilterService
 } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';

@@ -27,7 +27,7 @@ import { GauzyFiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/gauzy-f
 import { ViewTimeLogModule } from './../../../../@shared/timesheet/view-time-log/view-time-log.module';
 import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 import { TaskSelectModule } from './../../../../@shared/tasks/task-select/task-select.module';
-import { DialogsModule } from './../../../../@shared/dialogs';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';

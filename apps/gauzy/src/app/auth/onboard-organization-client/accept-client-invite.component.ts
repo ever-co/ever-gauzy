@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
+import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { InviteService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({

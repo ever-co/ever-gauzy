@@ -13,7 +13,7 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ProductTypeService, ToastrService } from '@gauzy/ui-sdk/core';
 import { HttpErrorResponse } from '@angular/common/http';
 

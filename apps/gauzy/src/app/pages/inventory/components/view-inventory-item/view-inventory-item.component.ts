@@ -8,7 +8,7 @@ import { combineLatest } from 'rxjs';
 import { IImageAsset, IProductOptionTranslatable, IProductTranslatable, LanguagesEnum } from '@gauzy/contracts';
 import { ProductService, TranslatableService } from '@gauzy/ui-sdk/core';
 import { GalleryComponent, GalleryService } from './../../../../@shared/gallery';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { EnabledStatusComponent, ImageRowComponent } from '../inventory-table-components';
 import { Store } from '@gauzy/ui-sdk/common';
 

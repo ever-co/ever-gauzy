@@ -1,4 +1,4 @@
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { OnInit, Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 

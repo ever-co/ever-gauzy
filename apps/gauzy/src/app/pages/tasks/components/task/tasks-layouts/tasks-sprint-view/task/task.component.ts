@@ -12,7 +12,7 @@ import { NbMenuService } from '@nebular/theme';
 import { filter, map, takeUntil, tap } from 'rxjs/operators';
 import { combineLatest, debounceTime, Subject } from 'rxjs';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';

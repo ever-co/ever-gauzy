@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { environment } from '@gauzy/ui-config';
 import { RolePermissionsService, RoleService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';

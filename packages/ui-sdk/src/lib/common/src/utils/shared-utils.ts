@@ -1,5 +1,5 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -514,3 +514,15 @@ export const parseToBoolean = (value: any): boolean => {
 		return false; // Return false on parsing errors
 	}
 };
+
+/**
+ * Replaces all occurrences of a substring in a given string with another substring.
+ *
+ * @param {string} value - The input value.
+ * @param {string} search - The substring to search for.
+ * @param {string} replace - The substring to replace the search substring with.
+ * @return {string} The modified string with all occurrences of the search substring replaced.
+ */
+export function replaceAll(value: string, search: string, replace: string): string {
+	return value.split(search).join(replace);
+}

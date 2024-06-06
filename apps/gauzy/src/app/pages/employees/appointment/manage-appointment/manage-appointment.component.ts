@@ -16,7 +16,7 @@ import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	AppointmentEmployeesService,

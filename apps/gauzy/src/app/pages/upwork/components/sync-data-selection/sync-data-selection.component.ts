@@ -3,7 +3,7 @@ import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/ui-sdk/core';

@@ -14,7 +14,7 @@ import {
 	IProductTranslatable
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
 import { InventoryStore, ProductService, ProductVariantService, ToastrService } from '@gauzy/ui-sdk/core';
 

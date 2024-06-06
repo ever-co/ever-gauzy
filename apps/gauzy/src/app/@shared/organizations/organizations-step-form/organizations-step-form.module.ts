@@ -15,16 +15,13 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CountryModule, CurrencyModule, LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { RemoveLodashModule } from '../../remove-lodash/remove-lodash.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { CurrencyModule } from '../../currency/currency.module';
-import { CountryModule } from '../../country/country.module';
-import { LocationFormModule } from '../../forms/location';
-import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
 import { TimeZoneSelectorModule } from '../../selectors';
 
 @NgModule({
