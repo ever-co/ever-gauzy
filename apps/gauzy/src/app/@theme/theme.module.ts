@@ -27,7 +27,6 @@ import {
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
 import { NgxPermissionsModule } from 'ngx-permissions';
-
 import {
 	COSMIC_THEME,
 	DEFAULT_THEME,
@@ -35,7 +34,7 @@ import {
 	GAUZY_LIGHT,
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
-} from '@gauzy/ui-sdk/static/styles';
+} from '@gauzy/ui-sdk/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
 	CommonNavModule,
@@ -46,8 +45,6 @@ import {
 	UsersService
 } from '@gauzy/ui-sdk/core';
 import { DirectivesModule, UnderConstructionPopupComponent } from '@gauzy/ui-sdk/shared';
-
-import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
 import { Pipes } from './pipes';
 import {
 	OneColumnLayoutComponent,
@@ -55,9 +52,8 @@ import {
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-
 import { WindowModeBlockScrollService } from './services';
-
+import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector.service';
