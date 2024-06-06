@@ -15,7 +15,7 @@ import {
 	SMTPSecureEnum
 } from '@gauzy/contracts';
 import { isNotEmpty, Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { FileStorageService, TenantService } from '@gauzy/ui-sdk/core';
 

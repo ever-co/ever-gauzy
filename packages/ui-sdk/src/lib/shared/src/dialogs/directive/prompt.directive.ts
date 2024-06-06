@@ -1,9 +1,9 @@
 import { Directive, Input, Output, HostListener, EventEmitter, OnDestroy } from '@angular/core';
-import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { PromptComponent, PromptDialogOptions } from '../prompt/prompt.component';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({

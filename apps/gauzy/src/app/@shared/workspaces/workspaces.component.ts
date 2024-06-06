@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/internal/Observable';
 

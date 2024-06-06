@@ -5,7 +5,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { richTextCKEditorConfig, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,

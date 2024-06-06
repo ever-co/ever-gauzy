@@ -9,7 +9,7 @@ import { LatLng } from 'leaflet';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { LocationFormComponent } from './../../../../../@shared/forms/location';
 import { LeafletMapComponent } from './../../../../../@shared/forms/maps';

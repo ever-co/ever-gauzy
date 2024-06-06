@@ -34,7 +34,7 @@ import {
 	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
 	GithubService,

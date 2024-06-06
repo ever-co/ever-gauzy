@@ -13,7 +13,7 @@ import { Store } from '@gauzy/ui-sdk/common';
 import { LocationFormComponent, LeafletMapComponent, FormHelpers } from './../../../../../@shared/forms';
 import { WarehouseService, ImageAssetService, MerchantService } from '@gauzy/ui-sdk/core';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

@@ -8,7 +8,7 @@ import {
 	IRecurringExpenseModel,
 	IEmployee
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @Component({
 	selector: 'ga-recurring-expense-block',

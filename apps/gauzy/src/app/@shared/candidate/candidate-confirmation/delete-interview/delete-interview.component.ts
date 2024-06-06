@@ -10,7 +10,7 @@ import {
 	CandidateTechnologiesService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @UntilDestroy()
 @Component({

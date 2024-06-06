@@ -20,7 +20,8 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent, ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import { JobService, ToastrService } from '@gauzy/ui-sdk/core';
 import { environment } from '@gauzy/ui-config';
 import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';

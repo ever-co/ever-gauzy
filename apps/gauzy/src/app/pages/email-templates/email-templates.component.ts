@@ -16,7 +16,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmailTemplateService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

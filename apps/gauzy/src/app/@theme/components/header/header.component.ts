@@ -18,6 +18,7 @@ import {
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
@@ -28,7 +29,7 @@ import {
 	SelectorBuilderService,
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
-import { QuickActionsComponent, TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { QuickActionsComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
 import {
 	EmployeesService,

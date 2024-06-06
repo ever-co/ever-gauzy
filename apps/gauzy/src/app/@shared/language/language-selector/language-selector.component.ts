@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, forwardRef, ChangeDetectorRef } from '@angular/core';
 import { LanguagesService } from '@gauzy/ui-sdk/core';
 import { ILanguage } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { filter, tap } from 'rxjs/operators';

@@ -3,7 +3,7 @@ import { NbDialogRef, NbIconLibraries, NbMenuItem, NbMenuService } from '@nebula
 import { TimeLogType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { TimeTrackerService } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '../../language-base/translation-base.component';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 type GroupType = {
 	groupTitle: string;

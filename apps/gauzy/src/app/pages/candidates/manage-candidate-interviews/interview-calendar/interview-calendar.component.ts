@@ -12,7 +12,7 @@ import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { ICandidate, IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	CandidateInterviewService,
 	CandidateInterviewersService,

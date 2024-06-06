@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
 import { CustomSmtpService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { FormHelpers } from '../forms/helpers';
 import { patterns } from '../regex/regex-patterns.const';

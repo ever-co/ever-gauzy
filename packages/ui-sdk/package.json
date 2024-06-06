@@ -9,6 +9,7 @@
 	},
 	"license": "AGPL-3.0",
 	"private": true,
+	"typings": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],

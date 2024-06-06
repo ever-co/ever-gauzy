@@ -19,7 +19,7 @@ import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/ui-config';
 import { FormHelpers } from '../helpers';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { CountryService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

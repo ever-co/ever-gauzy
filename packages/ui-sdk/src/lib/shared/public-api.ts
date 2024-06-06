@@ -1,5 +1,4 @@
 export * from './src/ckeditor.config';
-export * from './src/language-base';
 export * from './src/components';
 export * from './src/directives/directives.module';
 export * from './src/directives';
