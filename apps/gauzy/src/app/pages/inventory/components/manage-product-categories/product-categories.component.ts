@@ -12,10 +12,7 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

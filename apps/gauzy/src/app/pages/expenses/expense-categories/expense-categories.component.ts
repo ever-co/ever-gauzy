@@ -12,10 +12,7 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';

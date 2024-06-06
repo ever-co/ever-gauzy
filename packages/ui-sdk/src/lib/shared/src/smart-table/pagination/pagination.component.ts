@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { UntilDestroy } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

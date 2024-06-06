@@ -2,20 +2,20 @@
 @import 'gauzy/_gauzy-overrides';
 
 :host {
-    a,
-    span {
-        display: block;
-        margin: 3px;
-    }
+  a,
+  span {
+    display: block;
+    margin: 3px;
+  }
 
-    a {
-        pointer-events: none;
-        text-decoration: none;
-    }
+  a {
+    pointer-events: none;
+    text-decoration: none;
+  }
 
-    li {
-      cursor: pointer;
-      overflow: hidden;
+  li {
+    cursor: pointer;
+    overflow: hidden;
 
     &.active span {
       color: nb-theme(text-primary-color);
@@ -41,17 +41,17 @@
     }
   }
 
-    .pagination {
-        font-size: 0.875rem;
-        display: flex;
-        align-items: center;
-    }
+  .pagination {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+  }
 
-    ::ng-deep{
-      @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
-    }
+  ::ng-deep {
+    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+  }
 }
-nav{
+nav {
   display: flex;
   justify-content: space-between;
 }

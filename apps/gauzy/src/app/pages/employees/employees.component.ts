@@ -36,10 +36,7 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,

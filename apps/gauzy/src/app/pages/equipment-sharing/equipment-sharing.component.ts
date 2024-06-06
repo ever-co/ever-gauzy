@@ -19,10 +19,7 @@ import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 import { Store } from '@gauzy/ui-sdk/common';

@@ -14,10 +14,7 @@ import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { WarehouseService } from '@gauzy/ui-sdk/core';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { InputFilterComponent } from './../../../../../@shared/table-filters';
 import { DescriptionComponent } from '../../inventory-table-components/description/description.component';

@@ -29,7 +29,7 @@ import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-e
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { StageComponent } from './stage/stage.component';

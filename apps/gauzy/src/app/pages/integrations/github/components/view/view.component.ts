@@ -24,10 +24,7 @@ import {
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 import {
 	ClickableLinkComponent,

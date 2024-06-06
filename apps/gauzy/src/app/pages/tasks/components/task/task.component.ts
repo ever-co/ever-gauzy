@@ -45,10 +45,7 @@ import {
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

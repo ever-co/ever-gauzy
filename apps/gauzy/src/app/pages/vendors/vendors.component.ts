@@ -13,10 +13,7 @@ import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } fr
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
 
 @UntilDestroy({ checkProperties: true })

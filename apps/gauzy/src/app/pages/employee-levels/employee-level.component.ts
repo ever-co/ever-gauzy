@@ -10,10 +10,7 @@ import { NotesWithTagsComponent } from '../../@shared/table-components/notes-wit
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeLevelService } from '@gauzy/ui-sdk/core';
 import { ToastrService } from '@gauzy/ui-sdk/core';

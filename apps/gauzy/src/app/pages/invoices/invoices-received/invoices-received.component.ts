@@ -33,10 +33,7 @@ import {
 } from '../../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
 import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 

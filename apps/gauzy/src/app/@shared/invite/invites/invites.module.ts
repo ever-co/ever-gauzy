@@ -29,7 +29,7 @@ import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 const COMPONENTS = [
 	InvitesComponent,

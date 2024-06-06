@@ -6,7 +6,7 @@ import { Subject } from 'rxjs';
 import { ICandidateExperience, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateExperienceService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({

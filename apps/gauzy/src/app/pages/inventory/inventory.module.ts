@@ -53,7 +53,7 @@ import { WarehousesModule } from './components/manage-warehouses/warehouses.modu
 import { InventoryTableComponentsModule } from './components/inventory-table-components/inventory-table-components.module';
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
 import { ProductCategorySelectorModule } from '../../@shared/product-category-selector/product-category-selector.module';

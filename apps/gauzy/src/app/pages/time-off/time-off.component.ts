@@ -17,10 +17,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { ApprovalPolicyComponent } from '../approvals/table-components';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 import { InputFilterComponent } from '../../@shared/table-filters';
 

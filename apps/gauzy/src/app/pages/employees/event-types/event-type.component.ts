@@ -18,10 +18,7 @@ import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EventTypeService } from '@gauzy/ui-sdk/core';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';

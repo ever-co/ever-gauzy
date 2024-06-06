@@ -25,10 +25,7 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {

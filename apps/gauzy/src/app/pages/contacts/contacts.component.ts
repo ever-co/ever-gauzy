@@ -30,10 +30,7 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

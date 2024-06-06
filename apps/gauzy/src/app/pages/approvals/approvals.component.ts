@@ -18,10 +18,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
 import { pluck } from 'underscore';
 import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 

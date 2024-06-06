@@ -22,10 +22,7 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

@@ -13,10 +13,7 @@ import { PipelineDealCreatedByComponent } from '../table-components/pipeline-dea
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -13,10 +13,7 @@ import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationDocumentsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
 import { ActivatedRoute } from '@angular/router';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })

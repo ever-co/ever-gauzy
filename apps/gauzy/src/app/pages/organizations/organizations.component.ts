@@ -24,10 +24,7 @@ import {
 	OrganizationsStatusComponent
 } from './table-components';
 import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

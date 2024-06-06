@@ -26,10 +26,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';

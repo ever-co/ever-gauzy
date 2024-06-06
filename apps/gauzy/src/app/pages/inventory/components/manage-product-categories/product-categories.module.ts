@@ -19,7 +19,7 @@ import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
 import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
 import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
-import { PaginationV2Module } from '../../../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 const NB_MODULES = [NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbInputModule, NbTooltipModule];

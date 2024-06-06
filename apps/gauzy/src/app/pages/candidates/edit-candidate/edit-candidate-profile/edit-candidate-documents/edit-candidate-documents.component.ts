@@ -9,7 +9,7 @@ import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common'
 import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import { PaginationFilterBaseComponent } from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

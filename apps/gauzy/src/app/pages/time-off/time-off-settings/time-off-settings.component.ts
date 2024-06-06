@@ -14,10 +14,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';
 import { API_PREFIX, ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { TimeOffService } from '@gauzy/ui-sdk/core';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { EmployeeWithLinksComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })

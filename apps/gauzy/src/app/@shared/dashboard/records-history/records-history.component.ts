@@ -12,7 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ContactLinksComponent, IncomeExpenseAmountComponent, DateViewComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,13 +1,5 @@
 /* It's a pagination component that works with the angular2-smart-table component */
-import {
-	Component,
-	EventEmitter,
-	Input,
-	OnChanges,
-	OnDestroy,
-	Output,
-	SimpleChanges,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 @Component({
 	selector: 'ngx-pagination',
 	templateUrl: './pagination-v2.component.html',
-	styleUrls: ['./pagination-v2.component.scss'],
+	styleUrls: ['./pagination-v2.component.scss']
 })
 export class PaginationV2Component implements OnChanges, OnDestroy {
 	private _source: LocalDataSource;
@@ -46,8 +38,7 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	private _initPages() {
 		const pagesCount = this.last;
 		let showPagesCount = 4;
-		showPagesCount =
-			pagesCount < showPagesCount ? pagesCount : showPagesCount;
+		showPagesCount = pagesCount < showPagesCount ? pagesCount : showPagesCount;
 		this._pages = [];
 
 		if (this.isShouldShow) {
@@ -115,19 +106,13 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	}
 
 	public get isPageOutOfBounce(): boolean {
-		return (
-			this._page * this._perPage >= this._count + this._perPage &&
-			this._page > 1
-		);
+		return this._page * this._perPage >= this._count + this._perPage && this._page > 1;
 	}
 
 	public onChangePerPage(event: any) {
 		this._currentPerPage = event;
 		if (this._currentPerPage) {
-			if (
-				typeof this._currentPerPage === 'string' &&
-				this._currentPerPage.toLowerCase() === 'all'
-			) {
+			if (typeof this._currentPerPage === 'string' && this._currentPerPage.toLowerCase() === 'all') {
 				this._source.getPaging().perPage = null;
 			} else {
 				this._source.getPaging().perPage = this._currentPerPage * 1;
@@ -141,8 +126,7 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 		return (this._page - 1) * this._perPage + 1;
 	}
 	public get endCount() {
-		const entriesEndPage: number =
-			(this._page - 1) * this._perPage + this._perPage;
+		const entriesEndPage: number = (this._page - 1) * this._perPage + this._perPage;
 
 		if (entriesEndPage > this._count) {
 			return this._count;
@@ -203,5 +187,5 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	public get changePage(): EventEmitter<{ page: number }> {
 		return this._changePage;
 	}
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

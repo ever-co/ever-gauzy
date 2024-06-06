@@ -11,10 +11,7 @@ import { InventoryStore, WarehouseService } from '@gauzy/ui-sdk/core';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

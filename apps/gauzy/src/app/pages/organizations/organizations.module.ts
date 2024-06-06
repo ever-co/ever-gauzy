@@ -38,7 +38,7 @@ import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-ex
 import { TableComponentsModule } from '../../@shared/table-components';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

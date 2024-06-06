@@ -23,7 +23,7 @@ import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
-import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [

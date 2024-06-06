@@ -11,10 +11,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';

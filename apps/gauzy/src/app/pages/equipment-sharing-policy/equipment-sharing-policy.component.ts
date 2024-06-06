@@ -14,10 +14,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

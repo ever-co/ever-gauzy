@@ -34,7 +34,7 @@ import {
 	TagsOnlyComponent
 } from '../../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { VisibilityComponent } from '../../../../@shared/table-components/visibility/visibility.component';
 import { ProjectOrganizationGridComponent } from '../../../../@shared/table-components';
 import { TagsColorFilterComponent } from '../../../../@shared/table-filters';

@@ -16,10 +16,7 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ProductService } from '@gauzy/ui-sdk/core';

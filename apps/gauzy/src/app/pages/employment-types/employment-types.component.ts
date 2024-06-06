@@ -20,10 +20,7 @@ import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-con
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 

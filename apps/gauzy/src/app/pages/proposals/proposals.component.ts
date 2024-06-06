@@ -36,10 +36,7 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import {
 	InputFilterComponent,

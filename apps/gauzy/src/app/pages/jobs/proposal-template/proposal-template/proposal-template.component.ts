@@ -20,10 +20,7 @@ import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui
 import { Nl2BrPipe, TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { ProposalTemplateService } from '../proposal-template.service';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 

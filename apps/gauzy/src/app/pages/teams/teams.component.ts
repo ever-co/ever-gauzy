@@ -27,10 +27,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { EmployeeWithLinksComponent, TagsOnlyComponent } from '../../@shared/table-components';

@@ -33,12 +33,9 @@ import {
 	IntegrationEntity
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-sdk/core';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../@shared/pagination/pagination-filter-base.component';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';

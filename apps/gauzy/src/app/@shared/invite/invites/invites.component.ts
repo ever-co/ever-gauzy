@@ -22,6 +22,7 @@ import {
 	InviteStatusEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../user/forms';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
@@ -29,7 +30,6 @@ import { ResendConfirmationComponent } from './resend-confirmation/resend-confir
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { DateViewComponent } from '../../table-components';
-import { PaginationFilterBaseComponent, IPaginationBase } from '../../pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
