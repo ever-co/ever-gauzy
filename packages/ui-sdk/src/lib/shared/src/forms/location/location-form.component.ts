@@ -15,12 +15,11 @@ import { FormArray, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms'
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick, isEmpty } from 'underscore';
-import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/ui-config';
-import { FormHelpers } from '../helpers';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { CountryService } from '@gauzy/ui-sdk/core';
+import { CountryService, convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
+import { FormHelpers } from '../helpers';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -95,9 +94,8 @@ export class LocationFormComponent extends TranslationBaseComponent implements A
 		public readonly translateService: TranslateService,
 		public readonly countryService: CountryService,
 		private readonly cdr: ChangeDetectorRef,
-
-		@Inject(DOCUMENT) private _document: Document,
-		private renderer: Renderer2
+		@Inject(DOCUMENT) private readonly _document: Document,
+		private readonly renderer: Renderer2
 	) {
 		super(translateService);
 		this.countryService.countries$

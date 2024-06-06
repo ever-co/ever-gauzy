@@ -45,7 +45,6 @@ import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
-import { CurrencyModule } from '../../@shared/currency/currency.module';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -74,7 +73,7 @@ import {
 	TranslatableService
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
+import { CurrencyModule, CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
 import {
 	EstimateAddComponent,
 	EstimateEditComponent,

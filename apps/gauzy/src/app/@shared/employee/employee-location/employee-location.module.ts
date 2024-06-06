@@ -9,11 +9,10 @@ import {
 	NbInputModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
+import { LocationFormModule, LeafletMapModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EmployeeLocationComponent } from './employee-location.component';
-import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
-import { LeafletMapModule } from '../../forms/maps/leaflet/leaflet.module';
-import { LocationFormModule } from '../../forms/location';
 
 @NgModule({
 	imports: [

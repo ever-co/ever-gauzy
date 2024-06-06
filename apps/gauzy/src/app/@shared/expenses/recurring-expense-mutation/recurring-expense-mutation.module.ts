@@ -15,10 +15,10 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
+import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
-import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [

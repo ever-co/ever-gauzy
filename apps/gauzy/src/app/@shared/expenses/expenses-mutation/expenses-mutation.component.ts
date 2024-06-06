@@ -22,7 +22,7 @@ import { AttachReceiptComponent } from './attach-receipt/attach-receipt.componen
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
 import { OrganizationSettingService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../../forms/helpers';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

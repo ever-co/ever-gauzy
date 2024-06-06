@@ -3,8 +3,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { MatchValidator } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../../../@shared/forms';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-accept-invite-form',

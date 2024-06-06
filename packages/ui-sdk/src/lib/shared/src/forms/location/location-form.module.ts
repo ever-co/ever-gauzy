@@ -4,13 +4,13 @@ import { NbCheckboxModule, NbFormFieldModule, NbIconModule, NbInputModule, NbSel
 import { NgMapsGoogleModule } from '@ng-maps/google';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LocationFormComponent } from './location-form.component';
-import { ThemeModule } from '../../../@theme/theme.module';
-import { CountryModule } from '../../country/country.module';
+import { CountryModule } from '../../modules/country/country.module';
 import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
+import { CommonModule } from '@angular/common';
 
 @NgModule({
 	imports: [
-		ThemeModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbSelectModule,
@@ -18,8 +18,8 @@ import { LeafletMapModule } from '../maps/leaflet/leaflet.module';
 		NbCheckboxModule,
 		NbFormFieldModule,
 		NbIconModule,
-		I18nTranslateModule.forChild(),
 		NgMapsGoogleModule,
+		I18nTranslateModule.forChild(),
 		CountryModule,
 		LeafletMapModule
 	],

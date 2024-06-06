@@ -20,7 +20,7 @@ import {
 	OrganizationTeamsService,
 	RequestApprovalService
 } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../forms/helpers';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

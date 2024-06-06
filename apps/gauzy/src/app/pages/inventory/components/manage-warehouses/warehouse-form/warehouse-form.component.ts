@@ -10,12 +10,9 @@ import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { LocationFormComponent } from './../../../../../@shared/forms/location';
-import { LeafletMapComponent } from './../../../../../@shared/forms/maps';
-import { FormHelpers } from './../../../../../@shared/forms';
+import { ImageAssetService, ToastrService, WarehouseService } from '@gauzy/ui-sdk/core';
+import { FormHelpers, LocationFormComponent, LeafletMapComponent } from '@gauzy/ui-sdk/shared';
 import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
-import { ImageAssetService, WarehouseService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

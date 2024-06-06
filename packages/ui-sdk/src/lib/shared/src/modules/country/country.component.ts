@@ -9,52 +9,50 @@ import {
 	Output
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ICurrency, IOrganization } from '@gauzy/contracts';
+import { ICountry, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { CurrencyService } from '@gauzy/ui-sdk/core';
+import { CountryService, distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { environment as ENV } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-currency',
-	templateUrl: './currency.component.html',
-	styleUrls: ['./currency.component.scss'],
+	selector: 'ga-country',
+	templateUrl: './country.component.html',
+	styleUrls: ['./country.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => CurrencyComponent),
+			useExisting: forwardRef(() => CountryComponent),
 			multi: true
 		}
 	]
 })
-export class CurrencyComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
+export class CountryComponent extends TranslationBaseComponent implements OnInit, AfterViewInit, ControlValueAccessor {
 	@Input() formControl: FormControl = new FormControl();
-	@Output() optionChange = new EventEmitter<ICurrency>();
+	@Output() optionChange = new EventEmitter<ICountry>();
 
 	public organization: IOrganization;
 	loading: boolean = true;
-	currencies$: Observable<ICurrency[]> = this.currencyService.currencies$;
-	private _currencies: ICurrency[] = [];
+	countries$: Observable<ICountry[]> = this.countryService.countries$;
+	private _countries: ICountry[] = [];
 
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
 	/*
-	 * Getter & Setter for dynamic selected currency
+	 * Getter & Setter for dynamic selected country
 	 */
-	private _currency: string;
-	get currency() {
-		return this._currency;
+	private _country: string;
+	get country() {
+		return this._country;
 	}
-	@Input() set currency(val: string) {
-		if (isNotEmpty(val)) {
-			this._currency = val;
+	@Input() set country(val: string) {
+		if (val) {
+			this._country = val;
 			this.onChange(val);
 			this.onTouched();
 		}
@@ -73,25 +71,14 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 		}
 	}
 
-	/*
-	 * Getter & Setter for dynamic label display
-	 */
-	private _label: boolean = true;
-	get label() {
-		return this._label;
-	}
-	@Input() set label(val: boolean) {
-		this._label = val;
-	}
-
 	constructor(
-		public readonly translateService: TranslateService,
+		private readonly countryService: CountryService,
+		public translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
-		private readonly currencyService: CurrencyService,
 		private readonly store: Store
 	) {
 		super(translateService);
-		this.currencyService.find$.next(true);
+		this.countryService.find$.next(true);
 	}
 
 	ngOnInit(): void {
@@ -100,20 +87,17 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(({ currency }) => {
-					this.currency = currency || ENV.DEFAULT_CURRENCY;
-				}),
-				tap(({ currency }) => {
-					this.formControl.setValue(currency);
+				tap(({ contact }: IOrganization) => {
+					this.country = contact ? contact.country : ENV.DEFAULT_COUNTRY;
 					this.formControl.updateValueAndValidity();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.currencies$
+		this.countries$
 			.pipe(
-				tap((currencies: ICurrency[]) => (this._currencies = currencies)),
-				tap(() => this.onSelectChange(this.currency)),
+				tap((countries: ICountry[]) => (this._countries = countries)),
+				tap(() => this.onSelectChange(this.country)),
 				tap(() => (this.loading = false)),
 				untilDestroyed(this)
 			)
@@ -125,27 +109,20 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	onSelectChange(value: string) {
-		if (this._currencies.length > 0) {
-			const currency = this._currencies.find((currency: ICurrency) => currency.isoCode === value);
-			this.currency = !!currency ? currency.isoCode : null;
-			this.onOptionChange(currency);
+		if (value && this._countries.length > 0) {
+			const country = this._countries.find((country: ICountry) => country.isoCode === value);
+			this.country = country.isoCode;
+			this.onOptionChange(country);
 		}
 	}
 
-	onOptionChange($event: ICurrency) {
+	onOptionChange($event: ICountry) {
 		this.optionChange.emit($event);
-	}
-
-	searchCurrency(term: string, item: any) {
-		return (
-			item.isoCode.toLowerCase().includes(term.toLowerCase()) ||
-			item.currency.toLowerCase().includes(term.toLowerCase())
-		);
 	}
 
 	writeValue(value: any) {
 		if (value) {
-			this.currency = value;
+			this.country = value;
 		}
 		this.cdr.detectChanges();
 	}
@@ -156,5 +133,12 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 
 	registerOnTouched(fn: () => void): void {
 		this.onTouched = fn;
+	}
+
+	searchCountry(term: string, item: any) {
+		return (
+			item.isoCode.toLowerCase().includes(term.toLowerCase()) ||
+			item.country.toLowerCase().includes(term.toLowerCase())
+		);
 	}
 }

@@ -16,11 +16,8 @@ import { LatLng } from 'leaflet';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { FilterArrayPipe } from '@gauzy/ui-sdk/shared';
+import { FilterArrayPipe, FormHelpers, LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { LocationFormComponent } from '../../../@shared/forms/location';
-import { LeafletMapComponent } from '../../../@shared/forms/maps/leaflet/leaflet.component';
-import { FormHelpers } from '../../../@shared/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

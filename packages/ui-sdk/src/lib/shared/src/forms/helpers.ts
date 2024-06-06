@@ -31,20 +31,11 @@ export class FormHelpers {
 	 * @param control
 	 * @returns
 	 */
-	static isInvalidControl(
-		formGroup: UntypedFormGroup,
-		control: string
-	): boolean {
+	static isInvalidControl(formGroup: UntypedFormGroup, control: string): boolean {
 		if (!formGroup.contains(control)) {
 			return true;
 		}
-		return (
-			(
-				formGroup.get(control).touched ||
-				formGroup.get(control).dirty
-			) &&
-			formGroup.get(control).invalid
-		);
+		return (formGroup.get(control).touched || formGroup.get(control).dirty) && formGroup.get(control).invalid;
 	}
 
 	/**
@@ -54,19 +45,10 @@ export class FormHelpers {
 	 * @param control
 	 * @returns
 	 */
-	static isValidControl(
-		formGroup: UntypedFormGroup,
-		control: string
-	): boolean {
+	static isValidControl(formGroup: UntypedFormGroup, control: string): boolean {
 		if (!formGroup.contains(control)) {
 			return false;
 		}
-		return (
-			(
-				formGroup.get(control).touched ||
-				formGroup.get(control).dirty
-			) &&
-			formGroup.get(control).valid
-		);
+		return (formGroup.get(control).touched || formGroup.get(control).dirty) && formGroup.get(control).valid;
 	}
 }

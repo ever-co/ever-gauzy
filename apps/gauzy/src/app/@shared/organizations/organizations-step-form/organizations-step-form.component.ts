@@ -32,9 +32,7 @@ import {
 import { environment as ENV } from '@gauzy/ui-config';
 import { DUMMY_PROFILE_IMAGE, Store, retrieveNameFromEmail } from '@gauzy/ui-sdk/common';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../../forms';
-import { LeafletMapComponent } from '../../forms/maps';
-import { LocationFormComponent } from '../../forms/location';
+import { LocationFormComponent, LeafletMapComponent, FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

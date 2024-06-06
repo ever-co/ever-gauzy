@@ -8,33 +8,22 @@
 		<ng-select
 			class="currency-selector"
 			#select
-			[items]="(currencies$ | async)"
-			(clear)="select.blur();"
+			[items]="currencies$ | async"
+			(clear)="select.blur()"
 			[clearable]="false"
-			(change)="onOptionChange($event); select.blur();"
-			[placeholder]=" placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate"
+			(change)="onOptionChange($event); select.blur()"
+			[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_CURRENCIES' | translate"
 			[(ngModel)]="currency"
 			[searchFn]="searchCurrency"
 			[loading]="loading"
 			bindValue="isoCode"
 			appendTo="body"
-			[class]="
-				formControl.invalid && formControl.touched ? 
-					'danger' : 
-					'basic'
-			"
+			[class]="formControl.invalid && formControl.touched ? 'danger' : 'basic'"
 		>
-			<ng-template 
-				ng-option-tmp
-				let-item="item"
-				let-index="index"
-			>
+			<ng-template ng-option-tmp let-item="item" let-index="index">
 				{{ item?.currency + ' (' + item?.isoCode + ')' }}
 			</ng-template>
-			<ng-template 
-				ng-label-tmp 
-				let-item="item"
-			>
+			<ng-template ng-label-tmp let-item="item">
 				{{ item?.currency + ' (' + item?.isoCode + ')' }}
 			</ng-template>
 		</ng-select>

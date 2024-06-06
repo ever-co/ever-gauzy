@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 import { uniq } from 'underscore';
 import { environment } from '@gauzy/ui-config';
 import { CompareDateValidator, ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { FormHelpers, ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployee,
 	IOrganization,
@@ -43,7 +43,7 @@ import {
 	OrganizationTeamsService
 } from '@gauzy/ui-sdk/core';
 import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
-import { FormHelpers } from '../../forms/helpers';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-mutation',
