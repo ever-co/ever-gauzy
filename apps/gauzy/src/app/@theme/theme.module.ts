@@ -33,7 +33,9 @@ import {
 	GAUZY_DARK,
 	GAUZY_LIGHT,
 	MATERIAL_DARK_THEME,
-	MATERIAL_LIGHT_THEME
+	MATERIAL_LIGHT_THEME,
+	Pipes,
+	WindowModeBlockScrollService
 } from '@gauzy/ui-sdk/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
@@ -45,14 +47,12 @@ import {
 	UsersService
 } from '@gauzy/ui-sdk/core';
 import { DirectivesModule, UnderConstructionPopupComponent } from '@gauzy/ui-sdk/shared';
-import { Pipes } from './pipes';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-import { WindowModeBlockScrollService } from './services';
 import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
