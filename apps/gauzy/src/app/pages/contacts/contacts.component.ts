@@ -20,12 +20,13 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	CountryService,
 	OrganizationContactService,
 	OrganizationProjectsService,
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, CountryService, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';

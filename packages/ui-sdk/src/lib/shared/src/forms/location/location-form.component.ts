@@ -18,7 +18,8 @@ import { pick, isEmpty } from 'underscore';
 import { ICountry, IGeoLocationCreateObject } from '@gauzy/contracts';
 import { environment as env } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { CountryService, convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
+import { CountryService } from '@gauzy/ui-sdk/core';
+import { convertPrecisionFloatDigit } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '../helpers';
 
 @UntilDestroy({ checkProperties: true })

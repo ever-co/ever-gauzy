@@ -14,9 +14,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { CountryService, distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { environment as ENV } from '@gauzy/ui-config';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { CountryService } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

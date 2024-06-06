@@ -15,8 +15,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ICurrency, IOrganization } from '@gauzy/contracts';
 import { environment as ENV } from '@gauzy/ui-config';
-import { CurrencyService, distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { CurrencyService } from '@gauzy/ui-sdk/core';
+import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
