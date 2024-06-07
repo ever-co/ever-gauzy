@@ -1,11 +1,10 @@
 <nb-layout windowMode>
-
 	<nb-layout-header fixed *ngIf="user$ | async">
 		<ngx-header [expanded]="isExpanded"></ngx-header>
 	</nb-layout-header>
 
 	<nb-sidebar class="user-workspace" state="compacted" tag="user-workspace">
-		<div><gauzy-workspaces></gauzy-workspaces></div>
+		<div><ngx-gauzy-workspaces></ngx-gauzy-workspaces></div>
 		<gauzy-user [user$]="user$" (click)="isOpen = !isOpen"></gauzy-user>
 	</nb-sidebar>
 
@@ -20,17 +19,8 @@
 				<div
 					[ngClass]="isExpanded? isCollapse? 'logo-container':'logo-container not-collapsed' : 'logo-container compacted'"
 				>
-					<ngx-gauzy-logo
-						[controlled]="trigger"
-						(onCollapsed)="onCollapse($event)"
-					></ngx-gauzy-logo>
-					<button
-						*ngIf="isCollapse && isExpanded"
-						class="hidden-menu"
-						outline
-						nbButton
-						underConstruction
-					>
+					<ngx-gauzy-logo [controlled]="trigger" (onCollapsed)="onCollapse($event)"></ngx-gauzy-logo>
+					<button *ngIf="isCollapse && isExpanded" class="hidden-menu" outline nbButton underConstruction>
 						<i class="fas fa-ellipsis-h"></i>
 					</button>
 				</div>
@@ -66,10 +56,5 @@
 	>
 		<ngx-theme-sidebar [config]="sidebar"></ngx-theme-sidebar>
 	</nb-sidebar>
-
 </nb-layout>
-<gauzy-user-menu
-	[user$]="user$"
-	(close)="isOpen=false"
-	*ngIf="isOpen"
-></gauzy-user-menu>
+<gauzy-user-menu [user$]="user$" (close)="isOpen=false" *ngIf="isOpen"></gauzy-user-menu>

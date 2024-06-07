@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { WidgetLayoutComponent } from './widget-layout.component';
 import { WidgetModule } from '../widget/widget.module';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
 	declarations: [WidgetLayoutComponent],

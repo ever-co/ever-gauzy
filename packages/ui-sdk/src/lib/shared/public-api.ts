@@ -12,3 +12,4 @@ export * from './src/modules/currency/currency.module';
 export * from './src/pipes';
 export * from './src/pipes/pipes.module';
 export * from './src/smart-table';
+export * from './src/workspaces';

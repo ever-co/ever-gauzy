@@ -1,14 +1,13 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
+import { Observable } from 'rxjs/internal/Observable';
 import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { Observable } from 'rxjs/internal/Observable';
 
 interface IWorkSpace {
 	id: string;
@@ -18,17 +17,16 @@ interface IWorkSpace {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-workspaces',
+	selector: 'ngx-gauzy-workspaces',
 	templateUrl: './workspaces.component.html',
 	styleUrls: ['./workspaces.component.scss']
 })
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);
 	public workspaces$: Observable<IWorkSpace[]> = this._workspaces$.asObservable();
-
-	selected: IWorkSpace;
-	contextMenus: NbMenuItem[];
-	user: IUser;
+	public selected: IWorkSpace;
+	public contextMenus: NbMenuItem[];
+	public user: IUser;
 
 	constructor(public readonly translateService: TranslateService, private readonly store: Store) {
 		super(translateService);
@@ -52,7 +50,12 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 			.subscribe();
 	}
 
-	getWorkspaces() {
+	/**
+	 * Retrieves the workspaces associated with the user's tenant.
+	 *
+	 * @return {void} This function does not return a value.
+	 */
+	getWorkspaces(): void {
 		if (!this.user.tenantId) {
 			return;
 		}
@@ -64,6 +67,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 		};
 		const workspaces = this._workspaces$.getValue();
 		const index = workspaces.find((workspace: IWorkSpace) => workspace.id === tenant.id);
+
 		if (!index) {
 			this._workspaces$.next([...workspaces, workspace]);
 			this.selected = workspace;
@@ -71,7 +75,10 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * Translate context menus
+	 * Applies translation changes by subscribing to the onLangChange observable provided by translateService.
+	 * When a language change occurs, it triggers the creation of context menus.
+	 *
+	 * @return {void} This function does not return a value.
 	 */
 	private _applyTranslationOnChange() {
 		this.translateService.onLangChange
@@ -83,11 +90,12 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	}
 
 	/**
-	 * On Change workspace
+	 * Updates the selected workspace and sets its `isOnline` property to `true`.
 	 *
-	 * @param workspace
+	 * @param {IWorkSpace} workspace - The workspace to be selected.
+	 * @return {void} This function does not return a value.
 	 */
-	onChangeWorkspace(workspace: IWorkSpace) {
+	onChangeWorkspace(workspace: IWorkSpace): void {
 		this.selected = workspace;
 		this.selected.isOnline = true;
 	}

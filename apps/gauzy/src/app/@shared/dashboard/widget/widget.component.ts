@@ -13,8 +13,7 @@ import { WidgetService } from './widget.service';
 	styleUrls: ['./widget.component.scss']
 })
 export class WidgetComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {
-	private _widgetDragEnded: Observable<any>;
-	@ViewChild(NbPopoverDirective)
+	private _widgetDragEnded: Observable<any>; @ViewChild(NbPopoverDirective)
 	private _widgetPopover: NbPopoverDirective;
 	@ViewChild('widget')
 	private _element: ElementRef;
