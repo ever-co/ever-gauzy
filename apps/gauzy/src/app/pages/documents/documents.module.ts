@@ -24,7 +24,7 @@ import { UploadDocumentComponent } from './upload-document/upload-document.compo
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];

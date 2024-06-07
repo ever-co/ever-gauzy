@@ -25,7 +25,7 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 @NgModule({

@@ -16,11 +16,14 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
+import {
+	GauzyButtonActionModule,
+	LeafletMapModule,
+	LocationFormModule,
+	PaginationV2Module
+} from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ThemeModule } from './../../../../@theme/theme.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';

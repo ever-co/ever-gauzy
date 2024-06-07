@@ -21,7 +21,7 @@ import { ExportAllService } from '@gauzy/ui-sdk/core';
 import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../../@shared/shared.module';
-import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

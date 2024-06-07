@@ -31,7 +31,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { StageComponent } from './stage/stage.component';
 import { NbTabsetModule } from '@nebular/theme';
 

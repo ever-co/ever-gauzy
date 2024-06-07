@@ -54,7 +54,7 @@ import { InventoryTableComponentsModule } from './components/inventory-table-com
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
 import { ProductCategorySelectorModule } from '../../@shared/product-category-selector/product-category-selector.module';
 

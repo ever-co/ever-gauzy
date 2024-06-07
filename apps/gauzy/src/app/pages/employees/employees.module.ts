@@ -67,7 +67,7 @@ import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-pro
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TimeZoneSelectorModule } from '../../@shared/selectors';

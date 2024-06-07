@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProductTypeService } from '@gauzy/ui-sdk/core';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { SharedModule } from '../../../../@shared/shared.module';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
@@ -12,8 +13,6 @@ import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
 
 const NB_MODULES = [NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule];

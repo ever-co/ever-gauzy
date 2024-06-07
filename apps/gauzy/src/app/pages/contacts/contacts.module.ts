@@ -21,7 +21,7 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../@shared/shared.module';
