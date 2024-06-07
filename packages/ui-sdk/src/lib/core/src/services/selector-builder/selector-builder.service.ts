@@ -60,4 +60,13 @@ export class SelectorBuilderService {
 
 		return this.selectorsMapper.get(id);
 	}
+
+	/**
+	 * Retrieves the current state of the selectors by returning the value of the `_selectors$` BehaviorSubject.
+	 *
+	 * @return {ISelectorVisibility} The current state of the selectors.
+	 */
+	getSelectors(): ISelectorVisibility {
+		return this._selectors$.getValue();
+	}
 }

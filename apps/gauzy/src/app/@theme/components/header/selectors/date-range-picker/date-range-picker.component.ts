@@ -16,6 +16,7 @@ import {
 	DateRangePickerBuilderService,
 	NavigationService,
 	OrganizationsService,
+	SelectorBuilderService,
 	TimesheetFilterService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
@@ -133,8 +134,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			this._selectedDateRange = range;
 			this.range$.next(range);
 
-			// Update query parameters and navigate
-			this.navigateWithQueryParams();
+			// Check if the date selector exists
+			if (this._selectorBuilderService.getSelectors().date) {
+				// Updates the query parameters of the current route without navigating away
+				this.navigateWithQueryParams();
+			}
 		}
 	}
 
@@ -217,6 +221,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly _timesheetFilterService: TimesheetFilterService,
 		private readonly _navigationService: NavigationService,
+		private readonly _selectorBuilderService: SelectorBuilderService,
 		private readonly _timeZoneService: TimeZoneService
 	) {
 		super(translateService);
