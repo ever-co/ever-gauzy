@@ -1,4 +1,4 @@
-import { GuiDrag, ILayoutPersistance, IPersistance } from '@gauzy/ui-sdk/shared';
+import { GuiDrag, ILayoutPersistance, IPersistance } from '@gauzy/ui-sdk/common';
 import { Persistance } from './persistance.class';
 
 export class LayoutPersistance implements ILayoutPersistance {

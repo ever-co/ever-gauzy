@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
 import { toUtcOffset } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';

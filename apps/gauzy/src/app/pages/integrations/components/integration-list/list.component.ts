@@ -20,7 +20,7 @@ import {
 	IntegrationTenantService,
 	IntegrationsService
 } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
 

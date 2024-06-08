@@ -4,10 +4,9 @@ import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { LocationFormComponent } from '../../forms/location';
-import { LeafletMapComponent } from '../../forms/maps';
 import { Store } from '@gauzy/ui-sdk/common';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
+import { LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -15,7 +15,7 @@ import {
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { environment } from '@gauzy/ui-config';
 import { Store, compareDate, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { InvoicesService, OrganizationSettingService } from '@gauzy/ui-sdk/core';

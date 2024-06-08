@@ -1,13 +1,19 @@
 import { Component, OnInit, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { ErrorHandlingService, MatchValidator, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_TIME_FORMATS } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService, RoleService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../../forms/helpers';
+import {
+	AuthService,
+	ErrorHandlingService,
+	MatchValidator,
+	RoleService,
+	ToastrService,
+	UsersService
+} from '@gauzy/ui-sdk/core';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

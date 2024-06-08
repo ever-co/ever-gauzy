@@ -1,20 +1,17 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { TeamsComponent } from './teams.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: TeamsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_TEAM_VIEW
-				],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TEAM_VIEW],
 				redirectTo: '/pages/dashboard'
 			}
 		}

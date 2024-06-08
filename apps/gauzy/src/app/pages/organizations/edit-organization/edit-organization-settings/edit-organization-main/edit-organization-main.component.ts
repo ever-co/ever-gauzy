@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { DUMMY_PROFILE_IMAGE, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
 

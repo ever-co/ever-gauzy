@@ -13,7 +13,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeeStore, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

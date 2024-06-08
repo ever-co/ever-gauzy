@@ -5,7 +5,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { NbCardModule, NbButtonModule, NbDialogModule, NbIconModule, NbAlertModule } from '@nebular/theme';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
-import { DialogsModule } from '../../dialogs';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { LabelModule } from '../../components/label/label.module';
 import { TableComponentsModule } from '../../table-components';
 

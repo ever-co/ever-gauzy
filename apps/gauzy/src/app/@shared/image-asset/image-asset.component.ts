@@ -4,7 +4,7 @@ import { IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ImageAssetService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy()

@@ -1,6 +1,6 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
 import { IWarehouseProductVariant } from '@gauzy/contracts';

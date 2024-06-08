@@ -13,7 +13,11 @@ import {
 	NbTooltipModule,
 	NbActionsModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
@@ -29,16 +33,12 @@ import {
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { TableComponentsModule } from '../../@shared/table-components';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { DirectivesModule } from '../../@shared/directives/directives.module';
 
 @NgModule({
 	imports: [

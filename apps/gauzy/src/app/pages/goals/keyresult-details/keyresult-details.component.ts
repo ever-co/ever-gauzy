@@ -29,7 +29,7 @@ import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/key
 import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import { Store } from '@gauzy/ui-sdk/common';
 import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

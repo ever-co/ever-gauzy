@@ -7,7 +7,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TasksService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

@@ -14,10 +14,10 @@ import {
 	IOrganization,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ReplacePipe } from '@gauzy/ui-sdk/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ReplacePipe } from '../../../../../@shared/pipes';
 import {
 	GauzyAIService,
 	IntegrationEntitySettingService,

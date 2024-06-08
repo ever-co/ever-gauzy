@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { InviteGuard } from '@gauzy/ui-sdk/core';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { UsersComponent } from './users.component';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
@@ -17,7 +16,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: UsersComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_USERS_VIEW],
@@ -28,7 +27,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: EditUserProfileComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_USERS_EDIT],

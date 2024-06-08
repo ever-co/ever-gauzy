@@ -4,7 +4,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ImageAssetService } from '@gauzy/ui-sdk/core';

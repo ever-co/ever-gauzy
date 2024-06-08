@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
+import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store } from '@gauzy/ui-sdk/common';

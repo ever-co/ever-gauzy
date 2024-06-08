@@ -13,7 +13,7 @@ import {
 	TaskSizeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';

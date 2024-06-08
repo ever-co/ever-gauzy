@@ -31,7 +31,7 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { convertLocalToTimezone } from '@gauzy/ui-sdk/common';

@@ -8,7 +8,7 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })

@@ -7,7 +7,13 @@ import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	EmployeeStore,
+	EmployeesService,
+	ErrorHandlingService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -20,6 +26,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { DateFormatPipe } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
@@ -33,7 +40,6 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,
@@ -42,7 +48,6 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ToggleFilterComponent } from '../../@shared/table-filters';
-import { DateFormatPipe } from '../../@shared/pipes';
 import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
 import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 

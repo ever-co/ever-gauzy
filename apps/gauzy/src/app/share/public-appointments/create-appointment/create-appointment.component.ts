@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { firstValueFrom } from 'rxjs';
 import { IEmployee, IEventType } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';

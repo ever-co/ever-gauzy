@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { Resolve, Router } from '@angular/router';
 import { catchError, debounceTime, from, of, tap } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { IUser } from '@gauzy/contracts';
@@ -16,7 +16,7 @@ export class UserResolver implements Resolve<Observable<number | Observable<neve
 	) {}
 
 	// Get the observable for fetching user data from the service
-	resolve(route: ActivatedRouteSnapshot): Observable<number> {
+	resolve(): Observable<number> {
 		// Get the observable for fetching user data from the service
 		const user$ = this._usersService.getMe();
 

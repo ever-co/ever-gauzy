@@ -4,7 +4,7 @@ import { PermissionsEnum, ICandidate, ICandidateInterview } from '@gauzy/contrac
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService, CandidatesService } from '@gauzy/ui-sdk/core';
 import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';

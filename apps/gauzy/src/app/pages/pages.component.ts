@@ -7,7 +7,7 @@ import { filter, map, take, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	AuthStrategy,
 	IJobMatchingEntity,
@@ -15,6 +15,7 @@ import {
 	IntegrationsService,
 	NavMenuBuilderService,
 	NavMenuSectionItem,
+	PermissionsService,
 	UsersService
 } from '@gauzy/ui-sdk/core';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
@@ -49,7 +50,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		private readonly authStrategy: AuthStrategy,
 		private readonly _integrationsService: IntegrationsService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
-		private readonly _navMenuBuilderService: NavMenuBuilderService
+		private readonly _navMenuBuilderService: NavMenuBuilderService,
+		private readonly _permissionsService: PermissionsService
 	) {
 		super(translate);
 	}
@@ -104,7 +106,10 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			.pipe(
 				filter((permissions: IRolePermission[]) => isNotEmpty(permissions)),
 				map((permissions) => permissions.map(({ permission }) => permission)),
-				tap((permissions) => this.ngxPermissionsService.loadPermissions(permissions)),
+				tap((permissions) => {
+					this.ngxPermissionsService.flushPermissions();
+					this.ngxPermissionsService.loadPermissions(permissions);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -348,10 +353,11 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	}
 
 	/**
+	 * Retrieves the report menu items for a specific organization.
 	 *
-	 * @returns
+	 * @return {Promise<void>} - A promise that resolves when the report menu items are retrieved.
 	 */
-	async getReportsMenus() {
+	async getReportsMenus(): Promise<void> {
 		if (!this.organization) {
 			return;
 		}
@@ -359,10 +365,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		await this.reportService.getReportMenuItems({
-			tenantId,
-			organizationId
-		});
+		await this.reportService.getReportMenuItems({ tenantId, organizationId });
 	}
 
 	/*
@@ -370,12 +373,14 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 	 */
 	private async _createEntryPoint() {
 		const id = this.store.userId;
+
 		if (!id) return;
 
-		this.user = await this.usersService.getMe(
-			['role.rolePermissions', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'],
-			true
-		);
+		//Load permissions
+		this._permissionsService.loadPermissions();
+
+		const relations = ['role', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'];
+		this.user = await this.usersService.getMe(relations, true);
 
 		this.authStrategy.electronAuthentication({
 			user: this.user,
@@ -392,11 +397,8 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		this.store.user = this.user;
 
 		//tenant enabled/disabled features for relatives organizations
-		const { tenant, role } = this.user;
+		const { tenant } = this.user;
 		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
-
-		//only enabled permissions assign to logged in user
-		this.store.userRolePermissions = role.rolePermissions.filter((permission) => permission.enabled);
 	}
 
 	ngOnDestroy() {}

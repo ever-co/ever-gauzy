@@ -1,0 +1,178 @@
+@import 'themes';
+
+$button-color: #fa754e;
+$wrapper-padding: 30px;
+$register-background-light-color: nb-theme(gauzy-card-1);
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.card {
+  background: nb-theme(gauzy-card-1);
+}
+
+// Queries
+@mixin mobile-screen {
+  @media screen and (max-width: 490px) {
+    @content;
+  }
+}
+@mixin small-mobile-screen {
+  @media screen and (max-width: 320px) {
+    @content;
+  }
+}
+@mixin small-laptop-screen {
+  @media screen and (max-width: 1024px) {
+    @content;
+  }
+}
+@mixin tablet-screen {
+  @media screen and (max-width: 790px) {
+    @content;
+  }
+}
+@mixin not-mobile-screen {
+  @media screen and (min-width: 491px) {
+    @content;
+  }
+}
+@mixin big-screen {
+  @media screen and (min-width: 1400px) {
+    @content;
+  }
+}
+// End of queries
+
+@mixin submit-btn {
+  padding: 13px 39px;
+  -webkit-box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
+  box-shadow: 0px 19px 15px -14px rgba(0, 0, 0, 0.22);
+  //styleName: Button label;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+  letter-spacing: -0.009em;
+  text-align: left;
+  &:enabled {
+    background-color: $button-color;
+    border: 1px solid $button-color;
+    color: #ffffff;
+  }
+}
+@mixin social-links-style {
+  text-align: start;
+  color: #808080;
+  @include mobile-screen {
+    text-align: center;
+  }
+  & .socials {
+    margin-left: -11px;
+    & .social-link {
+      margin: 0 10px 0 0;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      @include small-mobile-screen {
+        margin: 0;
+      }
+      & nb-icon {
+        height: 28px;
+        color: nb-theme(background-alternative-color-2) !important;
+        opacity: 0.8;
+        @include small-laptop-screen {
+          height: 24px;
+        }
+        @include small-mobile-screen {
+          height: 21px;
+        }
+      }
+      &:hover {
+        border: 1px solid nb-theme(color-primary-500);
+        & * {
+          color: nb-theme(color-primary-500) !important;
+        }
+      }
+    }
+  }
+}
+@mixin another-action {
+  padding-top: 10px;
+  padding-left: 10px;
+  color: #808080;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+
+  @include mobile-screen {
+    text-align: center;
+  }
+  & a {
+    color: nb-theme(color-primary-500);
+    text-decoration: none;
+    font-weight: bold;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+@mixin hr-div-strong {
+  width: 416px;
+  height: 1px;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.15;
+  margin-bottom: 29px;
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+@mixin hr-div-soft {
+  width: 416px;
+  height: 1px;
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.05;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+
+@mixin input-fields-color {
+  ::ng-deep .input-full-width {
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 0.5px 0.5px 0.5px inset;
+    border-radius: nb-theme(border-radius);
+    background-color: nb-theme(gauzy-input-background) !important;
+    border: unset;
+  }
+
+  ::ng-deep ngx-register .register-wrapper .input-full-width {
+    background-color: nb-theme(gauzy-input-background) !important;
+  }
+
+  ::ng-deep ngx-register .register-wrapper.dark .input-full-width {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+  }
+}

@@ -16,7 +16,7 @@ import { NbDialogRef } from '@nebular/theme';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	EmployeesService,
 	EquipmentService,

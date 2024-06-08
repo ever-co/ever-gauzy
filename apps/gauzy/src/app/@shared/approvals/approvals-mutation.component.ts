@@ -1,5 +1,5 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IRequestApproval,
@@ -20,7 +20,7 @@ import {
 	OrganizationTeamsService,
 	RequestApprovalService
 } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../forms/helpers';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

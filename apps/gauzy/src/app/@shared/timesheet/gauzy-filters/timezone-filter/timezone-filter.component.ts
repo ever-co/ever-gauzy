@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { NavigationService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	DEFAULT_TIME_FORMATS,
 	IOrganization,

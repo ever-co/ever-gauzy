@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
@@ -17,13 +17,10 @@ const routes: Routes = [
 			{
 				path: '',
 				component: ProjectListComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
-						only: [
-							PermissionsEnum.ALL_ORG_VIEW,
-							PermissionsEnum.ORG_PROJECT_VIEW
-						],
+						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW],
 						redirectTo: '/pages/dashboard'
 					}
 				}
@@ -31,13 +28,10 @@ const routes: Routes = [
 			{
 				path: 'create',
 				component: ProjectCreateMutationComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
-						only: [
-							PermissionsEnum.ALL_ORG_EDIT,
-							PermissionsEnum.ORG_PROJECT_ADD
-						],
+						only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD],
 						redirectTo: '/pages/dashboard'
 					},
 					selectors: {
@@ -68,13 +62,10 @@ const routes: Routes = [
 					{
 						path: 'edit',
 						component: ProjectEditMutationComponent,
-						canActivate: [NgxPermissionsGuard],
+						canActivate: [PermissionsGuard],
 						data: {
 							permissions: {
-								only: [
-									PermissionsEnum.ALL_ORG_EDIT,
-									PermissionsEnum.ORG_PROJECT_EDIT
-								],
+								only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT],
 								redirectTo: '/pages/dashboard'
 							},
 							relations: [
@@ -84,11 +75,11 @@ const routes: Routes = [
 								'tags',
 								'teams',
 								'repository'
-							],
+							]
 						}
-					},
+					}
 				]
-			},
+			}
 		]
 	}
 ];
@@ -97,4 +88,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ProjectsRoutingModule { }
+export class ProjectsRoutingModule {}

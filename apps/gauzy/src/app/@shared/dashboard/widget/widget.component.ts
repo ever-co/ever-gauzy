@@ -3,7 +3,7 @@ import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { filter, tap } from 'rxjs/operators';
-import { GuiDrag } from '@gauzy/ui-sdk/shared';
+import { GuiDrag } from '@gauzy/ui-sdk/common';
 import { WidgetService } from './widget.service';
 
 @UntilDestroy({ checkProperties: true })

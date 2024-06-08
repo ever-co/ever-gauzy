@@ -2,7 +2,7 @@ import { Component, Output, EventEmitter } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @Component({
 	selector: 'ga-danger-zone-mutation',

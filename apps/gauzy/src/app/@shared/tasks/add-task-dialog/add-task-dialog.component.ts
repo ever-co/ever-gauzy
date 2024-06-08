@@ -20,7 +20,7 @@ import {
 	TaskParticipantEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { EmployeesService, OrganizationTeamsService, TasksService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })

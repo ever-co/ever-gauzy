@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -1,13 +1,13 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ICurrency, IPagination } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, EMPTY, Subject } from 'rxjs';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, EMPTY, Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ICurrency, IPagination } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
+
 @UntilDestroy()
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CurrencyService {
 	private _currencies$: BehaviorSubject<ICurrency[]> = new BehaviorSubject([]);
 	public currencies$: Observable<ICurrency[]> = this._currencies$.asObservable();

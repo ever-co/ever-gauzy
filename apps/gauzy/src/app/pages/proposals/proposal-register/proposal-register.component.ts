@@ -18,7 +18,7 @@ import {
 	ISelectedEmployee
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

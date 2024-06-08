@@ -6,10 +6,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, pairwise, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CustomSmtpService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '../forms/helpers';
+import { CustomSmtpService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 import { patterns } from '../regex/regex-patterns.const';
 
 @UntilDestroy({ checkProperties: true })

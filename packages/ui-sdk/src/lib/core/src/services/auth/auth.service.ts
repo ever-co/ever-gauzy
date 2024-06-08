@@ -115,12 +115,24 @@ export class AuthService {
 		return this.http.post(`${API_PREFIX}/auth/reset-password`, resetPasswordInput);
 	}
 
+	/**
+	 * Checks if the current user has the specified roles.
+	 *
+	 * @param {RolesEnum[]} roles - An array of roles to check.
+	 * @return {Observable<boolean>} An observable that emits a boolean indicating whether the user has the specified roles.
+	 */
 	hasRole(roles: RolesEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/role`, {
 			params: toParams({ roles })
 		});
 	}
 
+	/**
+	 * Checks if the user has the specified permissions.
+	 *
+	 * @param {...PermissionsEnum[]} permissions - The permissions to check.
+	 * @return {Observable<boolean>} An observable that emits a boolean indicating whether the user has the specified permissions.
+	 */
 	hasPermissions(...permissions: PermissionsEnum[]): Observable<boolean> {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/permissions`, {
 			params: toParams({ permissions })

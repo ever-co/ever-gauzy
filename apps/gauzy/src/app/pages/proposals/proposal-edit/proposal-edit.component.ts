@@ -2,13 +2,14 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/co
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { OrganizationSettingService, ProposalsService, ToastrService, UrlPatternValidator } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IProposal, ITag } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent, ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

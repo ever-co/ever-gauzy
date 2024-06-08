@@ -3,12 +3,12 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { ViewRoutingModule } from './view-routing.module';
 import { GithubViewComponent } from './view/view.component';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet';
-import { DialogsModule } from './../../../../@shared/dialogs';
 import { SharedModule } from './../../../../@shared/shared.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DateRangeTitleModule } from './../../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
 

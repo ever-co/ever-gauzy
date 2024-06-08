@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { KeyResultService } from '@gauzy/ui-sdk/core';
 import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 
