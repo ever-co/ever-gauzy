@@ -3,6 +3,7 @@ import { AfterViewChecked, ChangeDetectorRef, Component, EventEmitter, Input, On
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
+import { NgxPermissionsService } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService } from '../../../../../services';
@@ -17,7 +18,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _user: IUser;
 
 	/**
+	 * Returns the value of the private `_item` property.
 	 *
+	 * @return {IMenuItem} The value of the `_item` property.
 	 */
 	private _item: IMenuItem;
 	get item() {
@@ -28,7 +31,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current collapse state.
 	 *
+	 * @return {boolean} The current collapse state.
 	 */
 	private _collapse = true;
 	get collapse() {
@@ -40,7 +45,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current selected state.
 	 *
+	 * @return {boolean} The current selected state.
 	 */
 	private _selected: boolean;
 	get selected() {
@@ -51,7 +58,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current state of the component.
 	 *
+	 * @return {boolean} The current state of the component.
 	 */
 	private _state: boolean;
 	public get state() {
@@ -62,7 +71,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the selected children.
 	 *
+	 * @return {IMenuItem} The selected children.
 	 */
 	private _selectedChildren: IMenuItem;
 	public get selectedChildren() {
@@ -81,8 +92,11 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _location: Location,
 		private readonly _jitsuService: JitsuService,
-		private readonly _store: Store
-	) {}
+		private readonly _store: Store,
+		protected readonly _ngxPermissionsService: NgxPermissionsService
+	) {
+		console.log(_ngxPermissionsService.getPermissions());
+	}
 
 	ngOnInit(): void {
 		// Get the user data from the store
