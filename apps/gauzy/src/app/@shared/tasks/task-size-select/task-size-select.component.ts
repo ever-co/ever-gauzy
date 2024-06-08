@@ -13,9 +13,11 @@ import {
 	TaskSizeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskSizesService, ToastrService } from '../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TaskSizesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

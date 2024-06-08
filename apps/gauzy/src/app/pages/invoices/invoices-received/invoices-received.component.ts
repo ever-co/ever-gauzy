@@ -16,10 +16,14 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
-import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
-import { ErrorHandlingService, InvoicesService, Store, ToastrService } from '../../../@core/services';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	InvoicesService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
 import {
 	ContactLinksComponent,

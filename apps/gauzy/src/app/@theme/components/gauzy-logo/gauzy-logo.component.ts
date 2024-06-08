@@ -9,15 +9,13 @@ import {
 	AfterViewInit,
 	Inject
 } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { tap, debounceTime, filter } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { tap, debounceTime, filter } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { Store } from '../../../@core/services';
-import { GAUZY_ENV } from '../../../@core';
-import { Environment } from '../../../../environments/model';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,7 +38,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		{
 			title: 'Invite people',
 			icon: 'fas fa-user-plus',
-			link: '/pages/employees',
+			link: '/pages/employees/invites',
 			data: {
 				translationKey: 'MENU.INVITE_PEOPLE',
 				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVITE_VIEW],
@@ -197,11 +195,10 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 
 	constructor(
 		private readonly themeService: NbThemeService,
-		private readonly store: Store,
+		private readonly domSanitizer: DomSanitizer,
 		private readonly cd: ChangeDetectorRef,
-		@Inject(GAUZY_ENV)
-		private readonly environment: Environment,
-		private readonly domSanitizer: DomSanitizer
+		private readonly store: Store,
+		@Inject(GAUZY_ENV) private readonly environment: Environment
 	) {
 		this.logoUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(environment.PLATFORM_LOGO);
 	}
@@ -210,8 +207,8 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				debounceTime(100),
-				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
+				distinctUntilChange(),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)

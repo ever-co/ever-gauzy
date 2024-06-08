@@ -11,10 +11,10 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
 import { JobTableComponentsModule } from '../../../table-components';
-import { DirectivesModule } from './../../../../../@shared/directives/directives.module';
 import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-template-select/proposal-template-select.module';
 import { EmployeeSelectorsModule } from './../../../../../@theme/components/header/selectors/employee';
@@ -34,7 +34,7 @@ import { EmployeeSelectorsModule } from './../../../../../@theme/components/head
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,

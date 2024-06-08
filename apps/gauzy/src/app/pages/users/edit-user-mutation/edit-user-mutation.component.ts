@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
-import { UsersOrganizationsService } from '../../../@core/services/users-organizations.service';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../../@core/services/store.service';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
+import { UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/basic-info-form.component';
 
 @Component({

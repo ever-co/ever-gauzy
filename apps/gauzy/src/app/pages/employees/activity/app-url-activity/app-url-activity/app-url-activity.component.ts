@@ -5,7 +5,7 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITimeLogFilters,
@@ -15,12 +15,12 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { ActivityService, DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 import { toUTC, toLocal, isJsObject, isEmpty, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../../@core/services';
-import { ActivityService, TimesheetFilterService } from './../../../../../@shared/timesheet';
+import { Store } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -47,9 +47,10 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly timesheetFilterService: TimesheetFilterService,
 		private readonly activityService: ActivityService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit(): void {
@@ -76,11 +77,21 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 			.subscribe();
 	}
 
-	filtersChange(filters: ITimeLogFilters) {
+	/**
+	 * Handles changes to the filters.
+	 *
+	 * @param filters The new filters to apply.
+	 */
+	filtersChange(filters: ITimeLogFilters): void {
+		// Save filters if saveFilters is true
 		if (this.gauzyFiltersComponent.saveFilters) {
 			this.timesheetFilterService.filter = filters;
 		}
+
+		// Update the current filters with a new copy of the filters object
 		this.filters = Object.assign({}, filters);
+
+		// Notify subscribers about the filter change
 		this.subject$.next(true);
 	}
 
@@ -101,81 +112,116 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		this.payloads$.next(request);
 	}
 
-	loadChild(item: IDailyActivity) {
+	/**
+	 * Load child activities for the given item.
+	 *
+	 * @param item The daily activity item to load child activities for.
+	 */
+	async loadChild(item: IDailyActivity) {
 		const date = moment(item.date).format('YYYY-MM-DD');
 		const dateTime = toLocal(moment.utc(date + ' ' + item.time));
 
-		const { id: organizationId } = this.organization;
-		const request: IGetActivitiesInput = {
-			startDate: toUTC(dateTime).format('YYYY-MM-DD HH:mm:ss'),
-			endDate: toUTC(dateTime).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
-			employeeIds: [item.employeeId],
-			types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
-			titles: [item.title],
-			organizationId
+		try {
+			const request: IGetActivitiesInput = {
+				organizationId: this.organization.id,
+				tenantId: this.organization.tenantId,
+				startDate: toUTC(dateTime).format('YYYY-MM-DD HH:mm:ss'),
+				endDate: toUTC(dateTime).add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'),
+				employeeIds: [item.employeeId],
+				types: [this.type === 'urls' ? ActivityType.URL : ActivityType.APP],
+				titles: [item.title]
+			};
+
+			const activities = await this.activityService.getActivities(request);
+			item.childItems = activities.map((activity) => this.createDailyActivity(activity, item.duration));
+		} catch (error) {
+			console.error('Error loading child activities:', error);
+		}
+	}
+
+	/**
+	 * Creates a daily activity object from the given activity data.
+	 *
+	 * @param activity The activity data.
+	 * @param parentDuration The duration of the parent activity.
+	 * @returns The daily activity object.
+	 */
+	private createDailyActivity(activity: IActivity, parentDuration: number): IDailyActivity {
+		const dailyActivity: IDailyActivity = {
+			duration: activity.duration,
+			employeeId: activity.employeeId,
+			date: activity.date,
+			title: activity.title,
+			description: activity.description,
+			durationPercentage: (activity.duration * 100) / parentDuration
 		};
 
-		this.activityService.getActivities(request).then((items) => {
-			item.childItems = items.map((activity: IActivity): IDailyActivity => {
-				const dailyActivity = {
-					duration: activity.duration,
-					employeeId: activity.employeeId,
-					date: activity.date,
-					title: activity.title,
-					description: activity.description,
-					durationPercentage: (activity.duration * 100) / item.duration
-				};
-				if (activity.metaData) {
-					let metaData: IURLMetaData = new Object();
-					if (typeof activity.metaData === 'string') {
-						metaData = JSON.parse(activity.metaData) as IURLMetaData;
-					} else if (isJsObject(activity.metaData)) {
-						metaData = activity.metaData as IURLMetaData;
-					}
-					dailyActivity['metaData'] = metaData;
-					dailyActivity['url'] = metaData.url || '';
-				}
-				return dailyActivity;
-			});
-		});
+		if (activity.metaData) {
+			let metaData: IURLMetaData = {};
+
+			if (typeof activity.metaData === 'string') {
+				metaData = JSON.parse(activity.metaData) as IURLMetaData;
+			} else if (isJsObject(activity.metaData)) {
+				metaData = activity.metaData as IURLMetaData;
+			}
+
+			dailyActivity.metaData = metaData;
+			dailyActivity.url = metaData.url || '';
+		}
+
+		return dailyActivity;
 	}
 
 	/**
 	 * Get APP & URL's activity logs
 	 *
-	 * @returns
+	 * @returns void
 	 */
-	getAppUrlActivityLogs() {
+	async getAppUrlActivityLogs(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
-		const payloads = this.payloads$.getValue();
 
 		this.loading = true;
-		this.activityService
-			.getDailyActivities(payloads)
-			.then((activities) => {
-				this.apps = chain(activities)
-					.map((activity) => {
-						activity.hours = toLocal(
-							moment.utc(moment.utc(activity.date).format('YYYY-MM-DD') + ' ' + activity.time)
-						);
-						return activity;
-					})
-					.groupBy('hours')
-					.mapObject((value, key) => {
-						value = value.slice(0, 6);
-						const sum = reduce(value, (memo, activity) => memo + parseInt(activity.duration + '', 10), 0);
-						value = value.map((activity) => {
-							activity.durationPercentage = parseFloat(((activity.duration * 100) / sum).toFixed(1));
-							return activity;
-						});
-						return { hour: key, activities: value };
-					})
-					.values()
-					.value();
-			})
-			.finally(() => (this.loading = false));
+
+		try {
+			const payloads = this.payloads$.getValue();
+			const activities = await this.activityService.getDailyActivities(payloads);
+			this.apps = chain(activities)
+				.map((activity) => {
+					activity.hours = toLocal(
+						moment.utc(moment.utc(activity.date).format('YYYY-MM-DD') + ' ' + activity.time)
+					);
+					return activity;
+				})
+				.groupBy('hours')
+				.map((activities, hour) => this.calculateActivityDurations(activities, hour))
+				.values()
+				.value();
+		} catch (error) {
+			console.error('Failed to get daily activities:', error);
+		} finally {
+			this.loading = false;
+		}
+	}
+
+	/**
+	 * Calculate the duration percentages for activities and group them by hour.
+	 *
+	 * @param activities The list of activities for a specific hour.
+	 * @param hour The hour to group activities by.
+	 * @returns An object containing the hour and its activities with duration percentages.
+	 */
+	private calculateActivityDurations(activities: any[], hour: string): { hour: string; activities: any[] } {
+		const limitedActivities = activities.slice(0, 6);
+		const totalDuration = reduce(limitedActivities, (sum, activity) => sum + parseInt(activity.duration, 10), 0);
+
+		const activitiesWithDurations = limitedActivities.map((activity) => {
+			activity.durationPercentage = parseFloat(((activity.duration * 100) / totalDuration).toFixed(1));
+			return activity;
+		});
+
+		return { hour, activities: activitiesWithDurations };
 	}
 
 	ngOnDestroy(): void {}

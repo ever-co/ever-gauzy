@@ -1,5 +1,5 @@
 import { OnInit, Component, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import {
 	IRequestApproval,
@@ -12,15 +12,15 @@ import {
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ApprovalPolicyService,
 	EmployeesService,
 	OrganizationTeamsService,
-	RequestApprovalService,
-	Store
-} from '../../@core/services';
-import { FormHelpers } from '../forms/helpers';
+	RequestApprovalService
+} from '@gauzy/ui-sdk/core';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,24 +1,19 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	AfterViewInit,
-	Output,
-	EventEmitter,
-	ChangeDetectionStrategy
-} from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { IOrganization, IOrganizationProject, CrudActionEnum, PermissionsEnum } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import {
+	NavigationService,
+	OrganizationProjectStore,
+	OrganizationProjectsService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { ALL_PROJECT_SELECTED } from './default-project';
-import { OrganizationProjectsService, OrganizationProjectStore, Store, ToastrService } from '../../../@core/services';
-import { TruncatePipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -124,7 +119,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		private readonly toastrService: ToastrService,
 		private readonly _organizationProjectStore: OrganizationProjectStore,
 		private readonly _truncatePipe: TruncatePipe,
-		private readonly router: Router,
+		private readonly _navigationService: NavigationService,
 		private readonly activatedRoute: ActivatedRoute
 	) {}
 
@@ -337,19 +332,19 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	selectProject(project: IOrganizationProject): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedProject = project || ALL_PROJECT_SELECTED;
-			this.setAttributesToParams({ projectId: project?.id || null });
+			this.setAttributesToParams({ projectId: project?.id });
 		}
 		this.selectedProject = project || ALL_PROJECT_SELECTED;
 		this.projectId = this.selectedProject.id;
 		this.onChanged.emit(project);
 	}
 
-	private setAttributesToParams(params: Object) {
-		this.router.navigate([], {
-			relativeTo: this.activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge'
-		});
+	/**
+	 * Sets attributes to the current navigation parameters.
+	 * @param params An object containing key-value pairs representing the parameters to set.
+	 */
+	private async setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
+		await this._navigationService.updateQueryParams(params);
 	}
 
 	selectProjectById(projectId: string) {

@@ -2,22 +2,13 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	ICandidateEducation,
-	ComponentLayoutStyleEnum,
-	IOrganization
-} from '@gauzy/contracts';
+import { ICandidateEducation, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
-import { DateViewComponent } from './../../../../../../@shared/table-components';
-import { ComponentEnum } from './../../../../../../@core/constants';
-import {
-	CandidateEducationsService,
-	CandidateStore,
-	Store,
-	ToastrService
-} from './../../../../../../@core/services';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
+import { CandidateEducationsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import { tap } from 'rxjs/operators';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { DateViewComponent } from './../../../../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -25,9 +16,7 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 	templateUrl: './edit-candidate-education.component.html',
 	styleUrls: ['./edit-candidate-education.component.scss']
 })
-export class EditCandidateEducationComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditCandidateEducationComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	public selectedOrganization: IOrganization;
 	public showAddCard: boolean;
 	public candidateId: string;
@@ -53,19 +42,17 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		this.setView();
 	}
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(untilDestroyed(this))
-			.subscribe(async (candidate) => {
-				if (candidate) {
-					this.candidateId = candidate.id;
-					this.selectedOrganization = this.store.selectedOrganization;
+		this.candidateStore.selectedCandidate$.pipe(untilDestroyed(this)).subscribe(async (candidate) => {
+			if (candidate) {
+				this.candidateId = candidate.id;
+				this.selectedOrganization = this.store.selectedOrganization;
 
-					await this._initializeForm();
-					await this.loadEducations();
-					await this.loadSmartTable();
-					this._applyTranslationOnSmartTable();
-				}
-			});
+				await this._initializeForm();
+				await this.loadEducations();
+				await this.loadSmartTable();
+				this._applyTranslationOnSmartTable();
+			}
+		});
 	}
 	private async _initializeForm() {
 		this.form = new UntypedFormGroup({
@@ -83,9 +70,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		);
 	}
 	editEducation(education: ICandidateEducation) {
-		const selectedItem: ICandidateEducation = education
-			? education
-			: this.selectedEducation;
+		const selectedItem: ICandidateEducation = education ? education : this.selectedEducation;
 		this.showAddCard = !this.showAddCard;
 		this.educations.patchValue([selectedItem]);
 		this.selectedEducation = selectedItem;
@@ -168,10 +153,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedEducation =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedEducation;
+				this.selectedEducation = this.dataLayoutStyle === 'CARDS_GRID' ? null : this.selectedEducation;
 			});
 	}
 	async submitForm() {
@@ -189,20 +171,14 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		if (this.selectedEducation) {
 			//editing existing education
 			try {
-				await this.candidateEducationsService.update(
-					this.selectedEducation.id,
-					{
-						...formValue,
-						organizationId,
-						tenantId
-					}
-				);
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_UPDATED',
-					{
-						name: formValue.schoolName
-					}
-				);
+				await this.candidateEducationsService.update(this.selectedEducation.id, {
+					...formValue,
+					organizationId,
+					tenantId
+				});
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EDUCATION_UPDATED', {
+					name: formValue.schoolName
+				});
 				this.loadEducations();
 			} catch (error) {
 				this.toastrError(error);
@@ -216,12 +192,9 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 					organizationId,
 					tenantId
 				});
-				this.toastrService.success(
-					'TOASTR.MESSAGE.CANDIDATE_EDUCATION_CREATED',
-					{
-						name: formValue.schoolName
-					}
-				);
+				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EDUCATION_CREATED', {
+					name: formValue.schoolName
+				});
 				this.loadEducations();
 			} catch (error) {
 				this.toastrError(error);
@@ -230,19 +203,14 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		this.cancel();
 	}
 	async removeEducation(education: ICandidateEducation) {
-		const selectedItem: ICandidateEducation = education
-			? education
-			: this.selectedEducation;
+		const selectedItem: ICandidateEducation = education ? education : this.selectedEducation;
 		try {
 			await this.candidateEducationsService.delete(selectedItem.id);
 			this.selectedEducation = null;
 			this.disableButton = true;
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_EDUCATION_DELETED',
-				{
-					name: selectedItem.schoolName
-				}
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_EDUCATION_DELETED', {
+				name: selectedItem.schoolName
+			});
 			this.loadEducations();
 		} catch (error) {
 			this.toastrError(error);
@@ -268,5 +236,5 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 		return this.form.get('educations') as FormArray;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

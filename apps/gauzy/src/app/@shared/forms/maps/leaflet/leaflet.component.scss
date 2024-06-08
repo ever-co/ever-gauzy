@@ -1,8 +1,0 @@
-@import 'themes';
-::ng-deep .leaflet-container {
-  width: 100% !important;
-  height: calc(100vh - 30rem)!important;
-  position: relative !important;
-  outline: none !important;
-  border-radius: nb-theme(border-radius);
-}

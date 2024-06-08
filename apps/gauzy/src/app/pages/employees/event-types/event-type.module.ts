@@ -16,13 +16,13 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EventTypeComponent } from './event-type.component';
 import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
-import { EventTypeService } from '../../../@core/services/event-type.service';
+import { EventTypeService } from '@gauzy/ui-sdk/core';
 import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
 import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -48,7 +48,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		CardGridModule,
 		BackNavigationModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module

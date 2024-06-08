@@ -7,16 +7,16 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { distinctUntilChange, splitCamelCase } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange, splitCamelCase } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
-import { Store, TagsService, ToastrService } from '../../@core/services';
-import { ComponentEnum } from '../../@core/constants';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -225,7 +225,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				name: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_NAME'),
 					type: 'custom',
-					width: '16%',
+					width: '20%',
 					class: 'text-center',
 					renderComponent: TagsColorComponent,
 					componentInitFunction: (instance: TagsColorComponent, cell: Cell) => {
@@ -235,16 +235,20 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 				},
 				description: {
 					title: this.getTranslation('TAGS_PAGE.TAGS_DESCRIPTION'),
-					type: 'string'
+					type: 'string',
+					width: '70%'
 				},
 				counter: {
 					title: this.getTranslation('Counter'),
 					type: 'string',
-					width: '25%',
+					width: '10%',
 					filter: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
-						const item = cell.getRow().getData();
-						return this.getCounter(item);
+						if (cell instanceof Cell) {
+							const data = cell.getRow().getData();
+							return this.getCounter(data);
+						}
+						return this.getCounter(cell);
 					}
 				}
 			}

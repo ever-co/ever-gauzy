@@ -9,11 +9,11 @@ import {
 	NbCheckboxModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TagsService } from '../../@core/services/tags.service';
+import { TagsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { TagsMutationComponent } from './tags-mutation.component';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -28,7 +28,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbInputModule,
 		NbSelectModule,
 		ColorPickerModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	declarations: [TagsMutationComponent],
 	providers: [TagsService]

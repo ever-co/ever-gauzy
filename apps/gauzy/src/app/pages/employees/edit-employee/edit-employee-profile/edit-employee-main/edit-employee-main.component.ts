@@ -4,7 +4,8 @@ import { IEmployee, IImageAsset, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { EmployeeStore, Store, ToastrService } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeStore, ToastrService } from '@gauzy/ui-sdk/core';
 
 /**
  * This component contains the properties stored within the User Entity of an Employee.
@@ -20,18 +21,15 @@ import { EmployeeStore, Store, ToastrService } from '../../../../../@core/servic
 	]
 })
 export class EditEmployeeMainComponent implements OnInit, OnDestroy {
-
 	organization: IOrganization;
 	hoverState: boolean;
 	selectedEmployee: IEmployee;
 
 	/*
-	* Employee Main Mutation Form
-	*/
+	 * Employee Main Mutation Form
+	 */
 	public form: UntypedFormGroup = EditEmployeeMainComponent.buildForm(this.fb);
-	static buildForm(
-		fb: UntypedFormBuilder
-	): UntypedFormGroup {
+	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			username: [],
 			email: [null, Validators.required],
@@ -40,9 +38,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			preferredLanguage: [],
 			profile_link: [],
 			imageId: [],
-			imageUrl: [
-				{ value: null, disabled: true }
-			],
+			imageUrl: [{ value: null, disabled: true }]
 		});
 	}
 
@@ -51,7 +47,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly employeeStore: EmployeeStore
-	) { }
+	) {}
 
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -105,8 +101,8 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		const values = {
 			organizationId,
 			tenantId,
-			...(this.form.valid ? this.form.value : {}),
-		}
+			...(this.form.valid ? this.form.value : {})
+		};
 
 		this.employeeStore.userForm = values;
 		this.employeeStore.employeeForm = values;
@@ -125,5 +121,5 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

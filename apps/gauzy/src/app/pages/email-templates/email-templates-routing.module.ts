@@ -1,14 +1,14 @@
 import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { EmailTemplatesComponent } from './email-templates.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { EmailTemplatesComponent } from './email-templates.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: EmailTemplatesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.VIEW_ALL_EMAIL_TEMPLATES],

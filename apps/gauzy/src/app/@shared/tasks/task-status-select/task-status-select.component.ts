@@ -12,10 +12,10 @@ import {
 	ITaskStatusFindInput,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, sluggable } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange, sluggable, Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, TaskStatusesService, ToastrService } from '../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TaskStatusesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

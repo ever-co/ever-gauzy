@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -15,23 +15,22 @@ import {
 	NbLayoutModule,
 	NbActionsModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
-import { OrganizationsService } from '../../@core/services/organizations.service';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { UserMutationModule } from '../../@shared/user/user-mutation/user-mutation.module';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { UsersOrganizationsService } from '../../@core/services/users-organizations.service';
 import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
 import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
 import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { InviteGuard } from '../../@core/guards';
 import { UserMultiSelectModule } from '../../@shared/user/user-multi-select/user-multi-select.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
@@ -39,10 +38,9 @@ import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-em
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
-import { UserIdService } from '../../@core/services/edit-user-data.service';
+import { UserIdService } from '@gauzy/ui-sdk/core';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -86,7 +84,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,

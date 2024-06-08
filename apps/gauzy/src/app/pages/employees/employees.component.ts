@@ -7,7 +7,13 @@ import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import {
+	EmployeeStore,
+	EmployeesService,
+	ErrorHandlingService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -19,7 +25,8 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { DateFormatPipe } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
@@ -29,12 +36,10 @@ import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/in
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeesService, EmployeeStore, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,
@@ -43,7 +48,6 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ToggleFilterComponent } from '../../@shared/table-filters';
-import { DateFormatPipe } from '../../@shared/pipes';
 import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
 import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 

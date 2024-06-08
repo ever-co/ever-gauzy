@@ -27,9 +27,23 @@
 						<div class="fields">
 							<div class="row">
 								<div class="col-6">
-									<ga-timezone-selector
-										formControlName="timeZone"
-									></ga-timezone-selector>
+									<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
+								</div>
+								<div class="col-6">
+									<div class="form-group">
+										<label class="label" for="timeZone">
+											{{ 'FORM.LABELS.TIME_FORMAT' | translate }}
+										</label>
+										<ng-select
+											id="timeFormat"
+											appendTo="body"
+											[(items)]="listOfTimeFormats"
+											[placeholder]="'FORM.PLACEHOLDERS.TIME_FORMAT' | translate"
+											[searchable]="false"
+											[clearable]="false"
+											formControlName="timeFormat"
+										></ng-select>
+									</div>
 								</div>
 							</div>
 						</div>
@@ -75,10 +89,7 @@
 			</nb-accordion>
 		</div>
 		<div class="actions">
-			<button
-				nbButton
-				status="success"
-			>
+			<button nbButton status="success">
 				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>

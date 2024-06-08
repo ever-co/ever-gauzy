@@ -14,9 +14,6 @@ import {
 	NbRouteTabsetModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { AuthService } from '../../@core/services/auth.service';
-import { ExpensesService } from '../../@core/services/expenses.service';
-import { IncomeService } from '../../@core/services/income.service';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
 import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/records-history.module';
 import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';
@@ -30,7 +27,8 @@ import { InfoBlockModule } from '../../@shared/dashboard/info-block/info-block.m
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { AuthService, ExpensesService, IncomeService } from '@gauzy/ui-sdk/core';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { DateRangeTitleModule } from '../../@shared/components/date-range-title';
@@ -60,7 +58,7 @@ import { TeamModule } from './team/team.module';
 		NbSelectModule,
 		NbAlertModule,
 		ProfitHistoryModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

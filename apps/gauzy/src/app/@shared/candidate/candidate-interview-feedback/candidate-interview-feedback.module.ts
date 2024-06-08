@@ -8,15 +8,17 @@ import {
 	NbRadioModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import {
+	CandidateCriterionsRatingService,
+	CandidatePersonalQualitiesService,
+	CandidateTechnologiesService
+} from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
 import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
-import { CandidatePersonalQualitiesService } from '../../../@core/services/candidate-personal-qualities.service';
-import { CandidateTechnologiesService } from '../../../@core/services/candidate-technologies.service';
 import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
-import { CandidateCriterionsRatingService } from '../../../@core/services/candidate-criterions-rating.service';
 
 @NgModule({
 	imports: [
@@ -33,7 +35,7 @@ import { CandidateCriterionsRatingService } from '../../../@core/services/candid
 		StarRatingOutputModule,
 		CandidateSelectModule,
 		NbAccordionModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],

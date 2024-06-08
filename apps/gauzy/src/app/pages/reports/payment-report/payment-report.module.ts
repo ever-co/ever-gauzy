@@ -4,7 +4,8 @@ import { PaymentReportRoutingModule } from './payment-report-routing.module';
 import { PaymentReportComponent } from './payment-report/payment-report.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../../@shared/shared.module';
 import { PaymentReportGridModule } from '../../../@shared/report/payment-report-grid/payment-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
@@ -12,7 +13,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ContactSelectModule } from '../../../@shared/contact-select/contact-select.module';
-import { CurrencyModule } from '../../../@shared/currency/currency.module';
 
 @NgModule({
 	declarations: [PaymentReportComponent],
@@ -20,7 +20,7 @@ import { CurrencyModule } from '../../../@shared/currency/currency.module';
 		CommonModule,
 		PaymentReportRoutingModule,
 		SharedModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

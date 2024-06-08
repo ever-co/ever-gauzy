@@ -7,17 +7,15 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IProductCategoryTranslated, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ProductCategoryService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import { ProductCategoryService, Store, ToastrService } from './../../../../@core/services';
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from './../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

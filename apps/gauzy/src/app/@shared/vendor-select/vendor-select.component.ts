@@ -1,21 +1,12 @@
-import {
-	Component,
-	OnInit,
-	OnDestroy,
-	Input,
-	forwardRef,
-	EventEmitter,
-	Output} from '@angular/core';
-import {
-	IOrganization,
-	IOrganizationVendor
-} from '@gauzy/contracts';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
+import { IOrganization, IOrganizationVendor } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '../../@core/services/store.service';
-import { ErrorHandlingService, OrganizationVendorsService, ToastrService } from '../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationVendorsService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,14 +22,13 @@ import { ErrorHandlingService, OrganizationVendorsService, ToastrService } from 
 	]
 })
 export class VendorSelectComponent implements OnInit, OnDestroy {
-
 	vendors: IOrganizationVendor[] = [];
 	organization: IOrganization;
 	subject$: Subject<any> = new Subject();
 
 	/*
-	* Getter & Setter for dynamic enabled/disabled element
-	*/
+	 * Getter & Setter for dynamic enabled/disabled element
+	 */
 	_disabled: boolean = false;
 	get disabled(): boolean {
 		return this._disabled;
@@ -48,8 +38,8 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic placeholder
-	*/
+	 * Getter & Setter for dynamic placeholder
+	 */
 	_placeholder: string;
 	get placeholder(): string {
 		return this._placeholder;
@@ -59,8 +49,8 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic clearable option
-	*/
+	 * Getter & Setter for dynamic clearable option
+	 */
 	_clearable: boolean;
 	get clearable(): boolean {
 		return this._clearable;
@@ -70,8 +60,8 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic add tag option
-	*/
+	 * Getter & Setter for dynamic add tag option
+	 */
 	_addTag: boolean = false;
 	get addTag(): boolean {
 		return this._addTag;
@@ -81,8 +71,8 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	}
 
 	/*
-	* Getter & Setter for dynamic searchable option
-	*/
+	 * Getter & Setter for dynamic searchable option
+	 */
 	_searchable: boolean = false;
 	get searchable(): boolean {
 		return this._searchable;
@@ -90,7 +80,7 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 	@Input() set searchable(value: boolean) {
 		this._searchable = value;
 	}
-	
+
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
@@ -116,12 +106,12 @@ export class VendorSelectComponent implements OnInit, OnDestroy {
 
 	ngOnInit() {
 		this.subject$
-		.pipe(
-			debounceTime(100),
-			tap(() => this.getVendors()),
-			untilDestroyed(this)
-		)
-		.subscribe();
+			.pipe(
+				debounceTime(100),
+				tap(() => this.getVendors()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),

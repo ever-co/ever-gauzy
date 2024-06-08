@@ -543,6 +543,7 @@
 			"PROJECTS": "Choose Projects",
 			"CHOOSE_FORMAT": "Choose Format",
 			"CHOOSE_TIME_ZONE": "Choose Time Zone",
+			"TIME_FORMAT": "Time Format",
 			"START_TIME": "HH:mm",
 			"END_TIME": "HH:mm",
 			"ADD_COLOR": "Add Color",
@@ -4240,7 +4241,14 @@
 			"BROWSER_EXTENSION": "Browser Extension",
 			"TEAMS": "Teams"
 		},
-		"LAST_WORKED": "Last worked:"
+		"LAST_WORKED": "Last worked:",
+		"TIME_ZONE": "Time Zone",
+		"TIME_FORMAT": "Time Format",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Org Timezone",
+			"MY_TIMEZONE": "My Timezone"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

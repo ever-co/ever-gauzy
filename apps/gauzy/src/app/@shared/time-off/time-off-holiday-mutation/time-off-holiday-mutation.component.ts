@@ -6,11 +6,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { CompareDateValidator } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmployeesService, Store, ToastrService } from '../../../@core/services';
-import { environment as ENV } from './../../../../environments/environment';
-import { FormHelpers } from '../../forms/helpers';
+import { CompareDateValidator, EmployeesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { environment as ENV } from '@gauzy/ui-config';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -977,7 +977,7 @@
 													</div>
 													<div
 														class="col-5 centered-text"
-														*ngIf="isServer"
+														*ngIf="isServer && !isServerApi"
 													>
 														<p>
 															{{
@@ -988,7 +988,7 @@
 													</div>
 													<div
 														class="col-7"
-														*ngIf="isServer"
+														*ngIf="isServer && !isServerApi"
 													>
 														<input
 															[(ngModel)]="

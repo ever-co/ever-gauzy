@@ -1,7 +1,14 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import {
+	ErrorHandlingService,
+	GoalService,
+	GoalSettingsService,
+	KeyResultService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
@@ -10,16 +17,11 @@ import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.compo
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { IGoal, IKeyResult, IGoalGeneralSetting, IOrganization, ISelectedEmployee, IUser } from '@gauzy/contracts';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
-import { GoalService } from '../../@core/services/goal.service';
-import { KeyResultService } from '../../@core/services/keyresult.service';
-import { ErrorHandlingService } from '../../@core/services/error-handling.service';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalLevelEnum } from '@gauzy/contracts';
-import { GoalSettingsService } from '../../@core/services/goal-settings.service';
 import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })

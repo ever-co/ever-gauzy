@@ -1,311 +1,305 @@
-@import "../../../../../@theme/styles/themes";
-@import "../../../../../@theme/styles/var";
+@import 'themes';
+@import 'var';
 
 :host {
-    height: 100%;
+  height: 100%;
 }
 
 // main sections
 :host .main-form {
-    width: 100%;
-    background-color: nb-theme(gauzy-card-2);
-    display: flex;
-    justify-content: space-between;
-    padding: 20px;
-    @include nb-ltr(padding-right, 8px);
-    @include nb-rtl(padding-left, 8px);
-    overflow: hidden;
-    height: calc(100vh - 19.25rem);
+  width: 100%;
+  background-color: nb-theme(gauzy-card-2);
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
+  overflow: hidden;
+  height: calc(100vh - 19.25rem);
 }
 .aside-nav {
-    width: 180px;
-    background-color: nb-theme(gauzy-card-3);
-    padding: 13px 18px;
-    border-radius: nb-theme(border-radius);
+  width: 180px;
+  background-color: nb-theme(gauzy-card-3);
+  padding: 13px 18px;
+  border-radius: nb-theme(border-radius);
+  height: fit-content;
+  & .settings-section-header {
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: 0em;
+    text-align: left;
+    margin-bottom: 18px;
+  }
+  ul {
+    padding-left: 0;
+    padding-right: 0;
+    display: inline-flex;
+    flex-direction: column;
     height: fit-content;
-    & .settings-section-header {
-        font-size: 14px;
-        font-style: normal;
-        font-weight: 600;
-        line-height: 17px;
-        letter-spacing: 0em;
-        text-align: left;
-        margin-bottom: 18px;
+    & li {
+      display: inline-flex;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+      letter-spacing: 0em;
+      text-align: left;
+      background: nb-theme(gauzy-sidebar-background-3);
+      border-radius: nb-theme(button-rectangle-border-radius);
+      list-style: none;
+      cursor: pointer;
+      box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+      &.active {
+        background: nb-theme(background-basic-color-1);
+        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
+      }
     }
-    ul {
-        padding-left: 0;
-        padding-right: 0;
-        display: inline-flex;
-        flex-direction: column;
-        height: fit-content;
-        & li {
-            display: inline-flex;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            font-style: normal;
-            font-weight: 400;
-            line-height: 16px;
-            letter-spacing: 0em;
-            text-align: left;
-            background: nb-theme(gauzy-sidebar-background-3);
-            border-radius: nb-theme(button-rectangle-border-radius);
-            list-style: none;
-            cursor: pointer;
-            box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
-            &.active {
-                background: nb-theme(background-basic-color-1);
-                box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15) inset;
-            }
-        }
-    }
+  }
 }
 .actions {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 .fields-section {
-    width: calc(100% - 230px);
+  width: calc(100% - 230px);
 }
 :host .accordion-section {
-    overflow: auto;
-    max-height: calc(100% - 3rem);
-    @include nb-ltr(padding-right, 8px);
-    @include nb-rtl(padding-left, 8px);
+  overflow: auto;
+  max-height: calc(100% - 3rem);
+  @include nb-ltr(padding-right, 8px);
+  @include nb-rtl(padding-left, 8px);
 }
 // end of main sections.
 
-
-// misc
-.form-group {
-    margin-bottom: 0;
-}
-.col-6 {
-    padding-left: 10px;
-    padding-right: 10px;
-    max-width: 49% !important;
-}
-
 // start of nb-overrides
 nb-accordion {
-    box-shadow: none;
+  box-shadow: none;
 
-    & nb-accordion-item-header {
-        border-bottom: none;
-        border-radius: 0.5rem;
-        padding-left: 20px;
-        padding-right: 20px;
+  & nb-accordion-item-header {
+    border-bottom: none;
+    border-radius: 0.5rem;
+    padding-left: 20px;
+    padding-right: 20px;
 
-        & ::ng-deep nb-icon {
-            border-radius: 6px;
-            width: 23px;
-            height: 23px;
-            border: 1px solid rgba(66, 66, 66, 0.2);
+    & ::ng-deep nb-icon {
+      border-radius: 6px;
+      width: 23px;
+      height: 23px;
+      border: 1px solid rgba(66, 66, 66, 0.2);
+    }
+  }
+  & nb-accordion-item-header,
+  nb-accordion-item-body,
+  nb-accordion-item {
+    background-color: nb-theme(gauzy-card-3);
+  }
+  & nb-accordion-item-body {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  //separate accordion styles for each one because of input fields colors, layouts, etc.
+  //some media queries here,... too much useless nesting otherwise
+  nb-accordion-item {
+    border-radius: 0.5rem;
+    margin-bottom: 20px;
+
+    & .item-body {
+      padding: 15px;
+    }
+    &:first-of-type {
+      ::ng-deep .select-button,
+      ::ng-deep .ng-select-container {
+        background-color: nb-theme(background-basic-color-1) !important;
+      }
+      ::ng-deep .date-picker-form ng-select {
+        width: 60%;
+      }
+      .fields {
+        width: 75%;
+        @include respond(md) {
+          width: 100%;
         }
+      }
+      .time-format-select {
+        width: 30%;
+      }
+      .row {
+        align-items: center;
+      }
     }
-    & nb-accordion-item-header, nb-accordion-item-body, nb-accordion-item {
-        background-color: nb-theme(gauzy-card-3);
-    }
-    & nb-accordion-item-body {
-        padding-left: 15px;
-        padding-right: 15px;
-    }
-
-    //separate accordion styles for each one because of input fields colors, layouts, etc.
-    //some media queries here,... too much useless nesting otherwise
-    nb-accordion-item {
-        border-radius: 0.5rem;
-        margin-bottom: 20px;
-
-        & .item-body {
-            padding: 15px;
+    &:nth-of-type(2) {
+      .select-wrapper {
+        display: flex;
+      }
+      .label {
+        white-space: nowrap;
+      }
+      .design-select {
+        width: 140px;
+        margin-right: 15px;
+      }
+      @include respond(md) {
+        .color-pick {
+          width: 100%;
         }
-        &:first-of-type {
-            ::ng-deep .select-button, ::ng-deep .ng-select-container {
-                background-color: nb-theme(background-basic-color-1) !important;
-            }
-            ::ng-deep .date-picker-form ng-select {
-                width: 60%;
-            }
-            .fields {
-                width: 75%;
-                @include respond(md) {
-                    width: 100%;
-                }
-            }
-            .time-format-select {
-                width: 30%;
-            }
-            .row {
-                align-items: center;
-            }
+      }
     }
-        &:nth-of-type(2) {
-            .select-wrapper {
-                display: flex;
-            }
-            .label {
-                white-space: nowrap;
-            }
-            .design-select {
-                width: 140px;
-                margin-right: 15px;
-            }
+    &:nth-of-type(3) {
+      .row {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+
+        &.fiscal-years {
+          width: 400px;
+          display: flex;
+          justify-content: space-between;
+          margin-left: -5px;
+          margin-right: -5px;
+
+          @include respond(lg) {
+            margin: 0;
+          }
+          @include respond(md) {
+            width: 100%;
+          }
+          & .year-pick {
+            width: 170px;
             @include respond(md) {
-                .color-pick {
-                    width: 100%;
-                }
+              width: 49%;
             }
+          }
         }
-        &:nth-of-type(3) {
-            .row {
-                padding-left: 0 !important;
-                padding-right: 0 !important;
+        &.toggles {
+          width: 500px;
+          display: flex;
+          flex-direction: column;
+          margin-left: -5px;
+          margin-right: -5px;
 
-                &.fiscal-years {
-                    width: 400px;
-                    display: flex;
-                    justify-content: space-between;
-                    margin-left: -5px;
-                    margin-right: -5px;
-
-                    @include respond(lg) {
-                        margin: 0;
-                    }
-                    @include respond(md) {
-                        width: 100%;
-                    }
-                    & .year-pick {
-                        width: 170px;
-                        @include respond(md) {width: 49%}
-                    }
-                }
-                &.toggles {
-                    width: 500px;
-                    display: flex;
-                    flex-direction: column;
-                    margin-left: -5px;
-                    margin-right: -5px;
-
-                    @include respond(lg) {
-                        margin: 0;
-                    }
-                    @include respond(md) {
-                        width: 100%;
-                    }
-                    & .invite-toggle {
-                        margin-bottom: 5px;
-                    }
-                }
-                &.half-width-inputs {
-                    display: flex;
-                    align-items: flex-end;
-                    margin-bottom: 10px;
-                    padding-left: 0;
-                    padding-right: 0;
-                    @include respond(sm) {
-                        flex-direction: column;
-                    }
-                }
-            }
+          @include respond(lg) {
+            margin: 0;
+          }
+          @include respond(md) {
+            width: 100%;
+          }
+          & .invite-toggle {
+            margin-bottom: 5px;
+          }
         }
-        &:nth-of-type(5) {
-            .row {
-                & input {
-                    padding: 10px;
-                }
-            }
+        &.half-width-inputs {
+          display: flex;
+          align-items: flex-end;
+          margin-bottom: 10px;
+          padding-left: 0;
+          padding-right: 0;
+          @include respond(sm) {
+            flex-direction: column;
+          }
         }
-        &:nth-of-type(6) {
-            .row {
-                width: 50%;
-                @include respond(md) {
-                    width: 100%;
-                }
-            }
-            .form-group {
-                width: 100%;
-                padding-left: 10px;
-                padding-right: 10px;
-                @include respond(lg) {
-                    padding-right: 0;
-                    padding-left: 0;
-                }
-            }
-        }
-        &:nth-of-type(7) {
-            .col-6 {
-                margin-bottom: 12px;
-            }
-            @include respond(sm) {
-                .row {
-                    width: 100%;
-                }
-            }
-        }
+      }
     }
+    &:nth-of-type(5) {
+      .row {
+        & input {
+          padding: 10px;
+        }
+      }
+    }
+    &:nth-of-type(6) {
+      .row {
+        width: 50%;
+        @include respond(md) {
+          width: 100%;
+        }
+      }
+      .form-group {
+        width: 100%;
+        padding-left: 10px;
+        padding-right: 10px;
+        @include respond(lg) {
+          padding-right: 0;
+          padding-left: 0;
+        }
+      }
+    }
+    &:nth-of-type(7) {
+      .col-6 {
+        margin-bottom: 12px;
+      }
+      @include respond(sm) {
+        .row {
+          width: 100%;
+        }
+      }
+    }
+  }
 }
 //end of nb-overrides
 
 //media queries
 @include respond(lg) {
-    .row {
-        display: flex;
-        justify-content: space-between;
-        margin-left: 0;
-        margin-right: 0;
+  .row {
+    display: flex;
+    justify-content: space-between;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .col-6 {
+    padding-right: 0;
+    padding-left: 0;
+  }
+  nb-accordion {
+    nb-accordion-item-body {
+      padding-left: 0;
+      padding-right: 0;
     }
-    .col-6 {
-        padding-right: 0;
-        padding-left: 0;
-    }
-    nb-accordion {
-        nb-accordion-item-body {
-            padding-left: 0;
-            padding-right: 0;
+    nb-accordion-item {
+      &:nth-of-type(2) {
+        .select-wrapper {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
         }
-        nb-accordion-item {
-            &:nth-of-type(2) {
-                .select-wrapper {
-                    width: 100%;
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .design-select {
-                    width: 49%;
-                    margin-right: 0;
-                }
-            }
+        .design-select {
+          width: 49%;
+          margin-right: 0;
         }
+      }
     }
+  }
 }
 
-@include respond(md){
-    .col-6 {
-        padding-right: 0;
-    }
-    .main-form {
-        flex-direction: column;
-    }
-    .fields-section {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-    }
-    .actions {
-        order: 2;
-        margin-bottom: 0;
-    }
+@include respond(md) {
+  .col-6 {
+    padding-right: 0;
+  }
+  .main-form {
+    flex-direction: column;
+  }
+  .fields-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .actions {
+    order: 2;
+    margin-bottom: 0;
+  }
 }
 
 @include respond(sm) {
-    .col-6 {
-        max-width: 100%;
-        width: 100%;
-        min-width: 100%;
-        margin-bottom: 5px;
-    }
-    .row {
-        width: 100%;
-    }
+  .col-6 {
+    max-width: 100%;
+    width: 100%;
+    min-width: 100%;
+    margin-bottom: 5px;
+  }
+  .row {
+    width: 100%;
+  }
 }

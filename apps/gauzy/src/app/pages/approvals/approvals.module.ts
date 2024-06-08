@@ -18,13 +18,13 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
+import { RequestApprovalService } from '@gauzy/ui-sdk/core';
 import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -50,7 +50,7 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,

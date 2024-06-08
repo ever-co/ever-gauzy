@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
-import { InventoryStore } from 'apps/gauzy/src/app/@core';
 import { firstValueFrom } from 'rxjs';
+import { InventoryStore } from '@gauzy/ui-sdk/core';
+import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity-form/manage-variants-quantity-form.component';
 
 @Component({
 	selector: 'ga-manage-variants-quantity',
@@ -16,9 +16,9 @@ export class ManageVariantsQuantityComponent extends TranslationBaseComponent {
 	@Input() rowData: any;
 
 	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private inventoryStore: InventoryStore
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly inventoryStore: InventoryStore
 	) {
 		super(translateService);
 	}

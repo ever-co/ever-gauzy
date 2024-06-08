@@ -5,7 +5,16 @@ import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DateRangePickerBuilderService, defaultDateFormat } from '@gauzy/ui-sdk/core';
+import {
+	DateRangePickerBuilderService,
+	EmployeeRecurringExpenseService,
+	EmployeesService,
+	ErrorHandlingService,
+	ExpenseCategoriesStoreService,
+	OrganizationRecurringExpenseService,
+	ToastrService,
+	defaultDateFormat
+} from '@gauzy/ui-sdk/core';
 import {
 	ComponentType,
 	IRecurringExpenseModel,
@@ -15,17 +24,8 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	EmployeeRecurringExpenseService,
-	EmployeesService,
-	ErrorHandlingService,
-	ExpenseCategoriesStoreService,
-	OrganizationRecurringExpenseService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 
@@ -96,7 +96,7 @@ export class RecurringExpenseMutationComponent
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly employeesService: EmployeesService,
 		private readonly expenseCategoriesStore: ExpenseCategoriesStoreService,
-		private readonly translate: TranslateService,
+		public readonly translate: TranslateService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService,

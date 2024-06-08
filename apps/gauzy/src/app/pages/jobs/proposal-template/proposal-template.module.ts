@@ -14,13 +14,13 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
-import { DialogsModule } from '../../../@shared/dialogs';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
@@ -33,7 +33,7 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 	imports: [
 		CommonModule,
 		ProposalTemplateRoutingModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		ReactiveFormsModule,
 		FormsModule,
 		SharedModule,

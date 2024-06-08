@@ -18,14 +18,10 @@ import {
 } from '../../../@shared/pagination/pagination-filter-base.component';
 import { NotesWithTagsComponent } from '../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../../@core/constants';
-import {
-	ErrorHandlingService,
-	OrganizationExpenseCategoriesService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationExpenseCategoriesService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -39,17 +35,14 @@ export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent im
 	disableButton: boolean = true;
 	smartTableSource: ServerDataSource;
 	settingsSmartTable: object;
-
 	expenseCategories: IOrganizationExpenseCategory[] = [];
 	selected = {
 		expenseCategory: null,
 		state: false
 	};
-
 	viewComponentName: ComponentEnum = ComponentEnum.EXPENSES_CATEGORY;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-
 	public organization: IOrganization;
 	categories$: Subject<any> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();

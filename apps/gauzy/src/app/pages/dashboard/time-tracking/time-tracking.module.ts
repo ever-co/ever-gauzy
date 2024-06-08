@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import { SharedModule } from '../../../@shared/shared.module';
@@ -25,6 +25,7 @@ import { DateRangeTitleModule } from '../../../@shared/components/date-range-tit
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
 import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
 import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/window-layout.module';
+import { TimezoneFilterModule } from '../../../@shared/timesheet/gauzy-filters/timezone-filter/timezone-filter.module';
 
 @NgModule({
 	imports: [
@@ -39,18 +40,19 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		NbToggleModule,
 		NbIconModule,
 		NbBadgeModule,
+		NbPopoverModule,
 		ScreenshotsItemModule,
 		ActivityItemModule,
 		NgChartsModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		GalleryModule,
 		HeaderTitleModule,
 		DateRangeTitleModule,
 		CounterPointModule,
 		WidgetLayoutModule,
 		WindowLayoutModule,
-		NbPopoverModule,
-		SwiperModule
+		SwiperModule,
+		TimezoneFilterModule
 	],
 	declarations: [TimeTrackingComponent],
 	exports: [TimeTrackingComponent],

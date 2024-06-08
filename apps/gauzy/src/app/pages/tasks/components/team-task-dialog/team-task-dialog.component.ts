@@ -3,17 +3,17 @@ import { IEmployee, IOrganizationProject, IOrganizationTeam, ITag, ITask, TaskSt
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
+import moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
-	Store,
 	ToastrService
-} from '../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 
 const initialTaskValue = {
 	title: '',

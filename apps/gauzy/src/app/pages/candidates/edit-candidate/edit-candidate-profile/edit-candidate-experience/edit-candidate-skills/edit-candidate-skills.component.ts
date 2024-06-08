@@ -1,16 +1,13 @@
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidateStore } from 'apps/gauzy/src/app/@core/services/candidate-store.service';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
-import { CandidateSkillsService } from 'apps/gauzy/src/app/@core/services/candidate-skills.service';
 import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum } from 'apps/gauzy/src/app/@core/constants/layout.constants';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { CandidateSkillsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',

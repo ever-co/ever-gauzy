@@ -6,20 +6,20 @@ import { NbDialogService } from '@nebular/theme';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { tap } from 'rxjs/operators';
 import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
-import { GoalSettingsService } from '../../@core/services/goal-settings.service';
+import { GoalSettingsService } from '@gauzy/ui-sdk/core';
 import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
-import { Store } from '../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

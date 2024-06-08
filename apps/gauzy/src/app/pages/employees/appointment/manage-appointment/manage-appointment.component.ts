@@ -11,24 +11,27 @@ import {
 	AfterViewInit,
 	ChangeDetectorRef
 } from '@angular/core';
-import { EmployeeAppointmentService } from '../../../../@core/services/employee-appointment.service';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeesService } from '../../../../@core/services';
+import {
+	AppointmentEmployeesService,
+	AvailabilitySlotsService,
+	EmployeeAppointmentService,
+	EmployeesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { NbDialogService } from '@nebular/theme';
-import { AppointmentEmployeesService } from '../../../../@core/services/appointment-employees.service';
-import { Store } from '../../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AlertModalComponent } from '../../../../@shared/alert-modal/alert-modal.component';
-import { AvailabilitySlotsService } from '../../../../@core/services/availability-slots.service';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
 import { EmployeeSelectComponent } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-appointment',

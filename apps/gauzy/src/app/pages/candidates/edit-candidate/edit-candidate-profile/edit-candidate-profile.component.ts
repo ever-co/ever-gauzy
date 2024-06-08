@@ -1,6 +1,8 @@
 import { Location } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import {
 	ICandidate,
 	ICandidateUpdateInput,
@@ -8,18 +10,19 @@ import {
 	ICandidateInterview,
 	IOrganization
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidatesService } from '../../../../@core/services/candidates.service';
-import { CandidateStore } from '../../../../@core/services/candidate-store.service';
-import { UsersService } from '../../../../@core/services';
-import { NbDialogService } from '@nebular/theme';
-import { ErrorHandlingService } from '../../../../@core/services/error-handling.service';
-import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
-import { CandidateInterviewService } from '../../../../@core/services/candidate-interview.service';
-import { Store } from '../../../../@core/services/store.service';
+import {
+	CandidateInterviewService,
+	CandidateStore,
+	CandidatesService,
+	ErrorHandlingService,
+	ToastrService,
+	UsersService
+} from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',
@@ -40,17 +43,17 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 	selectedOrganization: IOrganization;
 
 	constructor(
-		private route: ActivatedRoute,
-		private location: Location,
-		private candidatesService: CandidatesService,
-		private candidateStore: CandidateStore,
-		private userService: UsersService,
-		private toastrService: ToastrService,
-		private errorHandler: ErrorHandlingService,
-		private dialogService: NbDialogService,
+		private readonly route: ActivatedRoute,
+		private readonly location: Location,
+		private readonly candidatesService: CandidatesService,
+		private readonly candidateStore: CandidateStore,
+		private readonly userService: UsersService,
+		private readonly toastrService: ToastrService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly dialogService: NbDialogService,
 		private readonly candidateInterviewService: CandidateInterviewService,
 		readonly translateService: TranslateService,
-		private store: Store
+		private readonly store: Store
 	) {
 		super(translateService);
 	}

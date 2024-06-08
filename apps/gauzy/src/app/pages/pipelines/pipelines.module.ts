@@ -13,7 +13,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { PipelinesRouting } from './pipelines.routing';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -30,7 +30,7 @@ import { PipelineDealProbabilityComponent } from './table-components/pipeline-de
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { DealsService, PipelinesService } from '../../@core/services';
+import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { StageComponent } from './stage/stage.component';
 import { NbTabsetModule } from '@nebular/theme';
@@ -63,7 +63,7 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		PipelinesRouting,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,

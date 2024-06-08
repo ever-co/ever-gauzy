@@ -18,15 +18,15 @@ import { Observable, EMPTY } from 'rxjs';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	EmployeeAwardService,
 	EmployeeLevelService,
 	ErrorHandlingService,
 	OrganizationEmploymentTypesService,
-	Store,
 	ToastrService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

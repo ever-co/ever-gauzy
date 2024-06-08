@@ -7,9 +7,15 @@ import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, Subject } from 'rxjs';
-import { distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import * as moment from 'moment';
-import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { environment as ENV } from '@gauzy/ui-config';
 import {
 	IPayment,
 	ComponentLayoutStyleEnum,
@@ -32,21 +38,13 @@ import {
 	TagsOnlyComponent
 } from '../../@shared/table-components';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import {
-	ErrorHandlingService,
-	InvoiceEstimateHistoryService,
-	PaymentService,
-	Store,
-	ToastrService
-} from '../../@core/services';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,
 	PaymentMethodFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { environment as ENV } from './../../../environments/environment';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })

@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { ITag, IOrganization, IExpenseCategory } from '@gauzy/contracts';
+import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from './../../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { FormHelpers } from './../../../../@shared/forms';
-import { filter, tap } from 'rxjs/operators';
+import { ITag, IOrganization, IExpenseCategory } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

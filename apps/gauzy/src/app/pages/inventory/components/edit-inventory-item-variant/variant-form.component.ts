@@ -1,20 +1,22 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BillingInvoicingPolicyEnum, IProductVariant, IOrganization, IImageAsset } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
-import { ProductVariantPriceService } from 'apps/gauzy/src/app/@core/services/product-variant-price.service';
-import { ProductVariantSettingService } from 'apps/gauzy/src/app/@core/services/product-variant-setting.service';
 import { Subject, firstValueFrom } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
-import { Store } from 'apps/gauzy/src/app/@core/services/store.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
-import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { NbDialogService } from '@nebular/theme';
 import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
+import {
+	InventoryStore,
+	ProductVariantPriceService,
+	ProductVariantService,
+	ProductVariantSettingService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 export interface IOptionCreateInput {
 	name: string;

@@ -11,11 +11,10 @@ import {
 	NbInputModule,
 	NbButtonModule
 } from '@nebular/theme';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationSelectorComponent } from './organization/organization.component';
-import { OrganizationsService } from 'apps/gauzy/src/app/@core/services/organizations.service';
-import { OrganizationEditStore } from 'apps/gauzy/src/app/@core/services/organization-edit-store.service';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '../../../../@shared/directives/directives.module';
+import { OrganizationEditStore, OrganizationsService } from '@gauzy/ui-sdk/core';
 
 const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 
@@ -30,7 +29,7 @@ const COMPONENTS = [OrganizationSelectorComponent, DateSelectorComponent];
 		NbDatepickerModule,
 		NbInputModule,
 		NbButtonModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		DirectivesModule
 	],
 	exports: [...COMPONENTS],

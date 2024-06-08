@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { EditTimeLogModalComponent } from './edit-time-log-modal.component';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { ProjectSelectModule } from '../../project-select/project-select.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -17,7 +17,7 @@ import {
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
-import { DialogsModule } from '../../dialogs';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { NbInputModule } from '@nebular/theme';
 
 @NgModule({
@@ -28,7 +28,7 @@ import { NbInputModule } from '@nebular/theme';
 		TimerPickerModule,
 		TaskSelectModule,
 		ProjectSelectModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		SharedModule,
 		FormsModule,
 		ReactiveFormsModule,

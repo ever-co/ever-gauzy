@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { IWarehouse, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { filter, firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
-import { InventoryStore, Store, ToastrService, WarehouseService } from './../../../../../@core/services';
+import { InventoryStore, WarehouseService } from '@gauzy/ui-sdk/core';
 import { SelectProductComponent } from '../select-product-form/select-product-form.component';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { ManageQuantityComponent } from '../manage-quantity/manage-quantity.component';
@@ -15,6 +15,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

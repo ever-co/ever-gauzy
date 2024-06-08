@@ -6,9 +6,8 @@ import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +15,6 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
 	styleUrls: ['./edit-organization.component.scss', '../../dashboard/dashboard.component.scss']
 })
 export class EditOrganizationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	employeesCount: number;
 	public organization: IOrganization;
 
 	constructor(
@@ -36,7 +34,6 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data: Data) => !!data && !!data.organization),
-				tap(({ employeesCount }) => (this.employeesCount = employeesCount)),
 				map(({ organization }) => organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)

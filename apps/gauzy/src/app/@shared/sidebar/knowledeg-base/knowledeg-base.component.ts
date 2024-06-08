@@ -1,10 +1,11 @@
 import { Component, OnDestroy, Input, OnInit } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, ILanguage } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { HelpCenterService, Store } from '../../../@core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { HelpCenterService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-knowledeg-base-mutation',
@@ -53,9 +54,9 @@ export class KnowledgeBaseComponent extends TranslationBaseComponent implements 
 	}
 
 	constructor(
-		protected dialogRef: NbDialogRef<KnowledgeBaseComponent>,
-		readonly translateService: TranslateService,
-		private helpCenterService: HelpCenterService,
+		protected readonly dialogRef: NbDialogRef<KnowledgeBaseComponent>,
+		public readonly translateService: TranslateService,
+		private readonly helpCenterService: HelpCenterService,
 		private readonly formBuilder: UntypedFormBuilder,
 		private readonly store: Store
 	) {

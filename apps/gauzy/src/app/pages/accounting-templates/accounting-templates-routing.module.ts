@@ -1,14 +1,14 @@
 import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { AccountingTemplatesComponent } from './accounting-templates.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { AccountingTemplatesComponent } from './accounting-templates.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: AccountingTemplatesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.VIEW_ALL_ACCOUNTING_TEMPLATES],

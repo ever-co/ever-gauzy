@@ -4,9 +4,9 @@ import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { LocationFormComponent } from '../../forms/location';
-import { LeafletMapComponent } from '../../forms/maps';
-import { CandidateStore, EmployeeStore, Store } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
+import { LeafletMapComponent, LocationFormComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,13 +34,13 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		private readonly candidateStore: CandidateStore,
 		private readonly employeeStore: EmployeeStore,
 		private readonly store: Store
-	) { }
+	) {}
 
 	ngOnInit() {
 		this.employeeStore.selectedEmployee$
 			.pipe(
 				filter((employee: IEmployee) => !!employee),
-				tap((employee: IEmployee) => this.selectedEmployee = employee),
+				tap((employee: IEmployee) => (this.selectedEmployee = employee)),
 				tap(() => this.setValidator()),
 				tap((employee: IEmployee) => this._syncLocation(employee)),
 				untilDestroyed(this)
@@ -49,7 +49,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 		this.candidateStore.selectedCandidate$
 			.pipe(
 				filter((candidate: ICandidate) => !!candidate),
-				tap((candidate: ICandidate) => this.selectedCandidate = candidate),
+				tap((candidate: ICandidate) => (this.selectedCandidate = candidate)),
 				tap(() => this.setValidator()),
 				tap((candidate: ICandidate) => this._syncLocation(candidate)),
 				untilDestroyed(this)
@@ -58,10 +58,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	}
 
 	submitForm() {
-		if (
-			!this.store.selectedOrganization ||
-			this.form.invalid
-		) {
+		if (!this.store.selectedOrganization || this.form.invalid) {
 			return;
 		}
 
@@ -119,9 +116,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	/*
 	 * Google Place and Leaflet Map Coordinates Changed Event Emitter
 	 */
-	onCoordinatesChanges(
-		$event: google.maps.LatLng | google.maps.LatLngLiteral
-	) {
+	onCoordinatesChanges($event: google.maps.LatLng | google.maps.LatLngLiteral) {
 		const {
 			loc: { coordinates }
 		} = this.locationFormDirective.getValue();
@@ -161,7 +156,7 @@ export class EmployeeLocationComponent implements OnInit, OnDestroy {
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) { }
+	onGeometrySend(geometry: any) {}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

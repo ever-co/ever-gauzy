@@ -1,10 +1,11 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { IEmployee, IUser, IEmployeeUpdateInput } from '@gauzy/contracts';
+import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { BehaviorSubject, tap, Observable, filter, firstValueFrom } from 'rxjs';
-import { EmployeesService, ErrorHandlingService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

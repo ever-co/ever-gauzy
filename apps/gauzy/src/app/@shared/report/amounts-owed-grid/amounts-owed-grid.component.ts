@@ -10,12 +10,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import * as moment from 'moment';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from '../../../@core/services';
-import { TimesheetService } from '../../timesheet/timesheet.service';
+import { DateRangePickerBuilderService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,13 +41,14 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 	private payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
+		private readonly cd: ChangeDetectorRef,
 		private readonly timesheetService: TimesheetService,
+		public readonly translateService: TranslateService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -82,15 +81,10 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Create a request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy,
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			groupBy: this.groupBy
 		};
 
 		// Notify subscribers about the filter change

@@ -1,11 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import {
-	UntypedFormBuilder,
-	Validators,
-	UntypedFormGroup,
-	FormArray,
-	FormControl
-} from '@angular/forms';
+import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray, FormControl } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,8 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
-import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
-import { ComponentEnum } from './../../../../../@core/constants';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import {
 	CandidateCriterionsRatingService,
 	CandidateFeedbacksService,
@@ -31,13 +24,13 @@ import {
 	CandidatesService,
 	CandidateStore,
 	EmployeesService,
-	Store,
 	ToastrService
-} from './../../../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components';
 import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -45,9 +38,7 @@ import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagina
 	templateUrl: './edit-candidate-feedbacks.component.html',
 	styleUrls: ['./edit-candidate-feedbacks.component.scss']
 })
-export class EditCandidateFeedbacksComponent extends PaginationFilterBaseComponent
-	implements OnInit, OnDestroy {
-
+export class EditCandidateFeedbacksComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	feedbackId = null;
 	showAddCard: boolean;
 	feedbackList: ICandidateFeedback[] = [];
@@ -98,18 +89,16 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	}
 
 	ngOnInit() {
-		this.candidateStore.selectedCandidate$
-			.pipe(untilDestroyed(this))
-			.subscribe((candidate) => {
-				if (candidate) {
-					this.selectedOrganization = this.store.selectedOrganization;
-					this.candidateId = candidate.id;
-					this._initializeForm();
-					this.loadInterviews();
-					this.getEmployees();
-					this._applyTranslationOnSmartTable();
-				}
-			});
+		this.candidateStore.selectedCandidate$.pipe(untilDestroyed(this)).subscribe((candidate) => {
+			if (candidate) {
+				this.selectedOrganization = this.store.selectedOrganization;
+				this.candidateId = candidate.id;
+				this._initializeForm();
+				this.loadInterviews();
+				this.getEmployees();
+				this._applyTranslationOnSmartTable();
+			}
+		});
 		this.loadSmartTableSettings();
 		this.selectInterview.setValue('all');
 	}
@@ -135,10 +124,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			.pipe(untilDestroyed(this))
 			.subscribe((componentLayout) => {
 				this.dataLayoutStyle = componentLayout;
-				this.selectedFeedback =
-					this.dataLayoutStyle === 'CARDS_GRID'
-						? null
-						: this.selectedFeedback;
+				this.selectedFeedback = this.dataLayoutStyle === 'CARDS_GRID' ? null : this.selectedFeedback;
 			});
 	}
 	private _initializeForm() {
@@ -208,29 +194,23 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	}
 	private async loadFeedbacks() {
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer', 'criterionsRating'],
-			{ candidateId: this.candidateId, organizationId, tenantId }
-		);
+		const res = await this.candidateFeedbacksService.getAll(['interviewer', 'criterionsRating'], {
+			candidateId: this.candidateId,
+			organizationId,
+			tenantId
+		});
 		if (res) {
 			this.feedbackList = res.items;
 			this.allFeedbacks = res.items;
 			const feedbacksForTable = [];
 
 			this.feedbackList.forEach((fb) => {
-				const interview = this.interviewList.find(
-					(item) => item.id === fb.interviewId
-				);
+				const interview = this.interviewList.find((item) => item.id === fb.interviewId);
 				feedbacksForTable.push({
 					...fb,
 					interviewTitle: interview ? interview.title : null,
 					employees: fb.interviewer
-						? [
-							this.employeeList.find(
-								(emp) =>
-									emp.id === fb.interviewer.employeeId
-							)
-						]
+						? [this.employeeList.find((emp) => emp.id === fb.interviewer.employeeId)]
 						: null
 				});
 			});
@@ -252,35 +232,20 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 
 	private async loadCriterions(feedback: ICandidateFeedback) {
 		if (feedback.interviewId) {
-			this.currentInterview = this.interviewList.find(
-				(item) => item.id === feedback.interviewId
-			);
+			this.currentInterview = this.interviewList.find((item) => item.id === feedback.interviewId);
 			this.technologiesList = this.currentInterview.technologies;
-			this.personalQualitiesList =
-				this.currentInterview.personalQualities;
+			this.personalQualitiesList = this.currentInterview.personalQualities;
 			feedback.criterionsRating.forEach((item) => {
 				this.technologiesList.forEach((tech) =>
-					tech.id === item.technologyId
-						? (tech.rating = item.rating)
-						: null
+					tech.id === item.technologyId ? (tech.rating = item.rating) : null
 				);
 				this.personalQualitiesList.forEach((qual) =>
-					qual.id === item.personalQualityId
-						? (qual.rating = item.rating)
-						: null
+					qual.id === item.personalQualityId ? (qual.rating = item.rating) : null
 				);
 			});
 		}
-		const techRating = this.form.get([
-			'feedbacks',
-			0,
-			'technologies'
-		]) as FormArray;
-		const qualRating = this.form.get([
-			'feedbacks',
-			0,
-			'personalQualities'
-		]) as FormArray;
+		const techRating = this.form.get(['feedbacks', 0, 'technologies']) as FormArray;
+		const qualRating = this.form.get(['feedbacks', 0, 'personalQualities']) as FormArray;
 		if (qualRating.controls.length < this.personalQualitiesList.length) {
 			this.personalQualitiesList.forEach((item) => {
 				qualRating.push(this.fb.control(item.rating));
@@ -292,31 +257,17 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			});
 		}
 		this.form.valueChanges.subscribe((item) => {
-			this.averageRating = this.setRating(
-				item.feedbacks[0].technologies,
-				item.feedbacks[0].personalQualities
-			);
+			this.averageRating = this.setRating(item.feedbacks[0].technologies, item.feedbacks[0].personalQualities);
 		});
 	}
 	private setRating(technologies: number[], qualities: number[]) {
-		this.technologiesList.forEach(
-			(tech, index) => (tech.rating = technologies[index])
-		);
-		this.personalQualitiesList.forEach(
-			(qual, index) => (qual.rating = qualities[index])
-		);
+		this.technologiesList.forEach((tech, index) => (tech.rating = technologies[index]));
+		this.personalQualitiesList.forEach((qual, index) => (qual.rating = qualities[index]));
 		const techSum =
-			technologies.length > 0
-				? technologies.reduce((sum, current) => sum + current, 0) /
-				technologies.length
-				: 0;
+			technologies.length > 0 ? technologies.reduce((sum, current) => sum + current, 0) / technologies.length : 0;
 		const qualSum =
-			qualities.length > 0
-				? qualities.reduce((sum, current) => sum + current, 0) /
-				qualities.length
-				: 0;
-		const isSomeEmpty =
-			(technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
+			qualities.length > 0 ? qualities.reduce((sum, current) => sum + current, 0) / qualities.length : 0;
+		const isSomeEmpty = (technologies.length > 0 ? 1 : 0) + (qualities.length > 0 ? 1 : 0);
 		const res = techSum || qualSum ? (techSum + qualSum) / isSomeEmpty : 0;
 		return res;
 	}
@@ -348,30 +299,21 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			const feedbackList = await this.loadFeedbacks();
 			feedbackList.forEach((fb) => {
 				const currentInterview = this.interviewList.find(
-					(interview) =>
-						fb.interviewId && interview.id === fb.interviewId
+					(interview) => fb.interviewId && interview.id === fb.interviewId
 				);
-				fb.interviewTitle = currentInterview
-					? currentInterview.title
-					: '';
+				fb.interviewTitle = currentInterview ? currentInterview.title : '';
 
 				if (fb.interviewer) {
 					this.employeeList.forEach((item) => {
-						if (
-							fb.interviewId &&
-							fb.interviewer.employeeId === item.id
-						) {
-							fb.interviewer.employeeImageUrl =
-								item.user.imageUrl;
+						if (fb.interviewId && fb.interviewer.employeeId === item.id) {
+							fb.interviewer.employeeImageUrl = item.user.imageUrl;
 							fb.interviewer.employeeName = item.user.name;
 						}
 					});
 				}
 			});
 			const uniq = {};
-			this.interviewList = this.interviewList.filter(
-				(obj) => !uniq[obj.id] && (uniq[obj.id] = true)
-			);
+			this.interviewList = this.interviewList.filter((obj) => !uniq[obj.id] && (uniq[obj.id] = true));
 		}
 		this.loading = false;
 	}
@@ -382,9 +324,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		if (this.currentFeedback.criterionsRating.length) {
 			this.loadCriterions(this.currentFeedback);
 		}
-		this.showAddCard = this.showAddCard
-			? this.showAddCard
-			: !this.showAddCard;
+		this.showAddCard = this.showAddCard ? this.showAddCard : !this.showAddCard;
 		this.form.controls.feedbacks.patchValue([this.currentFeedback]);
 		this.feedbackId = this.currentFeedback.id;
 		if (this.currentFeedback.interviewId) {
@@ -395,18 +335,14 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				(interview) => this.feedbackInterviewId === interview.id
 			).interviewers;
 			this.getStatusHire(this.feedbackInterviewId);
-			this.interviewersHire = this.interviewers
-				? this.interviewers
-				: null;
+			this.interviewersHire = this.interviewers ? this.interviewers : null;
 			this.averageRating = this.currentFeedback.rating;
 		}
 	}
 	onEmployeeSelected(id: string) {
 		this.isEmployeeReset = false;
 		this.selectInterview.reset();
-		this.feedbackList = this.allFeedbacks.filter(
-			(fb) => fb.interviewId && id === fb.interviewer.employeeId
-		);
+		this.feedbackList = this.allFeedbacks.filter((fb) => fb.interviewId && id === fb.interviewer.employeeId);
 	}
 	submitForm() {
 		const feedbackForm = this.form.controls.feedbacks as FormArray;
@@ -432,8 +368,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 			await this.candidateFeedbacksService.update(this.feedbackId, {
 				description: formValue.description,
 				rating:
-					this.technologiesList.length === 0 &&
-						this.personalQualitiesList.length === 0
+					this.technologiesList.length === 0 && this.personalQualitiesList.length === 0
 						? formValue.rating
 						: this.averageRating,
 				interviewer: this.feedbackInterviewer,
@@ -441,9 +376,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				organizationId,
 				tenantId
 			});
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_UPDATED'
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_UPDATED');
 			this.loadInterviews();
 			this.setStatus(this.status);
 			this.showAddCard = !this.showAddCard;
@@ -462,9 +395,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				organizationId,
 				tenantId
 			});
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_CREATED'
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_CREATED');
 			this.loadInterviews();
 			this.showAddCard = !this.showAddCard;
 			this.feedbacks.reset();
@@ -474,33 +405,21 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 	}
 	async getStatusHire(interviewId: string) {
 		this.statusHire = 0;
-		const feedbacks = this.feedbackList.filter(
-			(fb) => fb.interviewId === interviewId
-		);
+		const feedbacks = this.feedbackList.filter((fb) => fb.interviewId === interviewId);
 		feedbacks.forEach((fb) => {
 			if (fb.interviewId === interviewId) {
-				this.statusHire =
-					fb.status === CandidateStatusEnum.HIRED
-						? this.statusHire + 1
-						: this.statusHire;
+				this.statusHire = fb.status === CandidateStatusEnum.HIRED ? this.statusHire + 1 : this.statusHire;
 			}
 		});
 	}
 	async setStatus(status: string) {
 		this.getStatusHire(this.feedbackInterviewId);
 		if (status === CandidateStatusEnum.REJECTED) {
-			await this.candidatesService.setCandidateAsRejected(
-				this.candidateId
-			);
-		} else if (
-			this.interviewers &&
-			this.statusHire === this.interviewers.length
-		) {
+			await this.candidatesService.setCandidateAsRejected(this.candidateId);
+		} else if (this.interviewers && this.statusHire === this.interviewers.length) {
 			await this.candidatesService.setCandidateAsHired(this.candidateId);
 		} else {
-			await this.candidatesService.setCandidateAsApplied(
-				this.candidateId
-			);
+			await this.candidatesService.setCandidateAsApplied(this.candidateId);
 		}
 	}
 	async removeFeedback(id?: string) {
@@ -511,9 +430,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		});
 		const data = await firstValueFrom(dialog.onClose);
 		if (data) {
-			this.toastrService.success(
-				'TOASTR.MESSAGE.CANDIDATE_FEEDBACK_DELETED'
-			);
+			this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_FEEDBACK_DELETED');
 			this.loadInterviews();
 		}
 	}
@@ -527,9 +444,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		this.isEmployeeReset = true;
 		this.feedbackList = this.allFeedbacks;
 		if (value !== 'all') {
-			this.feedbackList = this.feedbackList.filter(
-				(fb) => fb.interviewId === value
-			);
+			this.feedbackList = this.feedbackList.filter((fb) => fb.interviewId === value);
 		}
 	}
 
@@ -570,5 +485,5 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		return this.form.get('feedbacks') as FormArray;
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

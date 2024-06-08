@@ -3,12 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbBadgeModule, NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorComponent } from './language-selector.component';
-import { LanguagesService } from '../../../@core/services/languages.service';
+import { LanguagesService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
-	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, TranslateModule],
+	imports: [CommonModule, NbSelectModule, NbBadgeModule, FormsModule, NgSelectModule, I18nTranslateModule.forChild()],
 	exports: [LanguageSelectorComponent],
 	declarations: [LanguageSelectorComponent],
 	providers: [LanguagesService]

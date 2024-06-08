@@ -4127,7 +4127,14 @@
 			"BROWSER_EXTENSION": "Estensione del browser",
 			"TEAMS": "Squadre"
 		},
-		"LAST_WORKED": "Ultimo lavoro:"
+		"LAST_WORKED": "Ultimo lavoro:",
+		"TIME_ZONE": "Time Zone",
+		"TIME_FORMAT": "Time Format",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Org Timezone",
+			"MY_TIMEZONE": "My Timezone"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshot",

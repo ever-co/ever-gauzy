@@ -1,19 +1,12 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	ITimeLog,
-	PermissionsEnum,
-	IOrganization,
-	TimeLogSourceEnum
-} from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
+import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
+import { Store, TimeLogsLabel, TimeTrackerService } from '@gauzy/ui-sdk/common';
+import { TimesheetService } from '@gauzy/ui-sdk/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
-import { TimesheetService } from '../timesheet.service';
-import { TimeTrackerService } from './../../time-tracker/time-tracker.service';
-import { TimeLogsLabel } from './../../../@core/constants';
-import { Store } from './../../../@core/services';
-import { Router } from '@angular/router';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -41,10 +34,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap(
-					(organization: IOrganization) =>
-						(this.organization = organization)
-				),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -98,10 +88,7 @@ export class ViewTimeLogModalComponent implements OnInit, OnDestroy {
 	}
 
 	redirectToClient() {
-		this.router.navigate([
-			'/pages/contacts/view/',
-			this.timeLog.organizationContact.id
-		]);
+		this.router.navigate(['/pages/contacts/view/', this.timeLog.organizationContact.id]);
 	}
 
 	ngOnDestroy(): void {}

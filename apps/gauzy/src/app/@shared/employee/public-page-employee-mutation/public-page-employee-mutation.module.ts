@@ -18,11 +18,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { PublicPageEmployeeMutationComponent } from './public-page-employee-mutation.component';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { CurrencyModule } from '../../currency/currency.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorModule } from '../../language/language-selector';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
@@ -46,7 +46,7 @@ import { SharedModule } from '../../shared.module';
 		NbCheckboxModule,
 		NbTooltipModule,
 		SkillsInputModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

@@ -1,27 +1,29 @@
 <nb-card class="card-scroll">
-	<nb-card-header class="header-flex">
-		<div>
-			<h4>
-				<ngx-header-title>
-					{{ title | translate }}
-				</ngx-header-title>
-			</h4>
-			<ng-container
-				*ngIf="request?.startDate && request?.endDate"
-			>
-				<ngx-date-range-title
-					[start]="request?.startDate"
-					[end]="request?.endDate"
-					[format]="'dddd, LL'"
-				></ngx-date-range-title>
-			</ng-container>
+	<nb-card-header>
+		<div class="row">
+			<div class="col-auto">
+				<h4>
+					<ngx-header-title>
+						{{ title | translate }}
+					</ngx-header-title>
+				</h4>
+				<ng-container *ngIf="request?.startDate && request?.endDate">
+					<ngx-date-range-title
+						[start]="request?.startDate"
+						[end]="request?.endDate"
+						[format]="'dddd, LL'"
+					></ngx-date-range-title>
+				</ng-container>
+			</div>
 		</div>
-		<div class="filters">
-			<ngx-gauzy-filters
-				[filters]="filters"
-				[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
-				(filtersChange)="filtersChange($event)">
-			</ngx-gauzy-filters>
+		<div class="row">
+			<div class="col-auto ml-auto">
+				<ngx-gauzy-filters
+					[filters]="filters"
+					[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
+					(filtersChange)="filtersChange($event)"
+				></ngx-gauzy-filters>
+			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="report-body">
@@ -60,16 +62,14 @@
 									<div class="table-inner-wrapper">
 										<ng-template [ngIf]="duration === 'week'">
 											<ng-container
-												*ngTemplateOutlet="
-													weeklyTable;
-													context: { $implicit: timeLogRow }">
+												*ngTemplateOutlet="weeklyTable; context: { $implicit: timeLogRow }"
+											>
 											</ng-container>
 										</ng-template>
 										<ng-template [ngIf]="duration === 'day'">
 											<ng-container
-												*ngTemplateOutlet="
-													dailyTable;
-													context: { $implicit: timeLogRow }">
+												*ngTemplateOutlet="dailyTable; context: { $implicit: timeLogRow }"
+											>
 											</ng-container>
 										</ng-template>
 									</div>
@@ -95,10 +95,7 @@
 </nb-card>
 
 <ng-template let-project #projectEl>
-	<ga-project-column-view
-		*ngIf="project; else noProjects"
-		[project]="project"
-	></ga-project-column-view>
+	<ga-project-column-view *ngIf="project; else noProjects" [project]="project"></ga-project-column-view>
 	<ng-template #noProjects>
 		<span>{{ 'REPORT_PAGE.NO_PROJECT' | translate }}</span>
 	</ng-template>
@@ -114,11 +111,12 @@
 <ng-template let-employee #employeeEl>
 	<div class="avatar-wrapper-outer">
 		<ngx-avatar
-				class="report-table"
-				*ngIf="employee"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id">
+			class="report-table"
+			*ngIf="employee"
+			[src]="employee?.user?.imageUrl"
+			[name]="employee?.user?.name"
+			[id]="employee?.id"
+		>
 		</ngx-avatar>
 	</div>
 	<ng-template #noEmployee>
@@ -149,11 +147,7 @@
 			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-container
-					*ngTemplateOutlet="
-						employeeEl;
-						context: { $implicit: timeLogRow?.employee }">
-			</ng-container>
+			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: timeLogRow?.employee }"> </ng-container>
 		</div>
 	</div>
 	<div class="responsive-table-row limit-column">
@@ -172,18 +166,20 @@
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 		<div class="responsive-table-content project-name">
 			<ngx-progress-status
-					class="w-100 report-progress"
-					defaultStatus="success"
-					[percentage]="timeLogRow.durationPercentage">
+				class="w-100 report-progress"
+				defaultStatus="success"
+				[percentage]="timeLogRow.durationPercentage"
+			>
 			</ngx-progress-status>
 		</div>
 	</div>
 	<div class="responsive-table-row remaining-column remaining-content">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 		<div class="responsive-table-content day-col">
-			{{ timeLogRow.limit - timeLogRow.duration > 0
-				? (timeLogRow.limit - timeLogRow.duration | durationFormat)
-				: 0
+			{{
+				timeLogRow.limit - timeLogRow.duration > 0
+					? (timeLogRow.limit - timeLogRow.duration | durationFormat)
+					: 0
 			}}
 		</div>
 	</div>
@@ -196,7 +192,8 @@
 	<div class="responsive-table-row activity-column">
 		{{ 'REPORT_PAGE.ACTIVITY' | translate }}
 	</div>
-	<div class="responsive-table-row spent-column">8
+	<div class="responsive-table-row spent-column">
+		8
 		{{ 'REPORT_PAGE.SPENT_HOURS' | translate }}
 	</div>
 	<div class="responsive-table-row remaining-column">
@@ -212,20 +209,17 @@
 			{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
 		</div>
 		<div class="responsive-table-content project-name">
-			<ng-container
-					*ngTemplateOutlet="
-						employeeEl;
-						context: { $implicit: timeLogRow?.employee }">
-			</ng-container>
+			<ng-container *ngTemplateOutlet="employeeEl; context: { $implicit: timeLogRow?.employee }"> </ng-container>
 		</div>
 	</div>
 	<div class="responsive-table-row activity-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.ACTIVITY' | translate }}</div>
 		<div class="responsive-table-content project-name">
 			<ngx-progress-status
-					class="w-100 report-progress"
-					defaultStatus="success"
-					[percentage]="timeLogRow.durationPercentage">
+				class="w-100 report-progress"
+				defaultStatus="success"
+				[percentage]="timeLogRow.durationPercentage"
+			>
 			</ngx-progress-status>
 		</div>
 	</div>
@@ -238,9 +232,10 @@
 	<div class="responsive-table-row remaining-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.TO_DO' | translate }}</div>
 		<div class="responsive-table-content day-col">
-			{{ timeLogRow.limit - timeLogRow.duration > 0
-				? (timeLogRow.limit - timeLogRow.duration | durationFormat)
-				: 0
+			{{
+				timeLogRow.limit - timeLogRow.duration > 0
+					? (timeLogRow.limit - timeLogRow.duration | durationFormat)
+					: 0
 			}}
 		</div>
 	</div>

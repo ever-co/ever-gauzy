@@ -8,14 +8,13 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
+import { CurrencyModule } from '@gauzy/ui-sdk/shared';
+import { EquipmentService, ImageAssetService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentMutationComponent } from './equipment-mutation.component';
-import { Store } from '../../@core/services/store.service';
-import { EquipmentService } from '../../@core/services/equipment.service';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
-import { CurrencyModule } from '../currency/currency.module';
-import { ImageAssetService } from '../../@core/services';
 
 @NgModule({
 	imports: [
@@ -29,7 +28,7 @@ import { ImageAssetService } from '../../@core/services';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		CurrencyModule
 	],
 	declarations: [EquipmentMutationComponent],

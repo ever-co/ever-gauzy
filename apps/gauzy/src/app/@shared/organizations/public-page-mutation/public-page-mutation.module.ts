@@ -17,14 +17,13 @@ import {
 	NbTagModule
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';
 import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
-import { SkillsService } from '../../../@core/services/skills.service';
-import { LanguagesService } from '../../../@core/services/languages.service';
+import { LanguagesService, SkillsService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [
@@ -44,7 +43,7 @@ import { LanguagesService } from '../../../@core/services/languages.service';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbBadgeModule,
 		NbToggleModule,
 		NbTabsetModule,

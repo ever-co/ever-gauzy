@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
-import { GuiDrag, LayoutWithDraggableObject } from '@gauzy/ui-sdk/shared';
+import { GuiDrag, LayoutWithDraggableObject } from '@gauzy/ui-sdk/common';
 import { WidgetComponent } from '../widget/widget.component';
 import { WidgetService } from '../widget/widget.service';
 

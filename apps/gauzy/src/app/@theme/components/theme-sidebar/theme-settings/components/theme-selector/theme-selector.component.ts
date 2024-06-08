@@ -1,16 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { GAUZY_LIGHT } from '../../../../../styles/gauzy/theme.gauzy-light';
-import { GAUZY_DARK } from '../../../../../styles/gauzy/theme.gauzy-dark';
-import { CORPORATE_THEME } from '../../../../../styles/theme.corporate';
-import { DEFAULT_THEME } from '../../../../../styles/theme.default';
-import { DARK_THEME } from '../../../../../styles/theme.dark';
-import { COSMIC_THEME } from '../../../../../styles/theme.cosmic';
-import { MATERIAL_LIGHT_THEME } from '../../../../../styles/material/theme.material-light';
-import { MATERIAL_DARK_THEME } from '../../../../../styles/material/theme.material-dark';
 import { BehaviorSubject, map, Observable } from 'rxjs';
-import { Store } from 'apps/gauzy/src/app/@core';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import {
+	CORPORATE_THEME,
+	COSMIC_THEME,
+	DARK_THEME,
+	DEFAULT_THEME,
+	GAUZY_DARK,
+	GAUZY_LIGHT,
+	MATERIAL_DARK_THEME,
+	MATERIAL_LIGHT_THEME
+} from '@gauzy/ui-sdk/theme';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -83,10 +85,7 @@ export class ThemeSelectorComponent implements OnInit {
 	@Input()
 	isClassic: boolean = true;
 
-	constructor(
-		protected readonly themeService: NbThemeService,
-		protected readonly store: Store
-	) {}
+	constructor(protected readonly themeService: NbThemeService, protected readonly store: Store) {}
 
 	ngOnInit(): void {
 		this.themeService
@@ -102,11 +101,7 @@ export class ThemeSelectorComponent implements OnInit {
 			});
 
 		this.currentTheme$.subscribe((theme) => {
-			theme = theme
-				? theme
-				: this.store.currentTheme
-				? this.store.currentTheme
-				: this.currentTheme;
+			theme = theme ? theme : this.store.currentTheme ? this.store.currentTheme : this.currentTheme;
 			this.store.currentTheme = theme;
 			this.themeService.changeTheme(theme);
 		});
@@ -147,6 +142,10 @@ export class ThemeSelectorComponent implements OnInit {
 		this.toggleTheme();
 	}
 
+	/**
+	 * Checks if the current theme is dark or light and provides information about the opposite theme.
+	 * @returns An object containing information about the current theme state and its opposite.
+	 */
 	get isDark() {
 		const res = {
 			previous: null,

@@ -21,10 +21,10 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
-import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '../../@core/services';
+import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-sdk/core';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -50,7 +50,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		UserFormsModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		TagsColorInputModule,

@@ -2,9 +2,10 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { TaskComponent } from './components/task/task.component';
-import { TasksRoutingModule } from './tasks-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { CKEditorModule } from 'ckeditor4-angular';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { NgSelectModule } from '@ng-select/ng-select';
 import {
 	NbSpinnerModule,
 	NbCardModule,
@@ -24,9 +25,11 @@ import {
 	NbTooltipModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { NgxPermissionsModule } from 'ngx-permissions';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { TaskComponent } from './components/task/task.component';
+import { TasksRoutingModule } from './tasks-routing.module';
 import { ThemeModule } from '../../@theme/theme.module';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -42,7 +45,6 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -52,8 +54,6 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-number-field.module';
 import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
 import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
-import { DirectivesModule } from '../../@shared/directives/directives.module';
-import { CKEditorModule } from 'ckeditor4-angular';
 
 @NgModule({
 	declarations: [
@@ -92,7 +92,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NbDatepickerModule,
 		EmployeeMultiSelectModule,

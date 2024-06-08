@@ -5,9 +5,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IInvoice, IUser } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { saveAs } from 'file-saver';
-import { InvoicesService, Store, ToastrService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { NbDialogService } from '@nebular/theme';
 

@@ -1,13 +1,10 @@
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Component, Input } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IProductCategoryTranslatable, IProductOptionGroupTranslatable } from '@gauzy/contracts';
-
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
-import { ProductCategoryService } from '../../../@core/services/product-category.service';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -29,9 +26,7 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		public dialogRef: NbDialogRef<IProductCategoryTranslatable>,
 		readonly translationService: TranslateService,
 		private fb: UntypedFormBuilder,
-		private productCategoryService: ProductCategoryService,
-		private store: Store,
-		private toastrService: ToastrService
+		private store: Store
 	) {
 		super(translationService);
 	}

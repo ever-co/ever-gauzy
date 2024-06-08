@@ -1,10 +1,21 @@
-import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ModuleWithProviders, NgModule } from '@angular/core';
+import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
+	imports: [NgxPermissionsModule.forRoot()],
 	declarations: [],
-	imports: [CommonModule],
-	exports: [],
-	providers: []
+	exports: []
 })
-export class UiSdkModule {}
+export class UiSdkModule {
+	/**
+	 * Returns a ModuleWithProviders object for the UiSdkModule.
+	 *
+	 * @return {ModuleWithProviders<UiSdkModule>} The ModuleWithProviders object containing the UiSdkModule and an empty providers array.
+	 */
+	static forRoot(): ModuleWithProviders<UiSdkModule> {
+		return {
+			ngModule: UiSdkModule,
+			providers: []
+		};
+	}
+}

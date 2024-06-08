@@ -9,8 +9,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { finalize, map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ProductCategoryService, Store } from '../../@core/services';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ProductCategoryService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -93,11 +93,7 @@ export class ProductCategorySelectorComponent implements OnInit, OnDestroy {
 	@Output() onChanged: EventEmitter<IProductCategoryTranslated> = new EventEmitter<IProductCategoryTranslated>();
 	@Output() onLoaded: EventEmitter<IProductCategoryTranslated[]> = new EventEmitter<IProductCategoryTranslated[]>();
 
-	constructor(
-		private readonly store: Store,
-		private readonly errorHandler: ErrorHandlingService,
-		private readonly productCategoryService: ProductCategoryService
-	) {}
+	constructor(private readonly store: Store, private readonly productCategoryService: ProductCategoryService) {}
 
 	ngOnInit(): void {
 		this.hasEditProductCategory$ = this.store.userRolePermissions$.pipe(

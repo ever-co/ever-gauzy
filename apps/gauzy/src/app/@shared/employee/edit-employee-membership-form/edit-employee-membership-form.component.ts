@@ -1,12 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import {
-	IBaseEntityWithMembers,
-	IEditEntityByMemberInput,
-	IEmployee,
-	IOrganization
-} from '@gauzy/contracts';
-import { Store } from '../../../@core/services';
+import { IBaseEntityWithMembers, IEditEntityByMemberInput, IEmployee, IOrganization } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-edit-employee-membership',
@@ -14,7 +9,6 @@ import { Store } from '../../../@core/services';
 	styleUrls: ['./edit-employee-membership-form.component.scss']
 })
 export class EditEmployeeMembershipFormComponent implements OnInit {
-
 	@Input() organizationEntities: IBaseEntityWithMembers[] = [];
 	@Input() employeeEntities: IBaseEntityWithMembers[] = [];
 	@Input() selectedEmployee: IEmployee;
@@ -34,12 +28,9 @@ export class EditEmployeeMembershipFormComponent implements OnInit {
 		});
 	}
 
-	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly store: Store
-	) { }
+	constructor(private readonly fb: UntypedFormBuilder, private readonly store: Store) {}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 
 	async removeDepartment(id: string) {
 		if (!this.organization) {

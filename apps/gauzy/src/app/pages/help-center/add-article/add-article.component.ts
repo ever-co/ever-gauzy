@@ -5,14 +5,13 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, HelpCenterAuthorService } from '@gauzy/ui-sdk/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { HelpCenterArticleService } from '../../../@core/services/help-center-article.service';
-import { EmployeesService } from '../../../@core/services';
+import { HelpCenterArticleService } from '@gauzy/ui-sdk/core';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { takeUntil } from 'rxjs/operators';
-import { ErrorHandlingService } from '../../../@core/services/error-handling.service';
-import { HelpCenterAuthorService } from '../../../@core/services/help-center-author.service';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-add-article',

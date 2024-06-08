@@ -5,8 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import * as moment from 'moment';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import {
 	IGetExpenseInput,
 	ReportGroupFilterEnum,
@@ -14,14 +13,12 @@ import {
 	ITimeLogFilters,
 	IGetTimeLogReportInput
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../@core/services';
-import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,12 +40,13 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent impl
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		private readonly cd: ChangeDetectorRef,
-		protected readonly store: Store,
 		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -94,14 +92,10 @@ export class AmountsOwedReportComponent extends BaseSelectorFilterComponent impl
 			return; // Do nothing if either is empty
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone = moment.tz.guess();
-
 		// Construct the request for the time log report
 		const request: IGetTimeLogReportInput = {
 			...this.getFilterRequest(this.request), // Assuming this is a method to process the request
-			groupBy: this.groupBy,
-			timezone // Set the 'timezone' property to the determined timezone
+			groupBy: this.groupBy
 		};
 
 		// Emit the prepared request to the 'payloads$' observable

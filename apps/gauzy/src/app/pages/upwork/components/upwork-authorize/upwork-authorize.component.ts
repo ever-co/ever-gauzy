@@ -4,17 +4,23 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY } from 'rxjs';
 import { tap, switchMap, filter, debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IAccessTokenSecretPair, IIntegrationTenant, IOrganization, IUpworkClientSecretPair, IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationsService, Store, UpworkService } from './../../../../@core/services';
+import {
+	IAccessTokenSecretPair,
+	IIntegrationTenant,
+	IOrganization,
+	IUpworkClientSecretPair,
+	IntegrationEnum
+} from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-sdk/common';
+import { IntegrationsService, UpworkService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-upwork-authorize',
 	templateUrl: './upwork-authorize.component.html',
-	styleUrls: ['./upwork-authorize.component.scss'],
+	styleUrls: ['./upwork-authorize.component.scss']
 })
 export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
-
 	public rememberState: boolean;
 	public organization: IOrganization;
 
@@ -22,7 +28,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			consumerKey: [null, Validators.required],
-			consumerSecret: [null, Validators.required],
+			consumerSecret: [null, Validators.required]
 		});
 	}
 
@@ -33,7 +39,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _integrationsService: IntegrationsService
-	) { }
+	) {}
 
 	ngOnInit() {
 		this._store.selectedOrganization$
@@ -62,7 +68,10 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 						if (this.organization) {
 							const { id: organizationId } = this.organization;
 							const { oauth_token, oauth_verifier } = params;
-							return this._upworkService.getAccessToken({ requestToken: oauth_token, verifier: oauth_verifier }, organizationId);
+							return this._upworkService.getAccessToken(
+								{ requestToken: oauth_token, verifier: oauth_verifier },
+								organizationId
+							);
 						}
 					}
 					// if remember state is true
@@ -71,9 +80,7 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 					}
 					return EMPTY;
 				}),
-				tap((res) =>
-					this._redirectToUpworkIntegration(res.integrationId)
-				),
+				tap((res) => this._redirectToUpworkIntegration(res.integrationId)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -92,13 +99,15 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 			organizationId,
 			tenantId
 		});
-		state$.pipe(
-			filter((integration: IIntegrationTenant) => !!integration.id),
-			tap((integration: IIntegrationTenant) => {
-				this._redirectToUpworkIntegration(integration.id);
-			}),
-			untilDestroyed(this)
-		).subscribe();
+		state$
+			.pipe(
+				filter((integration: IIntegrationTenant) => !!integration.id),
+				tap((integration: IIntegrationTenant) => {
+					this._redirectToUpworkIntegration(integration.id);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -112,14 +121,16 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		}
 		const { id: organizationId } = this.organization;
 		const token$ = this._upworkService.getAccessTokenSecretPair(config, organizationId);
-		token$.pipe(
-			tap((token: IAccessTokenSecretPair) => {
-				token.accessToken
-					? this._redirectToUpworkIntegration(token.integrationId)
-					: window.location.replace(token.url);
-			}),
-			untilDestroyed(this)
-		).subscribe();
+		token$
+			.pipe(
+				tap((token: IAccessTokenSecretPair) => {
+					token.accessToken
+						? this._redirectToUpworkIntegration(token.integrationId)
+						: window.location.replace(token.url);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -130,5 +141,5 @@ export class UpworkAuthorizeComponent implements OnInit, OnDestroy {
 		this._router.navigate(['pages/integrations/upwork', integrationId]);
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

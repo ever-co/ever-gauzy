@@ -5,7 +5,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import {
 	FileStorageProviderEnum,
 	HttpStatus,
@@ -14,9 +14,10 @@ import {
 	PermissionsEnum,
 	SMTPSecureEnum
 } from '@gauzy/contracts';
-import { isNotEmpty } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, FileStorageService, Store, TenantService, ToastrService } from '../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { isNotEmpty, Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { FileStorageService, TenantService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

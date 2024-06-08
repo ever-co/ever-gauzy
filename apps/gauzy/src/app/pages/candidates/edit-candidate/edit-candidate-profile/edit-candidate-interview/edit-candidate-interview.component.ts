@@ -15,20 +15,19 @@ import {
 	ICandidateFeedback,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
-	EmployeesService,
-	Store,
-	ToastrService
-} from '../../../../../@core/services';
+	EmployeesService
+} from '@gauzy/ui-sdk/core';
 import { CandidateInterviewFeedbackComponent } from '../../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import { DeleteInterviewComponent } from '../../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
-import { ComponentEnum } from '../../../../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { InterviewActionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { InterviewDateTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';

@@ -1,12 +1,4 @@
-import {
-	Component,
-	OnInit,
-	ViewChild,
-	AfterViewInit,
-	OnDestroy,
-	Input,
-	ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, Input, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent } from '@nebular/theme';
@@ -30,9 +22,9 @@ import {
 	CandidateStore,
 	CandidateTechnologiesService,
 	EmployeesService,
-	ErrorHandlingService,
-	Store
-} from '../../../@core/services';
+	ErrorHandlingService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
@@ -43,17 +35,15 @@ import { CandidateNotificationFormComponent } from './candidate-notification-for
 	templateUrl: 'candidate-interview-mutation.component.html',
 	styleUrls: ['candidate-interview-mutation.component.scss']
 })
-export class CandidateInterviewMutationComponent
-	implements AfterViewInit, OnInit, OnDestroy {
-
+export class CandidateInterviewMutationComponent implements AfterViewInit, OnInit, OnDestroy {
 	@Input() editData: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate = null;
 	@Input() interviewId = null;
 	@Input() isCalendar: boolean;
 
 	/*
-	* Getter & Setter for date range
-	*/
+	 * Getter & Setter for date range
+	 */
 	_selectedRangeCalendar: IDateRange;
 	get selectedRangeCalendar(): IDateRange {
 		return this._selectedRangeCalendar;
@@ -63,8 +53,8 @@ export class CandidateInterviewMutationComponent
 	}
 
 	/*
-	* Getter & Setter for header title
-	*/
+	 * Getter & Setter for header title
+	 */
 	_headerTitle: string;
 	get headerTitle(): string {
 		return this._headerTitle;
@@ -74,8 +64,8 @@ export class CandidateInterviewMutationComponent
 	}
 
 	/*
-	* Getter & Setter for interviews
-	*/
+	 * Getter & Setter for interviews
+	 */
 	_interviews: ICandidateInterview[] = [];
 	get interviews(): ICandidateInterview[] {
 		return this._interviews;
@@ -124,13 +114,13 @@ export class CandidateInterviewMutationComponent
 		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		private readonly router: Router,
 		private readonly candidateStore: CandidateStore
-	) { }
+	) {}
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => this.organization = organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(() => this.loadCandidates()),
 				untilDestroyed(this)
 			)
@@ -142,10 +132,11 @@ export class CandidateInterviewMutationComponent
 		const { id: organizationId } = this.organization;
 
 		this.candidates = (
-			await firstValueFrom(this.candidatesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
+			await firstValueFrom(
+				this.candidatesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
 			)
 		).items;
 	}
@@ -193,9 +184,7 @@ export class CandidateInterviewMutationComponent
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const { items } = await firstValueFrom(this.employeesService
-			.getAll(['user'], { organizationId, tenantId })
-		);
+		const { items } = await firstValueFrom(this.employeesService.getAll(['user'], { organizationId, tenantId }));
 		const employeeList = items;
 		employeeIds.forEach((id) => {
 			employeeList.forEach((item) => {
@@ -241,22 +230,15 @@ export class CandidateInterviewMutationComponent
 		this.addInterviewers(interview.id, this.selectedInterviewers);
 		this.candidateCriterionsForm.loadFormData();
 		const criterionsForm = this.candidateCriterionsForm.form.value;
-		this.addCriterions(
-			interview.id,
-			criterionsForm.selectedTechnologies,
-			criterionsForm.selectedQualities
-		);
+		this.addCriterions(interview.id, criterionsForm.selectedTechnologies, criterionsForm.selectedQualities);
 		try {
-			await this.candidateInterviewService.update(
-				interview.id,
-				{
-					title: this.interview.title,
-					location: this.interview.location,
-					startTime: this.interview.startTime,
-					endTime: this.interview.endTime,
-					note: this.interview.note
-				}
-			);
+			await this.candidateInterviewService.update(interview.id, {
+				title: this.interview.title,
+				location: this.interview.location,
+				startTime: this.interview.startTime,
+				endTime: this.interview.endTime,
+				note: this.interview.note
+			});
 			return { ...interview, ...this.interview };
 		} catch (error) {
 			this.errorHandler.handleError(error);
@@ -281,14 +263,8 @@ export class CandidateInterviewMutationComponent
 
 	async addCriterions(interviewId: string, tech?: string[], qual?: string[]) {
 		try {
-			this.technologies = await this.candidateTechnologiesService.createBulk(
-				interviewId,
-				tech
-			);
-			this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(
-				interviewId,
-				qual
-			);
+			this.technologies = await this.candidateTechnologiesService.createBulk(interviewId, tech);
+			this.personalQualities = await this.candidatePersonalQualitiesService.createBulk(interviewId, qual);
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
@@ -298,74 +274,45 @@ export class CandidateInterviewMutationComponent
 		let deletedIds = [];
 		let newIds = [];
 		let updatedInterview;
-		const oldIds = this.editData.interviewers.map(
-			(item) => item.employeeId
-		);
+		const oldIds = this.editData.interviewers.map((item) => item.employeeId);
 		if (this.interview.interviewers) {
-			deletedIds = oldIds.filter(
-				(item) => !this.interview.interviewers.includes(item)
-			);
-			newIds = this.interview.interviewers.filter(
-				(item: string) => !oldIds.includes(item)
-			);
+			deletedIds = oldIds.filter((item) => !this.interview.interviewers.includes(item));
+			newIds = this.interview.interviewers.filter((item: string) => !oldIds.includes(item));
 		}
 		try {
-			this.updateCriterions(
-				this.editData.personalQualities,
-				this.editData.technologies
-			);
-			updatedInterview = await this.candidateInterviewService.update(
-				this.interviewId,
-				{
-					title: this.interview.title,
-					location: this.interview.location,
-					startTime: this.interview.startTime,
-					endTime: this.interview.endTime,
-					note: this.interview.note
-				}
-			);
+			this.updateCriterions(this.editData.personalQualities, this.editData.technologies);
+			updatedInterview = await this.candidateInterviewService.update(this.interviewId, {
+				title: this.interview.title,
+				location: this.interview.location,
+				startTime: this.interview.startTime,
+				endTime: this.interview.endTime,
+				note: this.interview.note
+			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		}
-		await this.candidateInterviewersService.deleteBulkByEmployeeId(
-			deletedIds
-		);
+		await this.candidateInterviewersService.deleteBulkByEmployeeId(deletedIds);
 		this.addInterviewers(this.interviewId, newIds);
 		this.interviewId = null;
 		return updatedInterview;
 	}
 
-	async updateCriterions(
-		qual: ICandidatePersonalQualities[],
-		tech: ICandidateTechnologies[]
-	) {
+	async updateCriterions(qual: ICandidatePersonalQualities[], tech: ICandidateTechnologies[]) {
 		this.candidateCriterionsForm.loadFormData();
 		const criterionsForm = this.candidateCriterionsForm.form.value;
-		const techCriterions = this.setCriterions(
-			tech,
-			criterionsForm.selectedTechnologies
-		);
-		const qualCriterions = this.setCriterions(
-			qual,
-			criterionsForm.selectedQualities
-		);
+		const techCriterions = this.setCriterions(tech, criterionsForm.selectedTechnologies);
+		const qualCriterions = this.setCriterions(qual, criterionsForm.selectedQualities);
 		//CREATE NEW
 		if (techCriterions.createInput) {
 			try {
-				await this.candidateTechnologiesService.createBulk(
-					this.editData.id,
-					techCriterions.createInput
-				);
+				await this.candidateTechnologiesService.createBulk(this.editData.id, techCriterions.createInput);
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
 		}
 		if (qualCriterions.createInput) {
 			try {
-				await this.candidatePersonalQualitiesService.createBulk(
-					this.editData.id,
-					qualCriterions.createInput
-				);
+				await this.candidatePersonalQualitiesService.createBulk(this.editData.id, qualCriterions.createInput);
 			} catch (error) {
 				this.errorHandler.handleError(error);
 			}
@@ -393,31 +340,20 @@ export class CandidateInterviewMutationComponent
 		}
 	}
 
-	setCriterions(
-		data: ICandidateTechnologies[] | ICandidatePersonalQualities[],
-		selectedItems: string[]
-	) {
+	setCriterions(data: ICandidateTechnologies[] | ICandidatePersonalQualities[], selectedItems: string[]) {
 		const createInput = [];
 		const deleteInput = [];
 		const dataName = [];
 		if (selectedItems) {
 			data.forEach((item) => dataName.push(item.name));
-			selectedItems.forEach((item) =>
-				dataName.includes(item) ? item : createInput.push(item)
-			);
-			data.forEach((item) =>
-				!selectedItems.includes(item.name)
-					? item
-					: deleteInput.push(item)
-			);
+			selectedItems.forEach((item) => (dataName.includes(item) ? item : createInput.push(item)));
+			data.forEach((item) => (!selectedItems.includes(item.name) ? item : deleteInput.push(item)));
 			return { createInput: createInput, deleteInput: deleteInput };
 		}
 	}
 
 	async onCandidateSelected(id: string) {
-		const candidate = await this.candidatesService.getCandidateById(id, [
-			'user'
-		]);
+		const candidate = await this.candidatesService.getCandidateById(id, ['user']);
 		this.selectedCandidate = candidate;
 	}
 
@@ -433,10 +369,8 @@ export class CandidateInterviewMutationComponent
 
 	route() {
 		this.dialogRef.close();
-		this.router.navigate([
-			'/pages/employees/candidates/interviews/criterion'
-		]);
+		this.router.navigate(['/pages/employees/candidates/interviews/criterion']);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

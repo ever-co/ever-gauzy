@@ -1,12 +1,10 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
-import { IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationsService } from '../../../../../@core/services/organizations.service';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { UsersOrganizationsService } from '../../../../../@core/services/users-organizations.service';
-import { UserIdService } from '../../../../../@core/services/edit-user-data.service';
-import { Store } from '../../../../../@core/services/store.service';
+import { IOrganization } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @Component({
 	selector: 'ga-edit-user-organizations-mutation',

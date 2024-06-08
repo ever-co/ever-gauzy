@@ -1,12 +1,10 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-
+import { PermissionsGuard, UserResolver } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
-import { UserResolver } from '../@core/resolvers';
 
 const routes: Routes = [
 	{
@@ -45,10 +43,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'expenses',
@@ -58,10 +53,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'expense-recurring',
@@ -148,10 +140,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'payments',
@@ -164,10 +153,7 @@ const routes: Routes = [
 								unitOfTime: 'month'
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'pipelines',
@@ -215,10 +201,7 @@ const routes: Routes = [
 								isDisablePastDate: true
 							}
 						},
-						resolve: {
-							dates: DateRangePickerResolver
-						},
-						runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+						resolve: { dates: DateRangePickerResolver }
 					},
 					{
 						path: 'event-types',
@@ -609,7 +592,7 @@ const routes: Routes = [
 				path: 'integrations',
 				loadChildren: () => import('./integrations/integrations.module').then((m) => m.IntegrationsModule),
 				/** */
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
 						only: [PermissionsEnum.INTEGRATION_VIEW],

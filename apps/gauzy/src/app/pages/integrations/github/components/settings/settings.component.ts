@@ -10,13 +10,9 @@ import {
 	IntegrationEntity,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import {
-	ErrorHandlingService,
-	IntegrationEntitySettingService,
-	IntegrationEntitySettingServiceStoreService,
-	ToastrService
-} from './../../../../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { IntegrationEntitySettingService, IntegrationEntitySettingServiceStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy()
 @Component({

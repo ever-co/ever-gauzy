@@ -8,13 +8,16 @@ import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { ErrorHandlingService, Store } from './../../../../@core/services';
-import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	TimesheetFilterService,
+	TimesheetService
+} from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimesheetFilterService } from './../../../../@shared/timesheet';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,14 +40,15 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 
 	constructor(
 		private readonly cd: ChangeDetectorRef,
-		public readonly translateService: TranslateService,
-		private readonly errorHandler: ErrorHandlingService,
+		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly timesheetService: TimesheetService,
-		protected readonly store: Store,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit(): void {
@@ -145,7 +149,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 		} catch (error) {
 			// Handle any exceptions or errors during the fetch
 			console.log('Error fetching manual logs:', error);
-			this.errorHandler.handleError(error);
+			this.errorHandlingService.handleError(error);
 		} finally {
 			// Set loading state to false regardless of success or failure
 			this.loading = false;

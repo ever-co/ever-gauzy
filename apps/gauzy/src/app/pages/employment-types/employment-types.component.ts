@@ -11,14 +11,13 @@ import {
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '../../@core/services/store.service';
-import { OrganizationEmploymentTypesService } from '../../@core/services/organization-employment-types.service';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { Store } from '@gauzy/ui-sdk/common';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -26,6 +25,7 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

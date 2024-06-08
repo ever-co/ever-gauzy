@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Subject } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeeAppointmentService } from '../../../@core/services/employee-appointment.service';
+import { EmployeeAppointmentService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	templateUrl: './edit-appointment.component.html'

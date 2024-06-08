@@ -20,10 +20,10 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { DepartmentsComponent } from './departments.component';
 import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';
-import { OrganizationDepartmentsService } from '../../@core/services/organization-departments.service';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
@@ -54,7 +54,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,

@@ -1,10 +1,10 @@
-import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { CandidatesComponent } from './candidates.component';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
-import { InviteGuard } from '../../@core/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
 import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
@@ -22,13 +22,12 @@ import { CandidateStatisticComponent } from './candidate-statistic/candidate-sta
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
 import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: CandidatesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],
@@ -42,7 +41,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: EditCandidateComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_EDIT],
@@ -53,7 +52,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id/profile',
 		component: EditCandidateProfileComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_EDIT],
@@ -205,10 +204,7 @@ const routes: Routes = [
 		component: ManageCandidateInviteComponent,
 		canActivate: [InviteGuard],
 		data: {
-			expectedPermissions: [
-				PermissionsEnum.ORG_INVITE_EDIT,
-				PermissionsEnum.ORG_INVITE_VIEW
-			],
+			expectedPermissions: [PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_INVITE_VIEW],
 			selectors: {
 				project: false,
 				employee: false,
@@ -219,7 +215,7 @@ const routes: Routes = [
 	{
 		path: 'interviews',
 		component: ManageCandidateInterviewsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT],
@@ -270,7 +266,7 @@ const routes: Routes = [
 	{
 		path: 'statistic',
 		component: CandidateStatisticComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_CANDIDATES_VIEW],

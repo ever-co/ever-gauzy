@@ -1,14 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { UpworkStoreService } from 'apps/gauzy/src/app/@core/services/upwork-store.service';
 import { Observable, of } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { IEngagement } from '@gauzy/contracts';
 import { tap, catchError } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { ErrorHandlingService } from 'apps/gauzy/src/app/@core/services/error-handling.service';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

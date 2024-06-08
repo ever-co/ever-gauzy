@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { IAppConfig } from '@gauzy/contracts';
-import { AppService } from '../../../@core/services';
+import { AppService } from '@gauzy/ui-sdk/core';
 
 /**
  * Interface representing a social link.
@@ -34,9 +34,7 @@ export class SocialLinksComponent implements OnInit {
 	public socialLinks$: Observable<ISocialLink[]>; // Observable for an array of social links
 	public configs: IAppConfig;
 
-	constructor(
-		private readonly _appService: AppService,
-	) { }
+	constructor(private readonly _appService: AppService) {}
 
 	/**
 	 * Lifecycle hook called after Angular has initialized all data-bound properties of a directive.
@@ -51,7 +49,7 @@ export class SocialLinksComponent implements OnInit {
 			/**
 			 * Handle component lifecycle to avoid memory leaks.
 			 */
-			untilDestroyed(this),
+			untilDestroyed(this)
 		);
 	}
 

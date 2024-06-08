@@ -1,20 +1,17 @@
 import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { EquipmentSharingComponent } from './equipment-sharing.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { EquipmentSharingComponent } from './equipment-sharing.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: EquipmentSharingComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW
-				],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW],
 				redirectTo: '/pages/dashboard'
 			}
 		}

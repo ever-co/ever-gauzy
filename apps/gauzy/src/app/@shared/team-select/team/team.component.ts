@@ -1,15 +1,14 @@
 import { Component, OnInit, OnDestroy, Input, forwardRef, Output, EventEmitter } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { IOrganization, IOrganizationTeam, CrudActionEnum, PermissionsEnum, IPagination } from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { NavigationService, OrganizationTeamStore, OrganizationTeamsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { ALL_TEAM_SELECTED } from './default-team';
-import { OrganizationTeamsService, Store, ToastrService } from '../../../@core/services';
-import { TruncatePipe } from '../../pipes';
-import { OrganizationTeamStore } from '../../../@core/services/organization-team-store.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -109,13 +108,13 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	onChanged = new EventEmitter<IOrganizationTeam>();
 
 	constructor(
-		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _organizationTeamsService: OrganizationTeamsService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
 		private readonly _organizationTeamStore: OrganizationTeamStore,
-		private readonly _truncatePipe: TruncatePipe
+		private readonly _truncatePipe: TruncatePipe,
+		private readonly _navigationService: NavigationService
 	) {}
 
 	ngOnInit(): void {
@@ -323,19 +322,19 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 	selectTeam(team: IOrganizationTeam): void {
 		if (!this.skipGlobalChange) {
 			this.store.selectedTeam = team || ALL_TEAM_SELECTED;
-			this.setAttributesToParams({ teamId: team?.id || null });
+			this.setAttributesToParams({ teamId: team?.id });
 		}
 		this.selectedTeam = team || ALL_TEAM_SELECTED;
 		this.teamId = this.selectedTeam.id;
 		this.onChanged.emit(team);
 	}
 
-	private setAttributesToParams(params: Object) {
-		this._router.navigate([], {
-			relativeTo: this._activatedRoute,
-			queryParams: { ...params },
-			queryParamsHandling: 'merge'
-		});
+	/**
+	 * Sets attributes to the current navigation parameters.
+	 * @param params An object containing key-value pairs representing the parameters to set.
+	 */
+	private async setAttributesToParams(params: { [key: string]: string | string[] | boolean }) {
+		await this._navigationService.updateQueryParams(params);
 	}
 
 	selectTeamById(teamId: string) {

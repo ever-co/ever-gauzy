@@ -5,9 +5,11 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { EquipmentService, ImageAssetService, Store, ToastrService } from '../../@core/services';
-import { environment as ENV } from './../../../environments/environment';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { environment as ENV } from '@gauzy/ui-config';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EquipmentService, ImageAssetService } from '@gauzy/ui-sdk/core';
 import { SelectAssetComponent } from './../../@shared/select-asset-modal/select-asset.component';
 
 @UntilDestroy({ checkProperties: true })

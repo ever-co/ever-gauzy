@@ -16,11 +16,11 @@ import {
 import { SidebarComponent } from './sidebar.component';
 import { TreeModule } from '@ali-hm/angular-tree-component';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { HelpCenterService } from '../../@core/services/help-center.service';
+import { HelpCenterService } from '@gauzy/ui-sdk/core';
 import { KnowledgeBaseModule } from './knowledeg-base/knowledeg-base.module';
 import { DeleteCategoryModule } from './delete-category/delete-category.module';
 import { DeleteBaseModule } from './delete-base/delete-base.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -42,7 +42,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbInputModule,
 		NbLayoutModule,
 		NbSidebarModule.forRoot(),
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	providers: [HelpCenterService],
 	declarations: [SidebarComponent],

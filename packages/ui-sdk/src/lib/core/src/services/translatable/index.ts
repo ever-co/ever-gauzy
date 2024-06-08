@@ -1,0 +1,1 @@
+export * from './translatable.service';

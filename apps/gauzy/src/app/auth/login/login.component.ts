@@ -1,28 +1,17 @@
-import {
-	ChangeDetectorRef,
-	Component,
-	ElementRef,
-	Inject,
-	OnInit,
-	ViewChild,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
-import {
-	NbAuthService,
-	NbLoginComponent,
-	NB_AUTH_OPTIONS,
-} from '@nebular/auth';
+import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { RolesEnum } from '@gauzy/contracts';
-import { environment } from './../../../environments/environment';
+import { environment } from '@gauzy/ui-config';
 import { CookieService } from 'ngx-cookie-service';
-import { ElectronService } from '../../@core/auth/electron.service';
+import { ElectronService } from '@gauzy/ui-sdk/core';
 import { patterns } from '../../@shared/regex/regex-patterns.const';
 
 @Component({
 	selector: 'ngx-login',
 	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss'],
+	styleUrls: ['./login.component.scss']
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	@ViewChild('form') private readonly form: FormGroupDirective;

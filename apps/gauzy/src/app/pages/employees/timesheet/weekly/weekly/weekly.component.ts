@@ -5,16 +5,14 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
-import { moment } from './../../../../../@core/moment-extend';
-import { Store } from './../../../../../@core/services';
-import { TimesheetService, TimesheetFilterService } from './../../../../../@shared/timesheet';
 import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;
@@ -45,14 +43,15 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 	@ViewChild(NbPopoverDirective) popover: NbPopoverDirective;
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly timesheetService: TimesheetService,
 		private readonly nbDialogService: NbDialogService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		public readonly translateService: TranslateService,
 		protected readonly store: Store,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {

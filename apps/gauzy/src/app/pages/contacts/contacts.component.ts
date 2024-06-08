@@ -19,17 +19,15 @@ import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	CountryService,
 	OrganizationContactService,
 	OrganizationProjectsService,
-	Store,
+	ServerDataSource,
 	ToastrService
-} from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+} from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';
 import {
@@ -278,7 +276,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
 					filter: false,
-					valuePrepareFunction: (value: ICountry['isoCode']) => this.getCountry(value)
+					valuePrepareFunction: (value: string) => this.getCountry(value)
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
@@ -607,12 +605,16 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 
 	/**
 	 * Returns the country name based on the ISO code.
+	 *
 	 * @param isoCode - ISO code of the country.
 	 * @returns The country name or null if not found.
 	 */
 	getCountry(isoCode: ICountry['isoCode']): string | null {
-		const foundCountry = this.countries.find((item) => item.isoCode === isoCode);
-		return foundCountry?.country || null;
+		// Logic to find the country based on the ISO code
+		const country = this.countries.find((item) => item.isoCode === isoCode);
+
+		// Return the country name if found, otherwise return null
+		return country?.country ?? null;
 	}
 
 	ngOnDestroy(): void {}

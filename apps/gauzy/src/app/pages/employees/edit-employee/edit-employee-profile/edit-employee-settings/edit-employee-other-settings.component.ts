@@ -4,8 +4,8 @@ import { filter, tap } from 'rxjs/operators';
 import { NbAccordionComponent, NbAccordionItemComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { IEmployee } from '@gauzy/contracts';
-import { EmployeeStore } from './../../../../../@core/services';
+import { DEFAULT_TIME_FORMATS, IEmployee } from '@gauzy/contracts';
+import { EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,7 +14,7 @@ import { EmployeeStore } from './../../../../../@core/services';
 	styleUrls: ['./edit-employee-other-settings.component.scss']
 })
 export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
-
+	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	selectedEmployee: IEmployee;
 	/**
 	 * Nebular Accordion Main Component
@@ -40,6 +40,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			timeZone: [],
+			timeFormat: [],
 			upworkId: [],
 			linkedInId: []
 		});
@@ -49,7 +50,7 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		private readonly cdr: ChangeDetectorRef,
 		private readonly fb: UntypedFormBuilder,
 		private readonly employeeStore: EmployeeStore
-	) { }
+	) {}
 
 	/**
 	 *
@@ -79,8 +80,9 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 		const { user } = employee;
 		this.form.patchValue({
 			timeZone: user.timeZone || moment.tz.guess(), // set current timezone, if employee don't have any timezone
+			timeFormat: user.timeFormat,
 			upworkId: employee.upworkId,
-			linkedInId: employee.linkedInId,
+			linkedInId: employee.linkedInId
 		});
 		this.form.updateValueAndValidity();
 	}
@@ -95,11 +97,12 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 			return;
 		}
 		const { organizationId, tenantId } = this.selectedEmployee;
-		const { timeZone, upworkId, linkedInId } = this.form.value;
+		const { timeZone, timeFormat, upworkId, linkedInId } = this.form.value;
 
 		/** Update user fields */
 		this.employeeStore.userForm = {
-			timeZone
+			timeZone,
+			timeFormat
 		};
 
 		/** Update employee fields */
@@ -114,5 +117,5 @@ export class EditEmployeeOtherSettingsComponent implements OnInit, OnDestroy {
 	/**
 	 *
 	 */
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

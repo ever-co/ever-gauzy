@@ -511,6 +511,10 @@ export class SetupComponent implements OnInit {
 		return this._environment.IS_SERVER;
 	}
 
+	public get isServerApi(): boolean {
+		return this._environment.IS_SERVER_API;
+	}
+
 	private scrollToBottom() {
 		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
 	}

@@ -4,7 +4,6 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pick } from 'underscore';
-import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	IGetPaymentInput,
@@ -13,13 +12,11 @@ import {
 	OrganizationContactBudgetTypeEnum,
 	ITimeLogFilters
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../@core/services';
-import { TimesheetService } from './../../../../@shared/timesheet/timesheet.service';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -38,14 +35,15 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	constructor(
-		private readonly timesheetService: TimesheetService,
-		protected readonly store: Store,
 		public readonly translateService: TranslateService,
+		private readonly timesheetService: TimesheetService,
 		private readonly cd: ChangeDetectorRef,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -79,18 +77,13 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone: string = moment.tz.guess();
-
 		// Extract clientIds from this.request
 		const appliedFilter = pick(this.request, 'clientIds');
 
 		// Create the request object of type IGetTimeLogReportInput
 		const request: IGetTimeLogReportInput = {
 			...appliedFilter,
-			...this.getFilterRequest(this.request),
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			...this.getFilterRequest(this.request)
 		};
 
 		// Update the payloads observable with the new request
@@ -135,10 +128,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 			const payloads = this.payloads$.getValue();
 
 			// Fetch the client budget reports from the timesheetService
-			const clients: IClientBudgetLimitReport[] = await this.timesheetService.getClientBudgetLimit(payloads);
-
-			// Update the 'clients' property with the retrieved data
-			this.clients = clients;
+			this.clients = await this.timesheetService.getClientBudgetLimit(payloads);
 		} catch (error) {
 			// Log any errors during the process
 			console.error('Error while retrieving client budget reports', error);

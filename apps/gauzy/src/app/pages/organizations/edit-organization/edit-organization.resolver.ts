@@ -3,8 +3,8 @@ import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { debounceTime, EMPTY, Observable, of as observableOf } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
-import { isEmpty } from '@gauzy/ui-sdk/common';
-import { OrganizationsService, Store } from '../../../@core/services';
+import { Store, isEmpty } from '@gauzy/ui-sdk/common';
+import { OrganizationsService } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'

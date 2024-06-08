@@ -3,7 +3,12 @@ import * as moment from 'moment';
 import { combineLatest, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import {
+	DateRangePickerBuilderService,
+	OrganizationTeamsService,
+	TimesheetService,
+	TimesheetStatisticsService
+} from '@gauzy/ui-sdk/core';
 import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
@@ -13,9 +18,9 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { OrganizationTeamsService, Store } from '../../../@core/services';
-import { TimesheetService, TimesheetStatisticsService } from '../../../@shared/timesheet';
+import { Store } from '@gauzy/ui-sdk/common';
 import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,11 +39,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		private readonly _organizationTeamsService: OrganizationTeamsService,
 		private readonly _timesheetStatisticsService: TimesheetStatisticsService,
 		private readonly _timesheetService: TimesheetService,
-		protected readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly _store: Store,
-		protected readonly _translateService: TranslateService
+		protected readonly translateService: TranslateService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly store: Store,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(_store, _translateService, _dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 		this._selectedTeam = {
 			data: null,
 			isSelected: false
@@ -135,7 +141,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		combineLatest([this._store.selectedEmployee$, this._store.selectedTeam$])
+		combineLatest([this.store.selectedEmployee$, this.store.selectedTeam$])
 			.pipe(
 				tap(([employee, organizationTeam]) => {
 					this._selectedEmployee = employee;

@@ -3072,7 +3072,7 @@
 		"404_PAGE_NOT_FOUND": "الصفحة غير موجودة",
 		"TAKE_ME_HOME": "خذني إلى المنزل",
 		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "الصفحة التي كنت تبحث عنها غير موجودة",
-  		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
+		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
 	},
 	"HELP_PAGE": {
 		"HELP": "مساعدة",
@@ -4126,7 +4126,14 @@
 			"BROWSER_EXTENSION": "امتداد المتصفح",
 			"TEAMS": "الفِرَق"
 		},
-		"LAST_WORKED": "آخر عملت:"
+		"LAST_WORKED": "آخر عملت:",
+		"TIME_ZONE": "Time Zone",
+		"TIME_FORMAT": "Time Format",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Org Timezone",
+			"MY_TIMEZONE": "My Timezone"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "لقطات الشاشة",

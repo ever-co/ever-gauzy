@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { InviteGuard } from '../../@core/guards';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { EmployeesComponent } from './employees.component';
 import { ManageEmployeeInviteComponent } from './manage-employee-invite/manage-employee-invite.component';
 import { EditEmployeeComponent } from './edit-employee/edit-employee.component';
@@ -27,7 +26,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: EmployeesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_VIEW],
@@ -44,7 +43,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: EditEmployeeComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT],
@@ -96,7 +95,7 @@ const routes: Routes = [
 			{
 				path: 'projects',
 				component: EditEmployeeProjectsComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					selectors: {
 						project: false,

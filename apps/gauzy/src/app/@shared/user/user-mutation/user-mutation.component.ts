@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { RolesEnum, IUser } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { Store, ToastrService } from '../../../@core/services';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 
 @Component({
@@ -10,7 +11,6 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 	styleUrls: ['./user-mutation.component.scss']
 })
 export class UserMutationComponent implements OnInit {
-	
 	@ViewChild('userBasicInfo')
 	userBasicInfo: BasicInfoFormComponent;
 

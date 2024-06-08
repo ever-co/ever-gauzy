@@ -7,7 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import {
+	ErrorHandlingService,
+	MyTasksStoreService,
+	ServerDataSource,
+	TasksStoreService,
+	TeamTasksStoreService
+} from '@gauzy/ui-sdk/core';
+import { HashNumberPipe } from '@gauzy/ui-sdk/shared';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -17,20 +24,11 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { HashNumberPipe } from './../../../../@shared/pipes';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { API_PREFIX, ComponentEnum } from '../../../../@core/constants';
-import {
-	ErrorHandlingService,
-	MyTasksStoreService,
-	Store,
-	TasksStoreService,
-	TeamTasksStoreService
-} from './../../../../@core/services';
 import {
 	AssignedToComponent,
 	CreateByComponent,
@@ -175,8 +173,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					filterFunction: (prefix: string) => {
 						this.setFilter({ field: 'prefix', search: prefix });
 					},
-					valuePrepareFunction: (data: number) => {
-						return this._hashNumberPipe.transform(data);
+					valuePrepareFunction: (value: string, cell: Cell) => {
+						return this._hashNumberPipe.transform(value);
 					}
 				},
 				description: {

@@ -1,14 +1,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbListModule,
+	NbSelectModule,
+	NbTooltipModule
+} from '@nebular/theme';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DirectivesModule } from '@gauzy/ui-sdk/shared';
 import { ThemeSettingsComponent } from './theme-settings.component';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
-import { NbCardModule, NbListModule } from '@nebular/theme';
 import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 import { LayoutSelectorModule } from './components/layout-selector/layout-selector.module';
-import { DirectivesModule } from 'apps/gauzy/src/app/@shared/directives/directives.module';
 
 @NgModule({
 	imports: [
@@ -17,7 +23,7 @@ import { DirectivesModule } from 'apps/gauzy/src/app/@shared/directives/directiv
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		ThemeLanguageSelectorModule,
 		LayoutSelectorModule,
 		ThemeSelectorModule,

@@ -9,9 +9,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
 import * as moment from 'moment';
 import { IEngagement } from '@gauzy/contracts';
-import { ErrorHandlingService, ToastrService, UpworkStoreService } from './../../../../@core/services';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { UpworkStoreService } from '@gauzy/ui-sdk/core';
 import { DateViewComponent } from './../../../../@shared/table-components';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
 @UntilDestroy({ checkProperties: true })

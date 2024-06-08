@@ -14,15 +14,13 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import * as moment from 'moment';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, PaymentService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
 import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { PaymentService, Store } from './../../../../@core/services';
-import { TimesheetFilterService } from './../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
+import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,7 +33,6 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 	public loading: boolean;
 	public charts: IChartData;
 	private groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
-
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -44,12 +41,13 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 	constructor(
 		private readonly paymentService: PaymentService,
 		private readonly cd: ChangeDetectorRef,
-		protected readonly store: Store,
-		public readonly translateService: TranslateService,
 		private readonly timesheetFilterService: TimesheetFilterService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		public readonly translateService: TranslateService,
+		protected readonly store: Store,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
-		super(store, translateService, dateRangePickerBuilderService);
+		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
 	ngOnInit() {
@@ -90,15 +88,10 @@ export class PaymentReportComponent extends BaseSelectorFilterComponent implemen
 			return;
 		}
 
-		// Determine the current timezone using moment-timezone
-		const timezone: string = moment.tz.guess();
-
 		// Create the request object of type IGetPaymentInput
 		const request: IGetPaymentInput = {
 			...this.getFilterRequest(this.request),
-			groupBy: this.groupBy,
-			// Set the 'timezone' property to the determined timezone
-			timezone
+			groupBy: this.groupBy
 		};
 
 		// Update the payloads observable with the new request

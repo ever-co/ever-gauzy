@@ -8,8 +8,9 @@ import { Observable, of, firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, HubstaffService, Store, ToastrService } from './../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, HubstaffService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -119,9 +120,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
-					valuePrepareFunction: (value: string) => {
-						return this._titlecasePipe.transform(value);
-					}
+					valuePrepareFunction: (_: string) => this._titlecasePipe.transform(_)
 				}
 			}
 		};

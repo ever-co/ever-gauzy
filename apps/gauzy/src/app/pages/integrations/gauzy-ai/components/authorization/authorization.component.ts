@@ -5,8 +5,9 @@ import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, GauzyAIService, Store, ToastrService } from './../../../../../@core/services';
-import { ReplacePipe } from './../../../../../@shared/pipes';
+import { ErrorHandlingService, GauzyAIService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ReplacePipe } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +17,6 @@ import { ReplacePipe } from './../../../../../@shared/pipes';
 	providers: []
 })
 export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
-
 	public organization: IOrganization;
 
 	/**
@@ -50,7 +50,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _replacePipe: ReplacePipe
-	) { }
+	) {}
 
 	ngOnInit(): void {
 		this._activatedRoute.data
@@ -95,7 +95,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	/**
 	 * Gauzy AI integration remember state API call
@@ -122,46 +122,49 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 			const { id: organizationId, tenantId, name: organizationName } = this.organization;
 
 			// Create a new integration using the provided values
-			this._gauzyAIService.create({
-				apiKey,
-				apiSecret,
-				openAiSecretKey,
-				openAiOrganizationId,
-				organizationId,
-				tenantId
-			}).pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				// Perform actions after the integration creation
-				tap((integration: IIntegrationTenant) => {
-					if (!!integration) {
-						// Transform integration name for display
-						const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+			this._gauzyAIService
+				.create({
+					apiKey,
+					apiSecret,
+					openAiSecretKey,
+					openAiOrganizationId,
+					organizationId,
+					tenantId
+				})
+				.pipe(
+					tap((response: any) => {
+						if (response['status'] == HttpStatus.BAD_REQUEST) {
+							throw new Error(`${response['message']}`);
+						}
+					}),
+					// Perform actions after the integration creation
+					tap((integration: IIntegrationTenant) => {
+						if (!!integration) {
+							// Transform integration name for display
+							const provider = this._replacePipe.transform(integration?.name, '_', ' ');
 
-						// Display success message
-						this._toastrService.success(`INTEGRATIONS.MESSAGE.INTEGRATION_ADDED`, {
-							provider,
-							organization: organizationName
-						});
-					}
-				}),
-				// Redirect to the Gauzy AI integration after creation
-				tap((integration: IIntegrationTenant) => {
-					this._redirectToGauzyAIIntegration(integration.id);
-				}),
-				// Catch and handle errors
-				catchError((error) => {
-					// Handle and log errors using the _errorHandlingService
-					this._errorHandlingService.handleError(error);
-					// Return an empty observable to continue the stream
-					return EMPTY;
-				}),
-				// Unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			).subscribe();
+							// Display success message
+							this._toastrService.success(`INTEGRATIONS.MESSAGE.INTEGRATION_ADDED`, {
+								provider,
+								organization: organizationName
+							});
+						}
+					}),
+					// Redirect to the Gauzy AI integration after creation
+					tap((integration: IIntegrationTenant) => {
+						this._redirectToGauzyAIIntegration(integration.id);
+					}),
+					// Catch and handle errors
+					catchError((error) => {
+						// Handle and log errors using the _errorHandlingService
+						this._errorHandlingService.handleError(error);
+						// Return an empty observable to continue the stream
+						return EMPTY;
+					}),
+					// Unsubscribe when the component is destroyed
+					untilDestroyed(this)
+				)
+				.subscribe();
 		} catch (error) {
 			// Log any errors that occur during the process
 			console.log('Error while creating new integration for Gauzy AI', error);

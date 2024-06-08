@@ -2,12 +2,12 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbInputModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PhoneFormInputComponent } from './phone.component';
 
 @NgModule({
 	declarations: [PhoneFormInputComponent],
 	exports: [PhoneFormInputComponent],
-	imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule, NbInputModule]
+	imports: [CommonModule, FormsModule, ReactiveFormsModule, I18nTranslateModule.forChild(), NbInputModule]
 })
 export class PhoneFormInputModule {}

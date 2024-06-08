@@ -1,4 +1,5 @@
 import { TimeLogSourceEnum } from '@gauzy/contracts';
+import { ITimerIcon } from '@gauzy/ui-sdk/common';
 import {
 	BrowserExtensionTimerIcon,
 	DesktopTimerIcon,
@@ -8,7 +9,6 @@ import {
 	UpworkTimerIcon,
 	WebTimerIcon
 } from '../concretes';
-import { ITimerIcon } from '../interfaces/itimer-icon';
 
 export class TimerIconFactory {
 	public static create(source: TimeLogSourceEnum): ITimerIcon {

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { InvoicesComponent } from './invoices.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
@@ -23,7 +23,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: InvoicesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
@@ -32,13 +32,12 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'add',
 		component: InvoiceAddComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
@@ -49,7 +48,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: InvoiceEditComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_EDIT],
@@ -60,7 +59,7 @@ const routes: Routes = [
 	{
 		path: 'received-invoices',
 		component: InvoicesReceivedComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
@@ -69,13 +68,12 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'view/:id',
 		component: InvoiceViewComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
@@ -85,7 +83,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'estimates',
-		canActivateChild: [NgxPermissionsGuard],
+		canActivateChild: [PermissionsGuard],
 		children: [
 			{
 				path: '',
@@ -141,7 +139,7 @@ const routes: Routes = [
 	{
 		path: 'received-estimates',
 		component: EstimatesReceivedComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
@@ -150,8 +148,7 @@ const routes: Routes = [
 		},
 		resolve: {
 			dates: DateRangePickerResolver
-		},
-		runGuardsAndResolvers: 'paramsOrQueryParamsChange'
+		}
 	},
 	{
 		path: 'payments/:id',

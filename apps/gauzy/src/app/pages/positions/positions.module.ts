@@ -12,13 +12,13 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { OrganizationPositionsService } from '../../@core/services/organization-positions';
+import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../@shared/shared.module';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -42,7 +42,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbActionsModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule

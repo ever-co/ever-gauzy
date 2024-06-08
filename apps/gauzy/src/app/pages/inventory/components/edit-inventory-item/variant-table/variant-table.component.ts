@@ -1,19 +1,17 @@
 import { Component, ViewChild, OnInit } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { IProductVariant } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms/delete-confirmation/delete-confirmation.component';
-import { ProductVariantService } from 'apps/gauzy/src/app/@core/services/product-variant.service';
 import { EnabledStatusComponent } from '../../inventory-table-components/enabled-row.component';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
-import { InventoryStore } from 'apps/gauzy/src/app/@core/services/inventory-store.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { InventoryStore, ProductVariantService, ToastrService } from '@gauzy/ui-sdk/core';
 
 export interface SelectedProductVariant {
 	data: IProductVariant;

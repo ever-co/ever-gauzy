@@ -1,5 +1,5 @@
 import { HttpParams } from '@angular/common/http';
-import * as moment from 'moment';
+import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -23,6 +23,15 @@ export function isNullOrUndefined<T>(value: T | null | undefined): value is null
  */
 export function isNotNullOrUndefined<T>(value: T | undefined | null): value is T {
 	return value !== undefined && value !== null;
+}
+
+/**
+ * Check if a value is null, undefined, or an empty string.
+ * @param value The value to check.
+ * @returns true if the value is null, undefined, or an empty string, false otherwise.
+ */
+export function isNotNullOrUndefinedOrEmpty<T>(value: T | undefined | null): boolean {
+	return isNotNullOrUndefined(value) && value !== '';
 }
 
 // It will use for pass nested object or array in query params in get method.
@@ -187,7 +196,44 @@ export function ucFirst(str: string, force: boolean): string {
 }
 
 /**
+ * Get the UTC offset for a given timezone.
+ *
+ * @param timezone The timezone identifier (e.g., 'Europe/Paris').
+ * @returns The UTC offset in minutes.
+ */
+export function getUTCOffsetForTimezone(timezone: string = 'UTC'): number {
+	return moment.tz(timezone).utcOffset();
+}
+
+/**
+ * Converts a date to UTC using the offset of the specified timezone.
+ *
+ * @param date The date to convert, can be a string, Date object, or moment object.
+ * @param timezone (Optional) The timezone identifier (e.g., 'Europe/Paris'). If not provided, the local timezone is used.
+ * @returns A moment object representing the date in UTC.
+ */
+export function toUtcOffset(date: string | Date | moment.Moment, timezone?: string): moment.Moment {
+	// Get the UTC offset for the specified timezone
+	const utcOffset = timezone ? getUTCOffsetForTimezone(timezone) : moment().utcOffset();
+
+	// Clone the provided date to avoid mutating it, then subtract the UTC offset
+	return moment(date).clone().subtract(utcOffset, 'minutes');
+}
+
+/**
+ * Converts the given date to the specified timezone.
+ *
+ * @param date The date to convert to the specified timezone.
+ * @param timezone The IANA timezone identifier (e.g., 'America/New_York', 'Europe/London').
+ * @returns A moment object representing the date in the specified timezone.
+ */
+export function toTimezone(date: string | Date | moment.Moment, timezone: string): moment.Moment {
+	return moment.utc(date).tz(timezone);
+}
+
+/**
  * Converts the given date to the local timezone.
+ *
  * @param date The date to convert to local timezone.
  * @returns A moment object representing the date in the local timezone.
  */
@@ -468,3 +514,15 @@ export const parseToBoolean = (value: any): boolean => {
 		return false; // Return false on parsing errors
 	}
 };
+
+/**
+ * Replaces all occurrences of a substring in a given string with another substring.
+ *
+ * @param {string} value - The input value.
+ * @param {string} search - The substring to search for.
+ * @param {string} replace - The substring to replace the search substring with.
+ * @return {string} The modified string with all occurrences of the search substring replaced.
+ */
+export function replaceAll(value: string, search: string, replace: string): string {
+	return value.split(search).join(replace);
+}

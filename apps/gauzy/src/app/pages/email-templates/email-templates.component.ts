@@ -14,8 +14,10 @@ import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { AceEditorComponent } from 'ngx-ace-editor-wrapper';
-import { EmailTemplateService, Store, ToastrService } from '../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmailTemplateService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

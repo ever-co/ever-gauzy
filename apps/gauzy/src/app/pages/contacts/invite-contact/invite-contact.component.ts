@@ -3,11 +3,8 @@ import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { IOrganization, IOrganizationContact } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationContactService } from '../../../@core/services/organization-contact.service';
-import { UsersService } from '../../../@core/services';
-import { InviteService } from '../../../@core/services/invite.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { InviteService, OrganizationContactService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-invite-contact',

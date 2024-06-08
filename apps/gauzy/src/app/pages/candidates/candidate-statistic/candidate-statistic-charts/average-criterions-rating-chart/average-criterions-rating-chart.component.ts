@@ -9,7 +9,7 @@ import {
 	ICandidateTechnologies,
 	ICandidatePersonalQualities
 } from '@gauzy/contracts';
-import { CandidateFeedbacksService } from 'apps/gauzy/src/app/@core/services/candidate-feedbacks.service';
+import { CandidateFeedbacksService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-average-criterions-rating-chart',
@@ -26,64 +26,47 @@ export class AverageCriterionsRatingChartComponent implements OnDestroy {
 	options: any;
 	backgroundColor: string[] = [];
 	private _ngDestroy$ = new Subject<void>();
-	constructor(
-		private themeService: NbThemeService,
-		private candidateFeedbacksService: CandidateFeedbacksService
-	) {}
+	constructor(private themeService: NbThemeService, private candidateFeedbacksService: CandidateFeedbacksService) {}
 
 	async onMembersSelected(id: string) {
-		const res = await this.candidateFeedbacksService.getAll(
-			['interviewer', 'criterionsRating'],
-			{
-				candidateId: id
-			}
-		);
+		const res = await this.candidateFeedbacksService.getAll(['interviewer', 'criterionsRating'], {
+			candidateId: id
+		});
 		if (res) {
 			const currInterviews = [];
 			this.feedbacks = res.items.filter((item) => item.interviewId);
 			const criterionsRating = [];
 			this.feedbacks.forEach((feedback) => {
 				this.interviewList.forEach((interview) => {
-					if (
-						interview.id === feedback.interviewId &&
-						!currInterviews.includes(interview)
-					) {
+					if (interview.id === feedback.interviewId && !currInterviews.includes(interview)) {
 						currInterviews.push(interview);
 					}
 				});
 				feedback.criterionsRating.forEach((criterionEl) => {
 					currInterviews.forEach((interview) => {
-						interview.personalQualities.forEach(
-							(pq: ICandidatePersonalQualities) => {
-								if (pq.id === criterionEl.personalQualityId) {
-									criterionsRating.push({
-										name: pq.name,
-										rating: criterionEl.rating
-									});
-								}
+						interview.personalQualities.forEach((pq: ICandidatePersonalQualities) => {
+							if (pq.id === criterionEl.personalQualityId) {
+								criterionsRating.push({
+									name: pq.name,
+									rating: criterionEl.rating
+								});
 							}
-						);
-						interview.technologies.forEach(
-							(t: ICandidateTechnologies) => {
-								if (t.id === criterionEl.technologyId) {
-									criterionsRating.push({
-										name: t.name,
-										rating: criterionEl.rating
-									});
-								}
+						});
+						interview.technologies.forEach((t: ICandidateTechnologies) => {
+							if (t.id === criterionEl.technologyId) {
+								criterionsRating.push({
+									name: t.name,
+									rating: criterionEl.rating
+								});
 							}
-						);
+						});
 					});
 				});
 			});
 			this.labels = [];
 			this.rating = [];
-			this.rating = this.getCriterionsRating(criterionsRating).map(
-				(x) => x.rating
-			);
-			this.labels = this.getCriterionsRating(criterionsRating).map(
-				(x) => x.name
-			);
+			this.rating = this.getCriterionsRating(criterionsRating).map((x) => x.rating);
+			this.labels = this.getCriterionsRating(criterionsRating).map((x) => x.name);
 			this.loadChart();
 		}
 	}
@@ -99,10 +82,7 @@ export class AverageCriterionsRatingChartComponent implements OnDestroy {
 			}, [])
 			.map((data) => {
 				this.loadColor(data.rating);
-				const rating = (
-					data.rating.reduce((prev, curr) => prev + curr) /
-					data.rating.length
-				).toFixed(2);
+				const rating = (data.rating.reduce((prev, curr) => prev + curr) / data.rating.length).toFixed(2);
 				return { ...data, rating };
 			});
 	}
@@ -145,10 +125,7 @@ export class AverageCriterionsRatingChartComponent implements OnDestroy {
 	}
 	loadColor(data: string[]) {
 		for (let i = 0; i < data.length; i++) {
-			const color =
-				i % 2 === 0
-					? 'rgba(75, 192, 192, 0.2)'
-					: 'rgba(153, 102, 255, 0.2)';
+			const color = i % 2 === 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(153, 102, 255, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}

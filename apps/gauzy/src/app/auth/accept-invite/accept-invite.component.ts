@@ -2,10 +2,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/shared';
 import { tap } from 'rxjs/operators';
+import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { InviteService, Store, ToastrService } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InviteService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -9,9 +9,9 @@ import { filter, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TimesheetService } from './../../../../../@shared/timesheet/timesheet.service';
 import { EditTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TimesheetService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

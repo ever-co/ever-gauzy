@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { MerchantComponent } from './merchant.component';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
@@ -9,14 +9,12 @@ import { MerchantFormResolver } from './merchant-form/merchant-form.resolver';
 
 const routes: Routes = [
 	{
-        path: '',
+		path: '',
 		component: MerchantComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ORG_INVENTORY_VIEW
-				],
+				only: [PermissionsEnum.ORG_INVENTORY_VIEW],
 				redirectTo: '/pages/dashboard'
 			},
 			selectors: {
@@ -56,7 +54,7 @@ const routes: Routes = [
 				resolve: {
 					merchant: MerchantFormResolver
 				}
-			},
+			}
 		]
 	}
 ];

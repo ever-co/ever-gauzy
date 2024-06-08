@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';
@@ -13,14 +13,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
+import { Store } from '@gauzy/ui-sdk/common';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import {
-	InvoiceEstimateHistoryService,
-	InvoicesService,
-	PaymentService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, ToastrService } from '@gauzy/ui-sdk/core';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })

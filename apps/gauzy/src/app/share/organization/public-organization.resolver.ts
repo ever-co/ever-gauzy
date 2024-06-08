@@ -1,13 +1,9 @@
 import { Injectable } from '@angular/core';
-import {
-	Resolve,
-	ActivatedRouteSnapshot,
-	Router
-} from '@angular/router';
-import { IOrganization } from '@gauzy/contracts';
+import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { EMPTY, Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ErrorHandlingService, OrganizationsService } from '../../@core/services';
+import { IOrganization } from '@gauzy/contracts';
+import { ErrorHandlingService, OrganizationsService } from '@gauzy/ui-sdk/core';
 
 @Injectable({
 	providedIn: 'root'
@@ -17,11 +13,14 @@ export class PublicOrganizationResolver implements Resolve<any> {
 		private readonly organizationsService: OrganizationsService,
 		private readonly router: Router,
 		private readonly errorHandlingService: ErrorHandlingService
-	) { }
+	) {}
 
-	resolve(
-		route: ActivatedRouteSnapshot
-	): Observable<IOrganization> {
+	/**
+	 *
+	 * @param route
+	 * @returns
+	 */
+	resolve(route: ActivatedRouteSnapshot): Observable<IOrganization> {
 		try {
 			const profileLink = route.params.profileLink;
 			const organizationId = route.params.organizationId;

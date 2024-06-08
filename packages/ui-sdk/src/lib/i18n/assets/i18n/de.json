@@ -4123,7 +4123,14 @@
 			"BROWSER_EXTENSION": "Browser-Erweiterung",
 			"TEAMS": "Teams"
 		},
-		"LAST_WORKED": "Zuletzt gearbeitet:"
+		"LAST_WORKED": "Zuletzt gearbeitet:",
+		"TIME_ZONE": "Time Zone",
+		"TIME_FORMAT": "Time Format",
+		"TIME_ZONE_OPTION": {
+			"UTC": "UTC",
+			"ORG_TIMEZONE": "Org Timezone",
+			"MY_TIMEZONE": "My Timezone"
+		}
 	},
 	"ACTIVITY": {
 		"SCREENSHOTS": "Screenshots",

@@ -7,9 +7,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { uniq } from 'underscore';
-import { environment } from '@env/environment';
-import { CompareDateValidator } from '@gauzy/ui-sdk/core';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { environment } from '@gauzy/ui-config';
+import { CompareDateValidator, ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { FormHelpers, ckEditorConfig } from '@gauzy/ui-sdk/shared';
 import {
 	IEmployee,
 	IOrganization,
@@ -33,20 +33,17 @@ import {
 	IOrganizationGithubRepository,
 	SYNC_TAG_GAUZY
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import {
-	ErrorHandlingService,
 	GithubService,
 	OrganizationContactService,
 	OrganizationProjectsService,
-	OrganizationTeamsService,
-	Store,
-	ToastrService
-} from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
-import { FormHelpers } from '../../forms/helpers';
+	OrganizationTeamsService
+} from '@gauzy/ui-sdk/core';
+import { DUMMY_PROFILE_IMAGE } from '@gauzy/ui-sdk/common';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-project-mutation',

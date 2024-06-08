@@ -3,7 +3,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { tap } from 'rxjs/operators';
 import { IChangelog } from '@gauzy/contracts';
-import { ChangelogService } from '../../../@core';
+import { ChangelogService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,7 +15,7 @@ export class NgxWhatsNewComponent implements OnInit {
 	learnMore: string;
 	items$: Observable<IChangelog[]> = this._changelogService.changelogs$;
 
-	constructor(private readonly _changelogService: ChangelogService) { }
+	constructor(private readonly _changelogService: ChangelogService) {}
 
 	ngOnInit() {
 		this._changelogService.getAll({ isFeature: 0 }).pipe(untilDestroyed(this)).subscribe();

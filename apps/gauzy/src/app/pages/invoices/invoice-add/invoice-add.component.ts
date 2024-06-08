@@ -19,25 +19,25 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	ExpensesService,
 	InvoiceEstimateHistoryService,
 	InvoiceItemService,
 	InvoicesService,
 	OrganizationProjectsService,
+	OrganizationSettingService,
 	ProductService,
-	Store,
 	TasksStoreService,
-	ToastrService,
 	TranslatableService
-} from '../../../@core/services';
+} from '@gauzy/ui-sdk/core';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import { InvoiceExpensesSelectorComponent } from '../table-components/invoice-expense-selector.component';
 import {
@@ -124,7 +124,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 		private readonly dialogService: NbDialogService,
 		private readonly expensesService: ExpensesService,
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
-		private readonly translatableService: TranslatableService
+		private readonly translatableService: TranslatableService,
+		private readonly organizationSettingService: OrganizationSettingService
 	) {
 		super(translateService);
 	}
@@ -177,7 +178,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 
 	initializeForm() {
 		this.form = this.fb.group({
-			invoiceDate: [this.store.getDateFromOrganizationSettings(), Validators.required],
+			invoiceDate: [this.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 			invoiceNumber: [this.formInvoiceNumber, Validators.compose([Validators.required, Validators.min(1)])],
 			dueDate: [this.getNextMonth(), Validators.required],
 			currency: ['', Validators.required],

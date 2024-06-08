@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum } from '../../../@core/constants';
-import { Store } from '../../../@core/services';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,19 +21,15 @@ export class LayoutSelectorComponent implements OnInit, OnDestroy {
 	ngOnInit() {
 		this.store.componentLayoutMap$
 			.pipe(untilDestroyed(this))
-			.subscribe(
-				(componentLayoutMap: Map<string, ComponentLayoutStyleEnum>) => {
-					const dataLayout = componentLayoutMap.get(
-						this.componentName
-					);
-					this.componentLayoutStyle = dataLayout;
-				}
-			);
+			.subscribe((componentLayoutMap: Map<string, ComponentLayoutStyleEnum>) => {
+				const dataLayout = componentLayoutMap.get(this.componentName);
+				this.componentLayoutStyle = dataLayout;
+			});
 	}
 
 	changeLayout(layout: ComponentLayoutStyleEnum) {
 		this.store.setLayoutForComponent(this.componentName, layout);
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

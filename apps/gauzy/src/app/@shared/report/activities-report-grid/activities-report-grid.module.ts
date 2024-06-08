@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ActivitiesReportGridComponent } from './activities-report-grid.component';
 import { SharedModule } from '../../shared.module';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
@@ -15,7 +15,7 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 	imports: [
 		CommonModule,
 		SharedModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

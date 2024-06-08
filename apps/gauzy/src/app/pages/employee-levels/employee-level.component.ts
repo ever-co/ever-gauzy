@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import { IEmployeeLevelInput, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'angular2-smart-table';
@@ -14,7 +14,9 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { EmployeeLevelService, Store, ToastrService } from '../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeLevelService } from '@gauzy/ui-sdk/core';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

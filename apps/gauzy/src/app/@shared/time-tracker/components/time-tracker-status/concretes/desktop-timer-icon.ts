@@ -1,6 +1,6 @@
 import { faDesktop } from '@fortawesome/free-solid-svg-icons';
 import { TimeLogSourceEnum } from '@gauzy/contracts';
-import { TimerIcon } from '../interfaces';
+import { TimerIcon } from '@gauzy/ui-sdk/common';
 
 export class DesktopTimerIcon extends TimerIcon {
 	constructor() {

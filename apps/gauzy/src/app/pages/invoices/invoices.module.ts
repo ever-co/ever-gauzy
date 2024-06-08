@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -20,13 +21,14 @@ import {
 	NbPopoverModule,
 	NbTabsetModule,
 	NbFormFieldModule,
-	NbListModule
+	NbListModule,
+	NbAccordionModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
@@ -41,11 +43,8 @@ import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mut
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { BackNavigationModule } from '../../@shared/back-navigation';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
-import { CurrencyModule } from '../../@shared/currency/currency.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -72,7 +71,9 @@ import {
 	TasksService,
 	TasksStoreService,
 	TranslatableService
-} from '../../@core/services';
+} from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { CurrencyModule, CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
 import {
 	EstimateAddComponent,
 	EstimateEditComponent,
@@ -88,8 +89,6 @@ import {
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
-import { CurrencyPositionPipe } from '../../@shared/pipes';
-import { NbAccordionModule } from '@nebular/theme';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
@@ -128,7 +127,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		HeaderTitleModule,

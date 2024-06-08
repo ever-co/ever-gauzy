@@ -5,15 +5,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import {
-	EmployeesService,
-	EmployeeStore,
-	ErrorHandlingService,
-	Store,
-	ToastrService,
-	UsersService
-} from './../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
+import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

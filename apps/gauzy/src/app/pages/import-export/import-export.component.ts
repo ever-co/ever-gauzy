@@ -19,17 +19,11 @@ import {
 	ImportTypeEnum,
 	IUserOrganization
 } from '@gauzy/contracts';
-import { environment } from '@env/environment';
-import { Environment } from '@env/model';
-import {
-	ErrorHandlingService,
-	ExportAllService,
-	GauzyCloudService,
-	Store,
-	ToastrService,
-	UsersOrganizationsService
-} from '../../@core/services';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { Environment, environment } from '@gauzy/ui-config';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { ExportAllService, GauzyCloudService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

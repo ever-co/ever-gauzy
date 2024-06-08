@@ -111,6 +111,13 @@ export type Env = Readonly<{
 	DESKTOP_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
+	DESKTOP_API_SERVER_APP_NAME: string;
+	DESKTOP_API_SERVER_APP_DESCRIPTION: string;
+	DESKTOP_API_SERVER_APP_ID: string;
+	DESKTOP_API_SERVER_APP_REPO_NAME: string;
+	DESKTOP_API_SERVER_APP_REPO_OWNER: string;
+	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
+	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
 	AWHost: string;
 	API_DEFAULT_PORT: number;
 	GAUZY_UI_DEFAULT_PORT: number;
@@ -290,6 +297,21 @@ export const env: Env = cleanEnv(
 		API_DEFAULT_PORT: num({ default: 3000 }),
 		GAUZY_UI_DEFAULT_PORT: num({ default: 5621 }),
 		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
+		DESKTOP_API_SERVER_APP_NAME: str({
+			default: 'gauzy-api-server',
+		}),
+		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
+			default: 'Gauzy Api Server',
+		}),
+		DESKTOP_API_SERVER_APP_ID: str({
+			default: 'com.ever.gauzyapiserver',
+		}),
+		DESKTOP_API_SERVER_APP_REPO_NAME: str({
+			default: 'ever-gauzy-api-server',
+		}),
+		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
+		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

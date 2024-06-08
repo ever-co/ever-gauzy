@@ -1,10 +1,10 @@
 {
 	"$schema": "../../../../node_modules/ng-packagr/ng-package.schema.json",
-	"dest": "../../../../dist/packages/ui-sdk",
+	"dest": "../../dist",
 	"allowedNonPeerDependencies": ["."],
-	"assets": ["./i18n/assets/i18n/*.*"],
+	"assets": ["./i18n/assets/i18n/*.*", "./static/styles/**/*.scss"],
 	"lib": {
 		"entryFile": "./public-api.ts",
-		"styleIncludePaths": []
+		"styleIncludePaths": ["./static/styles"]
 	}
 }

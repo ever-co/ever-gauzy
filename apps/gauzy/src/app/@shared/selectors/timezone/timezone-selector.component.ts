@@ -1,6 +1,6 @@
-import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from "@angular/core";
-import { NG_VALUE_ACCESSOR } from "@angular/forms";
-import { UntilDestroy } from "@ngneat/until-destroy";
+import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import * as timezone from 'moment-timezone';
 
 @UntilDestroy({ checkProperties: true })
@@ -17,14 +17,13 @@ import * as timezone from 'moment-timezone';
 	]
 })
 export class TimeZoneSelectorComponent implements OnInit, OnDestroy {
-
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 	onChange: any = () => {};
 	onTouched: any = () => {};
 
 	/*
-	* Getter & Setter for dynamic timezone option
-	*/
+	 * Getter & Setter for dynamic timezone option
+	 */
 	private _timeZone: string;
 	@Input() set timeZone(val: string) {
 		this._timeZone = val;

@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { IInvoice } from '@gauzy/contracts';
 import { saveAs } from 'file-saver';
-import { InvoiceEstimateHistoryService } from '../../../@core/services/invoice-estimate-history.service';
-import { Store } from '../../../@core/services/store.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
-import { InvoicesService } from '../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 

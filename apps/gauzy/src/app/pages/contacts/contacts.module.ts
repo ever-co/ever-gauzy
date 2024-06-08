@@ -13,14 +13,14 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { InviteService, OrganizationContactService, OrganizationProjectsService } from '../../@core/services';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
+import { LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
-import { LeafletMapModule, LocationFormModule } from '../../@shared/forms';
 import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
@@ -67,7 +67,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		SharedModule,
 		TagsColorInputModule,
 		ThemeModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 
 	declarations: [...COMPONENTS],

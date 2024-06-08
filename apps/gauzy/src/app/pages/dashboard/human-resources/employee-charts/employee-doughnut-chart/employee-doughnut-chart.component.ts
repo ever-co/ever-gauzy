@@ -6,12 +6,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType, TooltipItem } from 'chart.js';
-import { environment } from '@env/environment';
+import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from './../../../../../@core/services/store.service';
-import { CurrencyPositionPipe } from './../../../../../@shared/pipes';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

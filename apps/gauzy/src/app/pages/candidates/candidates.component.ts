@@ -15,14 +15,12 @@ import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
-import { CandidatesService, ErrorHandlingService, Store, ToastrService } from '../../@core/services';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,
@@ -40,7 +38,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	loading: boolean = false;
 	organizationInvitesAllowed: boolean = false;
 	disableButton: boolean = true;
-
 	settingsSmartTable: object;
 	sourceSmartTable: ServerDataSource;
 	selectedCandidate: ICandidateViewModel;
@@ -49,7 +46,6 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	candidateStatusEnum = CandidateStatusEnum;
 	candidates: ICandidateViewModel[] = [];
-
 	public organization: IOrganization;
 	public candidates$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();

@@ -3,14 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IGithubAppInstallInput, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { GithubService, Store } from '../../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
+import { GithubService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './installation.component.html'
 })
 export class GithubInstallationComponent implements AfterViewInit, OnInit {
-
 	public isLoading: boolean = true;
 	public organization: IOrganization;
 
@@ -18,7 +18,7 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 		private readonly _route: ActivatedRoute,
 		private readonly _githubService: GithubService,
 		private readonly _store: Store
-	) { }
+	) {}
 
 	/**
 	 * Initialize the component when it is created.
@@ -29,14 +29,15 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 			.pipe(
 				// Filter and keep only valid queryParams with 'installation_id' and 'setup_action'
 				filter(({ installation_id, setup_action }) => !!installation_id && !!setup_action),
-				tap(() => this.organization = this._store.selectedOrganization),
+				tap(() => (this.organization = this._store.selectedOrganization)),
 				// Use 'tap' operator to perform an asynchronous action
-				tap(async ({ installation_id, setup_action, state }: IGithubAppInstallInput) =>
-					await this.verifyGitHubAppAuthorization({
-						installation_id,
-						setup_action,
-						state
-					})
+				tap(
+					async ({ installation_id, setup_action, state }: IGithubAppInstallInput) =>
+						await this.verifyGitHubAppAuthorization({
+							installation_id,
+							setup_action,
+							state
+						})
 				),
 				// Use 'untilDestroyed' operator to automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
@@ -48,7 +49,7 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 	/**
 	 *
 	 */
-	ngAfterViewInit(): void { }
+	ngAfterViewInit(): void {}
 
 	/**
 	 * Verify GitHub application authorization and perform actions based on input parameters.
@@ -143,7 +144,7 @@ export class GithubInstallationComponent implements AfterViewInit, OnInit {
 		// Delay navigation by 'ms' milliseconds before closing the window
 		setTimeout(() => {
 			// Close the current window
-			window.open("", "_self");
+			window.open('', '_self');
 			window.close();
 		}, ms); // Delay for 'ms' milliseconds before closing the window
 	}

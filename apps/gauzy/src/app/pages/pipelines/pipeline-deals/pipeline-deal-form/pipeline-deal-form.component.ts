@@ -4,14 +4,12 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/contracts';
-import { PipelinesService } from '../../../../@core/services/pipelines.service';
-import { DealsService } from '../../../../@core/services/deals.service';
-import { AppStore, Store } from '../../../../@core/services/store.service';
-import { OrganizationContactService } from '../../../../@core/services/organization-contact.service';
+import { AppStore, Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from 'apps/gauzy/src/app/@core/services/toastr.service';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { DealsService, OrganizationContactService, PipelinesService, ToastrService } from '@gauzy/ui-sdk/core';
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-deal-form.component.html',
@@ -35,16 +33,16 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 	private tenantId: string;
 
 	constructor(
-		public translateService: TranslateService,
-		private router: Router,
-		private fb: UntypedFormBuilder,
-		private appStore: AppStore,
-		private store: Store,
-		private dealsService: DealsService,
-		private activatedRoute: ActivatedRoute,
-		private pipelinesService: PipelinesService,
-		private clientsService: OrganizationContactService,
-		private toastrService: ToastrService
+		public readonly translateService: TranslateService,
+		private readonly router: Router,
+		private readonly fb: UntypedFormBuilder,
+		private readonly appStore: AppStore,
+		private readonly store: Store,
+		private readonly dealsService: DealsService,
+		private readonly activatedRoute: ActivatedRoute,
+		private readonly pipelinesService: PipelinesService,
+		private readonly clientsService: OrganizationContactService,
+		private readonly toastrService: ToastrService
 	) {
 		super(translateService);
 

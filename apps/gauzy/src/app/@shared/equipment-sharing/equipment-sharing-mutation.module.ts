@@ -11,11 +11,12 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
 import { ThemeModule } from '../../@theme/theme.module';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
 import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
-import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService, Store } from '../../@core/services';
+import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [
@@ -32,7 +33,7 @@ import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingServic
 		NbDatepickerModule,
 		NgSelectModule,
 		NbRadioModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		EmployeeMultiSelectModule
 	],
 	declarations: [EquipmentSharingMutationComponent],

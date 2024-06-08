@@ -2,20 +2,19 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IRequestApproval, ComponentLayoutStyleEnum, IOrganization, IApprovalsData } from '@gauzy/contracts';
-import { RequestApprovalService } from '../../@core/services/request-approval.service';
+import { RequestApprovalService, ToastrService } from '@gauzy/ui-sdk/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '../../@core/services/store.service';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { ComponentEnum } from '../../@core/constants/layout.constants';
 import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService } from '../../@core/services/toastr.service';
 import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
 import { pluck } from 'underscore';
 import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
@@ -23,8 +22,6 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Subject } from 'rxjs/internal/Subject';
 import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 

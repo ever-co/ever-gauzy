@@ -15,10 +15,10 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
-import { LocationFormModule, LeafletMapModule } from './../../../../@shared/forms';
 import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../../../@shared/pagination/pagination-v2/pagination-v2.module';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -66,7 +66,7 @@ const NB_MODULES = [
 		ReactiveFormsModule,
 		Angular2SmartTableModule,
 		CommonModule,
-		TranslateModule,
+		I18nTranslateModule.forChild(),
 		...NB_MODULES,
 		SharedModule,
 		HeaderTitleModule,

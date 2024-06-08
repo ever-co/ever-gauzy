@@ -15,22 +15,20 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from './../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { PictureNameTagsComponent } from './../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ComponentEnum } from './../../../../@core/constants';
+import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
-	EmployeesService,
-	ErrorHandlingService,
-	Store,
-	ToastrService
-} from './../../../../@core/services';
+	EmployeesService
+} from '@gauzy/ui-sdk/core';
 import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import {

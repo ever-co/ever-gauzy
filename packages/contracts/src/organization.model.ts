@@ -22,18 +22,16 @@ export enum OrganizationPermissionsEnum {
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	ALLOW_MODIFY_TIME = 'ALLOW_MODIFY_TIME',
 	ALLOW_DELETE_TIME = 'ALLOW_DELETE_TIME',
-	ALLOW_FUTURE_DATE = 'FUTURE_DATE_ALLOWED',
+	ALLOW_FUTURE_DATE = 'FUTURE_DATE_ALLOWED'
 }
 
 export enum ListsInputTypeEnum {
 	DEPARTMENTS = 'DEPARTMENTS',
 	POSITIONS = 'POSITIONS',
-	VENDORS = 'VENDORS',
+	VENDORS = 'VENDORS'
 }
 
-export interface IOrganization
-	extends IBasePerTenantEntityModel,
-	IRelationalImageAsset, IOrganizationTimerSetting {
+export interface IOrganization extends IBasePerTenantEntityModel, IRelationalImageAsset, IOrganizationTimerSetting {
 	name: string;
 	isDefault: boolean;
 	profile_link: string;
@@ -81,7 +79,7 @@ export interface IOrganization
 	requireProject?: boolean;
 	requireTask?: boolean;
 	requireClient?: boolean;
-	timeFormat?: 12 | 24;
+	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;
 	registrationDate?: Date;
@@ -125,11 +123,11 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 }
 
 export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
-
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;
 	valueDate?: Date;
+	totalEmployees?: number;
 	imageUrl?: string;
 	currency: CurrenciesEnum;
 	client_focus?: string;
@@ -188,7 +186,7 @@ export enum OrganizationSelectInput {
 	createdAt = 'createdAt',
 	updatedAt = 'updatedAt',
 	isActive = 'isActive',
-	tags = 'tags',
+	tags = 'tags'
 }
 
 /**
@@ -207,37 +205,37 @@ export enum RegionCodeEnum {
 	ITALIAN = 'it',
 	DUTCH = 'nl',
 	POLISH = 'pl',
-	ARABIC = 'ar',
+	ARABIC = 'ar'
 }
 
 export enum RegionsEnum {
 	'EN' = 'English (United States)',
 	'BG' = 'Bulgarian (Bulgaria)',
 	'HE' = 'Hebrew (Israel)',
-	'RU' = 'Russian (Russia)',
+	'RU' = 'Russian (Russia)'
 }
 
 export enum DefaultValueDateTypeEnum {
 	TODAY = 'TODAY',
 	END_OF_MONTH = 'END_OF_MONTH',
-	START_OF_MONTH = 'START_OF_MONTH',
+	START_OF_MONTH = 'START_OF_MONTH'
 }
 
 export enum ProjectBillingEnum {
 	RATE = 'RATE',
 	FLAT_FEE = 'FLAT_FEE',
-	MILESTONES = 'MILESTONES',
+	MILESTONES = 'MILESTONES'
 }
 
 export enum AlignmentOptions {
 	LEFT = 'LEFT',
 	RIGHT = 'RIGHT',
-	CENTER = 'CENTER',
+	CENTER = 'CENTER'
 }
 
 export enum CurrencyPosition {
 	LEFT = 'LEFT',
-	RIGHT = 'RIGHT',
+	RIGHT = 'RIGHT'
 }
 
 export enum WeekDaysEnum {
@@ -247,24 +245,24 @@ export enum WeekDaysEnum {
 	THURSDAY = 'THURSDAY',
 	FRIDAY = 'FRIDAY',
 	SATURDAY = 'SATURDAY',
-	SUNDAY = 'SUNDAY',
+	SUNDAY = 'SUNDAY'
 }
 
 export enum BonusTypeEnum {
 	PROFIT_BASED_BONUS = 'PROFIT_BASED_BONUS',
-	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS',
+	REVENUE_BASED_BONUS = 'REVENUE_BASED_BONUS'
 }
 
 export enum ClientFocusEnum {
 	VERY_SMALL_BUSINESSES = 'Very Small Businesses',
 	SMALL_BUSINESSES = 'Small Businesses',
 	MEDIUM_BUSINESSES = 'Medium Businesses',
-	LARGE_BUSINESSES = 'Large Businesses',
+	LARGE_BUSINESSES = 'Large Businesses'
 }
 
 export enum ProjectOwnerEnum {
 	CLIENT = 'CLIENT',
-	INTERNAL = 'INTERNAL',
+	INTERNAL = 'INTERNAL'
 }
 
 export enum MinimumProjectSizeEnum {
@@ -273,7 +271,7 @@ export enum MinimumProjectSizeEnum {
 	TEN_THOUSAND = '10000+',
 	TWENTY_FIVE_THOUSAND = '25000+',
 	FIFTY_THOUSAND = '50000+',
-	ONE_HUNDRED_THOUSAND = '100000+',
+	ONE_HUNDRED_THOUSAND = '100000+'
 }
 
 export const DEFAULT_PROFIT_BASED_BONUS = 75;
@@ -288,11 +286,23 @@ export interface IOrganizationStoreState {
 export enum CrudActionEnum {
 	CREATED = 'CREATED',
 	UPDATED = 'UPDATED',
-	DELETED = 'DELETED',
+	DELETED = 'DELETED'
 }
 
+export enum TimeFormatEnum {
+	FORMAT_12_HOURS = 12,
+	FORMAT_24_HOURS = 24
+}
+
+export enum TimeZoneEnum {
+	UTC_TIMEZONE = 'utc',
+	ORG_TIMEZONE = 'org',
+	MINE_TIMEZONE = 'mine'
+}
+
+export const DEFAULT_TIME_FORMATS: number[] = [TimeFormatEnum.FORMAT_12_HOURS, TimeFormatEnum.FORMAT_24_HOURS];
 export const DEFAULT_DATE_FORMATS: string[] = ['L', 'LL', 'dddd, LL'];
-export const DEFAULT_TIME_FORMATS: number[] = [12, 24];
+
 export interface IKeyValuePair {
 	key: string;
 	value: boolean | string;
@@ -302,8 +312,6 @@ export const DEFAULT_INACTIVITY_TIME_LIMITS: number[] = [1, 5, 10, 20, 30];
 export const DEFAULT_ACTIVITY_PROOF_DURATIONS: number[] = [1, 3, 5, 10];
 
 export const DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS: number[] = [1, 3, 5, 10];
-
-
 
 export interface IOrganizationTimerSetting {
 	allowTrackInactivity?: boolean;

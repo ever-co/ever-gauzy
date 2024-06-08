@@ -16,11 +16,18 @@ import { combineLatest, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
-import * as moment from 'moment';
+import moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	ExpensesService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { ReplacePipe } from '@gauzy/ui-sdk/shared';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
@@ -38,11 +45,8 @@ import {
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { ErrorHandlingService, ExpensesService, Store, ToastrService } from '../../@core/services';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
-import { ReplacePipe } from '../../@shared/pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

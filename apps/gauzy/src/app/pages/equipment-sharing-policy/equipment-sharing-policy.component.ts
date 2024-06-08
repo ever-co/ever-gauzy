@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-sdk/common';
 import { IEquipmentSharing, ComponentLayoutStyleEnum, IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EquipmentSharingPolicyService, Store, ToastrService } from '../../@core/services';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
+import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
 import {
 	IPaginationBase,
@@ -46,7 +46,6 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 		private readonly dialogService: NbDialogService,
 		private readonly toastrService: ToastrService,
 		private readonly store: Store,
-		private readonly router: Router,
 		private readonly httpClient: HttpClient
 	) {
 		super(translateService);

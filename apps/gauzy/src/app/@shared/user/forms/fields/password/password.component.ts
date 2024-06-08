@@ -16,7 +16,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { debounceTime } from 'rxjs/operators';
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { NbComponentSize } from '@nebular/theme';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

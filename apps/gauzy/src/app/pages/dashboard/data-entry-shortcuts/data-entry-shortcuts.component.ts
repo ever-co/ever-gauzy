@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Router } from '@angular/router';
-import { Store } from '../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import { takeUntil } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 
@@ -13,10 +13,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 	private _ngDestroy$ = new Subject<void>();
 
-	constructor(
-		private readonly router: Router,
-		private readonly store: Store
-	) {}
+	constructor(private readonly router: Router, private readonly store: Store) {}
 
 	hasPermissionE = false;
 	hasPermissionI = false;
@@ -24,22 +21,12 @@ export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 	hasPermissionEEdit = false;
 
 	async ngOnInit() {
-		this.store.userRolePermissions$
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.hasPermissionE = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_VIEW
-				);
-				this.hasPermissionI = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_VIEW
-				);
-				this.hasPermissionEEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_EXPENSES_EDIT
-				);
-				this.hasPermissionIEdit = this.store.hasPermission(
-					PermissionsEnum.ORG_INCOMES_EDIT
-				);
-			});
+		this.store.userRolePermissions$.pipe(takeUntil(this._ngDestroy$)).subscribe(() => {
+			this.hasPermissionE = this.store.hasPermission(PermissionsEnum.ORG_EXPENSES_VIEW);
+			this.hasPermissionI = this.store.hasPermission(PermissionsEnum.ORG_INCOMES_VIEW);
+			this.hasPermissionEEdit = this.store.hasPermission(PermissionsEnum.ORG_EXPENSES_EDIT);
+			this.hasPermissionIEdit = this.store.hasPermission(PermissionsEnum.ORG_INCOMES_EDIT);
+		});
 	}
 
 	async addIncome() {
@@ -47,9 +34,7 @@ export class DataEntryShortcutsComponent implements OnInit, OnDestroy {
 	}
 
 	async addExpense() {
-		this.router.navigateByUrl(
-			'pages/accounting/expenses?openAddDialog=true'
-		);
+		this.router.navigateByUrl('pages/accounting/expenses?openAddDialog=true');
 	}
 
 	async addOrganizationRecurringExpense() {

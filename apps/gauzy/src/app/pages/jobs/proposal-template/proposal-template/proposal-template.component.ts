@@ -1,6 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+
+import { NbDialogService, NbTabComponent } from '@nebular/theme';
+import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
 import {
 	IEmployee,
 	IEmployeeProposalTemplate,
@@ -8,25 +15,17 @@ import {
 	ISelectedEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { NbDialogService, NbTabComponent } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Nl2BrPipe, TruncatePipe } from './../../../../@shared/pipes';
+import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { Nl2BrPipe, TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
-import { ErrorHandlingService, Store, ToastrService } from './../../../../@core/services';
 import { ProposalTemplateService } from '../proposal-template.service';
-import { API_PREFIX } from './../../../../@core/constants';
-import { ServerDataSource } from '@gauzy/ui-sdk/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase
 } from '../../../../@shared/pagination/pagination-filter-base.component';
 import { EmployeeLinksComponent } from './../../../../@shared/table-components';
-import { DeleteConfirmationComponent } from 'apps/gauzy/src/app/@shared/user/forms';
+import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',
@@ -300,10 +299,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					filter: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['content']) => {
-						if (value) {
-							return this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500);
-						}
-						return '';
+						return value ? this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500) : '';
 					}
 				},
 				isDefault: {

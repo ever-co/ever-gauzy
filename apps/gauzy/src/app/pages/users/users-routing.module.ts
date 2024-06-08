@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { UsersComponent } from './users.component';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
-import { InviteGuard } from '../../@core/guards';
-import { PermissionsEnum } from '@gauzy/contracts';
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -17,7 +16,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: UsersComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_USERS_VIEW],
@@ -28,7 +27,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: EditUserProfileComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_USERS_EDIT],
@@ -46,7 +45,7 @@ const routes: Routes = [
 						date: false,
 						organization: false
 					}
-				},
+				}
 			},
 			{
 				path: 'organizations',
@@ -58,7 +57,7 @@ const routes: Routes = [
 						date: false,
 						organization: false
 					}
-				},
+				}
 			}
 		]
 	},
@@ -67,10 +66,7 @@ const routes: Routes = [
 		component: ManageUserInviteComponent,
 		canActivate: [InviteGuard],
 		data: {
-			expectedPermissions: [
-				PermissionsEnum.ORG_INVITE_EDIT,
-				PermissionsEnum.ORG_INVITE_VIEW
-			]
+			expectedPermissions: [PermissionsEnum.ORG_INVITE_EDIT, PermissionsEnum.ORG_INVITE_VIEW]
 		}
 	}
 ];

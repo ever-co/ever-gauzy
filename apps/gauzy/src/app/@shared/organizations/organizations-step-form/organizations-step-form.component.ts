@@ -29,13 +29,10 @@ import {
 	DEFAULT_DATE_FORMATS,
 	IImageAsset
 } from '@gauzy/contracts';
-import { retrieveNameFromEmail } from '@gauzy/ui-sdk/common';
-import { FormHelpers } from '../../forms';
-import { LeafletMapComponent } from '../../forms/maps';
-import { LocationFormComponent } from '../../forms/location';
-import { environment as ENV } from './../../../../environments/environment';
-import { Store, ToastrService } from '../../../@core/services';
-import { DUMMY_PROFILE_IMAGE } from '../../../@core/constants';
+import { environment as ENV } from '@gauzy/ui-config';
+import { DUMMY_PROFILE_IMAGE, Store, retrieveNameFromEmail } from '@gauzy/ui-sdk/common';
+import { ToastrService } from '@gauzy/ui-sdk/core';
+import { LocationFormComponent, LeafletMapComponent, FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

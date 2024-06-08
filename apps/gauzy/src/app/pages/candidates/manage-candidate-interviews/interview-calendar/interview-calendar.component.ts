@@ -12,17 +12,19 @@ import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { ICandidate, IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
-import { CandidateInterviewService } from './../../../../@core/services/candidate-interview.service';
-import { CandidateInterviewersService } from './../../../../@core/services/candidate-interviewers.service';
-import { CandidatesService } from './../../../../@core/services/candidates.service';
-import { EmployeesService } from './../../../../@core/services';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import {
+	CandidateInterviewService,
+	CandidateInterviewersService,
+	CandidateStore,
+	CandidatesService,
+	EmployeesService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import { CandidateInterviewInfoComponent } from './../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { CandidateStore } from './../../../../@core/services/candidate-store.service';
-import { Store } from './../../../../@core/services/store.service';
+import { Store } from '@gauzy/ui-sdk/common';
 import * as _ from 'underscore';
-import { ToastrService } from './../../../../@core/services/toastr.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
@@ -45,6 +47,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	calendarEvents: EventInput[] = [];
 	interviewList: ICandidateInterview[];
 	organization: IOrganization;
+
 	constructor(
 		readonly translateService: TranslateService,
 		private dialogService: NbDialogService,

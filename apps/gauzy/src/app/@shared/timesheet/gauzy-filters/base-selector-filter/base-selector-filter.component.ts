@@ -5,12 +5,13 @@ import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { toUTC } from '@gauzy/ui-sdk/common';
 import { pick } from 'underscore';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { toUtcOffset } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from './../../../../@core/services';
+import { Store } from '@gauzy/ui-sdk/common';
 import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
+import { TimeZoneService } from '../timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -27,8 +28,9 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 
 	constructor(
 		protected readonly store: Store,
-		public readonly translateService: TranslateService,
-		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		protected readonly translateService: TranslateService,
+		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
+		protected readonly timeZoneService: TimeZoneService
 	) {
 		super(translateService);
 		this.onInit();
@@ -82,6 +84,8 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 		// Extract organizationId and tenantId from the organization object
 		const { id: organizationId, tenantId } = this.organization;
 
+		const timeZone = this.timeZoneService.currentTimeZone;
+
 		// Create a selectorFilters object containing projectIds, employeeIds, and teamIds
 		const selectorFilters = pick(this.request, 'projectIds', 'employeeIds', 'teamIds');
 
@@ -90,8 +94,10 @@ export class BaseSelectorFilterComponent extends TranslationBaseComponent {
 			...selectorFilters,
 			organizationId,
 			tenantId,
-			startDate: toUTC(startDate).format('YYYY-MM-DD HH:mm'),
-			endDate: toUTC(endDate).format('YYYY-MM-DD HH:mm')
+			startDate: toUtcOffset(startDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			endDate: toUtcOffset(endDate, timeZone).format('YYYY-MM-DD HH:mm:ss'),
+			// Set the 'timezone' property to the determined timezone
+			timeZone
 		};
 
 		// Return the modified ITimeLogFilters object

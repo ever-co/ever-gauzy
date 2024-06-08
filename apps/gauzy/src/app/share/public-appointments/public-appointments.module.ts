@@ -3,10 +3,10 @@ import { ThemeModule } from '../../@theme/theme.module';
 import { PublicAppointmentsComponent } from './public-appointments.component';
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
 import { PublicAppointmentRoutingModule } from './public-appointment.routing.module';
-import { EventTypeService } from '../../@core/services/event-type.service';
+import { EventTypeService } from '@gauzy/ui-sdk/core';
 import { CreateAppointmentModule } from './create-appointment/create-appointment.module';
 import { AppointmentModule } from '../../pages/employees/appointment/appointment.module';
-import { TranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
@@ -17,7 +17,7 @@ import { TranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbCardModule,
 		AppointmentModule,
 		CreateAppointmentModule,
-		TranslateModule
+		I18nTranslateModule.forChild()
 	],
 	declarations: [PublicAppointmentsComponent],
 	exports: [PublicAppointmentsComponent],

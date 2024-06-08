@@ -37,9 +37,15 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
 } from '../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '../../@core/constants';
-import { DateRangePickerBuilderService, ServerDataSource } from '@gauzy/ui-sdk/core';
-import { ErrorHandlingService, IncomeService, Store, ToastrService } from '../../@core/services';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { IncomeService } from '@gauzy/ui-sdk/core';
 import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 

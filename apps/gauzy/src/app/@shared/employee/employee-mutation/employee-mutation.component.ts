@@ -1,18 +1,13 @@
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef, NbStepperComponent, NbTagComponent } from '@nebular/theme';
-import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
-import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IEmployee, IUser, IEmployeeCreateInput, CrudActionEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	EmployeesService,
-	EmployeeStore,
-	ErrorHandlingService,
-	OrganizationsService,
-	Store
-} from '../../../@core/services';
+import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EmployeeStore, EmployeesService, ErrorHandlingService, OrganizationsService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-sdk/common';
+import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

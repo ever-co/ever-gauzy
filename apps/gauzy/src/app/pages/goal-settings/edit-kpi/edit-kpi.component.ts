@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { EmployeesService } from '../../../@core/services';
+import { EmployeesService } from '@gauzy/ui-sdk/core';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
@@ -14,9 +14,9 @@ import {
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '../../../@core/services/store.service';
-import { GoalSettingsService } from '../../../@core/services/goal-settings.service';
-import { ToastrService } from '../../../@core/services/toastr.service';
+import { Store } from '@gauzy/ui-sdk/common';
+import { GoalSettingsService } from '@gauzy/ui-sdk/core';
+import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @Component({
 	selector: 'ga-edit-kpi',
