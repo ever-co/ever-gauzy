@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { FeatureToggleComponent } from '../../../@shared/feature-toggle/feature-toggle.component';
 import { FeatureComponent } from './feature.component';
@@ -13,7 +13,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: FeatureComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW],

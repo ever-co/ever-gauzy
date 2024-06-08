@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: ApprovalPolicyComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.APPROVAL_POLICY_VIEW],

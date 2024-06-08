@@ -1,9 +1,8 @@
-import { Location } from '@angular/common';
 import { AfterViewChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
-import { NgxPermissionsService } from 'ngx-permissions';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum, JitsuService } from '../../../../../services';
@@ -92,11 +91,8 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 		private readonly _cdr: ChangeDetectorRef,
 		private readonly _location: Location,
 		private readonly _jitsuService: JitsuService,
-		private readonly _store: Store,
-		protected readonly _ngxPermissionsService: NgxPermissionsService
-	) {
-		console.log(_ngxPermissionsService.getPermissions());
-	}
+		private readonly _store: Store
+	) {}
 
 	ngOnInit(): void {
 		// Get the user data from the store

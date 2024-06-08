@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { ProposalTemplateComponent } from './proposal-template/proposal-template.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: ProposalTemplateComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
