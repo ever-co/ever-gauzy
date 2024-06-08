@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { uniq } from 'underscore';
