@@ -1,7 +1,6 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { NgxPermissionsGuard } from 'ngx-permissions';
-import { UserResolver } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard, UserResolver } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
@@ -593,7 +592,7 @@ const routes: Routes = [
 				path: 'integrations',
 				loadChildren: () => import('./integrations/integrations.module').then((m) => m.IntegrationsModule),
 				/** */
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
 						only: [PermissionsEnum.INTEGRATION_VIEW],

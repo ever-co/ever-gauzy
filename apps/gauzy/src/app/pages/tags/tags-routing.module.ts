@@ -1,6 +1,6 @@
 import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TagsComponent } from './tags.component';
 
@@ -8,13 +8,10 @@ const routes: Routes = [
 	{
 		path: '',
 		component: TagsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ALL_ORG_VIEW,
-					PermissionsEnum.ORG_TAGS_VIEW
-				],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_TAGS_VIEW],
 				redirectTo: '/pages/dashboard'
 			}
 		}
@@ -25,4 +22,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class TagsRoutingModule { }
+export class TagsRoutingModule {}

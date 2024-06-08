@@ -1,23 +1,20 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { InventoryComponent } from './components/inventory.component';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
-import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 
-const ORG_PERMISSIONS = [
-	PermissionsEnum.ALL_ORG_VIEW,
-	PermissionsEnum.ALL_ORG_EDIT
-];
+const ORG_PERMISSIONS = [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT];
 
 const routes: Routes = [
 	{
 		path: '',
 		component: InventoryComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [...ORG_PERMISSIONS, PermissionsEnum.ORG_INVENTORY_VIEW],
@@ -84,19 +81,23 @@ const routes: Routes = [
 	},
 	{
 		path: 'product-types',
-		loadChildren: () => import('./components/manage-product-types/product-types.module').then(m => m.ProductTypesModule)
+		loadChildren: () =>
+			import('./components/manage-product-types/product-types.module').then((m) => m.ProductTypesModule)
 	},
 	{
 		path: 'product-categories',
-		loadChildren: () => import('./components/manage-product-categories/product-categories-routing.module').then(m => m.ProductCategoriesRoutingModule)
+		loadChildren: () =>
+			import('./components/manage-product-categories/product-categories-routing.module').then(
+				(m) => m.ProductCategoriesRoutingModule
+			)
 	},
 	{
 		path: 'warehouses',
-		loadChildren: () => import('./components/manage-warehouses/warehouses.module').then(m => m.WarehousesModule)
+		loadChildren: () => import('./components/manage-warehouses/warehouses.module').then((m) => m.WarehousesModule)
 	},
 	{
 		path: 'merchants',
-		loadChildren: () => import('./components/manage-merchants/merchant.module').then(m => m.MerchantModule)
+		loadChildren: () => import('./components/manage-merchants/merchant.module').then((m) => m.MerchantModule)
 	}
 ];
 

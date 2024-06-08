@@ -43,6 +43,7 @@ export * from './notification';
 export * from './organization';
 export * from './organizations';
 export * from './payment';
+export * from './permission';
 export * from './pipeline';
 export * from './product';
 export * from './proposal';

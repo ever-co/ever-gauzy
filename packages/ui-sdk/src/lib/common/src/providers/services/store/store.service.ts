@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { StoreConfig, Store as AkitaStore, Query } from '@datorama/akita';
-import { NgxPermissionsService, NgxRolesService } from 'ngx-permissions';
 import { merge, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { uniq } from 'underscore';
@@ -126,9 +125,7 @@ export class Store {
 		protected readonly appStore: AppStore,
 		protected readonly appQuery: AppQuery,
 		protected readonly persistStore: PersistStore,
-		protected readonly persistQuery: PersistQuery,
-		protected readonly permissionsService: NgxPermissionsService,
-		protected readonly ngxRolesService: NgxRolesService
+		protected readonly persistQuery: PersistQuery
 	) {}
 
 	user$ = this.appQuery.select((state) => state.user);
@@ -338,38 +335,55 @@ export class Store {
 		return !!filtered.find((item) => item.feature.code === feature && item.isEnabled);
 	}
 
+	/**
+	 * Returns the user role permissions from the application state.
+	 *
+	 * @return {IRolePermission[]} The user role permissions.
+	 */
 	get userRolePermissions(): IRolePermission[] {
 		const { userRolePermissions } = this.appQuery.getValue();
 		return userRolePermissions;
 	}
 
-	set userRolePermissions(rolePermissions: IRolePermission[]) {
-		this.appStore.update({
-			userRolePermissions: rolePermissions
-		});
-		this.loadPermissions();
+	/**
+	 * Updates the user role permissions in the application state.
+	 *
+	 * @param {IRolePermission[]} userRolePermissions - The new user role permissions.
+	 */
+	set userRolePermissions(userRolePermissions: IRolePermission[]) {
+		this.appStore.update({ userRolePermissions });
 	}
 
-	hasPermission(permission: PermissionsEnum) {
+	/**
+	 * Checks if the user has a specific permission.
+	 *
+	 * @param {PermissionsEnum} permission - The permission to check.
+	 * @return {boolean} Returns true if the user has the permission, false otherwise.
+	 */
+	hasPermission(permission: PermissionsEnum): boolean {
 		const { userRolePermissions } = this.appQuery.getValue();
 		return !!(userRolePermissions || []).find((p) => p.permission === permission && p.enabled);
 	}
 
 	/**
-	 * The method checks if a user has all the specified permissions.
-	 * @param {PermissionsEnum[]} permissions - An array of permissions that are of type PermissionsEnum.
-	 * @returns a boolean value.
+	 * Checks if the user has all the specified permissions.
+	 *
+	 * @param {...PermissionsEnum[]} permissions - The permissions to check.
+	 * @return {boolean} Returns true if the user has all the permissions, false otherwise.
 	 */
-	hasAllPermissions(...permissions: PermissionsEnum[]) {
+	hasAllPermissions(...permissions: PermissionsEnum[]): boolean {
 		return permissions.reduce((acc, permission) => {
 			return this.hasPermission(permission) && acc;
 		}, true);
 	}
 
 	/**
-	 * Check any permissions exists
+	 * Checks if the user has any of the specified permissions.
+	 *
+	 * @param {...PermissionsEnum[]} permissions - The permissions to check.
+	 * @return {boolean} Returns true if the user has any of the permissions, false otherwise.
 	 */
-	hasAnyPermission(...permissions: PermissionsEnum[]) {
+	hasAnyPermission(...permissions: PermissionsEnum[]): boolean {
 		const { userRolePermissions } = this.appQuery.getValue();
 		return !!(userRolePermissions || []).find(
 			(p: IRolePermission) => permissions.includes(p.permission as PermissionsEnum) && p.enabled
@@ -412,23 +426,6 @@ export class Store {
 	clear() {
 		this.appStore.reset();
 		this.persistStore.reset();
-	}
-
-	loadRoles() {
-		const { user } = this.appQuery.getValue();
-		this.ngxRolesService.flushRoles();
-		this.ngxRolesService.addRole(user.role.name, () => true);
-	}
-
-	loadPermissions() {
-		let permissions = [];
-		// User permissions load here
-		const userPermissions = Object.keys(PermissionsEnum)
-			.map((key) => PermissionsEnum[key])
-			.filter((permission) => this.hasPermission(permission));
-		permissions = permissions.concat(userPermissions);
-		this.permissionsService.flushPermissions();
-		this.permissionsService.loadPermissions(permissions);
 	}
 
 	getLayoutForComponent(componentName: ComponentEnum): ComponentLayoutStyleEnum {

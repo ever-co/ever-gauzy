@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { DateRangePickerResolver } from './../../../../@theme/components/header/selectors/date-range-picker';
 import { ApprovalsComponent } from './approvals/approvals.component';
 
@@ -9,7 +9,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: ApprovalsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.CAN_APPROVE_TIMESHEET],

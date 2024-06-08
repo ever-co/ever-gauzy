@@ -1,5 +1,5 @@
-import { Location } from '@angular/common';
 import { AfterViewChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { NbSidebarService } from '@nebular/theme';
@@ -17,7 +17,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	private _user: IUser;
 
 	/**
+	 * Returns the value of the private `_item` property.
 	 *
+	 * @return {IMenuItem} The value of the `_item` property.
 	 */
 	private _item: IMenuItem;
 	get item() {
@@ -28,7 +30,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current collapse state.
 	 *
+	 * @return {boolean} The current collapse state.
 	 */
 	private _collapse = true;
 	get collapse() {
@@ -40,7 +44,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current selected state.
 	 *
+	 * @return {boolean} The current selected state.
 	 */
 	private _selected: boolean;
 	get selected() {
@@ -51,7 +57,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the current state of the component.
 	 *
+	 * @return {boolean} The current state of the component.
 	 */
 	private _state: boolean;
 	public get state() {
@@ -62,7 +70,9 @@ export class MenuItemComponent implements OnInit, AfterViewChecked {
 	}
 
 	/**
+	 * Returns the selected children.
 	 *
+	 * @return {IMenuItem} The selected children.
 	 */
 	private _selectedChildren: IMenuItem;
 	public get selectedChildren() {

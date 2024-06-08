@@ -3,6 +3,7 @@ import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { Store } from '@gauzy/ui-sdk/common';
+import { PermissionsService } from '../permission/permissions.service';
 import { UsersService } from '../users';
 import { AuthStrategy } from '../auth/auth-strategy.service';
 
@@ -11,53 +12,46 @@ export class AppInitService {
 	user: IUser;
 
 	constructor(
-		private readonly router: Router,
-		private readonly ngxPermissionsService: NgxPermissionsService,
-		private readonly store: Store,
-		private readonly usersService: UsersService,
-		private readonly authStrategy: AuthStrategy
+		private readonly _router: Router,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _store: Store,
+		private readonly _usersService: UsersService,
+		private readonly _authStrategy: AuthStrategy,
+		private readonly _permissionsService: PermissionsService
 	) {}
 
 	async init() {
 		try {
-			const id = this.store.userId;
+			const id = this._store.userId;
 			if (id) {
-				this.user = await this.usersService.getMe(
-					[
-						'role',
-						'role.rolePermissions',
-						'tenant',
-						'tenant.featureOrganizations',
-						'tenant.featureOrganizations.feature'
-					],
-					true
-				);
+				const relations = [
+					'role',
+					'tenant',
+					'tenant.featureOrganizations',
+					'tenant.featureOrganizations.feature'
+				];
+				this.user = await this._usersService.getMe(relations, true);
 
-				this.authStrategy.electronAuthentication({
+				//Load permissions
+				this._permissionsService.loadPermissions();
+
+				this._authStrategy.electronAuthentication({
 					user: this.user,
-					token: this.store.token
+					token: this._store.token
 				});
 
 				//When a new user registers & logs in for the first time, he/she does not have tenantId.
 				//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
 				if (!this.user?.tenantId) {
-					this.router.navigate(['/onboarding/tenant']);
+					this._router.navigate(['/onboarding/tenant']);
 					return;
 				}
 
-				this.store.user = this.user;
+				this._store.user = this.user;
 
 				//tenant enabled/disabled features for relatives organizations
 				const { tenant } = this.user;
-				this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
-
-				//only enabled permissions assign to logged in user
-				this.store.userRolePermissions = this.user.role.rolePermissions.filter(
-					(permission) => permission.enabled
-				);
-
-				const permissions = this.store.userRolePermissions.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
+				this._store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 			}
 		} catch (error) {
 			console.log(error);

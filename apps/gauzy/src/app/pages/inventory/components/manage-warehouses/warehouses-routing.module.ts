@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { WarehousesComponent } from './warehouses.component';
 import { WarehouseFormComponent } from './warehouse-form/warehouse-form.component';
@@ -11,12 +11,10 @@ const routes: Routes = [
 	{
 		path: '',
 		component: WarehousesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [
-					PermissionsEnum.ORG_INVENTORY_VIEW
-				],
+				only: [PermissionsEnum.ORG_INVENTORY_VIEW],
 				redirectTo: '/pages/dashboard'
 			},
 			selectors: {
@@ -65,4 +63,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class WarehousesRoutingModule { }
+export class WarehousesRoutingModule {}
