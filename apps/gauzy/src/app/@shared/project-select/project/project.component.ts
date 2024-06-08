@@ -5,12 +5,15 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { NavigationService, ToastrService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
+import {
+	NavigationService,
+	OrganizationProjectStore,
+	OrganizationProjectsService,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
+import { TruncatePipe } from '@gauzy/ui-sdk/shared';
 import { ALL_PROJECT_SELECTED } from './default-project';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationProjectsService, OrganizationProjectStore } from '@gauzy/ui-sdk/core';
-import { TruncatePipe } from '../../pipes/text.pipe';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

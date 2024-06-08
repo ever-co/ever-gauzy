@@ -11,7 +11,7 @@ import {
 	GAUZY_LIGHT,
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
-} from '@gauzy/ui-sdk/static/styles';
+} from '@gauzy/ui-sdk/theme';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })

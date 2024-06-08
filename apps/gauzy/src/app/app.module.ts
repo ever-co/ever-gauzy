@@ -45,9 +45,9 @@ import {
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { CommonModule, Store } from '@gauzy/ui-sdk/common';
 import { GAUZY_ENV, environment } from '@gauzy/ui-config';
-import { HttpLoaderFactory } from '@gauzy/ui-sdk/i18n';
+import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -95,6 +95,8 @@ const isProd = environment.production;
 		NbEvaIconsModule,
 		UiConfigModule.forRoot(),
 		UiSdkModule.forRoot(),
+		I18nTranslateModule.forRoot(),
+		CommonModule.forRoot(),
 		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
 		TranslateModule.forRoot({
@@ -169,11 +171,10 @@ const isProd = environment.production;
 			deps: [FeatureService, Store],
 			multi: true
 		},
+		AppInitService,
 		{
 			provide: APP_INITIALIZER,
-			useFactory: (appInitService: AppInitService) => () => {
-				return appInitService.init();
-			},
+			useFactory: initializeApp,
 			deps: [AppInitService],
 			multi: true
 		},
@@ -191,7 +192,18 @@ const isProd = environment.production;
 	]
 })
 export class AppModule {
-	constructor() {
+	/**
+	 * Constructor for the AppModule class.
+	 *
+	 * Initializes the _i18nTranslateService with all available languages.
+	 * Sets Monday as the start of the week for the English locale in Moment.js.
+	 *
+	 * @param {I18nTranslateService} _i18nTranslateService - The I18nTranslateService instance.
+	 */
+	constructor(protected readonly _i18nTranslateService: I18nTranslateService) {
+		const availableLanguages = Object.values(LanguagesEnum);
+		_i18nTranslateService.setAvailableLanguags(availableLanguages);
+
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
 			week: {
@@ -203,13 +215,24 @@ export class AppModule {
 }
 
 /**
+ * Creates a function that initializes the app by calling the `init` method of the provided `AppInitService`.
  *
- * @param provider
- * @param store
- * @param router
- * @returns
+ * @param {AppInitService} provider - The `AppInitService` instance to initialize the app.
+ * @return {() => Promise<void>} A function that returns a `Promise` that resolves when the app initialization is complete.
  */
-export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router) {
+export function initializeApp(provider: AppInitService): () => Promise<void> {
+	return () => provider.init();
+}
+
+/**
+ * Creates a factory function that checks the server connection and performs actions based on the result.
+ *
+ * @param {ServerConnectionService} provider - The server connection service instance.
+ * @param {Store} store - The store instance.
+ * @param {Router} router - The router instance.
+ * @return {Function} A function that checks the server connection and performs actions based on the result.
+ */
+export function serverConnectionFactory(provider: ServerConnectionService, store: Store, router: Router): Function {
 	return () => {
 		const url = environment.API_BASE_URL;
 		console.log('Checking server connection in serverConnectionFactory on URL: ', url);
@@ -232,21 +255,23 @@ export function serverConnectionFactory(provider: ServerConnectionService, store
 }
 
 /**
+ * Creates a function that loads the Google Maps API key using the provided GoogleMapsLoaderService.
  *
- * @param provider
- * @returns
+ * @param {GoogleMapsLoaderService} provider - The GoogleMapsLoaderService instance used to load the API key.
+ * @return {Function} A function that loads the Google Maps API key by calling the provider's load method with the environment's Google Maps API key.
  */
-export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService) {
+export function googleMapsLoaderFactory(provider: GoogleMapsLoaderService): Function {
 	return () => provider.load(environment.GOOGLE_MAPS_API_KEY);
 }
 
 /**
+ * Creates a function that loads the feature toggle definitions using the provided FeatureService and stores them in the provided Store.
  *
- * @param provider
- * @param store
- * @returns
+ * @param {FeatureService} provider - The FeatureService instance used to load the feature toggle definitions.
+ * @param {Store} store - The Store instance used to store the loaded feature toggle definitions.
+ * @return {Function} A function that loads the feature toggle definitions by calling the provider's getFeatureToggleDefinition method and storing the result in the store.
  */
-export function featureToggleLoaderFactory(provider: FeatureService, store: Store) {
+export function featureToggleLoaderFactory(provider: FeatureService, store: Store): Function {
 	return () =>
 		provider
 			.getFeatureToggleDefinition()

@@ -3,7 +3,7 @@ import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { HelpCenterArticleService, HelpCenterAuthorService } from '@gauzy/ui-sdk/core';
 
 @Component({

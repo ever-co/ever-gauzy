@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';

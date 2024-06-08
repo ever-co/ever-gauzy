@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';

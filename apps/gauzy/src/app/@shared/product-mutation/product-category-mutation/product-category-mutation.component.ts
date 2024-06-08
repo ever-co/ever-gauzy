@@ -14,7 +14,7 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ProductCategoryService } from '@gauzy/ui-sdk/core';

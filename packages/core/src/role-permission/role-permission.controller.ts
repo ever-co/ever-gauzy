@@ -1,4 +1,3 @@
-
 import {
 	Body,
 	Controller,
@@ -28,10 +27,8 @@ import { RolePermissionService } from './role-permission.service';
 @Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
 @Controller()
 export class RolePermissionController extends CrudController<RolePermission> {
-	constructor(
-		private readonly rolePermissionService: RolePermissionService
-	) {
-		super(rolePermissionService);
+	constructor(private readonly _rolePermissionService: RolePermissionService) {
+		super(_rolePermissionService);
 	}
 
 	/**
@@ -51,10 +48,29 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@Permissions(PermissionsEnum.MIGRATE_GAUZY_CLOUD)
 	@Post('import/migrate')
-	async importRole(
-		@Body() input: any
-	) {
-		return await this.rolePermissionService.migrateImportRecord(input);
+	async importRole(@Body() input: any) {
+		return await this._rolePermissionService.migrateImportRecord(input);
+	}
+
+	/**
+	 * Retrieves the permissions of the current user.
+	 *
+	 * @return {Promise<IPagination<RolePermission>>} A Promise that resolves to a paginated list of RolePermission objects.
+	 */
+	@ApiOperation({ summary: 'Find current user permissions.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found current user permissions',
+		isArray: true
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Permissions not found'
+	})
+	@Permissions()
+	@Get('/me')
+	async findMePermissions(): Promise<IPagination<IRolePermission>> {
+		return await this._rolePermissionService.findMePermissions();
 	}
 
 	/**
@@ -64,10 +80,8 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	 * @returns
 	 */
 	@Get('pagination')
-	async pagination(
-		@Query() options: PaginationParams<RolePermission>
-	): Promise<IPagination<IRolePermission>> {
-		return await this.rolePermissionService.findAllRolePermissions(options);
+	async pagination(@Query() options: PaginationParams<RolePermission>): Promise<IPagination<IRolePermission>> {
+		return await this._rolePermissionService.findAllRolePermissions(options);
 	}
 
 	/**
@@ -88,11 +102,9 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@HttpCode(HttpStatus.OK)
 	@Get()
-	async findAll(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IRolePermission>> {
+	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IRolePermission>> {
 		const { findInput } = data;
-		return this.rolePermissionService.findAllRolePermissions({ where: findInput });
+		return this._rolePermissionService.findAllRolePermissions({ where: findInput });
 	}
 
 	/**
@@ -108,16 +120,13 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(
-		@Body() entity: CreateRolePermissionDTO
-	): Promise<IRolePermission> {
-		return this.rolePermissionService.createPermission(entity);
+	async create(@Body() entity: CreateRolePermissionDTO): Promise<IRolePermission> {
+		return this._rolePermissionService.createPermission(entity);
 	}
 
 	/**
@@ -138,8 +147,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description:
-			'Invalid input, The response body may contain clues as to what went wrong'
+		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -148,7 +156,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateRolePermissionDTO
 	): Promise<UpdateResult | IRolePermission> {
-		return await this.rolePermissionService.updatePermission(id, entity);
+		return await this._rolePermissionService.updatePermission(id, entity);
 	}
 
 	/**
@@ -159,9 +167,7 @@ export class RolePermissionController extends CrudController<RolePermission> {
 	 */
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string
-	): Promise<DeleteResult> {
-		return await this.rolePermissionService.deletePermission(id);
+	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<DeleteResult> {
+		return await this._rolePermissionService.deletePermission(id);
 	}
 }

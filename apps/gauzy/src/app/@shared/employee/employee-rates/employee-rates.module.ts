@@ -10,10 +10,10 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-sdk/core';
+import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { SharedModule } from '../../shared.module';
 import { EmployeeRatesComponent } from './employee-rates.component';
-import { CurrencyModule } from '../../currency/currency.module';
 
 @NgModule({
 	imports: [

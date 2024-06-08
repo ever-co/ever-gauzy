@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ErrorHandlingService, HelpCenterAuthorService } from '@gauzy/ui-sdk/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { HelpCenterArticleService } from '@gauzy/ui-sdk/core';

@@ -1,7 +1,7 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { NbDialogService } from '@nebular/theme';

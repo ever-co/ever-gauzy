@@ -1,13 +1,12 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
+import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
-import { filter, tap } from 'rxjs/operators';
+import { Store, TimeLogsLabel, TimeTrackerService } from '@gauzy/ui-sdk/common';
+import { TimesheetService } from '@gauzy/ui-sdk/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
-import { TimeLogsLabel } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { Router } from '@angular/router';
-import { TimeTrackerService, TimesheetService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -6,7 +6,7 @@
 		"baseUrl": "./src",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "jest"]
+		"types": ["node", "jest", "google.maps"]
 	},
 	"include": ["./src/**/*.ts"],
 	"exclude": ["node_modules", "dist", "**/*.spec.ts"]

@@ -22,7 +22,7 @@ import {
 	ComponentType
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '../../@shared/expenses';
 
 @UntilDestroy({ checkProperties: true })

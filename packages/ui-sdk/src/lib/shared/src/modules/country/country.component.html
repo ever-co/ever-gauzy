@@ -1,0 +1,28 @@
+<ng-container>
+	<div class="form-group">
+		<label class="label" for="countrySelect">
+			{{ placeholder || 'FORM.LABELS.COUNTRY' | translate }}
+		</label>
+		<ng-select
+			#select
+			[items]="countries$ | async"
+			(clear)="select.blur()"
+			[clearable]="false"
+			(change)="onOptionChange($event); select.blur()"
+			size="medium"
+			[placeholder]="placeholder || 'FORM.PLACEHOLDERS.COUNTRY' | translate"
+			[(ngModel)]="country"
+			[searchFn]="searchCountry"
+			bindValue="isoCode"
+			appendTo="body"
+			[class]="formControl.invalid && formControl.touched ? 'danger' : 'basic'"
+		>
+			<ng-template ng-option-tmp let-item="item" let-index="index">
+				{{ item?.country }}
+			</ng-template>
+			<ng-template ng-label-tmp let-item="item">
+				{{ item?.country }}
+			</ng-template>
+		</ng-select>
+	</div>
+</ng-container>

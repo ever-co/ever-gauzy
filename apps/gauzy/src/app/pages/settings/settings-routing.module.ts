@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 
@@ -14,20 +14,17 @@ const routes: Routes = [
 		children: [
 			{
 				path: 'general',
-				loadChildren: () => import('./general-setting/general-setting.module').then(
-					(m) => m.GeneralSettingModule
-				)
+				loadChildren: () =>
+					import('./general-setting/general-setting.module').then((m) => m.GeneralSettingModule)
 			},
 			{
 				path: 'features',
-				loadChildren: () => import('./feature/feature.module').then(
-					(m) => m.FeatureModule
-				)
+				loadChildren: () => import('./feature/feature.module').then((m) => m.FeatureModule)
 			},
 			{
 				path: 'email-history',
 				component: EmailHistoryComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
 						only: [PermissionsEnum.VIEW_ALL_EMAILS],
@@ -43,27 +40,24 @@ const routes: Routes = [
 			},
 			{
 				path: 'email-templates',
-				loadChildren: () => import('../email-templates/email-templates.module').then(
-					(m) => m.EmailTemplatesModule
-				)
+				loadChildren: () =>
+					import('../email-templates/email-templates.module').then((m) => m.EmailTemplatesModule)
 			},
 			{
 				path: 'accounting-templates',
-				loadChildren: () => import('../accounting-templates/accounting-templates.module').then(
-					(m) => m.AccountingTemplatesModule
-				)
+				loadChildren: () =>
+					import('../accounting-templates/accounting-templates.module').then(
+						(m) => m.AccountingTemplatesModule
+					)
 			},
 			{
 				path: 'roles-permissions',
-				loadChildren: () => import('./roles-permissions/roles-permissions.module').then(
-					(m) => m.RolesPermissionsModule
-				)
+				loadChildren: () =>
+					import('./roles-permissions/roles-permissions.module').then((m) => m.RolesPermissionsModule)
 			},
 			{
 				path: 'import-export',
-				loadChildren: () => import('../import-export/import-export.module').then(
-					(m) => m.ImportExportModule
-				),
+				loadChildren: () => import('../import-export/import-export.module').then((m) => m.ImportExportModule),
 				data: {
 					selectors: {
 						project: false,
@@ -76,7 +70,7 @@ const routes: Routes = [
 			{
 				path: 'sms-gateway',
 				component: SmsGatewayComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
 						only: [PermissionsEnum.SMS_GATEWAY_VIEW],
@@ -92,26 +86,19 @@ const routes: Routes = [
 			},
 			{
 				path: 'custom-smtp',
-				loadChildren: () => import('./custom-smtp/custom-smtp.module').then(
-					(m) => m.CustomSmtpModule
-				)
+				loadChildren: () => import('./custom-smtp/custom-smtp.module').then((m) => m.CustomSmtpModule)
 			},
 			{
 				path: 'file-storage',
-				loadChildren: () => import('./file-storage/file-storage.module').then(
-					(m) => m.FileStorageModule
-				)
+				loadChildren: () => import('./file-storage/file-storage.module').then((m) => m.FileStorageModule)
 			},
 			{
 				path: 'danger-zone',
 				component: DangerZoneComponent,
-				canActivate: [NgxPermissionsGuard],
+				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
-						only: [
-							PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-							PermissionsEnum.ACCESS_DELETE_ALL_DATA,
-						],
+						only: [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA],
 						redirectTo: '/pages/settings'
 					},
 					selectors: {
@@ -130,4 +117,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class SettingsRoutingModule { }
+export class SettingsRoutingModule {}

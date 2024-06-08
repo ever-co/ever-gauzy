@@ -15,7 +15,7 @@ import {
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { OrganizationAwardsService, OrganizationLanguagesService } from '@gauzy/ui-sdk/core';

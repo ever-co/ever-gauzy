@@ -1,0 +1,75 @@
+@import 'themes';
+
+:host nb-card-header {
+    display: flex;
+    @include nb-rtl(flex-direction, row-reverse);
+    flex-direction: row;
+    justify-content: space-between;
+
+    div {
+        display: flex;
+        justify-content: space-between;
+        width: 27%;
+        @include nb-rtl(flex-direction, row-reverse);
+
+        nb-tag {
+            border: none;
+            &:hover {
+                background-color: var(--tag-filled-basic-background-color);
+            }
+        }
+    }
+
+    span {
+        cursor: pointer;
+    }
+}
+
+:host nb-card-body {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    .group-container {
+        background: var(--gauzy-card-2);
+        padding: 10px 20px;
+        border-radius: var(--border-radius);
+        margin: 0.5rem;
+
+        .group-header {
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--gauzy-text-color-2);
+            margin-top: 0.5rem;
+        }
+    }
+}
+
+:host nb-menu {
+    ::ng-deep ul.menu-items li.menu-item a {
+        padding-inline: 2px;
+        @include nb-rtl(flex-direction, row-reverse);
+        transition: all;
+
+        .fas {
+            font-size: 1.1rem;
+        }
+
+        &:hover {
+            nb-badge {
+                outline: 1px solid var(--color-primary-400);
+                color: var(--color-primary-400);
+            }
+        }
+
+        nb-icon {
+            @include nb-rtl(margin-left, 0.5rem);
+            @include nb-rtl(margin-right, 0);
+        }
+
+        nb-badge {
+            margin-left: 1rem;
+            @include nb-rtl(margin-right, 1rem);
+            @include nb-rtl(margin-left, 0);
+        }
+    }
+}

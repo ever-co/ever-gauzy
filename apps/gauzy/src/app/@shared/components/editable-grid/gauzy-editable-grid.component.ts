@@ -5,7 +5,7 @@ import { NbDialogService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil, take, tap, filter } from 'rxjs/operators';
 
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 export type ItemActionType = 'create' | 'edit' | 'delete';
 

@@ -38,7 +38,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		{
 			title: 'Invite people',
 			icon: 'fas fa-user-plus',
-			link: '/pages/employees',
+			link: '/pages/employees/invites',
 			data: {
 				translationKey: 'MENU.INVITE_PEOPLE',
 				permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_INVITE_VIEW],

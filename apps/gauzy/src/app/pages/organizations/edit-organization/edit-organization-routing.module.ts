@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EditOrganizationMainComponent } from './edit-organization-settings/edit-organization-main/edit-organization-main.component';
 import { EditOrganizationLocationComponent } from './edit-organization-settings/edit-organization-location/edit-organization-location.component';
@@ -17,7 +17,7 @@ const routes: Routes = [
 	{
 		path: ':id',
 		component: EditOrganizationComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_EDIT],

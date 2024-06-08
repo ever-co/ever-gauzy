@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { PipelinesComponent } from './pipelines.component';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 
 export function redirectTo() {
@@ -12,9 +12,7 @@ export function redirectTo() {
 
 const PIPELINES_VIEW_PERMISSION = {
 	permissions: {
-		only: [
-			PermissionsEnum.VIEW_SALES_PIPELINES
-		],
+		only: [PermissionsEnum.VIEW_SALES_PIPELINES],
 		redirectTo
 	}
 };
@@ -23,25 +21,25 @@ const routes: Routes = [
 	{
 		path: '',
 		component: PipelinesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: PIPELINES_VIEW_PERMISSION
 	},
 	{
 		path: ':pipelineId/deals',
 		component: PipelineDealsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: PIPELINES_VIEW_PERMISSION
 	},
 	{
 		path: ':pipelineId/deals/create',
 		component: PipelineDealFormComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: PIPELINES_VIEW_PERMISSION
 	},
 	{
 		path: ':pipelineId/deals/:dealId/edit',
 		component: PipelineDealFormComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: PIPELINES_VIEW_PERMISSION
 	}
 ];

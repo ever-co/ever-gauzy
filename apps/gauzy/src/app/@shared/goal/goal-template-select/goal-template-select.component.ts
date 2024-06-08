@@ -15,7 +15,7 @@ import { NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	GoalService,
 	GoalSettingsService,

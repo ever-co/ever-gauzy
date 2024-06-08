@@ -36,6 +36,26 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	}
 
 	/**
+	 * Retrieves the permissions of the current user.
+	 *
+	 * @return {Promise<IPagination<RolePermission>>} A promise that resolves to a paginated list of RolePermission objects.
+	 */
+	async findMePermissions(): Promise<IPagination<IRolePermission>> {
+		const tenantId = RequestContext.currentTenantId();
+		const roleId = RequestContext.currentRoleId();
+
+		return await this.findAll({
+			where: {
+				role: { id: roleId, tenantId },
+				tenant: { id: tenantId },
+				enabled: true,
+				isActive: true,
+				isArchived: false
+			}
+		});
+	}
+
+	/**
 	 * GET all role-permissions using API filter
 	 *
 	 * @param filter

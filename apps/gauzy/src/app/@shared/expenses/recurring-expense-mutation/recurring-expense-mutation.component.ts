@@ -25,7 +25,7 @@ import {
 	IExpenseCategory
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 

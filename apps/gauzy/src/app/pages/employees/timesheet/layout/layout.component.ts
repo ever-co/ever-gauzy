@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NbRouteTab } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
