@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
@@ -17,7 +17,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: ProposalsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
@@ -37,7 +37,7 @@ const routes: Routes = [
 	{
 		path: 'register',
 		component: ProposalRegisterComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
@@ -58,7 +58,7 @@ const routes: Routes = [
 	{
 		path: 'details/:id',
 		component: ProposalDetailsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
@@ -78,7 +78,7 @@ const routes: Routes = [
 	{
 		path: 'edit/:id',
 		component: ProposalEditComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSALS_EDIT],

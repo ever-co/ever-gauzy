@@ -182,6 +182,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 				/**
 				 * Set Date Range Picker Default Unit and Config
 				 */
+				// Set selectors' visibility
+				tap(({ selectors }: { selectors?: ISelectorVisibility }) => {
+					// Iterate through the visibility settings for selectors
+					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
+						// Set the visibility for each selector based on the provided or default value
+						this._selectorBuilderService.setSelectorsVisibility(
+							id,
+							typeof selectors === 'boolean' ? selectors : value
+						);
+					});
+					// Retrieve and get the updated selectors' visibility
+					this._selectorBuilderService.getSelectorsVisibility();
+				}),
 				tap(
 					({
 						datePicker,
@@ -199,19 +212,6 @@ export class AppComponent implements OnInit, AfterViewInit {
 						this._dateRangePickerBuilderService.setDatePickerConfig(datePickerConfig);
 					}
 				),
-				// Set selectors' visibility
-				tap(({ selectors }: { selectors?: ISelectorVisibility }) => {
-					// Iterate through the visibility settings for selectors
-					Object.entries(Object.assign({}, DEFAULT_SELECTOR_VISIBILITY, selectors)).forEach(([id, value]) => {
-						// Set the visibility for each selector based on the provided or default value
-						this._selectorBuilderService.setSelectorsVisibility(
-							id,
-							typeof selectors === 'boolean' ? selectors : value
-						);
-					});
-					// Retrieve and get the updated selectors' visibility
-					this._selectorBuilderService.getSelectorsVisibility();
-				}),
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)

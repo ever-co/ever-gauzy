@@ -1,15 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { ContactType, PermissionsEnum } from '@gauzy/contracts';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { ContactsComponent } from './contacts.component';
 
 const CONTACT_VIEW_PERMISSION = {
 	permissions: {
-		only: [
-			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.ORG_CONTACT_VIEW
-		],
+		only: [PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_CONTACT_VIEW],
 		redirectTo: '/pages/contacts/visitors'
 	}
 };
@@ -22,9 +19,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'visitors',
-		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then(
-			(m) => m.WorkInProgressModule
-		),
+		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
 		data: {
 			selectors: {
 				project: false,
@@ -37,7 +32,7 @@ const routes: Routes = [
 	{
 		path: 'clients',
 		component: ContactsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
@@ -50,7 +45,7 @@ const routes: Routes = [
 	{
 		path: 'customers',
 		component: ContactsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
@@ -63,7 +58,7 @@ const routes: Routes = [
 	{
 		path: 'leads',
 		component: ContactsComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
@@ -75,9 +70,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'view/:id',
-		loadChildren: () => import('./contact-view/contact-view.module').then(
-			(m) => m.ContactViewModule
-		),
+		loadChildren: () => import('./contact-view/contact-view.module').then((m) => m.ContactViewModule),
 		data: {
 			...CONTACT_VIEW_PERMISSION,
 			selectors: {
@@ -85,7 +78,7 @@ const routes: Routes = [
 				date: false
 			}
 		}
-	},
+	}
 ];
 
 @NgModule({

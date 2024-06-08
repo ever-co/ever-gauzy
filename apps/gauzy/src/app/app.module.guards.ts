@@ -5,7 +5,7 @@ import { Store } from '@gauzy/ui-sdk/common';
 
 @Injectable()
 export class AppModuleGuard implements CanActivate {
-	constructor(private readonly router: Router, private store: Store) {}
+	constructor(private readonly router: Router, private readonly store: Store) {}
 
 	/**
 	 * Checks if the user can activate the route.

@@ -1,27 +1,71 @@
+// src/app/permissions.guard.ts
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, CanActivateChild } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../services';
 
-@Injectable()
-export class PermissionGuard implements CanActivate {
-	constructor(private readonly router: Router, private readonly authService: AuthService) {}
+@Injectable({
+	providedIn: 'root'
+})
+export class PermissionsGuard implements CanActivate, CanActivateChild {
+	constructor(private readonly _authService: AuthService, private readonly _router: Router) {}
 
 	/**
-	 * Checks if the user has the necessary permissions to activate a route.
+	 * Asynchronously checks if the user is allowed to activate the route.
 	 *
-	 * @param {ActivatedRouteSnapshot} route - The route to be activated.
-	 * @return {Promise<boolean>} - A promise that resolves to true if the user has the necessary permissions, false otherwise.
+	 * @param {ActivatedRouteSnapshot} route - The route being navigated to.
+	 * @param {RouterStateSnapshot} state - The current state of the router.
+	 * @return {Observable<boolean>} A promise that resolves to a boolean indicating whether the user is allowed to activate the route.
 	 */
-	async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
-		const expectedPermissions = route.data.expectedPermissions;
-		const hasPermission = await firstValueFrom(this.authService.hasPermissions(expectedPermissions));
+	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+		return this._hasPermissions(route, state);
+	}
 
-		if (hasPermission) {
-			return true;
+	/**
+	 * Checks if the user is allowed to activate the child routes.
+	 *
+	 * @param {ActivatedRouteSnapshot} childRoute - The child route being navigated to.
+	 * @param {RouterStateSnapshot} state - The current state of the router.
+	 * @return {Observable<boolean>} An observable that resolves to a boolean indicating whether the user is allowed to activate the child routes.
+	 */
+	canActivateChild(childRoute: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+		return this._hasPermissions(childRoute, state);
+	}
+
+	/**
+	 * Helper method to check permissions.
+	 *
+	 * @param {ActivatedRouteSnapshot} route - The route being navigated to.
+	 * @param {RouterStateSnapshot} state - The current state of the router.
+	 * @return {Observable<boolean>} An observable that resolves to a boolean indicating whether the user is allowed to activate the route.
+	 */
+	private _hasPermissions(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
+		const permissions = route.data['permissions'];
+		const defaultRedirectTo = '/pages/dashboard'; // Default redirection path
+
+		if (!permissions || (permissions.only && permissions.only.length === 0)) {
+			return of(true); // No permissions required, allow access
 		}
 
-		this.router.navigate(['/']);
-		return false;
+		// Check if the user has the necessary permissions
+		const isFunction = typeof permissions.redirectTo === 'function';
+		const redirectTo = isFunction ? permissions.redirectTo(route, state) : permissions.redirectTo;
+
+		// Check if the user has the necessary permissions
+		return this._authService.hasPermissions(...permissions.only).pipe(
+			map((hasPermission) => {
+				if (hasPermission) {
+					return true;
+				} else {
+					this._router.navigate([redirectTo || defaultRedirectTo]);
+					return false;
+				}
+			}),
+			catchError(() => {
+				this._router.navigate([redirectTo || defaultRedirectTo]);
+				return of(false);
+			})
+		);
 	}
 }

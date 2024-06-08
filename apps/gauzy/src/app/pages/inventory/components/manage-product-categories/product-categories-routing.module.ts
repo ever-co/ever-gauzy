@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { NgxPermissionsGuard } from 'ngx-permissions';
+import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { ProductCategoriesComponent } from './product-categories.component';
 
@@ -8,7 +8,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: ProductCategoriesComponent,
-		canActivate: [NgxPermissionsGuard],
+		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
 				only: [
@@ -27,9 +27,8 @@ const routes: Routes = [
 	}
 ];
 
-
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class ProductCategoriesRoutingModule { }
+export class ProductCategoriesRoutingModule {}

@@ -15,7 +15,7 @@ import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent, Too
 		ChildrenMenuItemComponent,
 		TooltipDirective
 	],
-	imports: [CommonModule, NbAccordionModule, NbTooltipModule, NbButtonModule, NgxPermissionsModule],
+	imports: [CommonModule, NbAccordionModule, NbTooltipModule, NbButtonModule, NgxPermissionsModule.forChild()],
 	exports: [BaseNavMenuComponent, MainNavMenuComponent, SidebarMenuComponent]
 })
 export class CommonNavModule {}
