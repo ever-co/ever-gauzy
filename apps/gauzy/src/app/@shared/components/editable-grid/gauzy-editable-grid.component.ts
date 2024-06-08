@@ -1,14 +1,13 @@
 import { Component, OnInit, Input, TemplateRef, EventEmitter, Output, OnDestroy } from '@angular/core';
-
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil, take, tap, filter } from 'rxjs/operators';
-
+import { take, tap, filter } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 
 export type ItemActionType = 'create' | 'edit' | 'delete';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-editable-grid',
 	templateUrl: './gauzy-editable-grid.component.html',
@@ -29,9 +28,7 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 	selectedItem: T;
 	currentAction: ItemActionType = null;
 
-	private _onDestroy$: Subject<void> = new Subject<void>();
-
-	constructor(readonly translateService: TranslateService, private dialogService: NbDialogService) {
+	constructor(public readonly translateService: TranslateService, private dialogService: NbDialogService) {
 		super(translateService);
 	}
 
@@ -69,13 +66,10 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 					});
 				}),
 				take(1),
-				takeUntil(this._onDestroy$)
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {
-		this._onDestroy$.next();
-		this._onDestroy$.complete();
-	}
+	ngOnDestroy(): void {}
 }

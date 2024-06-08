@@ -32,7 +32,7 @@ import {
 	OrganizationPositionsService,
 	OrganizationVendorsService
 } from '@gauzy/ui-sdk/core';
-import { CurrencyModule, LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
+import { CurrencyModule, LeafletMapModule, LocationFormModule, TimeZoneSelectorModule } from '@gauzy/ui-sdk/shared';
 import { EmployeeMultiSelectModule } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-uploader.module';
@@ -51,7 +51,6 @@ import { TableComponentsModule } from '../../../../@shared/table-components/tabl
 import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
-import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 
 @NgModule({
 	imports: [

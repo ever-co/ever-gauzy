@@ -6,18 +6,17 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'file-provider-selector',
-	templateUrl: './file-provider.component.html',
-	styleUrls: ['./file-provider.component.scss'],
+	templateUrl: './file-provider-selector.component.html',
+	styleUrls: ['./file-provider-selector.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => FileProviderComponent),
+			useExisting: forwardRef(() => FileProviderSelectorComponent),
 			multi: true
 		}
 	]
 })
-export class FileProviderComponent implements OnInit {
-
+export class FileProviderSelectorComponent implements OnInit {
 	public fileStorageProviders: { label: FileStorageProviderEnum; value: any }[] = [];
 
 	/**
@@ -33,19 +32,16 @@ export class FileProviderComponent implements OnInit {
 		return this._provider;
 	}
 
-	onChange: any = () => { };
-	onTouched: any = () => { };
+	onChange: any = () => {};
+	onTouched: any = () => {};
 
 	@Output() onSelectionChanged = new EventEmitter();
 
 	ngOnInit(): void {
-		this.fileStorageProviders = Object.keys(FileStorageProviderEnum)
-			.map(
-				(label: FileStorageProviderEnum) => ({
-					label,
-					value: FileStorageProviderEnum[label]
-				})
-			);
+		this.fileStorageProviders = Object.keys(FileStorageProviderEnum).map((label: FileStorageProviderEnum) => ({
+			label,
+			value: FileStorageProviderEnum[label]
+		}));
 	}
 
 	/**
