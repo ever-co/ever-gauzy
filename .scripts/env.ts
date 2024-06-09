@@ -304,7 +304,7 @@ export const env: Env = cleanEnv(
 			default: 'Ever Gauzy API Server',
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
-			default: 'com.ever.evergauzyapiserver',
+			default: 'com.ever.gauzyapiserver',
 		}),
 		DESKTOP_API_SERVER_APP_REPO_NAME: str({
 			default: 'ever-gauzy-api-server',
