@@ -4570,6 +4570,6 @@
 		"ADD_DROP": "Add or Drop Image",
 		"AVAILABLE": "Image not available"
 	},
-	"SERVER_API": "Server API",
-	"SERVER_API_LOG": "Server API Log"
+	"SERVER_API": "API Server",
+	"SERVER_API_LOG": "API Server Log"
 }

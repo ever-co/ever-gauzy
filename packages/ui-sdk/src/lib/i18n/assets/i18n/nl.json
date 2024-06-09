@@ -4589,6 +4589,6 @@
 		"ADD_DROP": "Afbeelding toevoegen of verwijderen",
 		"AVAILABLE": "Afbeelding niet beschikbaar"
 	},
-	"SERVER_API": "Server API",
-	"SERVER_API_LOG": "Server API Log"
+	"SERVER_API": "API Server",
+	"SERVER_API_LOG": "API Server Log"
 }
