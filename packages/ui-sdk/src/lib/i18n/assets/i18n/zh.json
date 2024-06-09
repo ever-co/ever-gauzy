@@ -4589,6 +4589,6 @@
 		"ADD_DROP": "添加或删除图像",
 		"AVAILABLE": "图像不可用"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "API服务器",
+	"SERVER_API_LOG": "API服务器日志"
 }

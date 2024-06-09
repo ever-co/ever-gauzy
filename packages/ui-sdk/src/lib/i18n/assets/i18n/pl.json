@@ -4589,6 +4589,6 @@
 		"ADD_DROP": "Dodaj lub usuń obraz",
 		"AVAILABLE": "Zdjęcie niedostępne"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "Serwer API",
+	"SERVER_API_LOG": "Dziennik serwera API"
 }

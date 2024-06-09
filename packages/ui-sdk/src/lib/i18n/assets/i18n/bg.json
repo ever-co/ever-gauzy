@@ -4580,6 +4580,6 @@
 		"ADD_DROP": "Add or Drop Image",
 		"AVAILABLE": "Image not available"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "API сървър",
+	"SERVER_API_LOG": "Дневник на API сървъра"
 }

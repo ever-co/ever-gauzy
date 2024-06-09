@@ -4578,6 +4578,6 @@
 		"ADD_DROP": "Добавить или выложить изображение",
 		"AVAILABLE": "Изображение недоступно"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "API-сервер",
+	"SERVER_API_LOG": "Журнал API-сервера"
 }

@@ -4588,6 +4588,6 @@
 		"ADD_DROP": "أضف أو أزل الصورة",
 		"AVAILABLE": "الصورة غير متاحة"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "خادم واجهة برمجة التطبيقات",
+	"SERVER_API_LOG": "سجل خادم API"
 }

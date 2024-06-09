@@ -4591,6 +4591,6 @@
 		"ADD_DROP": "Agregar o Eliminar Imagen",
 		"AVAILABLE": "Imagen no disponible"
 	},
-	"SERVER_API": "API Server",
-	"SERVER_API_LOG": "API Server Log"
+	"SERVER_API": "Servidor API",
+	"SERVER_API_LOG": "Registro del servidor API"
 }
