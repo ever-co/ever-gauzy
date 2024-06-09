@@ -3888,9 +3888,9 @@
 		"SETUP": {
 			"WELCOME": "Welcome",
 			"TITLE": "Welcome to Ever® Gauzy™ - Open-Source Business Management Platform (ERP/CRM/HRM)",
-			"LABEL": "Gauzy Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
-			"TITLE_SERVER": "Gauzy Server Installation Wizard",
-			"LABEL_SERVER": "Gauzy Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
+			"LABEL": "Ever Gauzy Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
+			"TITLE_SERVER": "Ever Gauzy Server Installation Wizard",
+			"LABEL_SERVER": "Ever Gauzy Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications.",
 			"FUNCTIONALITIES": "Functionalities",
 			"WHAT_WOULD_LIKE_USE": "What would you like to use?",
 			"SELECT_MULTIPLE_OPTIONS": "You can select only one option or both options.",
