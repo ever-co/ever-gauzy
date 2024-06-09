@@ -4579,5 +4579,7 @@
 	"NO_IMAGE": {
 		"ADD_DROP": "Add or Drop Image",
 		"AVAILABLE": "Image not available"
-	}
+	},
+	"SERVER_API": "API сървър",
+	"SERVER_API_LOG": "Дневник на API сървъра"
 }
