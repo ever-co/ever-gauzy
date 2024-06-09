@@ -28,7 +28,7 @@ export type Env = Readonly<{
 	EXTENSION_DOWNLOAD_LINK: string;
 
 	// Platform logo url
-	PLATFORM_LOGO: string
+	PLATFORM_LOGO: string;
 
 	SENTRY_DSN: string;
 	SENTRY_TRACES_SAMPLE_RATE: string;
@@ -90,6 +90,7 @@ export type Env = Readonly<{
 	COMPANY_TWITTER_LINK: string;
 	COMPANY_LINKEDIN_LINK: string;
 	PROJECT_REPO: string;
+
 	DESKTOP_TIMER_APP_NAME: string;
 	DESKTOP_TIMER_APP_DESCRIPTION: string;
 	DESKTOP_TIMER_APP_ID: string;
@@ -97,6 +98,7 @@ export type Env = Readonly<{
 	DESKTOP_TIMER_APP_REPO_OWNER: string;
 	DESKTOP_TIMER_APP_WELCOME_TITLE: string;
 	DESKTOP_TIMER_APP_WELCOME_CONTENT: string;
+
 	DESKTOP_APP_NAME: string;
 	DESKTOP_APP_DESCRIPTION: string;
 	DESKTOP_APP_ID: string;
@@ -104,6 +106,7 @@ export type Env = Readonly<{
 	DESKTOP_APP_REPO_OWNER: string;
 	DESKTOP_APP_WELCOME_TITLE: string;
 	DESKTOP_APP_WELCOME_CONTENT: string;
+
 	DESKTOP_SERVER_APP_NAME: string;
 	DESKTOP_SERVER_APP_DESCRIPTION: string;
 	DESKTOP_SERVER_APP_ID: string;
@@ -111,6 +114,7 @@ export type Env = Readonly<{
 	DESKTOP_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_SERVER_APP_WELCOME_CONTENT: string;
+
 	DESKTOP_API_SERVER_APP_NAME: string;
 	DESKTOP_API_SERVER_APP_DESCRIPTION: string;
 	DESKTOP_API_SERVER_APP_ID: string;
@@ -118,6 +122,7 @@ export type Env = Readonly<{
 	DESKTOP_API_SERVER_APP_REPO_OWNER: string;
 	DESKTOP_API_SERVER_APP_WELCOME_TITLE: string;
 	DESKTOP_API_SERVER_APP_WELCOME_CONTENT: string;
+
 	AWHost: string;
 	API_DEFAULT_PORT: number;
 	GAUZY_UI_DEFAULT_PORT: number;
@@ -138,22 +143,22 @@ export const env: Env = cleanEnv(
 
 		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
 		PLATFORM_WEBSITE_DOWNLOAD_URL: str({
-			default: 'https://gauzy.co/downloads',
+			default: 'https://gauzy.co/downloads'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({
-			default: 'https://gauzy.co/downloads#desktop/apple',
+			default: 'https://gauzy.co/downloads#desktop/apple'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({
-			default: 'https://gauzy.co/downloads#desktop/windows',
+			default: 'https://gauzy.co/downloads#desktop/windows'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({
-			default: 'https://gauzy.co/downloads#desktop/linux',
+			default: 'https://gauzy.co/downloads#desktop/linux'
 		}),
 		MOBILE_APP_DOWNLOAD_LINK: str({
-			default: 'https://gauzy.co/downloads#mobile',
+			default: 'https://gauzy.co/downloads#mobile'
 		}),
 		EXTENSION_DOWNLOAD_LINK: str({
-			default: 'https://gauzy.co/downloads#extensions',
+			default: 'https://gauzy.co/downloads#extensions'
 		}),
 
 		SENTRY_DSN: str({ default: '' }),
@@ -196,122 +201,127 @@ export const env: Env = cleanEnv(
 
 		// Set default platform logo
 		PLATFORM_LOGO: str({
-			default: 'assets/images/logos/logo_Gauzy.svg',
+			default: 'assets/images/logos/logo_Gauzy.svg'
 		}),
 
 		//Set default gauzy desktop logo 512x512 pixels
 		GAUZY_DESKTOP_LOGO_512X512: str({
-			default: 'assets/icons/icon_512x512.png',
+			default: 'assets/icons/icon_512x512.png'
 		}),
 
 		// Set default platform privacy link
 		PLATFORM_PRIVACY_URL: str({
-			default: 'https://gauzy.co/privacy',
+			default: 'https://gauzy.co/privacy'
 		}),
 
 		// Set default platform terms of services link
 		PLATFORM_TOS_URL: str({
-			default: 'https://gauzy.co/tos',
+			default: 'https://gauzy.co/tos'
 		}),
 
 		COMPANY_NAME: str({
-			default: 'Ever Co. LTD',
+			default: 'Ever Co. LTD'
 		}),
 		COMPANY_SITE: str({
-			default: 'Gauzy',
+			default: 'Gauzy'
 		}),
 		COMPANY_LINK: str({
-			default: 'https://ever.co',
+			default: 'https://ever.co'
 		}),
 		COMPANY_SITE_LINK: str({
-			default: 'https://gauzy.co',
+			default: 'https://gauzy.co'
 		}),
 		COMPANY_GITHUB_LINK: str({
-			default: 'https://github.com/ever-co',
+			default: 'https://github.com/ever-co'
 		}),
 		COMPANY_GITLAB_LINK: str({
-			default: 'https://gitlab.com/ever-co',
+			default: 'https://gitlab.com/ever-co'
 		}),
 		COMPANY_FACEBOOK_LINK: str({
-			default: 'https://www.facebook.com/gauzyplatform',
+			default: 'https://www.facebook.com/gauzyplatform'
 		}),
 		COMPANY_TWITTER_LINK: str({
-			default: 'https://twitter.com/gauzyplatform',
+			default: 'https://twitter.com/gauzyplatform'
 		}),
 		COMPANY_LINKEDIN_LINK: str({
-			default: 'https://www.linkedin.com/company/ever-co',
+			default: 'https://www.linkedin.com/company/ever-co'
 		}),
 		NO_INTERNET_LOGO: str({
-			default: 'assets/images/logos/logo_Gauzy.svg',
+			default: 'assets/images/logos/logo_Gauzy.svg'
 		}),
 		PROJECT_REPO: str({
-			default: 'https://github.com/ever-co/ever-gauzy.git',
+			default: 'https://github.com/ever-co/ever-gauzy.git'
 		}),
+
 		DESKTOP_TIMER_APP_NAME: str({
-			default: 'gauzy-desktop-timer',
+			default: 'gauzy-desktop-timer'
 		}),
 		DESKTOP_TIMER_APP_DESCRIPTION: str({
-			default: 'Gauzy Desktop Timer',
+			default: 'Gauzy Desktop Timer'
 		}),
 		DESKTOP_TIMER_APP_ID: str({
-			default: 'com.ever.gauzydesktoptimer',
+			default: 'com.ever.gauzydesktoptimer'
 		}),
 		DESKTOP_TIMER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop-timer',
+			default: 'ever-gauzy-desktop-timer'
 		}),
 		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
+
 		DESKTOP_APP_NAME: str({
-			default: 'gauzy-desktop',
+			default: 'gauzy-desktop'
 		}),
 		DESKTOP_APP_DESCRIPTION: str({
-			default: 'Gauzy Desktop',
+			default: 'Ever Gauzy Desktop'
 		}),
 		DESKTOP_APP_ID: str({
-			default: 'com.ever.gauzydesktop',
+			default: 'com.ever.gauzydesktop'
 		}),
 		DESKTOP_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop',
+			default: 'ever-gauzy-desktop'
 		}),
 		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
+
 		DESKTOP_SERVER_APP_NAME: str({
-			default: 'gauzy-server',
+			default: 'gauzy-server'
 		}),
 		DESKTOP_SERVER_APP_DESCRIPTION: str({
-			default: 'Gauzy Server',
+			default: 'Ever Gauzy Server'
 		}),
 		DESKTOP_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyserver',
+			default: 'com.ever.gauzyserver'
 		}),
 		DESKTOP_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-server',
+			default: 'ever-gauzy-server'
 		}),
 		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+
 		I18N_FILES_URL: str({ default: '' }),
 		AWHost: str({ default: 'http://localhost:5600' }),
 		API_DEFAULT_PORT: num({ default: 3000 }),
 		GAUZY_UI_DEFAULT_PORT: num({ default: 5621 }),
 		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
+
 		DESKTOP_API_SERVER_APP_NAME: str({
-			default: 'gauzy-api-server',
+			default: 'gauzy-api-server'
 		}),
 		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
-			default: 'Gauzy Api Server',
+			default: 'Ever Gauzy API Server'
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyapiserver',
+			default: 'com.ever.gauzyapiserver'
 		}),
 		DESKTOP_API_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-api-server',
+			default: 'ever-gauzy-api-server'
 		}),
 		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
-		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
+		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' })
 	},
 	{ strict: true, dotEnvPath: __dirname + '/../.env' }
 );

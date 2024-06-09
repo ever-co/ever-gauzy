@@ -6,16 +6,23 @@
                     <div class="col-12 text-center margin-content">
                         <img [src]="gauzyIcon" [class]="styles.icon" />
                     </div>
-                    <div class="col-12 text-center margin-content">
+                    <div class="col-12 text-center margin-content" *ngIf="!isServerApi">
                         <h4 *ngIf="isExpandWindow">{{'SERVER' | translate| uppercase}}</h4>
                         <h5 *ngIf="!isExpandWindow">{{'SERVER' | translate| uppercase}}</h5>
+                    </div>
+                    <div class="col-12 text-center margin-content" *ngIf="isServerApi">
+                        <h4 *ngIf="isExpandWindow">{{'SERVER_API' | translate| uppercase}}</h4>
+                        <h5 *ngIf="!isExpandWindow">{{'SERVER_API' | translate| uppercase}}</h5>
                     </div>
                     <div class="col-12 text-center accordion margin-content" *ngIf="isExpandWindow">
                         <nb-accordion multi>
                             <nb-accordion-item #logServer [expanded]="logIsOpen"
                                 (collapsedChange)="logBoxChange($event)">
-                                <nb-accordion-item-header>
+                                <nb-accordion-item-header *ngIf="!isServerApi">
                                     {{'SERVER_LOG' | translate}}
+                                </nb-accordion-item-header>
+                                <nb-accordion-item-header *ngIf="isServerApi">
+                                    {{'SERVER_API_LOG' | translate}}
                                 </nb-accordion-item-header>
                                 <nb-accordion-item-body class="log-box">
                                     <div class="log-content" #logBox>
