@@ -1,8 +1,8 @@
 {
 	"name": "gauzy-server",
-	"productName": "Gauzy Server",
+	"productName": "Ever Gauzy Server",
 	"version": "0.1.0",
-	"description": "Gauzy Server",
+	"description": "Ever Gauzy Server",
 	"license": "AGPL-3.0",
 	"homepage": "https://gauzy.co",
 	"repository": {
@@ -47,7 +47,7 @@
 	"build": {
 		"appId": "com.ever.gauzyserver",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Gauzy Server",
+		"productName": "Ever Gauzy Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"dmg": {
 			"sign": false

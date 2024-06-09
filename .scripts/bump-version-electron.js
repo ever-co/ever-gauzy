@@ -1,145 +1,6 @@
 const fs = require('fs');
 const simpleGit = require('simple-git');
-const { exec } = require('child_process');
 const git = simpleGit();
-
-module.exports.serverapi = (isProd) => {
-	if (fs.existsSync('./apps/server-api/src/package.json')) {
-		let package = require('../apps/server-api/src/package.json');
-		let currentVersion = package.version;
-
-		exec('git fetch --tags && git tag --sort version:refname | tail -1', (error, stdout) => {
-			if (error) {
-				console.error(`exec error: ${error}`);
-				return;
-			}
-
-			let newVersion = stdout.trim();
-			console.log('latest tag', newVersion);
-			if (newVersion) {
-				// let's remove "v" from version, i.e. first character
-				newVersion = newVersion.substring(1);
-				package.version = newVersion;
-
-				if (!isProd) {
-					package.build.publish = [
-						{
-							provider: 'github',
-							repo: 'ever-gauzy-api-server',
-							releaseType: 'prerelease'
-						},
-						{
-							provider: 'spaces',
-							name: 'ever',
-							region: 'sfo3',
-							path: '/ever-gauzy-api-server-pre',
-							acl: 'public-read'
-						}
-					];
-				}
-
-				fs.writeFileSync('./apps/server-api/src/package.json', JSON.stringify(package, null, 2));
-
-				let updated = require('../apps/server-api/src/package.json');
-				console.log('Version updated to version => ', updated.version);
-			} else {
-				console.log('Latest tag is not found. Build Api Server with default version', currentVersion);
-			}
-		});
-	}
-};
-
-module.exports.server = (isProd) => {
-	if (fs.existsSync('./apps/server/src/package.json')) {
-		let package = require('../apps/server/src/package.json');
-		let currentVersion = package.version;
-
-		exec('git fetch --tags && git tag --sort version:refname | tail -1', (error, stdout) => {
-			if (error) {
-				console.error(`exec error: ${error}`);
-				return;
-			}
-
-			let newVersion = stdout.trim();
-			console.log('latest tag', newVersion);
-			if (newVersion) {
-				// let's remove "v" from version, i.e. first character
-				newVersion = newVersion.substring(1);
-				package.version = newVersion;
-
-				if (!isProd) {
-					package.build.publish = [
-						{
-							provider: 'github',
-							repo: 'ever-gauzy-server',
-							releaseType: 'prerelease'
-						},
-						{
-							provider: 'spaces',
-							name: 'ever',
-							region: 'sfo3',
-							path: '/ever-gauzy-server-pre',
-							acl: 'public-read'
-						}
-					];
-				}
-
-				fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
-
-				let updated = require('../apps/server/src/package.json');
-				console.log('Version updated to version => ', updated.version);
-			} else {
-				console.log('Latest tag is not found. Build Server with default version', currentVersion);
-			}
-		});
-	}
-};
-
-module.exports.desktop = (isProd) => {
-	if (fs.existsSync('./apps/desktop/src/package.json')) {
-		let package = require('../apps/desktop/src/package.json');
-		let currentVersion = package.version;
-
-		exec('git fetch --tags && git tag --sort version:refname | tail -1', (error, stdout) => {
-			if (error) {
-				console.error(`exec error: ${error}`);
-				return;
-			}
-
-			let newVersion = stdout.trim();
-			console.log('latest tag', newVersion);
-			if (newVersion) {
-				// let's remove "v" from version, i.e. first character
-				newVersion = newVersion.substring(1);
-				package.version = newVersion;
-
-				if (!isProd) {
-					package.build.publish = [
-						{
-							provider: 'github',
-							repo: 'ever-gauzy-desktop',
-							releaseType: 'prerelease'
-						},
-						{
-							provider: 'spaces',
-							name: 'ever',
-							region: 'sfo3',
-							path: '/ever-gauzy-desktop-pre',
-							acl: 'public-read'
-						}
-					];
-				}
-
-				fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
-
-				let updated = require('../apps/desktop/src/package.json');
-				console.log('Version updated to version => ', updated.version);
-			} else {
-				console.log('Latest tag is not found. build desktop app with default version', currentVersion);
-			}
-		});
-	}
-};
 
 async function getLatestTag(repoURL) {
 	try {
@@ -169,6 +30,252 @@ async function getLatestTag(repoURL) {
 	}
 }
 
+module.exports.serverapi = async (isProd) => {
+	if (fs.existsSync('./apps/server-api/src/package.json')) {
+		let package = require('../apps/server-api/src/package.json');
+		let currentVersion = package.version;
+
+		const repoURL = process.env.PROJECT_REPO;
+		console.log('repoURL', repoURL);
+
+		const appName = process.env.DESKTOP_API_SERVER_APP_NAME;
+		console.log('appName', appName);
+
+		const stdout = await getLatestTag(repoURL);
+
+		let newVersion = stdout.trim();
+		console.log('latest tag', newVersion);
+
+		if (newVersion) {
+			// let's remove "v" from version, i.e. first character
+			newVersion = newVersion.substring(1);
+			package.version = newVersion;
+
+			console.log('Version updated to version', newVersion);
+		} else {
+			console.log('Latest tag is not found. Build Desktop API Server App with default version', currentVersion);
+		}
+
+		package.name = appName;
+		package.productName = process.env.DESKTOP_API_SERVER_APP_DESCRIPTION;
+		package.description = process.env.DESKTOP_API_SERVER_APP_DESCRIPTION;
+		package.homepage = process.env.COMPANY_SITE_LINK;
+
+		package.build.appId = process.env.DESKTOP_API_SERVER_APP_ID;
+		package.build.productName = process.env.DESKTOP_API_SERVER_APP_DESCRIPTION;
+		package.build.linux.executableName = appName;
+
+		const appRepoName = process.env.DESKTOP_API_SERVER_REPO_NAME || appName;
+		const appRepoOwner = process.env.DESKTOP_API_SERVER_REPO_OWNER || 'ever-co';
+
+		// For GitHub options see https://www.electron.build/configuration/publish.html
+
+		if (!isProd) {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'prerelease'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}-pre`,
+					acl: 'public-read'
+				}
+			];
+		} else {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'release'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}`,
+					acl: 'public-read'
+				}
+			];
+		}
+
+		fs.writeFileSync('./apps/server-api/src/package.json', JSON.stringify(package, null, 2));
+
+		let updated = require('../apps/server-api/src/package.json');
+
+		console.log('Version releasing', updated.version);
+	}
+};
+
+module.exports.server = async (isProd) => {
+	if (fs.existsSync('./apps/server/src/package.json')) {
+		let package = require('../apps/server/src/package.json');
+		let currentVersion = package.version;
+
+		const repoURL = process.env.PROJECT_REPO;
+		console.log('repoURL', repoURL);
+
+		const appName = process.env.DESKTOP_SERVER_APP_NAME;
+		console.log('appName', appName);
+
+		const stdout = await getLatestTag(repoURL);
+
+		let newVersion = stdout.trim();
+		console.log('latest tag', newVersion);
+
+		if (newVersion) {
+			// let's remove "v" from version, i.e. first character
+			newVersion = newVersion.substring(1);
+			package.version = newVersion;
+
+			console.log('Version updated to version', newVersion);
+		} else {
+			console.log('Latest tag is not found. Build Desktop Server App with default version', currentVersion);
+		}
+
+		package.name = appName;
+		package.productName = process.env.DESKTOP_SERVER_APP_DESCRIPTION;
+		package.description = process.env.DESKTOP_SERVER_APP_DESCRIPTION;
+		package.homepage = process.env.COMPANY_SITE_LINK;
+
+		package.build.appId = process.env.DESKTOP_SERVER_APP_ID;
+		package.build.productName = process.env.DESKTOP_SERVER_APP_DESCRIPTION;
+		package.build.linux.executableName = appName;
+
+		const appRepoName = process.env.DESKTOP_SERVER_REPO_NAME || appName;
+		const appRepoOwner = process.env.DESKTOP_SERVER_REPO_OWNER || 'ever-co';
+
+		// For GitHub options see https://www.electron.build/configuration/publish.html
+
+		if (!isProd) {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'prerelease'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}-pre`,
+					acl: 'public-read'
+				}
+			];
+		} else {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'release'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}`,
+					acl: 'public-read'
+				}
+			];
+		}
+
+		fs.writeFileSync('./apps/server/src/package.json', JSON.stringify(package, null, 2));
+
+		let updated = require('../apps/server/src/package.json');
+
+		console.log('Version releasing', updated.version);
+	}
+};
+
+module.exports.desktop = async (isProd) => {
+	if (fs.existsSync('./apps/desktop/src/package.json')) {
+		let package = require('../apps/desktop/src/package.json');
+		let currentVersion = package.version;
+
+		const repoURL = process.env.PROJECT_REPO;
+		console.log('repoURL', repoURL);
+
+		const appName = process.env.DESKTOP_APP_NAME;
+		console.log('appName', appName);
+
+		const stdout = await getLatestTag(repoURL);
+
+		let newVersion = stdout.trim();
+		console.log('latest tag', newVersion);
+
+		if (newVersion) {
+			// let's remove "v" from version, i.e. first character
+			newVersion = newVersion.substring(1);
+			package.version = newVersion;
+
+			console.log('Version updated to version', newVersion);
+		} else {
+			console.log('Latest tag is not found. Build Desktop App with default version', currentVersion);
+		}
+
+		package.name = appName;
+		package.productName = process.env.DESKTOP_APP_DESCRIPTION;
+		package.description = process.env.DESKTOP_APP_DESCRIPTION;
+		package.homepage = process.env.COMPANY_SITE_LINK;
+
+		package.build.appId = process.env.DESKTOP_APP_ID;
+		package.build.productName = process.env.DESKTOP_APP_DESCRIPTION;
+		package.build.linux.executableName = appName;
+
+		const appRepoName = process.env.DESKTOP_APP_REPO_NAME || appName;
+		const appRepoOwner = process.env.DESKTOP_APP_REPO_OWNER || 'ever-co';
+
+		// For GitHub options see https://www.electron.build/configuration/publish.html
+
+		if (!isProd) {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'prerelease'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}-pre`,
+					acl: 'public-read'
+				}
+			];
+		} else {
+			package.build.publish = [
+				{
+					provider: 'github',
+					repo: appRepoName,
+					owner: appRepoOwner,
+					releaseType: 'release'
+				},
+				{
+					provider: 'spaces',
+					name: 'ever',
+					region: 'sfo3',
+					path: `/${appName}`,
+					acl: 'public-read'
+				}
+			];
+		}
+
+		fs.writeFileSync('./apps/desktop/src/package.json', JSON.stringify(package, null, 2));
+
+		let updated = require('../apps/desktop/src/package.json');
+
+		console.log('Version releasing', updated.version);
+	}
+};
+
 module.exports.desktopTimer = async (isProd) => {
 	if (fs.existsSync('./apps/desktop-timer/src/package.json')) {
 		let package = require('../apps/desktop-timer/src/package.json');
@@ -192,7 +299,7 @@ module.exports.desktopTimer = async (isProd) => {
 
 			console.log('Version updated to version', newVersion);
 		} else {
-			console.log('Latest tag is not found. build desktop-timer app with default version', currentVersion);
+			console.log('Latest tag is not found. Build Desktop Timer App with default version', currentVersion);
 		}
 
 		package.name = timerAppName;
@@ -248,97 +355,5 @@ module.exports.desktopTimer = async (isProd) => {
 		let updated = require('../apps/desktop-timer/src/package.json');
 
 		console.log('Version releasing', updated.version);
-	}
-};
-
-module.exports.desktopTimer2 = (isProd) => {
-	if (fs.existsSync('./apps/desktop-timer/src/package.json')) {
-		let package = require('../apps/desktop-timer/src/package.json');
-		let currentVersion = package.version;
-
-		const repoURL = process.env.PROJECT_REPO;
-		console.log('repoURL', repoURL);
-
-		const timerAppName = process.env.DESKTOP_TIMER_APP_NAME;
-		console.log('timerAppName', timerAppName);
-
-		const command =
-			'git ls-remote --tags ' +
-			repoURL +
-			" | grep -v '\\^{}' | awk -F'/' '/refs/tags\\// {print $3}' | grep -E '^v?[0-9]+\\.[0-9]+\\.[0-9]+' | sort -V | tail -n1";
-
-		console.log('command', command);
-
-		exec(command, (error, stdout) => {
-			if (error) {
-				console.error(`exec error: ${error}`);
-				return;
-			}
-
-			let newVersion = stdout.trim();
-			console.log('latest tag', newVersion);
-
-			if (newVersion) {
-				// let's remove "v" from version, i.e. first character
-				newVersion = newVersion.substring(1);
-				package.version = newVersion;
-
-				console.log('Version updated to version', newVersion);
-			} else {
-				console.log('Latest tag is not found. build desktop-timer app with default version', currentVersion);
-			}
-
-			package.name = timerAppName;
-			package.productName = process.env.DESKTOP_TIMER_APP_DESCRIPTION;
-			package.description = process.env.DESKTOP_TIMER_APP_DESCRIPTION;
-			package.homepage = process.env.COMPANY_SITE_LINK;
-
-			package.build.appId = process.env.DESKTOP_TIMER_APP_ID;
-			package.build.productName = process.env.DESKTOP_TIMER_APP_DESCRIPTION;
-			package.build.linux.executableName = timerAppName;
-
-			const appRepoName = process.env.DESKTOP_TIMER_APP_REPO_NAME || timerAppName;
-			const appRepoOwner = process.env.DESKTOP_TIMER_APP_REPO_OWNER || 'ever-co';
-
-			if (!isProd) {
-				package.build.publish = [
-					{
-						provider: 'github',
-						repo: appRepoName,
-						owner: appRepoOwner,
-						releaseType: 'prerelease'
-					},
-					{
-						provider: 'spaces',
-						name: 'ever',
-						region: 'sfo3',
-						path: `/${timerAppName}-pre`,
-						acl: 'public-read'
-					}
-				];
-			} else {
-				package.build.publish = [
-					{
-						provider: 'github',
-						repo: appRepoName,
-						owner: appRepoOwner,
-						releaseType: 'release'
-					},
-					{
-						provider: 'spaces',
-						name: 'ever',
-						region: 'sfo3',
-						path: `/${timerAppName}`,
-						acl: 'public-read'
-					}
-				];
-			}
-
-			fs.writeFileSync('./apps/desktop-timer/src/package.json', JSON.stringify(package, null, 2));
-
-			let updated = require('../apps/desktop-timer/src/package.json');
-
-			console.log('Version releasing', updated.version);
-		});
 	}
 };

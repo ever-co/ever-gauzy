@@ -56,6 +56,12 @@ jobs:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
+          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
 
       - name: Build Server
         run: 'yarn build:gauzy-server:linux:release:gh'
@@ -111,6 +117,12 @@ jobs:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
+          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
 
       - name: Build Server
         run: 'yarn build:gauzy-server:mac:release'
@@ -166,6 +178,12 @@ jobs:
           script: |
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(false))
+        env:
+          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
+          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
+          COMPANY_SITE_LINK: 'https://gauzy.co'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
+          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
 
       - name: Build Server
         run: 'yarn build:gauzy-server:windows:release:gh'
