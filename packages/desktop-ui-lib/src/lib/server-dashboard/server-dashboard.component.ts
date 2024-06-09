@@ -187,4 +187,8 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			this.logIsOpen = true;
 		}
 	}
+
+	public get isServerApi(): boolean {
+		return this._environment.IS_SERVER_API;
+	}
 }

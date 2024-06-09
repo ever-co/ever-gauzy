@@ -4577,5 +4577,7 @@
 	"NO_IMAGE": {
 		"ADD_DROP": "Добавить или выложить изображение",
 		"AVAILABLE": "Изображение недоступно"
-	}
+	},
+	"SERVER_API": "Server API",
+	"SERVER_API_LOG": "Server API Log"
 }

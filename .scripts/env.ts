@@ -298,13 +298,13 @@ export const env: Env = cleanEnv(
 		GAUZY_UI_DEFAULT_PORT: num({ default: 5621 }),
 		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
 		DESKTOP_API_SERVER_APP_NAME: str({
-			default: 'gauzy-api-server',
+			default: 'ever-gauzy-api-server',
 		}),
 		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
-			default: 'Gauzy Api Server',
+			default: 'Ever Gauzy API Server',
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyapiserver',
+			default: 'com.ever.evergauzyapiserver',
 		}),
 		DESKTOP_API_SERVER_APP_REPO_NAME: str({
 			default: 'ever-gauzy-api-server',

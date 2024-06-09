@@ -3999,5 +3999,7 @@
 	"NO_IMAGE": {
 		"ADD_DROP": "crwdns11241:0crwdne11241:0",
 		"AVAILABLE": "crwdns11243:0crwdne11243:0"
-	}
+	},
+	"SERVER_API": "Server API",
+	"SERVER_API_LOG": "Server API Log"
 }
