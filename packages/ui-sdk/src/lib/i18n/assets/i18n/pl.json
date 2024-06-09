@@ -4588,5 +4588,7 @@
 	"NO_IMAGE": {
 		"ADD_DROP": "Dodaj lub usuń obraz",
 		"AVAILABLE": "Zdjęcie niedostępne"
-	}
+	},
+	"SERVER_API": "Serwer API",
+	"SERVER_API_LOG": "Dziennik serwera API"
 }

@@ -14,6 +14,7 @@ export class DesktopTimerEnvironmentContent implements IContentGenerator {
 			IS_DESKTOP_TIMER: ${true},
 			IS_DESKTOP: ${false},
 			IS_SERVER: ${false},
+			IS_SERVER_API: ${false}
 		`;
 	}
 }
