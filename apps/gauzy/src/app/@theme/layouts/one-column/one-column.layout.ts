@@ -17,19 +17,19 @@ import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/the
 	templateUrl: './one-column.layout.html'
 })
 export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestroy {
-	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
-
-	private _user$: Observable<IUser>;
-	loading: boolean;
 	userMenu = [
 		{ title: 'Profile', link: '/pages/auth/profile' },
 		{ title: 'Log out', link: '/auth/logout' }
 	];
+	loading: boolean;
+	isOpen: boolean = false;
+	isExpanded: boolean = true;
+	isCollapse: boolean = true;
+	trigger: boolean = true;
 
-	isOpen = false;
-	isExpanded = true;
-	isCollapse = true;
-	trigger = true;
+	private _user$: Observable<IUser> = new Observable();
+
+	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
 	constructor(
 		@Inject(PLATFORM_ID) private platformId,
@@ -45,7 +45,6 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 			navigationBuilderService.addSidebarActionItem(config.actionItem);
 		});
 		navigationBuilderService.getSidebarWidgets();
-		this._user$ = new Observable();
 	}
 
 	ngOnInit() {
@@ -61,6 +60,11 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 		}
 	}
 
+	/**
+	 * Toggles the expansion state of the component and updates the sidebar accordingly.
+	 * If the component is expanded, it expands the 'menu-sidebar'.
+	 * If the component is collapsed, it triggers a sidebar toggle and changes the layout size.
+	 */
 	toggle() {
 		this.isExpanded = !this.isExpanded;
 		if (this.isExpanded) {
@@ -72,12 +76,23 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 		}
 	}
 
+	/**
+	 * Updates the state of the component based on the given event.
+	 *
+	 * @param {boolean} event - The event that triggered the collapse.
+	 */
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
 		if (!this.isCollapse && !this.isExpanded) this.toggle();
 	}
 
-	onStateChange(event) {
+	/**
+	 * Updates the state of the component based on the given event.
+	 *
+	 * @param {string} event - The event that triggered the state change.
+	 *
+	 */
+	onStateChange(event: string): void {
 		this.isExpanded = event === 'expanded' ? true : false;
 		this.trigger = event === 'compacted' ? true : this.isCollapse;
 	}

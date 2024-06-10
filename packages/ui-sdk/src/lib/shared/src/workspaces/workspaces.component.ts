@@ -1,13 +1,13 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { IUser } from '@gauzy/contracts';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { Observable } from 'rxjs/internal/Observable';
 import { NbMenuItem } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
+import { IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
 
 interface IWorkSpace {
 	id: string;
@@ -24,6 +24,7 @@ interface IWorkSpace {
 export class WorkspacesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	public _workspaces$: BehaviorSubject<IWorkSpace[]> = new BehaviorSubject([]);
 	public workspaces$: Observable<IWorkSpace[]> = this._workspaces$.asObservable();
+
 	public selected: IWorkSpace;
 	public contextMenus: NbMenuItem[];
 	public user: IUser;

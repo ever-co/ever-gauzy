@@ -5,46 +5,46 @@ import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonM
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
-import { DateViewComponent } from './date-view/date-view.component';
-import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
-import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
-import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
-import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
-import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
-import { TaskTeamsComponent } from './task-teams/task-teams.component';
-import { AssignedToComponent } from './assigned-to/assigned-to.component';
-import { StatusViewComponent } from './status-view/status-view.component';
-import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
-import { DocumentUrlTableComponent } from './document-url/document-url.component';
-import { DocumentDateTableComponent } from './document-date/document-date.component';
-import { ContactLinksComponent } from './contact-links/contact-links.component';
-import { TagsOnlyComponent } from './tags-only/tags-only.component';
-import { EmployeeLinksComponent } from './employee-links/employee-links.component';
-import { CreateByComponent } from './create-by/create-by.component';
-import { ProjectComponent } from './project/project.component';
-import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employees-merged-teams.component';
-import { CreatedAtComponent } from './created-at/created-at.component';
-import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
-import { OrganizationWithTagsComponent } from './organization-with-tags/organization-with-tags.component';
-import { EmailComponent } from './email/email.component';
-import { RoleComponent } from './role/role.component';
-import { ExternalLinkComponent } from './external-link/external-link.component';
-import { CompanyLogoComponent } from './company-logo/company-logo.component';
-import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
-import { VisibilityComponent } from './visibility/visibility.component';
-import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
-import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
-import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
-import { PhoneUrlComponent } from './phone-url/phone-url.component';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';
-import { NumberEditorComponent } from './editors/number-editor.component';
+import { AssignedToComponent } from './assigned-to/assigned-to.component';
 import { ClickableLinkComponent } from './clickable-link/clickable-link.component';
-import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
-import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
-import { GithubRepositoryComponent } from './github/repository/repository.component';
+import { CompanyLogoComponent } from './company-logo/company-logo.component';
+import { ContactLinksComponent } from './contact-links/contact-links.component';
+import { ContactWithTagsComponent } from './contact-with-tags/contact-with-tags.component';
+import { CreateByComponent } from './create-by/create-by.component';
+import { CreatedAtComponent } from './created-at/created-at.component';
+import { DateViewComponent } from './date-view/date-view.component';
+import { DocumentDateTableComponent } from './document-date/document-date.component';
+import { DocumentUrlTableComponent } from './document-url/document-url.component';
+import { NumberEditorComponent } from './editors/number-editor.component';
+import { EmailComponent } from './email/email.component';
+import { EmployeeLinksComponent } from './employee-links/employee-links.component';
+import { EmployeeWithLinksComponent } from './employee-with-links/employee-with-links.component';
+import { EmployeesMergedTeamsComponent } from './employees-merged-teams/employees-merged-teams.component';
+import { ExternalLinkComponent } from './external-link/external-link.component';
 import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
+import { GithubRepositoryComponent } from './github/repository/repository.component';
 import { ResyncButtonComponent } from './github/resync-button/resync-button.component';
+import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { InvoiceTotalValueComponent } from './invoice-total-value/invoice-total-value.component';
+import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
+import { OrganizationWithTagsComponent } from './organization-with-tags/organization-with-tags.component';
+import { PhoneUrlComponent } from './phone-url/phone-url.component';
+import { PictureNameTagsComponent } from './picture-name-tags/picture-name-tags.component';
+import { ProjectOrganizationEmployeesComponent } from './project-organization-employees/project-organization-employees.component';
+import { ProjectOrganizationGridDetailsComponent } from './project-organization-grid-details/project-organization-grid-details.component';
+import { ProjectOrganizationGridComponent } from './project-organization-grid/project-organization-grid.component';
+import { ProjectOrganizationComponent } from './project-organization/project-organization.component';
+import { ProjectComponent } from './project/project.component';
+import { RoleComponent } from './role/role.component';
+import { StatusViewComponent } from './status-view/status-view.component';
+import { TagsOnlyComponent } from './tags-only/tags-only.component';
+import { TaskEstimateComponent } from './task-estimate/task-estimate.component';
+import { TaskTeamsComponent } from './task-teams/task-teams.component';
+import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
+import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
+import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
+import { VisibilityComponent } from './visibility/visibility.component';
 
 @NgModule({
 	imports: [
@@ -60,89 +60,88 @@ import { InvoiceTotalValueComponent } from './invoice-total-value/invoice-total-
 		ComponentsModule
 	],
 	declarations: [
-		DateViewComponent,
-		InvoiceTotalValueComponent,
-		IncomeExpenseAmountComponent,
-		NotesWithTagsComponent,
-		PictureNameTagsComponent,
-		TaskEstimateComponent,
-		EmployeeWithLinksComponent,
-		TaskTeamsComponent,
+		AllowScreenshotCaptureComponent,
 		AssignedToComponent,
-		StatusViewComponent,
-		ValueWithUnitComponent,
-		DocumentUrlTableComponent,
-		DocumentDateTableComponent,
-		TagsOnlyComponent,
-		ContactLinksComponent,
-		EmployeeLinksComponent,
-		CreateByComponent,
-		ProjectComponent,
-		EmployeesMergedTeamsComponent,
-		CreatedAtComponent,
-		ContactWithTagsComponent,
-		OrganizationWithTagsComponent,
-		EmailComponent,
-		RoleComponent,
-		ExternalLinkComponent,
+		ClickableLinkComponent,
 		CompanyLogoComponent,
+		ContactLinksComponent,
+		ContactWithTagsComponent,
+		CreateByComponent,
+		CreatedAtComponent,
+		DateViewComponent,
+		DocumentDateTableComponent,
+		DocumentUrlTableComponent,
+		EmailComponent,
+		EmployeeLinksComponent,
+		EmployeeWithLinksComponent,
+		EmployeesMergedTeamsComponent,
+		ExternalLinkComponent,
+		GithubIssueTitleDescriptionComponent,
+		GithubRepositoryComponent,
+		IncomeExpenseAmountComponent,
+		InvoiceTotalValueComponent,
+		NotesWithTagsComponent,
+		NumberEditorComponent,
+		OrganizationWithTagsComponent,
+		PhoneUrlComponent,
+		PictureNameTagsComponent,
+		ProjectComponent,
 		ProjectOrganizationComponent,
-		VisibilityComponent,
+		ProjectOrganizationEmployeesComponent,
 		ProjectOrganizationGridComponent,
 		ProjectOrganizationGridDetailsComponent,
-		ProjectOrganizationEmployeesComponent,
-		PhoneUrlComponent,
-		AllowScreenshotCaptureComponent,
-		// smart table field editor
-		NumberEditorComponent,
-		ClickableLinkComponent,
-		TrustHtmlLinkComponent,
+		ResyncButtonComponent,
+		RoleComponent,
+		StatusViewComponent,
+		TagsOnlyComponent,
+		TaskEstimateComponent,
+		TaskTeamsComponent,
 		ToggleSwitchComponent,
-		GithubRepositoryComponent,
-		GithubIssueTitleDescriptionComponent,
-		ResyncButtonComponent
+		TrustHtmlLinkComponent,
+		ValueWithUnitComponent,
+		VisibilityComponent
 	],
 	exports: [
-		DateViewComponent,
-		IncomeExpenseAmountComponent,
-		NotesWithTagsComponent,
-		PictureNameTagsComponent,
-		TaskEstimateComponent,
-		EmployeeWithLinksComponent,
-		TaskTeamsComponent,
+		AllowScreenshotCaptureComponent,
 		AssignedToComponent,
-		StatusViewComponent,
-		ValueWithUnitComponent,
-		DocumentUrlTableComponent,
-		DocumentDateTableComponent,
-		TagsOnlyComponent,
-		ContactLinksComponent,
-		EmployeeLinksComponent,
-		CreateByComponent,
-		ProjectComponent,
-		EmployeesMergedTeamsComponent,
-		CreatedAtComponent,
-		ContactWithTagsComponent,
-		OrganizationWithTagsComponent,
-		EmailComponent,
-		RoleComponent,
-		ExternalLinkComponent,
+		ClickableLinkComponent,
 		CompanyLogoComponent,
+		ContactLinksComponent,
+		ContactWithTagsComponent,
+		CreateByComponent,
+		CreatedAtComponent,
+		DateViewComponent,
+		DocumentDateTableComponent,
+		DocumentUrlTableComponent,
+		EmailComponent,
+		EmployeeLinksComponent,
+		EmployeeWithLinksComponent,
+		EmployeesMergedTeamsComponent,
+		ExternalLinkComponent,
+		GithubIssueTitleDescriptionComponent,
+		GithubRepositoryComponent,
+		IncomeExpenseAmountComponent,
+		InvoiceTotalValueComponent,
+		NotesWithTagsComponent,
+		NumberEditorComponent,
+		OrganizationWithTagsComponent,
+		PhoneUrlComponent,
+		PictureNameTagsComponent,
+		ProjectComponent,
 		ProjectOrganizationComponent,
-		VisibilityComponent,
+		ProjectOrganizationEmployeesComponent,
 		ProjectOrganizationGridComponent,
 		ProjectOrganizationGridDetailsComponent,
-		ProjectOrganizationEmployeesComponent,
-		PhoneUrlComponent,
-		AllowScreenshotCaptureComponent,
-		// smart table field editor
-		NumberEditorComponent,
-		ClickableLinkComponent,
-		TrustHtmlLinkComponent,
+		ResyncButtonComponent,
+		RoleComponent,
+		StatusViewComponent,
+		TagsOnlyComponent,
+		TaskEstimateComponent,
+		TaskTeamsComponent,
 		ToggleSwitchComponent,
-		GithubRepositoryComponent,
-		GithubIssueTitleDescriptionComponent,
-		ResyncButtonComponent
+		TrustHtmlLinkComponent,
+		ValueWithUnitComponent,
+		VisibilityComponent
 	],
 	providers: []
 })
