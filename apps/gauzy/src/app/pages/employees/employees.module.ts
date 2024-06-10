@@ -32,7 +32,6 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
-	DirectivesModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	TableComponentsModule,
