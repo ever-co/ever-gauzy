@@ -25,8 +25,8 @@ import { TaskStatusEnum } from '@gauzy/contracts';
 				letter-spacing: 0em;
 				text-align: left;
 			}
-		`,
-	],
+		`
+	]
 })
 export class StatusViewComponent implements OnInit {
 	@Input() value: string;

@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { AlertModalComponent } from './alert-modal/alert-modal.component';
 import { AvatarComponent } from './avatar/avatar.component';
 import { BackNavigationComponent } from './back-navigation/back-navigation.component';
 import { BadgeLabelComponent } from './badge-label/badge-label.component';
@@ -14,6 +15,7 @@ import { SearchInputComponent } from './search-input/search-input.component';
 import { PipesModule } from '../pipes/pipes.module';
 
 export const Components = [
+	AlertModalComponent,
 	AvatarComponent,
 	BackNavigationComponent,
 	BadgeLabelComponent,

@@ -1,5 +1,5 @@
 export * from './components.module';
-
+export * from './alert-modal/alert-modal.component';
 export * from './avatar/avatar.component';
 export * from './back-navigation/back-navigation.component';
 export * from './badge-label/badge-label.component';

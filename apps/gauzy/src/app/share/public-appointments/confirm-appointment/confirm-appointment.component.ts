@@ -8,7 +8,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
 import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
+import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +28,7 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent implem
 		private readonly dialogService: NbDialogService,
 		private readonly employeeService: EmployeesService,
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
-		readonly translateService: TranslateService
+		public readonly translateService: TranslateService
 	) {
 		super(translateService);
 	}
@@ -63,7 +63,7 @@ export class ConfirmAppointmentComponent extends TranslationBaseComponent implem
 	async cancelAppointment(appointmentId: string) {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.getTranslation('APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'),
 					message: this.getTranslation('APPOINTMENTS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'

@@ -5,13 +5,11 @@ import { NbBadgeModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@n
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ComponentsModule, DirectivesModule, PipesModule } from '@gauzy/ui-sdk/shared';
-import { AlertModalModule } from './alert-modal';
-import { TaskBadgeViewComponent } from './tasks/task-badge-view/task-badge-view.component';
 
 const MODULES = [ComponentsModule, DirectivesModule, PipesModule];
 
 @NgModule({
-	declarations: [TaskBadgeViewComponent],
+	declarations: [],
 	imports: [
 		CommonModule,
 		RouterModule,
@@ -23,7 +21,7 @@ const MODULES = [ComponentsModule, DirectivesModule, PipesModule];
 		I18nTranslateModule.forChild(),
 		...MODULES
 	],
-	exports: [AlertModalModule, ...MODULES, TaskBadgeViewComponent]
+	exports: [...MODULES]
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {

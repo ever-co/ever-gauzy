@@ -12,23 +12,19 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AppointmentEmployeesService } from '@gauzy/ui-sdk/core';
 import { ManageAppointmentComponent } from './manage-appointment.component';
-import { ThemeModule } from './../../../../@theme/theme.module';
 import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-picker.module';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { EmployeeMultiSelectModule } from './../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { AlertModalModule } from './../../../../@shared/alert-modal/alert-modal.module';
 import { EmployeeSchedulesModule } from '../employee-schedules/employee-schedules.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
 		ManageAppointmentRoutingModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
 		NbInputModule,
-		AlertModalModule,
 		EmployeeSchedulesModule,
 		ReactiveFormsModule,
 		NbIconModule,

@@ -1,8 +1,5 @@
 <ng-container *ngIf="rowData?.taskStatus; else defaultView">
-	<gauzy-task-badge-view
-		*ngIf="rowData?.taskStatus"
-		[taskBadge]="rowData?.taskStatus"
-	></gauzy-task-badge-view>
+	<gauzy-task-badge-view [taskBadge]="rowData?.taskStatus"></gauzy-task-badge-view>
 </ng-container>
 <ng-template #defaultView>
 	<nb-badge

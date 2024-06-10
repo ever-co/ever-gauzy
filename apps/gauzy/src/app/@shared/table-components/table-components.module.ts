@@ -44,6 +44,7 @@ import { GithubRepositoryComponent } from './github/repository/repository.compon
 import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
 import { ResyncButtonComponent } from './github/resync-button/resync-button.component';
 import { StatusBadgeModule } from '../status-badge';
+import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
 
 @NgModule({
 	imports: [
@@ -56,7 +57,8 @@ import { StatusBadgeModule } from '../status-badge';
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
 		SharedModule,
-		StatusBadgeModule
+		StatusBadgeModule,
+		TaskBadgeViewComponentModule
 	],
 	declarations: [
 		DateViewComponent,
@@ -101,28 +103,44 @@ import { StatusBadgeModule } from '../status-badge';
 		ResyncButtonComponent
 	],
 	exports: [
+		DateViewComponent,
+		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,
+		TaskEstimateComponent,
 		EmployeeWithLinksComponent,
+		TaskTeamsComponent,
+		AssignedToComponent,
 		StatusViewComponent,
 		ValueWithUnitComponent,
+		DocumentUrlTableComponent,
+		DocumentDateTableComponent,
+		TagsOnlyComponent,
 		ContactLinksComponent,
 		EmployeeLinksComponent,
+		CreateByComponent,
 		ProjectComponent,
-		RoleComponent,
+		EmployeesMergedTeamsComponent,
+		CreatedAtComponent,
+		ContactWithTagsComponent,
+		OrganizationWithTagsComponent,
 		EmailComponent,
+		RoleComponent,
 		ExternalLinkComponent,
-		TagsOnlyComponent,
 		CompanyLogoComponent,
 		ProjectOrganizationComponent,
+		VisibilityComponent,
+		ProjectOrganizationGridComponent,
+		ProjectOrganizationGridDetailsComponent,
+		ProjectOrganizationEmployeesComponent,
 		PhoneUrlComponent,
-		CreateByComponent,
-		CreatedAtComponent,
-		DateViewComponent,
+		AllowScreenshotCaptureComponent,
+		// smart table field editor
+		NumberEditorComponent,
 		ClickableLinkComponent,
 		TrustHtmlLinkComponent,
-		GithubRepositoryComponent,
 		ToggleSwitchComponent,
+		GithubRepositoryComponent,
 		GithubIssueTitleDescriptionComponent,
 		ResyncButtonComponent
 	],

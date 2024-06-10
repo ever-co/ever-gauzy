@@ -10,18 +10,11 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 	styleUrls: ['./task-badge-view.component.scss']
 })
 export class TaskBadgeViewComponent {
-	constructor() {
-		this._taskBadge = null;
-	}
-
-	private _taskBadge: ITaskBadge;
-
+	private _taskBadge: ITaskBadge = null;
 	public get taskBadge(): ITaskBadge {
 		return this._taskBadge;
 	}
-
-	@Input()
-	public set taskBadge(value: ITaskBadge) {
+	@Input() public set taskBadge(value: ITaskBadge) {
 		this._taskBadge = value;
 	}
 

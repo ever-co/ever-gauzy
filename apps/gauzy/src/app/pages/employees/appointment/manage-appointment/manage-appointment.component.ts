@@ -1,5 +1,3 @@
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import {
 	Component,
 	OnDestroy,
@@ -12,12 +10,15 @@ import {
 	ChangeDetectorRef
 } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
-import { filter } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import moment from 'moment';
+import * as timezone from 'moment-timezone';
 import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
@@ -25,10 +26,9 @@ import {
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { NbDialogService } from '@nebular/theme';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlertModalComponent } from '../../../../@shared/alert-modal/alert-modal.component';
+import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
 import { EmployeeSelectComponent } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.component';
 
@@ -121,8 +121,6 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	private _patchFormValue() {
-		console.log(this.employeeAppointment);
-
 		this.form.patchValue({
 			emails: this.employeeAppointment.emails
 				? this.employeeAppointment.emails.split(', ').map((o) => ({ emailAddress: o }))
@@ -221,7 +219,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 		try {
 			const dialog = this.dialogService.open(AlertModalComponent, {
 				context: {
-					alertOptions: {
+					data: {
 						title: this.getTranslation('APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'),
 						message: this.getTranslation('APPOINTMENTS_PAGE.ARE_YOU_SURE'),
 						status: 'danger'

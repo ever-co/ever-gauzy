@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
+import { NgSelectModule } from '@ng-select/ng-select';
 import { TaskSizesService } from '@gauzy/ui-sdk/core';
-import { TaskSizeSelectComponent } from './task-size-select.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../shared.module';
+import { TaskSizeSelectComponent } from './task-size-select.component';
+import { TaskBadgeViewComponentModule } from '../task-badge-view/task-badge-view.module';
 
 @NgModule({
+	imports: [CommonModule, FormsModule, NgSelectModule, I18nTranslateModule.forChild(), TaskBadgeViewComponentModule],
 	declarations: [TaskSizeSelectComponent],
 	exports: [TaskSizeSelectComponent],
-	imports: [CommonModule, FormsModule, I18nTranslateModule.forChild(), NgSelectModule, SharedModule],
 	providers: [TaskSizesService]
 })
 export class TaskSizeSelectModule {}

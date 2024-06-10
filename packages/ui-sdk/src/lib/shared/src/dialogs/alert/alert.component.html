@@ -4,13 +4,7 @@
 			<div class="col">
 				{{ data?.title || ('DIALOG.ALERT' | translate) }}
 			</div>
-			<button
-				class="col-auto"
-				nbButton
-				ghost
-				(click)="close()"
-				type="button"
-			>
+			<button nbButton ghost type="button" class="col-auto" (click)="closeDialog()">
 				<nb-icon icon="close-outline"></nb-icon>
 			</button>
 		</div>
@@ -19,7 +13,7 @@
 		{{ data?.message }}
 	</nb-card-body>
 	<nb-card-footer>
-		<button class="mr-2" nbButton status="primary" (click)="close()">
+		<button class="mr-2" nbButton status="primary" (click)="closeDialog()">
 			{{ data?.closeText || ('BUTTONS.OK' | translate) }}
 		</button>
 	</nb-card-footer>
