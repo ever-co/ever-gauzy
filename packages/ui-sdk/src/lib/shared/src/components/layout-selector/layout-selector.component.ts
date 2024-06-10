@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

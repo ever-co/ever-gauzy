@@ -1,8 +1,8 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
+import { IOrganization, ISelectedEmployee, PermissionsEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
@@ -29,9 +29,8 @@ import { Store } from '@gauzy/ui-sdk/common';
 		`
 	]
 })
-export class HeaderTitleComponent implements AfterViewInit {
+export class HeaderTitleComponent implements OnInit {
 	PermissionsEnum: typeof PermissionsEnum = PermissionsEnum;
-	user: IUser;
 	organization: IOrganization;
 	employee: ISelectedEmployee;
 
@@ -43,23 +42,17 @@ export class HeaderTitleComponent implements AfterViewInit {
 		this._allowEmployee = value;
 	}
 
-	constructor(private readonly store: Store, private readonly crd: ChangeDetectorRef) {
-		this.store.user$
-			.pipe(
-				filter((user) => !!user),
-				tap((user: IUser) => (this.user = user)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
+	constructor(private readonly store: Store, private readonly crd: ChangeDetectorRef) {}
 
-	ngAfterViewInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
+	ngOnInit() {
+		const storeOrganization$ = this.store.selectedOrganization$.pipe(
+			filter((organization: IOrganization) => !!organization)
+		);
 		const storeEmployee$ = this.store.selectedEmployee$;
-		combineLatest([storeOrganization$, storeEmployee$])
+
+		combineLatest({ organization: storeOrganization$, employee: storeEmployee$ })
 			.pipe(
-				filter(([organization]) => !!organization),
-				tap(([organization, employee]) => {
+				tap(({ organization, employee }) => {
 					this.organization = organization;
 					this.employee = employee;
 					this.crd.detectChanges();

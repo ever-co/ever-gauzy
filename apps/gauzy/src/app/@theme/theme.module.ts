@@ -46,7 +46,7 @@ import {
 	UsersOrganizationsService,
 	UsersService
 } from '@gauzy/ui-sdk/core';
-import { DirectivesModule, UnderConstructionPopupComponent, WorkspacesModule } from '@gauzy/ui-sdk/shared';
+import { DirectivesModule, WorkspacesModule } from '@gauzy/ui-sdk/shared';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
@@ -116,8 +116,7 @@ const COMPONENTS = [
 	PublicLayoutComponent,
 	GauzyLogoComponent,
 	UserMenuComponent,
-	UserComponent,
-	UnderConstructionPopupComponent
+	UserComponent
 ];
 
 const PIPES = [...Pipes];

@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { DateFormatPipe } from '@gauzy/ui-sdk/shared';
+import { DateFormatPipe } from '../../pipes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,7 +22,7 @@ export class DateRangeTitleComponent {
 	/*
 	 * Getter & Setter for start element
 	 */
-	_start: Date;
+	private _start: Date;
 	get start(): Date {
 		return this._start;
 	}
@@ -33,7 +33,7 @@ export class DateRangeTitleComponent {
 	/*
 	 * Getter & Setter for end element
 	 */
-	_end: Date;
+	private _end: Date;
 	get end(): Date {
 		return this._end;
 	}
@@ -44,7 +44,7 @@ export class DateRangeTitleComponent {
 	/*
 	 * Getter & Setter for default format
 	 */
-	_format: string;
+	private _format: string;
 	get format(): string {
 		return this._format;
 	}

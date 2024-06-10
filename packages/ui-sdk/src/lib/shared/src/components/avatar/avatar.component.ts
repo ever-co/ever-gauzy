@@ -7,7 +7,6 @@ import { Router } from '@angular/router';
 	styleUrls: ['./avatar.component.scss']
 })
 export class AvatarComponent implements OnInit {
-
 	@Input() size: 'lg' | 'sm' | 'md' = 'md';
 	@Input() src: string;
 	@Input() appendCaption: string;
@@ -45,11 +44,9 @@ export class AvatarComponent implements OnInit {
 		this._name = value;
 	}
 
-	constructor(
-		private readonly router: Router
-	) { }
+	constructor(private readonly router: Router) {}
 
-	ngOnInit() { }
+	ngOnInit() {}
 
 	edit(id: string) {
 		if (id) {
