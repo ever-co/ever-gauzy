@@ -3,9 +3,10 @@ import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionComponent } from './gauzy-button-action.component';
+import { ComponentsModule } from '../components/components.module';
 
 @NgModule({
-	imports: [CommonModule, NbButtonModule, NbIconModule, I18nTranslateModule.forChild()],
+	imports: [CommonModule, NbButtonModule, NbIconModule, I18nTranslateModule.forChild(), ComponentsModule],
 	declarations: [GauzyButtonActionComponent],
 	exports: [GauzyButtonActionComponent]
 })
