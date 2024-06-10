@@ -8,19 +8,17 @@ import { NbDialogService } from '@nebular/theme';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
+import { EquipmentService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+	PaginationFilterBaseComponent,
+	PictureNameTagsComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
+import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EquipmentService } from '@gauzy/ui-sdk/core';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';
 

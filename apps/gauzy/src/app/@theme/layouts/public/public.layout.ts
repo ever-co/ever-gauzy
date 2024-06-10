@@ -5,7 +5,7 @@ import { NbLayoutComponent, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { UsersService } from '@gauzy/ui-sdk/core';
-import { WindowModeBlockScrollService } from '../../services';
+import { WindowModeBlockScrollService } from '@gauzy/ui-sdk/theme';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

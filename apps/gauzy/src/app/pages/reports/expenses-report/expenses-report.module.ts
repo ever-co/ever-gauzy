@@ -7,9 +7,7 @@ import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@ne
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ExpensesReportGridModule } from '../../../@shared/report/expenses-report-grid/expenses-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from '../../../@shared/shared.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-category-select/expense-category-select.module';
 
@@ -27,8 +25,6 @@ import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-c
 		FormsModule,
 		ExpensesReportGridModule,
 		LineChartModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule,
 		ExpenseCategorySelectModule
 	]

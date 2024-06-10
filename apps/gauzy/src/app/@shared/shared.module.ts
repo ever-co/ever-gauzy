@@ -1,20 +1,27 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { NbBadgeModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { DirectivesModule, PipesModule } from '@gauzy/ui-sdk/shared';
-import { BackNavigationModule } from './back-navigation';
-import { Components } from './components';
-import { AlertModalModule } from './alert-modal';
-import { EmployeeStartWorkModule } from './employee/employee-start-work/employee-start-work.module';
-import { TaskBadgeViewComponent } from './tasks/task-badge-view/task-badge-view.component';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ComponentsModule, DirectivesModule, PipesModule } from '@gauzy/ui-sdk/shared';
 
-const Modules = [NgxPermissionsModule, BackNavigationModule, DirectivesModule, PipesModule, EmployeeStartWorkModule];
+const MODULES = [ComponentsModule, DirectivesModule, PipesModule];
 
 @NgModule({
-	declarations: [...Components, TaskBadgeViewComponent],
-	imports: [CommonModule, RouterModule, ...Modules],
-	exports: [AlertModalModule, ...Components, ...Modules, TaskBadgeViewComponent]
+	declarations: [],
+	imports: [
+		CommonModule,
+		RouterModule,
+		NbBadgeModule,
+		NbButtonModule,
+		NbIconModule,
+		NbTooltipModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
+		...MODULES
+	],
+	exports: [...MODULES]
 })
 export class SharedModule {
 	static forRoot(): ModuleWithProviders<SharedModule> {

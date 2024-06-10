@@ -11,8 +11,12 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ContactLinksComponent, IncomeExpenseAmountComponent, DateViewComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from '../../pagination/pagination-filter-base.component';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	IncomeExpenseAmountComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -131,12 +135,9 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.CONTACT'),
 							type: 'custom',
 							renderComponent: ContactLinksComponent,
-							valuePrepareFunction: (row: { value?: any }) => {
-								return row?.value ?? null;
-							},
 							componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
-								instance.value = cell.getValue();
+								instance.value = cell.getRawValue();
 							}
 						},
 						amount: {

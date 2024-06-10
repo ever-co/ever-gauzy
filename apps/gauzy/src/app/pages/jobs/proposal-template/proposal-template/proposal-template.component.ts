@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -17,14 +16,15 @@ import {
 } from '@gauzy/contracts';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { Nl2BrPipe, TruncatePipe } from '@gauzy/ui-sdk/shared';
+import {
+	EmployeeLinksComponent,
+	IPaginationBase,
+	Nl2BrPipe,
+	PaginationFilterBaseComponent,
+	TruncatePipe
+} from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { ProposalTemplateService } from '../proposal-template.service';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../../../@shared/pagination/pagination-filter-base.component';
-import { EmployeeLinksComponent } from './../../../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 export enum ProposalTemplateTabsEnum {

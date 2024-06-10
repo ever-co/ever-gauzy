@@ -10,9 +10,7 @@
 		<div class="gauzy-button-container">
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
-				[isDisable]="
-					!selectedGoal.isSelected && !selectedKeyResult.isSelected
-				"
+				[isDisable]="!selectedGoal.isSelected && !selectedKeyResult.isSelected"
 				[buttonTemplate]="
 					selectedGoal.isSelected
 						? actionButtonsObjective
@@ -21,64 +19,33 @@
 						: actionButtonsObjective
 				"
 				[hasLayoutSelector]="false"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 		<div class="goals-container">
 			<div class="h-100" *ngIf="noGoals == true">
-				<ngx-no-data-message
-					[message]="'GOALS_PAGE.GOALS_EMPTY' | translate"
-				></ngx-no-data-message>
+				<ngx-no-data-message [message]="'GOALS_PAGE.GOALS_EMPTY' | translate"></ngx-no-data-message>
 			</div>
-			<div
-				*ngFor="
-					let group of objectiveGroup == 'timeFrames'
-						? goalTimeFrames
-						: goalLevels
-				"
-			>
+			<div *ngFor="let group of objectiveGroup == 'timeFrames' ? goalTimeFrames : goalLevels">
 				<h6 *ngIf="noGoals == false">{{ group }}</h6>
 				<nb-accordion
-					[hidden]="
-						objectiveGroup == 'timeFrames'
-							? goal.deadline != group
-							: goal.level != group
-					"
+					[hidden]="objectiveGroup == 'timeFrames' ? goal.deadline != group : goal.level != group"
 					class="my-3"
 					*ngFor="let goal of goals; let index = index"
 				>
 					<nb-accordion-item>
-						<nb-accordion-item-header
-							(click)="onClickObjective(goal, index)"
-							><div
-								class="w-100 d-flex align-items-center justify-content-between"
-							>
+						<nb-accordion-item-header (click)="onClickObjective(goal, index)"
+							><div class="w-100 d-flex align-items-center justify-content-between">
 								{{ goal.name }}
-								<div
-									class="w-25 d-flex align-items-center mr-5 ml-5"
-								>
-									<span class="ml-3"
-										>{{ goal.progress }}%</span
-									>
+								<div class="w-25 d-flex align-items-center mr-5 ml-5">
+									<span class="ml-3">{{ goal.progress }}%</span>
 									<nb-progress-bar
-										nbTooltip="{{
-											'GOALS_PAGE.TOOLTIPS.PROGRESS'
-												| translate
-										}}"
+										nbTooltip="{{ 'GOALS_PAGE.TOOLTIPS.PROGRESS' | translate }}"
 										class="ml-4"
 										[value]="goal.progress"
 										[status]="
-											goal.progress < 50
-												? 'warning'
-												: goal.progress < 75
-												? 'info'
-												: 'success'
+											goal.progress < 50 ? 'warning' : goal.progress < 75 ? 'info' : 'success'
 										"
 										size="small"
 									>
@@ -88,8 +55,7 @@
 						</nb-accordion-item-header>
 						<nb-accordion-item-body
 							[ngClass]="
-								selectedKeyResult.isSelected &&
-								selectedKeyResult.data.id === keyResult.id
+								selectedKeyResult.isSelected && selectedKeyResult.data.id === keyResult.id
 									? 'item selected'
 									: ''
 							"
@@ -101,18 +67,13 @@
 							>
 								{{ keyResult.name }}
 								<div class="w-25 d-flex align-items-center">
-									<span class="ml-3"
-										>{{ keyResult.progress }}%</span
-									>
+									<span class="ml-3">{{ keyResult.progress }}%</span>
 									<nb-progress-bar
 										nbTooltip="{{
 											'KEY_RESULT_PAGE.TOOLTIPS.PROGRESS'
 												| translate
 													: {
-															weight: calculateKeyResultWeight(
-																keyResult.weight,
-																goal
-															)
+															weight: calculateKeyResultWeight(keyResult.weight, goal)
 													  }
 										}}"
 										class="ml-3"
@@ -140,9 +101,7 @@
 								(click)="addKeyResult(index, true)"
 							>
 								<nb-icon icon="plus-outline"></nb-icon>
-								{{
-									'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate
-								}}
+								{{ 'GOALS_PAGE.ADD_NEW_KEY_RESULT' | translate }}
 							</button>
 						</nb-accordion-item-body>
 					</nb-accordion-item>
@@ -153,33 +112,14 @@
 </nb-card>
 <ng-template #actionButtons>
 	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			size="small"
-			(click)="openKeyResultDetails()"
-		>
+		<button nbButton status="basic" class="action secondary" size="small" (click)="openKeyResultDetails()">
 			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="addKeyResult()"
-		>
-			<nb-icon icon="edit-outline"></nb-icon
-			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
+		<button nbButton status="basic" class="action primary" size="small" (click)="addKeyResult()">
+			<nb-icon icon="edit-outline"></nb-icon>{{ 'KEY_RESULT_PAGE.TOOLTIPS.EDIT' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="openKeyResultParameters()"
-		>
+		<button nbButton status="basic" class="action primary" size="small" (click)="openKeyResultParameters()">
 			<span class="mr-1"><i class="fas fa-percentage"></i></span
 			>{{ 'KEY_RESULT_PAGE.TOOLTIPS.WEIGHT' | translate }}
 		</button>
@@ -208,15 +148,8 @@
 			<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			(click)="createObjective()"
-			size="small"
-		>
-			<nb-icon icon="edit-outline"></nb-icon
-			>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
+		<button nbButton status="basic" class="action primary" (click)="createObjective()" size="small">
+			<nb-icon icon="edit-outline"></nb-icon>{{ 'GOALS_PAGE.TOOLTIPS.EDIT' | translate }}
 		</button>
 		<button
 			nbButton
@@ -273,8 +206,7 @@
 		<nb-list-item
 			(click)="groupBy(group.value)"
 			[ngStyle]="{
-				'font-weight':
-					objectiveGroup === group.value ? 'bold' : 'normal'
+				'font-weight': objectiveGroup === group.value ? 'bold' : 'normal'
 			}"
 			style="cursor: pointer"
 			*ngFor="let group of groupObjectivesBy"
@@ -287,8 +219,7 @@
 		<nb-list-item
 			(click)="filterGoals(filter.value, allGoals)"
 			[ngStyle]="{
-				'font-weight':
-					selectedFilter === filter.value ? 'bold' : 'normal'
+				'font-weight': selectedFilter === filter.value ? 'bold' : 'normal'
 			}"
 			style="cursor: pointer"
 			*ngFor="let filter of filters"
@@ -297,22 +228,16 @@
 	</nb-list>
 </ng-template>
 <ng-template class="p-2" #createObjectivePopover>
-	<div
-		*ngIf="
-			!isEmployee ? true : goalGeneralSettings?.employeeCanCreateObjective
-		"
-	>
-		<nb-list>
-			<nb-list-item
-				(click)="createObjective(true)"
-				style="cursor: pointer"
-				>{{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}</nb-list-item
-			>
-			<nb-list-item
-				(click)="createObjectiveFromTemplate()"
-				style="cursor: pointer"
-				>{{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}</nb-list-item
-			>
-		</nb-list>
+	<div>
+		<ng-container *ngIf="!isEmployee ? true : goalGeneralSettings?.employeeCanCreateObjective">
+			<nb-list>
+				<nb-list-item (click)="createObjective(true)" style="cursor: pointer">
+					{{ 'GOALS_PAGE.CREATE_NEW_MENU' | translate }}
+				</nb-list-item>
+				<nb-list-item (click)="createObjectiveFromTemplate()" style="cursor: pointer">
+					{{ 'GOALS_PAGE.CREATE_FROM_PRESET' | translate }}
+				</nb-list-item>
+			</nb-list>
+		</ng-container>
 	</div>
 </ng-template>

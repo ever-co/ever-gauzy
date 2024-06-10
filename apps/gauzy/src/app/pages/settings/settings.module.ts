@@ -23,11 +23,9 @@ import { EmailHistoryComponent } from './email-history/email-history.component';
 import { EmailFiltersComponent } from './email-history/email-filters/email-filters.component';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../../@shared/shared.module';
 
@@ -54,8 +52,6 @@ import { SharedModule } from '../../@shared/shared.module';
 		NbToggleModule,
 		I18nTranslateModule.forChild(),
 		NgSelectModule,
-		BackNavigationModule,
-		HeaderTitleModule,
 		NgxPermissionsModule.forChild(),
 		SharedModule
 	],

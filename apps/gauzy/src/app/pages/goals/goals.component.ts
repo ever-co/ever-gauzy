@@ -1,5 +1,20 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import {
+	IGoal,
+	IKeyResult,
+	IGoalGeneralSetting,
+	IOrganization,
+	ISelectedEmployee,
+	IUser,
+	GoalLevelEnum
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
 import {
 	ErrorHandlingService,
 	GoalService,
@@ -7,22 +22,14 @@ import {
 	KeyResultService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
+import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { IGoal, IKeyResult, IGoalGeneralSetting, IOrganization, ISelectedEmployee, IUser } from '@gauzy/contracts';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
-import { GoalLevelEnum } from '@gauzy/contracts';
 import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -88,14 +95,14 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	};
 
 	constructor(
-		private store: Store,
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private toastrService: ToastrService,
-		private goalService: GoalService,
-		private errorHandler: ErrorHandlingService,
-		private keyResultService: KeyResultService,
-		private goalSettingsService: GoalSettingsService
+		private readonly store: Store,
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly toastrService: ToastrService,
+		private readonly goalService: GoalService,
+		private readonly errorHandler: ErrorHandlingService,
+		private readonly keyResultService: KeyResultService,
+		private readonly goalSettingsService: GoalSettingsService
 	) {
 		super(translateService);
 	}
@@ -517,7 +524,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	async deleteKeyResult() {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
 					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'
@@ -539,7 +546,7 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 	async deleteGoal() {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_OBJECTIVE'),
 					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'

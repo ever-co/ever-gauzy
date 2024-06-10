@@ -11,9 +11,8 @@ import {
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DirectivesModule } from '@gauzy/ui-sdk/shared';
 import { ThemeSettingsComponent } from './theme-settings.component';
-import { ThemeLanguageSelectorModule } from './components/theme-language-selector.module';
+import { ThemeLanguageSelectorModule } from './components/theme-language-selector/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';
-import { ThemeSelectorComponent } from './components/theme-selector/theme-selector.component';
 import { LayoutSelectorModule } from './components/layout-selector/layout-selector.module';
 
 @NgModule({
@@ -31,7 +30,7 @@ import { LayoutSelectorModule } from './components/layout-selector/layout-select
 		NbListModule,
 		DirectivesModule
 	],
-	exports: [ThemeSettingsComponent, ThemeSelectorComponent],
+	exports: [ThemeSettingsComponent],
 	declarations: [ThemeSettingsComponent],
 	providers: []
 })

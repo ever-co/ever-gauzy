@@ -29,7 +29,7 @@ import {
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components';
-import { PaginationFilterBaseComponent } from 'apps/gauzy/src/app/@shared/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { DeleteFeedbackComponent } from './../../../../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.component';
 
 @UntilDestroy({ checkProperties: true })

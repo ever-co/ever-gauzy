@@ -19,7 +19,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { ProposalsService } from '@gauzy/ui-sdk/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
@@ -34,11 +34,10 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [
@@ -69,7 +68,6 @@ import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule,
-		HeaderTitleModule,
 		PaginationV2Module,
 		ContactSelectModule,
 		TableFiltersModule,

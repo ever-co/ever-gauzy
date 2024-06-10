@@ -1,25 +1,24 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
+import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
-import { tap } from 'rxjs/operators';
-import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
-import { GoalSettingsService } from '@gauzy/ui-sdk/core';
-import { AlertModalComponent } from '../../@shared/alert-modal/alert-modal.component';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
-import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
-import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
-import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { GoalSettingsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import {
+	AlertModalComponent,
+	DateViewComponent,
+	PaginationFilterBaseComponent,
+	ValueWithUnitComponent
+} from '@gauzy/ui-sdk/shared';
+import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
+import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
+import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
+import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { PaginationFilterBaseComponent } from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -48,12 +47,12 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private goalSettingService: GoalSettingsService,
-		private toastrService: ToastrService,
-		private store: Store,
-		private fb: UntypedFormBuilder
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly goalSettingService: GoalSettingsService,
+		private readonly toastrService: ToastrService,
+		private readonly store: Store,
+		private readonly fb: UntypedFormBuilder
 	) {
 		super(translateService);
 		this.setView();
@@ -380,7 +379,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		}
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_TITLE'),
 					message: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_TIME_FRAME_CONFIRMATION'),
 					status: 'danger'
@@ -415,7 +414,7 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 		}
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_KPI_TITLE'),
 					message: this.translateService.instant('GOALS_PAGE.SETTINGS.DELETE_KPI_CONFIRMATION'),
 					status: 'danger'

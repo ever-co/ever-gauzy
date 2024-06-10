@@ -28,10 +28,7 @@ import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { InputFilterComponent } from '../../@shared/table-filters';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })

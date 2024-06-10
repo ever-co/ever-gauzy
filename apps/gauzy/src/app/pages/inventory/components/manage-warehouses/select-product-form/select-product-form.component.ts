@@ -11,10 +11,7 @@ import { SelectedRowComponent } from '../../inventory-table-components/selected-
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { debounceTime } from 'rxjs';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { Store } from '@gauzy/ui-sdk/common';
 
 export interface SelectedRowEvent {

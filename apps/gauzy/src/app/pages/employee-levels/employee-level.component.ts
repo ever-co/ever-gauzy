@@ -2,21 +2,14 @@ import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
 import { IEmployeeLevelInput, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'angular2-smart-table';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeeLevelService } from '@gauzy/ui-sdk/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { PaginationFilterBaseComponent, IPaginationBase, NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
+import { EmployeeLevelService, ToastrService } from '@gauzy/ui-sdk/core';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

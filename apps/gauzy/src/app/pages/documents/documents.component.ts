@@ -11,12 +11,13 @@ import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationDocumentsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { DocumentDateTableComponent, DocumentUrlTableComponent } from '../../@shared/table-components';
-import { ActivatedRoute } from '@angular/router';
 import {
+	DocumentDateTableComponent,
+	DocumentUrlTableComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+} from '@gauzy/ui-sdk/shared';
+import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
 
 @UntilDestroy({ checkProperties: true })

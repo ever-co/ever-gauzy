@@ -42,10 +42,7 @@ import {
 	InvoiceTasksSelectorComponent
 } from '../table-components';
 import { any } from 'underscore';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -435,7 +432,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	 */
 	onEditRowSelect({ row }) {
 		row.isInEditing = true;
-		console.log(row);
 	}
 
 	private async _loadOrganizationData() {

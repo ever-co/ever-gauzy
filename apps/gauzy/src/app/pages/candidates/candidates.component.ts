@@ -19,13 +19,15 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+	IPaginationBase,
+	PictureNameTagsComponent,
+	DateViewComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

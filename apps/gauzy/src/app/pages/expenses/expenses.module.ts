@@ -17,7 +17,7 @@ import { ExpensesComponent } from './expenses.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ExpensesMutationModule } from '../../@shared/expenses/expenses-mutation/expenses-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
@@ -25,9 +25,8 @@ import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } f
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
@@ -55,7 +54,6 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NbActionsModule,
 		TagsColorInputModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		NoDataMessageModule,

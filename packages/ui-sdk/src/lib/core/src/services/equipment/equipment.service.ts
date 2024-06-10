@@ -4,7 +4,7 @@ import { IEquipment, IEquipmentFindInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class EquipmentService {
 	EQUIPMENT_URL = `${API_PREFIX}/equipment`;
 

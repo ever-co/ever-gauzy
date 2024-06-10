@@ -15,10 +15,7 @@ import { ProductTypeService } from '@gauzy/ui-sdk/core';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from '../inventory-table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from './../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

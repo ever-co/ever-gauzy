@@ -1,6 +1,6 @@
-import {Component} from '@angular/core';
-import {EmployeeEndWorkComponent} from "../employee-end-work-popup/employee-end-work.component";
-import {NbDialogRef} from "@nebular/theme";
+import { Component } from '@angular/core';
+import { NbDialogRef } from '@nebular/theme';
+import { EmployeeEndWorkComponent } from '../employee-end-work-popup/employee-end-work.component';
 
 @Component({
 	selector: 'ga-employee-start-work',
@@ -11,10 +11,7 @@ export class EmployeeStartWorkComponent {
 	startWorkValue: Date;
 	employeeFullName: string;
 
-	constructor(
-		protected dialogRef: NbDialogRef<EmployeeEndWorkComponent>
-	) {
-	}
+	constructor(protected readonly dialogRef: NbDialogRef<EmployeeEndWorkComponent>) {}
 
 	closeDialog() {
 		this.dialogRef.close();

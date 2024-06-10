@@ -37,6 +37,7 @@ export class ThemeSettingsComponent implements OnInit, AfterViewChecked, OnDestr
 	public closeSidebar() {
 		this.sidebarService.toggle(false, 'settings_sidebar');
 	}
+
 	public onClickOutside(event: boolean) {
 		if (!event && this.state) this.closeSidebar();
 	}

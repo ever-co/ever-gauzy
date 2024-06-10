@@ -39,11 +39,10 @@ import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-u
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
 import { UserIdService } from '@gauzy/ui-sdk/core';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { SharedModule } from '../../@shared/shared.module';
 
@@ -91,7 +90,6 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,
 		CardGridModule,

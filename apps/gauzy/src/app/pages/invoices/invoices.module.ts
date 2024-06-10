@@ -38,20 +38,17 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
-	InvoiceEstimateTotalValueComponent,
 	InvoiceExpensesSelectorComponent,
 	InvoicePaidComponent,
 	InvoiceProductsSelectorComponent,
@@ -89,7 +86,7 @@ import {
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
 @NgModule({
@@ -123,14 +120,12 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbContextMenuModule,
 		NbMenuModule,
 		NbTabsetModule,
-		BackNavigationModule,
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		HeaderTitleModule,
 		PaginationV2Module,
 		ContactSelectModule,
 		ProjectSelectModule,
@@ -181,8 +176,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		InvoicePdfComponent,
 		AddInternalNoteComponent,
 		PublicLinkComponent,
-		InvoicePaymentReceiptMutationComponent,
-		InvoiceEstimateTotalValueComponent
+		InvoicePaymentReceiptMutationComponent
 	],
 	exports: [InvoiceViewInnerComponent]
 })

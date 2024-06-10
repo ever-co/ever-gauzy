@@ -47,10 +47,7 @@ import {
 	InvoiceProjectsSelectorComponent,
 	InvoiceTasksSelectorComponent
 } from '../table-components';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

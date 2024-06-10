@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
@@ -21,7 +21,6 @@ import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { CommonModule } from '@angular/common';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -43,8 +42,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		AceEditorModule,
-		LanguageSelectorModule,
-		HeaderTitleModule
+		LanguageSelectorModule
 	],
 	providers: [EmailTemplateService],
 	declarations: [EmailTemplatesComponent]

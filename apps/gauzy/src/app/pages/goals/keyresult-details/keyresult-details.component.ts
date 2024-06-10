@@ -1,5 +1,8 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { takeUntil } from 'rxjs/operators';
+import { Subject, firstValueFrom } from 'rxjs';
+import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import {
 	EmployeesService,
 	GoalSettingsService,
@@ -21,16 +24,13 @@ import {
 	IKPI,
 	IOrganization
 } from '@gauzy/contracts';
-import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
-import { takeUntil } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
-import { AlertModalComponent } from '../../../@shared/alert-modal/alert-modal.component';
-import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
-import { isFuture, isToday, compareDesc, isPast } from 'date-fns';
 import { Store } from '@gauzy/ui-sdk/common';
-import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
+import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
+import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ga-keyresult-details',
@@ -231,7 +231,7 @@ export class KeyResultDetailsComponent extends TranslationBaseComponent implemen
 	async deleteKeyResult() {
 		const dialog = this.dialogService.open(AlertModalComponent, {
 			context: {
-				alertOptions: {
+				data: {
 					title: this.getTranslation('GOALS_PAGE.DELETE_KEY_RESULT'),
 					message: this.getTranslation('GOALS_PAGE.ARE_YOU_SURE'),
 					status: 'danger'

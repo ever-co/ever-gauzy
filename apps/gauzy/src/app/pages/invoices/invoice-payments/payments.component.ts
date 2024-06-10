@@ -9,14 +9,14 @@ import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
+import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';
-import { Store } from '@gauzy/ui-sdk/common';
-import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
 import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, ToastrService } from '@gauzy/ui-sdk/core';
-import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
+import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,13 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../shared.module';
 import { NbCardModule, NbButtonModule, NbDialogModule, NbIconModule, NbAlertModule } from '@nebular/theme';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DialogsModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { ViewTimeLogModalComponent } from './view-time-log-modal.component';
+import { SharedModule } from '../../shared.module';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { LabelModule } from '../../components/label/label.module';
-import { TableComponentsModule } from '../../table-components';
 
 @NgModule({
 	declarations: [ViewTimeLogModalComponent],
@@ -22,7 +20,6 @@ import { TableComponentsModule } from '../../table-components';
 		EditTimeLogModalModule,
 		NbIconModule,
 		DialogsModule,
-		LabelModule,
 		NbAlertModule,
 		TableComponentsModule
 	]

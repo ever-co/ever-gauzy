@@ -3,7 +3,7 @@ import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { DiscountTaxTypeEnum, IInvoice, InvoiceTypeEnum } from '@gauzy/contracts';
 import { tap } from 'rxjs/operators';
-import { LocalDataSource, Angular2SmartTableComponent } from 'angular2-smart-table';
+import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
@@ -89,7 +89,8 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 					type: 'text',
 					filter: false,
-					valuePrepareFunction: (cell, row) => {
+					valuePrepareFunction: (value: number, cell: Cell) => {
+						const row = cell.getRow().getData();
 						const priceTransformed = this.getPipesTransform(
 							row.price * row.quantity,
 							row.currency,
@@ -102,7 +103,8 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 					type: 'text',
 					filter: false,
-					valuePrepareFunction: (cell, row) => {
+					valuePrepareFunction: (value: number, cell: Cell) => {
+						const row = cell.getRow().getData();
 						const priceTransformed = this.getPipesTransform(
 							row.price * row.quantity,
 							row.currency,

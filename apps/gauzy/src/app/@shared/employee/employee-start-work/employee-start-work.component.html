@@ -3,11 +3,7 @@
 		<span class="cancel"><i (click)="closeDialog()" class="fas fa-times"></i></span>
 		<h5 class="title">
 			{{ 'POP_UPS.START_WORK_FOR' | translate }}
-			{{
-			employeeFullName.trim()
-				? employeeFullName
-				: ('POP_UPS.EMPLOYEE' | translate)
-			}}
+			{{ employeeFullName.trim() ? employeeFullName : ('POP_UPS.EMPLOYEE' | translate) }}
 		</h5>
 	</nb-card-header>
 	<nb-card-body>

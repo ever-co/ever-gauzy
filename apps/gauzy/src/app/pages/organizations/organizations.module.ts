@@ -16,7 +16,12 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import {
+	DirectivesModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
@@ -35,10 +40,7 @@ import {
 } from './table-components';
 import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { TableComponentsModule } from '../../@shared/table-components';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [

@@ -11,8 +11,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { BackNavigationModule } from './../../../@shared/back-navigation';
 import { SharedModule } from '../../../@shared/shared.module';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
@@ -42,10 +40,8 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbTooltipModule,
 		GauzyAIRoutingModule,
 		I18nTranslateModule.forChild(),
-		BackNavigationModule,
 		WorkInProgressModule,
-		DirectivesModule,
-		SharedModule.forRoot()
+		SharedModule
 	]
 })
 export class GauzyAIModule {}

@@ -17,40 +17,23 @@
 			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body
-		[nbSpinner]="loading"
-		nbSpinnerStatus="primary"
-		nbSpinnerSize="large"
-	>
-		<ng-template
-			[ngIf]="
-				employeeLevels?.length &&
-				dataLayoutStyle === componentLayoutStyleEnum.TABLE
-			"
-		>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<ng-template [ngIf]="employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.TABLE">
 			<div class="table-scroll-container">
 				<nb-card class="p-0" *ngFor="let employee of employeeLevels">
 					<nb-card-body
 						class="custom-table"
 						[ngClass]="{
-							selected:
-								selected?.state &&
-								employee === selected?.employeeLevel
+							selected: selected?.state && employee === selected?.employeeLevel
 						}"
 						(click)="selectEmployee(employee)"
 					>
-						<ga-notes-with-tags [rowData]="employee">
-						</ga-notes-with-tags>
+						<ga-notes-with-tags [rowData]="employee"> </ga-notes-with-tags>
 					</nb-card-body>
 				</nb-card>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="
-				employeeLevels?.length &&
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID
-			"
-		>
+		<ng-template [ngIf]="employeeLevels?.length && dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
@@ -62,9 +45,7 @@
 		<ng-template [ngIf]="!loading && employeeLevels?.length == 0">
 			<div class="no-data">
 				<ngx-no-data-message
-					[message]="
-						'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE' | translate
-					"
+					[message]="'ORGANIZATIONS_PAGE.EMPLOYEE_LEVEL_NO_DATA_MESSAGE' | translate"
 				></ngx-no-data-message>
 			</div>
 		</ng-template>
@@ -84,12 +65,7 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			(click)="
-				removeEmployeeLevel(
-					selected.employeeLevel.id,
-					selected.employeeLevel.level
-				)
-			"
+			(click)="removeEmployeeLevel(selected.employeeLevel.id, selected.employeeLevel.level)"
 			nbButton
 			status="basic"
 			class="action"
@@ -102,13 +78,8 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="openDialog(addTemplate, false)"
-		>
+	<ng-template ngxPermissionsOnly="ALL_ORG_EDIT">
+		<button nbButton status="success" size="small" (click)="openDialog(addTemplate, false)">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
@@ -119,10 +90,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -130,20 +98,14 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
-					<label class="label" for="add-vendor">{{
-						'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-					}}</label>
+					<label class="label" for="add-vendor">{{ 'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate }}</label>
 					<input
 						#addInput="ngModel"
 						nbInput
 						type="text"
-						[placeholder]="
-							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-						"
+						[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
 						fullWidth
-						[ngModel]="
-							isGridEdit ? selectedEmployeeLevel.level : ''
-						"
+						[ngModel]="isGridEdit ? selectedEmployeeLevel.level : ''"
 						required
 					/>
 				</div>
@@ -160,13 +122,7 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12"></div>
-				<button
-					class="delete mr-3 ml-3"
-					(click)="ref.close(); disabled = true"
-					nbButton
-					status="basic"
-					outline
-				>
+				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 				<button
@@ -186,10 +142,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -199,20 +152,14 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
-					<label class="label" for="add-vendor">{{
-						'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-					}}</label>
+					<label class="label" for="add-vendor">{{ 'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate }}</label>
 					<input
 						#editInput="ngModel"
 						nbInput
 						type="text"
-						[placeholder]="
-							'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate
-						"
+						[placeholder]="'ORGANIZATIONS_PAGE.LEVEL_NAME' | translate"
 						fullWidth
-						[ngModel]="
-							isGridEdit ? selectedEmployeeLevel.level : ''
-						"
+						[ngModel]="isGridEdit ? selectedEmployeeLevel.level : ''"
 						required
 					/>
 				</div>
@@ -223,8 +170,7 @@
 						[selectedTags]="tags"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
-					>
-					</ga-tags-color-input>
+					></ga-tags-color-input>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -240,12 +186,7 @@
 					</button>
 					<button
 						(click)="
-							editEmployeeLevel(
-								selected.employeeLevel.id,
-								editInput.value
-							);
-							disabled = true;
-							ref.close()
+							editEmployeeLevel(selected.employeeLevel.id, editInput.value); disabled = true; ref.close()
 						"
 						nbButton
 						status="success"

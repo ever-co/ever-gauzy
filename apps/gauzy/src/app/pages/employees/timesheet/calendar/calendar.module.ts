@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
@@ -17,6 +18,7 @@ import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filter
 	imports: [
 		CommonModule,
 		I18nTranslateModule.forChild(),
+		NgxPermissionsModule.forChild(),
 		FullCalendarModule,
 		NbButtonModule,
 		NbCardModule,

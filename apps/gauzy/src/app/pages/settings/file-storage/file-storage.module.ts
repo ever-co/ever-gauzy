@@ -9,9 +9,9 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { FileProviderModule } from '../../../@shared/selectors/file-provider/file-provider.module';
-import { SharedModule } from '../../../@shared/shared.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { FileProviderSelectorModule } from '@gauzy/ui-sdk/shared';
+import { SharedModule } from '../../../@shared/shared.module';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { FileStorageRoutingModule } from './file-storage-routing.module';
 import { FileStorageComponent } from './file-storage.component';
@@ -31,7 +31,7 @@ import { FileStorageComponent } from './file-storage.component';
 		ThemeModule,
 		I18nTranslateModule.forChild(),
 		SharedModule,
-		FileProviderModule
+		FileProviderSelectorModule
 	],
 	declarations: [FileStorageComponent],
 	providers: []

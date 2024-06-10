@@ -10,20 +10,18 @@ import {
 	NbFormFieldModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { OrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
+import { OrganizationsService, RoleService, UsersService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { TableComponentsModule, TimeZoneSelectorModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
-import { RoleService } from '@gauzy/ui-sdk/core';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { LanguageSelectorModule } from '../../language/language-selector';
 import { SharedModule } from '../../shared.module';
 import { PasswordFormFieldModule } from '../forms/fields/password';
 import { RoleFormFieldModule } from '../forms/fields/role';
-import { TableComponentsModule } from '../../table-components';
-import { TimeZoneSelectorModule } from '../../selectors';
 import { PhoneFormInputModule } from '../forms/fields';
 
 @NgModule({

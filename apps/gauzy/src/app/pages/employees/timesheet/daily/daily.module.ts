@@ -16,6 +16,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DialogsModule, GauzyButtonActionModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -23,14 +25,11 @@ import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-pick
 import { ProjectSelectModule } from './../../../../@shared/project-select/project-select.module';
 import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
-import { GauzyFiltersModule } from 'apps/gauzy/src/app/@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ViewTimeLogModule } from './../../../../@shared/timesheet/view-time-log/view-time-log.module';
 import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
 import { TaskSelectModule } from './../../../../@shared/tasks/task-select/task-select.module';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
-import { GauzyButtonActionModule } from 'apps/gauzy/src/app/@shared/gauzy-button-action/gauzy-button-action.module';
-import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
+import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data-message.module';
+import { GauzyFiltersModule } from '../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [DailyComponent],
@@ -49,6 +48,7 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
+		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,

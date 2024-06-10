@@ -8,10 +8,8 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
@@ -28,8 +26,6 @@ import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-me
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule,
 		TableComponentsModule,
 		NoDataMessageModule

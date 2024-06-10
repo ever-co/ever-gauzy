@@ -19,7 +19,6 @@ import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { DeleteInterviewComponent } from './../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
-import { PictureNameTagsComponent } from './../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import {
@@ -31,10 +30,7 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+import { IPaginationBase, PaginationFilterBaseComponent, PictureNameTagsComponent } from '@gauzy/ui-sdk/shared';
 import {
 	InterviewActionsTableComponent,
 	InterviewCriterionsTableComponent,

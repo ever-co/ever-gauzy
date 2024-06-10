@@ -32,14 +32,12 @@ import {
 	ContactLinksComponent,
 	DateViewComponent,
 	EmployeeLinksComponent,
-	NotesWithTagsComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
-import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
+import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import {
 	InputFilterComponent,

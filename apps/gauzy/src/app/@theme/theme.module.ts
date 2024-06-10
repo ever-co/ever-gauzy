@@ -33,7 +33,9 @@ import {
 	GAUZY_DARK,
 	GAUZY_LIGHT,
 	MATERIAL_DARK_THEME,
-	MATERIAL_LIGHT_THEME
+	MATERIAL_LIGHT_THEME,
+	Pipes,
+	WindowModeBlockScrollService
 } from '@gauzy/ui-sdk/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
@@ -44,31 +46,28 @@ import {
 	UsersOrganizationsService,
 	UsersService
 } from '@gauzy/ui-sdk/core';
-import { DirectivesModule, UnderConstructionPopupComponent } from '@gauzy/ui-sdk/shared';
-import { Pipes } from './pipes';
+import { DirectivesModule, WorkspacesModule } from '@gauzy/ui-sdk/shared';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-import { WindowModeBlockScrollService } from './services';
-import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
+import { FooterComponent, HeaderComponent } from './components';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
-import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
-import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
-import { WorkspacesModule } from '../@shared/workspaces/workspaces.module';
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 import { TeamSelectModule } from '../@shared/team-select/team-select.module';
+import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.module';
+import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -111,16 +110,13 @@ const MODULES = [
 const COMPONENTS = [
 	HeaderComponent,
 	FooterComponent,
-	SearchInputComponent,
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	LayoutSelectorComponent,
 	GauzyLogoComponent,
 	UserMenuComponent,
-	UserComponent,
-	UnderConstructionPopupComponent
+	UserComponent
 ];
 
 const PIPES = [...Pipes];

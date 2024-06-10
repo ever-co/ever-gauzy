@@ -22,22 +22,20 @@ import {
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	ClickableLinkComponent,
 	ProjectComponent,
 	GithubRepositoryComponent,
 	GithubIssueTitleDescriptionComponent,
 	ToggleSwitchComponent,
-	ResyncButtonComponent
-} from './../../../../../@shared/table-components';
-import { HashNumberPipe } from '@gauzy/ui-sdk/shared';
+	ResyncButtonComponent,
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	HashNumberPipe
+} from '@gauzy/ui-sdk/shared';
+import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',

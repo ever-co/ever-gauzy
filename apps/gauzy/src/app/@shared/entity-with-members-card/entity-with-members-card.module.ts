@@ -10,15 +10,12 @@ import {
 	NbBadgeModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../@theme/theme.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
-import { TableComponentsModule } from '../table-components/table-components.module';
 
 @NgModule({
 	imports: [
-		TableComponentsModule,
 		NbBadgeModule,
-		ThemeModule,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
@@ -26,7 +23,8 @@ import { TableComponentsModule } from '../table-components/table-components.modu
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		I18nTranslateModule.forChild()
+		I18nTranslateModule.forChild(),
+		TableComponentsModule
 	],
 	declarations: [EntityWithMembersCardComponent],
 	exports: [EntityWithMembersCardComponent],

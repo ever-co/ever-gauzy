@@ -13,7 +13,7 @@ export class StatusBadgeComponent implements OnInit {
 	@Input() value: any;
 	@Input() layout?: ComponentLayoutStyleEnum | undefined;
 
-	constructor() { }
+	constructor() {}
 
 	ngOnInit() {
 		if (this.value && this.value.text) {

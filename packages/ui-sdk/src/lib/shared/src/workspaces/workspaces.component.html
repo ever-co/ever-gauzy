@@ -1,0 +1,14 @@
+<div *ngFor="let workspace of workspaces$ | async; index as i">
+	<div [ngClass]="selected?.id === workspace.id ? 'selected' : ''">
+		<div class="img-container">
+			<img [src]="workspace.imgUrl" alt="" (click)="onChangeWorkspace(workspace)" />
+			<div *ngIf="workspace.isOnline"></div>
+		</div>
+	</div>
+</div>
+<div>
+	<!-- TODO: Make button visible when workspace features are implemented -->
+	<button *ngIf="false" nbButton [nbContextMenu]="contextMenus" nbContextMenuPlacement="right" outline>
+		<i class="fas fa-plus"></i>
+	</button>
+</div>

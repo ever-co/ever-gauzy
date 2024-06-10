@@ -32,7 +32,7 @@ import {
 	OrganizationPositionsService,
 	OrganizationVendorsService
 } from '@gauzy/ui-sdk/core';
-import { CurrencyModule, LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
+import { CurrencyModule, LeafletMapModule, LocationFormModule, TimeZoneSelectorModule } from '@gauzy/ui-sdk/shared';
 import { EmployeeMultiSelectModule } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-uploader.module';
@@ -47,11 +47,10 @@ import { EditOrganizationMainComponent } from './edit-organization-main/edit-org
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
-import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 
 @NgModule({
 	imports: [

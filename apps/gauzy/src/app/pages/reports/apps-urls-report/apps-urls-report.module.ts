@@ -6,9 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ActivitiesReportGridModule } from '../../../@shared/report/activities-report-grid/activities-report-grid.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { SharedModule } from './../../../@shared/shared.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
@@ -24,8 +22,6 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		NbSelectModule,
 		FormsModule,
 		ActivitiesReportGridModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule
 	]
 })

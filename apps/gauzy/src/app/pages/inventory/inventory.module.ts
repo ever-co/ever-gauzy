@@ -44,7 +44,6 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
 import { ProductTypesModule } from './components/manage-product-types/product-types.module';
@@ -53,8 +52,8 @@ import { WarehousesModule } from './components/manage-warehouses/warehouses.modu
 import { InventoryTableComponentsModule } from './components/inventory-table-components/inventory-table-components.module';
 import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
 import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
 import { ProductCategorySelectorModule } from '../../@shared/product-category-selector/product-category-selector.module';
 
@@ -91,7 +90,6 @@ const NB_MODULES = [
 		CommonModule,
 		CurrencyModule,
 		FormsModule,
-		HeaderTitleModule,
 		ImageAssetModule,
 		InventoryRoutingModule,
 		MerchantModule,

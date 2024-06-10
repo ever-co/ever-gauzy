@@ -10,6 +10,7 @@ import { ThemeSelectorComponent } from '../theme-selector.component';
 })
 export class ThemeSelectorImageComponent extends ThemeSelectorComponent {
 	isOpen: boolean = false;
+
 	constructor(readonly themeService: NbThemeService, readonly store: Store) {
 		super(themeService, store);
 		this.ngOnInit();

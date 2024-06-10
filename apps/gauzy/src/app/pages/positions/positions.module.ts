@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../@shared/shared.module';
 import { PositionsRoutingModule } from './positions-routing.module';
@@ -19,8 +19,7 @@ import { PositionsComponent } from './positions.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
+import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
@@ -43,7 +42,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule
 	],

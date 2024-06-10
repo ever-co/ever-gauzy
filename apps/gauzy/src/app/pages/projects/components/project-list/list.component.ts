@@ -28,15 +28,15 @@ import {
 	ContactLinksComponent,
 	DateViewComponent,
 	EmployeesMergedTeamsComponent,
+	PaginationFilterBaseComponent,
 	ProjectOrganizationComponent,
 	ProjectOrganizationEmployeesComponent,
+	ProjectOrganizationGridComponent,
 	ProjectOrganizationGridDetailsComponent,
-	TagsOnlyComponent
-} from '../../../../@shared/table-components';
+	TagsOnlyComponent,
+	VisibilityComponent
+} from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { VisibilityComponent } from '../../../../@shared/table-components/visibility/visibility.component';
-import { ProjectOrganizationGridComponent } from '../../../../@shared/table-components';
 import { TagsColorFilterComponent } from '../../../../@shared/table-filters';
 import { CardGridComponent } from '../../../../@shared/card-grid/card-grid.component';
 

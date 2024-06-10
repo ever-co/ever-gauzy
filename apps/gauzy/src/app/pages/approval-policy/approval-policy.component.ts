@@ -5,18 +5,12 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { ApprovalPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
-import {
-	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

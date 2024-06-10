@@ -25,20 +25,18 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	IPaginationBase,
 	IncomeExpenseAmountComponent,
+	PaginationFilterBaseComponent,
 	TagsOnlyComponent
-} from '../../@shared/table-components';
+} from '@gauzy/ui-sdk/shared';
+import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
+import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,
