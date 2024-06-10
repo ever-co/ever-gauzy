@@ -53,7 +53,7 @@ import {
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-import { FooterComponent, HeaderComponent, SearchInputComponent } from './components';
+import { FooterComponent, HeaderComponent } from './components';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
@@ -110,7 +110,6 @@ const MODULES = [
 const COMPONENTS = [
 	HeaderComponent,
 	FooterComponent,
-	SearchInputComponent,
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,

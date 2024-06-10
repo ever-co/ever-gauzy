@@ -6,8 +6,8 @@ import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular
 	template: `
 		<i class="control-icon ion ion-ios-search" (click)="showInput()"></i>
 		<input
-			placeholder="{{ 'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST' | translate }}"
 			#input
+			[placeholder]="'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST' | translate"
 			[class.hidden]="!isInputShown"
 			(blur)="hideInput()"
 			(input)="onInput($event)"
@@ -15,11 +15,10 @@ import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular
 	`
 })
 export class SearchInputComponent {
-	@ViewChild('input', { static: true }) input: ElementRef;
-
-	@Output() search: EventEmitter<string> = new EventEmitter<string>();
-
 	isInputShown = false;
+
+	@ViewChild('input', { static: true }) input: ElementRef;
+	@Output() search: EventEmitter<string> = new EventEmitter<string>();
 
 	showInput() {
 		this.isInputShown = true;

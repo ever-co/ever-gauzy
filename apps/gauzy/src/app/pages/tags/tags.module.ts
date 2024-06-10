@@ -1,4 +1,6 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -7,16 +9,14 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbListModule,
+	NbRadioModule,
 	NbRouteTabsetModule,
 	NbSelectModule,
-	NbTooltipModule,
-	NbRadioModule,
 	NbSpinnerModule,
-	NbListModule
+	NbTooltipModule
 } from '@nebular/theme';
 import { TagsComponent } from './tags.component';
-import { ThemeModule } from '../../@theme/theme.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -33,34 +33,34 @@ import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	imports: [
-		NbListModule,
-		TagsRoutingModule,
-		ThemeModule,
-		SharedModule,
-		UserFormsModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
+		NbBadgeModule,
 		NbButtonModule,
-		NbInputModule,
-		NbIconModule,
-		Angular2SmartTableModule,
+		NbCardModule,
+		NbCheckboxModule,
 		NbDialogModule.forChild(),
+		NbIconModule,
+		NbInputModule,
+		NbListModule,
+		NbRadioModule,
+		NbRouteTabsetModule,
+		NbSelectModule,
+		NbSpinnerModule,
 		NbTooltipModule,
 		NgSelectModule,
-		NbRadioModule,
-		NbSelectModule,
-		NbBadgeModule,
-		NbRouteTabsetModule,
-		NbCheckboxModule,
-		TagsMutationModule,
-		ColorPickerModule,
-		CardGridModule,
+		Angular2SmartTableModule,
 		I18nTranslateModule.forChild(),
-		NbSpinnerModule,
+		NgxPermissionsModule.forChild(),
+		ColorPickerModule,
+		TagsRoutingModule,
+		SharedModule,
+		UserFormsModule,
+		TagsMutationModule,
+		CardGridModule,
 		GauzyButtonActionModule,
-		PaginationV2Module,
-		NgxPermissionsModule.forChild()
+		PaginationV2Module
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })
