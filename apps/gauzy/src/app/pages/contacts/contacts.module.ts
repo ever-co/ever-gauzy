@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -14,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import {
@@ -28,7 +30,6 @@ import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploa
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { ThemeModule } from '../../@theme/theme.module';
 import { ContactMutationComponent } from './contact-mutation/contact-mutation.component';
 import { ContactsRoutingModule } from './contacts-routing.module';
 import { ContactsComponent } from './contacts.component';
@@ -39,6 +40,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 
 @NgModule({
 	imports: [
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbButtonModule,
@@ -64,8 +66,8 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		PaginationV2Module,
 		SharedModule,
 		TagsColorInputModule,
-		ThemeModule,
-		I18nTranslateModule.forChild()
+		I18nTranslateModule.forChild(),
+		NgxPermissionsModule.forChild()
 	],
 
 	declarations: [...COMPONENTS],

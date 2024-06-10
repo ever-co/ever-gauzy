@@ -432,7 +432,6 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 	 */
 	onEditRowSelect({ row }) {
 		row.isInEditing = true;
-		console.log(row);
 	}
 
 	private async _loadOrganizationData() {

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -22,6 +23,7 @@ import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progr
 
 @NgModule({
 	imports: [
+		CommonModule,
 		OrganizationRoutingModule,
 		NbCardModule,
 		NbDialogModule.forChild(),

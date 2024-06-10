@@ -3,9 +3,7 @@
 		<img *ngIf="rowData" src="{{ rowData.imageUrl }}" />
 		<span>
 			<div>{{ rowData?.name }}</div>
-			<div class="member" *ngIf="rowData?.totalEmployees">
-				Members count {{ rowData?.totalEmployees }}
-			</div>
+			<div class="member" *ngIf="rowData?.totalEmployees">Members count {{ rowData?.totalEmployees }}</div>
 		</span>
 	</div>
 	<ng-template [ngIf]="rowData?.isDefault">

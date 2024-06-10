@@ -15,6 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
 	GauzyButtonActionModule,
@@ -24,7 +25,6 @@ import {
 } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { ThemeModule } from './../../../../@theme/theme.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { ManageQuantityComponent } from './manage-quantity/manage-quantity.component';
@@ -63,15 +63,15 @@ const NB_MODULES = [
 		ManageVariantsQuantityFormComponent
 	],
 	imports: [
-		WarehousesRoutingModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		Angular2SmartTableModule,
-		CommonModule,
-		I18nTranslateModule.forChild(),
 		...NB_MODULES,
+		Angular2SmartTableModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
+		WarehousesRoutingModule,
 		SharedModule,
-		ThemeModule,
 		LocationFormModule,
 		LeafletMapModule,
 		TagsColorInputModule,

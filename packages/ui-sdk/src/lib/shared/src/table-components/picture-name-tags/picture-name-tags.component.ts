@@ -4,12 +4,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 @Component({
 	selector: 'ga-picture-name-tags',
 	template: `
-		<ngx-avatar
-			[src]="avatar?.imageUrl"
-			[name]="avatar?.name"
-			[id]="avatar?.id"
-			class="report-table"
-		></ngx-avatar>
+		<ngx-avatar [src]="avatar?.imageUrl" [name]="avatar?.name" [id]="avatar?.id" class="report-table"></ngx-avatar>
 		<ng-template [ngIf]="rowData?.isDefault">
 			<nb-badge
 				class="color"
@@ -17,8 +12,7 @@ import { NotesWithTagsComponent } from '../notes-with-tags/notes-with-tags.compo
 				[style.background]="background(rowData?.color)"
 				[style.color]="backgroundContrast(rowData?.brandColor)"
 				text="Default"
-			>
-			</nb-badge>
+			></nb-badge>
 		</ng-template>
 		<div class="badges-block" *ngIf="isTags">
 			<nb-badge
