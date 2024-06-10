@@ -13,7 +13,6 @@ import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
 import { SharedModule } from '../../../@shared/shared.module';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
@@ -26,8 +25,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbIconModule,
 		NbSpinnerModule,
 		I18nTranslateModule.forChild(),
-		SharedModule,
-		HeaderTitleModule
+		SharedModule
 	],
 	exports: [AppointmentComponent],
 	declarations: [AppointmentComponent],

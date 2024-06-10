@@ -29,6 +29,19 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import {
+	CandidateInterviewersService,
+	CandidatePersonalQualitiesService,
+	CandidateTechnologiesService,
+	CandidatesService,
+	InviteGuard,
+	OrganizationEmploymentTypesService,
+	OrganizationsService
+} from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { NbToggleModule } from '@nebular/theme';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { ThemeModule } from '../../@theme/theme.module';
 import { SharedModule } from '../../@shared/shared.module';
@@ -84,22 +97,7 @@ import { InterviewersTableComponent } from './manage-candidate-interviews/interv
 import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NbToggleModule } from '@nebular/theme';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
-import {
-	CandidateInterviewersService,
-	CandidatePersonalQualitiesService,
-	CandidateTechnologiesService,
-	CandidatesService,
-	InviteGuard,
-	OrganizationEmploymentTypesService,
-	OrganizationsService
-} from '@gauzy/ui-sdk/core';
 
 const COMPONENTS = [
 	CandidatesComponent,
@@ -193,7 +191,6 @@ const COMPONENTS = [
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		NbToggleModule,
 		PaginationV2Module,

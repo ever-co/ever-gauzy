@@ -2,14 +2,10 @@
 	<button
 		(click)="changeLayout(layoutStyles.CARDS_GRID)"
 		status="basic"
-		[ngClass]="
-			componentLayoutStyle === layoutStyles.CARDS_GRID
-				? 'primary'
-				: 'basic'
-		"
+		[ngClass]="componentLayoutStyle === layoutStyles.CARDS_GRID ? 'primary' : 'basic'"
 		class="switch-button ml-1 mr-1"
 		nbButton
-    size="small"
+		size="small"
 		[nbTooltip]="'SETTINGS_MENU.CARDS_GRID' | translate"
 	>
 		<nb-icon icon="grid-outline"></nb-icon>
@@ -17,14 +13,10 @@
 	<button
 		(click)="changeLayout(layoutStyles.TABLE)"
 		status="basic"
-		[ngClass]="
-			componentLayoutStyle === layoutStyles.TABLE
-				? 'primary'
-				: 'basic'
-		"
+		[ngClass]="componentLayoutStyle === layoutStyles.TABLE ? 'primary' : 'basic'"
 		class="switch-button ml-1 mr-1"
 		nbButton
-    size="small"
+		size="small"
 		[nbTooltip]="'SETTINGS_MENU.TABLE' | translate"
 	>
 		<nb-icon icon="list-outline"></nb-icon>

@@ -13,8 +13,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
+import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { GithubRoutingModule } from './github-routing.module';
 import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
@@ -23,7 +22,7 @@ import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
 import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { SharedModule } from '../../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -35,6 +34,7 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 	],
 	imports: [
 		CommonModule,
+		GithubRoutingModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule,
@@ -45,10 +45,8 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 		NbToggleModule,
 		Angular2SmartTableModule,
 		NgSelectModule,
-		GithubRoutingModule,
 		I18nTranslateModule.forChild(),
-		DirectivesModule,
-		BackNavigationModule,
+		SharedModule,
 		PaginationV2Module,
 		RepositorySelectorModule,
 		ProjectSelectModule

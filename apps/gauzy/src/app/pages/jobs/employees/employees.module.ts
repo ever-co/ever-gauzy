@@ -16,7 +16,6 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { PaginationV2Module, SmartTableToggleModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../../@shared/shared.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 
@@ -37,7 +36,6 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		FormsModule,
 		Angular2SmartTableModule,
 		SmartTableToggleModule,
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,
 		WorkInProgressModule

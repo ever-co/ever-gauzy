@@ -29,7 +29,6 @@ import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { NbToggleModule } from '@nebular/theme';
@@ -61,7 +60,6 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,
 		NbToggleModule

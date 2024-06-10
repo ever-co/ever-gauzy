@@ -75,9 +75,9 @@ import { EmployeeLocationModule } from '../../@shared/employee/employee-location
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { EmployeeStartWorkModule } from '../../@shared/employee/employee-start-work/employee-start-work.module';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -140,7 +140,7 @@ const COMPONENTS = [
 		EmployeeLocationModule,
 		EmployeeRatesModule,
 		CKEditorModule,
-		HeaderTitleModule,
+		EmployeeStartWorkModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,
 		NbTabsetModule,

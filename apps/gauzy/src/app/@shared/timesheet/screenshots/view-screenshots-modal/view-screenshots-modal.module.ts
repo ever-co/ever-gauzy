@@ -1,18 +1,17 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-	NbDialogModule,
-	NbCardModule,
+	NbAlertModule,
 	NbButtonModule,
+	NbCardModule,
+	NbDialogModule,
 	NbIconModule,
 	NbProgressBarModule,
-	NbAlertModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../../shared.module';
-import { LabelModule } from '../../../components/label/label.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TableComponentsModule } from '../../../table-components/table-components.module';
@@ -33,9 +32,8 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		MomentModule,
 		SharedModule,
 		I18nTranslateModule.forChild(),
-		LabelModule,
-		GalleryModule,
 		DialogsModule,
+		GalleryModule,
 		TableComponentsModule
 	]
 })

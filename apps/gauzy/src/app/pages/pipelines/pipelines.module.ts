@@ -23,12 +23,10 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { ThemeModule } from '../../@theme/theme.module';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { SharedModule } from '../../@shared/shared.module';
 import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
@@ -74,10 +72,8 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbIconModule,
 		FormsModule,
 		CardGridModule,
-		ThemeModule,
-		BackNavigationModule,
+		SharedModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		NbTabsetModule

@@ -16,14 +16,16 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
-import { LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
+import {
+	GauzyButtonActionModule,
+	LeafletMapModule,
+	LocationFormModule,
+	PaginationV2Module
+} from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../@shared/shared.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ThemeModule } from '../../@theme/theme.module';
@@ -39,7 +41,6 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 	imports: [
 		FormsModule,
 		ReactiveFormsModule,
-
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule.forChild(),
@@ -50,16 +51,13 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		NbStepperModule,
 		NbToggleModule,
 		NbTooltipModule,
-
 		Angular2SmartTableModule,
 		NgSelectModule,
-
 		CardGridModule,
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,
 		GauzyButtonActionModule,
-		HeaderTitleModule,
 		ImageUploaderModule,
 		LeafletMapModule,
 		LocationFormModule,

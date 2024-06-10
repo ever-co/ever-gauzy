@@ -7,10 +7,9 @@ import {
 	IProductTypeTranslatable,
 	IProductTypeTranslated
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-sdk/common';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ProductTypeService {
 	PRODUCT_TYPES_URL = `${API_PREFIX}/product-types`;
 

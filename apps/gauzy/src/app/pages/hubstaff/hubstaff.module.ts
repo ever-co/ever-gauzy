@@ -20,11 +20,10 @@ import {
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [HubstaffAuthorizeComponent, HubstaffComponent, SettingsDialogComponent],
@@ -46,9 +45,8 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 		NbToggleModule,
 		NbActionsModule,
 		NbContextMenuModule,
-		ThemeModule,
+		SharedModule,
 		NbDatepickerModule,
-		BackNavigationModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild()
 	]

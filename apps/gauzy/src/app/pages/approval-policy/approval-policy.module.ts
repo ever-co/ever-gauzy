@@ -15,18 +15,15 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 import { SharedModule } from '../../@shared/shared.module';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
-import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [
@@ -48,10 +45,8 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
-		BackNavigationModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	],

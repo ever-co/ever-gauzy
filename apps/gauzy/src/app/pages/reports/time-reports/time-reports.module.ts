@@ -9,8 +9,6 @@ import { FormsModule } from '@angular/forms';
 import { DailyGridModule } from '../../../@shared/report/daily-grid/daily-grid.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
@@ -28,8 +26,6 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		NbCardModule,
 		NbSelectModule,
 		FormsModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule
 	]
 })

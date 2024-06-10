@@ -7,29 +7,28 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import {
-	NbSpinnerModule,
-	NbCardModule,
-	NbIconModule,
-	NbButtonModule,
-	NbDialogModule,
-	NbInputModule,
-	NbSelectModule,
+	NbTooltipModule,
 	NbBadgeModule,
-	NbDatepickerModule,
+	NbCardModule,
+	NbButtonModule,
 	NbRadioModule,
 	NbAccordionModule,
-	NbListModule,
+	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
 	NbTabsetModule,
 	NbActionsModule,
+	NbDialogModule,
+	NbListModule,
 	NbContextMenuModule,
-	NbTooltipModule,
+	NbSpinnerModule,
+	NbDatepickerModule,
 	NbPopoverModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
-import { ThemeModule } from '../../@theme/theme.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
@@ -39,21 +38,18 @@ import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
 import { ProjectViewComponent } from './components/task/task-settings/project-view/project-view.component';
-import { GauzyEditableGridModule } from '../../@shared/components/editable-grid/gauzy-editable-grid.module';
+import { GauzyEditableGridModule } from '../../@shared/editable-grid/gauzy-editable-grid.module';
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-number-field.module';
 import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
 import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -66,41 +62,42 @@ import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-
 		SprintTaskComponent
 	],
 	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
-		TableComponentsModule,
-		TagsColorInputModule,
-		CommonModule,
-		ThemeModule,
 		NbCardModule,
 		NbButtonModule,
-		NgSelectModule,
 		NbRadioModule,
 		NbAccordionModule,
 		NbIconModule,
-		FormsModule,
-		ReactiveFormsModule,
-		TasksRoutingModule,
 		NbInputModule,
 		NbSelectModule,
 		NbTabsetModule,
 		NbActionsModule,
-		NbDialogModule.forChild(),
+		NbDialogModule.forRoot(),
 		NbListModule,
 		NbContextMenuModule,
+		NbSpinnerModule,
+		NbDatepickerModule,
+		NbPopoverModule,
+		NgSelectModule,
 		Angular2SmartTableModule,
+		DragDropModule,
+		NgxPermissionsModule.forChild(),
+		CKEditorModule,
+		I18nTranslateModule.forChild(),
+		TasksRoutingModule,
+		TableComponentsModule,
+		TagsColorInputModule,
+		SharedModule,
 		UserFormsModule,
 		CardGridModule,
 		AddTaskDialogModule,
-		I18nTranslateModule.forChild(),
-		NbSpinnerModule,
-		NbDatepickerModule,
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,
-		DragDropModule,
-		BackNavigationModule,
 		TasksSprintSettingsViewModule,
-		HeaderTitleModule,
 		TableFiltersModule,
 		PaginationV2Module,
 		ProjectSelectModule,
@@ -108,11 +105,7 @@ import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-
 		TaskSizeSelectModule,
 		TaskStatusSelectModule,
 		GauzyButtonActionModule,
-		TaskNumberFieldModule,
-		NgxPermissionsModule.forChild(),
-		DirectivesModule,
-		CKEditorModule,
-		NbPopoverModule
+		TaskNumberFieldModule
 	]
 })
 export class TasksModule {}

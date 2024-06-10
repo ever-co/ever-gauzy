@@ -25,7 +25,6 @@ import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } f
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
@@ -55,7 +54,6 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 		NbActionsModule,
 		TagsColorInputModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		NoDataMessageModule,

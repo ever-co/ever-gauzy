@@ -1,20 +1,26 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbDatepickerModule } from '@nebular/theme';
+import { PipesModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { EmployeeStartWorkComponent } from './employee-start-work.component';
+import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	declarations: [EmployeeStartWorkComponent],
-	exports: [EmployeeStartWorkComponent],
 	imports: [
+		CommonModule,
 		FormsModule,
-		NbCardModule,
 		NbButtonModule,
+		NbCardModule,
 		NbIconModule,
-		NbDatepickerModule,
 		NbInputModule,
-		I18nTranslateModule.forChild()
-	]
+		NbDatepickerModule,
+		I18nTranslateModule.forChild(),
+		SharedModule,
+		PipesModule
+	],
+	declarations: [EmployeeStartWorkComponent],
+	exports: [EmployeeStartWorkComponent]
 })
 export class EmployeeStartWorkModule {}

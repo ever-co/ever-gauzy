@@ -2,11 +2,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TimesheetRoutingModule } from './timesheet-routing.module';
-import { SharedModule } from 'apps/gauzy/src/app/@shared/shared.module';
+import { SharedModule } from '../../../@shared/shared.module';
 import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
 import { TimesheetLayoutComponent } from './layout/layout.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [TimesheetLayoutComponent],
@@ -17,8 +16,7 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		SharedModule,
 		NbRouteTabsetModule,
 		NbCardModule,
-		I18nTranslateModule.forChild(),
-		HeaderTitleModule
+		I18nTranslateModule.forChild()
 	]
 })
 export class TimesheetModule {}

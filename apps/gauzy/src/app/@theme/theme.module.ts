@@ -53,21 +53,21 @@ import {
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent
 } from './layouts';
-import { FooterComponent, HeaderComponent, LayoutSelectorComponent, SearchInputComponent } from './components';
+import { FooterComponent, HeaderComponent, SearchInputComponent } from './components';
 import { HeaderSelectorsModule } from './components/header/selectors/selectors.module';
 import { EmployeeSelectorsModule } from './components/header/selectors/employee/employee.module';
-import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector.service';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { ProjectSelectModule } from '../@shared/project-select/project-select.module';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
 import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
-import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { DateRangePickerModule } from './components/header/selectors/date-range-picker';
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 import { TeamSelectModule } from '../@shared/team-select/team-select.module';
+import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.module';
+import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
 
 const NB_MODULES = [
 	NbLayoutModule,
@@ -115,7 +115,6 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	LayoutSelectorComponent,
 	GauzyLogoComponent,
 	UserMenuComponent,
 	UserComponent,

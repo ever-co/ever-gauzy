@@ -29,7 +29,6 @@ import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
-import { HeaderTitleModule } from '../../components/header-title/header-title.module';
 
 const COMPONENTS = [
 	InvitesComponent,
@@ -63,7 +62,6 @@ const COMPONENTS = [
 		InviteMutationModule,
 		UserFormsModule,
 		CardGridModule,
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	],

@@ -9,11 +9,11 @@ import {
 	NbUserModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { DialogsModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../shared.module';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-modal.module';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	declarations: [ViewTimeLogComponent],

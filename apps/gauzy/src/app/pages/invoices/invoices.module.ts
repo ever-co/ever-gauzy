@@ -42,11 +42,9 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { BackNavigationModule } from '../../@shared/back-navigation';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import {
 	InvoiceApplyTaxDiscountComponent,
@@ -123,14 +121,12 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		NbContextMenuModule,
 		NbMenuModule,
 		NbTabsetModule,
-		BackNavigationModule,
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		HeaderTitleModule,
 		PaginationV2Module,
 		ContactSelectModule,
 		ProjectSelectModule,

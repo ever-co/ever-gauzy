@@ -17,6 +17,7 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { DialogsModule, GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
 import { SharedModule } from './../../../../@shared/shared.module';
@@ -48,6 +49,7 @@ import { TableComponentsModule } from '../../../../@shared/table-components';
 		NbSelectModule,
 		NbSpinnerModule,
 		NbTooltipModule,
+		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,

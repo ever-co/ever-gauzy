@@ -12,13 +12,13 @@ import {
 	NbButtonModule,
 	NbSpinnerModule,
 	NbIconModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbInputModule
 } from '@nebular/theme';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { NbInputModule } from '@nebular/theme';
 
 @NgModule({
 	declarations: [EditTimeLogModalComponent],

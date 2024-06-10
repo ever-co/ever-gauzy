@@ -34,7 +34,6 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
@@ -69,7 +68,6 @@ import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ProposalTemplateSelectModule,
-		HeaderTitleModule,
 		PaginationV2Module,
 		ContactSelectModule,
 		TableFiltersModule,

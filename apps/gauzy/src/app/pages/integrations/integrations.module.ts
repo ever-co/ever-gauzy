@@ -16,7 +16,6 @@ import { SharedModule } from '../../@shared/shared.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { TableComponentsModule } from '../../@shared/table-components';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
@@ -33,7 +32,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		IntegrationsRoutingModule,
 		SharedModule,
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,

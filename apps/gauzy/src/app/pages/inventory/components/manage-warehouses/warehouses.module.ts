@@ -23,7 +23,6 @@ import {
 	PaginationV2Module
 } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
 import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ThemeModule } from './../../../../@theme/theme.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
@@ -72,7 +71,6 @@ const NB_MODULES = [
 		I18nTranslateModule.forChild(),
 		...NB_MODULES,
 		SharedModule,
-		HeaderTitleModule,
 		ThemeModule,
 		LocationFormModule,
 		LeafletMapModule,

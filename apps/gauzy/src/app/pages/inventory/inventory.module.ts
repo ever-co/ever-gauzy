@@ -44,7 +44,6 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
 import { ProductTypesModule } from './components/manage-product-types/product-types.module';
@@ -91,7 +90,6 @@ const NB_MODULES = [
 		CommonModule,
 		CurrencyModule,
 		FormsModule,
-		HeaderTitleModule,
 		ImageAssetModule,
 		InventoryRoutingModule,
 		MerchantModule,

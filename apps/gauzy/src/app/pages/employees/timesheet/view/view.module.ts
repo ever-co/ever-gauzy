@@ -9,7 +9,6 @@ import { ViewRoutingModule } from './view-routing.module';
 import { GithubViewComponent } from './view/view.component';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet';
 import { SharedModule } from './../../../../@shared/shared.module';
-import { DateRangeTitleModule } from './../../../../@shared/components/date-range-title/date-range-title.module';
 
 @NgModule({
 	declarations: [GithubViewComponent],
@@ -24,7 +23,6 @@ import { DateRangeTitleModule } from './../../../../@shared/components/date-rang
 		MomentModule,
 		DialogsModule,
 		EditTimeLogModalModule,
-		DateRangeTitleModule,
 		NbCheckboxModule,
 		GauzyButtonActionModule
 	]

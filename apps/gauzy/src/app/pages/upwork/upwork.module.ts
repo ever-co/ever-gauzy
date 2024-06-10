@@ -5,15 +5,15 @@ import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkRoutingModule } from './upwork-routing.module';
 import {
 	NbCardModule,
-	NbInputModule,
 	NbButtonModule,
-	NbIconModule,
-	NbTooltipModule,
-	NbTabsetModule,
-	NbRouteTabsetModule,
+	NbInputModule,
 	NbToggleModule,
 	NbDatepickerModule,
 	NbCalendarKitModule,
+	NbTooltipModule,
+	NbIconModule,
+	NbTabsetModule,
+	NbRouteTabsetModule,
 	NbCheckboxModule,
 	NbActionsModule,
 	NbContextMenuModule
@@ -27,7 +27,7 @@ import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { SharedModule } from '../../@shared/shared.module';
 
 @NgModule({
 	declarations: [
@@ -40,27 +40,27 @@ import { BackNavigationModule } from '../../@shared/back-navigation/back-navigat
 	],
 	imports: [
 		CommonModule,
-		Angular2SmartTableModule,
-		UpworkRoutingModule,
+		FormsModule,
+		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
-		FormsModule,
 		NbToggleModule,
-		ReactiveFormsModule,
 		NbDatepickerModule,
 		NbCalendarKitModule,
 		NbTooltipModule,
 		NbIconModule,
 		NbTabsetModule,
 		NbRouteTabsetModule,
-		TableComponentsModule,
-		EmployeeSelectorsModule,
 		NbCheckboxModule,
 		NbActionsModule,
 		NbContextMenuModule,
-		BackNavigationModule,
-		I18nTranslateModule.forChild()
+		UpworkRoutingModule,
+		Angular2SmartTableModule,
+		I18nTranslateModule.forChild(),
+		SharedModule,
+		TableComponentsModule,
+		EmployeeSelectorsModule
 	]
 })
 export class UpworkModule {}

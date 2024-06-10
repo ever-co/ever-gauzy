@@ -20,7 +20,6 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { NbTabsetModule } from '@nebular/theme';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
@@ -48,7 +47,6 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 		DialogsModule,
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	]

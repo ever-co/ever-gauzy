@@ -4,7 +4,7 @@ import { IEquipmentSharingPolicy, IEquipmentSharingPolicyFindInput } from '@gauz
 import { firstValueFrom } from 'rxjs';
 import { API_PREFIX } from '@gauzy/ui-sdk/common';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class EquipmentSharingPolicyService {
 	EQUIPMENT_SHARING_POLICY_URL = `${API_PREFIX}/equipment-sharing-policy`;
 

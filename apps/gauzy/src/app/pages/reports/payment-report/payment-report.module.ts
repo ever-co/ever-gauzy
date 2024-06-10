@@ -9,8 +9,6 @@ import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../../@shared/shared.module';
 import { PaymentReportGridModule } from '../../../@shared/report/payment-report-grid/payment-report-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ContactSelectModule } from '../../../@shared/contact-select/contact-select.module';
 
@@ -28,8 +26,6 @@ import { ContactSelectModule } from '../../../@shared/contact-select/contact-sel
 		FormsModule,
 		LineChartModule,
 		PaymentReportGridModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule,
 		ContactSelectModule,
 		CurrencyModule

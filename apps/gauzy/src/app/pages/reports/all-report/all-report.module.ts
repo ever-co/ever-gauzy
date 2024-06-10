@@ -14,7 +14,6 @@ import {
 	NbButtonModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	declarations: [AllReportComponent],
@@ -29,7 +28,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbSelectModule,
 		FormsModule,
 		NbToggleModule,
-		HeaderTitleModule,
 		NbButtonModule
 	]
 })

@@ -8,7 +8,7 @@ import { Store } from '@gauzy/ui-sdk/common';
 import { WindowModeBlockScrollService } from '@gauzy/ui-sdk/theme';
 import { LayoutService, NavigationBuilderService } from '@gauzy/ui-sdk/core';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
-import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector.service';
+import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

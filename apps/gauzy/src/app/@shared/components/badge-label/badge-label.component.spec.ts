@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { LabelComponent } from './label.component';
+import { BadgeLabelComponent } from './badge-label.component';
 
-describe('LabelComponent', () => {
-	let component: LabelComponent;
-	let fixture: ComponentFixture<LabelComponent>;
+describe('BadgeLabelComponent', () => {
+	let component: BadgeLabelComponent;
+	let fixture: ComponentFixture<BadgeLabelComponent>;
 
 	beforeEach(async(() => {
 		TestBed.configureTestingModule({
-			declarations: [LabelComponent],
+			declarations: [BadgeLabelComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	}));
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(LabelComponent);
+		fixture = TestBed.createComponent(BadgeLabelComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

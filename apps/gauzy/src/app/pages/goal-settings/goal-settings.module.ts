@@ -29,7 +29,6 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { GoalTemplatesModule } from '../../@shared/goal/goal-templates/goal-templates.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
@@ -62,7 +61,6 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	]

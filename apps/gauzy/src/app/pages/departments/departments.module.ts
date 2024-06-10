@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -11,7 +12,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ThemeModule } from '../../@theme/theme.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from '../../@shared/shared.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
@@ -24,17 +25,15 @@ import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
 @NgModule({
 	imports: [
+		CommonModule,
 		SharedModule,
-		ThemeModule,
 		DepartmentsRoutingModule,
 		NbCardModule,
 		FormsModule,
@@ -55,7 +54,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
+		NgxPermissionsModule.forChild(),
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		TableComponentsModule

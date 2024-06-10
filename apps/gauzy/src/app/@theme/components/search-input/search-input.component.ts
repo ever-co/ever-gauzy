@@ -1,10 +1,4 @@
-import {
-	Component,
-	ElementRef,
-	EventEmitter,
-	Output,
-	ViewChild
-} from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 
 @Component({
 	selector: 'ngx-search-input',
@@ -12,9 +6,7 @@ import {
 	template: `
 		<i class="control-icon ion ion-ios-search" (click)="showInput()"></i>
 		<input
-			placeholder="{{
-				'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST' | translate
-			}}"
+			placeholder="{{ 'FORM.PLACEHOLDERS.TYPE_SEARCH_REQUEST' | translate }}"
 			#input
 			[class.hidden]="!isInputShown"
 			(blur)="hideInput()"

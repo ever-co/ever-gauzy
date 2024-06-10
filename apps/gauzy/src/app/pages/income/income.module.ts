@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -14,25 +15,21 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { IncomeService } from '@gauzy/ui-sdk/core';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { ThemeModule } from '../../@theme/theme.module';
+import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { SharedModule } from '../../@shared/shared.module';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
 import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		NbBadgeModule,
 		IncomeRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -50,13 +47,11 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		TableFiltersModule,
 		GauzyButtonActionModule,
-		DirectivesModule
+		SharedModule
 	],
-	declarations: [IncomeComponent],
-	providers: [IncomeService]
+	declarations: [IncomeComponent]
 })
 export class IncomeModule {}
