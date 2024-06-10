@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
 	NbAlertModule,
@@ -16,10 +17,10 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { ProfitHistoryModule } from '../../@shared/dashboard/profit-history/profit-history.module';
 import { RecordsHistoryModule } from '../../@shared/dashboard/records-history/records-history.module';
 import { SingleStatisticModule } from '../../@shared/single-statistic/single-statistic.module';
-import { ThemeModule } from '../../@theme/theme.module';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
 import { DataEntryShortcutsComponent } from './data-entry-shortcuts/data-entry-shortcuts.component';
@@ -33,15 +34,14 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../@shared/shared.module';
 import { LineChartModule } from '../../@shared/report/charts/line-chart/line-chart.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
-import { TableComponentsModule } from '../../@shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 import { TeamModule } from './team/team.module';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		DashboardRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		NgSelectModule,
 		FormsModule,

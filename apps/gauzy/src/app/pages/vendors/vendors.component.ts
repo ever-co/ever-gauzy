@@ -11,10 +11,15 @@ import { Cell } from 'angular2-smart-table';
 import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
+import {
+	CompanyLogoComponent,
+	EmailComponent,
+	ExternalLinkComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from './../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

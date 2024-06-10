@@ -10,8 +10,8 @@ import { PictureNameTagsComponent } from '../picture-name-tags/picture-name-tags
 })
 export class OrganizationWithTagsComponent extends PictureNameTagsComponent {
 	constructor(
-		readonly themeService: NbThemeService,
-		readonly translateService: TranslateService
+		protected readonly themeService: NbThemeService,
+		protected readonly translateService: TranslateService
 	) {
 		super(themeService, translateService);
 	}

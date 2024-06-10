@@ -49,10 +49,16 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	ContactLinksComponent,
+	DateViewComponent,
+	IPaginationBase,
+	InvoiceTotalValueComponent,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
-import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
@@ -938,8 +944,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'custom',
 				width: '10%',
 				filter: false,
-				renderComponent: InvoiceEstimateTotalValueComponent,
-				componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
+				renderComponent: InvoiceTotalValueComponent,
+				componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();
 				}

@@ -9,7 +9,7 @@ import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-
 import { SharedModule } from '../../../@shared/shared.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
 import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({

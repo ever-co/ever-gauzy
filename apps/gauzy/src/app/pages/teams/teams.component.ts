@@ -27,10 +27,14 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	EmployeeWithLinksComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EmployeeWithLinksComponent, TagsOnlyComponent } from '../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

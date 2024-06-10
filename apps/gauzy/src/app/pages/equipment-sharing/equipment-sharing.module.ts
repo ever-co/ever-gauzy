@@ -17,7 +17,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';

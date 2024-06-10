@@ -38,7 +38,7 @@ import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
@@ -49,7 +49,6 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
-	InvoiceEstimateTotalValueComponent,
 	InvoiceExpensesSelectorComponent,
 	InvoicePaidComponent,
 	InvoiceProductsSelectorComponent,
@@ -177,8 +176,7 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		InvoicePdfComponent,
 		AddInternalNoteComponent,
 		PublicLinkComponent,
-		InvoicePaymentReceiptMutationComponent,
-		InvoiceEstimateTotalValueComponent
+		InvoicePaymentReceiptMutationComponent
 	],
 	exports: [InvoiceViewInnerComponent]
 })

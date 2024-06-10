@@ -11,7 +11,7 @@ import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
-import { TableComponentsModule } from './../../../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [ProductTypesComponent],

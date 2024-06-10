@@ -24,7 +24,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
 import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

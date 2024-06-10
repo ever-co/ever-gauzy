@@ -10,14 +10,13 @@ import {
 	NbTagModule,
 	NbUserModule
 } from '@nebular/theme';
-import { LeafletMapModule } from '@gauzy/ui-sdk/shared';
+import { LeafletMapModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 import { SharedModule } from '../../../@shared/shared.module';
 import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { TableComponentsModule } from '../../../@shared';
 
 @NgModule({
 	imports: [

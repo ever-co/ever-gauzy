@@ -16,8 +16,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { TableComponentsModule } from '../../@shared/table-components';
+import { GauzyButtonActionModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({

@@ -1,12 +1,12 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { NbDialogRef, NbThemeService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
-import { ITag } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { ITag } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 import { TagsService } from '@gauzy/ui-sdk/core';
-import { NotesWithTagsComponent } from '../table-components';
+import { NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ngx-tags-mutation',

@@ -15,7 +15,6 @@ import { Component, Input } from '@angular/core';
 	styles: []
 })
 export class DateViewComponent {
-
 	@Input() value: Date | string;
 	@Input() rowData: any;
 }

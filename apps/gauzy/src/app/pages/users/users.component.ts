@@ -22,13 +22,18 @@ import {
 	IEmployee
 } from '@gauzy/contracts';
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import {
+	EmailComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	PictureNameTagsComponent,
+	RoleComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
-import { EmailComponent, RoleComponent } from '../../@shared/table-components';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })

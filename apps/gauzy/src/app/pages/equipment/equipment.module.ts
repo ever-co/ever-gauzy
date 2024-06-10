@@ -14,7 +14,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EquipmentComponent } from './equipment.component';
 import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';

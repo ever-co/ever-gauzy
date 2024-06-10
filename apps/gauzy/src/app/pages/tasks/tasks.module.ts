@@ -30,7 +30,7 @@ import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/share
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';

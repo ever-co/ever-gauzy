@@ -26,7 +26,12 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DateFormatPipe } from '@gauzy/ui-sdk/shared';
+import {
+	AllowScreenshotCaptureComponent,
+	DateFormatPipe,
+	PictureNameTagsComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
@@ -34,7 +39,6 @@ import {
 } from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import {
@@ -45,7 +49,6 @@ import {
 	EmployeeWorkStatusComponent
 } from './table-components';
 import { ToggleFilterComponent } from '../../@shared/table-filters';
-import { AllowScreenshotCaptureComponent } from '../../@shared/table-components';
 import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })

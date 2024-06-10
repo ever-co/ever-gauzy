@@ -19,7 +19,7 @@ import { EmployeeSelectorsModule } from '../../@theme/components/header/selector
 import { ProposalsService } from '@gauzy/ui-sdk/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { ProposalStatusComponent } from './table-components/proposal-status/proposal-status.component';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';

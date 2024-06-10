@@ -21,7 +21,7 @@ import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 

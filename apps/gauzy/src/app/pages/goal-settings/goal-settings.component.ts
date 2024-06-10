@@ -8,13 +8,16 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { GoalSettingsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { AlertModalComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	AlertModalComponent,
+	DateViewComponent,
+	PaginationFilterBaseComponent,
+	ValueWithUnitComponent
+} from '@gauzy/ui-sdk/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
-import { ValueWithUnitComponent } from '../../@shared/table-components/value-with-units/value-with-units.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @UntilDestroy({ checkProperties: true })

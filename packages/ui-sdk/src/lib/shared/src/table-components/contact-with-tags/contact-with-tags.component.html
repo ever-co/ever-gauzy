@@ -1,7 +1,7 @@
 <ngx-avatar
 	[src]="rowData?.imageUrl"
 	[name]="rowData?.fullName ? rowData?.fullName : rowData?.name"
-    (click)="navigateToContact()"
+	(click)="navigateToContact()"
 	class="report-table"
 ></ngx-avatar>
 <ng-template [ngIf]="rowData?.isDefault">
@@ -11,8 +11,7 @@
 		[style.background]="background(rowData?.color)"
 		[style.color]="backgroundContrast(rowData?.brandColor)"
 		text="Default"
-	>
-	</nb-badge>
+	></nb-badge>
 </ng-template>
 <div class="badges-block" *ngIf="isTags">
 	<nb-badge
@@ -22,6 +21,5 @@
 		[style.background]="background(tag?.color)"
 		[style.color]="backgroundContrast(tag?.color)"
 		[text]="tag?.name"
-	>
-	</nb-badge>
+	></nb-badge>
 </div>

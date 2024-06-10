@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { UpworkComponent } from './components/upwork/upwork.component';
-import { UpworkRoutingModule } from './upwork-routing.module';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -18,11 +16,13 @@ import {
 	NbActionsModule,
 	NbContextMenuModule
 } from '@nebular/theme';
-import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { UpworkComponent } from './components/upwork/upwork.component';
+import { UpworkRoutingModule } from './upwork-routing.module';
+import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
 import { TransactionsComponent } from './components/transactions/transactions.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';

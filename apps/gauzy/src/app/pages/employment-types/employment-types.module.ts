@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../@shared/shared.module';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';

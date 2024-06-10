@@ -6,14 +6,14 @@ import { Store } from '@gauzy/ui-sdk/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-invoice-amount',
+	selector: 'ga-invoice-total-amount',
 	template: `
 		<span>
 			{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
 		</span>
 	`
 })
-export class InvoiceEstimateTotalValueComponent implements OnInit {
+export class InvoiceTotalValueComponent implements OnInit {
 	@Input() value: string;
 	@Input() rowData: any;
 

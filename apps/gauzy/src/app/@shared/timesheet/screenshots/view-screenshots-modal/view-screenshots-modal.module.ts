@@ -10,11 +10,10 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
+import { DialogsModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SharedModule } from '../../../shared.module';
 import { GalleryModule } from '../../../gallery/gallery.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { TableComponentsModule } from '../../../table-components/table-components.module';
 import { ViewScreenshotsModalComponent } from './view-screenshots-modal.component';
 
 @NgModule({

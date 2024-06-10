@@ -47,7 +47,7 @@ import { EditOrganizationMainComponent } from './edit-organization-main/edit-org
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
 import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
 import { SharedModule } from '../../../../@shared/shared.module';
 import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';

@@ -15,4 +15,5 @@ export * from './src/modules/selectors';
 export * from './src/pipes';
 export * from './src/pipes/pipes.module';
 export * from './src/smart-table';
+export * from './src/table-components';
 export * from './src/workspaces';

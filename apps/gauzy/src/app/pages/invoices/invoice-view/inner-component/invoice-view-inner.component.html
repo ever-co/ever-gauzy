@@ -9,33 +9,29 @@
 		<div class="d-flex justify-content-between">
 			<div class="mb-5 w-100">
 				<div class="d-flex justify-content-between">
-          <div class="mb-5 font-weight-bold">
-            <h4 class="d-inline mr-2">
-              {{
-                (!isEstimate
-                  ? 'INVOICES_PAGE.INVOICE_NUMBER'
-                  : 'INVOICES_PAGE.ESTIMATE_NUMBER'
-                ) | translate
-              }}
-            </h4>
-            <h4 class="d-inline">{{ invoice?.invoiceNumber }}</h4>
-          </div>
-          <div>
-            <ng-container>
-              <ng-template [ngTemplateOutlet]="buttonsOutlet"></ng-template>
-            </ng-container>
-          </div>
-        </div>
+					<div class="mb-5 font-weight-bold">
+						<h4 class="d-inline mr-2">
+							{{
+								(!isEstimate ? 'INVOICES_PAGE.INVOICE_NUMBER' : 'INVOICES_PAGE.ESTIMATE_NUMBER')
+									| translate
+							}}
+						</h4>
+						<h4 class="d-inline">{{ invoice?.invoiceNumber }}</h4>
+					</div>
+					<div>
+						<ng-container>
+							<ng-template [ngTemplateOutlet]="buttonsOutlet"></ng-template>
+						</ng-container>
+					</div>
+				</div>
 				<div class="d-flex justify-content-between w-100">
 					<div>
 						<div class="d-flex">
 							<div>
 								<div class="font-weight-bold">
 									{{
-										(!isEstimate
-											? 'INVOICES_PAGE.INVOICE_DATE'
-											: 'INVOICES_PAGE.ESTIMATE_DATE'
-										) | translate
+										(!isEstimate ? 'INVOICES_PAGE.INVOICE_DATE' : 'INVOICES_PAGE.ESTIMATE_DATE')
+											| translate
 									}}
 								</div>
 								<div class="font-weight-bold text-left">
@@ -51,21 +47,13 @@
 					<div class="d-flex">
 						<div>
 							<div class="font-weight-bold text-left">
-								{{
-									'INVOICES_PAGE.VIEW.FROM'
-										| translate
-										| titlecase
-								}}:
+								{{ 'INVOICES_PAGE.VIEW.FROM' | translate | titlecase }}:
 							</div>
 							<div>{{ invoice?.fromOrganization?.name }}</div>
 						</div>
 						<div class="ml-3">
 							<div class="font-weight-bold text-left">
-								{{
-									'INVOICES_PAGE.VIEW.TO'
-										| translate
-										| titlecase
-								}}:
+								{{ 'INVOICES_PAGE.VIEW.TO' | translate | titlecase }}:
 							</div>
 							<div>{{ invoice?.toContact?.name }}</div>
 						</div>
@@ -81,104 +69,56 @@
 				[source]="smartTableSource"
 				style="cursor: pointer"
 				#invoiceViewInnerTable
-			>
-			</angular2-smart-table>
+			></angular2-smart-table>
 		</div>
 
 		<div class="d-flex justify-content-between">
 			<div class="d-flex w-50 mt-3">
 				<div class="d-flex flex-column text-left font-weight-bold mr-5">
-					<div class="mt-2">
-						{{ 'INVOICES_PAGE.TAX' | translate }}:
-					</div>
-					<div class="mt-2">
-						{{ 'INVOICES_PAGE.TAX_2' | translate }}:
-					</div>
-					<div class="mt-2">
-						{{
-							'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE'
-								| translate
-						}}:
-					</div>
-					<div class="mt-2">
-						{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}:
-					</div>
-					<div
-						*ngIf="invoice.hasRemainingAmountInvoiced"
-						class="mt-2"
-					>
+					<div class="mt-2">{{ 'INVOICES_PAGE.TAX' | translate }}:</div>
+					<div class="mt-2">{{ 'INVOICES_PAGE.TAX_2' | translate }}:</div>
+					<div class="mt-2">{{ 'INVOICES_PAGE.INVOICES_SELECT_DISCOUNT_VALUE' | translate }}:</div>
+					<div class="mt-2">{{ 'INVOICES_PAGE.TOTAL_VALUE' | translate }}:</div>
+					<div *ngIf="invoice.hasRemainingAmountInvoiced" class="mt-2">
 						{{ 'INVOICES_PAGE.ALREADY_PAID' | translate }}:
 					</div>
-					<div
-						*ngIf="invoice.hasRemainingAmountInvoiced"
-						class="mt-2"
-					>
+					<div *ngIf="invoice.hasRemainingAmountInvoiced" class="mt-2">
 						{{ 'INVOICES_PAGE.AMOUNT_DUE' | translate }}:
 					</div>
 				</div>
 				<div class="d-flex flex-column mr-5 text-left">
 					<div class="mt-2">
-						<span
-							*ngIf="
-								invoice.taxType === discountTaxTypes.FLAT_VALUE
-							"
-						>
+						<span *ngIf="invoice.taxType === discountTaxTypes.FLAT_VALUE">
 							{{
 								invoice?.tax || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
-						<span
-							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
-						>
-							{{ invoice?.tax || 0 }} %
-						</span>
+						<span *ngIf="invoice.taxType === discountTaxTypes.PERCENT"> {{ invoice?.tax || 0 }} % </span>
 					</div>
 					<div class="mt-2">
-						<span
-							*ngIf="
-								invoice.taxType === discountTaxTypes.FLAT_VALUE
-							"
-						>
+						<span *ngIf="invoice.taxType === discountTaxTypes.FLAT_VALUE">
 							{{
 								invoice?.tax2 || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
-						<span
-							*ngIf="invoice.taxType === discountTaxTypes.PERCENT"
-						>
+						<span *ngIf="invoice.taxType === discountTaxTypes.PERCENT">
 							{{ invoice?.tax2 || 0 }}
 							%
 						</span>
 					</div>
 					<div class="mt-2">
-						<span
-							*ngIf="
-								invoice.discountType ===
-								discountTaxTypes.FLAT_VALUE
-							"
-						>
+						<span *ngIf="invoice.discountType === discountTaxTypes.FLAT_VALUE">
 							{{
 								invoice.discountValue || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
-						<span
-							*ngIf="
-								invoice.discountType ===
-								discountTaxTypes.PERCENT
-							"
-						>
+						<span *ngIf="invoice.discountType === discountTaxTypes.PERCENT">
 							{{ invoice?.discountValue || 0 }}
 							%
 						</span>
@@ -187,52 +127,33 @@
 						<span>
 							{{
 								invoice?.totalValue || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
 					</div>
-					<div
-						*ngIf="invoice.hasRemainingAmountInvoiced"
-						class="mt-2"
-					>
+					<div *ngIf="invoice.hasRemainingAmountInvoiced" class="mt-2">
 						<span>
 							{{
 								invoice?.alreadyPaid || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
 					</div>
-					<div
-						*ngIf="invoice.hasRemainingAmountInvoiced"
-						class="mt-2"
-					>
+					<div *ngIf="invoice.hasRemainingAmountInvoiced" class="mt-2">
 						<span>
 							{{
 								invoice?.amountDue || 0
-									| currency: invoice?.currency
-									| position
-										: invoice?.fromOrganization
-												.currencyPosition
+									| currency : invoice?.currency
+									| position : invoice?.fromOrganization.currencyPosition
 							}}
 						</span>
 					</div>
 				</div>
 			</div>
-			<div
-				*ngIf="invoice.internalNote && showInternalNote"
-				class="mt-3 w-50"
-			>
-				<h5 class="font-weight-bold">
-					{{
-						'INVOICES_PAGE.INTERNAL_NOTE.INTERNAL_NOTE' | translate
-					}}:
-				</h5>
+			<div *ngIf="invoice.internalNote && showInternalNote" class="mt-3 w-50">
+				<h5 class="font-weight-bold">{{ 'INVOICES_PAGE.INTERNAL_NOTE.INTERNAL_NOTE' | translate }}:</h5>
 				{{ invoice.internalNote }}
 			</div>
 		</div>

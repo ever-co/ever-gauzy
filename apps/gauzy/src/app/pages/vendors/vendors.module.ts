@@ -21,7 +21,7 @@ import { SharedModule } from '../../@shared/shared.module';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 

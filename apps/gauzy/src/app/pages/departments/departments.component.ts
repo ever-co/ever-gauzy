@@ -17,11 +17,15 @@ import {
 	ITag
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { Store } from '@gauzy/ui-sdk/common';
 import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	EmployeeWithLinksComponent,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

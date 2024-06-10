@@ -13,10 +13,9 @@ import {
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { DialogsModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { GalleryModule } from '../../../gallery/gallery.module';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
 import { ViewScreenshotsModalModule } from '../view-screenshots-modal/view-screenshots-modal.module';
-import { TableComponentsModule } from '../../../table-components/table-components.module';
 import { SharedModule } from '../../../shared.module';
 import { ScreenshotsItemComponent } from './screenshots-item.component';
 

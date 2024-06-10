@@ -8,7 +8,6 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IProduct,
 	ComponentLayoutStyleEnum,
@@ -16,13 +15,10 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ProductService } from '@gauzy/ui-sdk/core';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { IPaginationBase, PaginationFilterBaseComponent, TagsOnlyComponent } from '@gauzy/ui-sdk/shared';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { TagsOnlyComponent } from './../../../../@shared/table-components';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })

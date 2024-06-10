@@ -9,7 +9,6 @@ import {
 	HostListener,
 	Renderer2
 } from '@angular/core';
-import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -18,9 +17,10 @@ import { Subject } from 'rxjs/internal/Subject';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import * as randomColor from 'randomcolor';
+import { ITag, IOrganization, PermissionsEnum, ITagCreateInput } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TagsService } from '@gauzy/ui-sdk/core';
-import { PictureNameTagsComponent } from '../../table-components';
+import { PictureNameTagsComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

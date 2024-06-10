@@ -6,16 +6,12 @@ import { Router } from '@angular/router';
 	template: `
 		<div class="contact-links-container">
 			<ng-container *ngIf="value && value?.name">
-				<div
-					[nbTooltip]="value.name"
-					(click)="navigateToContact()"
-					class="inner-wrapper"
-				>
+				<div [nbTooltip]="value.name" (click)="navigateToContact()" class="inner-wrapper">
 					<div *ngIf="!value.imageUrl" class="prefix">
 						{{ value.name.substr(0, 1).toUpperCase() }}
 					</div>
 					<div *ngIf="value.imageUrl" class="avatar">
-						<img [src]="value?.imageUrl">
+						<img [src]="value?.imageUrl" />
 					</div>
 					<div class="names-wrapper">
 						<a class="link-text">{{ value.name }}</a>
@@ -27,15 +23,17 @@ import { Router } from '@angular/router';
 	styleUrls: ['./contact-links.component.scss']
 })
 export class ContactLinksComponent {
-
 	@Input() rowData: any;
 	@Input() value: any;
 
-	constructor(
-		private readonly _router: Router
-	) { }
+	constructor(private readonly _router: Router) {}
 
-	navigateToContact() {
+	/**
+	 * Navigates to the contact view page for the current value.
+	 *
+	 * @return {void} This function does not return anything.
+	 */
+	navigateToContact(): void {
 		if (!this.value) {
 			return;
 		}

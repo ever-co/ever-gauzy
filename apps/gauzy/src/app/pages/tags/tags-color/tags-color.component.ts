@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { NotesWithTagsComponent } from '../../../@shared/table-components';
+import { NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ngx-tags-color',

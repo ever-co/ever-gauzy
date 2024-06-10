@@ -7,8 +7,7 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { CandidateEducationsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import { tap } from 'rxjs/operators';
-import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { DateViewComponent } from './../../../../../../@shared/table-components';
+import { DateViewComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

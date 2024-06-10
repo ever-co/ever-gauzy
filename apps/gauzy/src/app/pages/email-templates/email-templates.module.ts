@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';

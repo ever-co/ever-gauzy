@@ -16,7 +16,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DialogsModule, GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { DialogsModule, GauzyButtonActionModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
@@ -30,7 +30,6 @@ import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-tim
 import { TaskSelectModule } from './../../../../@shared/tasks/task-select/task-select.module';
 import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data-message.module';
 import { GauzyFiltersModule } from '../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { TableComponentsModule } from '../../../../@shared/table-components';
 
 @NgModule({
 	declarations: [DailyComponent],

@@ -15,7 +15,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { SharedModule } from '../../@shared/shared.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';

@@ -22,7 +22,7 @@ import { DocumentsRoutingModule } from './documents-routing.module';
 import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 

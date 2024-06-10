@@ -73,7 +73,7 @@ import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-c
 import { SkillsInputModule } from '../../@shared/skills/skills-input/skills-input.module';
 import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
 import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
 import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';

@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '../../@shared/shared.module';
 import { PositionsRoutingModule } from './positions-routing.module';

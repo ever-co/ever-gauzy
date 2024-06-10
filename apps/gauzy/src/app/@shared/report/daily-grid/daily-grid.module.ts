@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DailyGridComponent } from './daily-grid.component';
 import { FormsModule } from '@angular/forms';
 import {
 	NbIconModule,
@@ -11,9 +10,10 @@ import {
 	NbBadgeModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../shared.module';
+import { DailyGridComponent } from './daily-grid.component';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
-import { TableComponentsModule } from '../../table-components';
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 
 @NgModule({

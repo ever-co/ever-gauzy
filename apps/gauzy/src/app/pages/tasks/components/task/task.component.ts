@@ -14,7 +14,19 @@ import {
 	TasksStoreService,
 	TeamTasksStoreService
 } from '@gauzy/ui-sdk/core';
-import { HashNumberPipe } from '@gauzy/ui-sdk/shared';
+import {
+	AssignedToComponent,
+	CreateByComponent,
+	CreatedAtComponent,
+	DateViewComponent,
+	EmployeesMergedTeamsComponent,
+	HashNumberPipe,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent,
+	ProjectComponent,
+	StatusViewComponent
+} from '@gauzy/ui-sdk/shared';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -29,23 +41,12 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import {
-	AssignedToComponent,
-	CreateByComponent,
-	CreatedAtComponent,
-	DateViewComponent,
-	EmployeesMergedTeamsComponent,
-	NotesWithTagsComponent,
-	ProjectComponent,
-	StatusViewComponent
-} from './../../../../@shared/table-components';
 import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import {
 	InputFilterComponent,
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

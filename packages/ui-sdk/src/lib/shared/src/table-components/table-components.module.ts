@@ -2,6 +2,9 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { ComponentsModule } from '../components/components.module';
+import { PipesModule } from '../pipes/pipes.module';
 import { DateViewComponent } from './date-view/date-view.component';
 import { IncomeExpenseAmountComponent } from './income-amount/income-amount.component';
 import { NotesWithTagsComponent } from './notes-with-tags/notes-with-tags.component';
@@ -14,8 +17,6 @@ import { StatusViewComponent } from './status-view/status-view.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { DocumentUrlTableComponent } from './document-url/document-url.component';
 import { DocumentDateTableComponent } from './document-date/document-date.component';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../shared.module';
 import { ContactLinksComponent } from './contact-links/contact-links.component';
 import { TagsOnlyComponent } from './tags-only/tags-only.component';
 import { EmployeeLinksComponent } from './employee-links/employee-links.component';
@@ -43,8 +44,7 @@ import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
 import { GithubRepositoryComponent } from './github/repository/repository.component';
 import { GithubIssueTitleDescriptionComponent } from './github/issue-title-description/issue-title-description.component';
 import { ResyncButtonComponent } from './github/resync-button/resync-button.component';
-import { StatusBadgeModule } from '../status-badge';
-import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
+import { InvoiceTotalValueComponent } from './invoice-total-value/invoice-total-value.component';
 
 @NgModule({
 	imports: [
@@ -56,12 +56,12 @@ import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badg
 		NbToggleModule,
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
-		SharedModule,
-		StatusBadgeModule,
-		TaskBadgeViewComponentModule
+		PipesModule,
+		ComponentsModule
 	],
 	declarations: [
 		DateViewComponent,
+		InvoiceTotalValueComponent,
 		IncomeExpenseAmountComponent,
 		NotesWithTagsComponent,
 		PictureNameTagsComponent,

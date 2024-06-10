@@ -15,9 +15,13 @@ import { TimeOffService } from '@gauzy/ui-sdk/core';
 import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { DateViewComponent, PictureNameTagsComponent } from '../../@shared/table-components';
 import { ApprovalPolicyComponent } from '../approvals/table-components';
-import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	PictureNameTagsComponent,
+	DateViewComponent
+} from '@gauzy/ui-sdk/shared';
 import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 import { InputFilterComponent } from '../../@shared/table-filters';
 

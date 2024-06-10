@@ -39,7 +39,7 @@ import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-u
 import { UserOrganizationsMultiSelectModule } from '../../@shared/user/user-organizations-multi-select/user-organizations-multi-select.module';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
 import { UserIdService } from '@gauzy/ui-sdk/core';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';

@@ -2,14 +2,12 @@ import { NgModule } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '../../shared.module';
-import { TableComponentsModule } from '../../table-components/table-components.module';
 import { RecurringExpenseHistoryComponent } from './recurring-expense-history.component';
 
 @NgModule({
 	imports: [
-		ThemeModule,
 		Angular2SmartTableModule,
 		TableComponentsModule,
 		NbIconModule,
@@ -17,7 +15,6 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 		SharedModule
 	],
 	exports: [RecurringExpenseHistoryComponent],
-	declarations: [RecurringExpenseHistoryComponent],
-	providers: []
+	declarations: [RecurringExpenseHistoryComponent]
 })
 export class RecurringExpenseHistoryModule {}

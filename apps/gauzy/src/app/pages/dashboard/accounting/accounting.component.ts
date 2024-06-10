@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
@@ -23,7 +24,11 @@ import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils
 @Component({
 	selector: 'ga-dashboard-accounting',
 	templateUrl: './accounting.component.html',
-	styleUrls: ['../../organizations/edit-organization/edit-organization.component.scss', './accounting.component.scss']
+	styleUrls: [
+		'../../organizations/edit-organization/edit-organization.component.scss',
+		'./accounting.component.scss'
+	],
+	providers: [CurrencyPipe]
 })
 export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;

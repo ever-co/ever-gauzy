@@ -21,7 +21,7 @@ import { EmployeeSelectorsModule } from './../../../../@theme/components/header/
 import { SharedModule } from './../../../../@shared/shared.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { EditTimeLogModalModule, ViewTimeLogModule } from '../../../../@shared/timesheet';
-import { TableComponentsModule } from '../../../../@shared/table-components';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({

@@ -14,8 +14,7 @@ import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';
 import { API_PREFIX, ComponentEnum, Store } from '@gauzy/ui-sdk/common';
 import { TimeOffService } from '@gauzy/ui-sdk/core';
-import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
-import { EmployeeWithLinksComponent } from '../../../@shared/table-components';
+import { PaginationFilterBaseComponent, IPaginationBase, EmployeeWithLinksComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +33,6 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	private _refresh$: Subject<any> = new Subject();
-
 	public organization: IOrganization;
 	timeOffPolicies$: Subject<any> = this.subject$;
 

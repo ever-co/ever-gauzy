@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { SharedModule } from './../../@shared/shared.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
+import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
