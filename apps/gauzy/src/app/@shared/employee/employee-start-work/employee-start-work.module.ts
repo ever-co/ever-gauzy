@@ -5,7 +5,6 @@ import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbDatepicker
 import { PipesModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { EmployeeStartWorkComponent } from './employee-start-work.component';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
@@ -17,7 +16,6 @@ import { SharedModule } from '../../shared.module';
 		NbInputModule,
 		NbDatepickerModule,
 		I18nTranslateModule.forChild(),
-		SharedModule,
 		PipesModule
 	],
 	declarations: [EmployeeStartWorkComponent],
