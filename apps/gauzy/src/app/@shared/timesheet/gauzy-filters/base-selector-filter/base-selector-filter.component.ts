@@ -1,17 +1,15 @@
 import { Component } from '@angular/core';
-import { combineLatest, debounceTime } from 'rxjs';
-import { Subject } from 'rxjs';
+import { Subject, combineLatest, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import { toUtcOffset } from '@gauzy/ui-sdk/common';
+import { Store, toUtcOffset } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { DateRangePickerBuilderService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 import { TimeZoneService } from '../timezone-filter';
+import { getAdjustDateRangeFutureAllowed } from '../../../selectors/date-range-picker/date-picker.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

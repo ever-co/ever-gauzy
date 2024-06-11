@@ -1,7 +1,14 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, ViewChild, AfterViewInit, OnDestroy, TemplateRef, ChangeDetectorRef } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
-import { CalendarOptions, EventClickArg, EventDropArg, EventHoveringArg, EventInput } from '@fullcalendar/core';
+import {
+	CalendarOptions,
+	DateSelectArg,
+	EventClickArg,
+	EventDropArg,
+	EventHoveringArg,
+	EventInput
+} from '@fullcalendar/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
@@ -15,14 +22,13 @@ import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
-import { isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
+import { Store, isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
 import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
 import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { dayOfWeekAsString } from './../../../../../@theme/components/header/selectors/date-range-picker';
 import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { dayOfWeekAsString } from '../../../../../@shared/selectors/date-range-picker/date-picker.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -274,8 +280,7 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 	 *
 	 * @param event - The event object representing the selected time slot.
 	 */
-	handleEventSelect(event): void {
-		console.log(event);
+	handleEventSelect(event: DateSelectArg): void {
 		this.openDialog({
 			startedAt: event.start,
 			stoppedAt: event.end,

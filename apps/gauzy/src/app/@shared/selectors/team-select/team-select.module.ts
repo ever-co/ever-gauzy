@@ -4,12 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { SharedModule } from '../shared.module';
 import { TeamSelectorComponent } from './team/team.component';
 
 @NgModule({
 	declarations: [TeamSelectorComponent],
 	exports: [TeamSelectorComponent],
-	imports: [CommonModule, NbSelectModule, FormsModule, I18nTranslateModule.forChild(), NgSelectModule, SharedModule]
+	imports: [CommonModule, NbSelectModule, FormsModule, I18nTranslateModule.forChild(), NgSelectModule]
 })
 export class TeamSelectModule {}

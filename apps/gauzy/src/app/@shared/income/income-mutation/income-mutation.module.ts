@@ -15,10 +15,10 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { IncomeService, OrganizationsService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
 import { IncomeMutationComponent } from './income-mutation.component';
+import { SelectorsModule } from '../../selectors/selectors.module';
 
 @NgModule({
 	imports: [
@@ -35,8 +35,8 @@ import { IncomeMutationComponent } from './income-mutation.component';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		EmployeeSelectorsModule,
 		I18nTranslateModule.forChild(),
+		SelectorsModule,
 		CurrencyModule,
 		ContactSelectModule
 	],

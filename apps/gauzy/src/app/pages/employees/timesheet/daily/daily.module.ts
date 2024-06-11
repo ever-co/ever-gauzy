@@ -22,8 +22,6 @@ import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-picker.module';
-import { ProjectSelectModule } from './../../../../@shared/project-select/project-select.module';
-import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
 import { EditTimeLogModalModule } from './../../../../@shared/timesheet/edit-time-log-modal/edit-time-log-modal.module';
 import { ViewTimeLogModule } from './../../../../@shared/timesheet/view-time-log/view-time-log.module';
 import { ViewTimeLogModalModule } from './../../../../@shared/timesheet/view-time-log-modal/view-time-log-modal.module';
@@ -53,10 +51,8 @@ import { GauzyFiltersModule } from '../../../../@shared/timesheet/gauzy-filters/
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
-		ProjectSelectModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
-		EmployeeSelectorsModule,
 		GauzyFiltersModule,
 		ViewTimeLogModule,
 		DialogsModule,

@@ -1,15 +1,14 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
+import { debounceTime } from 'rxjs';
+import { filter, tap } from 'rxjs/operators';
 import { IEmployee, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { debounceTime } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
+import { ALL_EMPLOYEES_SELECTED } from '../../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -44,12 +44,12 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 import { AddTaskDialogModule } from '../../@shared/tasks/add-task-dialog/add-task-dialog.module';
 import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskStatusSelectModule } from '../../@shared/tasks/task-status-select/task-status-select.module';
 import { TaskNumberFieldModule } from '../../@shared/tasks/task-number/task-number-field.module';
 import { TaskPrioritySelectModule } from '../../@shared/tasks/task-priority-select/task-priority-select.module';
 import { TaskSizeSelectModule } from '../../@shared/tasks/task-size-select/task-size-select.module';
 import { SharedModule } from '../../@shared/shared.module';
+import { ProjectSelectModule } from '../../@shared/selectors/project-select/project-select.module';
 
 @NgModule({
 	declarations: [

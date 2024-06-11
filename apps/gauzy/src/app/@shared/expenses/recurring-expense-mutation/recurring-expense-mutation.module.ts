@@ -18,7 +18,7 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { CurrencyModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
-import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
+import { SelectorsModule } from '../../selectors/selectors.module';
 
 @NgModule({
 	imports: [
@@ -36,8 +36,8 @@ import { EmployeeSelectorsModule } from '../../../@theme/components/header/selec
 		NbCheckboxModule,
 		NbAlertModule,
 		NbSpinnerModule,
-		EmployeeSelectorsModule,
 		I18nTranslateModule.forChild(),
+		SelectorsModule,
 		CurrencyModule
 	],
 	exports: [RecurringExpenseMutationComponent],

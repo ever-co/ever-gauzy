@@ -20,9 +20,9 @@ import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { ProjectMutationComponent } from './project-mutation.component';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { TeamSelectModule } from '../../team-select/team-select.module';
 import { SharedModule } from '../../shared.module';
 import { RepositorySelectorModule } from '../../integrations/github';
+import { TeamSelectModule } from '../../selectors/team-select/team-select.module';
 
 @NgModule({
 	declarations: [ProjectMutationComponent],

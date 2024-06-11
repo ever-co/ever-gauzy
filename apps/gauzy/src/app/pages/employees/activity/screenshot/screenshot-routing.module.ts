@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from './../../../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '../../../../@shared/selectors/date-range-picker';
 import { ScreenshotComponent } from './screenshot/screenshot.component';
 
 const routes: Routes = [
@@ -17,9 +17,7 @@ const routes: Routes = [
 				isDisableFutureDate: true
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

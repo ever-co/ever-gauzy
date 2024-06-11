@@ -18,10 +18,10 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TimeTrackerService } from '@gauzy/ui-sdk/common';
 import { SharedModule } from '../shared.module';
 import { TimerPickerModule } from '../timer-picker/timer-picker.module';
-import { ProjectSelectModule } from '../project-select/project-select.module';
 import { ContactSelectorModule } from '../contact-selector/contact-selector.module';
 import { TaskSelectModule } from '../tasks/task-select/task-select.module';
 import { TimeTrackerStatusModule } from './components/time-tracker-status/time-tracker-status.module';
+import { ProjectSelectModule } from '../selectors/project-select/project-select.module';
 
 @NgModule({
 	declarations: [TimeTrackerComponent],

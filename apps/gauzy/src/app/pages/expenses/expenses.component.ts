@@ -43,8 +43,8 @@ import {
 	VendorFilterComponent
 } from '../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { ALL_EMPLOYEES_SELECTED } from '../../@shared/selectors/employee';
+import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker/date-picker.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

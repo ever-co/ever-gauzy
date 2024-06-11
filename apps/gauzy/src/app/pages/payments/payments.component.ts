@@ -43,7 +43,7 @@ import {
 	PaymentMethodFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -209,8 +209,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 		}
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {

@@ -25,9 +25,9 @@ import { TransactionsComponent } from './components/transactions/transactions.co
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ReportsComponent } from './components/reports/reports.component';
 import { SharedModule } from '../../@shared/shared.module';
+import { SelectorsModule } from '../../@shared/selectors/selectors.module';
 
 @NgModule({
 	declarations: [
@@ -60,7 +60,7 @@ import { SharedModule } from '../../@shared/shared.module';
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
-		EmployeeSelectorsModule
+		SelectorsModule
 	]
 })
 export class UpworkModule {}

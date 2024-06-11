@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-sdk/core';
-import { DateRangePickerResolver } from './../../../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '../../../../@shared/selectors/date-range-picker';
 import { ApprovalsComponent } from './approvals/approvals.component';
 
 const routes: Routes = [
@@ -25,9 +25,7 @@ const routes: Routes = [
 				isSaveDatePicker: true
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

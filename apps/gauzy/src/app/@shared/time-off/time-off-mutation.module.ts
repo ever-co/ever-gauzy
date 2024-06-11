@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -11,21 +12,20 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ThemeModule } from '../../@theme/theme.module';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-settings-mutation.component';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { TimeOffRequestMutationComponent } from './time-off-request-mutation/time-off-request-mutation.component';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/time-off-holiday-mutation.component';
 import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-policy-select.module';
+import { SelectorsModule } from '../selectors/selectors.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
 		FormsModule,
-		NbCardModule,
+		CommonModule,
 		ReactiveFormsModule,
+		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
 		NgSelectModule,
@@ -34,9 +34,9 @@ import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-pol
 		NbInputModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		EmployeeSelectorsModule,
 		FileUploaderModule,
 		I18nTranslateModule.forChild(),
+		SelectorsModule,
 		TimeOffPolicySelectModule
 	],
 	declarations: [TimeOffSettingsMutationComponent, TimeOffRequestMutationComponent, TimeOffHolidayMutationComponent],

@@ -13,7 +13,7 @@ import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimat
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
 
 export function redirectTo() {
 	return '/pages/dashboard';

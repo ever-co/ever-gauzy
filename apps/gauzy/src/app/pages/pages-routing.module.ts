@@ -4,7 +4,7 @@ import { PermissionsGuard, UserResolver } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
-import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{

@@ -44,7 +44,7 @@ import {
 	OrganizationContactFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

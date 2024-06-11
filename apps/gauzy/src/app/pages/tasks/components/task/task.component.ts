@@ -41,12 +41,12 @@ import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
 import {
 	InputFilterComponent,
 	OrganizationTeamFilterComponent,
 	TaskStatusFilterComponent
 } from './../../../../@shared/table-filters';
+import { ALL_PROJECT_SELECTED } from 'apps/gauzy/src/app/@shared/selectors/project-select/project/default-project';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -87,7 +87,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 import { SharedModule } from '../../@shared/shared.module';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
+import { ProjectSelectModule } from '../../@shared/selectors/project-select/project-select.module';
 
 @NgModule({
 	imports: [

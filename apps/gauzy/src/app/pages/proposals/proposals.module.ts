@@ -15,7 +15,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { ProposalsService } from '@gauzy/ui-sdk/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
@@ -38,6 +37,7 @@ import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
 import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { SelectorsModule } from '../../@shared/selectors/selectors.module';
 
 @NgModule({
 	imports: [
@@ -58,7 +58,6 @@ import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 		NbDatepickerModule,
 		NbBadgeModule,
 		NbTooltipModule,
-		EmployeeSelectorsModule,
 		NgSelectModule,
 		Angular2SmartTableModule,
 		UserFormsModule,
@@ -71,7 +70,8 @@ import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 		PaginationV2Module,
 		ContactSelectModule,
 		TableFiltersModule,
-		GauzyButtonActionModule
+		GauzyButtonActionModule,
+		SelectorsModule
 	],
 	declarations: [
 		ProposalsComponent,

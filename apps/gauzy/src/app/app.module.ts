@@ -57,8 +57,8 @@ import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
 import { SharedModule } from './@shared/shared.module';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import { LegalModule } from './legal/legal.module';
-import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { initializeSentry } from './sentry';
+import { dayOfWeekAsString } from './@shared/selectors/date-range-picker';
 
 if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {

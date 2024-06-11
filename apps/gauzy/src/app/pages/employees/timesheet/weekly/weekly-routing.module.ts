@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from './../../../../@theme/components/header/selectors/date-range-picker';
 import { WeeklyComponent } from './weekly/weekly.component';
+import { DateRangePickerResolver } from 'apps/gauzy/src/app/@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -13,9 +13,7 @@ const routes: Routes = [
 				isLockDatePicker: true
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

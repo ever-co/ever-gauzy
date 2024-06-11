@@ -32,7 +32,6 @@ import { GoalsRoutingModule } from './goals-routing.module';
 import { GoalsComponent } from './goals.component';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
 import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { SharedModule } from '../../@shared/shared.module';
@@ -41,7 +40,6 @@ import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.co
 import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
@@ -87,7 +85,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbFormFieldModule,
 		NbBadgeModule,
 		GoalSettingsModule,
-		ProjectSelectModule,
 		GoalCustomUnitModule,
 		KeyresultTypeSelectModule,
 		GoalTemplateSelectModule,
@@ -96,7 +93,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule

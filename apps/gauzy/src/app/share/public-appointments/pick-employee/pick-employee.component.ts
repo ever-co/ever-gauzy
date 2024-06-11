@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EventTypeService, ToastrService } from '@gauzy/ui-sdk/core';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EmployeeSelectorComponent } from '../../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -15,17 +15,17 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 	styleUrls: ['pick-employee.component.scss']
 })
 export class PickEmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	@ViewChild('employeeSelector')
-	employeeSelector: EmployeeSelectorComponent;
-	loading: boolean;
-	_selectedOrganizationId: string;
+	public loading: boolean;
+	public _selectedOrganizationId: string;
+
+	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
 
 	constructor(
-		private router: Router,
-		private toastrService: ToastrService,
-		readonly translateService: TranslateService,
-		private eventTypeService: EventTypeService,
-		private store: Store
+		public readonly translateService: TranslateService,
+		private readonly router: Router,
+		private readonly toastrService: ToastrService,
+		private readonly eventTypeService: EventTypeService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}

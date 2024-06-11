@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from '../../../@theme/components/header/selectors/date-range-picker';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-reports.component';
+import { DateRangePickerResolver } from '../../../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -13,9 +13,7 @@ const routes: Routes = [
 				isLockDatePicker: true
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

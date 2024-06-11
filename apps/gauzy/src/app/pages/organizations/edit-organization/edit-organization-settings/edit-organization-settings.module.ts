@@ -39,7 +39,6 @@ import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-up
 import { OrganizationsMutationModule } from '../../../../@shared/organizations/organizations-mutation/organizations-mutation.module';
 import { RemoveLodashModule } from '../../../../@shared/remove-lodash/remove-lodash.module';
 import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.module';
-import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
 import { ThemeModule } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
@@ -82,7 +81,6 @@ import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker
 		NbRouteTabsetModule,
 		NbDatepickerModule,
 		NbToggleModule,
-		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,

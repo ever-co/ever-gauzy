@@ -43,8 +43,8 @@ import {
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
 import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
+import { ALL_EMPLOYEES_SELECTED } from '../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

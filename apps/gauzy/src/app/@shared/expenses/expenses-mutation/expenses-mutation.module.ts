@@ -16,15 +16,14 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { CurrencyModule } from '@gauzy/ui-sdk/shared';
+import { SelectorsModule } from '../../selectors/selectors.module';
 import { ExpensesMutationComponent } from './expenses-mutation.component';
-import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';
-import { ProjectSelectModule } from '../../project-select/project-select.module';
 
 @NgModule({
 	imports: [
@@ -41,7 +40,6 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 		NbDatepickerModule,
 		NbSelectModule,
 		NbRadioModule,
-		EmployeeSelectorsModule,
 		NbCheckboxModule,
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
@@ -49,7 +47,7 @@ import { ProjectSelectModule } from '../../project-select/project-select.module'
 		VendorSelectModule,
 		ExpenseCategorySelectModule,
 		ContactSelectModule,
-		ProjectSelectModule
+		SelectorsModule
 	],
 	exports: [ExpensesMutationComponent],
 	declarations: [ExpensesMutationComponent, AttachReceiptComponent],

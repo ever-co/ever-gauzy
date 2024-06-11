@@ -41,7 +41,7 @@ import {
 	OrganizationProjectStore,
 	OrganizationTeamsService
 } from '@gauzy/ui-sdk/core';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from './selectors/employee';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from '../../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, Input } from '@angular/core';
+import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import {
 	IEmployee,
@@ -8,13 +9,12 @@ import {
 	StatusTypesEnum,
 	IImageAsset as IDocumentAsset
 } from '@gauzy/contracts';
-import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator, OrganizationDocumentsService } from '@gauzy/ui-sdk/core';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { FormHelpers } from '@gauzy/ui-sdk/shared';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
+import { EmployeeSelectorComponent } from '../../selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

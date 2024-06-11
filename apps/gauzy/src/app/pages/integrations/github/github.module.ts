@@ -21,8 +21,8 @@ import { GithubInstallationComponent } from './components/installation/installat
 import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
-import { ProjectSelectModule } from '../../../@shared/project-select/project-select.module';
 import { SharedModule } from '../../../@shared/shared.module';
+import { ProjectSelectModule } from '../../../@shared/selectors/project-select/project-select.module';
 
 @NgModule({
 	declarations: [

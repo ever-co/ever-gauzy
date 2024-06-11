@@ -17,7 +17,6 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';
 import { ShareModule } from './../../../../share/share.module';
-import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
 import { SharedModule } from './../../../../@shared/shared.module';
 import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { EditTimeLogModalModule, ViewTimeLogModule } from '../../../../@shared/timesheet';
@@ -34,7 +33,6 @@ import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data
 		ShareModule,
 		NbDatepickerModule,
 		NbIconModule,
-		EmployeeSelectorsModule,
 		FormsModule,
 		NbButtonModule,
 		SharedModule,

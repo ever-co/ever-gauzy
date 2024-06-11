@@ -25,7 +25,7 @@ import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter/time-zone.service';
+import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

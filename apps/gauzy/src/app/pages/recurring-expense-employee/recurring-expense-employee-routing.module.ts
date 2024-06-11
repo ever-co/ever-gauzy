@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
+import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -15,9 +15,7 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

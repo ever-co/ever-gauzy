@@ -8,7 +8,7 @@ import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import { TeamComponent } from './team/team.component';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
