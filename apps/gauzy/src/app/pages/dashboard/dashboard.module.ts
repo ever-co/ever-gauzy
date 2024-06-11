@@ -31,7 +31,7 @@ import { ProjectManagementComponent } from './project-management/project-managem
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { LineChartModule } from '../../@shared/report/charts/line-chart/line-chart.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';

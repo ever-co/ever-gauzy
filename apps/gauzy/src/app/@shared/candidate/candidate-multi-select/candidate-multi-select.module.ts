@@ -1,14 +1,13 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { CandidateMultiSelectComponent } from './candidate-multi-select.component';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	imports: [ThemeModule, NbSelectModule, SharedModule, I18nTranslateModule.forChild()],
+	imports: [CommonModule, NbSelectModule, I18nTranslateModule.forChild(), SharedModule],
 	declarations: [CandidateMultiSelectComponent],
-	exports: [CandidateMultiSelectComponent],
-	providers: []
+	exports: [CandidateMultiSelectComponent]
 })
 export class CandidateMultiSelectModule {}

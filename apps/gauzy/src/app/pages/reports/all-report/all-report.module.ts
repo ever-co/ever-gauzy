@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { AllReportRoutingModule } from './all-report-routing.module';
 import { AllReportComponent } from './all-report/all-report.component';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { FormsModule } from '@angular/forms';
 import {
 	NbIconModule,

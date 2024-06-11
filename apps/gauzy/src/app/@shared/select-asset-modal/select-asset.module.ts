@@ -11,8 +11,7 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ImageAssetService } from '@gauzy/ui-sdk/core';
-import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
-import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
+import { FileUploaderModule, ImageUploaderModule } from '@gauzy/ui-sdk/shared';
 import { ImageAssetComponent } from './img-asset/img-asset.component';
 import { ImagePreviewComponent } from './img-preview/img-preview.component';
 import { SelectAssetComponent } from './select-asset.component';

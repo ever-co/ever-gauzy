@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAlertModule,
@@ -14,15 +15,13 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
-import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
 import { InviteService, RoleService } from '@gauzy/ui-sdk/core';
-import { SharedModule } from '../../shared.module';
-import { ContactSelectModule } from '../../contact-select/contact-select.module';
-import { RoleFormFieldModule } from '../../user/forms/fields/role';
+import { ContactSelectModule, RoleFormFieldModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { EmailInviteFormComponent } from './email-invite-form/email-invite-form.component';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbAlertModule,
@@ -36,7 +35,6 @@ import { RoleFormFieldModule } from '../../user/forms/fields/role';
 		NbTagModule,
 		NbTooltipModule,
 		NgSelectModule,
-		ThemeModule,
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		ContactSelectModule,

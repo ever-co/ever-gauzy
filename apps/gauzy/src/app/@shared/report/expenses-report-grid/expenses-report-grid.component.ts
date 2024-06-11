@@ -12,8 +12,7 @@ import {
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, ExpensesService } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
+import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

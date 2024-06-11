@@ -31,6 +31,7 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
+		"@angular-slider/ngx-slider": "^17.0.1",
 		"@angular/material": "^16.2.12",
 		"@angular/router": "^16.2.12",
 		"@asymmetrik/ngx-leaflet": "^16.0.1",
@@ -50,9 +51,11 @@
 		"leaflet": "^1.8.0",
 		"moment": "^2.30.1",
 		"moment-range": "^4.0.2",
+		"ng2-file-upload": "^5.0.0",
 		"ngx-color-picker": "^12.0.1",
 		"ngx-cookie-service": "^16.1.0",
 		"ngx-permissions": "^13.0.1",
+		"randomcolor": "^0.6.2",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2",
 		"underscore": "^1.13.3",

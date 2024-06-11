@@ -12,12 +12,10 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { DirectivesModule, EmployeeMultiSelectModule, SelectorsModule } from '@gauzy/ui-sdk/shared';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
 import { JobTableComponentsModule } from '../../../table-components';
-import { EmployeeMultiSelectModule } from './../../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { ProposalTemplateSelectModule } from './../../../../../@shared/proposal-template-select/proposal-template-select.module';
-import { SelectorsModule } from 'apps/gauzy/src/app/@shared/selectors/selectors.module';
+import { ProposalTemplateSelectModule } from 'apps/gauzy/src/app/@shared/proposal-template-select/proposal-template-select.module';
 
 @NgModule({
 	providers: [],

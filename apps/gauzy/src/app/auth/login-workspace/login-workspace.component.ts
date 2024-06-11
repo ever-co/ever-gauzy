@@ -8,7 +8,7 @@ import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorksp
 import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { AuthService } from '@gauzy/ui-sdk/core';
-import { PasswordFormFieldComponent } from './../../@shared/user/forms/fields/password';
+import { PasswordFormFieldComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

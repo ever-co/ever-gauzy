@@ -19,7 +19,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeeSelectorComponent } from '../../selectors/employee';
+import { EmployeeSelectorComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',

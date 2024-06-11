@@ -1,4 +1,5 @@
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
 	NbCardModule,
@@ -12,18 +13,13 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CurrencyModule } from '@gauzy/ui-sdk/shared';
+import { ContactSelectModule, CurrencyModule, SelectorsModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
 import { IncomeService, OrganizationsService } from '@gauzy/ui-sdk/core';
-import { ThemeModule } from '../../../@theme/theme.module';
-import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { ContactSelectModule } from '../../contact-select/contact-select.module';
 import { IncomeMutationComponent } from './income-mutation.component';
-import { SelectorsModule } from '../../selectors/selectors.module';
 
 @NgModule({
 	imports: [
-		TagsColorInputModule,
-		ThemeModule,
+		CommonModule,
 		FormsModule,
 		NbCardModule,
 		ReactiveFormsModule,
@@ -38,7 +34,8 @@ import { SelectorsModule } from '../../selectors/selectors.module';
 		I18nTranslateModule.forChild(),
 		SelectorsModule,
 		CurrencyModule,
-		ContactSelectModule
+		ContactSelectModule,
+		TagsColorInputModule
 	],
 	declarations: [IncomeMutationComponent],
 	providers: [IncomeService, OrganizationsService]

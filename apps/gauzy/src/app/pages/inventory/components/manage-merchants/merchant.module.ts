@@ -22,7 +22,9 @@ import {
 	GauzyButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module
+	PaginationV2Module,
+	SharedModule,
+	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
 import { MerchantComponent } from './merchant.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
@@ -30,8 +32,6 @@ import { MerchantTableComponent } from './merchant-table/merchant-table.componen
 import { MerchantRoutingModule } from './merchant-routing.module';
 import { ThemeModule } from './../../../../@theme/theme.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { SharedModule } from './../../../../@shared/shared.module';
-import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 const NB_MODULES = [

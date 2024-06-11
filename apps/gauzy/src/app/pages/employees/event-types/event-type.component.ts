@@ -2,6 +2,11 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
+import { combineLatest, Subject } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IEventType,
 	ComponentLayoutStyleEnum,
@@ -9,20 +14,15 @@ import {
 	IEventTypeViewModel,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { Cell, LocalDataSource } from 'angular2-smart-table';
-import { combineLatest } from 'rxjs';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EventTypeService } from '@gauzy/ui-sdk/core';
-import { PaginationFilterBaseComponent, IPaginationBase, NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, EventTypeService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	DeleteConfirmationComponent
+} from '@gauzy/ui-sdk/shared';
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { DEFAULT_EVENT_TYPE } from './default-event-type';
 
 @UntilDestroy({ checkProperties: true })

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';

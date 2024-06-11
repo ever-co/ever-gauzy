@@ -2,8 +2,8 @@ import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { PaymentsComponent } from './payments.component';
-import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{

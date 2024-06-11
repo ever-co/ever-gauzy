@@ -11,13 +11,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EquipmentService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
+	DeleteConfirmationComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-sdk/shared';
 import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';

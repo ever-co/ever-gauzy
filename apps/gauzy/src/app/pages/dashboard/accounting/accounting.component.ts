@@ -18,7 +18,7 @@ import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelecte
 import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-sdk/common';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@shared/selectors/employee';
+import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

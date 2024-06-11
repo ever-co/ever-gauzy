@@ -17,7 +17,7 @@ import {
 	NbContextMenuModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkRoutingModule } from './upwork-routing.module';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';
@@ -26,8 +26,6 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ContractsComponent } from './components/contracts/contracts.component';
 import { SyncDataSelectionComponent } from './components/sync-data-selection/sync-data-selection.component';
 import { ReportsComponent } from './components/reports/reports.component';
-import { SharedModule } from '../../@shared/shared.module';
-import { SelectorsModule } from '../../@shared/selectors/selectors.module';
 
 @NgModule({
 	declarations: [

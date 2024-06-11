@@ -7,8 +7,12 @@ import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { OrganizationPositionsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { PaginationFilterBaseComponent, IPaginationBase, NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	DeleteConfirmationComponent
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

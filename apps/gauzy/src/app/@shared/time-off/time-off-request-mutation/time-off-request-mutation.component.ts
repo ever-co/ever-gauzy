@@ -13,8 +13,7 @@ import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator, OrganizationDocumentsService } from '@gauzy/ui-sdk/core';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { FormHelpers } from '@gauzy/ui-sdk/shared';
-import { EmployeeSelectorComponent } from '../../selectors/employee';
+import { EmployeeSelectorComponent, FormHelpers } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

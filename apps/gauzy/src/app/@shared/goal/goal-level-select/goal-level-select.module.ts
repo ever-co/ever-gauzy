@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NbInputModule, NbSelectModule, NbTooltipModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { EmployeeMultiSelectModule } from '@gauzy/ui-sdk/shared';
 import { GoalLevelSelectComponent } from './goal-level-select.component';
-import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
 	declarations: [GoalLevelSelectComponent],

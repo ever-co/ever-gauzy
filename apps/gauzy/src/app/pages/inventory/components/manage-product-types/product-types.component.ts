@@ -13,9 +13,8 @@ import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui
 import { Store } from '@gauzy/ui-sdk/common';
 import { ProductTypeService } from '@gauzy/ui-sdk/core';
 import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { IconRowComponent } from '../inventory-table-components';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent } from './../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

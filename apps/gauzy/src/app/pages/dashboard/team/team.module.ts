@@ -10,7 +10,7 @@ import {
 } from '@nebular/theme';
 import { NgChartsModule } from 'ng2-charts';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 import { TeamComponent } from './team.component';

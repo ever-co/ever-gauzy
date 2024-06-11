@@ -1,19 +1,19 @@
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { CandidateSelectComponent } from './candidate-select.component';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
-		NbSelectModule,
-		SharedModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		I18nTranslateModule.forChild()
+		NbSelectModule,
+		I18nTranslateModule.forChild(),
+		SharedModule
 	],
 	declarations: [CandidateSelectComponent],
 	exports: [CandidateSelectComponent],

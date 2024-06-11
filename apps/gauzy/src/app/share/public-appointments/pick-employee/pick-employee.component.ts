@@ -1,12 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EventTypeService, ToastrService } from '@gauzy/ui-sdk/core';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeSelectorComponent } from '../../../@shared/selectors/employee';
+import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-sdk/common';
+import { EventTypeService, ToastrService } from '@gauzy/ui-sdk/core';
+import { EmployeeSelectorComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -27,7 +27,7 @@ import {
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
-import { EmployeeSelectorComponent } from '../../selectors/employee';
+import { EmployeeSelectorComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

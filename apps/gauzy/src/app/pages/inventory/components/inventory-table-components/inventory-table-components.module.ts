@@ -9,7 +9,7 @@ import { ItemImgTagsComponent } from './item-img-tags-row.component';
 import { SelectedRowComponent } from './selected-row.component';
 import { ContactRowComponent } from './contact-row.component';
 import { NameWithDescriptionComponent } from './name-with-description/name-with-description.component';
-import { SharedModule } from '../../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { NoImageComponent } from './no-image/no-image.component';
 import { DescriptionComponent } from './description/description.component';
 

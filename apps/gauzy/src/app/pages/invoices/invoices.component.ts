@@ -48,14 +48,15 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	IPaginationBase,
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
-	PaginationFilterBaseComponent
+	PaginationFilterBaseComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components';
@@ -65,7 +66,6 @@ import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.co
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
 import { generateCsv } from '../../@shared/invoice/generate-csv';
-import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -16,12 +16,14 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../@shared/shared.module';
+import {
+	GauzyButtonActionModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 

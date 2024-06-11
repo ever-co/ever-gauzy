@@ -8,8 +8,7 @@ import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@ne
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { SharedModule } from '../../../@shared/shared.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProjectColumnViewModule } from '../../../@shared/report/project-column-view/project-column-view.module';
 
 @NgModule({

@@ -6,8 +6,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ManualTimeRoutingModule } from './manual-time-routing.module';
 import { ManualTimeComponent } from './manual-time/manual-time.component';
-import { SharedModule } from '../../../@shared/shared.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProjectColumnViewModule } from '../../../@shared/report/project-column-view/project-column-view.module';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 

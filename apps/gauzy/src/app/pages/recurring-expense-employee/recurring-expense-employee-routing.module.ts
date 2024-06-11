@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
-import { DateRangePickerResolver } from '../../@shared/selectors/date-range-picker';
 
 const routes: Routes = [
 	{

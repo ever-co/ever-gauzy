@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from '../../../@shared/selectors/date-range-picker';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { ExpensesReportComponent } from './expenses-report/expenses-report.component';
 
 const routes: Routes = [

@@ -22,8 +22,12 @@ import {
 	InviteStatusEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { PaginationFilterBaseComponent, IPaginationBase, DateViewComponent } from '@gauzy/ui-sdk/shared';
-import { DeleteConfirmationComponent } from '../../user/forms';
+import {
+	PaginationFilterBaseComponent,
+	IPaginationBase,
+	DateViewComponent,
+	DeleteConfirmationComponent
+} from '@gauzy/ui-sdk/shared';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';

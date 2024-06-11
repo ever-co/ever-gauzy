@@ -10,10 +10,9 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { TableComponentsModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
@@ -31,7 +30,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		TagsColorInputModule,
 		NbActionsModule,
 		TableComponentsModule,
 		CardGridModule,

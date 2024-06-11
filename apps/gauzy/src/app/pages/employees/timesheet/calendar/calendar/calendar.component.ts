@@ -24,11 +24,14 @@ import { filter, tap } from 'rxjs/operators';
 import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { Store, isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
-import { dayOfWeekAsString } from '../../../../../@shared/selectors/date-range-picker/date-picker.utils';
+import {
+	BaseSelectorFilterComponent,
+	EditTimeLogModalComponent,
+	GauzyFiltersComponent,
+	TimeZoneService,
+	ViewTimeLogModalComponent,
+	dayOfWeekAsString
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

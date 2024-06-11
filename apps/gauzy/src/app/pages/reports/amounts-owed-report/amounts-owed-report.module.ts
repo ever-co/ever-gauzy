@@ -5,10 +5,9 @@ import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-r
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { AmountsOwedGridModule } from '../../../@shared/report/amounts-owed-grid/amounts-owed-grid.module';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { SharedModule } from '../../../@shared/shared.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 
 @NgModule({
 	declarations: [AmountsOwedReportComponent],

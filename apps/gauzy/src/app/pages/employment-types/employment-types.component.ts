@@ -17,9 +17,13 @@ import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IPaginationBase, NotesWithTagsComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { ToastrService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

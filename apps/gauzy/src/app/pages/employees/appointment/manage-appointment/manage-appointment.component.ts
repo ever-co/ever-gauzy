@@ -28,9 +28,8 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { AlertModalComponent, EmployeeSelectComponent } from '@gauzy/ui-sdk/shared';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
-import { EmployeeSelectComponent } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

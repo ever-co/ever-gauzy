@@ -15,14 +15,14 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	PictureNameTagsComponent,
-	DateViewComponent
+	DateViewComponent,
+	DeleteConfirmationComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { ApprovalPolicyComponent } from '../approvals/table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -452,7 +452,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 			this.sourceSmartTable = new ServerDataSource(this.httpClient, {

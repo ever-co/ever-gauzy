@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { OrganizationsStepFormModule } from '../../@shared/organizations/organizations-step-form/organizations-step-form.module';
+import { OrganizationsStepFormModule } from '@gauzy/ui-sdk/shared';
 import { TenantDetailsComponent } from './tenant-details.component';
 
 const routes: Routes = [

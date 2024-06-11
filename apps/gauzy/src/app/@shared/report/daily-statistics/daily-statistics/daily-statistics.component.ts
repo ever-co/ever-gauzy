@@ -4,7 +4,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import * as moment from 'moment';
+import moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import {
@@ -13,8 +13,7 @@ import {
 	OrganizationProjectsService,
 	TimesheetStatisticsService
 } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent } from '../../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../../timesheet/gauzy-filters/timezone-filter';
+import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

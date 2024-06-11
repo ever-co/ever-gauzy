@@ -15,7 +15,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { GauzyButtonActionModule, PaginationV2Module, SmartTableToggleModule } from '@gauzy/ui-sdk/shared';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees/employees.component';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 
 @NgModule({

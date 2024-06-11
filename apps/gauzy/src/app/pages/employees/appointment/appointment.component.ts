@@ -33,8 +33,8 @@ import {
 } from '@gauzy/contracts';
 import { Store, convertLocalToTimezone } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
-import { dayOfWeekAsString } from '../../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

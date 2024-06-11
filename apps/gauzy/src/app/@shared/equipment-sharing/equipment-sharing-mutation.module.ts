@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
@@ -13,14 +14,13 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ThemeModule } from '../../@theme/theme.module';
+import { EmployeeMultiSelectModule } from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingMutationComponent } from './equipment-sharing-mutation.component';
-import { EmployeeMultiSelectModule } from '../employee/employee-multi-select/employee-multi-select.module';
 import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [
-		ThemeModule,
+		CommonModule,
 		FormsModule,
 		NbCardModule,
 		NbIconModule,

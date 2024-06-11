@@ -21,12 +21,12 @@ import {
 	GauzyButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module
+	PaginationV2Module,
+	SharedModule,
+	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
-import { SharedModule } from './../../../../@shared/shared.module';
 import { ManageQuantityComponent } from './manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityFormComponent } from './manage-variants-quantity-form/manage-variants-quantity-form.component';
 import { ManageVariantsQuantityComponent } from './manage-variants-quantity/manage-variants-quantity.component';

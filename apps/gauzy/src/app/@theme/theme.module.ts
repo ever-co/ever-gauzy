@@ -46,7 +46,7 @@ import {
 	UsersOrganizationsService,
 	UsersService
 } from '@gauzy/ui-sdk/core';
-import { DirectivesModule, WorkspacesModule } from '@gauzy/ui-sdk/shared';
+import { DirectivesModule, SelectorsModule, WorkspacesModule } from '@gauzy/ui-sdk/shared';
 import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
 import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
 import {
@@ -63,7 +63,6 @@ import { UserComponent } from './components/user/user.component';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { ThemeLanguageSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.module';
 import { ThemeLanguageSelectorService } from './components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
-import { SelectorsModule } from '../@shared/selectors/selectors.module';
 
 const NB_MODULES = [
 	NbLayoutModule,

@@ -7,7 +7,6 @@ import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	IEmployee,
 	IOrganizationDepartment,
@@ -16,11 +15,10 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { OrganizationDepartmentsService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
+	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
 	IPaginationBase,
 	NotesWithTagsComponent,

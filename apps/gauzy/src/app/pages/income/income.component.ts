@@ -20,13 +20,16 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
 import {
+	ALL_EMPLOYEES_SELECTED,
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
 	PaginationFilterBaseComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
 import {
@@ -42,9 +45,6 @@ import {
 	OrganizationContactFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { getAdjustDateRangeFutureAllowed } from '../../@shared/selectors/date-range-picker';
-import { ALL_EMPLOYEES_SELECTED } from '../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

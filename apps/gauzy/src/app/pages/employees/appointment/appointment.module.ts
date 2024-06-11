@@ -11,7 +11,7 @@ import {
 import { ThemeModule } from '../../../@theme/theme.module';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 
 @NgModule({

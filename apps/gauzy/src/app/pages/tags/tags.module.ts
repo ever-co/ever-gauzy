@@ -16,20 +16,22 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TagsComponent } from './tags.component';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { ColorPickerModule } from 'ngx-color-picker';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TagsRoutingModule } from './tags-routing.module';
-import { TagsMutationModule } from '../../@shared/tags/tags-mutation.module';
-import { ColorPickerModule } from 'ngx-color-picker';
-import { TagsColorComponent } from './tags-color/tags-color.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../@shared/shared.module';
+import {
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TagsMutationModule,
+	UserFormsModule
+} from '@gauzy/ui-sdk/shared';
+import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
+import { TagsComponent } from './tags.component';
+import { TagsRoutingModule } from './tags-routing.module';
+import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @NgModule({
 	imports: [

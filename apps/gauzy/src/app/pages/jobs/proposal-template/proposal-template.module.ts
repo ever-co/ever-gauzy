@@ -17,11 +17,15 @@ import { MomentModule } from 'ngx-moment';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DialogsModule, GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	DialogsModule,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
 import { ProposalTemplateRoutingModule } from './proposal-template-routing.module';
 import { ProposalTemplateComponent } from './proposal-template/proposal-template.component';
-import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { SharedModule } from '../../../@shared/shared.module';
 import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
 

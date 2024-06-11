@@ -24,12 +24,12 @@ import {
 	CreateByComponent,
 	DateViewComponent,
 	EmployeeWithLinksComponent,
-	TaskTeamsComponent
+	TaskTeamsComponent,
+	DeleteConfirmationComponent
 } from '@gauzy/ui-sdk/shared';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
 import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

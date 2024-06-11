@@ -17,13 +17,17 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule, PaginationV2Module, TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from './../../@shared/shared.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import {
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	ImageUploaderModule,
+	PaginationV2Module,
+	ProjectSelectModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { ProjectSelectModule } from '../../@shared/selectors/project-select/project-select.module';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';

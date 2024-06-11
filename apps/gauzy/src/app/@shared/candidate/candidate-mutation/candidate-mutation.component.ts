@@ -14,10 +14,9 @@ import {
 	ICandidateSource,
 	IOrganization
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidatesService, ErrorHandlingService, RoleService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { BasicInfoFormComponent } from '../../user/forms/basic-info/basic-info-form.component';
+import { BasicInfoFormComponent } from '@gauzy/ui-sdk/shared';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 
 @UntilDestroy({ checkProperties: true })

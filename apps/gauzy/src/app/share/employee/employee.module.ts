@@ -11,12 +11,14 @@ import {
 	NbUserModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { SharedModule } from '../../@shared/shared.module';
+import {
+	ImageUploaderModule,
+	PublicPageEmployeeMutationModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { EmployeeComponent } from './employee.component';
-import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({

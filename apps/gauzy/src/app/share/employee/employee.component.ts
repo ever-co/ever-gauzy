@@ -10,7 +10,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
 import { EmployeesService, ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
-import { PublicPageEmployeeMutationComponent } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.component';
+import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -79,7 +79,13 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 		this.imageUpdateButton = false;
 	}
 
-	openEditEmployeeDialog(employee: IEmployee) {
+	/**
+	 * Opens a dialog to edit an employee.
+	 *
+	 * @param {IEmployee} employee - The employee to be edited.
+	 * @return {void} This function does not return a value.
+	 */
+	openEditEmployeeDialog(employee: IEmployee): void {
 		if (!this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
 			return;
 		}

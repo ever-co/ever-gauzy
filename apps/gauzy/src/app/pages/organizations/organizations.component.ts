@@ -15,9 +15,13 @@ import {
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
-import { IPaginationBase, OrganizationWithTagsComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	OrganizationWithTagsComponent,
+	OrganizationsMutationComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,

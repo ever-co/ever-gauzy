@@ -13,11 +13,13 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { SharedModule } from '../../@shared/shared.module';
-import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
+import {
+	EmployeeMultiSelectModule,
+	FileUploaderModule,
+	SharedModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { DepartmentsComponent } from './departments.component';
 import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';

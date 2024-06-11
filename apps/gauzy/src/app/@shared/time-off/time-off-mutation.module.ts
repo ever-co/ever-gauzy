@@ -13,12 +13,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { FileUploaderModule, SelectorsModule } from '@gauzy/ui-sdk/shared';
 import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-settings-mutation.component';
 import { TimeOffRequestMutationComponent } from './time-off-request-mutation/time-off-request-mutation.component';
-import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TimeOffHolidayMutationComponent } from './time-off-holiday-mutation/time-off-holiday-mutation.component';
 import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-policy-select.module';
-import { SelectorsModule } from '../selectors/selectors.module';
 
 @NgModule({
 	imports: [

@@ -31,13 +31,13 @@ import {
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { InvoicePaidComponent } from '../table-components';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
-import { getAdjustDateRangeFutureAllowed } from '../../../@shared/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

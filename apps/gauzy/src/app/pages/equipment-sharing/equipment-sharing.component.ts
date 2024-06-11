@@ -17,9 +17,13 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EquipmentSharingService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DateViewComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	DateViewComponent,
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,25 +11,26 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../@shared/shared.module';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import {
+	GauzyButtonActionModule,
+	PaginationModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [
 		SharedModule,
-		ThemeModule,
+		CommonModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,

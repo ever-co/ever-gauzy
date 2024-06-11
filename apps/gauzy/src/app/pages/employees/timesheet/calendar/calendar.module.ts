@@ -8,9 +8,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
 import { ShareModule } from './../../../../share/share.module';
-import { SharedModule } from './../../../../@shared/shared.module';
-import { EditTimeLogModalModule, ViewTimeLogModalModule } from './../../../../@shared/timesheet';
-import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { EditTimeLogModalModule, GauzyFiltersModule, SharedModule, ViewTimeLogModalModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [CalendarComponent],

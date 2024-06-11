@@ -14,12 +14,11 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { PaginationModule } from '@gauzy/ui-sdk/shared';
+import { FileUploaderModule, PaginationModule } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../@theme/theme.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
-import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TableComponentsModule } from '@gauzy/ui-sdk/shared';

@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAlertModule,
@@ -15,14 +16,12 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
-import { CurrencyModule } from '@gauzy/ui-sdk/shared';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { CurrencyModule, SelectorsModule } from '@gauzy/ui-sdk/shared';
 import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.component';
-import { SelectorsModule } from '../../selectors/selectors.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbCardModule,

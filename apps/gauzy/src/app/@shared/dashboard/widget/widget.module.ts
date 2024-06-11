@@ -2,19 +2,19 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbPopoverModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { WidgetComponent } from './widget.component';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
-	declarations: [WidgetComponent],
 	imports: [
 		CommonModule,
+		NbButtonModule,
 		NbIconModule,
 		NbPopoverModule,
-		NbButtonModule,
-		SharedModule,
-		I18nTranslateModule.forChild()
+		I18nTranslateModule.forChild(),
+		SharedModule
 	],
+	declarations: [WidgetComponent],
 	exports: [WidgetComponent]
 })
 export class WidgetModule {}

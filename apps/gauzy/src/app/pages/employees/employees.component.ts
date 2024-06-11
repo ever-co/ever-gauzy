@@ -29,16 +29,14 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import {
 	AllowScreenshotCaptureComponent,
 	DateFormatPipe,
+	DeleteConfirmationComponent,
+	EmployeeEndWorkComponent,
+	EmployeeMutationComponent,
+	EmployeeStartWorkComponent,
 	PictureNameTagsComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-sdk/shared';
-import {
-	EmployeeEndWorkComponent,
-	EmployeeMutationComponent,
-	EmployeeStartWorkComponent
-} from '../../@shared/employee';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import {

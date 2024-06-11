@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NbIconModule } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../shared.module';
+import { SharedModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { RecurringExpenseHistoryComponent } from './recurring-expense-history.component';
 
 @NgModule({

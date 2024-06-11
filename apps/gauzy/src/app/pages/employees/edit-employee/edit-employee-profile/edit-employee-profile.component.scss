@@ -1,25 +1,25 @@
 :host {
-    ::ng-deep .tabset-container .route-tabset {
-        overflow-x: scroll;
-        overflow-y: hidden;
+  ::ng-deep .tabset-container .route-tabset {
+    overflow-x: scroll;
+    overflow-y: hidden;
 
-        &::-webkit-scrollbar {
-            /* Chrome, Safari, Opera */
-            display: none;
-            /* IE, Edge */
-            -ms-overflow-style: none;
-            /* Firefox */
-            scrollbar-width: none;
-        }
-
-        @media only screen and (max-width: 1280px) {
-            li a.tab-link {
-                display: flex !important;
-
-                nb-icon {
-                    margin-bottom: 0;
-                }
-            }
-        }
+    &::-webkit-scrollbar {
+      /* Chrome, Safari, Opera */
+      display: none;
+      /* IE, Edge */
+      -ms-overflow-style: none;
+      /* Firefox */
+      scrollbar-width: none;
     }
+
+    @media only screen and (max-width: 1280px) {
+      li a.tab-link {
+        display: flex !important;
+
+        nb-icon {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
 }

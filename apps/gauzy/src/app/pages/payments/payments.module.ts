@@ -5,7 +5,7 @@ import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerMo
 import { PaymentsRoutingModule } from './payments-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {

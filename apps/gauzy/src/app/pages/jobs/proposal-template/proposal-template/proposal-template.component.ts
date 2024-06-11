@@ -17,6 +17,7 @@ import {
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
 	Nl2BrPipe,
@@ -25,7 +26,6 @@ import {
 } from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 import { ProposalTemplateService } from '../proposal-template.service';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',

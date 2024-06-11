@@ -19,9 +19,8 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { OrganizationSettingService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '@gauzy/ui-sdk/shared';
+import { ALL_EMPLOYEES_SELECTED, FormHelpers } from '@gauzy/ui-sdk/shared';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
-import { ALL_EMPLOYEES_SELECTED } from '../../selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

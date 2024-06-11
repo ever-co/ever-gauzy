@@ -19,8 +19,7 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

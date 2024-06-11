@@ -13,7 +13,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { PaginationV2Module, ProjectSelectModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { GithubRoutingModule } from './github-routing.module';
 import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
@@ -21,8 +21,6 @@ import { GithubInstallationComponent } from './components/installation/installat
 import { GithubViewComponent } from './components/view/view.component';
 import { GithubSettingsComponent } from './components/settings/settings.component';
 import { RepositorySelectorModule } from '../../../@shared/integrations/github';
-import { SharedModule } from '../../../@shared/shared.module';
-import { ProjectSelectModule } from '../../../@shared/selectors/project-select/project-select.module';
 
 @NgModule({
 	declarations: [

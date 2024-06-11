@@ -29,7 +29,7 @@ import {
 	SelectorBuilderService,
 	UsersOrganizationsService
 } from '@gauzy/ui-sdk/core';
-import { QuickActionsComponent } from '@gauzy/ui-sdk/shared';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } from '@gauzy/ui-sdk/shared';
 import { environment } from '@gauzy/ui-config';
 import {
 	EmployeesService,
@@ -41,7 +41,6 @@ import {
 	OrganizationProjectStore,
 	OrganizationTeamsService
 } from '@gauzy/ui-sdk/core';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED } from '../../../@shared/selectors/employee';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

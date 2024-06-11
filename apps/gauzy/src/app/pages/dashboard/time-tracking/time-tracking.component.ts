@@ -54,12 +54,14 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { GalleryService } from '../../../@shared/gallery';
+import {
+	ALL_EMPLOYEES_SELECTED,
+	GalleryService,
+	TimeZoneService,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-sdk/shared';
 import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
 import { WindowService } from '../../../@shared/dashboard/window/window.service';
-import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@shared/selectors/employee';
-import { getAdjustDateRangeFutureAllowed } from '../../../@shared/selectors/date-range-picker/date-picker.utils';
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);
