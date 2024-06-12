@@ -1,5 +1,5 @@
-@import "themes";
-@import "../../reusable";
+@import 'themes';
+@import '@shared/reusable';
 
 .main-section {
   background: linear-gradient(to bottom, nb-theme(color-primary-400), nb-theme(color-primary-600));

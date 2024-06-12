@@ -15,10 +15,7 @@ import { AuthService } from '@gauzy/ui-sdk/core';
 @Component({
 	selector: 'ngx-edit-user-profile',
 	templateUrl: './edit-user-profile.component.html',
-	styleUrls: [
-		'../../../@shared/user/edit-profile-form/edit-profile-form.component.scss',
-		'./edit-user-profile.component.scss'
-	]
+	styleUrls: ['./edit-user-profile.component.scss']
 })
 export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	form: UntypedFormGroup;

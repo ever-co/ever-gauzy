@@ -1,9 +1,8 @@
-@import '@shared/_add-task-dialog';
+@import 'gauzy/_gauzy-dialogs';
 
 .body {
   width: 550px;
 }
-
 .description {
   margin-top: 10px;
   height: 150px;
@@ -25,4 +24,9 @@
 
 .nb-radio {
   display: inline-block;
+}
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-1);
+  }
 }

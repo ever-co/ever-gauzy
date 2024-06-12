@@ -1,5 +1,5 @@
-@import "themes";
-@import "../reusable";
+@import 'themes';
+@import '@shared/reusable';
 
 .login-container {
   width: 765px;
@@ -53,25 +53,25 @@
         }
       }
       & .sent-code-container {
-          margin-bottom: 1rem;
-          margin-right: -20px;
-          & .normal-text {
-            font-size: 0.8rem;
-          }
-          & .minimum-text {
-            font-size: 0.75rem;
-          }
-          & p {
-            margin-bottom: 0;
-          }
-          & b {
-            font-size: 0.8rem;
-          }
-          & span {
-            font-size: 0.7rem;
-            color: var(--text-hint-color);
-          }
+        margin-bottom: 1rem;
+        margin-right: -20px;
+        & .normal-text {
+          font-size: 0.8rem;
         }
+        & .minimum-text {
+          font-size: 0.75rem;
+        }
+        & p {
+          margin-bottom: 0;
+        }
+        & b {
+          font-size: 0.8rem;
+        }
+        & span {
+          font-size: 0.7rem;
+          color: var(--text-hint-color);
+        }
+      }
     }
     & .hr-div-strong {
       @include hr-div-strong;
@@ -84,7 +84,6 @@
     margin-top: 29px;
     margin-bottom: 42px;
     & .form-control-group {
-
       .not-allowed {
         cursor: not-allowed;
       }
@@ -175,13 +174,13 @@
       }
     }
     & .magic-description {
-        & p {
-            text-align: left;
-            font-size: 0.85rem;
-            & a {
-                color: var(--link-text-color);
-            }
+      & p {
+        text-align: left;
+        font-size: 0.85rem;
+        & a {
+          color: var(--link-text-color);
         }
+      }
     }
   }
   & .links {
@@ -209,8 +208,8 @@
       background: nb-theme(color-primary-700);
       & .custom-btn {
         color: white;
-        background: #6E49E8;
-        border: 1px solid #6E49E8;
+        background: #6e49e8;
+        border: 1px solid #6e49e8;
       }
     }
   }
@@ -242,7 +241,7 @@
     text-align: left;
     margin-bottom: 20px;
     padding-left: 13px;
-    color: #7E7E8F;
+    color: #7e7e8f;
   }
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
@@ -294,7 +293,8 @@
       & * {
         text-align: center;
       }
-      & .title, .sub-title {
+      & .title,
+      .sub-title {
         text-align: center;
       }
     }
@@ -310,7 +310,8 @@
       & .headings {
         & .headings-inner {
           width: 100%;
-          & .title, .sub-title {
+          & .title,
+          .sub-title {
             width: 100%;
             text-align: center;
           }
@@ -351,7 +352,8 @@
       & * {
         text-align: left;
       }
-      & .title, .sub-title {
+      & .title,
+      .sub-title {
         text-align: left;
       }
     }
@@ -368,7 +370,7 @@
   }
 }
 // input fields color
-  @include input-fields-color;
+@include input-fields-color;
 
 ::ng-deep .remember-me .text {
   font-family: Inter;

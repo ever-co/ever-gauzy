@@ -27,10 +27,7 @@ import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/c
 @Component({
 	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
-	styleUrls: [
-		'./edit-candidate-profile.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./edit-candidate-profile.component.scss'],
 	providers: [CandidateStore]
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

@@ -14,10 +14,7 @@ import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
 @Component({
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
-	styleUrls: [
-		'./edit-employee-profile.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./edit-employee-profile.component.scss'],
 	providers: [EmployeeStore]
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
