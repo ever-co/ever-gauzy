@@ -132,12 +132,14 @@ import { TranslateService } from '@ngx-translate/core';
 export class InterviewActionsTableComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() rowData: any;
 	@Output() updateResult = new EventEmitter<any>();
-	constructor(readonly translateService: TranslateService) {
+
+	constructor(public readonly translateService: TranslateService) {
 		super(translateService);
 	}
 
 	ngOnInit() {}
 	ngOnDestroy() {}
+
 	isPastInterview(interview: ICandidateInterview) {
 		const now = new Date().getTime();
 		if (new Date(interview.startTime).getTime() > now) {
@@ -146,6 +148,7 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 			return true;
 		}
 	}
+
 	removeInterview() {
 		const params = {
 			type: 'remove',
@@ -153,6 +156,7 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 		};
 		this.updateResult.emit(params);
 	}
+
 	archive() {
 		const params = {
 			type: 'archive',
@@ -160,6 +164,7 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 		};
 		this.updateResult.emit(params);
 	}
+
 	addFeedback() {
 		const params = {
 			type: 'feedback',
@@ -167,6 +172,7 @@ export class InterviewActionsTableComponent extends TranslationBaseComponent imp
 		};
 		this.updateResult.emit(params);
 	}
+
 	editInterview() {
 		const params = {
 			type: 'edit',
