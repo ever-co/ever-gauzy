@@ -92,6 +92,8 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	}
 
 	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
 				debounceTime(300),
@@ -118,19 +120,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
-					const { tenantId } = this.store.user;
-					const { id: organizationId } = organization;
-
-					this.candidatesService
-						.getAll(['user'], {
-							organizationId,
-							tenantId
-						})
-						.pipe(
-							tap((candidates) => (this.candidates = candidates.items)),
-							untilDestroyed(this)
-						)
-						.subscribe();
+					this.getCandidates();
 					this.candidateStore.interviewList$.pipe(untilDestroyed(this)).subscribe();
 				}
 			});
@@ -142,8 +132,28 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
+	}
+
+	/**
+	 *
+	 * @returns
+	 */
+	getCandidates() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+		const candidates$ = this.candidatesService.getAll(['user'], {
+			organizationId,
+			tenantId
+		});
+		candidates$
+			.pipe(
+				tap(({ items }) => (this.candidates = items)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	onEmployeeSelected(empIds: string[]) {
@@ -178,85 +188,92 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	}
 
 	async loadInterviews() {
-		if (!this.organization) return;
-		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const res = await this.candidateFeedbacksService.getAll(['interviewer'], { organizationId, tenantId });
-		if (res) {
-			this.allFeedbacks = res.items;
+		if (!this.organization) {
+			return;
 		}
+		const { id: organizationId, tenantId } = this.organization;
 
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
-		);
-		this.employeeList = items;
+		try {
+			this.loading = true;
+			const { activePage, itemsPerPage } = this.getPagination();
+			const res = await this.candidateFeedbacksService.getAll(['interviewer'], { organizationId, tenantId });
+			if (res) {
+				this.allFeedbacks = res.items;
+			}
 
-		const interviews = await this.candidateInterviewService.getAll(
-			['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-			{ organizationId, tenantId }
-		);
-		if (interviews) {
-			this.interviewList = interviews.items;
-			this.allInterviews = interviews.items;
-			let tableInterviewList = [];
-			const result = [];
-			this.interviewList.forEach((interview) => {
-				const employees = [];
-				interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
-					this.employeeList.forEach((employee: IEmployee) => {
-						if (interviewer.employeeId === employee.id) {
-							interviewer.employeeImageUrl = employee.user.imageUrl;
-							interviewer.employeeName = employee.user.name;
-							employees.push(employee);
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
+			);
+			this.employeeList = items;
+
+			const interviews = await this.candidateInterviewService.getAll(
+				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+				{ organizationId, tenantId }
+			);
+			if (interviews) {
+				this.interviewList = interviews.items;
+				this.allInterviews = interviews.items;
+				let tableInterviewList = [];
+				const result = [];
+				this.interviewList.forEach((interview) => {
+					const employees = [];
+					interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
+						this.employeeList.forEach((employee: IEmployee) => {
+							if (interviewer.employeeId === employee.id) {
+								interviewer.employeeImageUrl = employee.user.imageUrl;
+								interviewer.employeeName = employee.user.name;
+								employees.push(employee);
+							}
+						});
+					});
+					this.candidates.forEach((candidate) => {
+						if (candidate.id === interview?.candidate?.id) {
+							interview.candidate.user = candidate.user;
+							result.push({
+								...interview,
+								fullName: candidate.user.name,
+								imageUrl: candidate.user.imageUrl,
+								employees: employees,
+								showArchive: true,
+								allFeedbacks: this.allFeedbacks,
+								hideActions: true
+							});
 						}
 					});
 				});
-				this.candidates.forEach((item) => {
-					if (item.id === interview.candidate.id) {
-						interview.candidate.user = item.user;
-						result.push({
-							...interview,
-							fullName: item.user.name,
-							imageUrl: item.user.imageUrl,
-							employees: employees,
-							showArchive: true,
-							allFeedbacks: this.allFeedbacks,
-							hideActions: true
-						});
-					}
+				// for grid view
+				this.interviewList = this.onlyPast
+					? this.filterInterviewByTime(this.interviewList, true)
+					: this.interviewList;
+
+				this.interviewList = this.onlyFuture
+					? this.filterInterviewByTime(this.interviewList, false)
+					: this.interviewList;
+
+				this.interviewList = this.includeArchivedCheck(this.includeArchived, this.interviewList);
+				//for table view
+				tableInterviewList = this.includeArchivedCheck(this.includeArchived, result);
+				tableInterviewList = this.onlyPast
+					? this.filterInterviewByTime(tableInterviewList, true)
+					: tableInterviewList;
+
+				tableInterviewList = this.onlyFuture
+					? this.filterInterviewByTime(tableInterviewList, false)
+					: tableInterviewList;
+				this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+				this.sourceSmartTable.load(this._getUniquesById(tableInterviewList));
+				this._loadGridLayoutData();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.sourceSmartTable.count()
 				});
-			});
-			// for grid view
-			this.interviewList = this.onlyPast
-				? this.filterInterviewByTime(this.interviewList, true)
-				: this.interviewList;
-
-			this.interviewList = this.onlyFuture
-				? this.filterInterviewByTime(this.interviewList, false)
-				: this.interviewList;
-
-			this.interviewList = this.includeArchivedCheck(this.includeArchived, this.interviewList);
-			//for table view
-			tableInterviewList = this.includeArchivedCheck(this.includeArchived, result);
-			tableInterviewList = this.onlyPast
-				? this.filterInterviewByTime(tableInterviewList, true)
-				: tableInterviewList;
-
-			tableInterviewList = this.onlyFuture
-				? this.filterInterviewByTime(tableInterviewList, false)
-				: tableInterviewList;
-			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-			this.sourceSmartTable.load(this._getUniquesById(tableInterviewList));
-			this._loadGridLayoutData();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.sourceSmartTable.count()
-			});
+			}
+		} catch (error) {
+			console.log('Error while getting candidate inteviews', error);
+		} finally {
 			this.loading = false;
 		}
 	}

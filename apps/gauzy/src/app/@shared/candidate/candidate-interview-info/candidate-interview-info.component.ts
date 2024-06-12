@@ -1,5 +1,8 @@
 import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { ICandidateInterview, ICandidate, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import {
@@ -9,11 +12,10 @@ import {
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { TranslateService } from '@ngx-translate/core';
-import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
-import { Subject, firstValueFrom } from 'rxjs';
 import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateInterviewMutationComponent } from '../candidate-interview-mutation/candidate-interview-mutation.component';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-candidate-interview-info',
 	templateUrl: './candidate-interview-info.component.html',
@@ -24,7 +26,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 	@Input() interviewList: ICandidateInterview[];
 	@Input() isSlider: boolean;
 	@Input() selectedCandidate: ICandidate; //from profile
-	private _ngDestroy$ = new Subject<void>();
+
 	candidateId: string;
 	interviewerNames = [];
 	currentInterview: ICandidateInterview;
@@ -35,19 +37,21 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 	isPreviousBtn = false;
 	interviewers = [];
 	organization: IOrganization;
+
 	constructor(
-		protected dialogRef: NbDialogRef<CandidateInterviewInfoComponent>,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private employeesService: EmployeesService,
-		private candidatesService: CandidatesService,
-		private dialogService: NbDialogService,
-		readonly translateService: TranslateService,
-		private toastrService: ToastrService,
-		private candidateInterviewService: CandidateInterviewService,
-		private store: Store
+		private readonly dialogRef: NbDialogRef<CandidateInterviewInfoComponent>,
+		private readonly candidateInterviewersService: CandidateInterviewersService,
+		private readonly employeesService: EmployeesService,
+		private readonly candidatesService: CandidatesService,
+		private readonly dialogService: NbDialogService,
+		public readonly translateService: TranslateService,
+		private readonly toastrService: ToastrService,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly store: Store
 	) {
 		super(translateService);
 	}
+
 	async edit() {
 		this.currentInterview.interviewers = this.interviewers;
 		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
@@ -92,6 +96,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 
 		this.loadData();
 	}
+
 	loadData() {
 		this.getData(this.currentInterview.id);
 		this.setTime(this.currentInterview.updatedAt);
@@ -114,6 +119,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 			}
 		}
 	}
+
 	previous() {
 		--this.index;
 		this.isNextBtn = true;
@@ -125,6 +131,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 			this.isPreviousBtn = false;
 		}
 	}
+
 	next() {
 		++this.index;
 		this.isPreviousBtn = true;
@@ -153,6 +160,7 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 				Math.floor(delta / 86400) + this.getTranslation('CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DAYS_AGO');
 		}
 	}
+
 	isPastInterview(interview: ICandidateInterview) {
 		const now = new Date().getTime();
 		if (interview && new Date(interview.startTime).getTime() > now) {
@@ -169,8 +177,6 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 	closeDialog() {
 		this.dialogRef.close();
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
 }
