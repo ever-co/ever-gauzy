@@ -21,7 +21,7 @@ import { ApprovalPolicyService } from '@gauzy/ui-sdk/core';
 import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalPolicyComponent } from './approval-policy.component';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 import { ApprovalPolicyMutationModule } from '../../@shared/approval-policy/approval-policy-mutation.module';
 

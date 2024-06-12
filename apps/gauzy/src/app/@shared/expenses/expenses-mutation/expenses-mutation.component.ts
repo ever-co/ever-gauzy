@@ -1,6 +1,9 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
-import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntypedFormBuilder, Validators, UntypedFormGroup, FormControl } from '@angular/forms';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { filter, tap } from 'rxjs/operators';
 import {
 	TaxTypesEnum,
 	ExpenseTypesEnum,
@@ -13,16 +16,11 @@ import {
 	ExpenseStatusesEnum,
 	ICurrency
 } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslateService } from '@ngx-translate/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { filter, tap } from 'rxjs/operators';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { OrganizationSettingService } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '@gauzy/ui-sdk/shared';
+import { ALL_EMPLOYEES_SELECTED, FormHelpers } from '@gauzy/ui-sdk/shared';
+import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

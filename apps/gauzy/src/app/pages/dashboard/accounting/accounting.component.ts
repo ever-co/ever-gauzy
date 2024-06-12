@@ -16,9 +16,9 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-sdk/common';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
 import { IChartData } from '../../../@shared/report/charts/line-chart';
 import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
+import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

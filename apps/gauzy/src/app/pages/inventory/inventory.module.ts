@@ -18,7 +18,6 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -31,12 +30,12 @@ import {
 	ProductVariantSettingService,
 	TranslatableService
 } from '@gauzy/ui-sdk/core';
-import { CurrencyModule } from '@gauzy/ui-sdk/shared';
+import { CurrencyModule, LanguageSelectorModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
 import { OrganizationsService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
 import { OptionsFormComponent } from './components/edit-inventory-item/options-form/options-form.component';
 import { VariantFormComponent } from './components/edit-inventory-item/variant-form/variant-form.component';
@@ -44,7 +43,6 @@ import { InventoryVariantFormComponent } from './components/edit-inventory-item-
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
-import { LanguageSelectorModule } from '../../@shared/language/language-selector';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
 import { ProductTypesModule } from './components/manage-product-types/product-types.module';
 import { ProductCategoriesModule } from './components/manage-product-categories/product-categories.module';

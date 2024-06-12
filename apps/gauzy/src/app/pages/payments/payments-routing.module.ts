@@ -1,9 +1,9 @@
 import { Routes, RouterModule } from '@angular/router';
-import { PaymentsComponent } from './payments.component';
 import { NgModule } from '@angular/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-sdk/core';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
+import { PaymentsComponent } from './payments.component';
 
 const routes: Routes = [
 	{
@@ -22,9 +22,7 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

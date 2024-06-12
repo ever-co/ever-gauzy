@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsGuard } from '@gauzy/ui-sdk/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { InvoicesComponent } from './invoices.component';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
@@ -13,7 +14,6 @@ import { EstimateEditComponent } from './invoice-estimates/estimate-edit/estimat
 import { EstimatesReceivedComponent } from './invoice-estimates/estimates-received/estimates-received.component';
 import { EstimateViewComponent } from './invoice-estimates/estimate-view/estimate-view.component';
 import { InvoicePaymentsComponent } from './invoice-payments/payments.component';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 
 export function redirectTo() {
 	return '/pages/dashboard';

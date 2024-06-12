@@ -28,33 +28,6 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { ThemeModule } from '../../@theme/theme.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
-import { InvoicesComponent } from './invoices.component';
-import { InvoicesRoutingModule } from './invoices-routing.module';
-import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
-import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
-import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
-import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
-import { PublicLinkComponent } from './public-link/public-link.component';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import {
-	InvoiceApplyTaxDiscountComponent,
-	InvoiceEmployeesSelectorComponent,
-	InvoiceExpensesSelectorComponent,
-	InvoicePaidComponent,
-	InvoiceProductsSelectorComponent,
-	InvoiceProjectsSelectorComponent,
-	InvoiceTasksSelectorComponent
-} from './table-components';
 import {
 	EmployeesService,
 	InvoiceEstimateHistoryService,
@@ -70,7 +43,41 @@ import {
 	TranslatableService
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CurrencyModule, CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
+import { ThemeModule } from '../../@theme/theme.module';
+import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
+import { InvoicesComponent } from './invoices.component';
+import { InvoicesRoutingModule } from './invoices-routing.module';
+import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
+import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
+import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
+import {
+	ContactSelectModule,
+	CurrencyModule,
+	CurrencyPositionPipe,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	ProjectSelectModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	UserFormsModule
+} from '@gauzy/ui-sdk/shared';
+import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
+import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
+import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
+import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
+import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
+import { PublicLinkComponent } from './public-link/public-link.component';
+import {
+	InvoiceApplyTaxDiscountComponent,
+	InvoiceEmployeesSelectorComponent,
+	InvoiceExpensesSelectorComponent,
+	InvoicePaidComponent,
+	InvoiceProductsSelectorComponent,
+	InvoiceProjectsSelectorComponent,
+	InvoiceTasksSelectorComponent
+} from './table-components';
 import {
 	EstimateAddComponent,
 	EstimateEditComponent,
@@ -84,10 +91,6 @@ import {
 	PaymentMutationComponent
 } from './invoice-payments';
 import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
-import { SharedModule } from '../../@shared/shared.module';
-import { ContactSelectModule } from '../../@shared/contact-select/contact-select.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
 @NgModule({
 	imports: [

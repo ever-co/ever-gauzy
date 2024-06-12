@@ -15,13 +15,15 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CurrencyModule } from '@gauzy/ui-sdk/shared';
-import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
-import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
+import {
+	CurrencyModule,
+	EmployeeMultiSelectModule,
+	ImageUploaderModule,
+	SharedModule,
+	TagsColorInputModule,
+	TeamSelectModule
+} from '@gauzy/ui-sdk/shared';
 import { ProjectMutationComponent } from './project-mutation.component';
-import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
-import { TeamSelectModule } from '../../team-select/team-select.module';
-import { SharedModule } from '../../shared.module';
 import { RepositorySelectorModule } from '../../integrations/github';
 
 @NgModule({

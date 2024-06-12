@@ -9,10 +9,13 @@ import { DateRangePickerBuilderService, moment, TimesheetFilterService, Timeshee
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { TranslateService } from '@ngx-translate/core';
-import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import {
+	BaseSelectorFilterComponent,
+	ViewTimeLogComponent,
+	GauzyFiltersComponent,
+	TimeZoneService,
+	EditTimeLogModalComponent
+} from '@gauzy/ui-sdk/shared';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;

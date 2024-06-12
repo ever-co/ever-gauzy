@@ -7,22 +7,21 @@ import { combineLatest, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as moment from 'moment';
-import { DateRangePickerBuilderService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import moment from 'moment';
+import { DateRangePickerBuilderService, ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-sdk/core';
 import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { TimeOffService } from '@gauzy/ui-sdk/core';
-import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ApprovalPolicyComponent } from '../approvals/table-components';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	PictureNameTagsComponent,
-	DateViewComponent
+	DateViewComponent,
+	DeleteConfirmationComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
+import { StatusBadgeComponent } from '../../@shared/status-badge';
+import { ApprovalPolicyComponent } from '../approvals/table-components';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
@@ -453,7 +452,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 
 			const { tenantId } = this.store.user;
 			const { id: organizationId } = this.organization;
-
 			const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 			this.sourceSmartTable = new ServerDataSource(this.httpClient, {

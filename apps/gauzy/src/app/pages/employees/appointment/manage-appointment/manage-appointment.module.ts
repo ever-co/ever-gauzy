@@ -11,10 +11,8 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { AppointmentEmployeesService } from '@gauzy/ui-sdk/core';
+import { EmployeeMultiSelectModule, SharedModule, TimerPickerModule } from '@gauzy/ui-sdk/shared';
 import { ManageAppointmentComponent } from './manage-appointment.component';
-import { TimerPickerModule } from './../../../../@shared/timer-picker/timer-picker.module';
-import { SharedModule } from './../../../../@shared/shared.module';
-import { EmployeeMultiSelectModule } from './../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { EmployeeSchedulesModule } from '../employee-schedules/employee-schedules.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';
 

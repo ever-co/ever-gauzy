@@ -5,7 +5,7 @@ import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-sdk/core
 import { ConfirmAppointmentRoutingModule } from './confirm-appointment.routing.module';
 import { ConfirmAppointmentComponent } from './confirm-appointment.component';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

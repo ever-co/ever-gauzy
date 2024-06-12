@@ -27,10 +27,9 @@ import {
 import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { AddTaskDialogComponent, AlertModalComponent } from '@gauzy/ui-sdk/shared';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
-import { AddTaskDialogComponent } from '../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
 
 @Component({
 	selector: 'ga-keyresult-details',

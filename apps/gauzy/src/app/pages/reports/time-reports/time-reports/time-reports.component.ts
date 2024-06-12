@@ -13,11 +13,9 @@ import {
 	TimeLogType
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

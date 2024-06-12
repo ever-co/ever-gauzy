@@ -28,23 +28,24 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import {
+	ActionConfirmationComponent,
 	ClickableLinkComponent,
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

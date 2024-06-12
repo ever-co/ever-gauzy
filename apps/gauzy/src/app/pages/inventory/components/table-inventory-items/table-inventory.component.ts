@@ -15,10 +15,14 @@ import {
 	IProductTranslated,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { IPaginationBase, PaginationFilterBaseComponent, TagsOnlyComponent } from '@gauzy/ui-sdk/shared';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })

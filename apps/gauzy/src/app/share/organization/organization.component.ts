@@ -16,7 +16,7 @@ import {
 	OrganizationsService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
+import { PublicPageMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -202,14 +202,19 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
 
-	editPublicPage() {
-		this.dialogService
-			.open(PublicPageMutationComponent, {
-				context: {
-					organization: this.organization
-				}
-			})
-			.onClose.pipe(
+	/**
+	 * Opens a dialog to edit the public page of the organization and updates the organization data if successful.
+	 *
+	 * @return {void}
+	 */
+	editPublicPage(): void {
+		const dialog$ = this.dialogService.open(PublicPageMutationComponent, {
+			context: {
+				organization: this.organization
+			}
+		});
+		dialog$.onClose
+			.pipe(
 				tap(() => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()),
 				untilDestroyed(this)
 			)

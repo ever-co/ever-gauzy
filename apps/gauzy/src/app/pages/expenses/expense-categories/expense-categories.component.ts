@@ -19,7 +19,7 @@ import {
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
 import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 
 @UntilDestroy({ checkProperties: true })

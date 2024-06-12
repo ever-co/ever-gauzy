@@ -28,23 +28,23 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import {
+	ALL_EMPLOYEES_SELECTED,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
 	PaginationFilterBaseComponent,
-	ReplacePipe
+	ReplacePipe,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
 	ExpenseCategoryFilterComponent,
 	InputFilterComponent,
 	VendorFilterComponent
 } from '../../@shared/table-filters';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

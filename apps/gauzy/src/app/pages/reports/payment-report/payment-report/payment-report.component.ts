@@ -15,12 +15,10 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 import { DateRangePickerBuilderService, PaymentService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
 import { IChartData } from './../../../../@shared/report/charts/line-chart';
 import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

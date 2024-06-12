@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -19,17 +20,16 @@ import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import {
 	DirectivesModule,
 	GauzyButtonActionModule,
+	ImageUploaderModule,
+	OrganizationsMutationModule,
 	PaginationV2Module,
-	TableComponentsModule
+	RemoveLodashModule,
+	TableComponentsModule,
+	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
 import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { ThemeModule } from '../../@theme/theme.module';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
@@ -44,12 +44,12 @@ import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [
-		TableComponentsModule,
-		OrganizationsRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
+		TableComponentsModule,
+		OrganizationsRoutingModule,
+		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
 		Angular2SmartTableModule,

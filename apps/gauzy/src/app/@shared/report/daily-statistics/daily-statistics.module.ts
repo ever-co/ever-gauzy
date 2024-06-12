@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DailyStatisticsComponent } from './daily-statistics/daily-statistics.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { DailyStatisticsComponent } from './daily-statistics/daily-statistics.component';
 import { CounterPointModule } from '../../counter-point/counter-point.module';
 
 @NgModule({

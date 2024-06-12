@@ -5,11 +5,9 @@ import { ClientBudgetsReportComponent } from './client-budgets-report/client-bud
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GauzyFiltersModule, SharedModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { SharedModule } from '../../../@shared/shared.module';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({

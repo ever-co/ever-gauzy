@@ -1,35 +1,32 @@
-import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
-import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
-import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
-import { EditCandidateLocationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-location/edit-candidate-location.component';
-import { EditCandidateHistoryComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-history/edit-candidate-history.component';
-import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
-import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbAccordionModule,
+	NbActionsModule,
 	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbContextMenuModule,
+	NbDatepickerModule,
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
-	NbRouteTabsetModule,
-	NbSpinnerModule,
-	NbTooltipModule,
-	NbSelectModule,
-	NbDatepickerModule,
-	NbActionsModule,
-	NbTabsetModule,
-	NbRadioModule,
 	NbMenuModule,
-	NbContextMenuModule,
-	NbAccordionModule
+	NbRadioModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTabsetModule,
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { NgChartsModule } from 'ng2-charts';
+import { FullCalendarModule } from '@fullcalendar/angular';
 import {
 	CandidateInterviewersService,
 	CandidatePersonalQualitiesService,
@@ -40,12 +37,25 @@ import {
 	OrganizationsService
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { NbToggleModule } from '@nebular/theme';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { ThemeModule } from '../../@theme/theme.module';
-import { SharedModule } from '../../@shared/shared.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
+import {
+	EmployeeLocationModule,
+	EmployeeMultiSelectModule,
+	EmployeeRatesModule,
+	FileUploaderModule,
+	GauzyButtonActionModule,
+	ImageUploaderModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
+import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
+import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
+import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';
+import { EditCandidateLocationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-location/edit-candidate-location.component';
+import { EditCandidateHistoryComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-history/edit-candidate-history.component';
+import { EditCandidateExperienceComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience.component';
+import { EditCandidateComponent } from './edit-candidate/edit-candidate.component';
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
@@ -57,12 +67,8 @@ import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate
 import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
 import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
 import { EditCandidateRatesComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-rates/edit-candidate-rates.component';
-import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
-import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
 import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-skills/edit-candidate-skills.component';
 import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
 import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
 import { StarRatingInputModule } from '../../@shared/star-rating/star-rating-input/star-rating-input.module';
@@ -71,13 +77,10 @@ import { CandidateSourceComponent } from './table-components/candidate-source/ca
 import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
-import { FullCalendarModule } from '@fullcalendar/angular';
 import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
 import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
-import { NgChartsModule } from 'ng2-charts';
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
 import { InterviewCriterionsComponent } from './manage-candidate-interviews/interview-criterions/interview-criterions.component';
@@ -141,36 +144,40 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		FullCalendarModule,
-		TableComponentsModule,
-		SharedModule,
-		NgChartsModule,
-		CandidatesRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbButtonModule,
-		NbInputModule,
-		NbSelectModule,
-		NbIconModule,
 		Angular2SmartTableModule,
-		NbDialogModule.forChild(),
-		NbTooltipModule,
-		NgSelectModule,
-		ImageUploaderModule,
-		NbBadgeModule,
-		NbRouteTabsetModule,
-		NbCheckboxModule,
-		FileUploaderModule,
-		NbTabsetModule,
-		CandidateSelectModule,
-		NbRadioModule,
-		NbActionsModule,
+		FullCalendarModule,
 		NbAccordionModule,
-		I18nTranslateModule.forChild(),
-		NbSpinnerModule,
+		NbActionsModule,
+		NbBadgeModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbContextMenuModule,
 		NbDatepickerModule,
+		NbDialogModule.forChild(),
+		NbIconModule,
+		NbInputModule,
+		NbMenuModule,
+		NbRadioModule,
+		NbRouteTabsetModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbTabsetModule,
+		NbToggleModule,
+		NbTooltipModule,
+		NgChartsModule,
+		NgSelectModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
+		TableComponentsModule,
+		SharedModule,
+		CandidatesRoutingModule,
+		ImageUploaderModule,
+		FileUploaderModule,
+		CandidateSelectModule,
 		TagsColorInputModule,
 		CandidateMutationModule,
 		CandidateInterviewMutationModule,
@@ -179,9 +186,6 @@ const COMPONENTS = [
 		InviteTableModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
-		NbMenuModule,
-		NbContextMenuModule,
-		NbActionsModule,
 		StarRatingInputModule,
 		CardGridModule,
 		StarRatingOutputModule,
@@ -190,11 +194,8 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
-		NbToggleModule,
 		PaginationV2Module,
-		CardGridModule,
 		WorkInProgressModule
 	],
 	declarations: [...COMPONENTS],

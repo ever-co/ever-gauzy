@@ -30,12 +30,11 @@ import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-se
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
-import { SharedModule } from '../@shared/shared.module';
+import { PasswordFormFieldModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
 import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
-import { PasswordFormFieldModule } from '../@shared/user/forms/fields/password';
 import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
 
 @NgModule({

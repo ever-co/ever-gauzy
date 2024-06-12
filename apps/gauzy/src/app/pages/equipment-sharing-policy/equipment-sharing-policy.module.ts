@@ -20,7 +20,7 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
 import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';

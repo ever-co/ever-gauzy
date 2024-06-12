@@ -1,13 +1,20 @@
-import * as moment from 'moment';
-import * as timezone from 'moment-timezone';
 import { Component, ViewChild, OnDestroy, OnInit, forwardRef, Input } from '@angular/core';
+import { NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { debounceTime, filter } from 'rxjs/operators';
+import { NbDialogService } from '@nebular/theme';
 import { CalendarOptions, EventInput } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Router } from '@angular/router';
-import { debounceTime, filter } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import bootstrapPlugin from '@fullcalendar/bootstrap';
+import { FullCalendarComponent } from '@fullcalendar/angular';
+import momentTimezonePlugin from '@fullcalendar/moment-timezone';
+import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import moment from 'moment';
+import * as timezone from 'moment-timezone';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
@@ -15,10 +22,6 @@ import {
 	TimeOffService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { TranslateService } from '@ngx-translate/core';
-import { FullCalendarComponent } from '@fullcalendar/angular';
-import momentTimezonePlugin from '@fullcalendar/moment-timezone';
-import bootstrapPlugin from '@fullcalendar/bootstrap';
 import {
 	IEmployeeAppointment,
 	ITimeOff,
@@ -28,14 +31,10 @@ import {
 	IOrganization,
 	WeekDaysEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store, convertLocalToTimezone } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { convertLocalToTimezone } from '@gauzy/ui-sdk/common';
-import { dayOfWeekAsString } from '../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

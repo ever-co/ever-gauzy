@@ -11,12 +11,10 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { Environment, environment } from '@gauzy/ui-config';
-import { Store } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent } from '../../timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
+import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

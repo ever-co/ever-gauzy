@@ -8,9 +8,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ApprovalPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { ApprovalPolicyMutationComponent } from '../../@shared/approval-policy';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })

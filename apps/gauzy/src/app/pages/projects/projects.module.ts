@@ -17,7 +17,7 @@ import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/share
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';

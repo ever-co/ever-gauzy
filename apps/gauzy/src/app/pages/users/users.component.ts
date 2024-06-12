@@ -23,15 +23,15 @@ import {
 } from '@gauzy/contracts';
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
+	DeleteConfirmationComponent,
 	EmailComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
 	RoleComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	UserMutationComponent
 } from '@gauzy/ui-sdk/shared';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
 import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
 import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';

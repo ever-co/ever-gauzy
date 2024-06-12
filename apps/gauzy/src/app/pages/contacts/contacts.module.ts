@@ -19,17 +19,17 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import {
+	EmployeeMultiSelectModule,
+	FileUploaderModule,
 	GauzyButtonActionModule,
+	ImageUploaderModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module
+	PaginationV2Module,
+	SharedModule,
+	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { SharedModule } from '../../@shared/shared.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
 import { ContactMutationComponent } from './contact-mutation/contact-mutation.component';
 import { ContactsRoutingModule } from './contacts-routing.module';
 import { ContactsComponent } from './contacts.component';

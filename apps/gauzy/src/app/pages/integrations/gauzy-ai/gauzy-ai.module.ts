@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';

@@ -18,11 +18,14 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
-import { ConfirmComponent } from '@gauzy/ui-sdk/shared';
+import {
+	BaseSelectorFilterComponent,
+	ConfirmComponent,
+	EditTimeLogModalComponent,
+	GauzyFiltersComponent,
+	TimeZoneService,
+	ViewTimeLogModalComponent
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

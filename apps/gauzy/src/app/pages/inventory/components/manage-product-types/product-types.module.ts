@@ -6,7 +6,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';

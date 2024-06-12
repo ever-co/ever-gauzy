@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SearchRoutingModule } from './search-routing.module';
-import { SearchComponent } from './search/search.component';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../../@shared/shared.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,17 +10,22 @@ import {
 	NbPopoverModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { MomentModule } from 'ngx-moment';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NbTabsetModule } from '@nebular/theme';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { MomentModule } from 'ngx-moment';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import {
+	DialogsModule,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
+import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
+import { SearchRoutingModule } from './search-routing.module';
+import { SearchComponent } from './search/search.component';
 
 @NgModule({
 	declarations: [SearchComponent],

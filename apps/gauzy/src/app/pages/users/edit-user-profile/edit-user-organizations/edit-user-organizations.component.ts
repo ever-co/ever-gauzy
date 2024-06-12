@@ -9,7 +9,7 @@ import { NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { OrganizationsService, ToastrService, UsersOrganizationsService, UsersService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
+import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

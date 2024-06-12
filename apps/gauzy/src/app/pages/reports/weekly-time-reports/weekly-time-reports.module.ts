@@ -4,10 +4,9 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { WeeklyTimeReportsRoutingModule } from './weekly-time-reports-routing.module';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-reports.component';
-import { SharedModule } from '../../../@shared/shared.module';
+import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
 import { DailyStatisticsModule } from '../../../@shared/report/daily-statistics/daily-statistics.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({

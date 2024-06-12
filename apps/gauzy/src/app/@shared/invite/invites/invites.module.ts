@@ -19,15 +19,13 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ClipboardModule } from 'ngx-clipboard';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule, PaginationV2Module, SharedModule, UserFormsModule } from '@gauzy/ui-sdk/shared';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
-import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
-import { SharedModule } from '../../shared.module';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 
 const COMPONENTS = [

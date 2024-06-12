@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from './../../../../@theme/components/header/selectors/date-range-picker';
+import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
 import { TimeAndActivitiesComponent } from './time-and-activities/time-and-activities.component';
 
 const routes: Routes = [
@@ -16,9 +16,7 @@ const routes: Routes = [
 				isSingleDatePicker: true
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

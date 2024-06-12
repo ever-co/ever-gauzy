@@ -11,7 +11,7 @@ import { environment } from '@gauzy/ui-config';
 import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-sdk/common';
 import { FeatureStoreService } from '@gauzy/ui-sdk/core';
-import { CountdownConfirmationComponent } from '../user/forms';
+import { CountdownConfirmationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

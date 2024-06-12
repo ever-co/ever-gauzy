@@ -20,11 +20,13 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone, Store } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
-import { GalleryService } from './../../../../../@shared/gallery/gallery.service';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import {
+	BaseSelectorFilterComponent,
+	DeleteConfirmationComponent,
+	GalleryService,
+	GauzyFiltersComponent,
+	TimeZoneService
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

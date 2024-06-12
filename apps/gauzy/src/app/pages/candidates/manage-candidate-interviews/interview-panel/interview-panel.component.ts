@@ -13,7 +13,7 @@ import {
 import { tap, debounceTime } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { LocalDataSource } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
@@ -28,9 +28,13 @@ import {
 	CandidateStore,
 	EmployeesService
 } from '@gauzy/ui-sdk/core';
-import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
 import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
-import { IPaginationBase, PaginationFilterBaseComponent, PictureNameTagsComponent } from '@gauzy/ui-sdk/shared';
+import {
+	ArchiveConfirmationComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	PictureNameTagsComponent
+} from '@gauzy/ui-sdk/shared';
 import {
 	InterviewActionsTableComponent,
 	InterviewCriterionsTableComponent,
@@ -294,12 +298,20 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 		this.settingsSmartTable = {
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INTERVIEW'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
+			},
 			columns: {
 				fullName: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'),
 					type: 'custom',
+					class: 'align-row',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				title: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.TITLE'),
@@ -309,27 +321,39 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'),
 					type: 'custom',
 					width: '120px',
+					filter: false,
 					renderComponent: InterviewDateTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewDateTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				rating: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
+					filter: false,
 					renderComponent: InterviewStarRatingComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				employees: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'),
 					type: 'custom',
 					width: '155px',
+					filter: false,
 					renderComponent: InterviewersTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				criterions: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: InterviewCriterionsTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewCriterionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				location: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'),
@@ -344,9 +368,10 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '10%',
 					type: 'custom',
-					renderComponent: InterviewActionsTableComponent,
 					filter: false,
-					onComponentInitFunction: (instance) => {
+					renderComponent: InterviewActionsTableComponent,
+					componentInitFunction: (instance: InterviewActionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updateResult.subscribe((params) => {
 							switch (params.type) {
 								case 'feedback':
@@ -365,10 +390,6 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 						});
 					}
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			}
 		};
 	}

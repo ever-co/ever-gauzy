@@ -4,7 +4,7 @@ import { ActivityRoutingModule } from './activity-routing.module';
 import { ActivityLayoutComponent } from './layout/layout.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [ActivityLayoutComponent],

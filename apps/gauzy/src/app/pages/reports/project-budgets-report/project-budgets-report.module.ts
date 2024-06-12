@@ -6,9 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { SharedModule } from '../../../@shared/shared.module';
+import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProgressStatusModule } from '../../../@shared/progress-status/progress-status.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
 import { ProjectColumnViewModule } from '../../../@shared/report/project-column-view/project-column-view.module';
 import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 

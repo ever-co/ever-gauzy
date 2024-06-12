@@ -27,6 +27,7 @@ import {
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
 	PaginationFilterBaseComponent,
 	ProjectOrganizationComponent,
@@ -36,7 +37,6 @@ import {
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-sdk/shared';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
 import { TagsColorFilterComponent } from '../../../../@shared/table-filters';
 import { CardGridComponent } from '../../../../@shared/card-grid/card-grid.component';
 

@@ -17,8 +17,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { AddTaskDialogComponent } from './../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
+import { AddTaskDialogComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
 
 @UntilDestroy({ checkProperties: true })

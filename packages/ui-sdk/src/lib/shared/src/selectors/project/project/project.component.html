@@ -1,0 +1,52 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
+<ng-template [ngIf]="!multiple" [ngIfElse]="multipleSelect">
+	<ng-select
+		#select
+		[addTag]="(hasAddProject$ | async) ? createNew : null"
+		[multiple]="multiple"
+		[clearable]="isClearable()"
+		[disabled]="disabled"
+		[items]="projects"
+		(change)="selectProject($event); select.blur()"
+		(clear)="select.blur(); clearSelection()"
+		[(ngModel)]="projectId"
+		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate"
+		[addTagText]="'FORM.PLACEHOLDERS.ADD_PROJECT' | translate"
+		bindValue="id"
+		bindLabel="name"
+		appendTo="body"
+		fullWidth
+	>
+		<ng-container *ngIf="shortened">
+			<ng-template ng-option-tmp let-item="item" let-index="index">
+				<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+				<span>
+					{{ item?.name }}
+				</span>
+			</ng-template>
+			<ng-template ng-label-tmp let-item="item">
+				<div class="selector-template">
+					<img *ngIf="item.imageUrl" [src]="item.imageUrl" width="20px" height="20px" />
+					<span>
+						{{ getShortenedName(item?.name) }}
+					</span>
+				</div>
+			</ng-template>
+		</ng-container>
+	</ng-select>
+</ng-template>
+<ng-template #multipleSelect>
+	<nb-select
+		class="multiple-select"
+		[disabled]="disabled"
+		[multiple]="multiple"
+		[placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate"
+		[(selected)]="projectId"
+		fullWidth
+	>
+		<nb-option *ngFor="let project of projects" [value]="project.id">
+			<img *ngIf="project?.imageUrl" [src]="project?.imageUrl" width="20px" height="20px" />
+			<span class="ml-1">{{ project.name }}</span>
+		</nb-option>
+	</nb-select>
+</ng-template>

@@ -21,7 +21,7 @@ import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/share
 import { RequestApprovalService } from '@gauzy/ui-sdk/core';
 import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';

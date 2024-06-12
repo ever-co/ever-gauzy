@@ -33,12 +33,16 @@ import {
 	IntegrationEntity
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-sdk/core';
-import { EmployeeLinksComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	EmployeeLinksComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
 import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
-import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

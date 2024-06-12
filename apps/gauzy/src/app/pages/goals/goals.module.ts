@@ -27,22 +27,18 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgChartsModule } from 'ng2-charts';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { EmployeeMultiSelectModule, GauzyButtonActionModule, TaskSelectModule } from '@gauzy/ui-sdk/shared';
 import { GoalsRoutingModule } from './goals-routing.module';
 import { GoalsComponent } from './goals.component';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
-import { EmployeeSelectorsModule } from '../../@theme/components/header/selectors/employee/employee.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { KeyResultProgressChartComponent } from './keyresult-progress-chart/keyresult-progress-chart.component';
 import { GoalSettingsModule } from '../goal-settings/goal-settings.module';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
-import { TaskSelectModule } from '../../@shared/tasks/task-select/task-select.module';
 import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
 import { KeyresultTypeSelectModule } from '../../@shared/goal/keyresult-type-select/keyresult-type-select.module';
 import { GoalLevelSelectModule } from '../../@shared/goal/goal-level-select/goal-level-select.module';
@@ -87,7 +83,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbFormFieldModule,
 		NbBadgeModule,
 		GoalSettingsModule,
-		ProjectSelectModule,
 		GoalCustomUnitModule,
 		KeyresultTypeSelectModule,
 		GoalTemplateSelectModule,
@@ -96,7 +91,6 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		EmployeeSelectorsModule,
 		EmployeeMultiSelectModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule

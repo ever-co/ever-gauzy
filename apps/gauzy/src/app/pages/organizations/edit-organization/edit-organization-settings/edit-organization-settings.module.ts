@@ -32,25 +32,29 @@ import {
 	OrganizationPositionsService,
 	OrganizationVendorsService
 } from '@gauzy/ui-sdk/core';
-import { CurrencyModule, LeafletMapModule, LocationFormModule, TimeZoneSelectorModule } from '@gauzy/ui-sdk/shared';
-import { EmployeeMultiSelectModule } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
+import {
+	CurrencyModule,
+	EmployeeMultiSelectModule,
+	FileUploaderModule,
+	ImageUploaderModule,
+	LeafletMapModule,
+	LocationFormModule,
+	OrganizationsMutationModule,
+	RemoveLodashModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	TimeZoneSelectorModule,
+	TimerPickerModule,
+	UserFormsModule
+} from '@gauzy/ui-sdk/shared';
 import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
-import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-uploader.module';
-import { OrganizationsMutationModule } from '../../../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { RemoveLodashModule } from '../../../../@shared/remove-lodash/remove-lodash.module';
-import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.module';
-import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
 import { ThemeModule } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
-import { SharedModule } from '../../../../@shared/shared.module';
-import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
 
 @NgModule({
 	imports: [
@@ -82,7 +86,6 @@ import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker
 		NbRouteTabsetModule,
 		NbDatepickerModule,
 		NbToggleModule,
-		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,

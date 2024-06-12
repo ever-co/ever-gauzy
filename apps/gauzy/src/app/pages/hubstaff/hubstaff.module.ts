@@ -23,7 +23,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { SettingsDialogComponent } from './components/settings-dialog/settings-dialog.component';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [HubstaffAuthorizeComponent, HubstaffComponent, SettingsDialogComponent],

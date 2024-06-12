@@ -1,99 +1,99 @@
-@import "themes";
-@import "./../reusable";
+@import 'themes';
+@import '@shared/reusable';
 
 :host {
-	.section-wrapper {
-		width: 765px;
-		display: flex;
-		justify-content: space-between;
-		.-wrapper {
-			background: nb-theme(gauzy-card-2);
-			border-radius: nb-theme(border-radius);
-			padding: 30px;
-			width: 476px;
-			& > * {
-				padding-left: 15px;
-				padding-right: 15px;
-			}
-			& .svg-wrapper {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				margin-bottom: 57px;
-			}
-			& .title {
-				font-family: Inter;
-				font-size: 24px;
-				font-style: normal;
-				font-weight: 700;
-				line-height: 30px;
-				letter-spacing: 0em;
-				text-align: left;
-			}
-			& .sub-title {
-				width: 358px;
-				height: 34px;
-				font-family: 'Inter';
-				font-style: normal;
-				font-weight: 400;
-				font-size: 14px;
-				line-height: 17px;
-				display: flex;
-				align-items: center;
-				text-align: start;
-				margin-bottom: 15px;
-			}
-			& .hr-div-strong {
-			  	@include hr-div-strong;
-			}
-			.form {
-				& .form-control-group {
-					margin-bottom: 24px;
-					& .label {
-						font-family: 'Inter';
-						font-style: normal;
-						font-weight: 600;
-						font-size: 11px;
-						line-height: 13px;
-						display: flex;
-						align-items: center;
-						letter-spacing: -0.01em;
-						color: #7E7E8F;
-					}
-				}
-				& .submit-btn-wrapper {
-					display: flex;
-					justify-content: flex-end;
-					& .submit-btn {
-						@include submit-btn;
-						margin-bottom: 25px;
-						margin-top: 15px;
-					}
-				}
-			}
-			.hr-div-soft {
-				@include hr-div-soft;
-			}
-			.redirect-link-p {
-				font-family: 'Inter';
-				font-style: normal;
-				font-weight: 400;
-				font-size: 14px;
-				line-height: 17px;
-				/* identical to box height */
-				color: #7E7E8F;
-				margin-bottom: 0;
-				& .text-link {
-					font-family: Inter;
-					font-size: 14px;
-					font-style: normal;
-					font-weight: 600;
-					line-height: 17px;
-					letter-spacing: 0em;
-					color: #6E49E8;
-					text-decoration: none;
-				}
-			}
-		}
-	}
+  .section-wrapper {
+    width: 765px;
+    display: flex;
+    justify-content: space-between;
+    .-wrapper {
+      background: nb-theme(gauzy-card-2);
+      border-radius: nb-theme(border-radius);
+      padding: 30px;
+      width: 476px;
+      & > * {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+      & .svg-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 57px;
+      }
+      & .title {
+        font-family: Inter;
+        font-size: 24px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 30px;
+        letter-spacing: 0em;
+        text-align: left;
+      }
+      & .sub-title {
+        width: 358px;
+        height: 34px;
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 17px;
+        display: flex;
+        align-items: center;
+        text-align: start;
+        margin-bottom: 15px;
+      }
+      & .hr-div-strong {
+        @include hr-div-strong;
+      }
+      .form {
+        & .form-control-group {
+          margin-bottom: 24px;
+          & .label {
+            font-family: 'Inter';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 11px;
+            line-height: 13px;
+            display: flex;
+            align-items: center;
+            letter-spacing: -0.01em;
+            color: #7e7e8f;
+          }
+        }
+        & .submit-btn-wrapper {
+          display: flex;
+          justify-content: flex-end;
+          & .submit-btn {
+            @include submit-btn;
+            margin-bottom: 25px;
+            margin-top: 15px;
+          }
+        }
+      }
+      .hr-div-soft {
+        @include hr-div-soft;
+      }
+      .redirect-link-p {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 17px;
+        /* identical to box height */
+        color: #7e7e8f;
+        margin-bottom: 0;
+        & .text-link {
+          font-family: Inter;
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 600;
+          line-height: 17px;
+          letter-spacing: 0em;
+          color: #6e49e8;
+          text-decoration: none;
+        }
+      }
+    }
+  }
 }

@@ -4,11 +4,9 @@ import { Component, Input } from '@angular/core';
 	selector: 'ga-interview-date',
 	template: `
 		<div class="start-column">
-			<strong style="text-align:center;"
-				>{{ rowData?.startTime | date: 'shortDate' }}
-			</strong>
-			<span> {{ rowData?.startTime | date: 'shortTime' }}</span>
-			<span>{{ rowData?.endTime | date: 'shortTime' }} </span>
+			<strong style="text-align:center;">{{ rowData?.startTime | date : 'shortDate' }} </strong>
+			<span> {{ rowData?.startTime | date : 'shortTime' }}</span>
+			<span>{{ rowData?.endTime | date : 'shortTime' }} </span>
 		</div>
 	`,
 	styles: [
@@ -23,6 +21,5 @@ import { Component, Input } from '@angular/core';
 	]
 })
 export class InterviewDateTableComponent {
-	@Input()
-	rowData: any;
+	@Input() rowData: any;
 }

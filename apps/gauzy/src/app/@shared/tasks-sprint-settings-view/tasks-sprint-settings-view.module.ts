@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { GauzyEditableGridModule } from '../editable-grid/gauzy-editable-grid.module';
-import { SharedModule } from '../shared.module';
 import { SprintDialogComponent } from './sprint-dialog/sprint-dialog.component';
 import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.component';
 

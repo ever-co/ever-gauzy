@@ -9,7 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { saveAs } from 'file-saver';
 import { Store } from '@gauzy/ui-sdk/common';
 import { InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
 import { NbDialogService } from '@nebular/theme';
 
 @UntilDestroy({ checkProperties: true })

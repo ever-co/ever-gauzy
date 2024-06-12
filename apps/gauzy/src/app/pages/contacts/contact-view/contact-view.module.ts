@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbCardModule,
@@ -10,18 +11,15 @@ import {
 	NbTagModule,
 	NbUserModule
 } from '@nebular/theme';
-import { LeafletMapModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { EmployeeMultiSelectModule, LeafletMapModule, SharedModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
-import { SharedModule } from '../../../@shared/shared.module';
-import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
 
 @NgModule({
 	imports: [
 		ContactViewRoutingModule,
-		ThemeModule,
+		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
 		I18nTranslateModule.forChild(),
@@ -37,7 +35,6 @@ import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-mu
 		EmployeeMultiSelectModule,
 		TableComponentsModule
 	],
-	declarations: [ContactViewComponent],
-	providers: []
+	declarations: [ContactViewComponent]
 })
 export class ContactViewModule {}

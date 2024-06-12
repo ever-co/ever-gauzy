@@ -9,10 +9,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { ComponentEnum, Store, distinctUntilChange, splitCamelCase } from '@gauzy/ui-sdk/common';
 import { TagsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	PaginationFilterBaseComponent,
+	TagsMutationComponent
+} from '@gauzy/ui-sdk/shared';
 import { TagsColorComponent } from './tags-color/tags-color.component';
-import { TagsMutationComponent } from '../../@shared/tags/tags-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

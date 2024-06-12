@@ -11,7 +11,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { saveAs } from 'file-saver';
 import { Store } from '@gauzy/ui-sdk/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
+import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
 import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
 import { generateCsv } from '../../../@shared/invoice/generate-csv';

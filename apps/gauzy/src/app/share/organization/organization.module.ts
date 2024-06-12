@@ -13,12 +13,14 @@ import {
 	NbTagModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import {
+	ImageUploaderModule,
+	PublicPageMutationModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
-import { PublicPageMutationModule } from '../../@shared/organizations/public-page-mutation/public-page-mutation.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { SharedModule } from '../../@shared/shared.module';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({

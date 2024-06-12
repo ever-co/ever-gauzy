@@ -11,8 +11,7 @@ import { ProductCategoryService, ServerDataSource, ToastrService } from '@gauzy/
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ImageRowComponent } from '../inventory-table-components';
 import { ProductCategoryMutationComponent } from '../../../../@shared/product-mutation';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -18,8 +18,8 @@ import {
 	CandidatesService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { EmployeeSelectorComponent } from '../../../@theme/components/header/selectors/employee/employee.component';
 import { Store } from '@gauzy/ui-sdk/common';
+import { EmployeeSelectorComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-candidate-interview-feedback',
@@ -30,8 +30,8 @@ export class CandidateInterviewFeedbackComponent extends TranslationBaseComponen
 	@Input() candidateId: string;
 	@Input() interviewId: string;
 	@Input() currentInterview: ICandidateInterview;
-	@ViewChild('employeeSelector')
-	employeeSelector: EmployeeSelectorComponent;
+	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
+
 	form: any;
 	interviewTitle: string;
 	feedbacks: ICandidateFeedback[] = null;
@@ -52,6 +52,7 @@ export class CandidateInterviewFeedbackComponent extends TranslationBaseComponen
 		interviewer: null
 	};
 	organization: IOrganization;
+
 	constructor(
 		protected dialogRef: NbDialogRef<CandidateInterviewFeedbackComponent>,
 		private readonly fb: UntypedFormBuilder,

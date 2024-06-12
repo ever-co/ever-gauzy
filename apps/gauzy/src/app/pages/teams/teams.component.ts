@@ -31,10 +31,10 @@ import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	EmployeeWithLinksComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	DeleteConfirmationComponent
 } from '@gauzy/ui-sdk/shared';
 import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

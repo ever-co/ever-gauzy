@@ -7,11 +7,11 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from './../../@shared/user/forms';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationDocumentsService, ToastrService } from '@gauzy/ui-sdk/core';
 import {
+	DeleteConfirmationComponent,
 	DocumentDateTableComponent,
 	DocumentUrlTableComponent,
 	IPaginationBase,

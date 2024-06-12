@@ -29,13 +29,14 @@ import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/cor
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
 	PaginationFilterBaseComponent,
-	TagsOnlyComponent
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import { StatusBadgeComponent } from '../../@shared/status-badge';
 import {
 	InputFilterComponent,
@@ -43,7 +44,6 @@ import {
 	PaymentMethodFilterComponent,
 	TagsColorFilterComponent
 } from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -209,8 +209,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 		}
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {

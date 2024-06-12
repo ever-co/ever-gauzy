@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../shared.module';
+import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 

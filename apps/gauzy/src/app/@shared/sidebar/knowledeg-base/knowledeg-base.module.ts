@@ -11,7 +11,7 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { LanguageSelectorModule } from '../../language/language-selector/language-selector.module';
+import { LanguageSelectorModule } from '@gauzy/ui-sdk/shared';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
 
 @NgModule({

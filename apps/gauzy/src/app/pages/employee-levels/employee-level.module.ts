@@ -14,10 +14,12 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '../../@shared/shared.module';
+import {
+	GauzyButtonActionModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
