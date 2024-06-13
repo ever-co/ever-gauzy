@@ -2,8 +2,8 @@ import { ICandidate, ICandidateInterview, IEmployee, IOrganization } from '@gauz
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
-import { CandidateInterviewService, CandidatesService, EmployeesService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateInterviewService, CandidatesService, EmployeesService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { catchError, Observable, of as observableOf } from 'rxjs';
 import { IEstimateEmail } from '@gauzy/contracts';
-import { EstimateEmailService } from '@gauzy/ui-sdk/core';
+import { EstimateEmailService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

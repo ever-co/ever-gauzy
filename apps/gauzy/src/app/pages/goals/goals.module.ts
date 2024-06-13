@@ -26,7 +26,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgChartsModule } from 'ng2-charts';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
@@ -35,7 +35,7 @@ import {
 	NoDataMessageModule,
 	SharedModule,
 	TaskSelectModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { GoalsRoutingModule } from './goals-routing.module';
 import { GoalsComponent } from './goals.component';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';

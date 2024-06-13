@@ -7,15 +7,15 @@ import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	TimeOffSettingsMutationComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })

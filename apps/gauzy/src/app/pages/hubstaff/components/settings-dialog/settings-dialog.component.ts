@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import moment from 'moment';
 import { tap } from 'rxjs/operators';
 import { IDateRangeActivityFilter, IntegrationEntity } from '@gauzy/contracts';
-import { HubstaffService } from '@gauzy/ui-sdk/core';
+import { HubstaffService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ngx-hubstaff-settings-dialog',

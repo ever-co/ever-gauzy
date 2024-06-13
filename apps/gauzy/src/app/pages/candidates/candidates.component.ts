@@ -15,8 +15,8 @@ import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -28,7 +28,7 @@ import {
 	InviteMutationComponent,
 	InputFilterComponent,
 	CandidateMutationComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })

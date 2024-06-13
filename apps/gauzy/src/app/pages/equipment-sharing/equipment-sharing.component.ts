@@ -15,8 +15,8 @@ import { NbDialogService } from '@nebular/theme';
 import { combineLatest, Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EquipmentSharingService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EquipmentSharingService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DateViewComponent,
 	DeleteConfirmationComponent,
@@ -24,7 +24,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	StatusBadgeComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })

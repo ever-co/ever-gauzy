@@ -11,15 +11,15 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ProductCategoryService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { ProductCategoryService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	ProductMutationModule
-} from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
 

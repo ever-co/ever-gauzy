@@ -21,8 +21,8 @@ import moment from 'moment';
 import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
-import { Store, isEmpty, toTimezone } from '@gauzy/ui-sdk/common';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { Store, isEmpty, toTimezone } from '@gauzy/ui-core/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import {
 	BaseSelectorFilterComponent,
@@ -31,7 +31,7 @@ import {
 	TimeZoneService,
 	ViewTimeLogModalComponent,
 	dayOfWeekAsString
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

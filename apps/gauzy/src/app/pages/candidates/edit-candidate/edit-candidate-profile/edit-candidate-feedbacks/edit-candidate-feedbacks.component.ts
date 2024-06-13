@@ -16,7 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
-import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store } from '@gauzy/ui-core/common';
 import {
 	CandidateCriterionsRatingService,
 	CandidateFeedbacksService,
@@ -25,11 +25,11 @@ import {
 	CandidateStore,
 	EmployeesService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components';
-import { DeleteFeedbackComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DeleteFeedbackComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

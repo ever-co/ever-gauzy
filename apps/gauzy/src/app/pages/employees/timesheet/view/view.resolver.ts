@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { catchError, Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { ITimesheet } from '@gauzy/contracts';
-import { TimesheetService } from '@gauzy/ui-sdk/core';
+import { TimesheetService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

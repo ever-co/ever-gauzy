@@ -5,11 +5,11 @@ import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Environment, environment } from '@gauzy/ui-config';
-import { ToastrService, UsersService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { DangerZoneMutationComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService, UsersService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { DangerZoneMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

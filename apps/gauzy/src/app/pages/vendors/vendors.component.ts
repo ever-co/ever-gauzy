@@ -8,9 +8,9 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
-import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	CompanyLogoComponent,
 	DeleteConfirmationComponent,
@@ -19,7 +19,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	TagsOnlyComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

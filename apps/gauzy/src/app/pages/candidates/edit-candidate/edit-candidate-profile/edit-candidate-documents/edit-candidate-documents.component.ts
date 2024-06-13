@@ -5,14 +5,14 @@ import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
 import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
 import {
 	CandidateCvComponent,
 	DocumentDateTableComponent,
 	DocumentUrlTableComponent,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -11,7 +11,7 @@ import {
 	EmployeesService,
 	ToastrService,
 	monthNames
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IOrganization,
 	RecurringExpenseDefaultCategoriesEnum,
@@ -21,9 +21,9 @@ import {
 	IDateRangePicker,
 	ComponentType
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { RecurringExpenseMutationComponent, RecurringExpenseDeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

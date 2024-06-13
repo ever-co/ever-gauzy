@@ -6,9 +6,9 @@ import { NbDialogService } from '@nebular/theme';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
-import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

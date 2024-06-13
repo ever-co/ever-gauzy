@@ -6,7 +6,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-sdk/core';
+import { ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -21,7 +21,7 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	EmailComponent,
@@ -33,7 +33,7 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	UserMutationComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })

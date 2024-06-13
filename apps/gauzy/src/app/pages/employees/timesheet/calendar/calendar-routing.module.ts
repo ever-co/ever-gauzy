@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { CalendarComponent } from './calendar/calendar.component';
 
 const routes: Routes = [

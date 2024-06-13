@@ -16,8 +16,8 @@ import {
 	NbActionsModule,
 	NbContextMenuModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkRoutingModule } from './upwork-routing.module';
 import { UpworkAuthorizeComponent } from './components/upwork-authorize/upwork-authorize.component';

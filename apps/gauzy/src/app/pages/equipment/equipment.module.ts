@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EquipmentMutationModule,
@@ -19,7 +19,7 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { EquipmentComponent } from './equipment.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';

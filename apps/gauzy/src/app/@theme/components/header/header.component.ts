@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import hotkeys, { HotkeysEvent } from 'hotkeys-js';
-import { Store, TimeTrackerService, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, TimeTrackerService, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	CrudActionEnum,
 	IDateRangePicker,
@@ -18,7 +18,7 @@ import {
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	DEFAULT_SELECTOR_VISIBILITY,
 	DateRangePickerBuilderService,
@@ -28,8 +28,8 @@ import {
 	OrganizationsService,
 	SelectorBuilderService,
 	UsersOrganizationsService
-} from '@gauzy/ui-sdk/core';
-import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } from '@gauzy/ui-core/shared';
 import { environment } from '@gauzy/ui-config';
 import {
 	EmployeesService,
@@ -40,7 +40,7 @@ import {
 	OrganizationProjectsService,
 	OrganizationProjectStore,
 	OrganizationTeamsService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

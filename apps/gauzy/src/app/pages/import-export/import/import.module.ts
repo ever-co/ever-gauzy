@@ -17,10 +17,10 @@ import { ImportComponent } from './import.component';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { ImportRoutingModule } from './import-routing.module';
-import { ExportAllService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { FileUploaderModule, SharedModule } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
+import { ExportAllService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { FileUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
+import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 
 @NgModule({
 	imports: [

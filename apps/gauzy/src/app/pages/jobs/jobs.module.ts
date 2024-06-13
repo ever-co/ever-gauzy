@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { JobSearchUiModule } from '@gauzy/plugins/job-search-ui';
 import { JobsRoutingModule } from './jobs-routing.module';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { JobTableComponentsModule } from './table-components/job-table-components.module';
 
 @NgModule({

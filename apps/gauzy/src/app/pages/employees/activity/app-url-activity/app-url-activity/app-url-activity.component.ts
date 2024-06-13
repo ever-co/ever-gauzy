@@ -15,9 +15,9 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { ActivityService, DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
-import { Store, distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
+import { ActivityService, DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
+import { Store, distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-core/common';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

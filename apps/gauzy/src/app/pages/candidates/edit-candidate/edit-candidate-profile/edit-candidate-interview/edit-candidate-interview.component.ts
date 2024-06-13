@@ -22,14 +22,14 @@ import {
 	CandidateStore,
 	EmployeesService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { ComponentEnum, Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	CandidateInterviewFeedbackComponent,
 	CandidateInterviewMutationComponent,
 	DeleteInterviewComponent,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { InterviewActionsTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { InterviewDateTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/date/date.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';

@@ -10,9 +10,9 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { HelpCenterArticleService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { EmployeeMultiSelectModule } from '@gauzy/ui-sdk/shared';
+import { HelpCenterArticleService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { EmployeeMultiSelectModule } from '@gauzy/ui-core/shared';
 import { AddArticleComponent } from './add-article.component';
 
 @NgModule({

@@ -29,7 +29,7 @@ import {
 	ProductVariantService,
 	ProductVariantSettingService,
 	TranslatableService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	CurrencyModule,
@@ -42,8 +42,8 @@ import {
 	SelectAssetModule,
 	SharedModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';

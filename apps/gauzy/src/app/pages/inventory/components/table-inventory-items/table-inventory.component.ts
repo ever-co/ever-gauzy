@@ -20,9 +20,9 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	TagsOnlyComponent
-} from '@gauzy/ui-sdk/shared';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })

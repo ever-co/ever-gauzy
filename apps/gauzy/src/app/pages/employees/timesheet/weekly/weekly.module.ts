@@ -13,7 +13,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
@@ -21,7 +21,7 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	ViewTimeLogModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';
 

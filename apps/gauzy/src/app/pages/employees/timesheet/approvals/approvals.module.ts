@@ -15,8 +15,8 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { GauzyButtonActionModule, NoDataMessageModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GauzyButtonActionModule, NoDataMessageModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 

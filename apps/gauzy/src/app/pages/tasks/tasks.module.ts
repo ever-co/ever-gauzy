@@ -25,7 +25,7 @@ import {
 	NbDatepickerModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	AddTaskDialogModule,
 	CardGridModule,
@@ -43,10 +43,10 @@ import {
 	TaskStatusSelectModule,
 	TasksSprintSettingsViewModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
+import { TableComponentsModule } from '@gauzy/ui-core/shared';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';

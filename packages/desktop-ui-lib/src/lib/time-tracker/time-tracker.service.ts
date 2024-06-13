@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import * as moment from 'moment';
 import { catchError, map, shareReplay, tap } from 'rxjs/operators';
 import { firstValueFrom, throwError } from 'rxjs';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { toParams } from '@gauzy/ui-core/common';
 import {
 	IGetTasksStatistics,
 	IOrganizationContact,

@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { IOrganization, IPipeline, IPipelineCreateInput } from '@gauzy/contracts';
-import { PipelinesService } from '@gauzy/ui-sdk/core';
+import { PipelinesService } from '@gauzy/ui-core/core';
 
 @Component({
 	templateUrl: './pipeline-form.component.html',

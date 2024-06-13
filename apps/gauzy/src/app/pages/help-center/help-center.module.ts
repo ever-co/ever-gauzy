@@ -9,7 +9,7 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
@@ -17,7 +17,7 @@ import {
 	SharedModule,
 	SidebarModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { HelpCenterComponent } from './help-center.component';
 import { HelpCenterRoutingModule } from './help-center-routing.module';
 import { DeleteArticleModule } from './delete-article/delete-article.module';

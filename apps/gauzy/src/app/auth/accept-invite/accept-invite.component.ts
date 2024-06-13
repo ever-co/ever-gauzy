@@ -3,11 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { SetLanguageBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { SetLanguageBaseComponent } from '@gauzy/ui-core/i18n';
+import { ToastrService } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-sdk/common';
-import { InviteService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-core/common';
+import { InviteService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

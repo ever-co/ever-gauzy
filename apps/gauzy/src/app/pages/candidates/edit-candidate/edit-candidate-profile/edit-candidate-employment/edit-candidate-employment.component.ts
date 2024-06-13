@@ -17,9 +17,9 @@ import {
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
 	OrganizationPositionsService
-} from '@gauzy/ui-sdk/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

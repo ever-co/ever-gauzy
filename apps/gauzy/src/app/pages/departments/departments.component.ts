@@ -15,8 +15,8 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { OrganizationDepartmentsService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { OrganizationDepartmentsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
@@ -25,7 +25,7 @@ import {
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
 	TagsColorFilterComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

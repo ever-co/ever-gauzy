@@ -4,8 +4,8 @@ import { IPipelineStageUpdateInput } from '@gauzy/contracts';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
 import { first } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
+import { Store } from '@gauzy/ui-core/common';
+import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @Component({
 	templateUrl: './stage-form.component.html',

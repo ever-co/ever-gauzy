@@ -18,10 +18,10 @@ import {
 	OrganizationRecurringExpenseService,
 	ToastrService,
 	monthNames
-} from '@gauzy/ui-sdk/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

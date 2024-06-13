@@ -16,7 +16,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
@@ -24,7 +24,7 @@ import {
 	PaginationV2Module,
 	SharedModule,
 	StatusBadgeModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ProposalTemplateRoutingModule } from './proposal-template-routing.module';
 import { ProposalTemplateComponent } from './proposal-template/proposal-template.component';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';

@@ -16,14 +16,14 @@ import {
 	ITag,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	CardGridComponent,
 	ContactLinksComponent,
@@ -38,7 +38,7 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	VisibilityComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

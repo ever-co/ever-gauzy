@@ -2,16 +2,16 @@ import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ITag, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
 import { NbDialogService, NbStepperComponent } from '@nebular/theme';
 import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ImageAssetService, ToastrService, WarehouseService } from '@gauzy/ui-sdk/core';
-import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ImageAssetService, ToastrService, WarehouseService } from '@gauzy/ui-core/core';
+import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

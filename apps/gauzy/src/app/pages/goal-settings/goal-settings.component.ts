@@ -6,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GoalSettingsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { GoalSettingsService, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	AlertModalComponent,
 	DateViewComponent,
@@ -15,7 +15,7 @@ import {
 	PaginationFilterBaseComponent,
 	StatusBadgeComponent,
 	ValueWithUnitComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';

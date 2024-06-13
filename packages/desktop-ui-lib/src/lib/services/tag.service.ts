@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { concatMap, firstValueFrom, map, shareReplay } from 'rxjs';
 import { API_PREFIX, Store, TagCacheService } from '@gauzy/desktop-ui-lib';
 import { IPagination, ITag } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'

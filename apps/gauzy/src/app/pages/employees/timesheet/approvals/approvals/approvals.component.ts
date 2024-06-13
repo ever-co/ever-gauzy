@@ -12,9 +12,9 @@ import { debounceTime, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, TimesheetService, ToastrService } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
+import { Store, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

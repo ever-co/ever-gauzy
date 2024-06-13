@@ -25,8 +25,8 @@ import {
 	OrganizationProjectsService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	ContactWithTagsComponent,
@@ -36,7 +36,7 @@ import {
 	InputFilterComponent,
 	PaginationFilterBaseComponent,
 	ProjectComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

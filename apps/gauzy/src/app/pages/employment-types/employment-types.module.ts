@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -21,8 +21,8 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';

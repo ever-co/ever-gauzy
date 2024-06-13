@@ -18,9 +18,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, combineLatest, map, switchMap, of as observableOf, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import * as _ from 'underscore';
-import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { JobPresetService, JobSearchCategoryService, JobSearchOccupationService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { ToastrService } from '@gauzy/ui-core/core';
+import { JobPresetService, JobSearchCategoryService, JobSearchOccupationService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

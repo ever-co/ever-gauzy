@@ -6,10 +6,10 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { ProposalTemplateService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { ckEditorConfig } from '@gauzy/ui-core/shared';
+import { ProposalTemplateService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({

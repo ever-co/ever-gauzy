@@ -15,7 +15,7 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
@@ -28,7 +28,7 @@ import {
 	TimerPickerModule,
 	ViewTimeLogModalModule,
 	ViewTimeLogModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';

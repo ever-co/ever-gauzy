@@ -1,6 +1,6 @@
 import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { AuthGuard } from '@gauzy/ui-sdk/core';
+import { AuthGuard } from '@gauzy/ui-core/core';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
 import { AppModuleGuard } from './app.module.guards';

@@ -14,8 +14,8 @@ import {
 	ISelectedEmployee,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ProposalTemplateService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ProposalTemplateService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
@@ -23,7 +23,7 @@ import {
 	Nl2BrPipe,
 	PaginationFilterBaseComponent,
 	TruncatePipe
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
 
 export enum ProposalTemplateTabsEnum {

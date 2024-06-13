@@ -20,10 +20,10 @@ import {
 	IUserOrganization
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ExportAllService, GauzyCloudService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { ExportAllService, GauzyCloudService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

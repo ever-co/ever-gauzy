@@ -5,16 +5,16 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ApprovalPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { ApprovalPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { IApprovalPolicy, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ApprovalPolicyMutationComponent,
 	DeleteConfirmationComponent,
 	IPaginationBase,
 	InputFilterComponent,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

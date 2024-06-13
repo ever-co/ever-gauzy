@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { CreateAppointmentComponent } from './create-appointment.component';
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
-import { AvailabilitySlotsService, EventTypeService } from '@gauzy/ui-sdk/core';
+import { AvailabilitySlotsService, EventTypeService } from '@gauzy/ui-core/core';
 import { CreateAppointmentRoutingModule } from './create-appointment.routing.module';
 import { AppointmentModule } from '../../../pages/employees/appointment/appointment.module';
 

@@ -35,8 +35,8 @@ import {
 	InviteGuard,
 	OrganizationEmploymentTypesService,
 	OrganizationsService
-} from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
@@ -61,7 +61,7 @@ import {
 	StarRatingOutputModule,
 	TableComponentsModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
 import { EditCandidateMainComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-main/edit-candidate-main.component';

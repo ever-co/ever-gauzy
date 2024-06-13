@@ -3,8 +3,8 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbLayoutModule, NbCardModule, NbSelectModule, NbButtonModule } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { LanguageSelectorModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { LanguageSelectorModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AccountingTemplatesRoutingModule } from './accounting-templates-routing.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
 

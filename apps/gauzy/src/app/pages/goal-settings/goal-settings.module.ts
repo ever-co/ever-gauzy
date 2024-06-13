@@ -21,7 +21,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
@@ -30,7 +30,7 @@ import {
 	GoalTemplatesModule,
 	PaginationV2Module,
 	SharedModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 
 @NgModule({

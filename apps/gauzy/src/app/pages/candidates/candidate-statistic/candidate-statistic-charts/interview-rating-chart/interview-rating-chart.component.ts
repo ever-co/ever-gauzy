@@ -3,7 +3,7 @@ import { NbThemeService } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
-import { CandidateFeedbacksService, CandidateInterviewService } from '@gauzy/ui-sdk/core';
+import { CandidateFeedbacksService, CandidateInterviewService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-interview-rating-chart',

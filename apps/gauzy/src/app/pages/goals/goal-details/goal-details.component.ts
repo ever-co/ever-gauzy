@@ -2,11 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { IGoal, IKeyResult, IKeyResultUpdate } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
-import { EmployeesService, GoalService, KeyResultService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { EmployeesService, GoalService, KeyResultService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { ToastrService } from '@gauzy/ui-core/core';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from '../keyresult-details/keyresult-details.component';
 

@@ -5,10 +5,10 @@ import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
-import { sleep } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { AuthService } from '@gauzy/ui-sdk/core';
+import { sleep } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { AuthService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

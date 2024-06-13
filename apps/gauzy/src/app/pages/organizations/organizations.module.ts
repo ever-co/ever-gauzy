@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	DirectivesModule,
@@ -31,8 +31,8 @@ import {
 	RemoveLodashModule,
 	TableComponentsModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {

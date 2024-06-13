@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { catchError, Observable, of as observableOf } from 'rxjs';
 import { IEmployee } from '@gauzy/contracts';
-import { EmployeesService } from '@gauzy/ui-sdk/core';
+import { EmployeesService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

@@ -6,9 +6,9 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IEmployee, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -12,9 +12,9 @@ import {
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
-import { ExportAllService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { FileUploaderModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { ExportAllService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { FileUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
 
 @NgModule({
 	imports: [

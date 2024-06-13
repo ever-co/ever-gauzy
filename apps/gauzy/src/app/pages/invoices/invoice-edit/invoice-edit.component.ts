@@ -22,8 +22,8 @@ import {
 	IProduct,
 	IExpense
 } from '@gauzy/contracts';
-import { Store, compareDate, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store, compareDate, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ToastrService } from '@gauzy/ui-core/core';
 import * as moment from 'moment';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
 import {
@@ -32,7 +32,7 @@ import {
 	InvoicesService,
 	OrganizationSettingService,
 	TranslatableService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	InvoiceApplyTaxDiscountComponent,
 	InvoiceEmployeesSelectorComponent,
@@ -42,7 +42,7 @@ import {
 	InvoiceTasksSelectorComponent
 } from '../table-components';
 import { any } from 'underscore';
-import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

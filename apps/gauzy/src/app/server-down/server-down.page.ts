@@ -1,8 +1,8 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ServerConnectionService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-core/common';
+import { ServerConnectionService } from '@gauzy/ui-core/core';
 
 @Component({
 	styleUrls: ['./server-down.page.scss'],

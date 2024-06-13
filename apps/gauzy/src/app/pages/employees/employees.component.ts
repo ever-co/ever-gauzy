@@ -13,7 +13,7 @@ import {
 	ErrorHandlingService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	ComponentLayoutStyleEnum,
@@ -25,7 +25,7 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	AllowScreenshotCaptureComponent,
 	CardGridComponent,
@@ -40,8 +40,8 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	ToggleFilterComponent
-} from '@gauzy/ui-sdk/shared';
-import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
+import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-core/shared';
 import {
 	EmployeeAverageBonusComponent,
 	EmployeeAverageExpensesComponent,

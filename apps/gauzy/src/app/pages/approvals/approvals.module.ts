@@ -16,15 +16,15 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	RequestApprovalMutationModule,
 	SharedModule
-} from '@gauzy/ui-sdk/shared';
-import { RequestApprovalService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { RequestApprovalService } from '@gauzy/ui-core/core';
 import { ApprovalsComponent } from './approvals.component';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';

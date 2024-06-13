@@ -13,8 +13,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { EmployeeMultiSelectModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { EmployeeMultiSelectModule, TagsColorInputModule } from '@gauzy/ui-core/shared';
 import { EventTypeMutationComponent } from './event-type-mutation.component';
 
 @NgModule({

@@ -15,15 +15,15 @@ import { NbDialogRef, NbDialogService, NbStepperComponent } from '@nebular/theme
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	GoalService,
 	GoalSettingsService,
 	GoalTemplatesService,
 	KeyResultService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 

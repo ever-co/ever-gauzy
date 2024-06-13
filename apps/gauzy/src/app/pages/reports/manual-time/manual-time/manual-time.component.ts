@@ -8,14 +8,14 @@ import { distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	TimesheetFilterService,
 	TimesheetService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

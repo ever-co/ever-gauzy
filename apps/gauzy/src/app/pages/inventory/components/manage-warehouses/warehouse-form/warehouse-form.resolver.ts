@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { catchError, EMPTY, from, Observable, of as observableOf } from 'rxjs';
 import { IWarehouse } from '@gauzy/contracts';
-import { WarehouseService } from '@gauzy/ui-sdk/core';
+import { WarehouseService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

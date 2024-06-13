@@ -12,7 +12,7 @@ import { filter } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { ICandidate, IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	CandidateInterviewService,
 	CandidateInterviewersService,
@@ -20,11 +20,11 @@ import {
 	CandidatesService,
 	EmployeesService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 import * as _ from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-sdk/shared';
+import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

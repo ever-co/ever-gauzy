@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, NgZone, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ILanguage, IUser, IUserUpdateInput, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UserOrganizationService } from '../time-tracker/organization-selector/user-organization.service';
 import { LanguageService } from './language.service';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

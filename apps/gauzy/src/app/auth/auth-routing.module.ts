@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NbLogoutComponent } from '@nebular/auth';
-import { NoAuthGuard } from '@gauzy/ui-sdk/core';
+import { NoAuthGuard } from '@gauzy/ui-core/core';
 import { NgxLoginComponent } from './login/login.component';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxAuthComponent } from './auth/auth.component';

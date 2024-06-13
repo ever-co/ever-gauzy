@@ -9,8 +9,8 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgChartsModule } from 'ng2-charts';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CounterPointModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { CounterPointModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TeamComponent } from './team.component';
 import { TeamCardComponent } from './team-card/team-card.component';
 import { TeamMemberComponent } from './team-member/team-member.component';

@@ -13,9 +13,9 @@ import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, EmployeeStatisticsService } from '@gauzy/ui-sdk/core';
-import { ProfitHistoryComponent, RecordsHistoryComponent } from '@gauzy/ui-sdk/shared';
+import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, EmployeeStatisticsService } from '@gauzy/ui-core/core';
+import { ProfitHistoryComponent, RecordsHistoryComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

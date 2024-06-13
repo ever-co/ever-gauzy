@@ -11,13 +11,13 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DirectivesModule,
 	EmployeeMultiSelectModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
 import { JobTableComponentsModule } from '../../../table-components';
 

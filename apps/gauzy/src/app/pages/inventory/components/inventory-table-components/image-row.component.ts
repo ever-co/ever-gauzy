@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { DEFAULT_SVG } from '@gauzy/ui-sdk/common';
+import { DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 @Component({
 	template: `

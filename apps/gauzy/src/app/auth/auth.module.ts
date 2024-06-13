@@ -15,8 +15,8 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ElectronService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { ElectronService } from '@gauzy/ui-core/core';
 import { ThemeModule } from '../@theme/theme.module';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
@@ -29,7 +29,7 @@ import { NgxAuthComponent } from './auth/auth.component';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { ConfirmEmailModule } from './confirm-email';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';

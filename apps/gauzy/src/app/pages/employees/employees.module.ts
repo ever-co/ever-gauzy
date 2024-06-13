@@ -29,8 +29,8 @@ import {
 	OrganizationEmploymentTypesService,
 	OrganizationsService,
 	SkillsService
-} from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
@@ -53,7 +53,7 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	TimeZoneSelectorModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,

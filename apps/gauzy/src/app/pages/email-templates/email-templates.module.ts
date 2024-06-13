@@ -13,9 +13,9 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { EmailTemplateService } from '@gauzy/ui-sdk/core';
-import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { EmailTemplateService } from '@gauzy/ui-core/core';
+import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
 

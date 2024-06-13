@@ -6,15 +6,15 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-core/core';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
 	GauzyFiltersComponent,
 	IChartData,
 	TimeZoneService
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

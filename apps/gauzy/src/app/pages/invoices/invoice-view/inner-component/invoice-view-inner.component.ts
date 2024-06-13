@@ -5,10 +5,10 @@ import { DiscountTaxTypeEnum, IInvoice, InvoiceTypeEnum } from '@gauzy/contracts
 import { tap } from 'rxjs/operators';
 import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { CurrencyPositionPipe } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
-import { TranslatableService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
+import { Store } from '@gauzy/ui-core/common';
+import { TranslatableService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

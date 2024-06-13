@@ -4,15 +4,15 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	ProductMutationModule,
 	TableComponentsModule
-} from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
 

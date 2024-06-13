@@ -29,7 +29,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import moment from 'moment';
-import { UiSdkModule } from '@gauzy/ui-sdk';
+import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
@@ -44,10 +44,10 @@ import {
 	ServerConnectionService,
 	TenantInterceptor,
 	TokenInterceptor
-} from '@gauzy/ui-sdk/core';
-import { CommonModule, Store } from '@gauzy/ui-sdk/common';
-import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-sdk/i18n';
-import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { CommonModule, Store } from '@gauzy/ui-core/common';
+import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-core/i18n';
+import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
@@ -89,7 +89,7 @@ const isProd = environment.production;
 		}),
 		NbEvaIconsModule,
 		UiConfigModule.forRoot(),
-		UiSdkModule.forRoot(),
+		UiCoreModule.forRoot(),
 		I18nTranslateModule.forRoot(),
 		CommonModule.forRoot(),
 		CoreModule.forRoot(),
