@@ -5,13 +5,13 @@ import { Injectable } from '@angular/core';
 })
 export class SidebarMenuService {
 	private _selectedItem: any;
-	constructor() {}
-
-	public get selectedItem(): any {
+	get selectedItem(): any {
 		return this._selectedItem;
 	}
 
-	public set selectedItem(value: any) {
+	set selectedItem(value: any) {
 		this._selectedItem = value;
 	}
+
+	constructor() {}
 }

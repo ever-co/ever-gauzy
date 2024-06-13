@@ -1,21 +1,21 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NbCardModule, NbSpinnerModule, NbButtonModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { EmployeeAppointmentService } from '@gauzy/ui-core/core';
 import { EditAppointmentComponent } from './edit-appointment.component';
 import { EditAppointmentRoutingModule } from './edit-appointment.routing.module';
-import { EmployeeAppointmentService } from '@gauzy/ui-core/core';
 import { ManageAppointmentModule } from '../../../pages/employees/appointment/manage-appointment/manage-appointment.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
+		CommonModule,
 		NbButtonModule,
-		NbSpinnerModule,
 		NbCardModule,
+		NbSpinnerModule,
+		I18nTranslateModule.forChild(),
 		EditAppointmentRoutingModule,
-		ManageAppointmentModule,
-		I18nTranslateModule.forChild()
+		ManageAppointmentModule
 	],
 	declarations: [EditAppointmentComponent],
 	providers: [EmployeeAppointmentService]

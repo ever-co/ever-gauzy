@@ -81,7 +81,7 @@ export class NavigationService {
 		}
 
 		const queryParamsString = this.createQueryParamsString(uniqueQueryParams); // Convert query params object to string
-		const newUrl = `${currentUrlTree}?${queryParamsString}`; // Combine current URL with updated query params
+		const newUrl = [currentUrlTree, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
 
 		// Replace the browser's URL without triggering navigation
 		this.location.replaceState(newUrl);

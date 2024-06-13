@@ -1,49 +1,47 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbInputModule,
-	NbIconModule,
-	NbRadioModule,
-	NbToastrModule,
-	NbBadgeModule,
-	NbTooltipModule,
-	NbSpinnerModule
-} from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbInputModule,
+	NbRadioModule,
+	NbSpinnerModule,
+	NbToastrModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { ImportComponent } from './import.component';
 import { FileUploadModule } from 'ng2-file-upload';
-import { ThemeModule } from '../../../@theme/theme.module';
-import { ImportRoutingModule } from './import-routing.module';
 import { ExportAllService } from '@gauzy/ui-core/core';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { FileUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
+import { FileUploaderModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ImportComponent } from './import.component';
+import { ImportRoutingModule } from './import-routing.module';
 
 @NgModule({
 	imports: [
-		ImportRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
+		FileUploadModule,
+		HttpClientModule,
+		NbBadgeModule,
 		NbButtonModule,
-		FileUploaderModule,
+		NbCardModule,
 		NbIconModule,
 		NbInputModule,
 		NbRadioModule,
-		FileUploadModule,
-		HttpClientModule,
+		NbSpinnerModule,
 		NbToastrModule.forRoot(),
-		I18nTranslateModule.forChild(),
-		NgxPermissionsModule.forChild(),
-		SharedModule,
-		NbBadgeModule,
 		NbTooltipModule,
-		GauzyButtonActionModule,
+		ImportRoutingModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
 		SharedModule,
-		NbSpinnerModule
+		FileUploaderModule,
+		GauzyButtonActionModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

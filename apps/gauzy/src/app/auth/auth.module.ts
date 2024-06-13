@@ -17,7 +17,7 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ElectronService } from '@gauzy/ui-core/core';
-import { ThemeModule } from '../@theme/theme.module';
+import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
@@ -26,7 +26,6 @@ import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.co
 import { NgxRegisterSideFeaturesComponent } from './register/register-side-features/register-side-features.component';
 import { NgxRegisterSideSingleFeatureComponent } from './register/register-side-features/register-side-single-feature/register-side-single-feature.component';
 import { NgxAuthComponent } from './auth/auth.component';
-import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { ConfirmEmailModule } from './confirm-email';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
@@ -54,11 +53,11 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 		NbSelectModule,
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
-		ThemeModule,
 		NgxAuthRoutingModule,
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ConfirmEmailModule,
+		ThemeModule,
 		SharedModule,
 		WorkspaceSelectionModule,
 		PasswordFormFieldModule
