@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { BehaviorSubject, map, Observable } from 'rxjs';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
+import { Store } from '@gauzy/ui-core/common';
 import {
 	CORPORATE_THEME,
 	COSMIC_THEME,
@@ -11,8 +12,7 @@ import {
 	GAUZY_LIGHT,
 	MATERIAL_DARK_THEME,
 	MATERIAL_LIGHT_THEME
-} from '@gauzy/ui-core/theme';
-import { Store } from '@gauzy/ui-core/common';
+} from '../../../../../themes';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

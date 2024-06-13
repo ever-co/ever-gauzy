@@ -1,4 +1,4 @@
-@import 'apps/gauzy/src/app/auth/@shared/whats-new/whats-new.component.scss';
+@import '@shared/_whats-new';
 @import 'gauzy/_gauzy-dialogs';
 
 ::ng-deep.changelog-sidebar {
@@ -8,6 +8,6 @@
 }
 i {
   position: absolute;
-  right: .75rem;
-  top: .75rem;
+  right: 0.75rem;
+  top: 0.75rem;
 }

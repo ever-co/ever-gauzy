@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -12,12 +13,12 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { FileProviderSelectorModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { FileStorageRoutingModule } from './file-storage-routing.module';
 import { FileStorageComponent } from './file-storage.component';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		FileStorageRoutingModule,
@@ -28,7 +29,6 @@ import { FileStorageComponent } from './file-storage.component';
 		NbSpinnerModule,
 		NbToggleModule,
 		NgxPermissionsModule.forChild(),
-		ThemeModule,
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		FileProviderSelectorModule

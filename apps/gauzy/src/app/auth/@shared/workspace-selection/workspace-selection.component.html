@@ -11,12 +11,14 @@
 	</nb-card-header>
 	<nb-card-body>
 		<nb-list>
-			<nb-list-item *ngFor="let workspace of workspaces" debounceClick (throttledClick)="selectWorkspace(workspace)">
+			<nb-list-item
+				*ngFor="let workspace of workspaces"
+				debounceClick
+				(throttledClick)="selectWorkspace(workspace)"
+			>
 				<div class="workspace-container">
 					<div class="workspace-image">
-						<img
-							[src]="workspace.user?.tenant?.logo"
-						/>
+						<img [src]="workspace.user?.tenant?.logo" />
 					</div>
 					<div class="workspace-info">
 						<div class="workspace-name">

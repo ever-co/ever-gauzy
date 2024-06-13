@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -19,8 +20,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-core/core';
-import { UserIdService } from '@gauzy/ui-core/core';
+import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
@@ -37,7 +37,6 @@ import {
 	UserMutationModule,
 	UserOrganizationsMultiSelectModule
 } from '@gauzy/ui-core/shared';
-import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
@@ -60,6 +59,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		CommonModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
@@ -69,7 +69,6 @@ const COMPONENTS = [
 		UserOrganizationsMultiSelectModule,
 		OrganizationsModule,
 		NbActionsModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,

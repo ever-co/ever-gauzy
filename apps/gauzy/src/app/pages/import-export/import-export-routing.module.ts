@@ -5,6 +5,7 @@ import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { ImportExportComponent } from './import-export.component';
 
 const externalUrlProvider = new InjectionToken('externalUrlRedirectResolver');
+
 const routes: Routes = [
 	{
 		path: '',

@@ -48,7 +48,7 @@ import {
 import { CommonModule, Store } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
-import { ThemeModule } from './@theme/theme.module';
+import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppModuleGuard } from './app.module.guards';
