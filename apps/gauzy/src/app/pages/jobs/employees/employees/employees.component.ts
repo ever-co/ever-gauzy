@@ -9,15 +9,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
 	NumberEditorComponent,
 	PaginationFilterBaseComponent,
 	SmartTableToggleComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 export enum JobSearchTabsEnum {
 	BROWSE = 'BROWSE',

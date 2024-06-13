@@ -13,16 +13,16 @@ import {
 	IUser,
 	GoalLevelEnum
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	GoalService,
 	GoalSettingsService,
 	KeyResultService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { AlertModalComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 import { EditObjectiveComponent } from './edit-objective/edit-objective.component';
 import { EditKeyResultsComponent } from './edit-keyresults/edit-keyresults.component';
 import { GoalDetailsComponent } from './goal-details/goal-details.component';

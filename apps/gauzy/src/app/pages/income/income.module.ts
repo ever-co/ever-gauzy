@@ -14,7 +14,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -24,7 +24,7 @@ import {
 	TableComponentsModule,
 	TableFiltersModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
 

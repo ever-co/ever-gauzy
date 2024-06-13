@@ -13,8 +13,8 @@ import {
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -22,8 +22,8 @@ import {
 	IPaginationBase,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

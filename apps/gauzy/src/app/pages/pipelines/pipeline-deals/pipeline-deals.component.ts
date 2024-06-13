@@ -4,15 +4,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { ComponentEnum, distinctUntilChange, Store } from '@gauzy/ui-sdk/common';
-import { DealsService, PipelinesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum, distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { DealsService, PipelinesService, ToastrService } from '@gauzy/ui-core/core';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject } from 'rxjs';
 import { PipelineDealCreatedByComponent } from '../table-components/pipeline-deal-created-by/pipeline-deal-created-by';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

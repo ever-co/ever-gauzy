@@ -13,8 +13,8 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EquipmentSharingMutationModule,
@@ -23,7 +23,7 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';

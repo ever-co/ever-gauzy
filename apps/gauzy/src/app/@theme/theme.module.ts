@@ -36,8 +36,8 @@ import {
 	MATERIAL_LIGHT_THEME,
 	Pipes,
 	WindowModeBlockScrollService
-} from '@gauzy/ui-sdk/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/theme';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CommonNavModule,
 	LanguagesService,
@@ -45,14 +45,14 @@ import {
 	SelectorService,
 	UsersOrganizationsService,
 	UsersService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	DirectivesModule,
 	SelectorsModule,
 	TimeTrackerModule,
 	TimeTrackerStatusModule,
 	WorkspacesModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,

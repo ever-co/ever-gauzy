@@ -14,7 +14,7 @@ import { tap, debounceTime, filter } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })

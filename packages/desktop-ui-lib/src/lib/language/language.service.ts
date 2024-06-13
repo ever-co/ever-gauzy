@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ILanguage } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { toParams } from '@gauzy/ui-core/common';
 import { firstValueFrom, map, shareReplay } from 'rxjs';
 import { API_PREFIX } from '../constants/app.constants';
 import { LanguageCacheService } from '../services';

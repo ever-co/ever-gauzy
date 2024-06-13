@@ -4,7 +4,7 @@ import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { HelpComponent } from './help.component';
 import { HelpRoutingModule } from './help-routing.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 
 @NgModule({
 	imports: [

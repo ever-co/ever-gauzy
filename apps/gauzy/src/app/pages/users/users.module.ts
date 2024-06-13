@@ -18,9 +18,9 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
-import { UserIdService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-core/core';
+import { UserIdService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
@@ -36,7 +36,7 @@ import {
 	UserMultiSelectModule,
 	UserMutationModule,
 	UserOrganizationsMultiSelectModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ThemeModule } from '../../@theme/theme.module';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';

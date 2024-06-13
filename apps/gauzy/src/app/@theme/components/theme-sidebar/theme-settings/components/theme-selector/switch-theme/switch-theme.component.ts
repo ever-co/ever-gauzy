@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { ThemeSelectorComponent } from '../theme-selector.component';
 import { NbThemeService } from '@nebular/theme';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
 import { SwitchThemeService } from './switch-theme.service';
 import { ActivatedRoute } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';

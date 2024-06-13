@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IOrganizationTeamEmployee } from '@gauzy/contracts';
-import { progressStatus } from '@gauzy/ui-sdk/common';
+import { progressStatus } from '@gauzy/ui-core/common';
 import moment from 'moment';
 
 @Component({

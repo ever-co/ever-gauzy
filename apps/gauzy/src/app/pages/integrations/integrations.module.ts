@@ -10,13 +10,13 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	GauzyButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { IntegrationLayoutComponent } from './layout/layout.component';

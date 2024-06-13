@@ -21,7 +21,7 @@ import {
 	EmployeeAppointmentService,
 	TimeOffService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IEmployeeAppointment,
 	ITimeOff,
@@ -31,9 +31,9 @@ import {
 	IOrganization,
 	WeekDaysEnum
 } from '@gauzy/contracts';
-import { Store, convertLocalToTimezone } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
+import { Store, convertLocalToTimezone } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { NbAuthComponent } from '@nebular/auth';
-import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '@gauzy/ui-sdk/shared';
+import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '@gauzy/ui-core/shared';
 
 export const routes: Routes = [
 	{

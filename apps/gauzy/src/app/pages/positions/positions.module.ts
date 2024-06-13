@@ -10,16 +10,16 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
 	NoDataMessageModule,
 	TableComponentsModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
-import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
+import { OrganizationPositionsService } from '@gauzy/ui-core/core';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
 import { Angular2SmartTableModule } from 'angular2-smart-table';

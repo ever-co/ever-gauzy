@@ -2,9 +2,9 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { IInvite, IUserRegistrationInput, ITag, ITenant } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { MatchValidator } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { FormHelpers } from '@gauzy/ui-sdk/shared';
+import { MatchValidator } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { FormHelpers } from '@gauzy/ui-core/shared';
 
 @Component({
 	selector: 'ga-accept-invite-form',

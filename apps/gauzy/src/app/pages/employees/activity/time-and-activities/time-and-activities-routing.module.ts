@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeAndActivitiesComponent } from './time-and-activities/time-and-activities.component';
 
 const routes: Routes = [

@@ -5,10 +5,10 @@ import { EMPTY, filter } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { AuthService } from '@gauzy/ui-sdk/core';
-import { PasswordFormFieldComponent } from '@gauzy/ui-sdk/shared';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { AuthService } from '@gauzy/ui-core/core';
+import { PasswordFormFieldComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

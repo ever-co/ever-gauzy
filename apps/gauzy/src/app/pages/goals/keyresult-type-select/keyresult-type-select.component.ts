@@ -4,7 +4,7 @@ import { KeyResultTypeEnum, IGoalGeneralSetting, IKPI } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { EditKpiComponent } from '../../../pages/goal-settings/edit-kpi/edit-kpi.component';
 import { firstValueFrom } from 'rxjs';
-import { GoalSettingsService } from '@gauzy/ui-sdk/core';
+import { GoalSettingsService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-keyresult-type-select',

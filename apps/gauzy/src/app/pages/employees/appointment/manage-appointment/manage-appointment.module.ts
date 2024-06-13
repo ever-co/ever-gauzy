@@ -9,9 +9,9 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { AppointmentEmployeesService } from '@gauzy/ui-sdk/core';
-import { EmployeeMultiSelectModule, SharedModule, TimerPickerModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { AppointmentEmployeesService } from '@gauzy/ui-core/core';
+import { EmployeeMultiSelectModule, SharedModule, TimerPickerModule } from '@gauzy/ui-core/shared';
 import { ManageAppointmentComponent } from './manage-appointment.component';
 import { EmployeeSchedulesModule } from '../employee-schedules/employee-schedules.module';
 import { ManageAppointmentRoutingModule } from './manage-appointment-routing.module';

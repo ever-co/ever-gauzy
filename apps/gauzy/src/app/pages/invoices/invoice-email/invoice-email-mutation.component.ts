@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { OnInit } from '@angular/core';
 import { IInvoice, InvoiceStatusTypesEnum, IInvoiceItem } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { InvoiceEstimateHistoryService, InvoicesService, ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 
 @Component({
 	selector: 'ga-invoice-email',

@@ -11,15 +11,15 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { IPaginationBase, NotesWithTagsComponent, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IPaginationBase, NotesWithTagsComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationExpenseCategoriesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 import { ExpenseCategoryMutationComponent } from './expense-category-mutation/expense-category-mutation.component';
 
 @UntilDestroy({ checkProperties: true })

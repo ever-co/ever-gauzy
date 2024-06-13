@@ -5,10 +5,10 @@ import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-sdk/shared';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService, OrganizationContactService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
+import { Store } from '@gauzy/ui-core/common';
+import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

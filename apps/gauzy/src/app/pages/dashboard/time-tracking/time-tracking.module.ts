@@ -14,7 +14,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import {
@@ -26,7 +26,7 @@ import {
 	TimezoneFilterModule,
 	WidgetLayoutModule,
 	WindowLayoutModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @NgModule({
 	imports: [

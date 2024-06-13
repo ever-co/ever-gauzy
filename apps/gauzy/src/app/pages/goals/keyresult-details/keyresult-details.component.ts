@@ -11,7 +11,7 @@ import {
 	OrganizationProjectsService,
 	TasksService,
 	TasksStoreService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IKeyResult,
 	IKeyResultUpdate,
@@ -24,10 +24,10 @@ import {
 	IKPI,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
-import { AddTaskDialogComponent, AlertModalComponent } from '@gauzy/ui-sdk/shared';
+import { AddTaskDialogComponent, AlertModalComponent } from '@gauzy/ui-core/shared';
 import { KeyResultUpdateComponent } from '../keyresult-update/keyresult-update.component';
 import { KeyResultProgressChartComponent } from '../keyresult-progress-chart/keyresult-progress-chart.component';
 

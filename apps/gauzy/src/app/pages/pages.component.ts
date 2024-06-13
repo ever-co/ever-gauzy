@@ -7,7 +7,7 @@ import { filter, map, take, tap } from 'rxjs/operators';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { chain } from 'underscore';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	AuthStrategy,
 	IJobMatchingEntity,
@@ -17,9 +17,9 @@ import {
 	NavMenuSectionItem,
 	PermissionsService,
 	UsersService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })

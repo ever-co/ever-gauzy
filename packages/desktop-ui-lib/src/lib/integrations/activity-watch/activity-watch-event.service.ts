@@ -11,7 +11,7 @@ import {
 	IDateRange
 } from '@gauzy/contracts';
 import { ActivityWatchUtil } from './activity-watch.util';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { toParams } from '@gauzy/ui-core/common';
 
 type BucketType = keyof ReturnType<(typeof ActivityWatchUtil)['parseBuckets']>;
 

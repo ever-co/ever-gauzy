@@ -77,7 +77,7 @@ COPY --chown=node:node packages/plugins/knowledge-base/package.json ./packages/p
 COPY --chown=node:node packages/plugins/changelog/package.json ./packages/plugins/changelog/
 COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plugins/job-proposal/
 COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
-COPY --chown=node:node packages/ui-sdk/package.json ./packages/ui-sdk/
+COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now

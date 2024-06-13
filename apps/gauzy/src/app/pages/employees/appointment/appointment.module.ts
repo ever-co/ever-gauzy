@@ -1,17 +1,17 @@
 import { NgModule } from '@angular/core';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NbButtonModule, NbCardModule, NbSpinnerModule, NbIconModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
 	EmployeeAppointmentService,
 	TimeOffService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { ThemeModule } from '../../../@theme/theme.module';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 
 @NgModule({

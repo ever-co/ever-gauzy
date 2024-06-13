@@ -4,8 +4,8 @@ import { IOrganizationProject, TaskListTypeEnum, PermissionsEnum, IPagination, I
 import { Observable } from 'rxjs';
 import { map, tap, switchMap, take } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-sdk/common';
-import { TasksService, TasksStoreService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-core/common';
+import { TasksService, TasksStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

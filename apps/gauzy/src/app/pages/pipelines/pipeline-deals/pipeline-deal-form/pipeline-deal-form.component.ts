@@ -4,11 +4,11 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { filter } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { IPipeline, IContact } from '@gauzy/contracts';
-import { AppStore, Store } from '@gauzy/ui-sdk/common';
+import { AppStore, Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { DealsService, OrganizationContactService, PipelinesService, ToastrService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DealsService, OrganizationContactService, PipelinesService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

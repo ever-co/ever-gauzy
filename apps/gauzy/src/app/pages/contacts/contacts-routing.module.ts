@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { ContactType, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { ContactsComponent } from './contacts.component';
 
 const CONTACT_VIEW_PERMISSION = {

@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
@@ -23,7 +23,7 @@ import {
 	PaginationV2Module,
 	SharedModule,
 	StatusBadgeModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { SearchRoutingModule } from './search-routing.module';
 import { SearchComponent } from './search/search.component';
 

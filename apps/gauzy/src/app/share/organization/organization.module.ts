@@ -12,13 +12,13 @@ import {
 	NbUserModule,
 	NbTagModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	ImageUploaderModule,
 	PublicPageMutationModule,
 	SharedModule,
 	TableComponentsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';

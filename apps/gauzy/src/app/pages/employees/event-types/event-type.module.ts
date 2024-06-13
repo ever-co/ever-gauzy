@@ -12,8 +12,8 @@ import {
 } from '@nebular/theme';
 import { EventTypeRoutingModule } from './event-type.routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { EventTypeService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { EventTypeService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -22,7 +22,7 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EventTypeComponent } from './event-type.component';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
 

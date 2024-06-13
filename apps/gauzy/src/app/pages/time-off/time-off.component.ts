@@ -8,9 +8,9 @@ import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
-import { DateRangePickerBuilderService, ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-core/core';
 import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -22,7 +22,7 @@ import {
 	TimeOffHolidayMutationComponent,
 	InputFilterComponent,
 	StatusBadgeComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from '../approvals/table-components';
 
 @UntilDestroy({ checkProperties: true })

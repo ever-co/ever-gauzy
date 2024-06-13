@@ -25,8 +25,8 @@ import {
 	ProposalsService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	ActionConfirmationComponent,
 	ClickableLinkComponent,
@@ -43,7 +43,7 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -19,8 +19,8 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsService, TimeOffService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -28,7 +28,7 @@ import {
 	SharedModule,
 	TimeOffMutationModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';

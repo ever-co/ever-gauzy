@@ -14,14 +14,14 @@ import {
 	IEventTypeViewModel,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, EventTypeService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, EventTypeService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	NotesWithTagsComponent,
 	DeleteConfirmationComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EventTypeMutationComponent } from './event-type-mutation/event-type-mutation.component';
 import { DEFAULT_EVENT_TYPE } from './default-event-type';
 

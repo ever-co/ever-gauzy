@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DailyStatisticsModule,
 	GalleryModule,
@@ -12,7 +12,7 @@ import {
 	ScreenshotsItemModule,
 	SharedModule,
 	ViewTimeLogModalModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ScreenshotRoutingModule } from './screenshot-routing.module';
 import { ScreenshotComponent } from './screenshot/screenshot.component';
 

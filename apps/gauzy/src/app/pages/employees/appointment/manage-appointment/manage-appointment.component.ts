@@ -18,17 +18,17 @@ import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
 	EmployeeAppointmentService,
 	EmployeesService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlertModalComponent, EmployeeSelectComponent } from '@gauzy/ui-sdk/shared';
+import { AlertModalComponent, EmployeeSelectComponent } from '@gauzy/ui-core/shared';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -14,7 +14,7 @@ import {
 	ProposalTemplateService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -33,14 +33,14 @@ import {
 	IIntegrationEntitySetting,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { JobService } from '@gauzy/ui-sdk/core';
+import { JobService } from '@gauzy/ui-core/core';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
-import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/shared';
+import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 

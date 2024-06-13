@@ -10,13 +10,13 @@ import {
 	NbTagModule,
 	NbUserModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	ImageUploaderModule,
 	PublicPageEmployeeMutationModule,
 	SharedModule,
 	TableComponentsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { EmployeeComponent } from './employee.component';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';

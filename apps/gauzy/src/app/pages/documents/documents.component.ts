@@ -1,22 +1,22 @@
 import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { IOrganizationDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, OrganizationDocumentsService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, OrganizationDocumentsService, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	DocumentDateTableComponent,
 	DocumentUrlTableComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ActivatedRoute } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
 

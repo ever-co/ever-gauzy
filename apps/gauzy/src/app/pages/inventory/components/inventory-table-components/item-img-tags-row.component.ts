@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { getContrastColor } from '@gauzy/ui-sdk/common';
+import { getContrastColor } from '@gauzy/ui-core/common';
 import { ComponentLayoutStyleEnum } from '@gauzy/contracts';
 
 @Component({

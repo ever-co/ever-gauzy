@@ -5,10 +5,10 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { IGetTimeLimitReportInput, ITimeLogFilters } from '@gauzy/contracts';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
+import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -4,14 +4,14 @@ import { ExpensesReportRoutingModule } from './expenses-report-routing.module';
 import { ExpensesReportComponent } from './expenses-report/expenses-report.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	ExpenseCategorySelectModule,
 	ExpensesReportGridModule,
 	GauzyFiltersModule,
 	LineChartModule,
 	SharedModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],

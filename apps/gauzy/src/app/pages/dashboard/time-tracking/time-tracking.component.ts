@@ -45,15 +45,15 @@ import {
 	ITimeLogTodayFilters,
 	TimeFormatEnum
 } from '@gauzy/contracts';
-import { GuiDrag, Store, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-sdk/common';
+import { GuiDrag, Store, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	EmployeesService,
 	OrganizationProjectsService,
 	TimesheetStatisticsService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	ALL_EMPLOYEES_SELECTED,
 	GalleryService,
@@ -61,7 +61,7 @@ import {
 	WidgetService,
 	WindowService,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);

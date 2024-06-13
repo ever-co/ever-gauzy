@@ -32,13 +32,13 @@ import {
 	DiscountTaxTypeEnum,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	InvoiceEstimateHistoryService,
@@ -46,7 +46,7 @@ import {
 	InvoicesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ContactLinksComponent,
@@ -59,7 +59,7 @@ import {
 	StatusBadgeComponent,
 	generateCsv,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';

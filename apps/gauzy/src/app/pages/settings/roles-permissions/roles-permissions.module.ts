@@ -13,8 +13,8 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ThemeModule } from '../../../@theme/theme.module';
-import { RolePermissionsService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { RolePermissionsService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { RolesPermissionsRoutingModule } from './roles-permissions-routing.module';
 import { RolesPermissionsComponent } from './roles-permissions.component';
 

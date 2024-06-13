@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSelectModule } from '@nebular/theme';
 import { NgChartsModule } from 'ng2-charts';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ThemeModule } from 'apps/gauzy/src/app/@theme/theme.module';
 import { EmployeeChartsComponent } from './employee-charts.component';
 import { EmployeeDoughnutChartComponent } from './employee-doughnut-chart/employee-doughnut-chart.component';

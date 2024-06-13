@@ -15,10 +15,10 @@ import {
 	startOfYear,
 	endOfYear
 } from 'date-fns';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { GoalSettingsService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { GoalSettingsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

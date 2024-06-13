@@ -8,8 +8,8 @@ import {
 	GauzyFiltersModule,
 	LineChartModule,
 	SharedModule
-} from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
 

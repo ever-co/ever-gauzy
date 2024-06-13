@@ -15,8 +15,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
@@ -27,7 +27,7 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';

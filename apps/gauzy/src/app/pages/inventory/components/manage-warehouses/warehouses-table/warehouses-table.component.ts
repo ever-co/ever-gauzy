@@ -8,14 +8,14 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ServerDataSource, ToastrService, WarehouseService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ServerDataSource, ToastrService, WarehouseService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
 	InputFilterComponent,
 	PaginationFilterBaseComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import { DescriptionComponent } from '../../inventory-table-components/description/description.component';
 

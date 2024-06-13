@@ -6,14 +6,14 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { LocalDataSource } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
 	NotesWithTagsComponent,
 	DeleteConfirmationComponent
-} from '@gauzy/ui-sdk/shared';
-import { EmployeeLevelService, ToastrService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { EmployeeLevelService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

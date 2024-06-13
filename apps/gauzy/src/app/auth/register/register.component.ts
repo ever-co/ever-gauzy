@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthService, NbRegisterComponent } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { patterns } from '@gauzy/ui-sdk/shared';
+import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -12,8 +12,8 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { PaginationV2Module, ProjectSelectModule, RepositorySelectorModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { PaginationV2Module, ProjectSelectModule, RepositorySelectorModule, SharedModule } from '@gauzy/ui-core/shared';
 import { GithubRoutingModule } from './github-routing.module';
 import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';

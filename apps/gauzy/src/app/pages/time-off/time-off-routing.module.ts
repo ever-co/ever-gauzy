@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
-import { DateRangePickerResolver } from '@gauzy/ui-sdk/shared';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 

@@ -4,11 +4,16 @@ import { CommonModule } from '@angular/common';
 import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
 import { ShareModule } from './../../../../share/share.module';
-import { EditTimeLogModalModule, GauzyFiltersModule, SharedModule, ViewTimeLogModalModule } from '@gauzy/ui-sdk/shared';
+import {
+	EditTimeLogModalModule,
+	GauzyFiltersModule,
+	SharedModule,
+	ViewTimeLogModalModule
+} from '@gauzy/ui-core/shared';
 
 @NgModule({
 	declarations: [CalendarComponent],

@@ -7,16 +7,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of as observableOf, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	EmployeeStatisticsService,
 	EmployeesService,
 	OrganizationsService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { PublicPageMutationComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { PublicPageMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

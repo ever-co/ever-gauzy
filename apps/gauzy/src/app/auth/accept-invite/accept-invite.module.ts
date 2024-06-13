@@ -12,9 +12,9 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { InviteService, RoleService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { PasswordFormFieldModule } from '@gauzy/ui-sdk/shared';
+import { InviteService, RoleService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { PasswordFormFieldModule } from '@gauzy/ui-core/shared';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
 import { AcceptInvitePage } from './accept-invite.component';
 

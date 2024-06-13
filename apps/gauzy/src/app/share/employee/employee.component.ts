@@ -7,10 +7,10 @@ import { NbDialogService } from '@nebular/theme';
 import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauzy/contracts';
 import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EmployeesService, ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
-import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { EmployeesService, ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-core/core';
+import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

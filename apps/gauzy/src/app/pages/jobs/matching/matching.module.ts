@@ -15,8 +15,8 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { MomentModule } from 'ngx-moment';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DialogsModule, EmployeeMultiSelectModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { DialogsModule, EmployeeMultiSelectModule, SharedModule } from '@gauzy/ui-core/shared';
 import { MatchingRoutingModule } from './matching-routing.module';
 import { MatchingComponent } from './matching/matching.component';
 

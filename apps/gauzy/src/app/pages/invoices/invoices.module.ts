@@ -41,8 +41,8 @@ import {
 	TasksService,
 	TasksStoreService,
 	TranslatableService
-} from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+} from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ThemeModule } from '../../@theme/theme.module';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
@@ -63,7 +63,7 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';

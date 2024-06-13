@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { OrganizationsStepFormModule } from '@gauzy/ui-sdk/shared';
+import { OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
 import { OnboardingCompleteComponent } from './onboarding-complete.component';
 
 const routes: Routes = [

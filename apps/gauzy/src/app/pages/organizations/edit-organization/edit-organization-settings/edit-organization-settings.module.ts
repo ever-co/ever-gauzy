@@ -22,7 +22,7 @@ import {
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeStore,
 	InviteService,
@@ -32,7 +32,7 @@ import {
 	OrganizationExpenseCategoriesService,
 	OrganizationPositionsService,
 	OrganizationVendorsService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	CurrencyModule,
 	EmployeeMultiSelectModule,
@@ -49,7 +49,7 @@ import {
 	TimeZoneSelectorModule,
 	TimerPickerModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';

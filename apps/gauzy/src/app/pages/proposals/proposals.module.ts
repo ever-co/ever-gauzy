@@ -17,8 +17,8 @@ import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ProposalsService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { ProposalsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	ContactSelectModule,
@@ -31,7 +31,7 @@ import {
 	TableFiltersModule,
 	TagsColorInputModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalsRoutingModule } from './proposals-routing.module';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';

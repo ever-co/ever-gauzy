@@ -16,14 +16,14 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	InvoicesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
@@ -36,7 +36,7 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { InvoicePaidComponent } from '../table-components';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
 

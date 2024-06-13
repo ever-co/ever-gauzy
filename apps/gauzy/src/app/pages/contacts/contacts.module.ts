@@ -16,8 +16,8 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
@@ -29,7 +29,7 @@ import {
 	PaginationV2Module,
 	SharedModule,
 	TagsColorInputModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ContactMutationComponent } from './contact-mutation/contact-mutation.component';
 import { ContactsRoutingModule } from './contacts-routing.module';
 import { ContactsComponent } from './contacts.component';

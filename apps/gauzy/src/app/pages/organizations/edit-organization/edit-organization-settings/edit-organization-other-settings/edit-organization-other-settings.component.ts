@@ -35,10 +35,10 @@ import {
 	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
 	DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS
 } from '@gauzy/contracts';
-import { Store, isEmpty } from '@gauzy/ui-sdk/common';
-import { AccountingTemplateService, OrganizationEditStore, OrganizationTaskSettingService } from '@gauzy/ui-sdk/core';
-import { OrganizationsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { NotesWithTagsComponent } from '@gauzy/ui-sdk/shared';
+import { Store, isEmpty } from '@gauzy/ui-core/common';
+import { AccountingTemplateService, OrganizationEditStore, OrganizationTaskSettingService } from '@gauzy/ui-core/core';
+import { OrganizationsService, ToastrService } from '@gauzy/ui-core/core';
+import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -11,13 +11,13 @@ import {
 	NbDialogModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	GauzyButtonActionModule,
 	NoDataMessageModule,
 	RecurringExpenseBlockModule,
 	SharedModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { RecurringExpensesEmployeeRoutingModule } from './recurring-expense-employee-routing.module';
 import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee.component';
 

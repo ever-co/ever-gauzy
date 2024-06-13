@@ -10,10 +10,10 @@ import { Subject } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { saveAs } from 'file-saver';
 import { environment } from '@gauzy/ui-config';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ImportService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { API_PREFIX } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/common';
+import { ImportService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

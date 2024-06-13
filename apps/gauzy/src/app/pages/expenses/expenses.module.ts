@@ -15,8 +15,8 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	ExpensesMutationModule,
@@ -27,7 +27,7 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';

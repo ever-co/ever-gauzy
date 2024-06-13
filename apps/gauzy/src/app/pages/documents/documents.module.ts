@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	FileUploaderModule,
@@ -23,7 +23,7 @@ import {
 	PaginationModule,
 	SharedModule,
 	TableComponentsModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';

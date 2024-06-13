@@ -1,6 +1,6 @@
 import { Component, Input, EventEmitter, Output, OnInit, OnDestroy } from '@angular/core';
 import { ICandidateInterview } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

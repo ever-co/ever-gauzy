@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { JobPostStatusEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
 	selector: 'job-status',

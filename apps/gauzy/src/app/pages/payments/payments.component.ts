@@ -13,8 +13,8 @@ import {
 	ErrorHandlingService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import { environment as ENV } from '@gauzy/ui-config';
 import {
 	IPayment,
@@ -25,7 +25,7 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-core/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
@@ -40,7 +40,7 @@ import {
 	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 
 @UntilDestroy({ checkProperties: true })

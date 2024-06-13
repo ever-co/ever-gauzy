@@ -5,10 +5,10 @@ import { take } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-sdk/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -10,15 +10,15 @@ import {
 	PaginationV2Module,
 	SharedModule,
 	TableFiltersModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	InvoiceEstimateHistoryService,
 	InvoicesService,
 	OrganizationContactService,
 	PaymentService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 
 @NgModule({
 	imports: [

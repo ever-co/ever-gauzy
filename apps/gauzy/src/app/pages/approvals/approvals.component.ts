@@ -15,8 +15,8 @@ import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
-import { RequestApprovalService, ToastrService } from '@gauzy/ui-sdk/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { RequestApprovalService, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -28,7 +28,7 @@ import {
 	DeleteConfirmationComponent,
 	RequestApprovalMutationComponent,
 	StatusBadgeComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 
 @UntilDestroy({ checkProperties: true })

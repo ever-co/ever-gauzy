@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { PipelinesComponent } from './pipelines.component';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 
 export function redirectTo() {

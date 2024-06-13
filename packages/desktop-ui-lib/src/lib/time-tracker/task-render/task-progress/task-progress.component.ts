@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, ViewChild } from '@angular/core';
 import { TaskRenderComponent } from '../task-render.component';
-import { progressStatus } from '@gauzy/ui-sdk/common';
+import { progressStatus } from '@gauzy/ui-core/common';
 import { TaskEstimateComponent } from '../task-estimate/task-estimate.component';
 import { Observable, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

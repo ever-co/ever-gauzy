@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
 import { ThemeModule } from '../../@theme/theme.module';
 import { WorkInProgressComponent } from './work-in-progress.component';

@@ -22,8 +22,8 @@ import {
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-core/core';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ClickableLinkComponent,
 	ProjectComponent,
@@ -35,7 +35,7 @@ import {
 	IPaginationBase,
 	HashNumberPipe,
 	StatusBadgeComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',

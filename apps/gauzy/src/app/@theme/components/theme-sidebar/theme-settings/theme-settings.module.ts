@@ -8,8 +8,8 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { DirectivesModule } from '@gauzy/ui-core/shared';
 import { ThemeSettingsComponent } from './theme-settings.component';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector/theme-language-selector.module';
 import { ThemeSelectorModule } from './components/theme-selector/theme-selector.module';

@@ -15,9 +15,9 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
+import { ComponentEnum } from '@gauzy/ui-core/common';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
@@ -26,7 +26,7 @@ import {
 	EmployeesService,
 	ErrorHandlingService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	ArchiveConfirmationComponent,
 	CandidateInterviewFeedbackComponent,
@@ -35,7 +35,7 @@ import {
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import {
 	InterviewActionsTableComponent,
 	InterviewCriterionsTableComponent,

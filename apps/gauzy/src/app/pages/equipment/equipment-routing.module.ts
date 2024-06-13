@@ -1,6 +1,6 @@
 import { Routes, RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { EquipmentComponent } from './equipment.component';
 

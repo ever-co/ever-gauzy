@@ -3,7 +3,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs/internal/Observable';
 import { tap } from 'rxjs/operators';
 import { IChangelog } from '@gauzy/contracts';
-import { ChangelogService } from '@gauzy/ui-sdk/core';
+import { ChangelogService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

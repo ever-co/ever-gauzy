@@ -5,9 +5,9 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
-import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	BaseSelectorFilterComponent,
@@ -15,7 +15,7 @@ import {
 	GauzyFiltersComponent,
 	TimeZoneService,
 	EditTimeLogModalComponent
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;

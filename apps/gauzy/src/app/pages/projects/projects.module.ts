@@ -12,17 +12,17 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EntityWithMembersModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	ProjectMutationModule
-} from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { TableComponentsModule } from '@gauzy/ui-core/shared';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';

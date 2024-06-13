@@ -10,7 +10,7 @@ import {
 	ViewChild,
 	ViewContainerRef
 } from '@angular/core';
-import { ISidebarConfig } from '@gauzy/ui-sdk/core';
+import { ISidebarConfig } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ngx-theme-sidebar',

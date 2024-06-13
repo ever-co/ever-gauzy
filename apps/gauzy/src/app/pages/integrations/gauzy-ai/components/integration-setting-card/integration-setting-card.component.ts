@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { IIntegrationSetting } from '@gauzy/contracts';
-import { IntegrationSettingService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { IntegrationSettingService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 export enum SettingTitlesEnum {
 	API_KEY = 'apiKey',

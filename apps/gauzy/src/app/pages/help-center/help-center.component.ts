@@ -1,16 +1,16 @@
 import { SafeHtml, DomSanitizer } from '@angular/platform-browser';
 import { IHelpCenterArticle, IHelpCenter, IHelpCenterAuthor, IEmployee, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { AddArticleComponent } from './add-article/add-article.component';
 import { NbDialogService } from '@nebular/theme';
 import { DeleteArticleComponent } from './delete-article/delete-article.component';
-import { HelpCenterArticleService, HelpCenterAuthorService, ToastrService } from '@gauzy/ui-sdk/core';
+import { HelpCenterArticleService, HelpCenterAuthorService, ToastrService } from '@gauzy/ui-core/core';
 import { filter } from 'rxjs/operators';
-import { EmployeesService } from '@gauzy/ui-sdk/core';
+import { EmployeesService } from '@gauzy/ui-core/core';
 import { FormControl } from '@angular/forms';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
 

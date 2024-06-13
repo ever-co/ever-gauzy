@@ -4,14 +4,14 @@ import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ErrorHandlingService, HelpCenterAuthorService } from '@gauzy/ui-sdk/core';
+import { ckEditorConfig } from '@gauzy/ui-core/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ErrorHandlingService, HelpCenterAuthorService } from '@gauzy/ui-core/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { HelpCenterArticleService } from '@gauzy/ui-sdk/core';
-import { EmployeesService } from '@gauzy/ui-sdk/core';
+import { HelpCenterArticleService } from '@gauzy/ui-core/core';
+import { EmployeesService } from '@gauzy/ui-core/core';
 import { takeUntil } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
 
 @Component({
 	selector: 'ga-add-article',
