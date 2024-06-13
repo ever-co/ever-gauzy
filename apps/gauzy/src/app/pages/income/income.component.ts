@@ -1,6 +1,13 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { combineLatest, Subject } from 'rxjs';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Cell } from 'angular2-smart-table';
+import { debounceTime, filter, tap } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import moment from 'moment';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,
@@ -11,14 +18,14 @@ import {
 	IDateRangePicker,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { combineLatest, Subject } from 'rxjs';
-import { Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { Cell } from 'angular2-smart-table';
-import { debounceTime, filter, tap } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	IncomeService,
+	ServerDataSource,
+	ToastrService
+} from '@gauzy/ui-sdk/core';
 import {
 	ALL_EMPLOYEES_SELECTED,
 	ContactLinksComponent,
@@ -27,24 +34,14 @@ import {
 	EmployeeLinksComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
+	IncomeMutationComponent,
+	InputFilterComponent,
+	OrganizationContactFilterComponent,
 	PaginationFilterBaseComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import {
-	DateRangePickerBuilderService,
-	ErrorHandlingService,
-	IncomeService,
-	ServerDataSource,
-	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { IncomeMutationComponent } from '../../@shared/income/income-mutation/income-mutation.component';
-import {
-	InputFilterComponent,
-	OrganizationContactFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

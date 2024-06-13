@@ -8,7 +8,6 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { NbDialogService } from '@nebular/theme';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import {
 	InventoryStore,
 	ProductVariantPriceService,
@@ -17,6 +16,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
+import { SelectAssetComponent } from '@gauzy/ui-sdk/shared';
 
 export interface IOptionCreateInput {
 	name: string;

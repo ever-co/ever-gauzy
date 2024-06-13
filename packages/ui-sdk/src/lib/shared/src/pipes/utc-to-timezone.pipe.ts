@@ -18,6 +18,6 @@ export class UtcToTimezone implements PipeTransform {
 		let date = moment(value);
 		if (!date.isValid()) date = moment.utc(value, format);
 
-		return toTimezone(date, timezone).format(format);
+		if (timezone) return toTimezone(date, timezone).format(format);
 	}
 }

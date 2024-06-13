@@ -28,11 +28,7 @@
 			<div class="row">
 				<div class="col-sm-3">
 					<div class="form-group">
-						<label class="label">
-							{{
-								'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate
-							}}</label
-						>
+						<label class="label"> {{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}</label>
 						<ngx-proposal-template-select
 							(selectedChange)="onProposalTemplateChange($event)"
 							[ngModelOptions]="{ standalone: true }"
@@ -43,15 +39,14 @@
 				</div>
 				<div class="col-sm-3">
 					<div class="form-group">
-						<label class="label">{{
-							'POP_UPS.CONTACT' | translate
-						}}</label>
+						<label class="label">{{ 'POP_UPS.CONTACT' | translate }}</label>
 						<ga-contact-select
 							[addTag]="true"
 							[searchable]="true"
 							(onChanged)="selectOrganizationContact($event)"
 							[placeholder]="'POP_UPS.CONTACT' | translate"
-							formControlName="organizationContact">
+							formControlName="organizationContact"
+						>
 						</ga-contact-select>
 					</div>
 				</div>
@@ -59,12 +54,7 @@
 			<div class="row">
 				<div class="col-xl-6">
 					<div class="form-group">
-						<label class="label"
-							>{{
-								'PROPOSALS_PAGE.REGISTER.JOB_POST_URL'
-									| translate
-							}}
-						</label>
+						<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_URL' | translate }} </label>
 						<input
 							nbInput
 							fullWidth
@@ -77,12 +67,7 @@
 				</div>
 				<div class="col-sm-3">
 					<div class="form-group">
-						<label class="label"
-							>{{
-								'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE'
-									| translate
-							}}
-						</label>
+						<label class="label">{{ 'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate }} </label>
 						<input
 							formControlName="valueDate"
 							nbInput
@@ -90,10 +75,7 @@
 							[placeholder]="'PROPOSALS_PAGE.REGISTER.PROPOSAL_DATE' | translate"
 							[nbDatepicker]="valueDatePicker"
 						/>
-						<nb-datepicker
-							[min]="minDate"
-							#valueDatePicker
-						></nb-datepicker>
+						<nb-datepicker [min]="minDate" #valueDatePicker></nb-datepicker>
 					</div>
 				</div>
 				<div class="col-sm-3">
@@ -108,32 +90,20 @@
 				<div class="col-xl-6">
 					<nb-card>
 						<nb-card-header>
-							{{
-								'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT'
-									| translate
-							}}
+							{{ 'PROPOSALS_PAGE.REGISTER.JOB_POST_CONTENT' | translate }}
 						</nb-card-header>
 						<nb-card-body>
-							<ckeditor
-								formControlName="jobPostContent"
-								[config]="ckConfig"
-							></ckeditor>
+							<ckeditor formControlName="jobPostContent" [config]="ckConfig"></ckeditor>
 						</nb-card-body>
 					</nb-card>
 				</div>
 				<div div class="col-xl-6">
 					<nb-card>
 						<nb-card-header>
-							{{
-								'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT'
-									| translate
-							}}
+							{{ 'PROPOSALS_PAGE.REGISTER.PROPOSALS_CONTENT' | translate }}
 						</nb-card-header>
 						<nb-card-body>
-							<ckeditor
-								formControlName="proposalContent"
-								[config]="ckConfig"
-							></ckeditor>
+							<ckeditor formControlName="proposalContent" [config]="ckConfig"></ckeditor>
 						</nb-card-body>
 					</nb-card>
 				</div>

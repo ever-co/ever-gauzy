@@ -12,15 +12,15 @@ import { EquipmentService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	DeleteConfirmationComponent,
+	EquipmentMutationComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-sdk/shared';
-import { EquipmentMutationComponent } from '../../@shared/equipment/equipment-mutation.component';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 import { ImageRowComponent } from '../inventory/components/inventory-table-components';
-import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

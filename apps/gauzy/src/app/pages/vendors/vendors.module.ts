@@ -17,15 +17,15 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	GauzyButtonActionModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [

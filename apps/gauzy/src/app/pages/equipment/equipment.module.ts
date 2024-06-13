@@ -11,12 +11,17 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module, SharedModule, UserFormsModule } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	EquipmentMutationModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule,
+	UserFormsModule
+} from '@gauzy/ui-sdk/shared';
 import { EquipmentRoutingModule } from './equipment-routing.module';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { EquipmentComponent } from './equipment.component';
-import { EquipmentMutationModule } from '../../@shared/equipment/equipment-mutation.module';
 import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({

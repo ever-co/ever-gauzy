@@ -5,13 +5,16 @@ import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipM
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	ProductMutationModule,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProductTypesComponent } from './product-types.component';
 import { ProductTypesRoutingModule } from './product-types-routing.module';
-import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { ProductMutationModule } from './../../../../@shared/product-mutation/product-mutation.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [ProductTypesComponent],

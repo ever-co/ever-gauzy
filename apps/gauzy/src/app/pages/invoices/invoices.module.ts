@@ -51,6 +51,7 @@ import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
+	CardGridModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
@@ -65,7 +66,6 @@ import {
 } from '@gauzy/ui-sdk/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { InvoicePdfComponent } from './invoice-pdf/invoice-pdf.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';

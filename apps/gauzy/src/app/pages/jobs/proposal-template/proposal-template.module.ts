@@ -22,11 +22,11 @@ import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
-	SharedModule
+	SharedModule,
+	StatusBadgeModule
 } from '@gauzy/ui-sdk/shared';
 import { ProposalTemplateRoutingModule } from './proposal-template-routing.module';
 import { ProposalTemplateComponent } from './proposal-template/proposal-template.component';
-import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/add-edit-proposal-template.component';
 
 @NgModule({

@@ -10,16 +10,19 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
-import { TableComponentsModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	NoDataMessageModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { OrganizationPositionsService } from '@gauzy/ui-sdk/core';
 import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { PositionsRoutingModule } from './positions-routing.module';
 import { PositionsComponent } from './positions.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [

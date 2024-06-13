@@ -13,22 +13,23 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	EmployeeMultiSelectModule,
+	EntityWithMembersModule,
 	FileUploaderModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
 	SharedModule,
+	TableComponentsModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
-import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { DepartmentsComponent } from './departments.component';
 import { DepartmentsRoutingModule } from './departments-routing.module';
 import { DepartmentsMutationComponent } from './departments-mutation/departments-mutation.component';
-import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 
 const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 

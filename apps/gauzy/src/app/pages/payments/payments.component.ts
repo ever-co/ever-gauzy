@@ -32,18 +32,16 @@ import {
 	DeleteConfirmationComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
+	InputFilterComponent,
+	OrganizationContactFilterComponent,
 	PaginationFilterBaseComponent,
+	PaymentMethodFilterComponent,
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
-	InputFilterComponent,
-	OrganizationContactFilterComponent,
-	PaymentMethodFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

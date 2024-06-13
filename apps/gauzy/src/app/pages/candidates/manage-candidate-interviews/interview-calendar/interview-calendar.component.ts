@@ -21,11 +21,10 @@ import {
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { CandidateInterviewInfoComponent } from './../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
-import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { Store } from '@gauzy/ui-sdk/common';
 import * as _ from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

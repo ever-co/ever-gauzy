@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { ISelectorVisibility } from '@gauzy/ui-sdk/core';
-import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '../../@shared/legal';
+import { PrivacyPolicyComponent, TermsAndConditionsComponent } from '@gauzy/ui-sdk/shared';
 
 /**
  * Disabled header selectors for privacy/terms pages

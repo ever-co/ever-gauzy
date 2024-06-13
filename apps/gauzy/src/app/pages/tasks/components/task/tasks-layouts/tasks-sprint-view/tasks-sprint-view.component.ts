@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SprintStoreService, TasksStoreService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GauzyEditableGridComponent } from '../../../../../../@shared/editable-grid/gauzy-editable-grid.component';
+import { GauzyEditableGridComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

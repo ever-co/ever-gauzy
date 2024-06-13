@@ -6,12 +6,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
-
 import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { GalleryComponent, GalleryService } from '@gauzy/ui-sdk/shared';
+import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -17,21 +17,22 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	RequestApprovalMutationModule,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
 import { RequestApprovalService } from '@gauzy/ui-sdk/core';
-import { ThemeModule } from '../../@theme/theme.module';
 import { ApprovalsComponent } from './approvals.component';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
 import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		SharedModule,
-		ThemeModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,

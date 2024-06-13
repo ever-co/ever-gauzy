@@ -32,9 +32,10 @@ import {
 	IPaginationBase,
 	EmployeeWithLinksComponent,
 	TagsOnlyComponent,
-	DeleteConfirmationComponent
+	DeleteConfirmationComponent,
+	InputFilterComponent,
+	TagsColorFilterComponent
 } from '@gauzy/ui-sdk/shared';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

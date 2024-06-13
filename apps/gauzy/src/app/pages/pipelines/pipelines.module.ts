@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { PipelinesComponent } from './pipelines.component';
+import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -10,28 +10,25 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbCheckboxModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTabsetModule
 } from '@nebular/theme';
-import { PipelinesRouting } from './pipelines.routing';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CommonModule } from '@angular/common';
+import { CardGridModule, GauzyButtonActionModule, PaginationV2Module, SharedModule } from '@gauzy/ui-sdk/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 import { StageComponent } from './stage/stage.component';
-import { NbTabsetModule } from '@nebular/theme';
+import { PipelinesRouting } from './pipelines.routing';
+import { PipelinesComponent } from './pipelines.component';
 
 @NgModule({
 	declarations: [
@@ -54,8 +51,9 @@ import { NbTabsetModule } from '@nebular/theme';
 	],
 	providers: [PipelinesService, DealsService],
 	imports: [
-		NbDialogModule.forChild(),
+		CommonModule,
 		ReactiveFormsModule,
+		NbDialogModule.forChild(),
 		Angular2SmartTableModule,
 		NbAccordionModule,
 		NbFormFieldModule,
@@ -67,7 +65,6 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbSelectModule,
 		NbInputModule,
 		NbCheckboxModule,
-		CommonModule,
 		NbCardModule,
 		NbIconModule,
 		FormsModule,

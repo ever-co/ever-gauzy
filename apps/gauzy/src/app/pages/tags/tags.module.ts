@@ -22,13 +22,13 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TagsMutationModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TagsComponent } from './tags.component';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsColorComponent } from './tags-color/tags-color.component';

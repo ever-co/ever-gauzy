@@ -11,14 +11,14 @@ import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common'
 import {
 	AlertModalComponent,
 	DateViewComponent,
+	GoalTemplatesComponent,
 	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
 	ValueWithUnitComponent
 } from '@gauzy/ui-sdk/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 import { ComponentLayoutStyleEnum, GoalOwnershipEnum, IGoalGeneralSetting, IOrganization } from '@gauzy/contracts';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
-import { GoalTemplatesComponent } from '../../@shared/goal/goal-templates/goal-templates.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -15,6 +15,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EventTypeService } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
@@ -24,7 +25,6 @@ import {
 } from '@gauzy/ui-sdk/shared';
 import { EventTypeComponent } from './event-type.component';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
-import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [

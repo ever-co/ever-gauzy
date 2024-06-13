@@ -1,18 +1,18 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { FeatureToggleModule } from '@gauzy/ui-sdk/shared';
 import { FeatureRoutingModule } from './feature-routing.module';
 import { FeatureComponent } from './feature.component';
-import { FeatureToggleModule } from '../../../@shared/feature-toggle/feature-toggle.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
-		FeatureRoutingModule,
-		ThemeModule,
+		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
 		I18nTranslateModule.forChild(),
+		FeatureRoutingModule,
 		FeatureToggleModule
 	],
 	declarations: [FeatureComponent],

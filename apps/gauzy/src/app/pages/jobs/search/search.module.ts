@@ -21,9 +21,9 @@ import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
-	SharedModule
+	SharedModule,
+	StatusBadgeModule
 } from '@gauzy/ui-sdk/shared';
-import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { SearchRoutingModule } from './search-routing.module';
 import { SearchComponent } from './search/search.component';
 

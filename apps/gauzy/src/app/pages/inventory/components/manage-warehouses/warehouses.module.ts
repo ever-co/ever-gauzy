@@ -18,6 +18,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	GauzyButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
@@ -25,7 +26,6 @@ import {
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 import { ManageQuantityComponent } from './manage-quantity/manage-quantity.component';
 import { ManageVariantsQuantityFormComponent } from './manage-variants-quantity-form/manage-variants-quantity-form.component';
@@ -78,7 +78,6 @@ const NB_MODULES = [
 		PaginationV2Module,
 		CardGridModule,
 		GauzyButtonActionModule,
-		CardGridModule,
 		InventoryTableComponentsModule
 	],
 	providers: []

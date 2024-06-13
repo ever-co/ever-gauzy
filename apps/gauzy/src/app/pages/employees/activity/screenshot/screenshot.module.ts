@@ -5,16 +5,16 @@ import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckb
 import { MomentModule } from 'ngx-moment';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	DailyStatisticsModule,
 	GalleryModule,
 	GauzyFiltersModule,
+	NoDataMessageModule,
 	ScreenshotsItemModule,
 	SharedModule,
 	ViewTimeLogModalModule
 } from '@gauzy/ui-sdk/shared';
 import { ScreenshotRoutingModule } from './screenshot-routing.module';
 import { ScreenshotComponent } from './screenshot/screenshot.component';
-import { DailyStatisticsModule } from 'apps/gauzy/src/app/@shared/report/daily-statistics/daily-statistics.module';
-import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ScreenshotComponent],

@@ -1,0 +1,112 @@
+@import 'themes';
+
+.faq {
+  width: 260px;
+  padding: 20px;
+  background: rgba(245, 109, 88, 0.05);
+  border-radius: nb-theme(border-radius);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  & .faq-heading,
+  .single-faq {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  & .faq-heading {
+    font-family: Inter;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 22px;
+    letter-spacing: -0.009em;
+    text-align: left;
+    color: nb-theme(text-basic-color);
+    margin-bottom: 19px;
+  }
+  & .heading-wrapper {
+    display: flex;
+    & nb-icon {
+      margin-right: 10px;
+      color: nb-theme(color-primary-500);
+    }
+    & .side-small-heading {
+      font-family: Inter;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 17px;
+      letter-spacing: 0em;
+      text-align: left;
+      color: nb-theme(text-basic-color);
+    }
+  }
+  & .side-description {
+    font-family: Inter;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0em;
+    text-align: left;
+    color: nb-theme(text-basic-color);
+  }
+  & .learn-more {
+    margin-top: 34px;
+  }
+  & .hr-div-soft {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+}
+
+// media queries
+@mixin tablet-screen {
+  @media screen and (max-width: 790px) {
+    @content;
+  }
+}
+@mixin mobile-screen {
+  @media screen and (max-width: 490px) {
+    @content;
+  }
+}
+@mixin hr-div-strong {
+  width: 416px;
+  height: 1px;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.15;
+  margin-bottom: 29px;
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+@mixin hr-div-soft {
+  width: 416px;
+  height: 1px;
+  background: nb-theme(border-alternative-color-4);
+  opacity: 0.05;
+  border-radius: 1px;
+  transform: matrix(1, 0, 0, -1, 0, 0);
+  padding-left: 0;
+  padding-right: 0;
+  @include mobile-screen {
+    width: 100%;
+  }
+}
+
+@include tablet-screen {
+  .faq {
+    width: 476px;
+    margin-top: 30px;
+  }
+}
+@include mobile-screen {
+  .faq {
+    display: none;
+  }
+}

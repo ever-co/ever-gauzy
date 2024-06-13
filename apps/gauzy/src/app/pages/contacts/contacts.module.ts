@@ -19,6 +19,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
 	GauzyButtonActionModule,
@@ -29,7 +30,6 @@ import {
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ContactMutationComponent } from './contact-mutation/contact-mutation.component';
 import { ContactsRoutingModule } from './contacts-routing.module';
 import { ContactsComponent } from './contacts.component';

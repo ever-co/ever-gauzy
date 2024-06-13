@@ -33,10 +33,10 @@ import {
 	DeleteConfirmationComponent,
 	EmployeeWithLinksComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	PaginationFilterBaseComponent,
 	ProjectComponent
 } from '@gauzy/ui-sdk/shared';
-import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

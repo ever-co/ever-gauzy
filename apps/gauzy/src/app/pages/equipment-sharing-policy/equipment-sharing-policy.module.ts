@@ -17,14 +17,16 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	EquipmentSharingPolicyMutationModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
-import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

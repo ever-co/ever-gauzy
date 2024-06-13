@@ -2,22 +2,22 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbDialogModule,
+	NbIconModule,
 	NbInputModule,
+	NbListModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbIconModule,
-	NbDialogModule,
-	NbListModule,
 	NbTabsetModule,
-	NbTooltipModule,
-	NbBadgeModule,
-	NbToggleModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { DangerZoneMutationModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
@@ -31,27 +31,28 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 @NgModule({
 	imports: [
 		CommonModule,
-		SettingsRoutingModule,
-		EmailTemplatesModule,
-		AccountingTemplatesModule,
-		NbCardModule,
 		FormsModule,
+		ReactiveFormsModule,
+		NbBadgeModule,
 		NbButtonModule,
+		NbCardModule,
+		NbDialogModule.forRoot(),
+		NbIconModule,
 		NbInputModule,
+		NbListModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		NbIconModule,
-		NbDialogModule,
-		NbListModule,
 		NbTabsetModule,
-		ReactiveFormsModule,
-		NbTooltipModule,
-		NbBadgeModule,
 		NbToggleModule,
-		I18nTranslateModule.forChild(),
+		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		SharedModule
+		I18nTranslateModule.forChild(),
+		SettingsRoutingModule,
+		SharedModule,
+		EmailTemplatesModule,
+		AccountingTemplatesModule,
+		DangerZoneMutationModule
 	],
 	declarations: [
 		SettingsComponent,

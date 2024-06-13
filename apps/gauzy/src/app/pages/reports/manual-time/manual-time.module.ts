@@ -4,28 +4,26 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { GauzyFiltersModule, NoDataMessageModule, ProjectColumnViewModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { ManualTimeRoutingModule } from './manual-time-routing.module';
 import { ManualTimeComponent } from './manual-time/manual-time.component';
-import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
-import { ProjectColumnViewModule } from '../../../@shared/report/project-column-view/project-column-view.module';
-import { NoDataMessageModule } from '../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ManualTimeComponent],
 	imports: [
 		CommonModule,
+		FormsModule,
 		ManualTimeRoutingModule,
 		SharedModule,
 		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		FormsModule,
+		NgSelectModule,
 		ReactiveFormsModule,
 		NbBadgeModule,
 		GauzyFiltersModule,
 		ProjectColumnViewModule,
-		NgSelectModule,
 		NoDataMessageModule
 	]
 })

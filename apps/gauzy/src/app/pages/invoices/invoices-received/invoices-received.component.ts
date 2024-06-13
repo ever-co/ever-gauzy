@@ -28,15 +28,16 @@ import {
 	ContactLinksComponent,
 	DateViewComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { InvoicePaidComponent } from '../table-components';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
-import { StatusBadgeComponent } from '../../../@shared/status-badge';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -23,11 +23,15 @@ import {
 	isNotEmpty,
 	isNotNullOrUndefined
 } from '@gauzy/ui-sdk/common';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent
+} from '@gauzy/ui-sdk/shared';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InputFilterComponent } from '../../@shared/table-filters';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
 import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -21,6 +21,7 @@ import {
 	EditTimeLogModalModule,
 	GauzyButtonActionModule,
 	GauzyFiltersModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,
@@ -31,7 +32,6 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DailyRoutingModule } from './daily-routing.module';
 import { DailyComponent } from './daily/daily.component';
-import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [DailyComponent],

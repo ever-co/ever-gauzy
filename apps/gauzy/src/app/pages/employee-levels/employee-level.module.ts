@@ -15,15 +15,15 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	GauzyButtonActionModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
 import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [

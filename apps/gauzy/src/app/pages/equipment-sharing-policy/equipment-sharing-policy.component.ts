@@ -6,15 +6,16 @@ import { NbDialogService } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
 import { firstValueFrom, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
 import { IEquipmentSharing, ComponentLayoutStyleEnum, IEquipmentSharingPolicy, IOrganization } from '@gauzy/contracts';
-import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { EquipmentSharingPolicyMutationComponent } from '../../@shared/equipment-sharing-policy';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { InputFilterComponent } from '../../@shared/table-filters';
+import { EquipmentSharingPolicyService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import {
+	DeleteConfirmationComponent,
+	EquipmentSharingPolicyMutationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

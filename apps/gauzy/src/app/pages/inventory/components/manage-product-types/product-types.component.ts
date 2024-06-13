@@ -1,21 +1,23 @@
 import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IOrganization, IProductTypeTranslated, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { combineLatest } from 'rxjs';
+import { Subject, combineLatest, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { IOrganization, IProductTypeTranslated, ComponentLayoutStyleEnum } from '@gauzy/contracts';
 import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ProductTypeService } from '@gauzy/ui-sdk/core';
-import { ProductTypeMutationComponent } from '../../../../@shared/product-mutation';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent,
+	ProductTypeMutationComponent
+} from '@gauzy/ui-sdk/shared';
 import { IconRowComponent } from '../inventory-table-components';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { InputFilterComponent } from './../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

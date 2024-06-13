@@ -13,7 +13,7 @@ import {
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store } from '@gauzy/ui-sdk/common';
 import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { ProjectMutationComponent } from './../../../../@shared/project';
+import { ProjectMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -46,9 +46,13 @@ import {
 	UsersOrganizationsService,
 	UsersService
 } from '@gauzy/ui-sdk/core';
-import { DirectivesModule, SelectorsModule, WorkspacesModule } from '@gauzy/ui-sdk/shared';
-import { TimeTrackerModule } from '../@shared/time-tracker/time-tracker.module';
-import { TimeTrackerStatusModule } from '../@shared/time-tracker/components/time-tracker-status/time-tracker-status.module';
+import {
+	DirectivesModule,
+	SelectorsModule,
+	TimeTrackerModule,
+	TimeTrackerStatusModule,
+	WorkspacesModule
+} from '@gauzy/ui-sdk/shared';
 import {
 	OneColumnLayoutComponent,
 	ThreeColumnsLayoutComponent,
@@ -87,7 +91,6 @@ const NB_MODULES = [
 
 const MODULES = [
 	SelectorsModule,
-	TimeTrackerModule,
 	I18nTranslateModule.forChild(),
 	NgxPermissionsModule.forChild(),
 	ThemeLanguageSelectorModule,
@@ -95,6 +98,7 @@ const MODULES = [
 	WorkspacesModule,
 	CommonNavModule,
 	DirectivesModule,
+	TimeTrackerModule,
 	TimeTrackerStatusModule
 ];
 

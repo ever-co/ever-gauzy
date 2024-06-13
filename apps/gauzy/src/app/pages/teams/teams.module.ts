@@ -18,6 +18,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
 	ImageUploaderModule,
@@ -27,7 +28,6 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';

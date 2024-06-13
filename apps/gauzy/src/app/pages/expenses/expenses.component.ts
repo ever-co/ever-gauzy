@@ -32,19 +32,17 @@ import {
 	DateViewComponent,
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
+	ExpenseCategoryFilterComponent,
+	ExpensesMutationComponent,
 	IPaginationBase,
 	IncomeExpenseAmountComponent,
+	InputFilterComponent,
 	PaginationFilterBaseComponent,
 	ReplacePipe,
+	StatusBadgeComponent,
+	VendorFilterComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
-import {
-	ExpenseCategoryFilterComponent,
-	InputFilterComponent,
-	VendorFilterComponent
-} from '../../@shared/table-filters';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

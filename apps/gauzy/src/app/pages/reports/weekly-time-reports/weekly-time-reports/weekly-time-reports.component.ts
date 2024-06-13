@@ -8,9 +8,13 @@ import * as randomColor from 'randomcolor';
 import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
 import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
-import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import {
+	BaseSelectorFilterComponent,
+	ChartUtil,
+	GauzyFiltersComponent,
+	IChartData,
+	TimeZoneService
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

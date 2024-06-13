@@ -11,6 +11,7 @@ import { Cell } from 'angular2-smart-table';
 import {
 	AtLeastOneFieldValidator,
 	DateRangePickerBuilderService,
+	ProposalTemplateService,
 	ServerDataSource,
 	ToastrService
 } from '@gauzy/ui-sdk/core';
@@ -40,7 +41,6 @@ import {
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
-import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 

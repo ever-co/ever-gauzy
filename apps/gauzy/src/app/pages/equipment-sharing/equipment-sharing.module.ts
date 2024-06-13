@@ -16,6 +16,8 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
+	EquipmentSharingMutationModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
@@ -24,10 +26,8 @@ import {
 } from '@gauzy/ui-sdk/shared';
 import { EquipmentSharingRoutingModule } from './equipment-sharing-routing.module';
 import { EquipmentSharingComponent } from './equipment-sharing.component';
-import { EquipmentSharingMutationModule } from '../../@shared/equipment-sharing/equipment-sharing-mutation.module';
 import { EquipmentSharingActionComponent } from './table-components/equipment-sharing-action/equipment-sharing-action.component';
 import { EquipmentSharingStatusComponent } from './table-components/equipment-sharing-status/equipment-sharing-status.component';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [

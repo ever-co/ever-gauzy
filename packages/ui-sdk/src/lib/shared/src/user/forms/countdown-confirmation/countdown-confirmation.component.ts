@@ -51,7 +51,7 @@ export class CountdownConfirmationComponent {
 	isEnabled: boolean;
 	countDownConfig: CountdownConfig = { leftTime: 5 };
 
-	constructor(protected dialogRef: NbDialogRef<CountdownConfirmationComponent>) {}
+	constructor(protected readonly dialogRef: NbDialogRef<CountdownConfirmationComponent>) {}
 
 	handleActionEvent(e: CountdownEvent) {
 		if (e.action === 'done') {

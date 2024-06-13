@@ -29,11 +29,7 @@
 							{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
 						</nb-card-header>
 						<nb-card-body>
-							<form
-								#formDirective="ngForm"
-								[formGroup]="form"
-								(ngSubmit)="onSubmit()"
-							>
+							<form #formDirective="ngForm" [formGroup]="form" (ngSubmit)="onSubmit()">
 								<div class="row">
 									<div class="col-xl-3 col-lg-7">
 										<div class="form-group m-0">
@@ -75,18 +71,18 @@
 									<ng-container *ngIf="form.get('employeeId').value">
 										<div class="col-xl-7 col-lg-12">
 											<div class="row">
-													<div class="col-7">
-														<label class="label" for="proposal_template">
-															{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
-														</label>
-														<ngx-proposal-template-select
-															id="proposal_template"
-															[employeeId]="form.get('employeeId').value"
-															(selectedChange)="onProposalTemplateChange($event)"
-														></ngx-proposal-template-select>
-													</div>
-													<div class="col-5 h-100 align-self-end">
-														<button
+												<div class="col-7">
+													<label class="label" for="proposal_template">
+														{{ 'PROPOSALS_PAGE.REGISTER.TEMPLATE' | translate }}
+													</label>
+													<ngx-proposal-template-select
+														id="proposal_template"
+														[employeeId]="form.get('employeeId').value"
+														(selectedChange)="onProposalTemplateChange($event)"
+													></ngx-proposal-template-select>
+												</div>
+												<div class="col-5 h-100 align-self-end">
+													<button
 														status="primary"
 														class="button-generate-proposal"
 														outline
@@ -116,7 +112,7 @@
 														icon="sync-outline"
 														debounceClick
 														(throttledClick)="proposal$.next(true)"
-														[ngClass]="{ 'spin' : loading }"
+														[ngClass]="{ spin: loading }"
 													></nb-icon>
 													<ng-template [ngIf]="loading">
 														<span class="ml-1 caption-2">Generating Proposal ...</span>
@@ -148,7 +144,7 @@
 														icon="sync-outline"
 														debounceClick
 														(throttledClick)="proposal$.next(true)"
-														[ngClass]="{ 'spin' : loading }"
+														[ngClass]="{ spin: loading }"
 													></nb-icon>
 												</div>
 												<ckeditor
@@ -170,7 +166,7 @@
 												ng2FileDrop
 												[uploader]="uploader"
 												(fileOver)="fileOverBase($event)"
-												[ngClass]="{'nv-file-over': hasDropZoneOver}"
+												[ngClass]="{ 'nv-file-over': hasDropZoneOver }"
 												class="well my-drop-zone"
 											>
 												{{ 'FORM.PLACEHOLDERS.DRAG_DROP_FILE' | translate }}
@@ -185,21 +181,10 @@
 			</div>
 		</nb-card-body>
 		<nb-card-footer class="text-right">
-			<button
-				status="basic"
-				outline
-				class="mr-3"
-				nbButton
-				(click)="close()"
-			>
+			<button status="basic" outline class="mr-3" nbButton (click)="close()">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
-			<button
-				[disabled]="form.invalid"
-				status="success"
-				nbButton
-				(click)="formDirective.ngSubmit.emit()"
-			>
+			<button [disabled]="form.invalid" status="success" nbButton (click)="formDirective.ngSubmit.emit()">
 				{{ 'BUTTONS.APPLY' | translate }}
 			</button>
 		</nb-card-footer>

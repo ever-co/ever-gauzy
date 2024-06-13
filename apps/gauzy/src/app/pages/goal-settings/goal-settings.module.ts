@@ -21,14 +21,17 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { EmployeeMultiSelectModule, SharedModule } from '@gauzy/ui-sdk/shared';
-import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { GoalCustomUnitModule } from '../../@shared/goal/goal-custom-unit/goal-custom-unit.module';
-import { GoalTemplatesModule } from '../../@shared/goal/goal-templates/goal-templates.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	GoalCustomUnitModule,
+	GoalTemplatesModule,
+	PaginationV2Module,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
+import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 
 @NgModule({
 	declarations: [GoalSettingsComponent, EditTimeFrameComponent, EditKpiComponent],

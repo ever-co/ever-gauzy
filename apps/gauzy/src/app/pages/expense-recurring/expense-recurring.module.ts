@@ -12,12 +12,14 @@ import {
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import {
+	GauzyButtonActionModule,
+	NoDataMessageModule,
+	RecurringExpenseBlockModule,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
-import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
@@ -32,9 +34,9 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
+		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		RecurringExpenseBlockModule,
-		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		NoDataMessageModule
 	],

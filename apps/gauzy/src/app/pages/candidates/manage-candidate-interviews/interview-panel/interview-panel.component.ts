@@ -16,21 +16,22 @@ import { NbDialogService } from '@nebular/theme';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { DeleteInterviewComponent } from './../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
-	EmployeesService
+	EmployeesService,
+	ErrorHandlingService,
+	ToastrService
 } from '@gauzy/ui-sdk/core';
-import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
 import {
 	ArchiveConfirmationComponent,
+	CandidateInterviewFeedbackComponent,
+	CandidateInterviewMutationComponent,
+	DeleteInterviewComponent,
 	IPaginationBase,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent

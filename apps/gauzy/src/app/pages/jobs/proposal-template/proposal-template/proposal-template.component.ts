@@ -15,7 +15,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, ProposalTemplateService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
@@ -25,7 +25,6 @@ import {
 	TruncatePipe
 } from '@gauzy/ui-sdk/shared';
 import { AddEditProposalTemplateComponent } from '../add-edit-proposal-template/add-edit-proposal-template.component';
-import { ProposalTemplateService } from '../proposal-template.service';
 
 export enum ProposalTemplateTabsEnum {
 	ACTIONS = 'ACTIONS',

@@ -10,9 +10,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { ServerDataSource, ToastrService, WarehouseService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
-import { InputFilterComponent } from './../../../../../@shared/table-filters';
 import { DescriptionComponent } from '../../inventory-table-components/description/description.component';
 
 @UntilDestroy({ checkProperties: true })
