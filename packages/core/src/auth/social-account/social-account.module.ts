@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { SocialAccountService } from './social-account.service';
 import { RolePermissionModule } from '../../role-permission';
 import { SocialAccount } from './social-account.entity';
+import { UserModule } from '../../user';
 
 @Module({
 	imports: [
 		RouterModule.register([{ path: '/social-account', module: SocialAccountModule }]),
 		TypeOrmModule.forFeature([SocialAccount]),
 		MikroOrmModule.forFeature([SocialAccount]),
+		UserModule,
 		RolePermissionModule
 	],
 	providers: [SocialAccountService],

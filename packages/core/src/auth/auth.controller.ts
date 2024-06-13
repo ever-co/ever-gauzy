@@ -13,7 +13,13 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiOkResponse, ApiBadRequestResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
-import { IAuthResponse, IUserSigninWorkspaceResponse, LanguagesEnum } from '@gauzy/contracts';
+import {
+	IAuthResponse,
+	ISocialAccount,
+	ISocialAccountExistUser,
+	IUserSigninWorkspaceResponse,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
 import { AuthService } from './auth.service';
 import { User as IUser } from '../user/user.entity';
@@ -37,7 +43,7 @@ import {
 	WorkspaceSigninEmailVerifyDTO,
 	WorkspaceSigninDTO
 } from './dto';
-import { SocialLoginBodyRequestDTO } from './social-account/dto';
+import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -161,6 +167,37 @@ export class AuthController {
 	}
 
 	/**
+	 * Find user by email address
+	 *
+	 * @param input An object that imcludes the email to search with
+	 * @return  A promise that resolves to a boolean specifying if the user exists or not
+	 */
+	@HttpCode(HttpStatus.OK)
+	@Post('/signup.email.social')
+	@Public()
+	@UseValidationPipe()
+	async socialSignupCheckIfUserExists(@Body() input: UserEmailDTO): Promise<ISocialAccountExistUser> {
+		return await this.authService.socialSignupCheckIfUserExists(input);
+	}
+
+	/**
+	 * Check if any user with the given provider infos exists
+
+	 * @param input An object that contains the provider name and the provider Account ID
+	 * @returns A promise that resolves to a boolean specifying if the user exists or not
+	 */
+
+	@HttpCode(HttpStatus.OK)
+	@Post('/signup.provider.social')
+	@Public()
+	@UseValidationPipe()
+	async socialSignupCheckIfUserExistsBySocial(
+		@Body() input: FindUserBySocialLoginDTO
+	): Promise<ISocialAccountExistUser> {
+		return await this.authService.socialSignupCheckIfUserExistsBySocial(input);
+	}
+
+	/**
 	 * Sign in workspaces by email social media.
 	 *
 	 * @param input - User sign-in data.
@@ -172,6 +209,14 @@ export class AuthController {
 	@UseValidationPipe()
 	async signinWorkspacesBySocial(@Body() input: SocialLoginBodyRequestDTO): Promise<IUserSigninWorkspaceResponse> {
 		return await this.authService.signinWorkspacesByEmailSocial(input, convertNativeParameters(input.includeTeams));
+	}
+
+	@HttpCode(HttpStatus.OK)
+	@Post('/signup.link.account')
+	@Public()
+	@UseValidationPipe()
+	async linkUserToSocialAccount(@Body() input: SocialLoginBodyRequestDTO): Promise<ISocialAccount> {
+		return await this.authService.linkUserToSocialAccount(input);
 	}
 
 	/**
