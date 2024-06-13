@@ -38,14 +38,27 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CandidateInterviewFeedbackModule,
+	CandidateInterviewInfoModule,
+	CandidateInterviewMutationModule,
+	CandidateMultiSelectModule,
+	CandidateMutationModule,
+	CandidateSelectModule,
+	CardGridModule,
+	DeleteFeedbackModule,
+	DeleteInterviewModule,
 	EmployeeLocationModule,
 	EmployeeMultiSelectModule,
 	EmployeeRatesModule,
 	FileUploaderModule,
 	GauzyButtonActionModule,
 	ImageUploaderModule,
+	InviteMutationModule,
+	InviteTableModule,
 	PaginationV2Module,
 	SharedModule,
+	StarRatingInputModule,
+	StarRatingOutputModule,
 	TableComponentsModule,
 	TagsColorInputModule
 } from '@gauzy/ui-sdk/shared';
@@ -59,10 +72,7 @@ import { EditCandidateComponent } from './edit-candidate/edit-candidate.componen
 import { CandidatesComponent } from './candidates.component';
 import { CandidatesRoutingModule } from './candidates-routing.module';
 import { CandidateStatusComponent } from './table-components/candidate-status/candidate-status.component';
-import { CandidateMutationModule } from '../../@shared/candidate/candidate-mutation/candidate-mutation.module';
-import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
-import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { EditCandidateDocumentsComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-documents/edit-candidate-documents.component';
 import { EditCandidateEmploymentComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-employment/edit-candidate-employment.component';
 import { EditCandidateHiringComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-hiring/edit-candidate-hiring.component';
@@ -71,15 +81,9 @@ import { EditCandidateSkillsComponent } from './edit-candidate/edit-candidate-pr
 import { EditCandidateEducationComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-education/edit-candidate-education.component';
 import { EditCandidateExperienceFormComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-experience/edit-candidate-experience/edit-candidate-experience-form.component';
 import { EditCandidateFeedbacksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/edit-candidate-feedbacks.component';
-import { StarRatingInputModule } from '../../@shared/star-rating/star-rating-input/star-rating-input.module';
-import { StarRatingOutputModule } from '../../@shared/star-rating/star-rating-output/star-rating-output.module';
 import { CandidateSourceComponent } from './table-components/candidate-source/candidate-source.component';
 import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
-import { CandidateInterviewMutationModule } from '../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.module';
 import { ManageCandidateInterviewsComponent } from './manage-candidate-interviews/manage-candidate-interviews.component';
-import { CandidateInterviewInfoModule } from '../../@shared/candidate/candidate-interview-info/candidate-interview-info.module';
-import { CandidateMultiSelectModule } from '../../@shared/candidate/candidate-multi-select/candidate-multi-select.module';
-import { CandidateInterviewFeedbackModule } from '../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.module';
 import { CandidateStatisticComponent } from './candidate-statistic/candidate-statistic.component';
 import { InterviewCalendarComponent } from './manage-candidate-interviews/interview-calendar/interview-calendar.component';
 import { InterviewPanelComponent } from './manage-candidate-interviews/interview-panel/interview-panel.component';
@@ -87,9 +91,6 @@ import { InterviewCriterionsComponent } from './manage-candidate-interviews/inte
 import { CandidateTechnologiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-technologies/candidate-technologies.component';
 import { CandidatePersonalQualitiesComponent } from './manage-candidate-interviews/interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
 import { CriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/criterions-rating-chart/criterions-rating-chart.component';
-import { CandidateSelectModule } from '../../@shared/candidate/candidate-select/candidate-select.module';
-import { DeleteInterviewModule } from '../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.module';
-import { DeleteFeedbackModule } from '../../@shared/candidate/candidate-confirmation/delete-feedback/delete-feedback.module';
 import { CandidateRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/overall-rating-chart/overall-rating-chart.component';
 import { InterviewRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/interview-rating-chart/interview-rating-chart.component';
 import { AverageCriterionsRatingChartComponent } from './candidate-statistic/candidate-statistic-charts/average-criterions-rating-chart/average-criterions-rating-chart.component';
@@ -99,7 +100,6 @@ import { InterviewDateTableComponent } from './manage-candidate-interviews/inter
 import { InterviewersTableComponent } from './manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 const COMPONENTS = [

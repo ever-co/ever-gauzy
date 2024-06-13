@@ -7,15 +7,16 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { MerchantService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { MerchantService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-sdk/shared';
 import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
-import { DeleteConfirmationComponent, IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-sdk/shared';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { InputFilterComponent } from './../../../../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

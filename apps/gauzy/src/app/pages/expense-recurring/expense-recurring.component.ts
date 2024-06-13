@@ -1,5 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject, firstValueFrom, debounceTime, tap, combineLatest } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	ComponentType,
 	IDateRangePicker,
@@ -8,17 +13,15 @@ import {
 	RecurringExpenseDefaultCategoriesEnum,
 	RecurringExpenseDeletionEnum
 } from '@gauzy/contracts';
-import { NbDialogService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { Subject, firstValueFrom, debounceTime, tap, combineLatest } from 'rxjs';
-import { filter } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DateRangePickerBuilderService, ToastrService, monthNames } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
+import {
+	DateRangePickerBuilderService,
+	OrganizationRecurringExpenseService,
+	ToastrService,
+	monthNames
+} from '@gauzy/ui-sdk/core';
+import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { OrganizationRecurringExpenseService } from '@gauzy/ui-sdk/core';
-import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '../../@shared/expenses';
+import { RecurringExpenseDeleteConfirmationComponent, RecurringExpenseMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

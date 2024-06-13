@@ -5,10 +5,13 @@ import { ExpensesReportComponent } from './expenses-report/expenses-report.compo
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyFiltersModule, SharedModule } from '@gauzy/ui-sdk/shared';
-import { ExpensesReportGridModule } from '../../../@shared/report/expenses-report-grid/expenses-report-grid.module';
-import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { ExpenseCategorySelectModule } from '../../../@shared/expenses/expense-category-select/expense-category-select.module';
+import {
+	ExpenseCategorySelectModule,
+	ExpensesReportGridModule,
+	GauzyFiltersModule,
+	LineChartModule,
+	SharedModule
+} from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	declarations: [ExpensesReportComponent],

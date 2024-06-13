@@ -1,0 +1,19 @@
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-cards';
+@import '@shared/_payments';
+
+:host {
+  .header-title-with-back {
+    display: flex;
+    align-items: center;
+    @include nb-rtl(gap, 24px);
+  }
+  .invite-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  ::ng-deep ga-layout-selector {
+    @include nb-rtl(margin, 0 20px 0 0);
+  }
+}

@@ -33,9 +33,9 @@ import {
 	ResyncButtonComponent,
 	PaginationFilterBaseComponent,
 	IPaginationBase,
-	HashNumberPipe
+	HashNumberPipe,
+	StatusBadgeComponent
 } from '@gauzy/ui-sdk/shared';
-import { StatusBadgeComponent } from './../../../../../@shared/status-badge';
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',

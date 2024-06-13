@@ -16,7 +16,6 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -24,23 +23,33 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	ImageAssetService,
 	InventoryStore,
+	OrganizationsService,
 	ProductService,
 	ProductVariantPriceService,
 	ProductVariantService,
 	ProductVariantSettingService,
 	TranslatableService
 } from '@gauzy/ui-sdk/core';
-import { CurrencyModule, LanguageSelectorModule, TagsColorInputModule } from '@gauzy/ui-sdk/shared';
-import { OrganizationsService } from '@gauzy/ui-sdk/core';
+import {
+	CardGridModule,
+	CurrencyModule,
+	GauzyButtonActionModule,
+	ImageAssetModule,
+	LanguageSelectorModule,
+	PaginationV2Module,
+	ProductCategorySelectorModule,
+	ProductTypeSelectorModule,
+	SelectAssetModule,
+	SharedModule,
+	TagsColorInputModule
+} from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
 import { OptionsFormComponent } from './components/edit-inventory-item/options-form/options-form.component';
 import { VariantFormComponent } from './components/edit-inventory-item/variant-form/variant-form.component';
 import { InventoryVariantFormComponent } from './components/edit-inventory-item-variant/variant-form.component';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { ProductGalleryComponent } from './components/edit-inventory-item/product-gallery/product-gallery.component';
 import { InventoryItemViewComponent } from './components/view-inventory-item/view-inventory-item.component';
 import { MerchantModule } from './components/manage-merchants/merchant.module';
@@ -48,12 +57,6 @@ import { ProductTypesModule } from './components/manage-product-types/product-ty
 import { ProductCategoriesModule } from './components/manage-product-categories/product-categories.module';
 import { WarehousesModule } from './components/manage-warehouses/warehouses.module';
 import { InventoryTableComponentsModule } from './components/inventory-table-components/inventory-table-components.module';
-import { SelectAssetModule } from '../../@shared/select-asset-modal/select-asset.module';
-import { ImageAssetModule } from '../../@shared/image-asset/image-asset.module';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { ProductTypeSelectorModule } from '../../@shared/product-type-selector/product-type-selector.module';
-import { ProductCategorySelectorModule } from '../../@shared/product-category-selector/product-category-selector.module';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -102,7 +105,6 @@ const NB_MODULES = [
 		SelectAssetModule,
 		InventoryTableComponentsModule,
 		TagsColorInputModule,
-		ThemeModule,
 		I18nTranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,

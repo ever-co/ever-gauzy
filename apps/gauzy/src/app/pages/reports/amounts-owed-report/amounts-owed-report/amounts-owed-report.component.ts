@@ -14,9 +14,13 @@ import {
 	IGetTimeLogReportInput
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
-import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import {
+	BaseSelectorFilterComponent,
+	ChartUtil,
+	GauzyFiltersComponent,
+	IChartData,
+	TimeZoneService
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

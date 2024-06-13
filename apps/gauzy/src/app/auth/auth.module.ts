@@ -3,20 +3,21 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbAuthModule } from '@nebular/auth';
 import {
+	NbAccordionModule,
 	NbAlertModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
-	NbAccordionModule,
-	NbFormFieldModule,
-	NbSelectModule,
 	NbLayoutModule,
+	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ElectronService } from '@gauzy/ui-sdk/core';
+import { ThemeModule } from '../@theme/theme.module';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
@@ -25,12 +26,10 @@ import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.co
 import { NgxRegisterSideFeaturesComponent } from './register/register-side-features/register-side-features.component';
 import { NgxRegisterSideSingleFeatureComponent } from './register/register-side-features/register-side-single-feature/register-side-single-feature.component';
 import { NgxAuthComponent } from './auth/auth.component';
-import { ThemeModule } from '../@theme/theme.module';
 import { ThemeSelectorModule } from '../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
-import { NgxFaqModule } from '../@shared/faq';
 import { ConfirmEmailModule } from './confirm-email';
-import { PasswordFormFieldModule, SharedModule } from '@gauzy/ui-sdk/shared';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-sdk/shared';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
@@ -42,27 +41,27 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NgxAuthRoutingModule,
-		NbAlertModule,
-		NbInputModule,
-		NbButtonModule,
-		NbCheckboxModule,
 		NbAuthModule,
-		NbIconModule,
-		NbCardModule,
-		I18nTranslateModule.forChild(),
 		NbAccordionModule,
+		NbAlertModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
 		NbFormFieldModule,
-		NbSelectModule,
+		NbIconModule,
+		NbInputModule,
 		NbLayoutModule,
+		NbSelectModule,
+		NbTooltipModule,
+		I18nTranslateModule.forChild(),
 		ThemeModule,
+		NgxAuthRoutingModule,
 		ThemeSelectorModule,
 		NgxFaqModule,
 		ConfirmEmailModule,
 		SharedModule,
 		WorkspaceSelectionModule,
-		PasswordFormFieldModule,
-		NbTooltipModule
+		PasswordFormFieldModule
 	],
 	declarations: [
 		NgxLoginComponent,

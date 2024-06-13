@@ -15,7 +15,7 @@ import { Subject } from 'rxjs/internal/Subject';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, EmployeeStatisticsService } from '@gauzy/ui-sdk/core';
-import { ProfitHistoryComponent, RecordsHistoryComponent } from '../../../@shared/dashboard';
+import { ProfitHistoryComponent, RecordsHistoryComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -131,14 +131,13 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		if (!this.selectedOrganization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { startDate, endDate } = this.selectedDateRange;
 
 		this.dialogService.open(RecordsHistoryComponent, {
 			context: {
 				type,
-				recordsData: await this.employeeStatisticsService.getEmployeeStatisticsHistory({
+				records: await this.employeeStatisticsService.getEmployeeStatisticsHistory({
 					employeeId: this.selectedEmployee.id,
 					startDate,
 					endDate,
@@ -150,12 +149,16 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		});
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async openProfitDialog() {
 		if (!this.selectedOrganization) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		const { startDate, endDate } = this.selectedDateRange;
 
 		const incomes = await this.employeeStatisticsService.getEmployeeStatisticsHistory({
@@ -177,7 +180,7 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 
 		this.dialogService.open(ProfitHistoryComponent, {
 			context: {
-				recordsData: {
+				records: {
 					incomes,
 					expenses,
 					incomeTotal: this.income,
@@ -188,13 +191,26 @@ export class HumanResourcesComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	private _statsSum = (employeeStatistics: IMonthAggregatedEmployeeStatistics[], key: string): number =>
-		Number(employeeStatistics.reduce((a, b) => a + b[key], 0).toFixed(2));
+	/**
+	 *
+	 * @param employeeStatistics
+	 * @param key
+	 * @returns
+	 */
+	private _statsSum = (employeeStatistics: IMonthAggregatedEmployeeStatistics[], key: string): number => {
+		return Number(employeeStatistics.reduce((a, b) => a + b[key], 0).toFixed(2));
+	};
 
+	/**
+	 *
+	 */
 	navigateToAccounting() {
 		this.router.navigate(['/pages/dashboard/accounting']);
 	}
 
+	/**
+	 *
+	 */
 	edit() {
 		this.router.navigate(['/pages/employees/edit/' + this.selectedEmployee.id]);
 	}

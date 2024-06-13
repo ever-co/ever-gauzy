@@ -11,8 +11,7 @@ import { Subject, firstValueFrom, debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ImageAssetService, ToastrService, WarehouseService } from '@gauzy/ui-sdk/core';
-import { FormHelpers, LocationFormComponent, LeafletMapComponent } from '@gauzy/ui-sdk/shared';
-import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
+import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

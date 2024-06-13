@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
@@ -35,6 +36,7 @@ import {
 import {
 	CurrencyModule,
 	EmployeeMultiSelectModule,
+	EntityWithMembersModule,
 	FileUploaderModule,
 	ImageUploaderModule,
 	LeafletMapModule,
@@ -48,8 +50,6 @@ import {
 	TimerPickerModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
-import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
-import { ThemeModule } from '../../../../@theme/theme.module';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
@@ -58,10 +58,10 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 
 @NgModule({
 	imports: [
+		CommonModule,
 		NbBadgeModule,
 		TableComponentsModule,
 		TagsColorInputModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,

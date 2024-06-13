@@ -15,14 +15,18 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module, UserFormsModule } from '@gauzy/ui-sdk/shared';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	IncomeMutationModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule,
+	TableFiltersModule,
+	UserFormsModule
+} from '@gauzy/ui-sdk/shared';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
-import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	imports: [

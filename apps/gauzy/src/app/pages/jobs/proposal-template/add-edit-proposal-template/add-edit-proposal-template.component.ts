@@ -9,8 +9,7 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-sdk/common';
 import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { ToastrService } from '@gauzy/ui-sdk/core';
-import { ProposalTemplateService } from '../proposal-template.service';
+import { ProposalTemplateService, ToastrService } from '@gauzy/ui-sdk/core';
 
 @UntilDestroy()
 @Component({

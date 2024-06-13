@@ -18,6 +18,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	CurrencyModule,
 	GauzyButtonActionModule,
 	LeafletMapModule,
@@ -30,8 +31,6 @@ import { MerchantComponent } from './merchant.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantRoutingModule } from './merchant-routing.module';
-import { ThemeModule } from './../../../../@theme/theme.module';
-import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
 
 const NB_MODULES = [
@@ -59,7 +58,6 @@ const NB_MODULES = [
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
-		ThemeModule,
 		I18nTranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,

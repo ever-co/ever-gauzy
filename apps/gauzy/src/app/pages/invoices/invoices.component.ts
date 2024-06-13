@@ -56,16 +56,16 @@ import {
 	InvoiceTotalValueComponent,
 	NotesWithTagsComponent,
 	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	generateCsv,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
-import { generateCsv } from '../../@shared/invoice/generate-csv';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -20,11 +20,11 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import {
 	DateViewComponent,
 	DeleteConfirmationComponent,
+	EquipmentSharingMutationComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent
 } from '@gauzy/ui-sdk/shared';
-import { EquipmentSharingMutationComponent } from '../../@shared/equipment-sharing';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { EquipmentSharingPolicyTableComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })

@@ -22,10 +22,13 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { InviteGuard, OrganizationsService, UsersOrganizationsService } from '@gauzy/ui-sdk/core';
 import { UserIdService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
 	GauzyButtonActionModule,
 	ImageUploaderModule,
+	InviteMutationModule,
+	InviteTableModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
@@ -39,14 +42,11 @@ import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { EditUserMutationComponent } from './edit-user-mutation/edit-user-mutation.component';
-import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';
-import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
 import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 const COMPONENTS = [
 	UsersComponent,

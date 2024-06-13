@@ -28,16 +28,20 @@ import {
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
 	AddTaskDialogModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
+	GauzyEditableGridModule,
 	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
+	TableFiltersModule,
 	TagsColorInputModule,
 	TaskNumberFieldModule,
 	TaskPrioritySelectModule,
 	TaskSizeSelectModule,
 	TaskStatusSelectModule,
+	TasksSprintSettingsViewModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
 import { TaskComponent } from './components/task/task.component';
@@ -45,14 +49,10 @@ import { TasksRoutingModule } from './tasks-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
 import { ProjectViewComponent } from './components/task/task-settings/project-view/project-view.component';
-import { GauzyEditableGridModule } from '../../@shared/editable-grid/gauzy-editable-grid.module';
 import { TasksSprintViewComponent } from './components/task/tasks-layouts/tasks-sprint-view/tasks-sprint-view.component';
 import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprint-view/task/task.component';
-import { TasksSprintSettingsViewModule } from '../../@shared/tasks-sprint-settings-view/tasks-sprint-settings-view.module';
-import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	declarations: [

@@ -20,12 +20,15 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProposalsService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
 	ContactSelectModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
+	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
 	TableComponentsModule,
+	TableFiltersModule,
 	TagsColorInputModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
@@ -37,9 +40,6 @@ import { ProposalDetailsComponent } from './proposal-details/proposal-details.co
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
 import { ProposalsPieChartComponent } from './proposals-pie-chart/proposals-pie-chart.component';
 import { JobTitleComponent } from './table-components/job-title/job-title.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { ProposalTemplateSelectModule } from '../../@shared/proposal-template-select/proposal-template-select.module';
-import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
 
 @NgModule({
 	imports: [

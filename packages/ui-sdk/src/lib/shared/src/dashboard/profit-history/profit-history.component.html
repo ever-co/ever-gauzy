@@ -1,0 +1,48 @@
+<nb-card class="profit-history" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+		<h5 class="title mb-3">
+			{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.PROFIT_REPORT' | translate }}
+		</h5>
+		<div class="totals">
+			<nb-card>
+				<div class="mx-auto p-2">
+					{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_EXPENSES' | translate }}
+				</div>
+				<div class="mx-auto pb-2">
+					<b>{{ records?.expenseTotal }} {{ organization?.currency }}</b>
+				</div>
+			</nb-card>
+			<nb-card>
+				<div class="mx-auto p-2">
+					{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_INCOME' | translate }}
+				</div>
+				<div class="mx-auto pb-2">
+					<b>{{ records?.incomeTotal }} {{ organization?.currency }}</b>
+				</div>
+			</nb-card>
+			<nb-card>
+				<div class="mx-auto p-2">
+					{{ 'DASHBOARD_PAGE.PROFIT_HISTORY.TOTAL_PROFIT' | translate }}
+				</div>
+				<div class="mx-auto pb-2">
+					<b>{{ records?.profit }} {{ organization?.currency }}</b>
+				</div>
+			</nb-card>
+		</div>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="table-scroll-container">
+			<angular2-smart-table
+				class="table"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+			></angular2-smart-table>
+		</div>
+		<div class="pagination-container">
+			<ng-container *ngIf="smartTableSource">
+				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+			</ng-container>
+		</div>
+	</nb-card-body>
+</nb-card>

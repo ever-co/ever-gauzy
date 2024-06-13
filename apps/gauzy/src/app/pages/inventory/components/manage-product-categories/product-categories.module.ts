@@ -13,12 +13,15 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ProductCategoryService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	ProductMutationModule
+} from '@gauzy/ui-sdk/shared';
 import { SharedModule } from '@gauzy/ui-sdk/shared';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
-import { ProductMutationModule } from '../../../../@shared/product-mutation/product-mutation.module';
-import { CardGridModule } from '../../../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	declarations: [ProductCategoriesComponent],

@@ -26,14 +26,14 @@ import {
 	DeleteConfirmationComponent,
 	EmailComponent,
 	IPaginationBase,
+	InviteMutationComponent,
 	PaginationFilterBaseComponent,
 	PictureNameTagsComponent,
 	RoleComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	UserMutationComponent
 } from '@gauzy/ui-sdk/shared';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { TagsColorFilterComponent } from '../../@shared/table-filters';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })

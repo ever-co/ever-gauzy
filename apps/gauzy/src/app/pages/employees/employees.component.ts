@@ -28,16 +28,19 @@ import {
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	AllowScreenshotCaptureComponent,
+	CardGridComponent,
 	DateFormatPipe,
 	DeleteConfirmationComponent,
 	EmployeeEndWorkComponent,
 	EmployeeMutationComponent,
 	EmployeeStartWorkComponent,
+	InputFilterComponent,
+	InviteMutationComponent,
 	PictureNameTagsComponent,
-	TagsOnlyComponent
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	ToggleFilterComponent
 } from '@gauzy/ui-sdk/shared';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
 import { PaginationFilterBaseComponent, IPaginationBase } from '@gauzy/ui-sdk/shared';
 import {
 	EmployeeAverageBonusComponent,
@@ -46,8 +49,6 @@ import {
 	EmployeeTimeTrackingStatusComponent,
 	EmployeeWorkStatusComponent
 } from './table-components';
-import { ToggleFilterComponent } from '../../@shared/table-filters';
-import { CardGridComponent } from '../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

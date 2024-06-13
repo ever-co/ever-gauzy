@@ -25,11 +25,11 @@ import {
 	DateViewComponent,
 	EmployeeWithLinksComponent,
 	TaskTeamsComponent,
-	DeleteConfirmationComponent
+	DeleteConfirmationComponent,
+	RequestApprovalMutationComponent,
+	StatusBadgeComponent
 } from '@gauzy/ui-sdk/shared';
 import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
-import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -395,6 +395,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		} else {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
+
 		const requestApproval: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (requestApproval) {
 			this.toastrService.success(

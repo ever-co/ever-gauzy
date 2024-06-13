@@ -19,14 +19,14 @@ import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import {
 	ActivityItemModule,
+	CounterPointModule,
 	GalleryModule,
 	ScreenshotsItemModule,
 	SharedModule,
-	TimezoneFilterModule
+	TimezoneFilterModule,
+	WidgetLayoutModule,
+	WindowLayoutModule
 } from '@gauzy/ui-sdk/shared';
-import { CounterPointModule } from '../../../@shared/counter-point/counter-point.module';
-import { WidgetLayoutModule } from '../../../@shared/dashboard/widget-layout/widget-layout.module';
-import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/window-layout.module';
 
 @NgModule({
 	imports: [
@@ -55,7 +55,6 @@ import { WindowLayoutModule } from '../../../@shared/dashboard/window-layout/win
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [TimeTrackingComponent],
-	exports: [TimeTrackingComponent],
-	providers: []
+	exports: [TimeTrackingComponent]
 })
 export class TimeTrackingModule {}

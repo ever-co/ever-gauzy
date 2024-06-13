@@ -18,18 +18,21 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
 import {
+	CardGridModule,
 	DirectivesModule,
 	GauzyButtonActionModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
 	PaginationV2Module,
+	RecurringExpenseBlockModule,
+	RecurringExpenseDeleteConfirmationModule,
+	RecurringExpenseHistoryModule,
+	RecurringExpenseMutationModule,
 	RemoveLodashModule,
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
-import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
@@ -38,9 +41,6 @@ import {
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
-import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 
 @NgModule({
 	imports: [

@@ -17,12 +17,13 @@ import {
 	PictureNameTagsComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
-	getAdjustDateRangeFutureAllowed
+	getAdjustDateRangeFutureAllowed,
+	TimeOffRequestMutationComponent,
+	TimeOffHolidayMutationComponent,
+	InputFilterComponent,
+	StatusBadgeComponent
 } from '@gauzy/ui-sdk/shared';
-import { TimeOffHolidayMutationComponent, TimeOffRequestMutationComponent } from '../../@shared/time-off';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
 import { ApprovalPolicyComponent } from '../approvals/table-components';
-import { InputFilterComponent } from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

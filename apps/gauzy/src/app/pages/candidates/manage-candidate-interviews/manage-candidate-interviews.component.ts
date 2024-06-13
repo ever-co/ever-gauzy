@@ -6,11 +6,10 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
 import { ActivatedRoute } from '@angular/router';
 import { Store } from '@gauzy/ui-sdk/common';
-import { CandidateInterviewService } from '@gauzy/ui-sdk/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateInterviewService, ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateInterviewMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

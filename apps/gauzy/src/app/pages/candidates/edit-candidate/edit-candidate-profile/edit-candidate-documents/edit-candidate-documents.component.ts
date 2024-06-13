@@ -8,11 +8,11 @@ import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@ga
 import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
 import {
+	CandidateCvComponent,
 	DocumentDateTableComponent,
 	DocumentUrlTableComponent,
 	PaginationFilterBaseComponent
 } from '@gauzy/ui-sdk/shared';
-import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

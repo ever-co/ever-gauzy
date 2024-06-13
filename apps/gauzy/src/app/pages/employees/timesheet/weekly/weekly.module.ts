@@ -17,14 +17,13 @@ import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	ViewTimeLogModule
 } from '@gauzy/ui-sdk/shared';
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';
-import { ShareModule } from './../../../../share/share.module';
-import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -33,7 +32,6 @@ import { NoDataMessageModule } from '../../../../@shared/no-data-message/no-data
 		WeeklyRoutingModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		ShareModule,
 		NbDatepickerModule,
 		NbIconModule,
 		FormsModule,

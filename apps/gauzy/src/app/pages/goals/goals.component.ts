@@ -29,7 +29,7 @@ import { GoalDetailsComponent } from './goal-details/goal-details.component';
 import { KeyResultUpdateComponent } from './keyresult-update/keyresult-update.component';
 import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details.component';
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
-import { GoalTemplateSelectComponent } from '../../@shared/goal/goal-template-select/goal-template-select.component';
+import { GoalTemplateSelectComponent } from './goal-template-select/goal-template-select.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

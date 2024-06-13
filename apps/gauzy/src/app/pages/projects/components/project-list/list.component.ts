@@ -25,6 +25,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-sdk/core';
 import {
+	CardGridComponent,
 	ContactLinksComponent,
 	DateViewComponent,
 	DeleteConfirmationComponent,
@@ -34,11 +35,10 @@ import {
 	ProjectOrganizationEmployeesComponent,
 	ProjectOrganizationGridComponent,
 	ProjectOrganizationGridDetailsComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	VisibilityComponent
 } from '@gauzy/ui-sdk/shared';
-import { TagsColorFilterComponent } from '../../../../@shared/table-filters';
-import { CardGridComponent } from '../../../../@shared/card-grid/card-grid.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

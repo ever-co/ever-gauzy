@@ -1,7 +1,6 @@
-import { AddArticleModule } from './add-article/add-article.module';
-import { SidebarModule } from './../../@shared/sidebar/sidebar.module';
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,34 +9,35 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HelpCenterComponent } from './help-center.component';
-import { HelpCenterRoutingModule } from './help-center-routing.module';
-import { DeleteArticleModule } from './delete-article/delete-article.module';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
+	NoDataMessageModule,
 	SharedModule,
+	SidebarModule,
 	UserFormsModule
 } from '@gauzy/ui-sdk/shared';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
+import { HelpCenterComponent } from './help-center.component';
+import { HelpCenterRoutingModule } from './help-center-routing.module';
+import { DeleteArticleModule } from './delete-article/delete-article.module';
+import { AddArticleModule } from './add-article/add-article.module';
 
 @NgModule({
 	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
 		AddArticleModule,
 		DeleteArticleModule,
 		HelpCenterRoutingModule,
-		ThemeModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
 		NbTooltipModule,
 		NbSpinnerModule,
-		ReactiveFormsModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
 		I18nTranslateModule.forChild(),

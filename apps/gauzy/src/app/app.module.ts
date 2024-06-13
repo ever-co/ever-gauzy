@@ -47,13 +47,11 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { CommonModule, Store } from '@gauzy/ui-sdk/common';
 import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-sdk/i18n';
+import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
 import { ThemeModule } from './@theme/theme.module';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppModuleGuard } from './app.module.guards';
-import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
-import { SharedModule, dayOfWeekAsString } from '@gauzy/ui-sdk/shared';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import { LegalModule } from './legal/legal.module';
 import { initializeSentry } from './sentry';
@@ -77,7 +75,6 @@ const isProd = environment.production;
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
-		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
 		NbCalendarKitModule,

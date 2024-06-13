@@ -15,13 +15,10 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import { GauzyButtonActionModule, NoDataMessageModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-sdk/shared';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
-import { StatusBadgeModule } from './../../../../@shared/status-badge';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [ApprovalsComponent],

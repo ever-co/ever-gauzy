@@ -6,7 +6,7 @@ import { IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } 
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-sdk/core';
 import { Store } from '@gauzy/ui-sdk/common';
-import { ProjectMutationComponent } from './../../../../@shared/project/project-mutation/project-mutation.component';
+import { ProjectMutationComponent } from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

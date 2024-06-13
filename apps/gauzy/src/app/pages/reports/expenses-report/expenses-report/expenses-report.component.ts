@@ -8,9 +8,13 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
 import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-sdk/shared';
-import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
+import {
+	BaseSelectorFilterComponent,
+	ChartUtil,
+	GauzyFiltersComponent,
+	IChartData,
+	TimeZoneService
+} from '@gauzy/ui-sdk/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

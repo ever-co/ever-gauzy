@@ -35,17 +35,15 @@ import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	NotesWithTagsComponent,
+	OrganizationContactFilterComponent,
 	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
-	InputFilterComponent,
-	OrganizationContactFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

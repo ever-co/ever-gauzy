@@ -13,16 +13,19 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { GauzyButtonActionModule, PaginationV2Module } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	EntityWithMembersModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	ProjectMutationModule
+} from '@gauzy/ui-sdk/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { EntityWithMembersModule } from '../../@shared/entity-with-members-card/entity-with-members-card.module';
 import { SharedModule } from '@gauzy/ui-sdk/shared';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
-import { ProjectMutationModule } from '../../@shared/project/project-mutation/project-mutation.module';
 import { ProjectListComponent } from './components/project-list/list.component';
 
 @NgModule({

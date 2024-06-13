@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -14,24 +15,25 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { FileUploaderModule, PaginationModule } from '@gauzy/ui-sdk/shared';
-import { ThemeModule } from '../../@theme/theme.module';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	FileUploaderModule,
+	GauzyButtonActionModule,
+	NoDataMessageModule,
+	PaginationModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-sdk/shared';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TableComponentsModule } from '@gauzy/ui-sdk/shared';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
 @NgModule({
 	imports: [
-		SharedModule,
+		CommonModule,
 		DocumentsRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -40,6 +42,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbSelectModule,
 		NbIconModule,
 		NbActionsModule,
+		SharedModule,
 		CardGridModule,
 		TableComponentsModule,
 		Angular2SmartTableModule,

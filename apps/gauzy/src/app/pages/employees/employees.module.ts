@@ -32,6 +32,7 @@ import {
 } from '@gauzy/ui-sdk/core';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
 	EmployeeLocationModule,
@@ -40,16 +41,19 @@ import {
 	EmployeeStartWorkModule,
 	GauzyButtonActionModule,
 	ImageUploaderModule,
+	InviteMutationModule,
+	InviteTableModule,
+	LanguageSelectorModule,
 	PaginationV2Module,
+	RecurringExpenseBlockModule,
+	RecurringExpenseDeleteConfirmationModule,
+	RecurringExpenseMutationModule,
 	SharedModule,
+	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
 	TimeZoneSelectorModule
 } from '@gauzy/ui-sdk/shared';
-import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
-import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
-import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
-import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
 import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,
@@ -73,11 +77,7 @@ import {
 	EmployeeWorkStatusComponent,
 	EmployeeTimeTrackingStatusComponent
 } from './table-components';
-import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { LanguageSelectorModule } from '@gauzy/ui-sdk/shared/src/language/language-selector';
-import { SkillsInputModule } from '@gauzy/ui-sdk/shared/src/skills/skills-input/skills-input.module';
 
 const COMPONENTS = [
 	EmployeesComponent,

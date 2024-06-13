@@ -17,9 +17,6 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -27,9 +24,12 @@ import {
 	DateViewComponent,
 	TagsOnlyComponent,
 	ArchiveConfirmationComponent,
-	CandidateActionConfirmationComponent
+	CandidateActionConfirmationComponent,
+	InviteMutationComponent,
+	InputFilterComponent,
+	CandidateMutationComponent
 } from '@gauzy/ui-sdk/shared';
-import { InputFilterComponent } from '../../@shared/table-filters';
+import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -7,8 +7,8 @@ import { Store } from '@gauzy/ui-sdk/common';
 import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateInterviewService, CandidatesService } from '@gauzy/ui-sdk/core';
-import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
 import { NbDialogService } from '@nebular/theme';
+import { CandidateInterviewInfoComponent } from '@gauzy/ui-sdk/shared';
 
 @Component({
 	selector: 'ga-edit-candidate',

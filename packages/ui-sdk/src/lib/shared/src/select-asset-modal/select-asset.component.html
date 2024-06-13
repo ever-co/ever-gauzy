@@ -1,0 +1,46 @@
+<nb-card class="main" size="large">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"> <i class="fas fa-times" (click)="dialogRef.close()"></i> </span>
+		<h5 class="title">
+			{{ 'INVENTORY_PAGE.SELECT_OR_UPLOAD_IMAGE' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="mb-3" *ngIf="settings.uploadImageEnabled">
+					<ngx-file-uploader-input
+						class="browse-image"
+						id="inputImageUrl"
+						[placeholder]="'upload image'"
+						(uploadedImgData)="onImageUploaded($event)"
+					></ngx-file-uploader-input>
+					<button class="button-import" outline status="primary" size="medium" nbButton>
+						{{ 'INVENTORY_PAGE.BROWSE' | translate }}
+					</button>
+				</div>
+				<div class="row image-assets-container">
+					<div class="col-lg-3 col-md-4 col-sm-6 mb-3 image-item" *ngFor="let image of gallery">
+						<ngx-img-asset
+							[imageAsset]="image"
+							[selectedImages]="selectedImages"
+							[deleteImageEnabled]="settings.deleteImageEnabled"
+							(imageClicked)="onSelectImage($event)"
+							(assetDeleted)="onImageAssetDeleted($event)"
+						></ngx-img-asset>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-4">
+				<div class="row pl-3">
+					<ngx-img-preview [selectedImage]="activeImage"></ngx-img-preview>
+				</div>
+			</div>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="primary button-home" status="primary" nbButton nbStepperNext (click)="onSelectImageClick()">
+			{{ 'INVENTORY_PAGE.SELECT_IMAGE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

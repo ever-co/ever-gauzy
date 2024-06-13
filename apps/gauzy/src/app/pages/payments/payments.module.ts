@@ -4,8 +4,13 @@ import { PaymentsComponent } from './payments.component';
 import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerModule } from '@nebular/theme';
 import { PaymentsRoutingModule } from './payments-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { SharedModule } from '@gauzy/ui-sdk/shared';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TableFiltersModule
+} from '@gauzy/ui-sdk/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 import {
@@ -14,9 +19,6 @@ import {
 	OrganizationContactService,
 	PaymentService
 } from '@gauzy/ui-sdk/core';
-import { PaginationV2Module } from '@gauzy/ui-sdk/shared';
-import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { GauzyButtonActionModule } from '@gauzy/ui-sdk/shared';
 
 @NgModule({
 	imports: [

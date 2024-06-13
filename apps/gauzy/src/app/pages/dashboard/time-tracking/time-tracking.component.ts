@@ -58,10 +58,10 @@ import {
 	ALL_EMPLOYEES_SELECTED,
 	GalleryService,
 	TimeZoneService,
+	WidgetService,
+	WindowService,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-sdk/shared';
-import { WidgetService } from '../../../@shared/dashboard/widget/widget.service';
-import { WindowService } from '../../../@shared/dashboard/window/window.service';
 
 // install Swiper modules
 SwiperCore.use([Pagination, Navigation, Virtual]);
