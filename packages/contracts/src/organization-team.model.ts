@@ -16,6 +16,7 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	logo?: string;
 	prefix?: string;
 	shareProfileView?: boolean; // If true, all members can view "Worked" tasks and "Daily Plan" tabs of all other employees, By default, it's true
+	requirePlanToTrack?: boolean; // If true, members can't be able to track time without have a "Daily Plan". By defaut, it's false
 	public?: boolean;
 	profile_link?: string;
 	members?: IOrganizationTeamEmployee[];
@@ -41,6 +42,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 	logo?: string;
 	prefix?: string;
 	shareProfileView?: boolean;
+	requirePlanToTrack?: boolean;
 	public?: boolean;
 	profile_link?: string;
 	memberIds?: string[];
@@ -52,6 +54,7 @@ export interface IOrganizationTeamCreateInput extends IBasePerTenantAndOrganizat
 export interface IOrganizationTeamUpdateInput extends Partial<IOrganizationTeamCreateInput> {
 	id: string;
 	shareProfileView?: boolean;
+	requirePlanToTrack?: boolean;
 	public?: boolean;
 }
 
