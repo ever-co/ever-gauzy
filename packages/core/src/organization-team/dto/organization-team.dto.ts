@@ -9,7 +9,7 @@ import { OrganizationProject } from '../../organization-project/organization-pro
 export class OrganizationTeamDTO
 	extends IntersectionType(
 		IntersectionType(TenantOrganizationBaseDTO, PartialType(RelationalTagDTO)),
-		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId', 'shareProfileView'])
+		PickType(OrganizationTeam, ['logo', 'prefix', 'imageId', 'shareProfileView', 'requirePlanToTrack'])
 	)
 	implements Omit<IOrganizationTeam, 'name'>
 {
