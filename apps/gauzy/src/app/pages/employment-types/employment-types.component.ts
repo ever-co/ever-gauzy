@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalDataSource } from 'angular2-smart-table';
 import {
 	IEmployee,
 	IOrganization,
@@ -11,21 +13,17 @@ import {
 } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { LocalDataSource } from 'angular2-smart-table';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Subject, firstValueFrom, filter, debounceTime, tap } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	DeleteConfirmationComponent,
 	IPaginationBase,
+	NotesWithTagsComponent,
 	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/shared';
+import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

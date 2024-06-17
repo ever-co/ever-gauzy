@@ -5,14 +5,17 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain, pick } from 'underscore';
-import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { IGetTimeLogInput, ITimeLog, IOrganizationProject, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
-import { EditTimeLogModalComponent, ViewTimeLogComponent } from './../../../../../@shared/timesheet';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import {
+	BaseSelectorFilterComponent,
+	ViewTimeLogComponent,
+	GauzyFiltersComponent,
+	TimeZoneService,
+	EditTimeLogModalComponent
+} from '@gauzy/ui-core/shared';
 
 interface WeeklyDayData {
 	project?: IOrganizationProject;

@@ -65,7 +65,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 */
 	async getOrganizationTeamStatistic(input: GetOrganizationTeamStatisticQuery): Promise<IOrganizationTeam> {
 		try {
-			console.time('Get Organization Team ID Query');
 			const { organizationTeamId, query } = input;
 			const { withLastWorkedTask } = query;
 
@@ -86,7 +85,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				);
 			}
 
-			console.timeEnd('Get Organization Team ID Query');
 			return organizationTeam;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -220,15 +218,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// If not included, add the employeeId to the managerIds array
 					managerIds.push(employeeId);
 				}
-			} catch (error) { }
+			} catch (error) {}
 
 			// Retrieves a collection of employees based on specified criteria.
-			const employees = await this.retrieveEmployees(
-				memberIds,
-				managerIds,
-				organizationId,
-				tenantId
-			);
+			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 			// Find the manager role
 			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
@@ -237,18 +230,29 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const managerIdsSet = new Set(managerIds);
 
 			// Use destructuring to directly extract 'id' from 'employee'
-			const members = employees.map(({ id: employeeId }) => new OrganizationTeamEmployee({
-				employee: { id: employeeId },
-				organization: { id: organizationId },
-				tenant: { id: tenantId },
-				role: managerIdsSet.has(employeeId) ? managerRole : null
-			}));
+			const members = employees.map(
+				({ id: employeeId }) =>
+					new OrganizationTeamEmployee({
+						employee: { id: employeeId },
+						organization: { id: organizationId },
+						tenant: { id: tenantId },
+						role: managerIdsSet.has(employeeId) ? managerRole : null
+					})
+			);
 
 			// Create the organization team with the prepared members
 			return await super.create({
 				organization: { id: organizationId },
 				tenant: { id: tenantId },
-				tags, name, prefix, members, profile_link, public: input.public, logo, imageId, projects
+				tags,
+				name,
+				prefix,
+				members,
+				profile_link,
+				public: input.public,
+				logo,
+				imageId,
+				projects
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create a team: ${error}`);
@@ -304,12 +308,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				});
 
 				// Retrieves a collection of employees based on specified criteria.
-				const employees = await this.retrieveEmployees(
-					memberIds,
-					managerIds,
-					organizationId,
-					tenantId
-				);
+				const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
 
 				// Update nested entity
 				await this.organizationTeamEmployeeService.updateOrganizationTeam(
@@ -419,7 +418,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 					// Execute the raw SQL query and get the results
 					const rawResults: OrganizationTeamEmployee[] = (await knex.raw(sqlQuery.toString())).rows || [];
-					const organizationTeamIds = rawResults.map((entry: OrganizationTeamEmployee) => entry.organizationTeamId);
+					const organizationTeamIds = rawResults.map(
+						(entry: OrganizationTeamEmployee) => entry.organizationTeamId
+					);
 
 					// Convert to string for the subquery
 					return organizationTeamIds || [];
@@ -446,7 +447,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				}
 
 				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(options as FindManyOptions);
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(
+					options as FindManyOptions
+				);
 				// Retrieve the items and total count
 				const [entities, totalEntities] = await this.mikroOrmOrganizationTeamRepository.findAndCount(
 					enhanceWhereWithTenantId(tenantId, where), // Add a condition for the tenant ID
@@ -477,7 +480,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					// Apply the organization filter if available
 					if (options?.where?.organizationId) {
 						const { organizationId } = options.where;
-						subQuery.andWhere(p(`"${subQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+						subQuery.andWhere(p(`"${subQuery.alias}"."organizationId" = :organizationId`), {
+							organizationId
+						});
 					}
 
 					// Additional conditions
@@ -498,13 +503,17 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					if (isNotEmpty(members) && isNotEmpty(members['employeeId'])) {
 						const employeeId = members['employeeId'];
 						// Sub query to get only employee assigned teams
-						typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+						typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) =>
+							subQueryBuilder(cb, employeeId)
+						);
 					}
 				} else {
 					// If employee has login and doesn't have permission to change employee
 					const employeeId = RequestContext.currentEmployeeId();
 					// Sub query to get only employee assigned teams
-					typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) => subQueryBuilder(cb, employeeId));
+					typeOrmQueryBuilder.andWhere((cb: SelectQueryBuilder<OrganizationTeam>) =>
+						subQueryBuilder(cb, employeeId)
+					);
 				}
 
 				// Set query options
@@ -555,13 +564,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					organizationId,
 					...(!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 						? {
-							members: {
-								employeeId: RequestContext.currentEmployeeId(),
-								role: {
-									name: RolesEnum.MANAGER
+								members: {
+									employeeId: RequestContext.currentEmployeeId(),
+									role: {
+										name: RolesEnum.MANAGER
+									}
 								}
-							}
-						}
+						  }
 						: {})
 				}
 			});

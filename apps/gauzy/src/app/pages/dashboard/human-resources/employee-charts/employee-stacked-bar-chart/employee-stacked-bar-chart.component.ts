@@ -1,12 +1,12 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { monthNames } from '@gauzy/ui-sdk/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { monthNames } from '@gauzy/ui-core/core';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-employee-stacked-bar-chart',
 	template: `
@@ -27,7 +27,6 @@ import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
 	`
 })
 export class EmployeeStackedBarChartComponent extends TranslationBaseComponent implements OnInit, OnDestroy, OnChanges {
-	private _ngDestroy$ = new Subject<void>();
 	data: any;
 	options: any;
 	proportion: number;
@@ -59,7 +58,7 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 	private _LoadChart() {
 		this.themeService
 			.getJsTheme()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((config) => {
 				const chartjs: any = config.variables.chartjs;
 				const bonusColors = this.bonusStatistics.map((val) => (val < 0 ? 'red' : '#0091ff'));
@@ -160,8 +159,5 @@ export class EmployeeStackedBarChartComponent extends TranslationBaseComponent i
 		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

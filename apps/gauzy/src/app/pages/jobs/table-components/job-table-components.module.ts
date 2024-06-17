@@ -1,9 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { NbBadgeModule, NbButtonModule, NbIconModule, NbTagModule, NbTooltipModule } from '@nebular/theme';
-import { SharedModule } from '../../../@shared/shared.module';
-import { StatusBadgeModule } from '../../../@shared/status-badge';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { PipesModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
 import { JobTitleDescriptionDetailsComponent } from './job-title-description-details/job-title-description-details.component';
 import { JobStatusComponent } from './job-status/job-status.component';
 
@@ -15,8 +14,8 @@ import { JobStatusComponent } from './job-status/job-status.component';
 		NbIconModule,
 		NbTagModule,
 		NbTooltipModule,
-		SharedModule,
 		I18nTranslateModule.forChild(),
+		PipesModule,
 		StatusBadgeModule
 	],
 	declarations: [JobTitleDescriptionDetailsComponent, JobStatusComponent],

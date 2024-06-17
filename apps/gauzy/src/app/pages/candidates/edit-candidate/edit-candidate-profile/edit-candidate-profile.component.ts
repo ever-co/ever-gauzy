@@ -17,20 +17,17 @@ import {
 	ErrorHandlingService,
 	ToastrService,
 	UsersService
-} from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
-	styleUrls: [
-		'./edit-candidate-profile.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./edit-candidate-profile.component.scss'],
 	providers: [CandidateStore]
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

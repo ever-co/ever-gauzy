@@ -29,8 +29,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import moment from 'moment';
-import { UiSdkModule } from '@gauzy/ui-sdk';
-import { UiConfigModule } from '@gauzy/ui-config';
+import { UiCoreModule } from '@gauzy/ui-core';
+import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	APIInterceptor,
@@ -44,20 +44,16 @@ import {
 	ServerConnectionService,
 	TenantInterceptor,
 	TokenInterceptor
-} from '@gauzy/ui-sdk/core';
-import { CommonModule, Store } from '@gauzy/ui-sdk/common';
-import { GAUZY_ENV, environment } from '@gauzy/ui-config';
-import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from './@theme/theme.module';
+} from '@gauzy/ui-core/core';
+import { CommonModule, Store } from '@gauzy/ui-core/common';
+import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-core/i18n';
+import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppModuleGuard } from './app.module.guards';
-import { DangerZoneMutationModule } from './@shared/settings/danger-zone-mutation.module';
-import { TimeTrackerModule } from './@shared/time-tracker/time-tracker.module';
-import { SharedModule } from './@shared/shared.module';
 import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
 import { LegalModule } from './legal/legal.module';
-import { dayOfWeekAsString } from './@theme/components/header/selectors/date-range-picker';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {
@@ -79,7 +75,6 @@ const isProd = environment.production;
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
-		DangerZoneMutationModule,
 		AppRoutingModule,
 		NbCalendarModule,
 		NbCalendarKitModule,
@@ -94,11 +89,12 @@ const isProd = environment.production;
 		}),
 		NbEvaIconsModule,
 		UiConfigModule.forRoot(),
-		UiSdkModule.forRoot(),
+		UiCoreModule.forRoot(),
 		I18nTranslateModule.forRoot(),
 		CommonModule.forRoot(),
 		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
+		SharedModule.forRoot(),
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
@@ -110,7 +106,6 @@ const isProd = environment.production;
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
 		isProd ? [] : AkitaNgDevtools,
-		SharedModule.forRoot(),
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot()
 	],

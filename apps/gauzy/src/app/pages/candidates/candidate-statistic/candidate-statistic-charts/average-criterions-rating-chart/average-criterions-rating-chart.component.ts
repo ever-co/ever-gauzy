@@ -9,7 +9,7 @@ import {
 	ICandidateTechnologies,
 	ICandidatePersonalQualities
 } from '@gauzy/contracts';
-import { CandidateFeedbacksService } from '@gauzy/ui-sdk/core';
+import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-average-criterions-rating-chart',

@@ -1,0 +1,11 @@
+@import 'themes';
+@import '@shared/_contact-links';
+
+@include nb-install-component() {
+  .client-badge {
+    display: inline-block;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.4rem;
+    background-color: nb-theme(color-success-default);
+  }
+}

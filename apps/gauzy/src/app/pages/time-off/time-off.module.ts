@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -12,34 +13,33 @@ import {
 	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbRadioModule
+	NbRadioModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TimeOffMutationModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
-import { TimeOffMutationModule } from '../../@shared/time-off/time-off-mutation.module';
-import { TimeOffService } from '@gauzy/ui-sdk/core';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
 import { RequestApprovalIcon } from './table-components/request-approval-icon';
 import { PaidIcon } from './table-components/paid-icon';
-import { SharedModule } from '../../@shared/shared.module';
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { NbToggleModule } from '@nebular/theme';
-import { OrganizationsService } from '@gauzy/ui-sdk/core';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		SharedModule,
 		TimeOffRoutingModule,
-		ThemeModule,
 		UserFormsModule,
 		NbCardModule,
 		FormsModule,
@@ -61,7 +61,6 @@ import { OrganizationsService } from '@gauzy/ui-sdk/core';
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,
 		NbToggleModule

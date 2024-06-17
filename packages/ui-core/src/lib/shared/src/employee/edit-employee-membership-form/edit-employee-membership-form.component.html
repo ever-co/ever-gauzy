@@ -1,0 +1,52 @@
+<nb-card class="card">
+	<nb-card-header>
+		<button *ngIf="!showAddCard" (click)="showAddCard = !showAddCard" nbButton status="success">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<div *ngIf="showAddCard" class="container m-0 w-25">
+			<div class="row">
+				<form [formGroup]="form" class="col">
+					<ng-select
+						id="departmentsSelect"
+						[hideSelected]="true"
+						multiple="true"
+						bindLabel="name"
+						appendTo="body"
+						formControlName="departments"
+						[placeholder]="placeholder"
+						fullWidth
+					>
+						<ng-option *ngFor="let entity of organizationEntities" [value]="entity.id">
+							{{ entity.name }}
+						</ng-option>
+					</ng-select>
+				</form>
+			</div>
+			<div class="row mt-3">
+				<span class="mr-3 ml-3">
+					<button (click)="showAddCard = !showAddCard" nbButton status="basic" outline>
+						{{ 'BUTTONS.CANCEL' | translate }}
+					</button>
+				</span>
+				<span>
+					<button (click)="submitForm()" nbButton status="success" [disabled]="form.invalid">
+						{{ 'BUTTONS.ADD' | translate }}
+					</button>
+				</span>
+			</div>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="entities" *ngIf="employeeEntities?.length">
+		<div class="mb-3">
+			<strong>{{ title }}</strong>
+		</div>
+		<nb-card *ngFor="let entity of employeeEntities">
+			<nb-card-body>
+				{{ entity.name }}
+				<nb-actions class="float-right" e="medium">
+					<nb-action (click)="removeDepartment(entity.id)" class="d-inline pr-0" icon="close"></nb-action>
+				</nb-actions>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

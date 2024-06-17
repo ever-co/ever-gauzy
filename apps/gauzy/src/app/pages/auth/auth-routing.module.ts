@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { EditProfileFormComponent } from '../../@shared/user/edit-profile-form/edit-profile-form.component';
+import { EditProfileFormComponent } from '@gauzy/ui-core/shared';
 
 const routes: Routes = [
 	{

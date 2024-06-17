@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAutocompleteModule,
@@ -12,18 +13,17 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { ThemeModule } from '../../../@theme/theme.module';
-import { RolePermissionsService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { RolePermissionsService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { RolesPermissionsRoutingModule } from './roles-permissions-routing.module';
 import { RolesPermissionsComponent } from './roles-permissions.component';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
 		RolesPermissionsRoutingModule,
-		ThemeModule,
 		NbAutocompleteModule,
 		NbButtonModule,
 		NbCardModule,

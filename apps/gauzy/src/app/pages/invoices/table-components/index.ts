@@ -5,4 +5,3 @@ export * from './invoice-paid.component';
 export * from './invoice-product-selector.component';
 export * from './invoice-project-selector.component';
 export * from './invoice-tasks-selector.component';
-export * from './invoice-total-value.component';

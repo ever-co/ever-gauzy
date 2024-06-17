@@ -13,25 +13,17 @@
 				[componentName]="viewComponentName"
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disabled"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
-				documentList?.length
-			"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && documentList?.length">
 			<div class="table-scroll-container">
 				<nb-card class="p-0" *ngFor="let document of documentList">
 					<nb-card-body
 						class="custom-table"
 						[ngClass]="{
-							selected:
-								selected?.state &&
-								document === selected?.document
+							selected: selected?.state && document === selected?.document
 						}"
 						(click)="selectDocument(document)"
 					>
@@ -55,12 +47,7 @@
 				></ngx-no-data-message>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
-				documentList?.length
-			"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && documentList?.length">
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
@@ -72,21 +59,12 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		(click)="openDialog(addEditTemplate, false)"
-	>
+	<button nbButton status="success" size="small" (click)="openDialog(addEditTemplate, false)">
 		<nb-icon icon="plus-outline"> </nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
 </ng-template>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="actions">
 		<button
 			(click)="openDialog(addEditTemplate, true)"
@@ -117,29 +95,17 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
 				<h5 class="title mr-3 ml-3">
-					{{
-						this.selected.document
-							? ('POP_UPS.EDIT' | translate)
-							: ('POP_UPS.ADD' | translate)
-					}}
+					{{ this.selected.document ? ('POP_UPS.EDIT' | translate) : ('POP_UPS.ADD' | translate) }}
 				</h5>
 			</div>
 			<form [formGroup]="form" *ngIf="form">
 				<div formArrayName="documents">
-					<div
-						*ngFor="
-							let document of form.controls.documents['controls'];
-							let i = index
-						"
-					>
+					<div *ngFor="let document of form.controls.documents['controls']; let i = index">
 						<div [formGroupName]="i">
 							<div class="row mb-3">
 								<div class="col-sm-12 d-flex flex-column">
@@ -152,10 +118,7 @@
 										nbInput
 										formControlName="name"
 										type="text"
-										placeholder="{{
-											'FORM.PLACEHOLDERS.DOCUMENT_NAME'
-												| translate
-										}}"
+										placeholder="{{ 'FORM.PLACEHOLDERS.DOCUMENT_NAME' | translate }}"
 										fullWidth
 									/>
 								</div>
@@ -170,23 +133,13 @@
 					<div class="label mb-1">
 						{{ 'FORM.LABELS.DOCUMENT_URL' | translate }}
 					</div>
-					<ga-upload-doc
-						#uploadDoc
-						[documentUrl]="documentUrl"
-						[isDocument]="true"
-					></ga-upload-doc>
+					<ga-upload-doc #uploadDoc [documentUrl]="documentUrl" [isDocument]="true"></ga-upload-doc>
 				</div>
 			</div>
 
 			<div class="row mb-3">
 				<div class="col-sm-12"></div>
-				<button
-					class="delete mr-3 ml-3"
-					(click)="ref.close(); disabled = true"
-					nbButton
-					status="basic"
-					outline
-				>
+				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 				<button (click)="submitForm()" nbButton status="success">

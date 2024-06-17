@@ -25,28 +25,25 @@ import {
 	ProposalsService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
+	ActionConfirmationComponent,
 	ClickableLinkComponent,
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
-	NotesWithTagsComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
-import { ActionConfirmationComponent, DeleteConfirmationComponent } from '../../@shared/user/forms';
-import {
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import {
 	InputFilterComponent,
+	NotesWithTagsComponent,
 	OrganizationContactFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

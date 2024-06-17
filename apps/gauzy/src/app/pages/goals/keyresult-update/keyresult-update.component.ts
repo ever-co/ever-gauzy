@@ -10,9 +10,9 @@ import {
 	KpiOperatorEnum
 } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { GoalSettingsService, KeyResultUpdateService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { GoalSettingsService, KeyResultUpdateService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 
 @Component({
 	selector: 'ga-keyresult-update',

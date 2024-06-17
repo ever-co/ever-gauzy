@@ -3,10 +3,10 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IInvoice } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { InvoicesService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { InvoicesService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { InvoiceEmailMutationComponent } from '../invoice-email/invoice-email-mutation.component';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-add-internal-note',

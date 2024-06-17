@@ -1,0 +1,41 @@
+.grid-boundary {
+  display: flex;
+  margin: 0 -0.5rem;
+
+  ga-widget {
+    cursor: pointer;
+    ::ng-deep nb-card {
+      margin: 0;
+    }
+  }
+}
+
+.cdk-drag-preview {
+  ::ng-deep {
+    nb-card nb-card-body {
+      background-color: var(--color-primary-transparent-100);
+      border-radius: var(--border-radius);
+      * {
+        color: var(--text-primary-color) !important;
+      }
+    }
+  }
+}
+
+.cdk-drop-list-dragging > .cdk-drag-placeholder {
+  ::ng-deep {
+    nb-card nb-card-body {
+      min-width: 230px;
+      background-color: var(--gauzy-sidebar-background-3);
+      border-radius: var(--border-radius);
+    }
+  }
+}
+
+.cdk-drop-list-dragging > *:not(.cdk-drag-placeholder) {
+  display: none;
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}

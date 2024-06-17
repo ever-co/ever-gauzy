@@ -9,15 +9,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmployeeLinksComponent } from './../../../../@shared/table-components';
+import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	EmployeeLinksComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
-import { SmartTableToggleComponent } from './../../../../@shared/smart-table/smart-table-toggle/smart-table-toggle.component';
-import { NumberEditorComponent } from 'apps/gauzy/src/app/@shared/table-components/editors/number-editor.component';
+	NumberEditorComponent,
+	PaginationFilterBaseComponent,
+	SmartTableToggleComponent
+} from '@gauzy/ui-core/shared';
 
 export enum JobSearchTabsEnum {
 	BROWSE = 'BROWSE',
@@ -45,13 +45,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public disableButton: boolean = true;
 
 	constructor(
-		private readonly http: HttpClient,
-		private readonly router: Router,
-		private readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly employeesService: EmployeesService,
-		private readonly toastrService: ToastrService,
-		private readonly currencyPipe: CurrencyPipe
+		private readonly _http: HttpClient,
+		private readonly _router: Router,
+		private readonly _store: Store,
+		private readonly _employeesService: EmployeesService,
+		private readonly _toastrService: ToastrService,
+		private readonly _currencyPipe: CurrencyPipe
 	) {
 		super(translateService);
 	}
@@ -87,8 +87,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			)
 			.subscribe();
 		// Combine selectedOrganization$ and selectedEmployee$ observables
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
 
 		// Subscribe to the combined observables with debounce time, distinctUntilChange, filter, tap, and untilDestroyed operators
 		combineLatest([storeOrganization$, storeEmployee$])
@@ -124,11 +124,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		this.loading = true;
 
 		// Destructure properties for clarity
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const { id: organizationId } = this.organization;
 
 		// Create a new ServerDataSource for Smart Table
-		this.smartTableSource = new ServerDataSource(this.http, {
+		this.smartTableSource = new ServerDataSource(this._http, {
 			endPoint: `${API_PREFIX}/employee/job-statistics`,
 			relations: ['user'],
 			// Define query parameters for the API request
@@ -174,7 +174,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
 			// Display an error toastr notification in case of any exceptions.
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 
@@ -256,7 +256,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					},
 					valuePrepareFunction: (value: number, cell: Cell) => {
 						const employee: IEmployee = cell.getRow().getData();
-						return this.currencyPipe.transform(value, employee?.billRateCurrency);
+						return this._currencyPipe.transform(value, employee?.billRateCurrency);
 					}
 				},
 				minimumBillingRate: {
@@ -271,7 +271,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					},
 					valuePrepareFunction: (value: number, cell: Cell) => {
 						const employee: IEmployee = cell.getRow().getData();
-						return this.currencyPipe.transform(value, employee?.billRateCurrency);
+						return this._currencyPipe.transform(value, employee?.billRateCurrency);
 					}
 				},
 				isJobSearchActive: {
@@ -308,14 +308,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			}
 
 			// Destructure properties for clarity.
-			const { tenantId } = this.store.user;
+			const { tenantId } = this._store.user;
 			const { id: organizationId } = this.organization;
 
 			const employeeId = event.data?.id;
 			const { billRateValue, minimumBillingRate } = event.newData ?? {};
 
 			// Update employee bill rates.
-			await this.employeesService.updateProfile(employeeId, {
+			await this._employeesService.updateProfile(employeeId, {
 				minimumBillingRate,
 				billRateValue,
 				tenantId,
@@ -348,7 +348,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			const { id: organizationId, tenantId } = this.organization;
 
 			// Update the job search status using the employeesService.
-			await this.employeesService.updateJobSearchStatus(employee.id, {
+			await this._employeesService.updateJobSearchStatus(employee.id, {
 				isJobSearchActive,
 				organizationId,
 				tenantId
@@ -359,12 +359,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				? 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE'
 				: 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE';
 
-			this.toastrService.success(toastrMessageKey, {
+			this._toastrService.success(toastrMessageKey, {
 				name: employee.fullName.trim()
 			});
 		} catch (error) {
 			// Display an error toastr notification in case of any exceptions.
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 
@@ -419,8 +419,26 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 
 		// Navigate to the employee edit page
-		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
+		this._router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
 	}
+
+	/**
+	 *
+	 * @param event
+	 * @returns
+	 */
+	addNew = async (event: PointerEvent) => {
+		if (!this.organization) {
+			return;
+		}
+		try {
+			this._router.navigate(['/pages/employees/'], {
+				queryParams: { openAddDialog: true }
+			});
+		} catch (error) {
+			this._toastrService.error(error);
+		}
+	};
 
 	ngOnDestroy(): void {}
 }

@@ -8,11 +8,10 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { LatLng } from 'leaflet';
 import { ITag, IMerchant, IWarehouse, IImageAsset, IOrganization } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { WarehouseService, ImageAssetService, MerchantService, ToastrService } from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { FormHelpers, LocationFormComponent, LeafletMapComponent } from '@gauzy/ui-sdk/shared';
-import { SelectAssetComponent } from './../../../../../@shared/select-asset-modal/select-asset.component';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { WarehouseService, ImageAssetService, MerchantService, ToastrService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { FormHelpers, LocationFormComponent, LeafletMapComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

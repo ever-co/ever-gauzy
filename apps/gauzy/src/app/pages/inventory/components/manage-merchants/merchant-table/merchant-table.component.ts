@@ -7,19 +7,16 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import { IMerchant, IOrganization, ComponentLayoutStyleEnum, IWarehouse } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { MerchantService } from '@gauzy/ui-sdk/core';
-import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { MerchantService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
+	DeleteConfirmationComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	PaginationFilterBaseComponent
-} from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
-import { InputFilterComponent } from './../../../../../@shared/table-filters';
+} from '@gauzy/ui-core/shared';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

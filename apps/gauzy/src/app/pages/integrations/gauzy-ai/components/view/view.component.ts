@@ -14,15 +14,15 @@ import {
 	IOrganization,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ReplacePipe } from '@gauzy/ui-sdk/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ReplacePipe } from '@gauzy/ui-core/shared';
+import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 import {
 	GauzyAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 
 @UntilDestroy({ checkProperties: true })

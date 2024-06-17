@@ -1,0 +1,139 @@
+<nb-card class="card">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
+		<h6 class="title">
+			<ng-template [ngIf]="flag === flagEnum.BASE" [ngIfElse]="categoryTitle">
+				{{ (editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_BASE' : 'HELP_PAGE.ADD_BASE') | translate }}
+			</ng-template>
+			<ng-template #categoryTitle>
+				{{
+					(editType === actionEnum.EDIT ? 'HELP_PAGE.MANAGE_CATEGORY' : 'HELP_PAGE.ADD_CATEGORY') | translate
+				}}
+			</ng-template>
+		</h6>
+	</nb-card-header>
+	<nb-card-body class="card-body">
+		<form [formGroup]="form" (ngSubmit)="submit()" #knowledgeBaseForm="ngForm">
+			<div class="row">
+				<div class="col-12">
+					<div class="form-group">
+						<label id="language" class="label">{{ 'HELP_PAGE.LANGUAGE' | translate }}</label>
+						<ngx-language-selector
+							[placeholder]="'FORM.PLACEHOLDERS.SELECT' | translate"
+							[clearable]="false"
+							[addTag]="false"
+							[selectedLanguageCode]="language"
+							template="ng-select"
+							selectBy="object"
+							(selectedLanguageEvent)="selectedLanguage($event)"
+						></ngx-language-selector>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group mt-2 mb-2">
+						<nb-toggle
+							status="primary"
+							labelPosition="start"
+							[checked]="privacy"
+							(checkedChange)="togglePrivacy($event)"
+						>
+							<span>
+								{{ 'HELP_PAGE.PUBLISH_STATUS' | translate }}
+							</span>
+						</nb-toggle>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="icon" class="label">{{ 'HELP_PAGE.CHOSE_ICON' | translate }}</label>
+						<nb-select
+							[placeholder]="'FORM.PLACEHOLDERS.SELECT_ICON' | translate"
+							formControlName="icon"
+							fullWidth
+							id="icon"
+							[status]="isInvalidControl('icon') ? 'danger' : 'basic'"
+						>
+							<nb-select-label *ngIf="icon">
+								<nb-icon [ngStyle]="{ color: 'inherit' }" class="mr-1" [icon]="icon.value"></nb-icon
+								>{{ icon.label }}
+							</nb-select-label>
+							<nb-option *ngFor="let icon of icons" [value]="icon">
+								<nb-icon class="mr-1" [icon]="icon.value"></nb-icon>
+								{{ icon.label }}
+							</nb-option>
+						</nb-select>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="color" class="label">{{ 'HELP_PAGE.COLOR' | translate }}</label>
+						<input
+							formControlName="color"
+							[placeholder]="'HELP_PAGE.COLOR' | translate"
+							[colorPicker]="color"
+							[value]="color"
+							(colorPickerChange)="selectedColor($event)"
+							[style.background]="color + ' !important'"
+							fullWidth
+							nbInput
+							id="color"
+						/>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="name" class="label">
+							{{
+								(flag === 'base' ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate
+							}}
+						</label>
+						<input
+							formControlName="name"
+							[placeholder]="
+								(flag === 'base' ? 'HELP_PAGE.NAME_OF_THE_BASE' : 'HELP_PAGE.NAME_CATEGORY') | translate
+							"
+							type="text"
+							size="24"
+							fullWidth
+							nbInput
+							id="name"
+							[status]="isInvalidControl('name') ? 'danger' : 'basic'"
+							class="mb-1"
+						/>
+						<div *ngIf="name.touched && name.hasError('required')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.NAME_REQUIRE' | translate }}
+						</div>
+						<div *ngIf="name.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="form-group">
+						<label id="description" class="label">
+							{{ 'HELP_PAGE.DESCRIPTION' | translate }}
+						</label>
+						<input
+							formControlName="description"
+							[placeholder]="'HELP_PAGE.DESCRIPTION' | translate"
+							type="text"
+							size="30"
+							fullWidth
+							nbInput
+							id="description"
+							class="mb-1"
+						/>
+						<div *ngIf="description.hasError('maxlength')" class="caption status-danger">
+							{{ 'HELP_PAGE.ERRORS.MAXIMUM_LENGTH' | translate }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</nb-card-body>
+	<nb-card-footer class="text-left">
+		<button status="success" (click)="knowledgeBaseForm.ngSubmit.emit()" [disabled]="form.invalid" nbButton>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

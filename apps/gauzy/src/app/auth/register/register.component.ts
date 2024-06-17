@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { NB_AUTH_OPTIONS, NbAuthOptions, NbAuthService, NbRegisterComponent } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { patterns } from '../../@shared/regex/regex-patterns.const';
+import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -14,7 +14,6 @@ import { patterns } from '../../@shared/regex/regex-patterns.const';
 	styleUrls: ['./register.component.scss']
 })
 export class NgxRegisterComponent extends NbRegisterComponent implements OnInit {
-
 	public showPassword: boolean = false;
 	public showConfirmPassword: boolean = false;
 	public passwordNoSpaceEdges = patterns.passwordNoSpaceEdges;
@@ -45,7 +44,7 @@ export class NgxRegisterComponent extends NbRegisterComponent implements OnInit 
 			filter((params: Params) => !!params),
 
 			// Tap into the observable to update the 'user.email' property with the 'email' query parameter.
-			tap(({ email }: Params) => this.user.email = email),
+			tap(({ email }: Params) => (this.user.email = email)),
 
 			// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 			untilDestroyed(this)

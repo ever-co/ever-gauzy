@@ -14,7 +14,7 @@ import {
 	PipelinesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	API_PREFIX,
 	ComponentEnum,
@@ -22,16 +22,16 @@ import {
 	distinctUntilChange,
 	isNotEmpty,
 	isNotNullOrUndefined
-} from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/common';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	InputFilterComponent,
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent
+} from '@gauzy/ui-core/shared';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InputFilterComponent } from '../../@shared/table-filters';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
 import { StageComponent } from './stage/stage.component';
 
 @UntilDestroy({ checkProperties: true })

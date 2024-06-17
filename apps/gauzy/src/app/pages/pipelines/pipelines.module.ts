@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { PipelinesComponent } from './pipelines.component';
+import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -10,30 +10,25 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbCheckboxModule,
-	NbSpinnerModule
+	NbSpinnerModule,
+	NbTabsetModule
 } from '@nebular/theme';
-import { PipelinesRouting } from './pipelines.routing';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { CommonModule } from '@angular/common';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { CardGridModule, GauzyButtonActionModule, PaginationV2Module, SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { DealsService, PipelinesService } from '@gauzy/ui-core/core';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { ThemeModule } from '../../@theme/theme.module';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
 import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { DealsService, PipelinesService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
 import { StageComponent } from './stage/stage.component';
-import { NbTabsetModule } from '@nebular/theme';
+import { PipelinesRouting } from './pipelines.routing';
+import { PipelinesComponent } from './pipelines.component';
 
 @NgModule({
 	declarations: [
@@ -56,8 +51,9 @@ import { NbTabsetModule } from '@nebular/theme';
 	],
 	providers: [PipelinesService, DealsService],
 	imports: [
-		NbDialogModule.forChild(),
+		CommonModule,
 		ReactiveFormsModule,
+		NbDialogModule.forChild(),
 		Angular2SmartTableModule,
 		NbAccordionModule,
 		NbFormFieldModule,
@@ -69,15 +65,12 @@ import { NbTabsetModule } from '@nebular/theme';
 		NbSelectModule,
 		NbInputModule,
 		NbCheckboxModule,
-		CommonModule,
 		NbCardModule,
 		NbIconModule,
 		FormsModule,
 		CardGridModule,
-		ThemeModule,
-		BackNavigationModule,
+		SharedModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		NbTabsetModule

@@ -1,21 +1,22 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
-import { TenantService } from '@gauzy/ui-sdk/core';
-import { FeatureToggleModule } from '../../@shared/feature-toggle/feature-toggle.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { ThemeModule } from '../../@theme/theme.module';
+import { TenantService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { FeatureToggleModule } from '@gauzy/ui-core/shared';
+import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { OnboardingCompleteRoutingModule } from './onboarding-complete-routing.module';
 import { OnboardingCompleteComponent } from './onboarding-complete.component';
-import { ThemeSelectorModule } from '../../@theme/components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
 
 @NgModule({
 	imports: [
-		OnboardingCompleteRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		NbButtonModule,
+		NbCardModule,
 		NbIconModule,
 		I18nTranslateModule.forChild(),
+		ThemeModule,
+		OnboardingCompleteRoutingModule,
 		FeatureToggleModule,
 		ThemeSelectorModule
 	],

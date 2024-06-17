@@ -12,18 +12,18 @@ import {
 	NbCardModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	EditTimeLogModalModule,
+	GauzyFiltersModule,
+	NoDataMessageModule,
+	SharedModule,
+	TableComponentsModule,
+	ViewTimeLogModule
+} from '@gauzy/ui-core/shared';
 import { WeeklyRoutingModule } from './weekly-routing.module';
 import { WeeklyComponent } from './weekly/weekly.component';
-import { ShareModule } from './../../../../share/share.module';
-
-import { EmployeeSelectorsModule } from './../../../../@theme/components/header/selectors/employee/employee.module';
-import { SharedModule } from './../../../../@shared/shared.module';
-import { GauzyFiltersModule } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
-import { EditTimeLogModalModule, ViewTimeLogModule } from 'apps/gauzy/src/app/@shared/timesheet';
-import { TableComponentsModule } from 'apps/gauzy/src/app/@shared';
-import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [WeeklyComponent],
@@ -31,10 +31,9 @@ import { NoDataMessageModule } from 'apps/gauzy/src/app/@shared/no-data-message/
 		CommonModule,
 		WeeklyRoutingModule,
 		I18nTranslateModule.forChild(),
-		ShareModule,
+		NgxPermissionsModule.forChild(),
 		NbDatepickerModule,
 		NbIconModule,
-		EmployeeSelectorsModule,
 		FormsModule,
 		NbButtonModule,
 		SharedModule,

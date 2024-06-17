@@ -48,7 +48,7 @@ import {
 	ProjectOwnerEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { compressImage, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlerService,
 	NativeNotificationService,

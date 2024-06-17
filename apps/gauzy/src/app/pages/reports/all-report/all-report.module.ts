@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { AllReportRoutingModule } from './all-report-routing.module';
 import { AllReportComponent } from './all-report/all-report.component';
-import { SharedModule } from '../../../@shared/shared.module';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule } from '@angular/forms';
 import {
 	NbIconModule,
@@ -13,8 +13,7 @@ import {
 	NbToggleModule,
 	NbButtonModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 
 @NgModule({
 	declarations: [AllReportComponent],
@@ -29,7 +28,6 @@ import { HeaderTitleModule } from '../../../@shared/components/header-title/head
 		NbSelectModule,
 		FormsModule,
 		NbToggleModule,
-		HeaderTitleModule,
 		NbButtonModule
 	]
 })

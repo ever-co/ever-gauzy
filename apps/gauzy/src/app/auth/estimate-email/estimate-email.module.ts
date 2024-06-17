@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbSpinnerModule } from '@nebular/theme';
-import { EstimateEmailService, InvoicesService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { EstimateEmailService, InvoicesService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { EstimateEmailComponent } from './estimate-email.component';
 
 @NgModule({

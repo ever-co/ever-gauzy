@@ -1,0 +1,81 @@
+<nb-card class="card-feature" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header>
+		<ng-template [ngIf]="isOrganization" [ngIfElse]="tenantHeader">
+			<header>
+				{{ 'FEATURE_PAGE.HEADER' | translate : { name: organization?.name } }}
+			</header>
+		</ng-template>
+		<ng-template #tenantHeader>
+			<header>
+				{{ 'FEATURE_PAGE.HEADER' | translate : { name: user?.tenant?.name } }}
+			</header>
+		</ng-template>
+	</nb-card-header>
+	<nb-card-body class="features" *ngIf="!loading">
+		<div class="mansory-layout">
+			<ng-container *ngFor="let block of blocks$ | async">
+				<ng-container *ngFor="let row of block">
+					<div class="shortcut-card">
+						<nb-card [status]="row?.status">
+							<nb-card-header class="p-3">
+								<div class="row">
+									<div class="col-6">
+										<nb-icon [icon]="row?.icon" *ngIf="row?.icon"></nb-icon>
+										<span>
+											{{ getTranslationFormat('SETTINGS_FEATURES.' + row?.name) | translate }}
+										</span>
+									</div>
+									<div class="col-6" *ngIf="row?.isPaid">
+										<button nbButton [status]="'basic'">
+											{{ 'BUTTONS.BUY' | translate }}
+										</button>
+									</div>
+								</div>
+							</nb-card-header>
+							<nb-card-body class="border border-top-0 p-3">
+								<div class="row">
+									<div class="col-10">
+										{{
+											getTranslationFormat(
+												'SETTINGS_FEATURES_DESCRIPTION' +
+													'.' +
+													row?.name +
+													'.' +
+													row?.description
+											) | translate
+										}}
+									</div>
+									<div class="col-2">
+										<nb-toggle
+											[checked]="enabledFeature(row)"
+											(checkedChange)="featureChanged($event, row)"
+											labelPosition="start"
+											status="basic"
+										></nb-toggle>
+									</div>
+								</div>
+								<div class="row" *ngIf="row?.children.length > 0">
+									<nb-list>
+										<nb-list-item class="border-top" *ngFor="let child of row?.children">
+											<nb-checkbox
+												[checked]="enabledFeature(child)"
+												(checkedChange)="featureChanged($event, child)"
+												status="basic"
+											>
+												{{
+													getTranslationFormat(
+														'SETTINGS_FEATURES_TEXT' + '.' + row?.name + '.' + child?.name
+													) | translate
+												}}
+											</nb-checkbox>
+										</nb-list-item>
+									</nb-list>
+								</div>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</ng-container>
+			</ng-container>
+		</div>
+	</nb-card-body>
+</nb-card>

@@ -16,29 +16,29 @@ import {
 	ITag,
 	IOrganizationProject
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	OrganizationProjectStore,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
+	CardGridComponent,
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeesMergedTeamsComponent,
+	PaginationFilterBaseComponent,
 	ProjectOrganizationComponent,
 	ProjectOrganizationEmployeesComponent,
+	ProjectOrganizationGridComponent,
 	ProjectOrganizationGridDetailsComponent,
-	TagsOnlyComponent
-} from '../../../../@shared/table-components';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { PaginationFilterBaseComponent } from '../../../../@shared/pagination/pagination-filter-base.component';
-import { VisibilityComponent } from '../../../../@shared/table-components/visibility/visibility.component';
-import { ProjectOrganizationGridComponent } from '../../../../@shared/table-components';
-import { TagsColorFilterComponent } from '../../../../@shared/table-filters';
-import { CardGridComponent } from '../../../../@shared/card-grid/card-grid.component';
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	VisibilityComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

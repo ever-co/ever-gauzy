@@ -5,14 +5,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
 import * as randomColor from 'randomcolor';
-import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-sdk/core';
+import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
+import {
+	BaseSelectorFilterComponent,
+	ChartUtil,
+	GauzyFiltersComponent,
+	IChartData,
+	TimeZoneService
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

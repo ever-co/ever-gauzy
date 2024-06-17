@@ -1,18 +1,16 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
 import { IEmployeeProposalTemplate, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, Permissions, PermissionGuard, TenantPermissionGuard, UUIDValidationPipe, UseValidationPipe, PaginationParams } from '@gauzy/core';
+import {
+	CrudController,
+	Permissions,
+	PermissionGuard,
+	TenantPermissionGuard,
+	UUIDValidationPipe,
+	UseValidationPipe,
+	PaginationParams
+} from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
 import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';

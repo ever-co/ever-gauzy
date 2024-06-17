@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { InventoryComponent } from './components/inventory.component';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';

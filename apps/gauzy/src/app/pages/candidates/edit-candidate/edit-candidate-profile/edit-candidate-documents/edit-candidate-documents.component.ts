@@ -2,14 +2,17 @@ import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit } from '@angular
 import { UntypedFormBuilder, Validators, UntypedFormGroup, FormArray } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LocalDataSource } from 'angular2-smart-table';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateCvComponent } from './../../../../../@shared/candidate/candidate-cv/candidate-cv.component';
-import { DocumentDateTableComponent, DocumentUrlTableComponent } from './../../../../../@shared/table-components';
-import { PaginationFilterBaseComponent } from '../../../../../@shared/pagination/pagination-filter-base.component';
+import { ICandidateDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidateDocumentsService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
+import {
+	CandidateCvComponent,
+	DocumentDateTableComponent,
+	DocumentUrlTableComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

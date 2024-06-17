@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -11,29 +12,28 @@ import {
 	NbActionsModule,
 	NbSpinnerModule
 } from '@nebular/theme';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { ThemeModule } from '../../@theme/theme.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	FileUploaderModule,
+	GauzyButtonActionModule,
+	NoDataMessageModule,
+	PaginationModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { DocumentsComponent } from './documents.component';
 import { DocumentsRoutingModule } from './documents-routing.module';
-import { FileUploaderModule } from '../../@shared/file-uploader-input/file-uploader-input.module';
 import { UploadDocumentComponent } from './upload-document/upload-document.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationModule } from '../../@shared/pagination/pagination.module';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
 @NgModule({
 	imports: [
-		SharedModule,
+		CommonModule,
 		DocumentsRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -42,6 +42,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbSelectModule,
 		NbIconModule,
 		NbActionsModule,
+		SharedModule,
 		CardGridModule,
 		TableComponentsModule,
 		Angular2SmartTableModule,
@@ -51,7 +52,6 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NgSelectModule,
 		NbSpinnerModule,
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
 		PaginationModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule

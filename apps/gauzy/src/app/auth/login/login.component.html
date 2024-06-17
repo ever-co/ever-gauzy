@@ -1,294 +1,245 @@
 <section class="login-container">
-  <div class="login-wrapper">
-    <div class="svg-wrapper">
-      <ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
-      <gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
-    </div>
-    <div class="headings" [class]="isDemo ? 'headings-demo' : ''">
-      <div class="headings-inner">
-        <h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
-        <p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
-        <nb-accordion *ngIf="!electronService?.isElectron && isDemo" class="demo-credentials-select">
-          <nb-accordion-item class="demo-credentials-select-item">
-            <nb-accordion-item-header class="demo-credentials-header">
-              <div class="demo-credentials-head-text">
-                <span class="demo-text-span">
-                  {{ "LOGIN_PAGE.DEMO.DEMO_TITLE" | translate }}
-                </span>
-                {{ "LOGIN_PAGE.DEMO.CREDENTIALS_TITLE" | translate }}
-              </div>
-            </nb-accordion-item-header>
-            <nb-accordion-item-body class="demo-credentials-body">
-              <div>{{ "LOGIN_PAGE.DEMO.SUPER_ADMIN_TITLE" | translate }}</div>
-              <br/>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} admin@ever.co
-              </div>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} admin
-              </div>
-              <br/>
-              <div>{{ "LOGIN_PAGE.DEMO.ADMIN_TITLE" | translate }}</div>
-              <br/>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} local.admin@ever.co
-              </div>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} admin
-              </div>
-              <br/>
-              <div>{{ "LOGIN_PAGE.DEMO.EMPLOYEE_TITLE" | translate }}</div>
-              <br/>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.EMAIL" | translate }} employee@ever.co</div>
-              <div>
-                {{ "LOGIN_PAGE.DEMO.LABELS.PASSWORD" | translate }} 123456
-              </div>
-            </nb-accordion-item-body>
-          </nb-accordion-item>
-        </nb-accordion>
-      </div>
-    </div>
-    <nb-alert
-      *ngIf="showMessages.error && errors?.length && !submitted"
-      outline="danger"
-      role="alert"
-    >
-      <p class="alert-title"><b>Oh snap!</b></p>
-      <ul class="alert-message-list">
-        <li *ngFor="let error of errors" class="alert-message">
-          {{ error }}
-        </li>
-      </ul>
-    </nb-alert>
-    <nb-alert
-      *ngIf="showMessages.success && messages?.length && !submitted"
-      outline="success"
-      role="alert"
-    >
-      <p class="alert-title"><b>Hooray!</b></p>
-      <ul class="alert-message-list">
-        <li *ngFor="let message of messages" class="alert-message">
-          {{ message }}
-        </li>
-      </ul>
-    </nb-alert>
-    <div class="hr-div-strong"></div>
-    <form (ngSubmit)="login()" #form="ngForm" aria-labelledby="title">
-      <div class="form-control-group">
-        <label class="label" for="input-email">
-          {{ 'LOGIN_PAGE.LABELS.EMAIL' | translate }}
-        </label>
-        <input
-          nbInput
-          fullWidth
-          [(ngModel)]="user.email"
-          #email="ngModel"
-          name="email"
-          noSpaceEdges
-          id="input-email"
-          pattern=".+@.+\..+"
-          [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
-          fieldSize="large"
-          autofocus
-          [status]="
-					email.dirty
-						? email.invalid
-							? 'danger'
-							: 'success'
-						: 'basic'
-				"
-          [required]="getConfigValue('forms.validation.email.required')"
-          [attr.aria-invalid]="
-					email.invalid && email.touched ? true : null
-				"
-          autocomplete="off"
-        />
-        <ng-container *ngIf="email.invalid && email.touched">
-          <p class="caption status-danger" *ngIf="email.errors?.required">
-            {{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
-          </p>
-          <p class="caption status-danger" *ngIf="email.errors?.pattern">
-            {{
-            'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate
-            }}
-          </p>
-        </ng-container>
-      </div>
-      <div class="form-control-group">
-			<span class="label-with-link">
-				<label class="label" for="input-password">
-					{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
+	<div class="login-wrapper">
+		<div class="svg-wrapper">
+			<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+			<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
+		</div>
+		<div class="headings" [class]="isDemo ? 'headings-demo' : ''">
+			<div class="headings-inner">
+				<h2 id="title" class="title">{{ 'LOGIN_PAGE.TITLE' | translate }}</h2>
+				<p class="sub-title">{{ 'LOGIN_PAGE.SUB_TITLE' | translate }}</p>
+				<nb-accordion *ngIf="!electronService?.isElectron && isDemo" class="demo-credentials-select">
+					<nb-accordion-item class="demo-credentials-select-item">
+						<nb-accordion-item-header class="demo-credentials-header">
+							<div class="demo-credentials-head-text">
+								<span class="demo-text-span">
+									{{ 'LOGIN_PAGE.DEMO.DEMO_TITLE' | translate }}
+								</span>
+								{{ 'LOGIN_PAGE.DEMO.CREDENTIALS_TITLE' | translate }}
+							</div>
+						</nb-accordion-item-header>
+						<nb-accordion-item-body class="demo-credentials-body">
+							<div>{{ 'LOGIN_PAGE.DEMO.SUPER_ADMIN_TITLE' | translate }}</div>
+							<br />
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.EMAIL' | translate }} admin@ever.co</div>
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.PASSWORD' | translate }} admin</div>
+							<br />
+							<div>{{ 'LOGIN_PAGE.DEMO.ADMIN_TITLE' | translate }}</div>
+							<br />
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.EMAIL' | translate }} local.admin@ever.co</div>
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.PASSWORD' | translate }} admin</div>
+							<br />
+							<div>{{ 'LOGIN_PAGE.DEMO.EMPLOYEE_TITLE' | translate }}</div>
+							<br />
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.EMAIL' | translate }} employee@ever.co</div>
+							<div>{{ 'LOGIN_PAGE.DEMO.LABELS.PASSWORD' | translate }} 123456</div>
+						</nb-accordion-item-body>
+					</nb-accordion-item>
+				</nb-accordion>
+			</div>
+		</div>
+		<nb-alert *ngIf="showMessages.error && errors?.length && !submitted" outline="danger" role="alert">
+			<p class="alert-title"><b>Oh snap!</b></p>
+			<ul class="alert-message-list">
+				<li *ngFor="let error of errors" class="alert-message">
+					{{ error }}
+				</li>
+			</ul>
+		</nb-alert>
+		<nb-alert *ngIf="showMessages.success && messages?.length && !submitted" outline="success" role="alert">
+			<p class="alert-title"><b>Hooray!</b></p>
+			<ul class="alert-message-list">
+				<li *ngFor="let message of messages" class="alert-message">
+					{{ message }}
+				</li>
+			</ul>
+		</nb-alert>
+		<div class="hr-div-strong"></div>
+		<form (ngSubmit)="login()" #form="ngForm" aria-labelledby="title">
+			<div class="form-control-group">
+				<label class="label" for="input-email">
+					{{ 'LOGIN_PAGE.LABELS.EMAIL' | translate }}
 				</label>
-			</span>
-        <nb-form-field>
-          <input
-            nbInput
-            fullWidth
-            [(ngModel)]="user.password"
-            #password="ngModel"
-            [pattern]="passwordNoSpaceEdges"
-            name="password"
-            [type]="showPassword ? 'text' : 'password'"
-            id="input-password"
-            [placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
-            fieldSize="large"
-            [status]="
-					password.dirty
-						? password.invalid
-							? 'danger'
-							: 'success'
-						: 'basic'
-				"
-            [required]="
-					getConfigValue('forms.validation.password.required')
-				"
-            [minlength]="
-					getConfigValue('forms.validation.password.minLength')
-				"
-            [maxlength]="
-					getConfigValue('forms.validation.password.maxLength')
-				"
-            [attr.aria-invalid]="
-					password.invalid && password.touched ? true : null
-				"
-            autocomplete="off"
-          />
-          <a
-            nbSuffix
-            nbButton
-            size="small"
-            ghost
-            (click)="showPassword = !showPassword"
-            class="show-password-icon"
-          >
-            <nb-icon
-              [icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
-              pack="eva"
-              [attr.aria-label]="showPassword ? 'hide password' : 'show password'"
-            ></nb-icon>
-          </a>
-        </nb-form-field>
-        <ng-container *ngIf="password.invalid && password.touched">
-          <p class="caption status-danger" *ngIf="password.errors?.pattern">
-            {{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
-          </p>
-          <p
-            class="caption status-danger"
-            *ngIf="password.errors?.required"
-          >
-            {{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
-          </p>
-          <p
-            class="caption status-danger"
-            *ngIf="
-						password.errors?.minlength || password.errors?.maxlength
-					"
-          >
-            {{
-            'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
-              | translate
-              : {
-                minLength: getConfigValue(
-                  'forms.validation.password.minLength'
-                ),
-                maxLength: getConfigValue(
-                  'forms.validation.password.maxLength'
-                )
-              }
-            }}
-          </p>
-        </ng-container>
-      </div>
-      <div class="form-control-group accept-group">
-        <nb-checkbox
-          name="rememberMe"
-          [(ngModel)]="user.rememberMe"
-          class="remember-me"
-          *ngIf="rememberMe"
-        >{{ 'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate }}</nb-checkbox
-        >
-      </div>
-      <div class="submit-btn-wrapper">
-        <a
-          class="forgot-password caption-2 forgot-password-big"
-          routerLink="/auth/request-password"
-        >
-          {{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
-        </a>
-        <div class="submit-inner-wrapper">
-          <a
-            class="forgot-password caption-2 forgot-password-small"
-            routerLink="/auth/request-password"
-          >
-            {{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
-          </a>
-          <button
-            type="submit"
-            nbButton
-            size="small"
-            class="submit-btn"
-            [disabled]="submitted || !form.valid"
-            [class.btn-pulse]="submitted"
-          >
-            {{ 'BUTTONS.LOGIN' | translate }}
-          </button>
+				<input
+					nbInput
+					fullWidth
+					[(ngModel)]="user.email"
+					#email="ngModel"
+					name="email"
+					noSpaceEdges
+					id="input-email"
+					pattern=".+@.+\..+"
+					[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.EMAIL' | translate"
+					fieldSize="large"
+					autofocus
+					[status]="email.dirty ? (email.invalid ? 'danger' : 'success') : 'basic'"
+					[required]="getConfigValue('forms.validation.email.required')"
+					[attr.aria-invalid]="email.invalid && email.touched ? true : null"
+					autocomplete="off"
+				/>
+				<ng-container *ngIf="email.invalid && email.touched">
+					<p class="caption status-danger" *ngIf="email.errors?.required">
+						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REQUIRED' | translate }}
+					</p>
+					<p class="caption status-danger" *ngIf="email.errors?.pattern">
+						{{ 'LOGIN_PAGE.VALIDATION.EMAIL_REAL_REQUIRED' | translate }}
+					</p>
+				</ng-container>
+			</div>
+			<div class="form-control-group">
+				<span class="label-with-link">
+					<label class="label" for="input-password">
+						{{ 'LOGIN_PAGE.LABELS.PASSWORD' | translate }}
+					</label>
+				</span>
+				<nb-form-field>
+					<input
+						nbInput
+						fullWidth
+						[(ngModel)]="user.password"
+						#password="ngModel"
+						[pattern]="passwordNoSpaceEdges"
+						name="password"
+						[type]="showPassword ? 'text' : 'password'"
+						id="input-password"
+						[placeholder]="'LOGIN_PAGE.PLACEHOLDERS.PASSWORD' | translate"
+						fieldSize="large"
+						[status]="password.dirty ? (password.invalid ? 'danger' : 'success') : 'basic'"
+						[required]="getConfigValue('forms.validation.password.required')"
+						[minlength]="getConfigValue('forms.validation.password.minLength')"
+						[maxlength]="getConfigValue('forms.validation.password.maxLength')"
+						[attr.aria-invalid]="password.invalid && password.touched ? true : null"
+						autocomplete="off"
+					/>
+					<a
+						nbSuffix
+						nbButton
+						size="small"
+						ghost
+						(click)="showPassword = !showPassword"
+						class="show-password-icon"
+					>
+						<nb-icon
+							[icon]="showPassword ? 'eye-outline' : 'eye-off-outline'"
+							pack="eva"
+							[attr.aria-label]="showPassword ? 'hide password' : 'show password'"
+						></nb-icon>
+					</a>
+				</nb-form-field>
+				<ng-container *ngIf="password.invalid && password.touched">
+					<p class="caption status-danger" *ngIf="password.errors?.pattern">
+						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_NO_SPACE_EDGES' | translate }}
+					</p>
+					<p class="caption status-danger" *ngIf="password.errors?.required">
+						{{ 'LOGIN_PAGE.VALIDATION.PASSWORD_REQUIRED' | translate }}
+					</p>
+					<p class="caption status-danger" *ngIf="password.errors?.minlength || password.errors?.maxlength">
+						{{
+							'LOGIN_PAGE.VALIDATION.PASSWORD_SHOULD_CONTAIN'
+								| translate
+									: {
+											minLength: getConfigValue('forms.validation.password.minLength'),
+											maxLength: getConfigValue('forms.validation.password.maxLength')
+									  }
+						}}
+					</p>
+				</ng-container>
+			</div>
+			<div class="form-control-group accept-group">
+				<nb-checkbox name="rememberMe" [(ngModel)]="user.rememberMe" class="remember-me" *ngIf="rememberMe">{{
+					'LOGIN_PAGE.REMEMBER_ME_TITLE' | translate
+				}}</nb-checkbox>
+			</div>
+			<div class="submit-btn-wrapper">
+				<a class="forgot-password caption-2 forgot-password-big" routerLink="/auth/request-password">
+					{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
+				</a>
+				<div class="submit-inner-wrapper">
+					<a class="forgot-password caption-2 forgot-password-small" routerLink="/auth/request-password">
+						{{ 'LOGIN_PAGE.FORGOT_PASSWORD_TITLE' | translate }}
+					</a>
+					<button
+						type="submit"
+						nbButton
+						size="small"
+						class="submit-btn"
+						[disabled]="submitted || !form.valid"
+						[class.btn-pulse]="submitted"
+					>
+						{{ 'BUTTONS.LOGIN' | translate }}
+					</button>
+				</div>
+			</div>
+			<div class="login-magic-wrapper">
+				<a routerLink="/auth/login-magic">
+					{{ 'LOGIN_PAGE.LOGIN_MAGIC.TITLE' | translate }}
+				</a>
+			</div>
+		</form>
+		<div class="hr-div-soft"></div>
+		<section>
+			<ngx-social-links></ngx-social-links>
+		</section>
+		<div class="hr-div-soft"></div>
+		<section class="another-action" aria-label="Sign In Workspace">
+			{{ 'WORKSPACES.UNKNOWN_WORKSPACE' | translate }}
+			<a class="text-link" routerLink="/auth/login-workspace">
+				{{ 'WORKSPACES.FIND_WORKSPACE' | translate }}
+			</a>
+		</section>
 
-        </div>
-      </div>
-      <div class="login-magic-wrapper">
-        <a routerLink="/auth/login-magic">
-          {{ "LOGIN_PAGE.LOGIN_MAGIC.TITLE" | translate }}
-        </a>
-      </div>
-    </form>
-    <div class="hr-div-soft"></div>
-    <section>
-      <ngx-social-links></ngx-social-links>
-    </section>
-    <div class="hr-div-soft"></div>
-    <section class="another-action" aria-label="Sign In Workspace">
-		  {{ "WORKSPACES.UNKNOWN_WORKSPACE" | translate }}
-      <a class="text-link" routerLink="/auth/login-workspace">
-        {{ "WORKSPACES.FIND_WORKSPACE" | translate }}
-      </a>
-    </section>
-
-    <section class="another-action" aria-label="Register">
-      {{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
-      <a class="text-link" routerLink="/auth/register">
-        {{ 'BUTTONS.REGISTER' | translate }}
-      </a>
-    </section>
-  </div>
-  <div class="features-wrapper">
-    <ng-container *ngIf="(!electronService?.isElectron && isDemo); else whatsNew">
-      <div class="demo-credentials-buttons">
-        <nb-card class="features-card">
-          <nb-card-body class="card-body">
-            <h6 class="title">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h6>
-            <p class="sub-title">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
-            <button nbButton fullWidth size="small" class="mt-3 custom-btn"
-                    (click)="autoLogin(RolesEnum.SUPER_ADMIN)">
-              <nb-icon icon="star"></nb-icon>
-              {{ 'BUTTONS.SUPER_ADMIN_DEMO' | translate }}
-            </button>
-            <br/>
-            <button nbButton fullWidth size="small" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.ADMIN)">
-              {{ 'BUTTONS.ADMIN_DEMO' | translate }}
-            </button>
-            <br/>
-            <button nbButton fullWidth size="small" class="mt-3 custom-btn" (click)="autoLogin(RolesEnum.EMPLOYEE)">
-              {{ 'BUTTONS.EMPLOYEE_DEMO' | translate }}
-            </button>
-          </nb-card-body>
-        </nb-card>
-      </div>
-    </ng-container>
-    <ng-template #whatsNew>
-      <div>
-        <ngx-whats-new></ngx-whats-new>
-      </div>
-    </ng-template>
-  </div>
+		<section class="another-action" aria-label="Register">
+			{{ 'LOGIN_PAGE.DO_NOT_HAVE_ACCOUNT_TITLE' | translate }}
+			<a class="text-link" routerLink="/auth/register">
+				{{ 'BUTTONS.REGISTER' | translate }}
+			</a>
+		</section>
+	</div>
+	<div class="features-wrapper">
+		<ng-container *ngIf="!electronService?.isElectron && isDemo; else whatsNew">
+			<div class="demo-credentials-buttons">
+				<nb-card class="features-card">
+					<nb-card-body class="card-body">
+						<h6 class="title">{{ 'LOGIN_PAGE.DEMO.TITLE' | translate }}</h6>
+						<p class="sub-title">{{ 'LOGIN_PAGE.DEMO.SUB_TITLE' | translate }}</p>
+						<button
+							nbButton
+							fullWidth
+							size="small"
+							class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.SUPER_ADMIN)"
+						>
+							<nb-icon icon="star"></nb-icon>
+							{{ 'BUTTONS.SUPER_ADMIN_DEMO' | translate }}
+						</button>
+						<br />
+						<button
+							nbButton
+							fullWidth
+							size="small"
+							class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.ADMIN)"
+						>
+							{{ 'BUTTONS.ADMIN_DEMO' | translate }}
+						</button>
+						<br />
+						<button
+							nbButton
+							fullWidth
+							size="small"
+							class="mt-3 custom-btn"
+							(click)="autoLogin(RolesEnum.EMPLOYEE)"
+						>
+							{{ 'BUTTONS.EMPLOYEE_DEMO' | translate }}
+						</button>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</ng-container>
+		<ng-template #whatsNew>
+			<div>
+				<ngx-whats-new></ngx-whats-new>
+			</div>
+		</ng-template>
+	</div>
 </section>

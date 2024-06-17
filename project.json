@@ -6,7 +6,7 @@
 			"tags": [],
 			"implicitDependencies": ["gauzy"]
 		},
-		"@gauzy/ui-sdk": {
+		"@gauzy/ui-core": {
 			"tags": []
 		},
 		"@gauzy/ui-config": {

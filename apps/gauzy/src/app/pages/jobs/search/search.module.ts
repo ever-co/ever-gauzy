@@ -1,9 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SearchRoutingModule } from './search-routing.module';
-import { SearchComponent } from './search/search.component';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../../@shared/shared.module';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,18 +10,22 @@ import {
 	NbPopoverModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { MomentModule } from 'ngx-moment';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { EmployeeMultiSelectModule } from '../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { StatusBadgeModule } from '../../../@shared/status-badge/status-badge.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { DialogsModule } from '@gauzy/ui-sdk/shared';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { NbTabsetModule } from '@nebular/theme';
-import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { MomentModule } from 'ngx-moment';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	DialogsModule,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	StatusBadgeModule
+} from '@gauzy/ui-core/shared';
+import { SearchRoutingModule } from './search-routing.module';
+import { SearchComponent } from './search/search.component';
 
 @NgModule({
 	declarations: [SearchComponent],
@@ -48,7 +50,6 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		DialogsModule,
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	]

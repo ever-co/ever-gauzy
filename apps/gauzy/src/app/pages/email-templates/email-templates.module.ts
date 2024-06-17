@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,25 +11,19 @@ import {
 	NbLayoutModule,
 	NbSelectModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
+import { AceEditorModule } from 'ngx-ace-editor-wrapper';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { EmailTemplateService } from '@gauzy/ui-core/core';
+import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
-import { EmailTemplateService } from '@gauzy/ui-sdk/core';
-import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { CommonModule } from '@angular/common';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
 
 @NgModule({
 	imports: [
 		NbLayoutModule,
 		CommonModule,
 		EmailTemplatesRoutingModule,
-		ThemeModule,
 		UserFormsModule,
 		NbCardModule,
 		FormsModule,
@@ -43,8 +38,7 @@ import { HeaderTitleModule } from '../../@shared/components/header-title/header-
 		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		AceEditorModule,
-		LanguageSelectorModule,
-		HeaderTitleModule
+		LanguageSelectorModule
 	],
 	providers: [EmailTemplateService],
 	declarations: [EmailTemplatesComponent]

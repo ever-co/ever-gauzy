@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
-import { SMTPComponent } from '../../../@shared/smtp/smtp.component';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { SMTPComponent } from '@gauzy/ui-core/shared';
 import { CustomSmtpComponent } from './custom-smtp.component';
 
 const routes: Routes = [

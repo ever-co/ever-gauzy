@@ -1,116 +1,117 @@
 @import 'var';
-@import "themes";
+@import 'themes';
+@import '@shared/_edit-profile-form';
 
 .form-group input {
-    width: 100%;
+  width: 100%;
 }
 
 .org-settings {
-    width: 100%;
-    height: 100%;
-    background-color: unset;
+  width: 100%;
+  height: 100%;
+  background-color: unset;
 }
 
 nb-tab,
 nb-tabset {
-    height: 100%;
+  height: 100%;
 }
 
 nb-card-body {
-    overflow-y: hidden; //prevent extra scroll bar
+  overflow-y: hidden; //prevent extra scroll bar
 }
 
 .header {
-    display: flex;
+  display: flex;
 }
 
 :host ::ng-deep {
-    nb-route-tabset {
-        ul.route-tabset {
-            padding: 0;
-            flex-wrap: wrap;
-            border-bottom: none;
-            margin-bottom: 0 !important;
-            // @include respond(dsk) {
-            //   flex-wrap: wrap;
-            // }
-        }
-
-        li {
-
-            &:last-of-type {
-                margin-left: auto;
-                @include respond(sm) {
-                    margin-left: 0;
-                }
-            }
-            & svg {
-                fill: #7E7E8F !important;
-            }
-            &.active {
-                & .tab-link {
-                    background: nb-theme(gauzy-card-2);
-                    transition: background 0.5s ease-in-out;
-                }
-            }
-            &.active, &:hover {
-                svg {
-                    fill: nb-theme(text-primary-color) !important;
-                }
-            }
-            & .tab-link {
-                display: flex !important;
-                justify-content: space-between;
-                align-items: center;
-                transition: background 0.5s ease-in-out;
-
-                &:before {
-                    width: 0 !important;
-                }
-
-                @include respond(dsk) {
-                    padding: px2rem(10px) px2rem(20px);
-                }
-
-                @include respond(1440px) {
-                    padding: px2rem(10px) px2rem(25px);
-                }
-
-                @include respond(xxl) {
-                    padding: px2rem(10px) px2rem(20px);
-                }
-
-                nb-icon {
-                    margin: 0;
-                    margin-right: 5px;
-                    margin-left: -5px;
-                    width: 18px;
-                    height: 19px;
-                }
-            }
-        }
-
-        .tab-text {
-            margin-left: 0 !important;
-            font-size: 16px;
-            font-style: normal;
-            font-weight: 600;
-            line-height: 16px;
-            letter-spacing: 0em;
-        }
+  nb-route-tabset {
+    ul.route-tabset {
+      padding: 0;
+      flex-wrap: wrap;
+      border-bottom: none;
+      margin-bottom: 0 !important;
+      // @include respond(dsk) {
+      //   flex-wrap: wrap;
+      // }
     }
+
+    li {
+      &:last-of-type {
+        margin-left: auto;
+        @include respond(sm) {
+          margin-left: 0;
+        }
+      }
+      & svg {
+        fill: #7e7e8f !important;
+      }
+      &.active {
+        & .tab-link {
+          background: nb-theme(gauzy-card-2);
+          transition: background 0.5s ease-in-out;
+        }
+      }
+      &.active,
+      &:hover {
+        svg {
+          fill: nb-theme(text-primary-color) !important;
+        }
+      }
+      & .tab-link {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        transition: background 0.5s ease-in-out;
+
+        &:before {
+          width: 0 !important;
+        }
+
+        @include respond(dsk) {
+          padding: px2rem(10px) px2rem(20px);
+        }
+
+        @include respond(1440px) {
+          padding: px2rem(10px) px2rem(25px);
+        }
+
+        @include respond(xxl) {
+          padding: px2rem(10px) px2rem(20px);
+        }
+
+        nb-icon {
+          margin: 0;
+          margin-right: 5px;
+          margin-left: -5px;
+          width: 18px;
+          height: 19px;
+        }
+      }
+    }
+
+    .tab-text {
+      margin-left: 0 !important;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 600;
+      line-height: 16px;
+      letter-spacing: 0em;
+    }
+  }
 }
 
 ::ng-deep .full-width .route-tabset {
-    display: flex;
-    justify-content: flex-start !important;
-    @include respond(sm) {
-        justify-content: center !important;
-    }
+  display: flex;
+  justify-content: flex-start !important;
+  @include respond(sm) {
+    justify-content: center !important;
+  }
 }
 
 @include respond(sm) {
-    .org-settings {
-        height: auto;
-    }
+  .org-settings {
+    height: auto;
+  }
 }

@@ -1,21 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { IOrganization, IProductTranslated, LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell, ServerDataSource } from 'angular2-smart-table';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ImageRowComponent } from '../../inventory-table-components/image-row.component';
 import { NbDialogRef } from '@nebular/theme';
 import { SelectedRowComponent } from '../../inventory-table-components/selected-row.component';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { debounceTime } from 'rxjs';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../../@shared/pagination/pagination-filter-base.component';
-import { Store } from '@gauzy/ui-sdk/common';
+import { IPaginationBase, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
+import { Store } from '@gauzy/ui-core/common';
 
 export interface SelectedRowEvent {
 	data: IProductTranslated;

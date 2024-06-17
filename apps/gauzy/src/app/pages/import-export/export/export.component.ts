@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
-import { isNotEmpty } from '@gauzy/ui-sdk/common';
+import { isNotEmpty } from '@gauzy/ui-core/common';
 import { saveAs } from 'file-saver';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,8 +7,8 @@ import * as _ from 'underscore';
 import { Subject } from 'rxjs';
 import { finalize, tap } from 'rxjs/operators';
 import { IEntityModel } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ExportAllService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ExportAllService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

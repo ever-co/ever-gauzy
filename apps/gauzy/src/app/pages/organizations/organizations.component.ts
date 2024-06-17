@@ -7,27 +7,26 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
+	OrganizationEditStore,
 	OrganizationsService,
 	ToastrService,
 	UsersOrganizationsService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
-import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+} from '@gauzy/ui-core/core';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	OrganizationWithTagsComponent,
+	OrganizationsMutationComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-core/shared';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

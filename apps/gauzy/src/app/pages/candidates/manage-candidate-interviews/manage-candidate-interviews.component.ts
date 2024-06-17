@@ -5,12 +5,11 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { CandidateInterviewMutationComponent } from '../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ActivatedRoute } from '@angular/router';
-import { Store } from '@gauzy/ui-sdk/common';
-import { CandidateInterviewService } from '@gauzy/ui-sdk/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-core/common';
+import { CandidateInterviewService, ToastrService } from '@gauzy/ui-core/core';
+import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

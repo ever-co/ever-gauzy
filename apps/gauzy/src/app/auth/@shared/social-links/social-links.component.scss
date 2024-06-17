@@ -1,10 +1,10 @@
-@import "../../reusable";
+@import '@shared/reusable';
 
 .links {
-    margin-top: 21px;
-    @include social-links-style;
-    & .socials {
-        margin-top: 15px;
-        margin-bottom: 25px;
-    }
+  margin-top: 21px;
+  @include social-links-style;
+  & .socials {
+    margin-top: 15px;
+    margin-bottom: 25px;
+  }
 }

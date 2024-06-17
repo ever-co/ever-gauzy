@@ -6,9 +6,9 @@ import { catchError, filter, tap } from 'rxjs/operators';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { patterns } from '../../@shared/regex/regex-patterns.const';
-import { AuthService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { AuthService } from '@gauzy/ui-core/core';
+import { patterns } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

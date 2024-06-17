@@ -25,16 +25,18 @@ import {
 	OrganizationProjectsService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { ContactWithTagsComponent, EmployeeWithLinksComponent, ProjectComponent } from '../../@shared/table-components';
 import {
+	ContactWithTagsComponent,
+	DeleteConfirmationComponent,
+	EmployeeWithLinksComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent } from '../../@shared/table-filters';
+	InputFilterComponent,
+	PaginationFilterBaseComponent,
+	ProjectComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

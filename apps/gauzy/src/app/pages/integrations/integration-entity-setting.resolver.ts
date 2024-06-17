@@ -3,7 +3,7 @@ import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable, EMPTY, map } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IIntegrationEntitySetting, IPagination } from '@gauzy/contracts';
-import { IntegrationEntitySettingService } from '@gauzy/ui-sdk/core';
+import { IntegrationEntitySettingService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

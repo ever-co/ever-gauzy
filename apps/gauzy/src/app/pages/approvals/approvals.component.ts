@@ -1,29 +1,35 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { IRequestApproval, ComponentLayoutStyleEnum, IOrganization, IApprovalsData } from '@gauzy/contracts';
-import { RequestApprovalService, ToastrService } from '@gauzy/ui-sdk/core';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { combineLatest, firstValueFrom } from 'rxjs';
 import { filter, first, tap, debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { NbDialogService } from '@nebular/theme';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
-import { RequestApprovalMutationComponent } from '../../@shared/approvals/approvals-mutation.component';
-import { PictureNameTagsComponent } from '../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeeWithLinksComponent, TaskTeamsComponent } from '../../@shared/table-components';
+import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
-import { CreateByComponent } from '../../@shared/table-components/create-by/create-by.component';
+import {
+	ComponentLayoutStyleEnum,
+	IApprovalsData,
+	IOrganization,
+	IRequestApproval,
+	RequestApprovalStatusTypesEnum
+} from '@gauzy/contracts';
+import { RequestApprovalService, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { DateViewComponent } from '../../@shared/table-components/date-view/date-view.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+	IPaginationBase,
+	PictureNameTagsComponent,
+	CreateByComponent,
+	DateViewComponent,
+	EmployeeWithLinksComponent,
+	TaskTeamsComponent,
+	DeleteConfirmationComponent,
+	RequestApprovalMutationComponent,
+	StatusBadgeComponent
+} from '@gauzy/ui-core/shared';
+import { ApprovalPolicyComponent } from './table-components/approval-policy/approval-policy.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -389,6 +395,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 		} else {
 			dialog = this.dialogService.open(RequestApprovalMutationComponent);
 		}
+
 		const requestApproval: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (requestApproval) {
 			this.toastrService.success(

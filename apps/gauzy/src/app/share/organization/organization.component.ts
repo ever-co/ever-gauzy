@@ -7,16 +7,16 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, of as observableOf, Subject } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import * as moment from 'moment';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	EmployeeStatisticsService,
 	EmployeesService,
 	OrganizationsService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { PublicPageMutationComponent } from '../../@shared/organizations/public-page-mutation/public-page-mutation.component';
+} from '@gauzy/ui-core/core';
+import { PublicPageMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -202,14 +202,19 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		this.toastrService.success('TOASTR.MESSAGE.IMAGE_UPDATED');
 	}
 
-	editPublicPage() {
-		this.dialogService
-			.open(PublicPageMutationComponent, {
-				context: {
-					organization: this.organization
-				}
-			})
-			.onClose.pipe(
+	/**
+	 * Opens a dialog to edit the public page of the organization and updates the organization data if successful.
+	 *
+	 * @return {void}
+	 */
+	editPublicPage(): void {
+		const dialog$ = this.dialogService.open(PublicPageMutationComponent, {
+			context: {
+				organization: this.organization
+			}
+		});
+		dialog$.onClose
+			.pipe(
 				tap(() => this._changeClientsTabIfActiveAndPrivacyIsTurnedOff()),
 				untilDestroyed(this)
 			)

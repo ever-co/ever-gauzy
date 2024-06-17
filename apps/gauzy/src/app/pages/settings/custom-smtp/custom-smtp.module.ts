@@ -1,21 +1,20 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { SMTPModule } from '@gauzy/ui-core/shared';
 import { CustomSmtpComponent } from './custom-smtp.component';
 import { CustomSmtpRoutingModule } from './custom-smtp-routing.module';
-import { SMTPModule } from '../../../@shared/smtp/smtp.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
 
 @NgModule({
 	imports: [
-		CustomSmtpRoutingModule,
-		ThemeModule,
+		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
 		I18nTranslateModule.forChild(),
+		CustomSmtpRoutingModule,
 		SMTPModule
 	],
-	declarations: [CustomSmtpComponent],
-	providers: []
+	declarations: [CustomSmtpComponent]
 })
 export class CustomSmtpModule {}

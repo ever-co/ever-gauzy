@@ -7,18 +7,16 @@ import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { TimeOffSettingsMutationComponent } from '../../../@shared/time-off';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
-import { PaidIcon, RequestApprovalIcon } from '../table-components';
-import { API_PREFIX, ComponentEnum, Store } from '@gauzy/ui-sdk/common';
-import { TimeOffService } from '@gauzy/ui-sdk/core';
+import { ServerDataSource, TimeOffService, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	DeleteConfirmationComponent,
+	EmployeeWithLinksComponent,
+	IPaginationBase,
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../../@shared/pagination/pagination-filter-base.component';
-import { EmployeeWithLinksComponent } from '../../../@shared/table-components';
+	TimeOffSettingsMutationComponent
+} from '@gauzy/ui-core/shared';
+import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -37,7 +35,6 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	private _refresh$: Subject<any> = new Subject();
-
 	public organization: IOrganization;
 	timeOffPolicies$: Subject<any> = this.subject$;
 

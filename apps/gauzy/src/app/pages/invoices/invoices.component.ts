@@ -32,13 +32,13 @@ import {
 	DiscountTaxTypeEnum,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { Router } from '@angular/router';
 import { first, map, filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom, combineLatest, BehaviorSubject } from 'rxjs';
 import * as moment from 'moment';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	InvoiceEstimateHistoryService,
@@ -46,23 +46,26 @@ import {
 	InvoicesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
 import {
+	ContactLinksComponent,
+	DateViewComponent,
+	DeleteConfirmationComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
+	InvoiceTotalValueComponent,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	generateCsv,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
-import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from './table-components';
-import { ContactLinksComponent, DateViewComponent, NotesWithTagsComponent } from '../../@shared/table-components';
+import { InvoicePaidComponent } from './table-components';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge/status-badge.component';
 import { AddInternalNoteComponent } from './add-internal-note/add-internal-note.component';
 import { PublicLinkComponent } from './public-link/public-link.component';
-import { generateCsv } from '../../@shared/invoice/generate-csv';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -941,8 +944,8 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				type: 'custom',
 				width: '10%',
 				filter: false,
-				renderComponent: InvoiceEstimateTotalValueComponent,
-				componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
+				renderComponent: InvoiceTotalValueComponent,
+				componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getValue();
 				}

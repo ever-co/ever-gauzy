@@ -6,7 +6,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	HttpStatus,
 	IIntegration,
@@ -16,13 +16,13 @@ import {
 	IntegrationEnum
 } from '@gauzy/contracts';
 import {
+	ErrorHandlingService,
 	IntegrationEntitySettingServiceStoreService,
 	IntegrationTenantService,
 	IntegrationsService
-} from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from './../../../../@shared/user/forms';
+} from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

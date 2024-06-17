@@ -25,15 +25,17 @@ import {
 	OrganizationTeamsService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { EmployeeWithLinksComponent, TagsOnlyComponent } from '../../@shared/table-components';
+	IPaginationBase,
+	EmployeeWithLinksComponent,
+	TagsOnlyComponent,
+	DeleteConfirmationComponent,
+	InputFilterComponent,
+	TagsColorFilterComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

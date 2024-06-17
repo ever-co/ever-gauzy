@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-core/core';
 import { EditUserProfileComponent } from './edit-user-profile/edit-user-profile.component';
 import { UsersComponent } from './users.component';
 import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invite.component';

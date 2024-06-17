@@ -11,19 +11,19 @@ import {
 	IEmployeeLevel
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { ckEditorConfig } from '@gauzy/ui-sdk/shared';
+import { ckEditorConfig } from '@gauzy/ui-core/shared';
 import {
 	EmployeeLevelService,
 	EmployeeStore,
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
 	OrganizationPositionsService
-} from '@gauzy/ui-sdk/core';
-import { ToastrService } from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
+import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

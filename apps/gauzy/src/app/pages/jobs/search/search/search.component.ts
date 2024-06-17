@@ -11,9 +11,10 @@ import { Cell } from 'angular2-smart-table';
 import {
 	AtLeastOneFieldValidator,
 	DateRangePickerBuilderService,
+	ProposalTemplateService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
@@ -32,17 +33,16 @@ import {
 	IIntegrationEntitySetting,
 	IntegrationEntity
 } from '@gauzy/contracts';
-import { JobService } from '@gauzy/ui-sdk/core';
-import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-sdk/common';
-import { EmployeeLinksComponent } from './../../../../@shared/table-components';
+import { JobService } from '@gauzy/ui-core/core';
 import {
+	EmployeeLinksComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../../@shared/pagination/pagination-filter-base.component';
-import { ProposalTemplateService } from '../../proposal-template/proposal-template.service';
+	PaginationFilterBaseComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
+import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
-import { getAdjustDateRangeFutureAllowed } from './../../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

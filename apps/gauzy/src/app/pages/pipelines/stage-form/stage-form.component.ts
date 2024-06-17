@@ -3,9 +3,9 @@ import { ControlContainer, FormArray, UntypedFormBuilder, UntypedFormGroup, Vali
 import { IPipelineStageUpdateInput } from '@gauzy/contracts';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbDialogService } from '@nebular/theme';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
 import { first } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
+import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @Component({
 	templateUrl: './stage-form.component.html',

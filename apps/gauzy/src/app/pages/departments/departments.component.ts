@@ -7,7 +7,6 @@ import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
 import {
 	IEmployee,
 	IOrganizationDepartment,
@@ -16,16 +15,17 @@ import {
 	IOrganization,
 	ITag
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmployeeWithLinksComponent, NotesWithTagsComponent } from '../../@shared/table-components';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationDepartmentsService } from '@gauzy/ui-sdk/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { OrganizationDepartmentsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
+	DeleteConfirmationComponent,
+	EmployeeWithLinksComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../@shared/table-filters';
+	InputFilterComponent,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent,
+	TagsColorFilterComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

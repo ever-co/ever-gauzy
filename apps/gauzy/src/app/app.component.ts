@@ -20,10 +20,10 @@ import {
 	LanguagesService,
 	SelectorBuilderService,
 	SeoService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-sdk/common';
-import { I18nTranslateService } from '@gauzy/ui-sdk/i18n';
+import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-core/common';
+import { I18nTranslateService } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })

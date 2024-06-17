@@ -1,0 +1,57 @@
+@import 'themes';
+@import 'gauzy/_gauzy-overrides';
+
+:host {
+  a,
+  span {
+    display: block;
+    margin: 3px;
+  }
+
+  a {
+    pointer-events: none;
+    text-decoration: none;
+  }
+
+  li {
+    cursor: pointer;
+    overflow: hidden;
+
+    &.active span {
+      color: nb-theme(text-primary-color);
+      background-color: nb-theme(background-basic-color-1);
+      border-radius: nb-theme(button-rectangle-border-radius);
+    }
+
+    span {
+      font-size: 0.875rem;
+      background-color: transparent;
+      color: nb-theme(text-basic-color);
+      padding: 0.75rem 1.1rem;
+      border: none;
+      &.icon {
+        background: rgba(255, 255, 255, 0.75);
+        box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+        border-radius: nb-theme(button-rectangle-border-radius);
+        padding: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .pagination {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+  }
+
+  ::ng-deep {
+    @include nb-select-overrides(2rem, $default-button-radius, $default-box-shadow);
+  }
+}
+nav {
+  display: flex;
+  justify-content: space-between;
+}

@@ -1,10 +1,11 @@
 import { InjectionToken, NgModule } from '@angular/core';
 import { Routes, RouterModule, ActivatedRouteSnapshot } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { ImportExportComponent } from './import-export.component';
 
 const externalUrlProvider = new InjectionToken('externalUrlRedirectResolver');
+
 const routes: Routes = [
 	{
 		path: '',

@@ -1,8 +1,5 @@
 <div class="global">
-	<ga-sidebar
-		(clickedNode)="clickedNode($event)"
-		(deletedNode)="deletedNode()"
-	></ga-sidebar>
+	<ga-sidebar (clickedNode)="clickedNode($event)" (deletedNode)="deletedNode()"></ga-sidebar>
 	<div class="main">
 		<nb-card>
 			<nb-card-header class="head">
@@ -39,15 +36,10 @@
 					></ngx-gauzy-button-action>
 				</div>
 				<ng-template [ngIf]="showFilters">
-					<div
-						*ngIf="categoryName"
-						class="row row-search ml-1 mb-3 align-items-end"
-					>
+					<div *ngIf="categoryName" class="row row-search ml-1 mb-3 align-items-end">
 						<div class="col-lg-5">
 							<div class="form-group">
-								<label for="employee" class="label">{{
-									'HELP_PAGE.SEARCH_BY_NAME' | translate
-								}}</label>
+								<label for="employee" class="label">{{ 'HELP_PAGE.SEARCH_BY_NAME' | translate }}</label>
 								<input
 									fullWidth
 									[formControl]="search"
@@ -67,12 +59,9 @@
 									[multiple]="false"
 									[label]="false"
 									[allEmployees]="employees"
-									(selectedChange)="
-										onEmployeeSelected($event)
-									"
+									(selectedChange)="onEmployeeSelected($event)"
 									[reset]="isResetSelect"
-								>
-								</ga-employee-multi-select>
+								></ga-employee-multi-select>
 							</div>
 						</div>
 						<div class="col-lg-2">
@@ -89,11 +78,7 @@
 					</div>
 				</ng-template>
 			</nb-card-header>
-			<nb-card-body
-				[nbSpinner]="loading"
-				nbSpinnerStatus="primary"
-				nbSpinnerSize="giant"
-			>
+			<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="giant">
 				<div
 					*ngIf="this.articleList.length; else nodata"
 					class="table-scroll"
@@ -104,10 +89,7 @@
 						[ngClass]="{
 							selected: isSelected(i, article)
 						}"
-						*ngFor="
-							let article of this.filteredArticles;
-							let i = index
-						"
+						*ngFor="let article of this.filteredArticles; let i = index"
 						(click)="selectItem(i, article)"
 					>
 						<div class="row-name">
@@ -122,11 +104,7 @@
 							</p>
 						</div>
 						<p>{{ article.description }}</p>
-						<div
-							class="data"
-							*ngIf="showData[i]"
-							[innerHtml]="dataArray[i]"
-						></div>
+						<div class="data" *ngIf="showData[i]" [innerHtml]="dataArray[i]"></div>
 						<div class="user-info">
 							<p>
 								{{ 'HELP_PAGE.WRITTEN_BY' | translate }}
@@ -146,13 +124,10 @@
 								</span>
 							</div>
 							<div class="create-at">
-								<nb-icon
-									class="icon"
-									icon="clock-outline"
-								></nb-icon>
+								<nb-icon class="icon" icon="clock-outline"></nb-icon>
 								<p>
 									{{ 'HELP_PAGE.CREATED_AT' | translate }}:
-									{{ article.createdAt | date: 'short' }}
+									{{ article.createdAt | date : 'short' }}
 								</p>
 							</div>
 						</div>
@@ -164,23 +139,11 @@
 </div>
 
 <ng-template #visible>
-	<button
-		status="success"
-		class="action"
-		(click)="addNode()"
-		size="small"
-		nbButton
-	>
+	<button status="success" class="action" (click)="addNode()" size="small" nbButton>
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
-	<button
-		status="basic"
-		class="action info-text-1"
-		(click)="showFilters = !showFilters"
-		size="small"
-		nbButton
-	>
+	<button status="basic" class="action info-text-1" (click)="showFilters = !showFilters" size="small" nbButton>
 		<nb-icon icon="funnel-outline"></nb-icon>
 		{{ 'BUTTONS.FILTER' | translate }}
 	</button>
@@ -198,13 +161,7 @@
 				<nb-icon icon="eye-outline"></nb-icon>
 				{{ 'BUTTONS.VIEW' | translate }}
 			</button>
-			<button
-				size="small"
-				class="action primary"
-				(click)="editNode(selectedItem?.index)"
-				status="basic"
-				nbButton
-			>
+			<button size="small" class="action primary" (click)="editNode(selectedItem?.index)" status="basic" nbButton>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
@@ -223,8 +180,6 @@
 </ng-template>
 <ng-template #nodata>
 	<div class="no-data">
-		<ngx-no-data-message
-			[message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"
-		></ngx-no-data-message>
+		<ngx-no-data-message [message]="'HELP_PAGE.CHOOSE_ANY_CATEGORY' | translate"></ngx-no-data-message>
 	</div>
 </ng-template>

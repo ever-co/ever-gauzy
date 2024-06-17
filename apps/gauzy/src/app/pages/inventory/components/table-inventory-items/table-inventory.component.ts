@@ -8,7 +8,6 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
 import {
 	IProduct,
 	ComponentLayoutStyleEnum,
@@ -17,15 +16,13 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import {
+	DeleteConfirmationComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ProductService } from '@gauzy/ui-sdk/core';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
-import { TagsOnlyComponent } from './../../../../@shared/table-components';
+	PaginationFilterBaseComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-core/shared';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })

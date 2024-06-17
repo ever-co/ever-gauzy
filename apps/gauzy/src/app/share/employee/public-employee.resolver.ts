@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Resolve, Router, ActivatedRouteSnapshot } from '@angular/router';
-import { EmployeesService } from '@gauzy/ui-sdk/core';
+import { EmployeesService } from '@gauzy/ui-core/core';
 import { catchError } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
 import { IEmployee } from '@gauzy/contracts';
-import { ErrorHandlingService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

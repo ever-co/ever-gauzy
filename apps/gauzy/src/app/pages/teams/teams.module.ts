@@ -14,29 +14,30 @@ import {
 	NbBadgeModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { SharedModule } from './../../@shared/shared.module';
-import { ThemeModule } from '../../@theme/theme.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { OrganizationTeamsService } from '@gauzy/ui-sdk/core';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { OrganizationTeamsService } from '@gauzy/ui-core/core';
+import {
+	CardGridModule,
+	EmployeeMultiSelectModule,
+	GauzyButtonActionModule,
+	ImageUploaderModule,
+	PaginationV2Module,
+	ProjectSelectModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-core/shared';
 import { TeamsRoutingModule } from './teams-routing.module';
 import { TeamsComponent } from './teams.component';
 import { TeamsMutationComponent } from './teams-mutation/teams-mutation.component';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { EmployeeMultiSelectModule } from '../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { ProjectSelectModule } from '../../@shared/project-select/project-select.module';
 
 @NgModule({
 	imports: [
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
+		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -53,12 +54,11 @@ import { ProjectSelectModule } from '../../@shared/project-select/project-select
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
+		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
 		PaginationV2Module,
 		GauzyButtonActionModule,
-		CommonModule,
 		ImageUploaderModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],

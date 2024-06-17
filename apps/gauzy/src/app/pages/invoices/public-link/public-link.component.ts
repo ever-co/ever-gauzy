@@ -2,10 +2,10 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { IInvoice } from '@gauzy/contracts';
-import { __prepareExternalUrlLocation } from '@gauzy/ui-sdk/common';
+import { __prepareExternalUrlLocation } from '@gauzy/ui-core/common';
 import { NbDialogRef } from '@nebular/theme';
 import { ClipboardService } from 'ngx-clipboard';
-import { InvoicesService } from '@gauzy/ui-sdk/core';
+import { InvoicesService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'public-invoice-link',

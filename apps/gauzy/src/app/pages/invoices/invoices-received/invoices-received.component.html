@@ -1,13 +1,12 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-custom-header">
 		<div class="card-header-title">
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{ (isEstimate ? 'INVOICES_PAGE.RECEIVED_ESTIMATES' : 'INVOICES_PAGE.RECEIVED_INVOICES' ) | translate }}
+					{{
+						(isEstimate ? 'INVOICES_PAGE.RECEIVED_ESTIMATES' : 'INVOICES_PAGE.RECEIVED_INVOICES')
+							| translate
+					}}
 				</ngx-header-title>
 			</h4>
 		</div>
@@ -21,10 +20,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
 					style="cursor: pointer"
@@ -35,9 +31,7 @@
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -52,11 +46,7 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
 		<button
 			nbButton
@@ -65,6 +55,7 @@
 			(click)="view(selectedItem)"
 			[disabled]="!selectedItem && disableButton"
 			size="small"
+			underConstruction
 		>
 			<nb-icon icon="eye-outline"></nb-icon>
 			{{ 'BUTTONS.VIEW' | translate }}
@@ -132,12 +123,7 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		underConstruction
-	>
+	<button nbButton status="success" size="small" underConstruction>
 		<nb-icon [icon]="isEstimate ? 'plus-outline' : 'credit-card-outline'"></nb-icon>
 		{{ (isEstimate ? 'BUTTONS.ADD' : 'BUTTONS.PAY') | translate }}
 	</button>

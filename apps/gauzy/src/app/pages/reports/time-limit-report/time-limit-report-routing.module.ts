@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.component';
-import { DateRangePickerResolver } from '../../../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{
@@ -14,9 +14,7 @@ const routes: Routes = [
 				unitOfTime: 'week'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	}
 ];
 

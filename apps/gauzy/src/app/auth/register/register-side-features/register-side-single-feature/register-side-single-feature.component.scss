@@ -1,5 +1,5 @@
-@import "themes";
-@import "../../../reusable";
+@import 'themes';
+@import '@shared/reusable';
 
 .feature-wrapper {
   width: 100%;
@@ -53,9 +53,10 @@
   letter-spacing: 0em;
   text-align: left;
   width: 100%;
-
 }
-.heading, nb-icon, .description {
+.heading,
+nb-icon,
+.description {
   color: rgba(255, 255, 255, 0.75);
 }
 @include small-laptop-screen {

@@ -1,0 +1,20 @@
+<nb-card class="view-log-dialog">
+	<nb-card-header>
+		<div class="row">
+			<div class="col">
+				{{ data?.title || ('DIALOG.ALERT' | translate) }}
+			</div>
+			<button nbButton ghost type="button" class="col-auto" (click)="closeDialog()">
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="custom-scroll">
+		{{ data?.message }}
+	</nb-card-body>
+	<nb-card-footer>
+		<button class="mr-2" nbButton status="primary" (click)="closeDialog()">
+			{{ data?.closeText || ('BUTTONS.OK' | translate) }}
+		</button>
+	</nb-card-footer>
+</nb-card>

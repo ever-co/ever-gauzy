@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
-import { RoleService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { EditProfileFormModule } from '../../@shared/user/edit-profile-form/edit-profile-form.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { RoleService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { EditProfileFormModule } from '@gauzy/ui-core/shared';
 import { AuthRoutingModule } from './auth-routing.module';
 
 @NgModule({
-	imports: [AuthRoutingModule, ThemeModule, I18nTranslateModule.forChild(), EditProfileFormModule],
+	imports: [CommonModule, I18nTranslateModule.forChild(), AuthRoutingModule, EditProfileFormModule],
 	providers: [RoleService]
 })
 export class AuthModule {}

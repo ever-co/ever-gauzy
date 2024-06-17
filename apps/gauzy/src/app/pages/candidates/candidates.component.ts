@@ -15,18 +15,21 @@ import { finalize, firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
-import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent } from '../../@shared/table-filters';
+	IPaginationBase,
+	PictureNameTagsComponent,
+	DateViewComponent,
+	TagsOnlyComponent,
+	ArchiveConfirmationComponent,
+	CandidateActionConfirmationComponent,
+	InviteMutationComponent,
+	InputFilterComponent,
+	CandidateMutationComponent
+} from '@gauzy/ui-core/shared';
+import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
