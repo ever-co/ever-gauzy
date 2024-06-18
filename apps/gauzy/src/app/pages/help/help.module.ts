@@ -1,20 +1,18 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbInputModule } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
 import { HelpComponent } from './help.component';
 import { HelpRoutingModule } from './help-routing.module';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 
 @NgModule({
 	imports: [
-		HelpRoutingModule,
-		ThemeModule,
-		NbCardModule,
-		FormsModule,
+		CommonModule,
 		NbButtonModule,
+		NbCardModule,
 		NbInputModule,
-		I18nTranslateModule.forChild()
+		I18nTranslateModule.forChild(),
+		HelpRoutingModule
 	],
 	declarations: [HelpComponent]
 })

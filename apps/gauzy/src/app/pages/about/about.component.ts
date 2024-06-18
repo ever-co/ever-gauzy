@@ -6,7 +6,7 @@ import { Store } from '@gauzy/ui-core/common';
 	templateUrl: './about.component.html'
 })
 export class AboutComponent implements OnInit, OnDestroy {
-	constructor(private store: Store) {}
+	constructor(private readonly store: Store) {}
 
 	ngOnInit() {}
 

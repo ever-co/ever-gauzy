@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -43,7 +43,6 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { ThemeModule } from '../../@theme/theme.module';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
@@ -94,6 +93,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 
 @NgModule({
 	imports: [
+		CommonModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,
@@ -109,7 +109,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		ReactiveFormsModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),
-		ThemeModule,
 		NbInputModule,
 		NbRouteTabsetModule,
 		NbSelectModule,

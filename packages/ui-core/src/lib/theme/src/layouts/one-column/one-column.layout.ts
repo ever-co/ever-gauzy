@@ -5,8 +5,8 @@ import { NbLayoutComponent, NbSidebarService } from '@nebular/theme';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/common';
-import { WindowModeBlockScrollService } from '@gauzy/ui-core/theme';
 import { LayoutService, NavigationBuilderService } from '@gauzy/ui-core/core';
+import { WindowModeBlockScrollService } from '../../services';
 import { DEFAULT_SIDEBARS } from '../../components/theme-sidebar/default-sidebars';
 import { ThemeLanguageSelectorService } from '../../components/theme-sidebar/theme-settings/components/theme-language-selector/theme-language-selector.service';
 

@@ -115,6 +115,16 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	shareProfileView?: boolean;
 
 	/**
+	 * Optional property representing the team time tracking required by existing of a daily plan
+	 * Default value is set to false
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	requirePlanToTrack?: boolean;
+
+	/**
 	 * Optional property representing the team type (boolean true/false).
 	 * Default value is set to false.
 	 */

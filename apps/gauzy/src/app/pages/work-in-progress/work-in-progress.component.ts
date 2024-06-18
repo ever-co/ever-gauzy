@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Store } from '@gauzy/ui-core/common';
 
 @Component({
 	selector: 'ga-wip',
@@ -13,8 +12,6 @@ import { Store } from '@gauzy/ui-core/common';
 	`
 })
 export class WorkInProgressComponent implements OnInit, OnDestroy {
-	constructor(private store: Store) {}
-
 	ngOnInit() {}
 
 	ngOnDestroy() {}

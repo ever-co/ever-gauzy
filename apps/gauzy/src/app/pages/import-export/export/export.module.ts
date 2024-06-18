@@ -1,38 +1,37 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-	NbCardModule,
 	NbButtonModule,
-	NbInputModule,
-	NbIconModule,
-	NbRadioModule,
+	NbCardModule,
 	NbCheckboxModule,
+	NbIconModule,
+	NbInputModule,
+	NbRadioModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ExportComponent } from './export.component';
-import { ExportRoutingModule } from './export-routing.module';
 import { ExportAllService } from '@gauzy/ui-core/core';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { FileUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ExportComponent } from './export.component';
+import { ExportRoutingModule } from './export-routing.module';
 
 @NgModule({
 	imports: [
-		ExportRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
+		ReactiveFormsModule,
 		NbButtonModule,
-		FileUploaderModule,
+		NbCardModule,
+		NbCheckboxModule,
 		NbIconModule,
 		NbInputModule,
 		NbRadioModule,
-		NbCheckboxModule,
 		NbSpinnerModule,
-		ReactiveFormsModule,
-		FormsModule,
 		I18nTranslateModule.forChild(),
-		SharedModule
+		FileUploaderModule,
+		SharedModule,
+		ExportRoutingModule
 	],
 	declarations: [ExportComponent],
 	exports: [ExportComponent],

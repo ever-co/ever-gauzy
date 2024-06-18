@@ -13,13 +13,12 @@ export enum EmployeeChartEnum {
 	styleUrls: ['./employee-charts.component.scss']
 })
 export class EmployeeChartsComponent implements OnInit {
-
 	selectedChart = EmployeeChartEnum.BAR;
 	EmployeeChartEnum: typeof EmployeeChartEnum = EmployeeChartEnum;
 
 	@Input() employeeStatistics: IMonthAggregatedEmployeeStatistics[];
 
-	constructor() { }
+	constructor() {}
 
-	ngOnInit() { }
+	ngOnInit() {}
 }

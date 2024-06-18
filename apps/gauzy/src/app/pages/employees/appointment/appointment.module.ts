@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { NbButtonModule, NbCardModule, NbSpinnerModule, NbIconModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentEmployeesService,
@@ -8,24 +9,23 @@ import {
 	EmployeeAppointmentService,
 	TimeOffService
 } from '@gauzy/ui-core/core';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
-import { SharedModule } from '@gauzy/ui-core/shared';
 import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 
 @NgModule({
 	imports: [
-		FullCalendarModule,
-		AppointmentRoutingModule,
-		TimezoneSelectorModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		NbButtonModule,
+		NbCardModule,
 		NbIconModule,
 		NbSpinnerModule,
+		FullCalendarModule,
 		I18nTranslateModule.forChild(),
-		SharedModule
+		SharedModule,
+		TimezoneSelectorModule,
+		AppointmentRoutingModule
 	],
 	exports: [AppointmentComponent],
 	declarations: [AppointmentComponent],
