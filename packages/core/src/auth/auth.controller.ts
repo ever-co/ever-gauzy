@@ -167,20 +167,6 @@ export class AuthController {
 	}
 
 	/**
-	 * Find user by email address
-	 *
-	 * @param input An object that imcludes the email to search with
-	 * @return  A promise that resolves to a boolean specifying if the user exists or not
-	 */
-	@HttpCode(HttpStatus.OK)
-	@Post('/signup.email.social')
-	@Public()
-	@UseValidationPipe()
-	async socialSignupCheckIfUserExists(@Body() input: UserEmailDTO): Promise<ISocialAccountExistUser> {
-		return await this.authService.socialSignupCheckIfUserExists(input);
-	}
-
-	/**
 	 * Check if any user with the given provider infos exists
 
 	 * @param input An object that contains the provider name and the provider Account ID

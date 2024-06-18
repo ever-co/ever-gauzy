@@ -231,18 +231,6 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Check if any user with a given email exists
-	 * This function is used to facilitate the GauzyAdapter in Ever Teams try to create new Users or only signin them
-
-	 * @param input An object that imcludes the email to search with
-	 * @returns A promise that resolves to a boolean specifying if the user exists or not
-	 */
-	async socialSignupCheckIfUserExists(input: IUserEmailInput): Promise<ISocialAccountExistUser> {
-		const isExist = await this.socialAccountService.signupFindUserByEmail(input.email);
-		return { isUserExists: isExist };
-	}
-
-	/**
 	 * Check if any user with the given provider infos exists
 	 * This function is used to facilitate the GauzyAdapter in Ever Teams try to create new Users or only signin them
 
