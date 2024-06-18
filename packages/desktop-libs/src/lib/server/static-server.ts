@@ -1,5 +1,5 @@
 import express, { Express } from 'express';
-import { IncomingMessage, Server, ServerResponse } from 'http';
+import { Server } from 'http';
 import { ILocalServer } from '../interfaces';
 
 export class StaticServer implements ILocalServer {
