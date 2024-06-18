@@ -15,7 +15,7 @@
 		"gauzy": {
 			"projectType": "application",
 			"schematics": {
-				"@nrwl/workspace:component": {
+				"@nx/workspace:component": {
 					"style": "scss"
 				}
 			},
@@ -450,7 +450,7 @@
 		"desktop": {
 			"projectType": "application",
 			"schematics": {
-				"@nrwl/workspace:component": {
+				"@nx/workspace:component": {
 					"style": "scss"
 				}
 			},
@@ -1021,7 +1021,7 @@
 		"gauzy-server-ui": {
 			"projectType": "application",
 			"schematics": {
-				"@nrwl/workspace:component": {
+				"@nx/workspace:component": {
 					"style": "scss"
 				}
 			},
