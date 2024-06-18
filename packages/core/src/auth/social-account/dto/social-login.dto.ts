@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { ProviderEnum } from '@gauzy/contracts';
+import { ISocialAccountBase, ProviderEnum } from '@gauzy/contracts';
 import { IncludeTeamsDTO } from '../../../user/dto/include-teams.dto';
 
 /**
@@ -16,4 +16,14 @@ export class SocialLoginBodyRequestDTO extends IncludeTeamsDTO {
 	@IsNotEmpty()
 	@IsString()
 	readonly token: string;
+}
+
+export class FindUserBySocialLoginDTO
+	extends PickType(SocialLoginBodyRequestDTO, ['provider'])
+	implements ISocialAccountBase
+{
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsString()
+	readonly providerAccountId: string;
 }

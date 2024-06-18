@@ -12,3 +12,11 @@ export interface ISocialAccountCreateInput extends ISocialAccount {}
 
 export interface ISocialAccountUpdateInput
 	extends Partial<Pick<ISocialAccountCreateInput, 'provider' | 'providerAccountId'>> {}
+
+export interface ISocialAccountExistUser extends Partial<ISocialAccountBase> {
+	isUserExists: boolean;
+}
+
+export interface ISocialAccountLogin extends Pick<ISocialAccountBase, 'provider'> {
+	token: string;
+}
