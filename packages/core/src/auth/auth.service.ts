@@ -25,7 +25,11 @@ import {
 	IOrganizationTeam,
 	IWorkspaceResponse,
 	ITenant,
-	ProviderEnum
+	ProviderEnum,
+	ISocialAccountBase,
+	ISocialAccountExistUser,
+	ISocialAccountLogin,
+	ISocialAccount
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -227,6 +231,19 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Check if any user with the given provider infos exists
+	 * This function is used to facilitate the GauzyAdapter in Ever Teams try to create new Users or only signin them
+
+	 * @param input An object that contains the provider name and the provider Account ID
+	 * @returns A promise that resolves to a boolean specifying if the user exists or not
+	 */
+	async socialSignupCheckIfUserExistsBySocial(input: ISocialAccountBase): Promise<ISocialAccountExistUser> {
+		const user = await this.socialAccountService.findUserBySocialId(input);
+		if (!user) return { isUserExists: false };
+		return { isUserExists: true };
+	}
+
+	/**
 	 * Authenticate a user by email from social media and return user workspaces.
 	 *
 	 * @param email - The user's email.
@@ -235,7 +252,7 @@ export class AuthService extends SocialAuthService {
 	 * @throws UnauthorizedException if authentication fails.
 	 */
 	async signinWorkspacesByEmailSocial(
-		input: { provider: ProviderEnum; token: string },
+		input: ISocialAccountLogin,
 		includeTeams: boolean
 	): Promise<IUserSigninWorkspaceResponse> {
 		const { provider: inputProvider, token } = input;
@@ -267,7 +284,7 @@ export class AuthService extends SocialAuthService {
 				users.map(async (user) => {
 					return await this.socialAccountService.registerSocialAccount({
 						provider,
-						providerAccountId: providerData.id,
+						providerAccountId,
 						userId: user.id,
 						user,
 						tenantId: user.tenantId,
@@ -309,6 +326,37 @@ export class AuthService extends SocialAuthService {
 		} else {
 			console.log('Error while signin workspace: %s');
 			throw new UnauthorizedException();
+		}
+	}
+
+	/**
+	 * This method links a user to an oAuth account when signin/singup with a social media provider
+	 *
+	 * @param input The body request that contains the token to be verified and the provider name
+	 * @returns A promise that resolved with  an account creation
+	 */
+
+	async linkUserToSocialAccount(input: ISocialAccountLogin): Promise<ISocialAccount> {
+		try {
+			const { provider: inputProvider, token } = input;
+
+			const providerData = await this.verifyOAuthToken(inputProvider, token);
+			const { email, id, provider } = providerData;
+			const user = await this.userService.getUserByEmail(email);
+
+			if (!user) {
+				throw new BadRequestException('User for these credentials could not be found');
+			}
+			return await this.socialAccountService.registerSocialAccount({
+				provider,
+				providerAccountId: id,
+				userId: user.id,
+				user,
+				tenantId: user.tenantId,
+				tenant: user.tenant
+			});
+		} catch (error) {
+			throw new BadRequestException('User for these credentials could not be found');
 		}
 	}
 
