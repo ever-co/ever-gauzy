@@ -5,7 +5,7 @@ import { IEmployee, ITimeOffPolicy, IOrganization, StatusTypesEnum, IUser } from
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { CompareDateValidator, EmployeesService, ToastrService } from '@gauzy/ui-core/core';
 import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { environment as ENV } from '@gauzy/ui-config';

@@ -17,7 +17,7 @@ export class ServerDataSource extends LocalDataSource {
 		}
 	}
 
-	count(): number {
+	override count(): number {
 		return this.lastRequestCount;
 	}
 
@@ -25,7 +25,7 @@ export class ServerDataSource extends LocalDataSource {
 		return this.data;
 	}
 
-	getElements(): Promise<any> {
+	override getElements(): Promise<any> {
 		return firstValueFrom(
 			this.requestElements().pipe(
 				map((res) => {

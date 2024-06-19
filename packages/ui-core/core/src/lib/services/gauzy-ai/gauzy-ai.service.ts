@@ -21,7 +21,7 @@ export class GauzyAIService extends CrudService<IIntegrationTenant> {
 	 * @param input - Data for creating the integration AI, of type IIntegrationAICreateInput.
 	 * @returns An Observable of type IIntegrationTenant representing the created integration AI.
 	 */
-	create(input: IIntegrationAICreateInput): Observable<IIntegrationTenant> {
+	override create(input: IIntegrationAICreateInput): Observable<IIntegrationTenant> {
 		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/gauzy-ai`, input);
 	}
 }

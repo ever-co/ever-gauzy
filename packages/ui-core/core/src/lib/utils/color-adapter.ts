@@ -42,14 +42,18 @@ export class ColorAdapter {
 	public static contrast(bgColor: string): string {
 		let color = new Color(bgColor);
 		color = color.valid ? color : new Color(this.hex2Rgb(bgColor));
+
 		const MIN_THRESHOLD = 128;
 		const MAX_THRESHOLD = 186;
 		const contrast = color.rgb ? color.rgb.r * 0.299 + color.rgb.g * 0.587 + color.rgb.b * 0.114 : null;
-		if (contrast < MIN_THRESHOLD) {
+
+		if (contrast && contrast < MIN_THRESHOLD) {
 			return '#ffffff';
-		} else if (contrast > MAX_THRESHOLD) {
+		} else if (contrast && contrast > MAX_THRESHOLD) {
 			return '#000000';
 		}
+
+		return '';
 	}
 
 	/**

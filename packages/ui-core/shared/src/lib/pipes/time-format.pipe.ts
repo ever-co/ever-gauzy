@@ -1,6 +1,6 @@
 import { Pipe, PipeTransform, OnDestroy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
-import moment from 'moment';
+import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, TimeFormatEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/common';

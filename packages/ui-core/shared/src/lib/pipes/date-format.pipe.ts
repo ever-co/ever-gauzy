@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IOrganization, RegionsEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-core/common';
 

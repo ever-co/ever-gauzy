@@ -9,7 +9,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { CandidateInterviewService } from '@gauzy/ui-core/core';

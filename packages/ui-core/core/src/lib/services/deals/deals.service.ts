@@ -7,7 +7,7 @@ import { Service } from '../crud/service';
 
 @Injectable()
 export class DealsService extends Service<IDeal, IDealFindInput, IDealCreateInput> {
-	public constructor(protected http: HttpClient) {
+	public constructor(http: HttpClient) {
 		super({ http, basePath: `${API_PREFIX}/deals` });
 	}
 
