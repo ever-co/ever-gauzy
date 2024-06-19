@@ -1,5 +1,4 @@
 import { ModuleWithProviders, NgModule } from '@angular/core';
-import { ColorPickerService } from 'ngx-color-picker';
 import { NgxPermissionsModule } from 'ngx-permissions';
 
 @NgModule({
@@ -16,7 +15,7 @@ export class UiCoreModule {
 	static forRoot(): ModuleWithProviders<UiCoreModule> {
 		return {
 			ngModule: UiCoreModule,
-			providers: [ColorPickerService]
+			providers: []
 		};
 	}
 }

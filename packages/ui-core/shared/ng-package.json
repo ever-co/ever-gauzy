@@ -1,0 +1,6 @@
+{
+	"lib": {
+		"entryFile": "src/index.ts",
+		"styleIncludePaths": ["../static/styles"]
+	}
+}

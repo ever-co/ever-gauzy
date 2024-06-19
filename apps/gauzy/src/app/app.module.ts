@@ -28,10 +28,10 @@ import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
-import moment from 'moment';
+import * as moment from 'moment';
+import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -90,7 +90,6 @@ const isProd = environment.production;
 		NbEvaIconsModule,
 		UiConfigModule.forRoot(),
 		UiCoreModule.forRoot(),
-		I18nTranslateModule.forRoot(),
 		CommonModule.forRoot(),
 		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
@@ -102,6 +101,7 @@ const isProd = environment.production;
 				deps: [HttpClient]
 			}
 		}),
+		I18nTranslateModule.forRoot(),
 		CloudinaryModule,
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),

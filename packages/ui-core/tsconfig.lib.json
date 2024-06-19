@@ -1,16 +1,12 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
+		"outDir": "../../dist/out-tsc",
 		"declaration": true,
 		"declarationMap": true,
-		"sourceMap": true,
 		"inlineSources": true,
-		"lib": ["es2020", "es2017", "es2016", "dom"]
+		"types": []
 	},
-	"angularCompilerOptions": {
-		"skipTemplateCodegen": true,
-		"strictMetadataEmit": true,
-		"enableResourceInlining": true
-	},
-	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
+	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
+	"include": ["src/**/*.ts"]
 }
