@@ -13,7 +13,7 @@ export class OrganizationStore extends AkitaStore<IOrganizationStoreState> {
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationQuery extends Query<IOrganizationStoreState> {
-	constructor(protected store: OrganizationStore) {
+	constructor(store: OrganizationStore) {
 		super(store);
 	}
 }
@@ -25,14 +25,9 @@ export class OrganizationQuery extends Query<IOrganizationStoreState> {
 export class OrganizationEditStore {
 	private _selectedOrganization: IOrganization;
 
-	constructor(
-		protected organizationStore: OrganizationStore,
-		protected organizationQuery: OrganizationQuery
-	) {}
+	constructor(protected organizationStore: OrganizationStore, protected organizationQuery: OrganizationQuery) {}
 
-	selectedOrganization$: BehaviorSubject<IOrganization> = new BehaviorSubject(
-		this.selectedOrganization
-	);
+	selectedOrganization$: BehaviorSubject<IOrganization> = new BehaviorSubject(this.selectedOrganization);
 
 	set selectedOrganization(organization: IOrganization) {
 		this._selectedOrganization = organization;
@@ -43,11 +38,9 @@ export class OrganizationEditStore {
 		return this._selectedOrganization;
 	}
 
-	organizationAction$ = this.organizationQuery.select(
-		({ organization, action }) => {
-			return { organization, action };
-		}
-	);
+	organizationAction$ = this.organizationQuery.select(({ organization, action }) => {
+		return { organization, action };
+	});
 
 	set organizationAction({ organization, action }: IOrganizationStoreState) {
 		this.organizationStore.update({

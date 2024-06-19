@@ -9,7 +9,7 @@ import { CrudService } from '../crud/crud.service';
 export class TagsService extends CrudService<ITag> {
 	static readonly API_URL = `${API_PREFIX}/tags`;
 
-	constructor(protected readonly http: HttpClient) {
+	constructor(http: HttpClient) {
 		super(http, TagsService.API_URL);
 	}
 

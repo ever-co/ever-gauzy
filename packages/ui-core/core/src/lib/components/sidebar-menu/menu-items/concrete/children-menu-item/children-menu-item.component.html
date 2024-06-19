@@ -6,15 +6,15 @@
 				[gaTooltip]="item?.title"
 				[icon]="item?.icon"
 				[class]="(selected ? 'selected ' : '') + (!collapse ? 'custom ' : '') + 'sub-item'"
-				(click)="select($event)"
+				(click)="select()"
 			>
 				<span class="info">
 					<i [class]="item?.icon"></i>
 					<span *ngIf="collapse || mouseHover">
 						<a [href]="getExternalUrl(item?.link)" onclick="return false;">
 							{{ item?.title }}
-						</a
-					></span>
+						</a>
+					</span>
 				</span>
 			</div>
 		</ng-container>
@@ -36,14 +36,7 @@
 					</span>
 				</span>
 				<ng-template [ngIf]="item?.data?.add">
-					<button
-						class="float-right plus"
-						status="basic"
-						outline
-						size="tiny"
-						(click)="add()"
-						nbButton
-					>
+					<button class="float-right plus" status="basic" outline size="tiny" (click)="add()" nbButton>
 						<i class="fas fa-plus"></i>
 					</button>
 				</ng-template>

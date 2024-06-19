@@ -25,7 +25,7 @@ export class TimesheetFilterStore extends Store<ITimeLogFilters> {
 
 @Injectable({ providedIn: 'root' })
 export class TimesheetFilterQuery extends Query<ITimeLogFilters> {
-	constructor(protected readonly store: TimesheetFilterStore) {
+	constructor(store: TimesheetFilterStore) {
 		super(store);
 	}
 }

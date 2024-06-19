@@ -15,5 +15,5 @@ export const hasRequiredField = (control: AbstractControl): boolean => {
 		return false;
 	}
 	// Check if the control has a 'required' error
-	return !!(control.errors && control.errors.required);
+	return !!(control.errors && control.errors['required']);
 };

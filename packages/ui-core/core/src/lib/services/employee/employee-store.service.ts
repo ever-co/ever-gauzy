@@ -19,7 +19,7 @@ export class EmployeeAkitaStore extends AkitaStore<IEmployeeStoreState> {
 
 @Injectable({ providedIn: 'root' })
 export class EmployeeAkitaQuery extends Query<IEmployeeStoreState> {
-	constructor(protected store: EmployeeAkitaStore) {
+	constructor(store: EmployeeAkitaStore) {
 		super(store);
 	}
 }
@@ -33,22 +33,13 @@ export class EmployeeStore {
 	private _userForm: IUserFindInput;
 	private _employeeForm: IEmployeeUpdateInput;
 
-	constructor(
-		protected employeeAkitaStore: EmployeeAkitaStore,
-		protected employeeAkitaQuery: EmployeeAkitaQuery
-	) { }
+	constructor(protected employeeAkitaStore: EmployeeAkitaStore, protected employeeAkitaQuery: EmployeeAkitaQuery) {}
 
-	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
-		this.selectedEmployee
-	);
+	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(this.selectedEmployee);
 
-	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(
-		this.userForm
-	);
+	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(this.userForm);
 
-	employeeForm$: BehaviorSubject<IEmployeeUpdateInput> = new BehaviorSubject(
-		this.employeeForm
-	);
+	employeeForm$: BehaviorSubject<IEmployeeUpdateInput> = new BehaviorSubject(this.employeeForm);
 
 	set selectedEmployee(employee: IEmployee) {
 		this._selectedEmployee = employee;

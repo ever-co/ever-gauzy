@@ -12,7 +12,7 @@ export class OrganizationProjectAkitaStore extends AkitaStore<IOrganizationProje
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationProjectAkitaQuery extends Query<IOrganizationProjectStoreState> {
-	constructor(protected store: OrganizationProjectAkitaStore) {
+	constructor(store: OrganizationProjectAkitaStore) {
 		super(store);
 	}
 }
@@ -27,16 +27,11 @@ export class OrganizationProjectStore {
 		protected organizationProjectAkitaQuery: OrganizationProjectAkitaQuery
 	) {}
 
-	organizationProjectAction$ = this.organizationProjectAkitaQuery.select(
-		({ project, action }) => {
-			return { project, action };
-		}
-	);
+	organizationProjectAction$ = this.organizationProjectAkitaQuery.select(({ project, action }) => {
+		return { project, action };
+	});
 
-	set organizationProjectAction({
-		project,
-		action
-	}: IOrganizationProjectStoreState) {
+	set organizationProjectAction({ project, action }: IOrganizationProjectStoreState) {
 		this.organizationProjectAkitaStore.update({
 			project,
 			action

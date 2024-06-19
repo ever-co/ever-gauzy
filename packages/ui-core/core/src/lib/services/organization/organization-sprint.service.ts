@@ -15,11 +15,7 @@ import { ToastrService } from '../notification';
 export class SprintService extends TranslationBaseComponent {
 	private readonly API_URL = `${API_PREFIX}/organization-sprint`;
 
-	constructor(
-		private _http: HttpClient,
-		private toastrService: ToastrService,
-		public translateService: TranslateService
-	) {
+	constructor(readonly _http: HttpClient, readonly toastrService: ToastrService, translateService: TranslateService) {
 		super(translateService);
 	}
 

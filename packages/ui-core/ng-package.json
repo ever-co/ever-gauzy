@@ -2,7 +2,7 @@
 	"$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
 	"dest": "../../dist/packages/ui-core",
 	"allowedNonPeerDependencies": ["."],
-	"assets": ["./i18n/assets/i18n/*.*"],
+	"assets": ["./i18n/assets/i18n/*.*", "./static/styles/**/*.scss"],
 	"lib": {
 		"entryFile": "src/index.ts"
 	}

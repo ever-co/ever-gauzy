@@ -9,7 +9,7 @@ import { CrudService } from '../crud/crud.service';
 export class ImageAssetService extends CrudService<IImageAsset> {
 	static readonly API_URL = `${API_PREFIX}/image-assets`;
 
-	constructor(protected readonly http: HttpClient) {
+	constructor(http: HttpClient) {
 		super(http, ImageAssetService.API_URL);
 	}
 
