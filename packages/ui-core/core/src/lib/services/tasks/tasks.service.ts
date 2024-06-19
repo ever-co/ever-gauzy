@@ -17,7 +17,7 @@ export class TasksService extends TranslationBaseComponent {
 	constructor(
 		private readonly _http: HttpClient,
 		private readonly toastrService: ToastrService,
-		public readonly translateService: TranslateService
+		translateService: TranslateService
 	) {
 		super(translateService);
 	}

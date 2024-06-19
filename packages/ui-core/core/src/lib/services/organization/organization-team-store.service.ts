@@ -5,16 +5,16 @@ import { Query, Store as AkitaStore, StoreConfig } from '@datorama/akita';
 @Injectable({ providedIn: 'root' })
 @StoreConfig({ name: 'team', resettable: true })
 export class OrganizationTeamAkitaStore extends AkitaStore<IOrganizationTeamStoreState> {
-    constructor() {
-        super({} as IOrganizationTeamStoreState);
-    }
+	constructor() {
+		super({} as IOrganizationTeamStoreState);
+	}
 }
 
 @Injectable({ providedIn: 'root' })
 export class OrganizationTeamAkitaQuery extends Query<IOrganizationTeamStoreState> {
-    constructor(protected store: OrganizationTeamAkitaStore) {
-        super(store);
-    }
+	constructor(store: OrganizationTeamAkitaStore) {
+		super(store);
+	}
 }
 
 /**
@@ -22,28 +22,23 @@ export class OrganizationTeamAkitaQuery extends Query<IOrganizationTeamStoreStat
  */
 @Injectable({ providedIn: 'root' })
 export class OrganizationTeamStore {
-    constructor(
-        protected organizationTeamAkitaStore: OrganizationTeamAkitaStore,
-        protected OrganizationTeamAkitaQuery: OrganizationTeamAkitaQuery
-    ) { }
+	constructor(
+		protected organizationTeamAkitaStore: OrganizationTeamAkitaStore,
+		protected OrganizationTeamAkitaQuery: OrganizationTeamAkitaQuery
+	) {}
 
-    organizationTeamAction$ = this.OrganizationTeamAkitaQuery.select(
-        ({ team, action }) => {
-            return { team, action };
-        }
-    );
+	organizationTeamAction$ = this.OrganizationTeamAkitaQuery.select(({ team, action }) => {
+		return { team, action };
+	});
 
-    set organizationTeamAction({
-        team,
-        action
-    }: IOrganizationTeamStoreState) {
-        this.organizationTeamAkitaStore.update({
-            team,
-            action
-        });
-    }
+	set organizationTeamAction({ team, action }: IOrganizationTeamStoreState) {
+		this.organizationTeamAkitaStore.update({
+			team,
+			action
+		});
+	}
 
-    destroy() {
-        this.organizationTeamAkitaStore.reset();
-    }
+	destroy() {
+		this.organizationTeamAkitaStore.reset();
+	}
 }

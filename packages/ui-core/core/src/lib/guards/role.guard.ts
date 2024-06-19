@@ -15,7 +15,7 @@ export class RoleGuard implements CanActivate {
 	 * @return {Promise<boolean>} A promise that resolves to true if the user has the expected role, false otherwise.
 	 */
 	async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
-		const expectedRole = route.data.expectedRole;
+		const expectedRole = route.data['expectedRole'];
 		const hasRole = await firstValueFrom(this.authService.hasRole(expectedRole));
 		if (hasRole) {
 			return true;

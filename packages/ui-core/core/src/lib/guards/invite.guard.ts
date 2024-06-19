@@ -19,7 +19,7 @@ export class InviteGuard implements CanActivate {
 	 */
 	async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
 		let hasPermission = false;
-		const expectedPermissions: PermissionsEnum[] = route.data.expectedPermissions;
+		const expectedPermissions: PermissionsEnum[] = route.data['expectedPermissions'];
 
 		// Retrieve user role permissions
 		const userRolePermissions = await firstValueFrom(this.store.userRolePermissions$);

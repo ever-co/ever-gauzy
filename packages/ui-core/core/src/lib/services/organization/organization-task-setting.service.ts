@@ -11,7 +11,7 @@ import { CrudService } from '../crud/crud.service';
 export class OrganizationTaskSettingService extends CrudService<IOrganizationTaskSetting> {
 	private static readonly API_URL = `${API_PREFIX}/organization-task-setting`;
 
-	constructor(protected readonly http: HttpClient) {
+	constructor(http: HttpClient) {
 		super(http, OrganizationTaskSettingService.API_URL);
 	}
 

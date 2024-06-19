@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IDeal, IPagination, IPipeline, IPipelineCreateInput, IPipelineFindInput } from '@gauzy/contracts';
-import { API_PREFIX, Store } from '@gauzy/ui-core/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { Service } from '../crud/service';
 
 @Injectable()
 export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPipelineCreateInput> {
-	public constructor(protected store: Store, protected http: HttpClient) {
+	public constructor(http: HttpClient) {
 		super({ http, basePath: `${API_PREFIX}/pipelines` });
 	}
 
