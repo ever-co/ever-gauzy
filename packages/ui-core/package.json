@@ -26,8 +26,8 @@
 		"clean": "rimraf dist"
 	},
 	"peerDependencies": {
-		"@angular/common": "^15.2.0",
-		"@angular/core": "^15.2.0"
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
 		"@ali-hm/angular-tree-component": "^12.0.5",

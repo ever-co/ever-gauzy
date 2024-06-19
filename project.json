@@ -6,13 +6,13 @@
 			"tags": [],
 			"implicitDependencies": ["gauzy"]
 		},
-		"@gauzy/ui-core": {
+		"ui-core": {
 			"tags": []
 		},
-		"@gauzy/ui-config": {
+		"ui-config": {
 			"tags": []
 		},
-		"@gauzy/job-search-ui-plugin": {
+		"job-search-ui-plugin": {
 			"tags": []
 		},
 		"gauzy": {

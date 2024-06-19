@@ -179,7 +179,7 @@
 				}
 			}
 		},
-		"@gauzy/ui-config": {
+		"ui-config": {
 			"projectType": "library",
 			"root": "packages/ui-config",
 			"sourceRoot": "packages/ui-config",
@@ -252,7 +252,7 @@
 				}
 			}
 		},
-		"@gauzy/job-search-ui-plugin": {
+		"job-search-ui-plugin": {
 			"projectType": "library",
 			"root": "packages/plugins/job-search-ui",
 			"sourceRoot": "packages/plugins/job-search-ui",
