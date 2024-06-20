@@ -306,6 +306,11 @@
     ora "5.4.1"
     rxjs "6.6.7"
 
+"@angular-eslint/bundled-angular-compiler@15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/bundled-angular-compiler/-/bundled-angular-compiler-15.0.0.tgz#814d625b84c3f71ab5cdc83a4f9191bb4e4f7ddf"
+  integrity sha512-IFJFVCc3t+ujD8J6//RzYrtp7N9wUQhZnRUkd7pI7IpUT1XrQx5uNbDca9OLXM5F+HCHOQPIoaCyg3O/XJcc8Q==
+
 "@angular-eslint/bundled-angular-compiler@16.3.1":
   version "16.3.1"
   resolved "https://registry.yarnpkg.com/@angular-eslint/bundled-angular-compiler/-/bundled-angular-compiler-16.3.1.tgz#c4e9828020e26be17abb87197118a7faaa8a97c5"
@@ -330,6 +335,14 @@
   dependencies:
     "@angular-eslint/utils" "16.3.1"
     "@typescript-eslint/utils" "5.62.0"
+
+"@angular-eslint/template-parser@~15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@angular-eslint/template-parser/-/template-parser-15.0.0.tgz#fcae7fa9c7994ac137fe9c8bce9f7e2fe40e30c0"
+  integrity sha512-tidZOhQ9ygXPyUwxXzXbEVJUiHRNF0oFu1Pf+hSlOwgjvRqCqVwXfDxEe6NjFEwRXsp0CtDgyseu7E9+ml+m6A==
+  dependencies:
+    "@angular-eslint/bundled-angular-compiler" "15.0.0"
+    eslint-scope "^7.0.0"
 
 "@angular-eslint/utils@16.3.1":
   version "16.3.1"
@@ -19573,6 +19586,14 @@ eslint-scope@5.1.1, eslint-scope@^5.1.1:
     esrecurse "^4.3.0"
     estraverse "^4.1.1"
 
+eslint-scope@^7.0.0:
+  version "7.2.2"
+  resolved "https://registry.yarnpkg.com/eslint-scope/-/eslint-scope-7.2.2.tgz#deb4f92563390f32006894af62a22dba1c46423f"
+  integrity sha512-dOt21O7lTMhDM+X9mB4GX+DZrZtCUJPL/wlcTqxyrx5IvO0IYtILdtrQGQp+8n5S0gwSVmOf9NQrjMOgfQZlIg==
+  dependencies:
+    esrecurse "^4.3.0"
+    estraverse "^5.2.0"
+
 eslint-visitor-keys@^3.3.0:
   version "3.4.3"
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-3.4.3.tgz#0cd72fe8550e3c2eae156a96a4dddcd1c8ac5800"
@@ -27620,7 +27641,7 @@ next-tick@^1.1.0:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.1.0.tgz#1836ee30ad56d67ef281b22bd199f709449b35eb"
   integrity sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==
 
-ng-packagr@16.2.3:
+ng-packagr@16.2.3, ng-packagr@^16.2.3:
   version "16.2.3"
   resolved "https://registry.yarnpkg.com/ng-packagr/-/ng-packagr-16.2.3.tgz#d516774ccee80147e9caa85395a7bf93d8d044f1"
   integrity sha512-VTJ7Qtge52+1subkhmF5nOqLNbVutA8/igJ0A5vH6Mgpb8Z/3HeZomtD1SHzZF5Dqp+p+QPHE548FWYu1MdMSQ==
