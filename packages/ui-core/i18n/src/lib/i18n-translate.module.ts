@@ -14,7 +14,6 @@ export class I18nTranslateModule {
 	 * @returns ModuleWithProviders configuration for the root module
 	 */
 	static forRoot(config?: TranslateModuleConfig): ModuleWithProviders<TranslateModule> {
-		console.log('I18nTranslateModule Loaded');
 		return TranslateModule.forRoot(
 			config || {
 				loader: {

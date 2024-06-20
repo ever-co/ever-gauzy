@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Observable, from, of, tap, Subject } from 'rxjs';
+import { Observable, from, of, tap, Subject, EMPTY } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
-import { NbAuthStrategyClass } from '@nebular/auth/auth.options';
+import { NbAuthStrategyClass } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
 import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
 import { Store, TimeTrackerService, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
@@ -145,6 +145,8 @@ export class AuthStrategy extends NbAuthStrategy {
 				const user: IUser = res;
 				if (isNotEmpty(user)) {
 					return this.login({ email, password });
+				} else {
+					return EMPTY; // Ensure an observable is returned
 				}
 			}),
 			catchError((err) => {

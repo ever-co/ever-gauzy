@@ -127,8 +127,9 @@ export class UpworkStoreService {
 			return this.syncContracts(contracts);
 		}
 		const entitiesToSync = settings.entitiesToSync.filter((entity) => entity.sync);
+
 		if (!entitiesToSync.length) {
-			return;
+			return EMPTY;
 		}
 
 		const integrationId = this._selectedIntegrationId$.getValue();
@@ -162,8 +163,8 @@ export class UpworkStoreService {
 		});
 	}
 
-	getConfig(findInput): Observable<IUpworkApiConfig> {
-		const { integrationId, organizationId, tenantId } = findInput;
+	getConfig(input): Observable<IUpworkApiConfig> {
+		const { integrationId, organizationId, tenantId } = input;
 		this.setSelectedIntegrationId(integrationId);
 		const config$ = this._config$.getValue();
 		if (config$) {

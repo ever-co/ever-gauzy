@@ -13,8 +13,7 @@ import {
 	IUserLoginInput,
 	IUserCodeInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-core/common';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class AuthService {

@@ -1,6 +1,6 @@
 import { Injectable, Injector } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { catchError, filter, take, switchMap, finalize } from 'rxjs/operators';
 import { HttpStatus } from '@gauzy/contracts';
 import { HubstaffService } from '../services';
@@ -28,14 +28,14 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 		return next.handle(req).pipe(
 			catchError((error: HttpErrorResponse) => {
 				if (error && error.status === HttpStatus.UNAUTHORIZED) {
-					// 401 errors are most likely going to be because we have an expired token that we need to refresh.
+					// HttpStatus.UNAUTHORIZED errors are most likely going to be because we have an expired token that we need to refresh.
 					if (this.refreshTokenInProgress) {
 						// If refreshTokenInProgress is true, we will wait until refreshTokenSubject has a non-null value
 						// which means the new token is ready and we can retry the request again
 						return this.refreshTokenSubject.pipe(
 							filter((result) => result !== null),
 							take(1),
-							switchMap(({ access_token }) => next.handle(this.addAuthenticationToken(req, access_token)))
+							switchMap((access_token) => next.handle(this.addAuthenticationToken(req, access_token!)))
 						);
 					} else {
 						this.refreshTokenInProgress = true;
@@ -53,6 +53,9 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 							finalize(() => (this.refreshTokenInProgress = false))
 						);
 					}
+				} else {
+					// If the error is not 401, we need to rethrow it so it can be handled by other interceptors or error handlers
+					return throwError(error);
 				}
 			})
 		);
@@ -75,9 +78,7 @@ export class HubstaffTokenInterceptor implements HttpInterceptor {
 	 */
 	private addAuthenticationToken(request: HttpRequest<any>, token): HttpRequest<any> {
 		return request.clone({
-			body: {
-				token
-			}
+			body: { token }
 		});
 	}
 }
