@@ -261,7 +261,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:ng-packagr",
 					"options": {
-						"project": "packages/plugins/job-search-ui/src/lib/ng-package.json"
+						"project": "packages/plugins/job-search-ui/ng-package.json"
 					},
 					"configurations": {
 						"production": {

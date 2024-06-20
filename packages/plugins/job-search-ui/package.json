@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/job-search-ui-plugin",
-	"version": "0.0.1",
-	"description": "UI plugin for job search in Gauzy",
+	"version": "0.1.0",
+	"description": "A UI plugin for job search functionality in the Gauzy platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -10,12 +10,20 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"build": "ng build",
-		"test": "ng test",
-		"clean": "rm -rf dist"
+		"lib:build": "ng build job-search-ui-plugin --configuration=development",
+		"lib:build:prod": "ng build job-search-ui-plugin --configuration=production",
+		"lib:watch": "ng build job-search-ui-plugin--watch --configuration=development",
+		"clean": "rimraf dist"
 	},
-	"publishConfig": {
-		"access": "restricted"
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/node": "^17.0.33"
 	},
 	"repository": {
 		"type": "git",
@@ -26,15 +34,18 @@
 	},
 	"homepage": "https://ever.co",
 	"keywords": [
-		"gauzy",
 		"job search",
-		"plugin",
-		"angular",
-		"ui"
+		"UI plugin",
+		"Gauzy",
+		"Angular",
+		"job board",
+		"employment",
+		"recruitment",
+		"job listings"
 	],
 	"engines": {
-		"node": ">=14.0.0",
-		"npm": ">=6.0.0"
+		"node": ">=16.20.1",
+		"yarn": ">=1.22.19"
 	},
 	"sideEffects": false
 }
