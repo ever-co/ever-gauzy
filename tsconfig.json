@@ -13,6 +13,7 @@
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
 			"swiper_angular": ["./node_modules/swiper/angular"],
+			"@gauzy/ui-auth": ["packages/ui-auth/src/index.ts"],
 			"@gauzy/ui-core": ["packages/ui-core/src/lib/index.ts"],
 			"@gauzy/ui-core/*": ["packages/ui-core/src/lib/*"],
 			"@gauzy/ui-config": ["packages/ui-config/src/index.ts"],
