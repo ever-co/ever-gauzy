@@ -30,7 +30,8 @@
 	"scripts": {
 		"lib:build": "ng build ui-config --configuration development",
 		"lib:build:prod": "yarn ts-node scripts/replace-env-files.ts && ng build ui-config --configuration production",
-		"lib:watch": "ng build ui-config --watch --configuration development"
+		"lib:watch": "ng build ui-config --watch --configuration development",
+		"clean": "rimraf dist"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
@@ -40,7 +41,8 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/node": "^17.0.33"
+		"@types/node": "^17.0.33",
+		"rimraf": "^3.0.2"
 	},
 	"repository": {
 		"type": "git",

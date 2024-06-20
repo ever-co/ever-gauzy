@@ -30,6 +30,7 @@ import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import * as moment from 'moment';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
+import { UiAuthModule } from '@gauzy/ui-auth';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
 import {
@@ -88,6 +89,7 @@ const isProd = environment.production;
 			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		NbEvaIconsModule,
+		UiAuthModule,
 		UiConfigModule.forRoot(),
 		UiCoreModule.forRoot(),
 		CommonModule.forRoot(),

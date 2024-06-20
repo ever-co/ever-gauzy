@@ -10,6 +10,7 @@
 			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
 			"@gauzy/plugins/job-search-ui": ["packages/plugins/job-search-ui/src/index.ts"],
+			"@gauzy/ui-auth": ["packages/ui-auth/src/index.ts"],
 			"@gauzy/ui-config": ["packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["packages/ui-core/src/index.ts"],
 			"@gauzy/ui-core/common": ["packages/ui-core/common/src/index.ts"],
@@ -21,7 +22,13 @@
 			"ng2-completer": ["./node_modules/@akveo/ng2-completer"],
 			"ngx-daterangepicker-material/*": ["./node_modules/ngx-daterangepicker-material/*"],
 			"swiper_angular": ["./node_modules/swiper/angular"]
-		}
+		},
+		"preserveConstEnums": true,
+		"allowSyntheticDefaultImports": true,
+		"noUnusedLocals": false,
+		"noImplicitAny": false,
+		"esModuleInterop": false,
+		"useDefineForClassFields": false
 	},
 	"extends": "./tsconfig.base.json"
 }
