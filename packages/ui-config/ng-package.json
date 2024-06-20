@@ -2,9 +2,7 @@
 	"$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
 	"dest": "./dist",
 	"allowedNonPeerDependencies": ["."],
-	"assets": [],
 	"lib": {
-		"entryFile": "./src/index.ts",
-		"styleIncludePaths": []
+		"entryFile": "src/index.ts"
 	}
 }

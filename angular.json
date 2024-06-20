@@ -215,7 +215,7 @@
 				}
 			}
 		},
-		"@gauzy/ui-config": {
+		"ui-config": {
 			"projectType": "library",
 			"root": "packages/ui-config",
 			"sourceRoot": "packages/ui-config",
