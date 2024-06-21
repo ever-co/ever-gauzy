@@ -6,16 +6,8 @@
 					{{ 'FORM.LABELS.EMAILS' | translate }}
 				</label>
 				<nb-form-field>
-					<nb-tag-list
-						class="custom-tag-list"
-						(tagRemove)="onEmailRemove($event)"
-					>
-						<nb-tag
-							*ngFor="let email of emails"
-							[text]="email"
-							[size]="'tiny'"
-							removable
-						></nb-tag>
+					<nb-tag-list class="custom-tag-list" (tagRemove)="onEmailRemove($event)">
+						<nb-tag *ngFor="let email of emails" [text]="email" [size]="'tiny'" removable></nb-tag>
 						<input
 							id="emails"
 							type="text"
@@ -24,11 +16,7 @@
 							fullWidth
 							(tagAdd)="onEmailAdd($event)"
 							(focusout)="onFocusOut($event)"
-							[status]="
-								FormHelpers.isInvalidControl(form, 'emails')
-									? 'danger'
-									: 'basic'
-							"
+							[status]="FormHelpers.isInvalidControl(form, 'emails') ? 'danger' : 'basic'"
 						/>
 					</nb-tag-list>
 					<nb-icon
@@ -54,9 +42,7 @@
 						[nbDatepicker]="appliedDatePicker"
 						nbInput
 						fullWidth
-						[placeholder]="
-							'FORM.PLACEHOLDERS.START_DATE' | translate
-						"
+						[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
 						formControlName="appliedDate"
 					/>
 					<nb-datepicker #appliedDatePicker></nb-datepicker>
@@ -68,18 +54,9 @@
 		<div class="row">
 			<div class="col-sm-6">
 				<div class="form-group">
-					<label
-						for="projectSelection"
-						class="label label-with-select"
-					>
+					<label for="projectSelection" class="label label-with-select">
 						{{ 'FORM.LABELS.PROJECTS_OPTIONAL' | translate }}
-						<button
-							nbButton
-							ghost
-							size="tiny"
-							type="button"
-							(click)="selectAllProjects()"
-						>
+						<button nbButton ghost size="tiny" type="button" (click)="selectAllProjects()">
 							{{ 'BUTTONS.SELECT_ALL' | translate }}
 						</button>
 					</label>
@@ -93,10 +70,7 @@
 						formControlName="projects"
 						[placeholder]="'FORM.PLACEHOLDERS.PROJECTS' | translate"
 					>
-						<ng-option
-							*ngFor="let project of organizationProjects"
-							[value]="project.id"
-						>
+						<ng-option *ngFor="let project of organizationProjects" [value]="project.id">
 							{{ project.name }}
 						</ng-option>
 					</ng-select>
@@ -104,18 +78,9 @@
 			</div>
 			<div class="col-sm-6">
 				<div class="form-group">
-					<label
-						for="contactSelection"
-						class="label label-with-select"
-					>
+					<label for="contactSelection" class="label label-with-select">
 						{{ 'FORM.LABELS.CONTACTS_OPTIONAL' | translate }}
-						<button
-							nbButton
-							ghost
-							size="tiny"
-							type="button"
-							(click)="selectAllOrganizationContacts()"
-						>
+						<button nbButton ghost size="tiny" type="button" (click)="selectAllOrganizationContacts()">
 							{{ 'BUTTONS.SELECT_ALL' | translate }}
 						</button>
 					</label>
@@ -128,10 +93,7 @@
 						formControlName="organizationContacts"
 						[placeholder]="'FORM.PLACEHOLDERS.CONTACTS' | translate"
 					>
-						<ng-option
-							*ngFor="let contact of organizationContacts"
-							[value]="contact.id"
-						>
+						<ng-option *ngFor="let contact of organizationContacts" [value]="contact.id">
 							{{ contact.name }}
 						</ng-option>
 					</ng-select>
@@ -140,10 +102,7 @@
 		</div>
 	</ng-container>
 	<ng-container
-		*ngIf="
-			invitationType === invitationTypeEnum.EMPLOYEE ||
-			invitationType === invitationTypeEnum.CANDIDATE
-		"
+		*ngIf="invitationType === invitationTypeEnum.EMPLOYEE || invitationType === invitationTypeEnum.CANDIDATE"
 	>
 		<div class="row">
 			<ng-container *ngIf="invitationType === invitationTypeEnum.EMPLOYEE">
@@ -151,13 +110,7 @@
 					<div class="form-group">
 						<label for="teamSelection" class="label label-with-select">
 							{{ 'FORM.LABELS.TEAMS_OPTIONAL' | translate }}
-							<button
-								nbButton
-								ghost
-								size="tiny"
-								type="button"
-								(click)="selectAllTeams()"
-							>
+							<button nbButton ghost size="tiny" type="button" (click)="selectAllTeams()">
 								{{ 'BUTTONS.SELECT_ALL' | translate }}
 							</button>
 						</label>
@@ -171,10 +124,7 @@
 							formControlName="teams"
 							[placeholder]="'FORM.PLACEHOLDERS.TEAMS' | translate"
 						>
-							<ng-option
-								*ngFor="let team of organizationTeams"
-								[value]="team.id"
-							>
+							<ng-option *ngFor="let team of organizationTeams" [value]="team.id">
 								{{ team.name }}
 							</ng-option>
 						</ng-select>
@@ -183,18 +133,9 @@
 			</ng-container>
 			<div [ngClass]="invitationType === invitationTypeEnum.EMPLOYEE ? 'col-6' : 'col-12'">
 				<div class="form-group">
-					<label
-						for="departmentSelection"
-						class="label label-with-select"
-					>
+					<label for="departmentSelection" class="label label-with-select">
 						{{ 'FORM.LABELS.DEPARTMENTS_OPTIONAL' | translate }}
-						<button
-							nbButton
-							ghost
-							size="tiny"
-							type="button"
-							(click)="selectAllDepartments()"
-						>
+						<button nbButton ghost size="tiny" type="button" (click)="selectAllDepartments()">
 							{{ 'BUTTONS.SELECT_ALL' | translate }}
 						</button>
 					</label>
@@ -206,14 +147,9 @@
 						bindLabel="name"
 						appendTo="body"
 						formControlName="departments"
-						[placeholder]="
-							'FORM.PLACEHOLDERS.DEPARTMENTS' | translate
-						"
+						[placeholder]="'FORM.PLACEHOLDERS.DEPARTMENTS' | translate"
 					>
-						<ng-option
-							*ngFor="let department of organizationDepartments"
-							[value]="department.id"
-						>
+						<ng-option *ngFor="let department of organizationDepartments" [value]="department.id">
 							{{ department.name }}
 						</ng-option>
 					</ng-select>
@@ -242,9 +178,7 @@
 					<label for="startedWorkOn" class="label">
 						{{ 'FORM.LABELS.START_DATE' | translate }}
 						<nb-icon
-							[nbTooltip]="
-								'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate
-							"
+							[nbTooltip]="'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate"
 							icon="question-mark-circle-outline"
 						></nb-icon>
 					</label>
@@ -254,9 +188,7 @@
 							[nbDatepicker]="startedWorkDatepicker"
 							nbInput
 							fullWidth
-							[placeholder]="
-								'FORM.PLACEHOLDERS.START_DATE' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.START_DATE' | translate"
 							formControlName="startedWorkOn"
 						/>
 						<nb-datepicker #startedWorkDatepicker></nb-datepicker>
@@ -275,16 +207,10 @@
 					<nb-select
 						id="invitationExpirationPeriod"
 						fullWidth
-						[placeholder]="
-							'FORM.PLACEHOLDERS.INVITATION_EXPIRATION'
-								| translate
-						"
+						[placeholder]="'FORM.PLACEHOLDERS.INVITATION_EXPIRATION' | translate"
 						formControlName="invitationExpirationPeriod"
 					>
-						<nb-option
-							*ngFor="let option of invitationExpiryOptions"
-							[value]="option?.value"
-						>
+						<nb-option *ngFor="let option of invitationExpiryOptions" [value]="option?.value">
 							{{ option?.label }}
 						</nb-option>
 					</nb-select>

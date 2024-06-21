@@ -21,7 +21,7 @@ import { CandidateTechnologiesService } from '@gauzy/ui-core/core';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { CandidateInterviewMutationComponent } from './candidate-interview-mutation.component';
-import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
+import { CandidateSelectModule } from '../selectors/candidate-select/candidate-select.module';
 import { CandidateCalendarInfoModule } from '../candidate-calendar-info/candidate-calendar-info.module';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';

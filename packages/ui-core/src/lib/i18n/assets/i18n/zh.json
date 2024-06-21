@@ -307,7 +307,7 @@
 			"NAME": "姓名",
 			"PHONE_NUMBER": "电话号码",
 			"WEBSITE": "网站",
-			"FIRST_NAME": "名字（可选）",
+			"FIRST_NAME": "名字",
 			"LAST_NAME": "姓（可选）",
 			"FROM": "从",
 			"TO": "进行翻译，将以下文本翻译为中文：To",

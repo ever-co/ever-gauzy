@@ -1,8 +1,6 @@
 <nb-card>
 	<nb-card-header class="d-flex flex-column pb-0">
-		<span class="cancel"
-			><i class="fas fa-times" (click)="closeDialog()"></i
-		></span>
+		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
 		<div class="d-flex flex-row p-0">
 			<img
 				*ngIf="!isCalendar"
@@ -21,23 +19,15 @@
 	<nb-card-body class="stepper">
 		<nb-stepper #stepper disableStepNavigation>
 			<nb-step [label]="step1">
-				<ng-template #step1>{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1'
-						| translate
-				}}</ng-template>
+				<ng-template #step1>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_1' | translate }}</ng-template>
 				<div class="form-group" *ngIf="isCalendar">
-					<label for="note" class="label">{{
-						'FORM.LABELS.CANDIDATE' | translate
-					}}</label>
+					<label for="note" class="label">{{ 'FORM.LABELS.CANDIDATE' | translate }}</label>
 					<ga-candidate-select
 						[allCandidates]="candidates"
-						[placeholder]="
-							'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate
-						"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATE' | translate"
 						(selectedChange)="onCandidateSelected($event)"
 						[selectedCandidateId]="selectedCandidateId"
-					>
-					</ga-candidate-select>
+					></ga-candidate-select>
 				</div>
 
 				<ga-candidate-interview-form
@@ -54,26 +44,18 @@
 						outline
 						class="green"
 						size="small"
-						[disabled]="
-							candidateInterviewForm.form.invalid || isTitleExist
-						"
+						[disabled]="candidateInterviewForm.form.invalid || isTitleExist"
 						nbButton
 						nbStepperNext
 						(click)="next()"
 					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
-								| translate
-						}}
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT' | translate }}
 					</button>
 				</div>
 			</nb-step>
 
 			<nb-step [label]="step2">
-				<ng-template #step2>{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2'
-						| translate
-				}}</ng-template>
+				<ng-template #step2>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_2' | translate }}</ng-template>
 
 				<ga-candidate-criterions-form
 					#candidateCriterionsForm
@@ -92,44 +74,19 @@
 						nbButton
 						nbStepperPrevious
 					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
-								| translate
-						}}
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS' | translate }}
 					</button>
-					<button
-						status="warning"
-						size="small"
-						class="mr-3 ml-2"
-						(click)="route()"
-						nbButton
-					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS'
-								| translate
-						}}
+					<button status="warning" size="small" class="mr-3 ml-2" (click)="route()" nbButton>
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS' | translate }}
 					</button>
-					<button
-						class="green"
-						status="basic"
-						size="small"
-						outline
-						nbButton
-						nbStepperNext
-					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT'
-								| translate
-						}}
+					<button class="green" status="basic" size="small" outline nbButton nbStepperNext>
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT' | translate }}
 					</button>
 				</div>
 			</nb-step>
 
 			<nb-step [label]="step3">
-				<ng-template #step3>{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_3'
-						| translate
-				}}</ng-template>
+				<ng-template #step3>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.STEP_3' | translate }}</ng-template>
 
 				<ga-candidate-notification-form
 					#candidateNotificationForm
@@ -140,30 +97,11 @@
 				</ga-candidate-notification-form>
 
 				<div class="text-left">
-					<button
-						class="btn gray"
-						status="basic"
-            outline=""
-						(click)="previous()"
-						nbButton
-						nbStepperPrevious
-					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS'
-								| translate
-						}}
+					<button class="btn gray" status="basic" outline="" (click)="previous()" nbButton nbStepperPrevious>
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS' | translate }}
 					</button>
-					<button
-						class="btn mr-3 ml-3"
-						status="success"
-						nbButton
-						nbStepperSave
-						(click)="save()"
-					>
-						{{
-							'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SAVE'
-								| translate
-						}}
+					<button class="btn mr-3 ml-3" status="success" nbButton nbStepperSave (click)="save()">
+						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SAVE' | translate }}
 					</button>
 				</div>
 			</nb-step>

@@ -54,11 +54,11 @@ export class CandidatesService {
 	 * @param body
 	 * @returns
 	 */
-	setCandidateAsArchived(id: ICandidate['id'], body: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
+	setCandidateAsArchived(id: ICandidate['id'], input: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				isArchived: true,
-				...body
+				...input
 			})
 		);
 	}

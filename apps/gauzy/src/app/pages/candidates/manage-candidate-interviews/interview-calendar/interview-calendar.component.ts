@@ -1,27 +1,26 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, DateSelectArg, EventHoveringArg, EventInput } from '@fullcalendar/core';
 import { disableCursor } from '@fullcalendar/core/internal';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { NbDialogService } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
-import { ICandidate, IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
+import { firstValueFrom, tap } from 'rxjs';
+import { IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	CandidateInterviewService,
 	CandidateInterviewersService,
 	CandidateStore,
-	CandidatesService,
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import * as _ from 'underscore';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
@@ -41,21 +40,19 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	candidateList: string[] = [];
 	employeeList: string[] = [];
 	isEmployee = false;
-	candidates: ICandidate[] = [];
 	employees: IEmployee[] = [];
 	calendarEvents: EventInput[] = [];
 	interviewList: ICandidateInterview[];
 	organization: IOrganization;
 
 	constructor(
-		readonly translateService: TranslateService,
-		private dialogService: NbDialogService,
-		private candidateInterviewService: CandidateInterviewService,
-		private candidateInterviewersService: CandidateInterviewersService,
-		private toastrService: ToastrService,
-		private candidatesService: CandidatesService,
-		private employeesService: EmployeesService,
-		private candidateStore: CandidateStore,
+		public readonly translateService: TranslateService,
+		private readonly dialogService: NbDialogService,
+		private readonly candidateInterviewService: CandidateInterviewService,
+		private readonly candidateInterviewersService: CandidateInterviewersService,
+		private readonly toastrService: ToastrService,
+		private readonly employeesService: EmployeesService,
+		private readonly candidateStore: CandidateStore,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -64,26 +61,15 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	ngOnInit() {
 		this.store.selectedOrganization$
 			.pipe(
-				filter((organization) => !!organization),
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
 				untilDestroyed(this)
 			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
-					const { tenantId } = this.store.user;
-					const { id: organizationId } = organization;
-					this.organization = organization;
-					this.candidatesService
-						.getAll(['user'], { organizationId, tenantId })
-						.pipe(untilDestroyed(this))
-						.subscribe((candidates) => {
-							this.candidates = candidates.items;
-						});
-					this.employeesService
-						.getAll(['user'], { organizationId, tenantId })
-						.pipe(untilDestroyed(this))
-						.subscribe((employees) => {
-							this.employees = employees.items;
-						});
+					this.getEmployees();
+
 					this.candidateStore.interviewList$.pipe(untilDestroyed(this)).subscribe(() => {
 						this.loadInterviews();
 					});
@@ -91,6 +77,30 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 			});
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
+	getEmployees() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+		this.employeesService
+			.getAll(['user'], { organizationId, tenantId })
+			.pipe(
+				tap(({ items }) => {
+					this.employees = items;
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 *
+	 */
 	async loadInterviews() {
 		const { id: organizationId, tenantId } = this.organization;
 		const res = await this.candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId });
@@ -144,16 +154,19 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 			this.mappedCalendarEvents();
 		}
 	}
+
 	async onCandidateSelected(ids: string[]) {
 		this.isCandidate = !ids.length ? false : true;
 		this.candidateList = ids;
 		this.mappedCalendarEvents();
 	}
+
 	async onEmployeeSelected(ids: string[]) {
 		this.isEmployee = !ids.length ? false : true;
 		this.employeeList = ids;
 		this.mappedCalendarEvents();
 	}
+
 	async mappedCalendarEvents() {
 		let result = [];
 		for (const event of this.calendarEvents as EventInput[]) {
@@ -191,11 +204,21 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 		}
 		this.calendarOptions.events = result;
 	}
+
+	/**
+	 *
+	 * @returns
+	 */
 	async getInterviewers() {
 		for (const event of this.calendarOptions.events as EventInput[]) {
 			return await this.candidateInterviewersService.findByInterviewId(event.id as string);
 		}
 	}
+
+	/**
+	 *
+	 * @param selectedRange
+	 */
 	async add(selectedRange?: IDateRange) {
 		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
 			context: {
@@ -213,12 +236,24 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 			this.loadInterviews();
 		}
 	}
-	handleDateClick(event) {
+
+	/**
+	 *
+	 * @param event
+	 */
+	handleDateClick(event: DateClickArg) {
 		if (event.view.type === 'dayGridMonth') {
-			this.calendarComponent.getApi().changeView('timeGridWeek', event.date);
+			if (this.calendarComponent) {
+				this.calendarComponent.getApi().changeView('timeGridWeek', event.date);
+			}
 		}
 	}
-	handleEventSelect(event) {
+
+	/**
+	 *
+	 * @param event
+	 */
+	handleEventSelect(event: DateSelectArg) {
 		const now = new Date().getTime();
 		if (now < event.start.getTime()) {
 			this.add({ start: event.start, end: event.end });
@@ -226,14 +261,30 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 			disableCursor();
 		}
 	}
-	handleEventMouseEnter({ el }) {
+
+	/**
+	 *
+	 * @param param0
+	 */
+	handleEventMouseEnter({ el }: EventHoveringArg) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
 			el.style.position = 'unset';
 		}
 	}
-	handleEventMouseLeave({ el }) {
+
+	/**
+	 *
+	 * @param param0
+	 */
+	handleEventMouseLeave({ el }: EventHoveringArg) {
 		el.removeAttribute('style');
 	}
+
+	/**
+	 *
+	 * @param el
+	 * @returns
+	 */
 	hasOverflow(el: HTMLElement) {
 		if (!el) {
 			return;
@@ -252,5 +303,6 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 
 		return isOverflowing;
 	}
+
 	ngOnDestroy() {}
 }

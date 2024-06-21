@@ -41,10 +41,10 @@
 					>
 						<nb-icon icon="eye-outline"></nb-icon>
 					</button>
-					<ng-template 
+					<ng-template
 						[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
 					>
-						<ng-template 
+						<ng-template
 							ngxTimeTrackingAuthorized
 							[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
 						>
@@ -64,7 +64,7 @@
 					<ng-template
 						[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
 					>
-						<ng-template 
+						<ng-template
 							ngxTimeTrackingAuthorized
 							[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
 						>
@@ -93,10 +93,10 @@
 	</nb-list>
 	<div class="text-center">
 		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MANUAL_TIME">
-			<ng-template 
+			<ng-template
 				ngxTimeTrackingAuthorized
 				[permission]="PermissionsEnum.ALLOW_MANUAL_TIME"
-			>	
+			>
 				<button
 					nbButton
 					class="mx-auto mt-3"
