@@ -33,29 +33,25 @@
 					}}
 				</div>
 				<div class="col">
-					<ga-timer-picker
-						[(ngModel)]="createForm.startTime"
-					></ga-timer-picker>
+					<ga-timer-picker [(ngModel)]="createForm.startTime"></ga-timer-picker>
 				</div>
 				<div class="col">
-					<ga-timer-picker
-						[(ngModel)]="createForm.endTime"
-					></ga-timer-picker>
+					<ga-timer-picker [(ngModel)]="createForm.endTime"></ga-timer-picker>
 				</div>
 				<div class="col">
-					<button nbButton status="primary" (click)="setSchedule()"
-					[disabled]="!createForm.startTime || !createForm.endTime ? true : false" >
+					<button
+						nbButton
+						status="primary"
+						(click)="setSchedule()"
+						[disabled]="!createForm.startTime || !createForm.endTime ? true : false"
+					>
 						{{ 'BUTTONS.SET' | translate }}
 					</button>
 				</div>
 			</div>
 		</div>
 		<div class="custom-calendar">
-			<full-calendar
-				*ngIf="!loading"
-				#calendar
-				[options]="calendarOptions"
-			></full-calendar>
+			<full-calendar *ngIf="!loading" #calendar [options]="calendarOptions"></full-calendar>
 		</div>
 	</nb-card-body>
 </nb-card>

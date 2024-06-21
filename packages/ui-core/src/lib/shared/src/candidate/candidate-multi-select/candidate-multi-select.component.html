@@ -1,11 +1,11 @@
 <nb-select
-	[selected]="selectedCandidateIds"
 	multiple
-	(selectedChange)="onMembersSelected($event)"
+	[selected]="selectedCandidateIds"
+	(selectedChange)="onCandidateSelected($event)"
 	fullWidth
-	placeholder="{{ 'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATES' | translate }}"
+	[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_CANDIDATES' | translate"
 >
-	<nb-option *ngFor="let candidate of allCandidates" [value]="candidate.id">
+	<nb-option *ngFor="let candidate of candidates$ | async" [value]="candidate.id">
 		<ngx-avatar
 			size="sm"
 			[src]="candidate.user?.imageUrl"
