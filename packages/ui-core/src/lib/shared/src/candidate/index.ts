@@ -15,9 +15,9 @@ export * from './candidate-interview-mutation/candidate-interview-mutation.compo
 export * from './candidate-interview-mutation/candidate-interview-mutation.module';
 export * from './candidate-interview-mutation/candidate-notification-form/candidate-email/candidate-email.component';
 export * from './candidate-interview-mutation/candidate-notification-form/candidate-notification-form.component';
-export * from './candidate-multi-select/candidate-multi-select.component';
-export * from './candidate-multi-select/candidate-multi-select.module';
 export * from './candidate-mutation/candidate-mutation.component';
 export * from './candidate-mutation/candidate-mutation.module';
-export * from './candidate-select/candidate-select.component';
-export * from './candidate-select/candidate-select.module';
+export * from './selectors/candidate-multi-select/candidate-multi-select.component';
+export * from './selectors/candidate-multi-select/candidate-multi-select.module';
+export * from './selectors/candidate-select/candidate-select.component';
+export * from './selectors/candidate-select/candidate-select.module';

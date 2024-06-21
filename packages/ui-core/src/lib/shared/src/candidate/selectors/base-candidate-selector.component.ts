@@ -1,27 +1,22 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { EMPTY, Observable, of } from 'rxjs';
-import { catchError, filter, map, switchMap } from 'rxjs/operators';
+import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { EMPTY, Observable, catchError, filter, map, of, switchMap } from 'rxjs';
 import { ICandidate, IOrganization, IPagination } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
-	selector: 'ga-candidate-multi-select',
-	templateUrl: './candidate-multi-select.component.html',
-	styleUrls: ['./candidate-multi-select.component.scss']
+	template: '',
+	styleUrls: ['./base-candidate-selector.component.scss']
 })
-export class CandidateMultiSelectComponent implements OnInit {
+export class BaseCandidateSelectorComponent implements OnInit {
 	public candidates$: Observable<ICandidate[]>; // Observable for an array of Organization candidates
 
-	@Input() selectedCandidateIds: string[] = [];
-	@Output() selectedChange = new EventEmitter();
-
 	constructor(
-		private readonly _store: Store,
-		private readonly _candidatesService: CandidatesService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		protected readonly _store: Store,
+		protected readonly _candidatesService: CandidatesService,
+		protected readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
 	ngOnInit(): void {
@@ -52,11 +47,5 @@ export class CandidateMultiSelectComponent implements OnInit {
 		);
 	}
 
-	/**
-	 *
-	 * @param candidate
-	 */
-	onCandidateSelected(candidate: ICandidate['id']): void {
-		this.selectedChange.emit(candidate);
-	}
+	ngOnDestroy(): void {}
 }

@@ -17,7 +17,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
-import { CandidateSelectModule } from '../candidate-select/candidate-select.module';
+import { CandidateSelectModule } from '../selectors/candidate-select/candidate-select.module';
 import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
 
 @NgModule({
