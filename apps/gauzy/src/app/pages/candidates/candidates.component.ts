@@ -11,7 +11,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
-import { finalize, firstValueFrom, Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
