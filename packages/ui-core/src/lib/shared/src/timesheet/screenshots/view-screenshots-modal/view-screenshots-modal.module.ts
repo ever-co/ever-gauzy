@@ -9,6 +9,7 @@ import {
 	NbProgressBarModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { MomentModule } from 'ngx-moment';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
@@ -31,6 +32,7 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		NbTooltipModule,
 		MomentModule,
 		SharedModule,
+		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		DialogsModule,
 		GalleryModule,
