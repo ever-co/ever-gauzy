@@ -2,7 +2,7 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
 import {
-	GauzyCorePlugin,
+	i4netCorePlugin,
 	IOnPluginBootstrap,
 	IOnPluginDestroy,
 	IOnPluginSeedable
@@ -15,7 +15,7 @@ import {
 } from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
-@GauzyCorePlugin({
+@i4netCorePlugin({
 	imports: [HelpCenterModule, HelpCenterArticleModule, HelpCenterAuthorModule, SeederModule],
 	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
 	providers: [HelpCenterSeederService]

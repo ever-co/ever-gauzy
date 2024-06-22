@@ -65,7 +65,7 @@ export class ServerConfig implements IServerConfig {
 	}
 
 	public get apiPort(): number {
-		return Number(this.setting?.port) || 3000;
+		return Number(this.setting?.port) || 3800;
 	}
 
 	public get uiPort(): number {

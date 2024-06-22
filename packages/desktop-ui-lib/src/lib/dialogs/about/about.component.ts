@@ -27,7 +27,7 @@ export class AboutComponent implements OnInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
@@ -74,7 +74,7 @@ export class AboutComponent implements OnInit {
 				),
 			version: this._electronService.remote.app.getVersion(),
 			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(
-				this._environment.GAUZY_DESKTOP_LOGO_512X512
+				this._environment.I4NET_DESKTOP_LOGO_512X512
 			),
 			companyName: this._environment.COMPANY_NAME
 		};

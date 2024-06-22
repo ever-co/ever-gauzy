@@ -14,7 +14,7 @@ import {
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +28,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 	filters: IGetPaymentInput;
 	clients: IClientBudgetLimitReport[] = [];
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -89,7 +89,7 @@ export class ClientBudgetsReportComponent extends BaseSelectorFilterComponent im
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
+	 * Updates i4net timesheet default filters, saves the filters if configured to do so,
 	 * and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).

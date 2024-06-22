@@ -1,6 +1,6 @@
-# Integration Gauzy AI
+# Integration i4net AI
 
-This library provides integration with Gauzy AI project.
+This library provides integration with i4net AI project.
 
 ## Running unit tests
 

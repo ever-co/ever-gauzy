@@ -2,51 +2,29 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica"
-					>You've been invited to Gauzy!</mj-text
-				>
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica">You've been invited to i4net!</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Dear {{name}},</p>
 					<p style="line-height: 1.5rem">
-						{{organizationName}} приглашает вас присоединиться к
-						{{appName}} — платформа управления бизнесом с открытым
-						исходным кодом (ERP/CRM/HRM) с упором на справедливость
-						и прозрачность!
+						{{organizationName}} приглашает вас присоединиться к {{appName}} — платформа управления бизнесом
+						с открытым исходным кодом (ERP/CRM/HRM) с упором на справедливость и прозрачность!
 					</p>
 				</mj-text>
-				<mj-button
-					href="{{generatedUrl}}"
-					font-family="Helvetica"
-					background-color="#3366ff"
-					color="white"
-				>
+				<mj-button href="{{generatedUrl}}" font-family="Helvetica" background-color="#3366ff" color="white">
 					Завершите регистрацию сейчас
 				</mj-button>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Best regards,</p>
-					<p>Gauzy Team</p>
+					<p>i4net Team</p>
 				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="{{appLink}}" style="color: #598bff"
-						>{{appName}}</a
-					>
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="{{companyLink}}" style="color: #598bff"
-						>{{companyName}}</a
-					>
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>

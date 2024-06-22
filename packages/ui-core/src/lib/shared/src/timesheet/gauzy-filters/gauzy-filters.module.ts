@@ -5,12 +5,12 @@ import { NbButtonModule, NbIconModule, NbPopoverModule, NbSelectModule } from '@
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { PipesModule } from '../../pipes/pipes.module';
-import { GauzyFiltersComponent } from './gauzy-filters.component';
+import { i4netFiltersComponent } from './gauzy-filters.component';
 import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 
 @NgModule({
-	declarations: [GauzyFiltersComponent],
-	exports: [GauzyFiltersComponent],
+	declarations: [i4netFiltersComponent],
+	exports: [i4netFiltersComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -24,4 +24,4 @@ import { TimezoneFilterModule } from './timezone-filter/timezone-filter.module';
 		TimezoneFilterModule
 	]
 })
-export class GauzyFiltersModule {}
+export class i4netFiltersModule { }

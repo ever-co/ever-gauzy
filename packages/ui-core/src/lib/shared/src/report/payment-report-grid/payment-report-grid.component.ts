@@ -85,7 +85,7 @@ export class PaymentReportGridComponent extends BaseSelectorFilterComponent impl
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * i4net timesheet default filters
 	 *
 	 * @param filters
 	 */

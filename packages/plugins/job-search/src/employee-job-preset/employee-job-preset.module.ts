@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
-import { GauzyAIModule } from '@gauzy/integration-ai';
+import { i4netAIModule } from '@gauzy/integration-ai';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeModule } from '@gauzy/core';
 import { CommandHandlers } from './commands/handlers';
@@ -41,7 +41,7 @@ export const entities = [
 		MikroOrmModule.forFeature([...entities]),
 		EmployeeModule,
 		CqrsModule,
-		GauzyAIModule.forRoot()
+		i4netAIModule.forRoot()
 	],
 	controllers: [
 		JobSearchOccupationController,

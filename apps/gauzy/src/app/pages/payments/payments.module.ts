@@ -6,7 +6,7 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableFiltersModule
@@ -36,9 +36,9 @@ import {
 		NgxPermissionsModule.forChild(),
 		PaginationV2Module,
 		TableFiltersModule,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	],
 	providers: [PaymentService, OrganizationContactService, InvoicesService, InvoiceEstimateHistoryService],
 	declarations: [PaymentsComponent]
 })
-export class PaymentsModule {}
+export class PaymentsModule { }

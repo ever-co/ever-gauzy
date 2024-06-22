@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"outDir": "../../dist/apps/gauzy-server",
+		"outDir": "../../dist/apps/i4net-server",
 		"sourceMap": true,
 		"declaration": false,
 		"moduleResolution": "node",

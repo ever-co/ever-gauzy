@@ -23,7 +23,7 @@ import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
 	templateUrl: './gauzy-logo.component.html',
 	styleUrls: ['./gauzy-logo.component.scss']
 })
-export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
+export class i4netLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 	theme: string;
 	isCollapse: boolean = true;
 	organization: IOrganization;
@@ -236,5 +236,5 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 		return this.environment.PLATFORM_LOGO.endsWith('.svg');
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

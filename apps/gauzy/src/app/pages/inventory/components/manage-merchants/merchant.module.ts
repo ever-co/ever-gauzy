@@ -20,7 +20,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	CurrencyModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
 	PaginationV2Module,
@@ -61,7 +61,7 @@ const NB_MODULES = [
 		I18nTranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		InventoryTableComponentsModule,
 		LeafletMapModule,
 		LocationFormModule,
@@ -70,4 +70,4 @@ const NB_MODULES = [
 	],
 	providers: []
 })
-export class MerchantModule {}
+export class MerchantModule { }

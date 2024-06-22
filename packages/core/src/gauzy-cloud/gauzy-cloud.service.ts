@@ -14,8 +14,8 @@ import {
 } from '@gauzy/contracts';
 
 @Injectable()
-export class GauzyCloudService {
-	constructor(private readonly _http: HttpService) {}
+export class i4netCloudService {
+	constructor(private readonly _http: HttpService) { }
 
 	/**
 	 * Extract user from cloud server

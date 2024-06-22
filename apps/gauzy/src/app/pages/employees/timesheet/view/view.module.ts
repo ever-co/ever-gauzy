@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { DialogsModule, EditTimeLogModalModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
+import { DialogsModule, EditTimeLogModalModule, i4netButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ViewRoutingModule } from './view-routing.module';
 import { GithubViewComponent } from './view/view.component';
 
@@ -22,7 +22,7 @@ import { GithubViewComponent } from './view/view.component';
 		DialogsModule,
 		EditTimeLogModalModule,
 		NbCheckboxModule,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	]
 })
-export class ViewModule {}
+export class ViewModule { }

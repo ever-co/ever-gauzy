@@ -72,6 +72,9 @@ export class ImageUploaderBaseComponent {
 			headers: headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+		this.uploader.onBeforeUploadItem = (item => {
+			item.withCredentials = false;
+		});
 	}
 
 	/**

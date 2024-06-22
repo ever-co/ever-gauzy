@@ -107,7 +107,7 @@ export class WorkspacesComponent extends TranslationBaseComponent implements Aft
 	private _createContextMenus() {
 		this.contextMenus = [
 			{
-				title: this.getTranslation('WORKSPACES.MENUS.SING_ANOTHER_WORKSPACE')
+				title: this.getTranslation('WORKSPACES.MENUS.SIGN_ANOTHER_WORKSPACE')
 			},
 			{
 				title: this.getTranslation('WORKSPACES.MENUS.CREATE_NEW_WORKSPACE')

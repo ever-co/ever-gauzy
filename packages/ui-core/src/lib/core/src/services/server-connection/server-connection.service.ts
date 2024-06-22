@@ -13,7 +13,7 @@ export class ServerConnectionService {
 			console.log(`Checking server connection on URL in ServerConnectionService in @core/services: ${url}`);
 
 			try {
-				if (endPoint !== 'http://localhost:3000') {
+				if (endPoint !== 'http://localhost:3800') {
 					const requestObservable = this.httpClient.get(url);
 
 					if (!requestObservable) {

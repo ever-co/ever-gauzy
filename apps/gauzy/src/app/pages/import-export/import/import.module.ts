@@ -17,7 +17,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ExportAllService } from '@gauzy/ui-core/core';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { FileUploaderModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
+import { FileUploaderModule, i4netButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ImportComponent } from './import.component';
 import { ImportRoutingModule } from './import-routing.module';
 
@@ -41,10 +41,10 @@ import { ImportRoutingModule } from './import-routing.module';
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		FileUploaderModule,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],
 	providers: [ExportAllService]
 })
-export class ImportModule {}
+export class ImportModule { }

@@ -1,4 +1,4 @@
-gauzy desktop with nstudio electron
+i4net Desktop with nstudio electron
 
 how to:
 
@@ -49,9 +49,9 @@ build execute app
 build:desktop:windows:quick
 ```
 
-uninstall gauzy desktop macOS
+uninstall i4net Desktop macOS
 
 ```bash
 - delete app data
-$ rm -rf ~/Library/Application Support/gauzy-desktop
+$ rm -rf ~/Library/Application Support/i4net-desktop
 ```

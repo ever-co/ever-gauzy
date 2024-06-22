@@ -13,10 +13,9 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 	templateUrl: './gauzy-editable-grid.component.html',
 	styleUrls: ['./gauzy-editable-grid.component.scss']
 })
-export class GauzyEditableGridComponent<T extends { id?: string }>
+export class i4netEditableGridComponent<T extends { id?: string }>
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy
-{
+	implements OnInit, OnDestroy {
 	@Input() items: T[];
 	@Input() itemTmpl?: TemplateRef<{ $implicit: any }>;
 
@@ -32,7 +31,7 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 		super(translateService);
 	}
 
-	ngOnInit(): void {}
+	ngOnInit(): void { }
 
 	toggleItemSelection(item: T): void {
 		if (!this.selectedItem || this.selectedItem.id !== item.id) {
@@ -71,5 +70,5 @@ export class GauzyEditableGridComponent<T extends { id?: string }>
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

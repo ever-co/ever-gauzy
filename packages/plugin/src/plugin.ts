@@ -10,7 +10,7 @@ import { PLUGIN_METADATA } from './plugin-metadata';
  * @param pluginMetadata Metadata to be applied to the target class.
  * @returns Class decorator function.
  */
-export function GauzyCorePlugin(
+export function i4netCorePlugin(
 	pluginMetadata: PluginMetadata
 ): ClassDecorator {
 	return (targetClass) => {

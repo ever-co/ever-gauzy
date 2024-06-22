@@ -22,7 +22,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
-import { GauzyButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
+import { i4netButtonActionModule } from '../../gauzy-button-action/gauzy-button-action.module';
 import { PaginationV2Module } from '../../smart-table/pagination/pagination-v2/pagination-v2.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -64,10 +64,10 @@ const COMPONENTS = [
 		InviteMutationModule,
 		UserFormsModule,
 		CardGridModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS]
 })
-export class InviteTableModule {}
+export class InviteTableModule { }

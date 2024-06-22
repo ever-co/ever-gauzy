@@ -1,11 +1,11 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
-import { GauzyAIService } from './gauzy-ai.service';
+import { i4netAIService } from './gauzy-ai.service';
 import gauzyAI from './config/gauzy-ai';
 import { IConfigurationOptions } from './configuration.interface';
 import { RequestConfigProvider } from './request-config.provider';
-import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
+import { i4net_AI_CONFIG_OPTIONS } from './constants';
 
 @Module({
 	imports: [
@@ -27,15 +27,15 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 	],
 	controllers: [],
 	providers: [
-		GauzyAIService,
+		i4netAIService,
 		RequestConfigProvider,
 	],
 	exports: [
-		GauzyAIService,
+		i4netAIService,
 		RequestConfigProvider,
 	],
 })
-export class GauzyAIModule {
+export class i4netAIModule {
 	/**
 	 *
 	 * @param options
@@ -43,13 +43,13 @@ export class GauzyAIModule {
 	 */
 	static forRoot(options?: IConfigurationOptions): DynamicModule {
 		return {
-			module: GauzyAIModule,
+			module: i4netAIModule,
 			imports: [
 				ConfigModule, // Make sure to import ConfigModule here
 			],
 			providers: [
 				{
-					provide: GAUZY_AI_CONFIG_OPTIONS,
+					provide: i4net_AI_CONFIG_OPTIONS,
 					useFactory: (config: ConfigService): IConfigurationOptions => ({
 						apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
 						apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
@@ -59,7 +59,7 @@ export class GauzyAIModule {
 				},
 			],
 			exports: [
-				GAUZY_AI_CONFIG_OPTIONS
+				i4net_AI_CONFIG_OPTIONS
 			],
 		};
 	}

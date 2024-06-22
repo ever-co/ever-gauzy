@@ -19,7 +19,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	StatusBadgeModule
@@ -50,8 +50,8 @@ import { SearchComponent } from './search/search.component';
 		DialogsModule,
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	]
 })
-export class SearchModule {}
+export class SearchModule { }

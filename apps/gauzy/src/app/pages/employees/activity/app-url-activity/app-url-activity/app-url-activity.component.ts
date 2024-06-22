@@ -17,7 +17,7 @@ import {
 } from '@gauzy/contracts';
 import { ActivityService, DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
 import { Store, distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-core/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,7 +34,7 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 	}[];
 	type: 'apps' | 'urls';
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -221,5 +221,5 @@ export class AppUrlActivityComponent extends BaseSelectorFilterComponent impleme
 		return { hour, activities: activitiesWithDurations };
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

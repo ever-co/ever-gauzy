@@ -1,7 +1,7 @@
 import { APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { Integration } from '@sentry/types';
-import { GauzyCorePlugin, IOnPluginBootstrap } from '@gauzy/plugin';
+import { i4netCorePlugin, IOnPluginBootstrap } from '@gauzy/plugin';
 import { SentryRequestMiddleware } from './sentry-request.middleware';
 import { SentryTraceMiddleware } from './sentry-trace.middleware';
 import { SentryPluginOptions } from './sentry.types';
@@ -12,7 +12,7 @@ import { createDefaultSentryIntegrations, parseOptions, removeDuplicateIntegrati
 // Assuming createDefaultSentryIntegrations returns an array of Integrations
 export const DefaultSentryIntegrations: Integration[] = createDefaultSentryIntegrations();
 
-@GauzyCorePlugin({
+@i4netCorePlugin({
 	imports: [
 		SentryModule.forRootAsync({
 			useFactory: createSentryOptions,

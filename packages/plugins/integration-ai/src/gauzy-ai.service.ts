@@ -72,8 +72,8 @@ export interface ImageAnalysisResult {
 }
 
 @Injectable()
-export class GauzyAIService {
-    private readonly _logger = new Logger(GauzyAIService.name);
+export class i4netAIService {
+    private readonly _logger = new Logger(i4netAIService.name);
     private _client: ApolloClient<NormalizedCacheObject>;
     public logging: boolean = false;
 
@@ -182,7 +182,7 @@ export class GauzyAIService {
     }
 
     /**
-     * Analyze an image/screenshot using Gauzy AI.
+     * Analyze an image/screenshot using i4net AI.
      *
      * @param files - Array of Buffers representing the uploaded images.
      * @returns Promise<any> - The analysis result for the image.
@@ -228,7 +228,7 @@ export class GauzyAIService {
         params: IEmployeeJobApplication
     ): Promise<any> {
         // First we need to get employee id because we have only externalId
-        params.employeeId = await this.getEmployeeGauzyAIId(params.employeeId);
+        params.employeeId = await this.getEmployeei4netAIId(params.employeeId);
 
         // Call the sendRequest function with the appropriate parameters
         return await firstValueFrom(
@@ -278,7 +278,7 @@ export class GauzyAIService {
     }
 
     /**
-     * Get statistic from Gauzy AI about how many jobs are available for given employee
+     * Get statistic from i4net AI about how many jobs are available for given employee
      * and to how many of jobs employee already applied and more statistic in the future.
      */
     public async getEmployeesStatistics(): Promise<IEmployeeJobsStatistics[]> {
@@ -286,8 +286,8 @@ export class GauzyAIService {
     }
 
     /**
-     * Updates in Gauzy AI if given Employee looking for a jobs or not.
-     * If not looking, Gauzy AI will NOT return jobs for such employee and will NOT crawl sources for jobs for such employee
+     * Updates in i4net AI if given Employee looking for a jobs or not.
+     * If not looking, i4net AI will NOT return jobs for such employee and will NOT crawl sources for jobs for such employee
      * @param employeeId
      * @param isJobSearchActive
      */
@@ -308,10 +308,10 @@ export class GauzyAIService {
         }
 
         // First we need to get employee id because we have only externalId
-        const gauzyAIEmployeeId = await this.getEmployeeGauzyAIId(employeeId);
+        const gauzyAIEmployeeId = await this.getEmployeei4netAIId(employeeId);
 
         console.log(
-            `updateEmployeeStatus called. EmployeeId: ${employeeId}. Gauzy AI EmployeeId: ${gauzyAIEmployeeId}`
+            `updateEmployeeStatus called. EmployeeId: ${employeeId}. i4net AI EmployeeId: ${gauzyAIEmployeeId}`
         );
 
         const update: UpdateEmployee = {
@@ -363,7 +363,7 @@ export class GauzyAIService {
         }
 
         // First we need to get employee id because we have only externalId
-        const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
+        const employeeId = await this.getEmployeei4netAIId(input.employeeId);
         console.log(
             chalk.green(`Method 'apply' is called. EmployeeId: ${employeeId}`)
         );
@@ -377,7 +377,7 @@ export class GauzyAIService {
             chalk.green(`Method 'apply' is called. jobPostId: ${jobPostId}`)
         );
 
-        // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+        // Next, we need to find `public employee job post` table record in i4net AI to get id of record.
         // We can find by employeeId and jobPostId
 
         const employeeJobPostId = await this.getEmployeeJobPostId(
@@ -439,9 +439,9 @@ export class GauzyAIService {
 
     /**
      * Updates job visibility
-     * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
-     * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
-     * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
+     * @param hide Should job be hidden or visible. This will set isActive field to false in i4net AI
+     * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in i4net AI)
+     * If employeeId is not set, job will be set not active for all employees (using JobPost record update in i4net AI)
      * @param providerCode e.g. 'upwork'
      * @param providerJobId Unique job id in the provider, e.g. in Upwork. If this value is not set, it will update ALL jobs for given provider
      */
@@ -455,7 +455,7 @@ export class GauzyAIService {
         // If it's for specific employee and specific job
         if (input.employeeId && input.providerCode && input.providerJobId) {
             // First we need to get employee id because we have only externalId
-            const employeeId = await this.getEmployeeGauzyAIId(
+            const employeeId = await this.getEmployeei4netAIId(
                 input.employeeId
             );
 
@@ -469,7 +469,7 @@ export class GauzyAIService {
 
             console.log(`updateVisibility called. jobPostId: ${jobPostId}`);
 
-            // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+            // Next, we need to find `public employee job post` table record in i4net AI to get id of record.
             // We can find by employeeId and jobPostId
 
             const employeeJobPostId = await this.getEmployeeJobPostId(
@@ -529,7 +529,7 @@ export class GauzyAIService {
      * NOTE: We will not use this method for now.
      *
      * Inside interface IEmployeeJobApplication we get below fields
-     *	applied: boolean; <- This will set isApplied and appliedDate fields in Gauzy AI
+     *	applied: boolean; <- This will set isApplied and appliedDate fields in i4net AI
      *	employeeId: string; <- Employee who applied for a job
      *	providerCode: string; <- e.g. 'upwork'
      *	providerJobId: string; <- Unique job id in the provider, e.g. in Upwork
@@ -546,7 +546,7 @@ export class GauzyAIService {
         }
 
         // First we need to get employee id because we have only externalId
-        const employeeId = await this.getEmployeeGauzyAIId(input.employeeId);
+        const employeeId = await this.getEmployeei4netAIId(input.employeeId);
         console.log(
             chalk.green(`updateApplied called. EmployeeId: ${employeeId}`)
         );
@@ -560,7 +560,7 @@ export class GauzyAIService {
             chalk.green(`updateApplied called. jobPostId: ${jobPostId}`)
         );
 
-        // Next, we need to find `public employee job post` table record in Gauzy AI to get id of record.
+        // Next, we need to find `public employee job post` table record in i4net AI to get id of record.
         // We can find by employeeId and jobPostId
 
         const employeeJobPostId = await this.getEmployeeJobPostId(
@@ -635,7 +635,7 @@ export class GauzyAIService {
             });
 
             // ------------------ Update Employee Job Post Record ------------------
-            // Note: it's just set isApplied and appliedDate fields in Gauzy AI
+            // Note: it's just set isApplied and appliedDate fields in i4net AI
 
             const update: UpdateEmployeeJobPost = {
                 employeeId: employeeId,
@@ -670,9 +670,9 @@ export class GauzyAIService {
             });
         }
 
-        // TODO: here we need to check what returned from Gauzy AI
+        // TODO: here we need to check what returned from i4net AI
         // Because for some providers (e.g. Upwork), redirect to apply manually required
-        // But for other providers, apply can work inside Gauzy AI automatically
+        // But for other providers, apply can work inside i4net AI automatically
         return { isRedirectRequired: true };
     }
 
@@ -680,18 +680,18 @@ export class GauzyAIService {
     // Both when Preset saved for given employee and when any criteria saved for given employee (new criteria or changes in criteria)
     // You should pass `employee` entity for which anything on Matching page was changes
     // IMPORTANT: You should ALWAYS pass ALL criteria defined for given employee on Matching page, not only new or changed!
-    // Best way to call this method, is to reload from Gauzy DB all criteria for given employee before call this method.
+    // Best way to call this method, is to reload from i4net DB all criteria for given employee before call this method.
     // We DO NOT USE DATA YOU PASS FROM UI!
     // INSTEAD, We CALL THIS METHOD FROM YOUR CQRS COMMAND HANDLERS when you detect that anything related to matching changes
     // But as explained above, we must reload criteria from DB, not use anything you have in the local variables
-    // (because it might not be full data, but this method requires all data to be synced to Gauzy AI, even if such data was previously already synced)
+    // (because it might not be full data, but this method requires all data to be synced to i4net AI, even if such data was previously already synced)
     // How this method will work internally:
-    // - it will call sync for employee first and if no such employee exists in Gauzy AI, it will create new. If exists, it will update employee properties, e.g. lastName
-    // - next, it will remove all criteria for employee in Gauzy AI and create new records again for criterions.
+    // - it will call sync for employee first and if no such employee exists in i4net AI, it will create new. If exists, it will update employee properties, e.g. lastName
+    // - next, it will remove all criteria for employee in i4net AI and create new records again for criterions.
     // I.e. no update will be done, it will be full replacement
     // The reason it's acceptable is because such data changes rarely for given employee, so it's totally fine to recreate it
     // NOTE: will need to call this method from multiple different CQRS command handlers!
-    public async syncGauzyEmployeeJobSearchCriteria(
+    public async synci4netEmployeeJobSearchCriteria(
         employee: IEmployee,
         criteria: IEmployeeUpworkJobsSearchCriterion[]
     ): Promise<boolean> {
@@ -699,7 +699,7 @@ export class GauzyAIService {
             return false;
         }
 
-        console.log(`syncGauzyEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(criteria)}. Employee: ${JSON.stringify(employee)}`);
+        console.log(`synci4netEmployeeJobSearchCriteria called. Criteria: ${JSON.stringify(criteria)}. Employee: ${JSON.stringify(employee)}`);
 
         try {
             const gauzyAIUser: User = await this.syncUser({
@@ -768,7 +768,7 @@ export class GauzyAIService {
                 )}`
             );
 
-            // now let's create new criteria in Gauzy AI based on Gauzy criterions data
+            // now let's create new criteria in i4net AI based on i4net criterions data
 
             if (criteria && criteria.length > 0) {
                 const gauzyAICriteria: UpworkJobsSearchCriterion[] = [];
@@ -820,11 +820,11 @@ export class GauzyAIService {
     }
 
     /**
-     * Creates employees in Gauzy AI if not exists yet. If exists, updates fields, including externalEmployeeId
+     * Creates employees in i4net AI if not exists yet. If exists, updates fields, including externalEmployeeId
      * How it works:
-     * - search done externalEmployeeId field first in Gauzy AI to be equal to Gauzy employee Id.
-     * - if no record found in Gauzy AI, it search Gauzy AI employees records by employee name
-     * - if no record found in Gauzy AI, it creates new employee in Gauzy AI
+     * - search done externalEmployeeId field first in i4net AI to be equal to i4net employee Id.
+     * - if no record found in i4net AI, it search i4net AI employees records by employee name
+     * - if no record found in i4net AI, it creates new employee in i4net AI
      *
      * @param employees
      */
@@ -1041,7 +1041,7 @@ export class GauzyAIService {
             };
 
             if (employeeIdFilter) {
-                const employeeId = await this.getEmployeeGauzyAIId(employeeIdFilter);
+                const employeeId = await this.getEmployeei4netAIId(employeeIdFilter);
                 filter.employeeId = {
                     eq: employeeId,
                 };
@@ -1056,7 +1056,7 @@ export class GauzyAIService {
                 (data.page * data.limit) / graphQLPageSize
             );
 
-            console.log(`Round trips to Gauzy API: ${loadCounts}`);
+            console.log(`Round trips to i4net API: ${loadCounts}`);
 
             let currentCount = 1;
 
@@ -1244,7 +1244,7 @@ export class GauzyAIService {
         return null;
     }
 
-    private async getEmployeeGauzyAIId(
+    private async getEmployeei4netAIId(
         externalEmployeeId: string
     ): Promise<string> {
         const employeesQuery: DocumentNode<EmployeeQuery> = gql`
@@ -1306,7 +1306,7 @@ export class GauzyAIService {
             };
 
             if (this.logging) {
-                console.log(this._requestConfigProvider.getConfig(), 'Runtime Gauzy AI Integration Config');
+                console.log(this._requestConfigProvider.getConfig(), 'Runtime i4net AI Integration Config');
                 console.log('Custom Run Time Headers: %s', customHeaders);
             }
 
@@ -1339,14 +1339,14 @@ export class GauzyAIService {
         try {
             const gauzyAIRESTEndpoint = this._configService.get<string>('guazyAI.gauzyAIRESTEndpoint');
 
-            console.log(chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
+            console.log(chalk.magenta(`i4netAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
 
             this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
 
-            console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
+            console.log(chalk.magenta(`i4netAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 
             if (this.gauzyAIGraphQLEndpoint && gauzyAIRESTEndpoint) {
-                this._logger.log('Gauzy AI Endpoints (GraphQL & REST) are configured in the environment');
+                this._logger.log('i4net AI Endpoints (GraphQL & REST) are configured in the environment');
 
                 this.initClient();
 
@@ -1385,27 +1385,27 @@ export class GauzyAIService {
                 // testConnectionQuery();
             } else {
                 this._logger.warn(
-                    'Gauzy AI Endpoints are not configured in the environment'
+                    'i4net AI Endpoints are not configured in the environment'
                 );
                 this._client = null;
             }
         } catch (err) {
             this._logger.warn(
-                'Gauzy AI Endpoints are not configured in the environment'
+                'i4net AI Endpoints are not configured in the environment'
             );
             this._logger.error(err);
             this._client = null;
         }
     }
 
-    /** Sync Employee between Gauzy and Gauzy AI
-     *  Creates new Employee in Gauzy AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
-     *  Update existed Gauzy AI Employee record with new data from Gauzy DB
+    /** Sync Employee between i4net and i4net AI
+     *  Creates new Employee in i4net AI if it's not yet exists there yet (it try to find by externalEmployeeId field value or by name)
+     *  Update existed i4net AI Employee record with new data from i4net DB
      */
     private async syncEmployee(employee: Employee): Promise<Employee> {
         console.log('-------------------------- Sync Employee --------------------------', employee);
         try {
-            // First, let's search by employee.externalEmployeeId (which is Gauzy employeeId)
+            // First, let's search by employee.externalEmployeeId (which is i4net employeeId)
             let employeesQuery: DocumentNode<EmployeeQuery> = gql`
 				query employeeByExternalEmployeeId(
 					$externalEmployeeIdFilter: String!
@@ -1438,7 +1438,7 @@ export class GauzyAIService {
             let isAlreadyCreated = employeesResponse.length > 0;
 
             console.log(
-                `Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by externalEmployeeId field`
+                `Is Employee ${employee.externalEmployeeId} already exists in i4net AI: ${isAlreadyCreated} by externalEmployeeId field`
             );
 
             if (!isAlreadyCreated) {
@@ -1481,7 +1481,7 @@ export class GauzyAIService {
                 isAlreadyCreated = employeesResponse.length > 0;
 
                 console.log(
-                    `Is Employee ${employee.externalEmployeeId} already exists in Gauzy AI: ${isAlreadyCreated} by name fields`
+                    `Is Employee ${employee.externalEmployeeId} already exists in i4net AI: ${isAlreadyCreated} by name fields`
                 );
 
                 if (!isAlreadyCreated) {
@@ -1560,13 +1560,13 @@ export class GauzyAIService {
     }
 
     /**
-     * Sync User between Gauzy and Gauzy AI
-     * Creates new User in Gauzy AI if it's not yet exists there yet (it try to find by externalUserId field value or by email)
-     * Update existed Gauzy AI User record with new data from Gauzy DB
+     * Sync User between i4net and i4net AI
+     * Creates new User in i4net AI if it's not yet exists there yet (it try to find by externalUserId field value or by email)
+     * Update existed i4net AI User record with new data from i4net DB
      */
     private async syncUser(user: User) {
         console.log('-------------------------- Sync User --------------------------', user);
-        // First, let's search by user.externalUserId & user.externalTenantId (which is Gauzy userId)
+        // First, let's search by user.externalUserId & user.externalTenantId (which is i4net userId)
         let userFilterByExternalFieldsQuery: DocumentNode<UserConnection> = gql`
 			query userFilterByExternalFieldsQuery(
 				$externalUserIdFilter: String!
@@ -1615,7 +1615,7 @@ export class GauzyAIService {
             let usersResponse = usersQueryResult.data.users.edges;
             let isAlreadyCreated = usersQueryResult.data.users.totalCount > 0;
 
-            console.log(`Is User already exists in Gauzy AI: ${isAlreadyCreated} by externalUserId: %s and externalTenantId: %s fields`, user.externalUserId, user.externalTenantId);
+            console.log(`Is User already exists in i4net AI: ${isAlreadyCreated} by externalUserId: %s and externalTenantId: %s fields`, user.externalUserId, user.externalTenantId);
 
             if (!isAlreadyCreated) {
                 /** Create record of user */
@@ -1696,7 +1696,7 @@ export class GauzyAIService {
     }
 
     /**
-     * Updates the API key of a tenant in the Gauzy AI service.
+     * Updates the API key of a tenant in the i4net AI service.
      *
      * @param input - The updated API key data.
      * @returns The updated tenant API key information.

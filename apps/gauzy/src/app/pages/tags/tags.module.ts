@@ -23,7 +23,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TagsMutationModule,
@@ -61,9 +61,9 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		UserFormsModule,
 		TagsMutationModule,
 		CardGridModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })
-export class TagsModule {}
+export class TagsModule { }

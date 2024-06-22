@@ -221,6 +221,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			headers: headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+		this.uploader.onBeforeUploadItem = (item => {
+			item.withCredentials = false;
+		});
 	}
 
 	public fileOverBase(e: any): void {
@@ -256,7 +259,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 * @param item
 	 */
 	onProposalTemplateChange(item: IEmployeeProposalTemplate | null): void {
-		/** Generate proposal using GauzyAI */
+		/** Generate proposal using i4netAI */
 		this.proposalTemplate = item || null;
 
 		/** Patch proposal value inside form directive */
@@ -401,7 +404,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 					// Stop making API calls as the desired parameter is found
 					if (isProposalGeneratedByAI) {
 						try {
-							/** If employee proposal generated successfully from Gauzy AI */
+							/** If employee proposal generated successfully from i4net AI */
 							if (isNotEmpty(application)) {
 								// Replace line breaks with spaces
 								const proposal = application.proposal
@@ -456,7 +459,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/**
 	 * On editor change
 	 */
-	onEditorChange(content: string): void {}
+	onEditorChange(content: string): void { }
 
 	/**
 	 * Close dialog

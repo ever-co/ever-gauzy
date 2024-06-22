@@ -29,7 +29,7 @@ import { NgChartsModule } from 'ng2-charts';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	GoalCustomUnitModule,
 	GoalLevelSelectModule,
 	NoDataMessageModule,
@@ -96,8 +96,8 @@ import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-typ
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	]
 })
-export class GoalsModule {}
+export class GoalsModule { }

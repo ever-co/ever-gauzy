@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IEmployee } from '@gauzy/contracts';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import { RequestContext } from './../../../core/context';
 import { EmployeeService } from '../../employee.service';
 import { UpdateEmployeeJobSearchStatusCommand } from '../update-employee-job-search-status.command';
@@ -11,7 +11,7 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 
 	constructor(
 		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly gauzyAIService: i4netAIService
 	) { }
 
 	public async execute(
@@ -35,7 +35,7 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 
 
 		try {
-			// Attempt to sync the employee with Gauzy AI
+			// Attempt to sync the employee with i4net AI
 			const syncResult = await this.gauzyAIService.syncEmployees([employee]);
 			try {
 				if (syncResult) {
@@ -51,15 +51,15 @@ export class UpdateEmployeeJobSearchStatusHandler implements ICommandHandler<Upd
 					console.log('Employee synced and job search status updated successfully.');
 				} else {
 					// Sync was not successful
-					console.log('Employee sync with Gauzy AI failed.');
+					console.log('Employee sync with i4net AI failed.');
 				}
 			} catch (updateError) {
 				// Handle errors during the status update operation
-				console.error('Error while updating employee job search status with Gauzy AI:', updateError.message);
+				console.error('Error while updating employee job search status with i4net AI:', updateError.message);
 			}
 		} catch (syncError) {
 			// Handle errors during the sync operation
-			console.error('Error while syncing employee with Gauzy AI:', syncError.message);
+			console.error('Error while syncing employee with i4net AI:', syncError.message);
 		}
 
 		return await this.employeeService.update(employeeId, { isJobSearchActive });

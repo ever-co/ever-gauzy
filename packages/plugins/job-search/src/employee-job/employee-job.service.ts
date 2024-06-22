@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import {
 	IEmployeeJobApplication,
 	IEmployee,
@@ -27,15 +27,15 @@ import { JobPost } from './jobPost.entity';
 export class EmployeeJobPostService {
 	constructor(
 		private readonly _employeeService: EmployeeService,
-		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _gauzyAIService: i4netAIService,
 		private readonly _integrationTenantService: IntegrationTenantService,
 	) { }
 
 	/**
 	 * Updates job visibility
-	 * @param hide Should job be hidden or visible. This will set isActive field to false in Gauzy AI
-	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in Gauzy AI)
-	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in Gauzy AI)
+	 * @param hide Should job be hidden or visible. This will set isActive field to false in i4net AI
+	 * @param employeeId If employeeId set, job will be set not active only for that specific employee (using EmployeeJobPost record update in i4net AI)
+	 * If employeeId is not set, job will be set not active for all employees (using JobPost record update in i4net AI)
 	 * @param providerCode e.g. 'upwork'
 	 * @param providerJobId Unique job id in the provider, e.g. in Upwork
 	 */
@@ -45,7 +45,7 @@ export class EmployeeJobPostService {
 
 	/**
 	 * Create Employee Job Application and updates Employee Job Post record that employee applied for a job
-	 * @param applied This will set isApplied and appliedDate fields in Gauzy AI
+	 * @param applied This will set isApplied and appliedDate fields in i4net AI
 	 * @param employeeId Employee who applied for a job
 	 * @param providerCode e.g. 'upwork', 'linkedin', 'indeed', etc.
 	 * @param providerJobId Unique job id in the provider, e.g. Job Id in Upwork
@@ -75,7 +75,7 @@ export class EmployeeJobPostService {
 	}
 
 	/**
-	 * Find all available Jobs matched to Gauzy Employees
+	 * Find all available Jobs matched to i4net Employees
 	 * @param data
 	 */
 	public async findAll(data: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
@@ -93,7 +93,7 @@ export class EmployeeJobPostService {
 				const integration = await this._integrationTenantService.getIntegrationByOptions({
 					organizationId,
 					tenantId,
-					name: IntegrationEnum.GAUZY_AI
+					name: IntegrationEnum.i4net_AI
 				});
 
 				// Check if integration exists
@@ -110,7 +110,7 @@ export class EmployeeJobPostService {
 					const result = await this._gauzyAIService.getEmployeesJobPosts(data);
 					if (result === null) {
 						if (env.production) {
-							// OK, so for some reason connection go Gauzy AI failed, we can't get jobs ...
+							// OK, so for some reason connection go i4net AI failed, we can't get jobs ...
 							jobs = {
 								items: [],
 								total: 0

@@ -22,7 +22,7 @@ import {
 	BaseSelectorFilterComponent,
 	ConfirmComponent,
 	EditTimeLogModalComponent,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	TimeZoneService,
 	ViewTimeLogModalComponent
 } from '@gauzy/ui-core/shared';
@@ -43,8 +43,8 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 	public filters: ITimeLogFilters = this.request; // Time log filters. Assuming request is defined somewhere.
 	public contextMenus: NbMenuItem[] = []; // C
 
-	//Reference to the GauzyFiltersComponent using @ViewChild.
-	@ViewChild(GauzyFiltersComponent) private gauzyFiltersComponent: GauzyFiltersComponent;
+	//Reference to the i4netFiltersComponent using @ViewChild.
+	@ViewChild(i4netFiltersComponent) private gauzyFiltersComponent: i4netFiltersComponent;
 
 	// Observable containing the date picker configuration.
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
@@ -532,13 +532,13 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 
 		this.contextMenus = deletePermission
 			? [
-					{
-						title: this.getTranslation('TIMESHEET.DELETE'),
-						data: {
-							action: 'DELETE'
-						}
+				{
+					title: this.getTranslation('TIMESHEET.DELETE'),
+					data: {
+						action: 'DELETE'
 					}
-			  ]
+				}
+			]
 			: [];
 	}
 
@@ -600,5 +600,5 @@ export class DailyComponent extends BaseSelectorFilterComponent implements After
 		return !!this.logs.find((log: ITimeLog) => log['checked']);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

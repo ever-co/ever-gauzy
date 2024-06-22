@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { AmountsOwedGridModule, GauzyFiltersModule, LineChartModule, SharedModule } from '@gauzy/ui-core/shared';
+import { AmountsOwedGridModule, i4netFiltersModule, LineChartModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AmountsOwedReportRoutingModule } from './amounts-owed-report-routing.module';
 import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-report.component';
 
@@ -21,7 +21,7 @@ import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-r
 		FormsModule,
 		AmountsOwedGridModule,
 		LineChartModule,
-		GauzyFiltersModule
+		i4netFiltersModule
 	]
 })
-export class AmountsOwedReportModule {}
+export class AmountsOwedReportModule { }

@@ -13,7 +13,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	RecurringExpenseBlockModule,
 	SharedModule
@@ -38,9 +38,9 @@ import { RecurringExpensesEmployeeComponent } from './recurring-expense-employee
 		SharedModule,
 		RecurringExpensesEmployeeRoutingModule,
 		RecurringExpenseBlockModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [RecurringExpensesEmployeeComponent]
 })
-export class RecurringExpensesEmployeeModule {}
+export class RecurringExpensesEmployeeModule { }

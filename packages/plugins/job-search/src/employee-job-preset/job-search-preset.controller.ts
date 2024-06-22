@@ -1,7 +1,7 @@
 import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { IGetJobPresetCriterionInput, IJobPreset, IMatchingCriterions } from '@gauzy/contracts';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import { EmployeeService, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
@@ -14,7 +14,7 @@ export class JobSearchPresetController {
 	constructor(
 		private readonly jobPresetService: JobPresetService,
 		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly gauzyAIService: i4netAIService
 	) { }
 
 	/**

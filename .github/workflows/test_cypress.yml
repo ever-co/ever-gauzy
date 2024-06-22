@@ -146,7 +146,7 @@ jobs:
           working-directory: 'apps/gauzy-e2e'
 
           # We wait till both API and UI runs completely here
-          wait-on: 'http://localhost:3000/api,http://localhost:4200'
+          wait-on: 'http://localhost:3800/api,http://localhost:4200'
 
           # wait up to 20 minutes for the servers to respond
           wait-on-timeout: 1200

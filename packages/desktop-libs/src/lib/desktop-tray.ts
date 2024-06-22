@@ -196,7 +196,7 @@ export class TrayIcon {
 
 		if (!!appConfig.gauzyWindow && mainWindow) {
 			// Prepare open main window option.
-			const openGauzyMenu = {
+			const openi4netMenu = {
 				id: '8',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.OPEN_MAIN_WINDOW'),
 				async click() {
@@ -205,9 +205,9 @@ export class TrayIcon {
 				}
 			};
 			// Put before the logout element
-			menuAuth.splice(menuAuth.length - 2, 0, openGauzyMenu);
+			menuAuth.splice(menuAuth.length - 2, 0, openi4netMenu);
 			// Put on the top of menu
-			unAuthMenu.unshift(openGauzyMenu);
+			unAuthMenu.unshift(openi4netMenu);
 		}
 
 		const menuWindowTime = Menu.getApplicationMenu().getMenuItemById('window-time-track');

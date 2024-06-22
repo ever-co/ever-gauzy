@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	NoDataMessageModule,
 	ProgressStatusModule,
@@ -28,9 +28,9 @@ import { ClientBudgetsReportComponent } from './client-budgets-report/client-bud
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		TableComponentsModule,
 		NoDataMessageModule
 	]
 })
-export class ClientBudgetsReportModule {}
+export class ClientBudgetsReportModule { }

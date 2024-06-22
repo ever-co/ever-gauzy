@@ -16,7 +16,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EditTimeLogModalModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
@@ -37,7 +37,7 @@ import { WeeklyComponent } from './weekly/weekly.component';
 		FormsModule,
 		NbButtonModule,
 		SharedModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		EditTimeLogModalModule,
 		NbDialogModule,
 		NbSpinnerModule,
@@ -50,4 +50,4 @@ import { WeeklyComponent } from './weekly/weekly.component';
 		NoDataMessageModule
 	]
 })
-export class WeeklyModule {}
+export class WeeklyModule { }

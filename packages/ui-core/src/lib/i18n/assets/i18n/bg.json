@@ -623,8 +623,8 @@
 			"ALL_TEAMS": "All Teams",
 			"UPWORK_API_KEY": "Upwork API key",
 			"UPWORK_SECRET": "Upwork Secret",
-			"GAUZY_API_KEY": "Ключ Gauzy AI",
-			"GAUZY_API_SECRET": "Gauzy AI Secret",
+			"GAUZY_API_KEY": "Ключ i4net AI",
+			"GAUZY_API_SECRET": "i4net AI Secret",
 			"OPEN_AI_API_SECRET_KEY": "Отворете тайния ключ на AI",
 			"OPEN_AI_ORGANIZATION_ID": "Отворете ID на AI организация",
 			"SELECT_COMPANY": "Select Company",
@@ -774,7 +774,7 @@
 		"TOTAL_INCOME_OR_MONTHLY_INCOME": "Total Income/Monthly Income",
 		"PROFITS": "Profits",
 		"BONUSES_PAID": "Bonuses Paid",
-		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over Gauzy",
+		"TOTAL_HOURS_WORKED_OVER_GAUZY": "Total Hours worked over i4net",
 		"MINIMUM_PROJECT_SIZE": "Minimum Project Size",
 		"PROJECTS_COUNT": "Projects Count",
 		"CLIENTS_COUNT": "Clients Count",
@@ -858,12 +858,12 @@
 			"WRONG_FILE_NAME": "Wrong file name!!!",
 			"CORRECT_FILE_NAME": "The file name should be: \"archive.zip\"",
 			"DOWNLOAD_TEMPLATES": "Download templates",
-			"MIGRATE_TO_CLOUD": "Migrate to Ever Gauzy Cloud",
-			"IMPORT_INFO": "Click \"Import\" to import your data into Gauzy DB.",
-			"EXPORT_INFO": "Click \"Export\" to export data from Gauzy DB.",
-			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of Gauzy data.",
-			"MIGRATE_TO_CLOUD_INFO": "Click \"Migrate to Ever Gauzy Cloud\" to migrate from self-hosted to cloud edition.",
-			"MIGRATE_SUCCESSFULLY": "Gauzy Cloud migration for '{{ tenant }}' successfully!",
+			"MIGRATE_TO_CLOUD": "Migrate to i4net Cloud",
+			"IMPORT_INFO": "Click \"Import\" to import your data into i4net DB.",
+			"EXPORT_INFO": "Click \"Export\" to export data from i4net DB.",
+			"DOWNLOAD_TEMPLATES_INFO": "Click \"Download Templates\" to download Zip archive with CSV templates for the format of i4net data.",
+			"MIGRATE_TO_CLOUD_INFO": "Click \"Migrate to i4net Cloud\" to migrate from self-hosted to cloud edition.",
+			"MIGRATE_SUCCESSFULLY": "i4net Cloud migration for '{{ tenant }}' successfully!",
 			"ACCOUNTING_TEMPLATE": "Accounting Template",
 			"ACTIVITY": "Activity",
 			"APPROVAL_POLICY": "Approval Policy",
@@ -1073,7 +1073,7 @@
 		"ACCOUNTING_TEMPLATES": "Счетоводни Шаблони",
 		"FOCUS": "Фокус",
 		"APPLICATIONS": "Приложения",
-		"OPEN_GA_BROWSER": "Отвори Gauzy в браузъра",
+		"OPEN_GA_BROWSER": "Отвори i4net в браузъра",
 		"START_SERVER": "Стартирай Сървъра",
 		"STOP_SERVER": "Спри Сървъра"
 	},
@@ -1085,8 +1085,8 @@
 		"CORPORATE": "Корпоративна",
 		"MATERIAL_LIGHT_THEME": "Material Light",
 		"MATERIAL_DARK_THEME": "Material Dark",
-		"GAUZY_LIGHT": "Gauzy Light",
-		"GAUZY_DARK": "Gauzy Dark",
+		"GAUZY_LIGHT": "i4net Light",
+		"GAUZY_DARK": "i4net Dark",
 		"LANGUAGE": "Език (Language)",
 		"ENGLISH": "Английски",
 		"FRENCH": "Френски",
@@ -1113,7 +1113,7 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
 		"LEARN_MORE_URL": "Learn more",
-		"GAUZY_FEATURES": "Gauzy features"
+		"GAUZY_FEATURES": "i4net features"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
@@ -1178,7 +1178,7 @@
 			"MANUAL_ACTIVITY": "No records found. Please select date range, employee or project.",
 			"AMOUNT_OWED": "No Amount Owed",
 			"WEEKLY_TIME_AND_ACTIVITY": "You have not any tracked time and activity yet for these day's.",
-			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy Desktop Timer App</a>.",
+			"DAILY_TIME_AND_ACTIVITY": "There is no time and activity tracked yet for this day. Please use the <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">i4net Desktop Timer App</a>.",
 			"PROJECT_BUDGET": "You have not created any project with budget.",
 			"CLIENT_BUDGET": "You have not created any client with budget."
 		}
@@ -1197,7 +1197,7 @@
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"CLIENT_ID": "Hubstaff Client ID",
 			"CLIENT_SECRET": "Hubstaff Client Secret",
-			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to Gauzy.",
+			"GRANT_PERMISSION": "Next you will be taken to Hubstaff to grant permission to i4net.",
 			"ENTER_CLIENT_SECRET": "Enter client secret to get access token."
 		},
 		"UPWORK_PAGE": {
@@ -1207,7 +1207,7 @@
 			"SUCCESSFULLY_AUTHORIZED": "Successfully authorized",
 			"API_KEY": "Upwork API key",
 			"SECRET": "Upwork Secret",
-			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to Gauzy.",
+			"NEXT_STEP_INFO": "Next you will be taken to Upwork to grant permission to i4net.",
 			"CONTRACTS": "Contracts",
 			"SYNCED_CONTRACTS": "Synced Contracts",
 			"SELECT_DATE": "Select Date",
@@ -1216,13 +1216,13 @@
 			"DATE_RANGE_PLACEHOLDER": "Choose date between",
 			"HOURLY": "Hourly"
 		},
-		"GAUZY_AI_PAGE": {
-			"TITLE": "Интеграция на Gauzy AI",
-			"API_KEY": "Gauzy AI ключ",
-			"API_SECRET": "Gauzy AI Secret",
+		"i4net_AI_PAGE": {
+			"TITLE": "Интеграция на i4net AI",
+			"API_KEY": "i4net AI ключ",
+			"API_SECRET": "i4net AI Secret",
 			"OPEN_AI_API_SECRET_KEY": "Отворете тайния ключ на AI",
 			"OPEN_AI_ORGANIZATION_ID": "Отворете ID на AI организация",
-			"DESCRIPTION": "Активирайте Gauzy AI интеграция за по-интелигентно търсене на работа.",
+			"DESCRIPTION": "Активирайте i4net AI интеграция за по-интелигентно търсене на работа.",
 			"CONSUMER_KEYS": "Потребителски ключове",
 			"OPEN_AI_API_KEYS": "Open AI API ключове",
 			"GENERATED": "Генерирани",
@@ -1236,7 +1236,7 @@
 				"OPEN_AI_API_SECRET_KEY": "Тайният API ключ на OpenAI служи като идентификатор на вашето приложение за API заявки, оставащ постоянно скрит, с някои видими символи.",
 				"OPEN_AI_ORGANIZATION_ID": "Незадължителен идентификатор за организационни цели при взаимодействие с OpenAI API. Помага за организирането и разграничаването на различни обекти или проекти във вашата организация.",
 				"ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS": "Активира разширен анализ на търсенето на работа и съвпадение за по-голяма точност. При изключване скрива пунктовете 'Преглед' и 'Съвпадение' за по-лесен интерфейс.",
-				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Управлява предаването на метрики за работата на служителите, включително клавишни въвеждания, движения на мишката и снимки на екрана, за анализ от Gauzy AI. Включването позволява изчерпателен анализ на производителността. При изключване Gauzy AI няма да получава и анализира снимки или други подробни данни, за да гарантира строга конфиденциалност и контрол върху споделянето на данни."
+				"ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS": "Управлява предаването на метрики за работата на служителите, включително клавишни въвеждания, движения на мишката и снимки на екрана, за анализ от i4net AI. Включването позволява изчерпателен анализ на производителността. При изключване i4net AI няма да получава и анализира снимки или други подробни данни, за да гарантира строга конфиденциалност и контрол върху споделянето на данни."
 			}
 		},
 		"GITHUB_PAGE": {
@@ -3787,19 +3787,19 @@
 		"WAIT_FOR": "Изчаква се {{ name }} да започне...",
 		"SETUP": {
 			"WELCOME": "Добре дошли",
-			"TITLE": "Добре дошли в Ever® Gauzy ™ - Open-Source платформа за управление на бизнеса (ERP / CRM / HRM)",
-			"LABEL": "Приложението Gauzy Desktop предоставя пълната функционалност на Gauzy Platform, достъпна директно на вашия настолен компютър или лаптоп. Освен това, то позволява проследяване на работно време, запис на дейности и възможността да получавате напомняния / известия за проследяване.",
-			"TITLE_SERVER": "Gauzy Инсталационен магьосник на сървъра",
-			"LABEL_SERVER": "Приложението Gauzy Desktop предоставя пълната функционалност на Gauzy Platform, достъпна директно на вашия настолен компютър или лаптоп. Освен това, то позволява проследяване на работно време, запис на дейности и възможността да получавате напомняния / известия за проследяване.",
+			"TITLE": "Добре дошли в Ever® i4net ™ - Open-Source платформа за управление на бизнеса (ERP / CRM / HRM)",
+			"LABEL": "Приложението i4net Desktop предоставя пълната функционалност на i4net Platform, достъпна директно на вашия настолен компютър или лаптоп. Освен това, то позволява проследяване на работно време, запис на дейности и възможността да получавате напомняния / известия за проследяване.",
+			"TITLE_SERVER": "i4net Инсталационен магьосник на сървъра",
+			"LABEL_SERVER": "Приложението i4net Desktop предоставя пълната функционалност на i4net Platform, достъпна директно на вашия настолен компютър или лаптоп. Освен това, то позволява проследяване на работно време, запис на дейности и възможността да получавате напомняния / известия за проследяване.",
 			"FUNCTIONALITIES": "Функционалности",
 			"WHAT_WOULD_LIKE_USE": "Какво бихте желали да използвате?",
 			"SELECT_MULTIPLE_OPTIONS": "Можете да изберете само една опция или и двете опции.",
 			"TIME_ACTIVITY_FEATURES": "Функции за проследяване на време и дейност",
-			"GP_FEATURES": "Функции на Gauzy Platform",
-			"HOW_GONNA_USE_GP": "Как ще използвате платформата Gauzy?",
+			"GP_FEATURES": "Функции на i4net Platform",
+			"HOW_GONNA_USE_GP": "Как ще използвате платформата i4net?",
 			"SELECT_ONE_OPTION": "Трябва да изберете само една от опциите по-долу.",
 			"INTEGRATED": "Интегриран",
-			"INSTALL_GP_LOCAL": "Инсталирайте и стартирайте Gauzy Platform на вашия локален компютър.",
+			"INSTALL_GP_LOCAL": "Инсталирайте и стартирайте i4net Platform на вашия локален компютър.",
 			"CUSTOM_NETWORK": "Персонализирано / Мрежово",
 			"SEPARATE_SERVER": "Свържете се с отделен сървър в работната ви мрежа.",
 			"LIVE": "Наживо",
@@ -3809,7 +3809,7 @@
 			"LEGAL_NOTE": "Законово: Всички продуктови имена, търговски марки, лога, търговски марки и регистрирани търговски марки са собственост на техните съответни притежатели. Ние нямаме връзка или официална подкрепа, спонсорство или подкрепа от споменатите компании, марки, продукти, сайтове или услуги на трети страни. Връзките към софтуер на трета страна се предоставят като удобство и за информационни цели само; те не представляват одобрение или одобрение на никой от продуктите, услугите или мненията на дружеството или организацията или лицето. Използваме съответните лога и търговски марки само за да рекламираме, че нашият продукт използва съответните продукти и технологии или има вградена интеграция със съответните услуги.",
 			"SETTING": "Настройки",
 			"READY_FOR_ADVANCED_SETTINGS": "Готови ли сте за някои напреднали настройки?",
-			"FINAL_STEP_GP": "Това е последната стъпка, в която можете да влезете в детайлите на вашия Gauzy Platform.",
+			"FINAL_STEP_GP": "Това е последната стъпка, в която можете да влезете в детайлите на вашия i4net Platform.",
 			"PORT": "Порт",
 			"PORT_API": "Порт Api",
 			"UI": "Ui",
@@ -4554,7 +4554,7 @@
 	},
 	"WORKSPACES": {
 		"MENUS": {
-			"SING_ANOTHER_WORKSPACE": "Sign in another workspace",
+			"SIGN_ANOTHER_WORKSPACE": "Sign in another workspace",
 			"CREATE_NEW_WORKSPACE": "Create a new workspace",
 			"FIND_WORKSPACE": "Find workspace"
 		},

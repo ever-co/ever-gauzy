@@ -1,12 +1,12 @@
 /**
  * @description
- * Current version of the Gauzy UI.
+ * Current version of the i4net UI.
  *
  * @example
  * ```
  * import { version } from './version';
  *
- * console.log('Gauzy UI version:', version);
+ * console.log('i4net UI version:', version);
  * ```
  *
  * @since 0.1.0

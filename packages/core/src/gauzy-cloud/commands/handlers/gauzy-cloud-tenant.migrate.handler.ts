@@ -2,21 +2,21 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { catchError, tap } from 'rxjs/operators';
 import { of as observableOf } from 'rxjs';
 import { ITenant } from '@gauzy/contracts';
-import { GauzyCloudService } from '../../gauzy-cloud.service';
+import { i4netCloudService } from '../../gauzy-cloud.service';
 import { RoleService } from './../../../role/role.service';
-import { GauzyCloudTenantMigrateCommand } from './../gauzy-cloud-tenant.migrate.command';
+import { i4netCloudTenantMigrateCommand } from './../gauzy-cloud-tenant.migrate.command';
 import { RolePermissionService } from './../../../role-permission/role-permission.service';
 
-@CommandHandler(GauzyCloudTenantMigrateCommand)
-export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyCloudTenantMigrateCommand> {
+@CommandHandler(i4netCloudTenantMigrateCommand)
+export class i4netCloudTenantMigrateHandler implements ICommandHandler<i4netCloudTenantMigrateCommand> {
 
 	constructor(
-		private readonly _gauzyCloudService: GauzyCloudService,
+		private readonly _gauzyCloudService: i4netCloudService,
 		private readonly _roleService: RoleService,
 		private readonly _rolePermissionService: RolePermissionService
-	) {}
+	) { }
 
-	public async execute(command: GauzyCloudTenantMigrateCommand): Promise<any> {
+	public async execute(command: i4netCloudTenantMigrateCommand): Promise<any> {
 		const { input, token } = command;
 		return this._gauzyCloudService.migrateTenant(input, token).pipe(
 			tap(async (response: any) => {
@@ -35,26 +35,26 @@ export class GauzyCloudTenantMigrateHandler implements ICommandHandler<GauzyClou
 	}
 
 	private async migrateRoles(
-		tenant: ITenant, 
+		tenant: ITenant,
 		token: string
 	) {
 		return this._gauzyCloudService.migrateRoles(
-			await this._roleService.migrateRoles(), 
-			token, 
+			await this._roleService.migrateRoles(),
+			token,
 			tenant
 		)
-		.subscribe();
+			.subscribe();
 	}
 
 	private async migratePermissions(
-		tenant: ITenant, 
+		tenant: ITenant,
 		token: string
 	) {
 		return this._gauzyCloudService.migrateRolePermissions(
-			await this._rolePermissionService.migratePermissions(), 
-			token, 
+			await this._rolePermissionService.migratePermissions(),
+			token,
 			tenant
 		)
-		.subscribe();
+			.subscribe();
 	}
 }

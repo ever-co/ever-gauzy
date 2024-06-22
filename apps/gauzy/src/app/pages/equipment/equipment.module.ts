@@ -14,7 +14,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EquipmentMutationModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
@@ -43,8 +43,8 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		PaginationV2Module,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })
-export class EquipmentModule {}
+export class EquipmentModule { }

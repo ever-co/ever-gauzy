@@ -10,7 +10,7 @@ import { CalendarComponent } from './calendar/calendar.component';
 import { ShareModule } from './../../../../share/share.module';
 import {
 	EditTimeLogModalModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	SharedModule,
 	ViewTimeLogModalModule
 } from '@gauzy/ui-core/shared';
@@ -32,7 +32,7 @@ import {
 		SharedModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
-		GauzyFiltersModule
+		i4netFiltersModule
 	]
 })
-export class CalendarModule {}
+export class CalendarModule { }

@@ -23,7 +23,7 @@ import { Environment, environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
-import { ExportAllService, GauzyCloudService } from '@gauzy/ui-core/core';
+import { ExportAllService, i4netCloudService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -42,7 +42,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 
 	constructor(
 		private readonly exportAll: ExportAllService,
-		private readonly gauzyCloudService: GauzyCloudService,
+		private readonly gauzyCloudService: i4netCloudService,
 		private readonly userOrganizationService: UsersOrganizationsService,
 		private readonly router: Router,
 		private readonly store: Store,
@@ -81,7 +81,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 	}
 
 	/*
-	 * Migrate Self Hosted to Gauzy Cloud Hosted
+	 * Migrate Self Hosted to i4net Cloud Hosted
 	 */
 	onMigrateIntoCloud(password: string) {
 		const {
@@ -168,7 +168,7 @@ export class ImportExportComponent extends TranslationBaseComponent implements O
 							this.toastrService.success('MENU.IMPORT_EXPORT.MIGRATE_SUCCESSFULLY', {
 								tenant: name
 							});
-							const externalUrl = environment.GAUZY_CLOUD_APP;
+							const externalUrl = environment.I4NET_CLOUD_APP;
 							const tree = this.router.createUrlTree(['/pages/settings/import-export/import'], {
 								queryParams: {
 									token: this.token,

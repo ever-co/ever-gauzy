@@ -21,7 +21,7 @@ import { ApprovalPolicyService } from '@gauzy/ui-core/core';
 import {
 	ApprovalPolicyMutationModule,
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule
 } from '@gauzy/ui-core/shared';
@@ -50,10 +50,10 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		ApprovalPolicyRoutingModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	],
 	declarations: [ApprovalPolicyComponent],
 	providers: [ApprovalPolicyService]
 })
-export class ApprovalPolicyModule {}
+export class ApprovalPolicyModule { }

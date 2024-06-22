@@ -48,7 +48,7 @@ import {
 	AlwaysOn,
 	ScreenCaptureNotification,
 	SplashScreen,
-	createGauzyWindow,
+	createi4netWindow,
 	createImageViewerWindow,
 	createSettingsWindow,
 	createSetupWindow,
@@ -61,7 +61,7 @@ import { autoUpdater } from 'electron-updater';
 import * as Sentry from '@sentry/electron';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
+// C:\Users\USERNAME\AppData\Roaming\i4net-desktop
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
 
@@ -299,7 +299,7 @@ async function startServer(value, restart = false) {
 
 	/* create main window */
 	try {
-		gauzyWindow = await createGauzyWindow(
+		gauzyWindow = await createi4netWindow(
 			gauzyWindow,
 			serve,
 			{ ...environment, gauzyWindow: value.gauzyWindow },
@@ -619,7 +619,7 @@ ipcMain.on('server_already_start', async () => {
 	if (!gauzyWindow && !isAlreadyRun) {
 		try {
 			const configs: any = store.get('configs');
-			gauzyWindow = await createGauzyWindow(
+			gauzyWindow = await createi4netWindow(
 				gauzyWindow,
 				serve,
 				{ ...environment, gauzyWindow: configs.gauzyWindow },
@@ -686,7 +686,7 @@ app.on('activate', async () => {
 	} else if (!onWaitingServer && LocalStore.getStore('configs') && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi);
+		await createi4netWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();

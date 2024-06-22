@@ -108,7 +108,7 @@ export enum IntegrationEnum {
 	IMPORT_EXPORT = 'Import_Export',
 	UPWORK = 'Upwork',
 	HUBSTAFF = 'Hubstaff',
-	GAUZY_AI = 'Gauzy_AI',
+	i4net_AI = 'i4net_AI',
 	GITHUB = 'Github',
 	JIRA = 'Jira'
 }

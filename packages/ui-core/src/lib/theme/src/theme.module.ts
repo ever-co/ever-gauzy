@@ -61,7 +61,7 @@ import { Pipes } from './pipes';
 import { WindowModeBlockScrollService } from './services';
 import { FooterComponent, HeaderComponent } from './components';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
-import { GauzyLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
+import { i4netLogoComponent } from './components/gauzy-logo/gauzy-logo.component';
 import { UserMenuComponent } from './components/user-menu/user-menu.component';
 import { UserComponent } from './components/user/user.component';
 import { ThemeSelectorModule } from './components/theme-sidebar/theme-settings/components/theme-selector/theme-selector.module';
@@ -109,7 +109,7 @@ const COMPONENTS = [
 	ThreeColumnsLayoutComponent,
 	TwoColumnsLayoutComponent,
 	PublicLayoutComponent,
-	GauzyLogoComponent,
+	i4netLogoComponent,
 	UserMenuComponent,
 	UserComponent
 ];

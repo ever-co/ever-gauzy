@@ -57,14 +57,14 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
-          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_SERVER_APP_NAME: 'i4net-server'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'i4net Server'
+          DESKTOP_SERVER_APP_ID: 'com.i4net.i4netserver'
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:linux:release:gh'
+        run: 'yarn build:i4net-server:linux:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -118,14 +118,14 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
-          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_SERVER_APP_NAME: 'i4net-server'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'i4net Server'
+          DESKTOP_SERVER_APP_ID: 'com.i4net.i4netserver'
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:mac:release'
+        run: 'yarn build:i4net-server:mac:release'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -179,14 +179,14 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.server(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_SERVER_APP_NAME: 'ever-gauzy-server'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_SERVER_APP_DESCRIPTION: 'Ever Gauzy Server'
-          DESKTOP_SERVER_APP_ID: 'com.ever.gauzyserver'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_SERVER_APP_NAME: 'i4net-server'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_SERVER_APP_DESCRIPTION: 'i4net Server'
+          DESKTOP_SERVER_APP_ID: 'com.i4net.i4netserver'
 
       - name: Build Server
-        run: 'yarn build:gauzy-server:windows:release:gh'
+        run: 'yarn build:i4net-server:windows:release:gh'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}

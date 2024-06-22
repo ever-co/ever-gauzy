@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	ProgressStatusModule,
 	ProjectColumnViewModule,
@@ -27,8 +27,8 @@ import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.
 		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		ProjectColumnViewModule
 	]
 })
-export class TimeLimitReportModule {}
+export class TimeLimitReportModule { }

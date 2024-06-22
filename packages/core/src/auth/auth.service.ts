@@ -232,7 +232,7 @@ export class AuthService extends SocialAuthService {
 
 	/**
 	 * Check if any user with the given provider infos exists
-	 * This function is used to facilitate the GauzyAdapter in Ever Teams try to create new Users or only signin them
+	 * This function is used to facilitate the i4netAdapter in Ever Teams try to create new Users or only signin them
 
 	 * @param input An object that contains the provider name and the provider Account ID
 	 * @returns A promise that resolves to a boolean specifying if the user exists or not
@@ -1250,10 +1250,10 @@ export class AuthService extends SocialAuthService {
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
-						id: user.tenant.id, // Assuming tenantId is a direct property of tenant
-						name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
-						logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
-				  })
+					id: user.tenant.id, // Assuming tenantId is a direct property of tenant
+					name: user.tenant.name || '', // Defaulting to an empty string if name is undefined
+					logo: user.tenant.logo || '' // Defaulting to an empty string if logo is undefined
+				})
 				: null // Sets tenant to null if user.tenant is undefined
 		});
 	}

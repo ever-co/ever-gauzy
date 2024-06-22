@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere } from 'typeorm';
-import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
+import { i4netAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
 import { IScreenshot, IntegrationEntity, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
@@ -20,7 +20,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 		mikroOrmScreenshotRepository: MikroOrmScreenshotRepository,
 
 		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly _gauzyAIService: GauzyAIService
+		private readonly _gauzyAIService: i4netAIService
 	) {
 		super(typeOrmScreenshotRepository, mikroOrmScreenshotRepository);
 	}
@@ -57,7 +57,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	}
 
 	/**
-	 * Analyze a screenshot using Gauzy AI service.
+	 * Analyze a screenshot using i4net AI service.
 	 * @param input - The input options for the screenshot.
 	 * @param data - The screenshot data.
 	 * @param file - The screenshot file.
@@ -78,7 +78,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 			const integration = await this._integrationTenantService.getIntegrationByOptions({
 				organizationId,
 				tenantId,
-				name: IntegrationEnum.GAUZY_AI
+				name: IntegrationEnum.i4net_AI
 			});
 
 			// Check if integration exists
@@ -94,7 +94,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 						entityType: IntegrationEntity.EMPLOYEE_PERFORMANCE
 					});
 
-					// Analyze image using Gauzy AI service
+					// Analyze image using i4net AI service
 					const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
 
 					if (!analysis.success) {
@@ -108,7 +108,7 @@ export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 
 					return analysis;
 				} catch (error) {
-					console.log('Error while getting Integration for Gauzy AI', error.message);
+					console.log('Error while getting Integration for i4net AI', error.message);
 					return null;
 				}
 			}

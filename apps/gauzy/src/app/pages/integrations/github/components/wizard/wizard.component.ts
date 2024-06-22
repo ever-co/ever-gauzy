@@ -45,7 +45,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
 		private readonly _store: Store
-	) {}
+	) { }
 
 	/**
 	 * This method is part of the Angular lifecycle and is called when the component is initialized.
@@ -107,9 +107,9 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 */
 	private async oAuthAppAuthorization() {
 		// Get the redirect URI, Post Install URL and client ID from the environment
-		const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
-		const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
-		const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
+		const redirect_uri = environment.I4NET_GITHUB_REDIRECT_URL;
+		const client_id = environment.I4NET_GITHUB_CLIENT_ID;
+		const postInstallURL = environment.I4NET_GITHUB_POST_INSTALL_URL;
 
 		// Define the query parameters for the authorization request
 		const queryParams = toParams({
@@ -180,7 +180,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		const top = window.innerHeight / 2 - height / 2;
 
 		// Specify a unique window name to identify the window
-		const windowName = environment.GAUZY_GITHUB_APP_NAME;
+		const windowName = environment.I4NET_GITHUB_APP_NAME;
 
 		// Check if a window with the same name is already open
 		if (window.frames[windowName] && !window.frames[windowName].closed) {
@@ -188,9 +188,9 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			window.frames[windowName].focus();
 		} else {
 			// Get the redirect URI, Post Install URL and client ID from the environment
-			const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
-			// const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
-			const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
+			const redirect_uri = environment.I4NET_GITHUB_REDIRECT_URL;
+			// const client_id = environment.I4NET_GITHUB_CLIENT_ID;
+			const postInstallURL = environment.I4NET_GITHUB_POST_INSTALL_URL;
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
@@ -200,9 +200,8 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 
 			// Construct the external URL for GitHub authorization with the query parameters
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${
-				environment.GAUZY_GITHUB_APP_NAME
-			}/installations/new?${queryParams.toString()}`;
+			const url = `https://github.com/apps/${environment.I4NET_GITHUB_APP_NAME
+				}/installations/new?${queryParams.toString()}`;
 			console.log('External Github App Installation URL: %s', url);
 
 			/** Navigate to the external URL with query parameters */

@@ -349,7 +349,7 @@ export const DEFAULT_FEATURES: IFeatureCreateInput[] = [
 			{
 				name: 'Help Center',
 				code: FeatureEnum.FEATURE_ORGANIZATION_HELP_CENTER,
-				description: 'Find out more about how to use Gauzy',
+				description: 'Find out more about how to use i4net',
 				image: 'help.png',
 				link: 'help',
 				isEnabled: features.FEATURE_ORGANIZATION_HELP_CENTER,

@@ -8,11 +8,11 @@ import { CrudService } from '../crud/crud.service';
 @Injectable({
 	providedIn: 'root'
 })
-export class GauzyAIService extends CrudService<IIntegrationTenant> {
+export class i4netAIService extends CrudService<IIntegrationTenant> {
 	static readonly API_URL = `${API_PREFIX}/integration/gauzy-ai`;
 
 	constructor(private readonly _http: HttpClient) {
-		super(_http, GauzyAIService.API_URL);
+		super(_http, i4netAIService.API_URL);
 	}
 
 	/**

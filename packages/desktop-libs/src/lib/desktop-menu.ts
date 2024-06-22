@@ -10,7 +10,7 @@ export class AppMenu {
 		const isZoomEnabled = isZoomVisible;
 		this.menu = [
 			{
-				label: process.env.DESCRIPTION || 'Gauzy',
+				label: process.env.DESCRIPTION || 'i4net',
 				submenu: [
 					{
 						id: 'gauzy-about',
@@ -118,7 +118,7 @@ export class AppMenu {
 					{
 						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
 						click() {
-							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
+							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://i4net.co.il/');
 						}
 					},
 					{

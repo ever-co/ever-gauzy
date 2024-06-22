@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { IGetTimeLimitReportInput, ITimeLogFilters } from '@gauzy/contracts';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -23,7 +23,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 	title: string;
 	duration: 'day' | 'week' | 'month';
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -72,7 +72,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Get header selectors request and Gauzy timesheet filters request.
+	 * Get header selectors request and i4net timesheet filters request.
 	 */
 	prepareRequest(): void {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
@@ -90,7 +90,7 @@ export class TimeLimitReportComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters, saves the filters if configured to do so,
+	 * Updates i4net timesheet default filters, saves the filters if configured to do so,
 	 * and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).

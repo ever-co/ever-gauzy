@@ -11,7 +11,7 @@ import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-c
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	IChartData,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
@@ -32,7 +32,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 
 	constructor(
 		private readonly cdr: ChangeDetectorRef,
@@ -102,7 +102,7 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters and notifies subscribers about the change.
+	 * Updates i4net timesheet default filters and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).
 	 */

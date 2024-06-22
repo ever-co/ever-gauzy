@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DailyGridModule, DailyStatisticsModule, GauzyFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
+import { DailyGridModule, DailyStatisticsModule, i4netFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TimeAndActivitiesRoutingModule } from './time-and-activities-routing.module';
 import { TimeAndActivitiesComponent } from './time-and-activities/time-and-activities.component';
 
@@ -12,7 +12,7 @@ import { TimeAndActivitiesComponent } from './time-and-activities/time-and-activ
 		DailyGridModule,
 		DailyStatisticsModule,
 		SharedModule,
-		GauzyFiltersModule
+		i4netFiltersModule
 	]
 })
-export class TimeAndActivitiesModule {}
+export class TimeAndActivitiesModule { }

@@ -2,7 +2,7 @@ export const PaymentsPageData = {
 	defaultPaymentMethod: 'Cash',
 	defaultAmount: 99,
 	defaultNote: 'Billable',
-	defaultProject: 'Gauzy Web Site',
+	defaultProject: 'i4net Web Site',
 	reports: 'Reports',
 	payments: 'Payments',
 	verifyAmount: '$99.00',

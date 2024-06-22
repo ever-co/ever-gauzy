@@ -11,7 +11,7 @@ import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService 
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	IChartData,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
@@ -31,7 +31,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -113,7 +113,7 @@ export class ExpensesReportComponent extends BaseSelectorFilterComponent impleme
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * i4net timesheet default filters
 	 *
 	 * @param filters
 	 */

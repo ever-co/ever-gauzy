@@ -2,7 +2,7 @@ import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nes
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationAICreateInput, IIntegrationTenant, IIntegrationTenantUpdateInput, IntegrationEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
-import { GauzyAIService, RequestConfigProvider } from '@gauzy/integration-ai';
+import { i4netAIService, RequestConfigProvider } from '@gauzy/integration-ai';
 import { RequestContext } from '../../core/context';
 import { arrayToObject } from '../../core/utils';
 import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
@@ -16,13 +16,13 @@ export class IntegrationAIService {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _requestConfigProvider: RequestConfigProvider,
-		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _gauzyAIService: i4netAIService,
 		private readonly _integrationService: IntegrationService,
 		private readonly _integrationTenantService: IntegrationTenantService
 	) { }
 
 	/**
-	 * Creates a new integration tenant for Gauzy AI.
+	 * Creates a new integration tenant for i4net AI.
 	 * @param input - The input data for creating the integration tenant.
 	 * @returns A promise that resolves to the created integration tenant.
 	 */
@@ -37,10 +37,10 @@ export class IntegrationAIService {
 			const tenantId = RequestContext.currentTenantId();
 			const organizationId = input.organizationId;
 
-			// Retrieve Gauzy AI integration from the database
+			// Retrieve i4net AI integration from the database
 			const integration = await this._integrationService.findOneByOptions({
 				where: {
-					provider: IntegrationEnum.GAUZY_AI,
+					provider: IntegrationEnum.i4net_AI,
 					isActive: true,
 					isArchived: false
 				}
@@ -57,15 +57,15 @@ export class IntegrationAIService {
 			const createdIntegration: IIntegrationTenant = await this._commandBus.execute(
 				new IntegrationTenantUpdateOrCreateCommand(
 					{
-						name: IntegrationEnum.GAUZY_AI,
+						name: IntegrationEnum.i4net_AI,
 						integration: {
-							provider: IntegrationEnum.GAUZY_AI
+							provider: IntegrationEnum.i4net_AI
 						},
 						tenantId,
 						organizationId,
 					},
 					{
-						name: IntegrationEnum.GAUZY_AI,
+						name: IntegrationEnum.i4net_AI,
 						integration,
 						organizationId,
 						tenantId,
@@ -112,7 +112,7 @@ export class IntegrationAIService {
 			return createdIntegration;
 		} catch (error) {
 			// Handle errors and throw an HTTP exception with a specific message
-			throw new HttpException(`Failed to add Gauzy AI integration`, HttpStatus.BAD_REQUEST);
+			throw new HttpException(`Failed to add i4net AI integration`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -128,7 +128,7 @@ export class IntegrationAIService {
 		input: IIntegrationTenantUpdateInput
 	): Promise<IIntegrationTenant> {
 		try {
-			// Retrieve Gauzy AI integration from the database
+			// Retrieve i4net AI integration from the database
 			const integration = await this._integrationTenantService.findOneByIdString(integrationId, {
 				relations: {
 					settings: true
@@ -159,7 +159,7 @@ export class IntegrationAIService {
 
 	/**
 	 * Updates a tenant's API key by configuring the necessary parameters,
-	 * triggering the update in the Gauzy AI service, and handling any potential errors in a robust manner.
+	 * triggering the update in the i4net AI service, and handling any potential errors in a robust manner.
 	 */
 	async updateOneTenantApiKey({
 		apiKey,
@@ -176,7 +176,7 @@ export class IntegrationAIService {
 				...(isNotEmpty(openAiOrganizationId) && { openAiOrganizationId }),
 			});
 
-			// Update Gauzy AI service with the new API key
+			// Update i4net AI service with the new API key
 			await this._gauzyAIService.updateOneTenantApiKey({
 				apiKey,
 				apiSecret,

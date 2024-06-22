@@ -18,7 +18,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	PaginationModule,
 	SharedModule,
@@ -53,10 +53,10 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbSpinnerModule,
 		I18nTranslateModule.forChild(),
 		PaginationModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []
 })
-export class DocumentsModule {}
+export class DocumentsModule { }

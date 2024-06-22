@@ -73,7 +73,7 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Get header selectors request and Gauzy timesheet filters request.
+	 * Get header selectors request and i4net timesheet filters request.
 	 */
 	prepareRequest(): void {
 		if (isEmpty(this.request) || isEmpty(this.filters)) {
@@ -91,7 +91,7 @@ export class AmountsOwedGridComponent extends BaseSelectorFilterComponent implem
 	}
 
 	/**
-	 * Updates Gauzy timesheet default filters and notifies subscribers about the change.
+	 * Updates i4net timesheet default filters and notifies subscribers about the change.
 	 *
 	 * @param filters - An object representing time log filters (ITimeLogFilters).
 	 */

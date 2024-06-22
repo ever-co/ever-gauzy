@@ -4,7 +4,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import {
 	DailyStatisticsModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	NoDataMessageModule,
 	SharedModule
@@ -24,9 +24,9 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		NbBadgeModule,
 		NoDataMessageModule
 	]
 })
-export class WeeklyTimeReportsModule {}
+export class WeeklyTimeReportsModule { }

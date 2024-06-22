@@ -1,12 +1,12 @@
 /**
  * @description
- * Current version of the Gauzy Desktop Application.
+ * Current version of the i4net Desktop Application.
  *
  * @example
  * ```
  * import { version } from './version';
  *
- * console.log('Gauzy Desktop Application Version:', version);
+ * console.log('i4net Desktop Application Version:', version);
  * ```
  *
  * @since 0.1.0

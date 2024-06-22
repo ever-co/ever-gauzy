@@ -6,7 +6,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	ContactSelectModule,
 	CurrencyModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	PaymentReportGridModule,
 	SharedModule
@@ -28,9 +28,9 @@ import { PaymentReportComponent } from './payment-report/payment-report.componen
 		FormsModule,
 		LineChartModule,
 		PaymentReportGridModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		ContactSelectModule,
 		CurrencyModule
 	]
 })
-export class PaymentReportModule {}
+export class PaymentReportModule { }

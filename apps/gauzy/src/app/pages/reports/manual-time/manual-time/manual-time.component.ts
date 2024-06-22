@@ -9,7 +9,7 @@ import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { chain } from 'underscore';
 import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -32,7 +32,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	ManualTimeLogAction: typeof ManualTimeLogAction = ManualTimeLogAction;
 	actions: string[] = Object.values(ManualTimeLogAction);
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
@@ -100,7 +100,7 @@ export class ManualTimeComponent extends BaseSelectorFilterComponent implements 
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * i4net timesheet default filters
 	 *
 	 * @param filters
 	 */

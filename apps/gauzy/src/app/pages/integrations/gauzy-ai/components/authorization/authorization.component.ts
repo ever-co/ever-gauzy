@@ -5,7 +5,7 @@ import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { HttpStatus, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, GauzyAIService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, i4netAIService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
 import { ReplacePipe } from '@gauzy/ui-core/shared';
 
@@ -16,13 +16,13 @@ import { ReplacePipe } from '@gauzy/ui-core/shared';
 	styleUrls: ['./authorization.component.scss'],
 	providers: []
 })
-export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
+export class i4netAIAuthorizationComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
 
 	/**
 	 * The form property is a readonly FormGroup that is built using the buildForm static method.
 	 */
-	readonly form: UntypedFormGroup = GauzyAIAuthorizationComponent.buildForm(this._formBuilder);
+	readonly form: UntypedFormGroup = i4netAIAuthorizationComponent.buildForm(this._formBuilder);
 
 	/**
 	 * Static method to build the Angular FormGroup using the FormBuilder.
@@ -46,18 +46,18 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _store: Store,
-		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _gauzyAIService: i4netAIService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _replacePipe: ReplacePipe
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this._activatedRoute.data
 			.pipe(
 				tap(({ integration }: Data) => {
 					if (integration) {
-						this._redirectToGauzyAIIntegration(integration.id);
+						this._redirectToi4netAIIntegration(integration.id);
 					}
 				}),
 				untilDestroyed(this) // Ensure that subscriptions are automatically unsubscribed on component destruction.
@@ -95,12 +95,12 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 		});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	/**
-	 * Gauzy AI integration remember state API call
+	 * i4net AI integration remember state API call
 	 */
-	private _redirectToGauzyAIIntegration(integrationId: string) {
+	private _redirectToi4netAIIntegration(integrationId: string) {
 		this._router.navigate(['pages/integrations/gauzy-ai', integrationId]);
 	}
 
@@ -150,9 +150,9 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 							});
 						}
 					}),
-					// Redirect to the Gauzy AI integration after creation
+					// Redirect to the i4net AI integration after creation
 					tap((integration: IIntegrationTenant) => {
-						this._redirectToGauzyAIIntegration(integration.id);
+						this._redirectToi4netAIIntegration(integration.id);
 					}),
 					// Catch and handle errors
 					catchError((error) => {
@@ -167,7 +167,7 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 				.subscribe();
 		} catch (error) {
 			// Log any errors that occur during the process
-			console.log('Error while creating new integration for Gauzy AI', error);
+			console.log('Error while creating new integration for i4net AI', error);
 		}
 	}
 

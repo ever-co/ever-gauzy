@@ -20,7 +20,7 @@ import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	PaginationV2Module,
 	ProjectSelectModule,
@@ -58,10 +58,10 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
 		PaginationV2Module,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		ImageUploaderModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],
 	providers: [OrganizationTeamsService]
 })
-export class TeamsModule {}
+export class TeamsModule { }

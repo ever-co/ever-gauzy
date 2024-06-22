@@ -1,16 +1,16 @@
 {
-	"name": "gauzy-server",
-	"productName": "Ever Gauzy Server",
+	"name": "i4net-server",
+	"productName": "i4net Server",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Server",
+	"description": "i4net Server",
 	"license": "AGPL-3.0",
-	"homepage": "https://gauzy.co",
+	"homepage": "https://i4net.co.il",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/i4net/i4net.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/i4net/i4net/issues"
 	},
 	"private": true,
 	"author": {
@@ -45,9 +45,9 @@
 		]
 	},
 	"build": {
-		"appId": "com.ever.gauzyserver",
+		"appId": "com.i4net.i4netserver",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Ever Gauzy Server",
+		"productName": "i4net Server",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"dmg": {
 			"sign": false
@@ -67,14 +67,14 @@
 		"publish": [
 			{
 				"provider": "github",
-				"repo": "ever-gauzy-server",
+				"repo": "i4net-server",
 				"releaseType": "release"
 			},
 			{
 				"provider": "spaces",
 				"name": "ever",
 				"region": "sfo3",
-				"path": "/ever-gauzy-server",
+				"path": "/i4net-server",
 				"acl": "public-read"
 			}
 		],
@@ -113,7 +113,7 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy-server",
+			"executableName": "i4net-server",
 			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Server",
 			"category": "Development"

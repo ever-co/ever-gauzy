@@ -20,7 +20,7 @@ import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	DirectivesModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
 	PaginationV2Module,
@@ -71,7 +71,7 @@ import {
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		CardGridModule,
 		PaginationV2Module,
 		DirectivesModule
@@ -85,4 +85,4 @@ import {
 	],
 	providers: [OrganizationEmploymentTypesService]
 })
-export class OrganizationsModule {}
+export class OrganizationsModule { }

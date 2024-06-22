@@ -7,7 +7,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DailyStatisticsModule,
 	GalleryModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	NoDataMessageModule,
 	ScreenshotsItemModule,
 	SharedModule,
@@ -34,9 +34,9 @@ import { ScreenshotComponent } from './screenshot/screenshot.component';
 		ReactiveFormsModule,
 		ScreenshotsItemModule,
 		GalleryModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		DailyStatisticsModule,
 		NoDataMessageModule
 	]
 })
-export class ScreenshotModule {}
+export class ScreenshotModule { }

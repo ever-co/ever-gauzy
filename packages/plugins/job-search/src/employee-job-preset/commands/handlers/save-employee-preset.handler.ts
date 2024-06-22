@@ -1,6 +1,6 @@
 import { In } from 'typeorm';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import { TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
@@ -15,7 +15,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		private readonly _typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 		private readonly _typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-		private readonly _gauzyAIService: GauzyAIService
+		private readonly _gauzyAIService: i4netAIService
 	) { }
 
 	/**
@@ -55,8 +55,8 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Save new employee job search criteria
 		await this._typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(employeeCriterions);
 
-		// Sync Gauzy employee job search criteria
-		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, employeeCriterions);
+		// Sync i4net employee job search criteria
+		this._gauzyAIService.synci4netEmployeeJobSearchCriteria(employee, employeeCriterions);
 
 		// Find the employee with related data
 		employee = await this._typeOrmEmployeeRepository.findOne({

@@ -19,7 +19,7 @@ import { ReplacePipe } from '@gauzy/ui-core/shared';
 import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
 import {
-	GauzyAIService,
+	i4netAIService,
 	IntegrationEntitySettingService,
 	IntegrationEntitySettingServiceStoreService
 } from '@gauzy/ui-core/core';
@@ -31,7 +31,7 @@ import { SettingTitlesEnum } from '../integration-setting-card/integration-setti
 	templateUrl: './view.component.html',
 	providers: [TitleCasePipe]
 })
-export class GauzyAIViewComponent extends TranslationBaseComponent implements OnInit {
+export class i4netAIViewComponent extends TranslationBaseComponent implements OnInit {
 	public organization: IOrganization;
 	public organization$: Observable<IOrganization>; // Observable to hold the selected organization
 	public settings$: Observable<IIntegrationSetting[]>;
@@ -49,7 +49,7 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		private readonly _toastrService: ToastrService,
 		private readonly _integrationEntitySettingService: IntegrationEntitySettingService,
 		private readonly _integrationEntitySettingServiceStoreService: IntegrationEntitySettingServiceStoreService,
-		private readonly _gauzyAIService: GauzyAIService,
+		private readonly _gauzyAIService: i4netAIService,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
@@ -186,9 +186,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 
 					// Display a success toast message using the _toastrService.
 					if (messageKey) {
-						successMessageKey = `INTEGRATIONS.GAUZY_AI_PAGE.MESSAGE.${messageKey}_${
-							sync ? 'ENABLED' : 'DISABLED'
-						}`;
+						successMessageKey = `INTEGRATIONS.i4net_AI_PAGE.MESSAGE.${messageKey}_${sync ? 'ENABLED' : 'DISABLED'
+							}`;
 						this._toastrService.success(
 							this.getTranslation(successMessageKey),
 							this.getTranslation('TOASTR.TITLE.SUCCESS')

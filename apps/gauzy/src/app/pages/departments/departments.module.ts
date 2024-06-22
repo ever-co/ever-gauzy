@@ -21,7 +21,7 @@ import {
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
@@ -59,10 +59,10 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		PaginationV2Module,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		TableComponentsModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationDepartmentsService]
 })
-export class DepartmentsModule {}
+export class DepartmentsModule { }

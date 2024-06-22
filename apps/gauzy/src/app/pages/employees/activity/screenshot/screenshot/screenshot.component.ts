@@ -24,7 +24,7 @@ import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,
 	GalleryService,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
 
@@ -47,7 +47,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 	allSelected = false;
 	originalTimeSlots: ITimeSlot[] = [];
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(

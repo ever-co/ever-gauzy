@@ -67,7 +67,7 @@ import * as Sentry from '@sentry/electron';
 remoteMain.initialize();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-// C:\Users\USERNAME\AppData\Roaming\gauzy-server
+// C:\Users\USERNAME\AppData\Roaming\i4net-server
 
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
@@ -380,7 +380,7 @@ const contextMenu = () => {
 			id: 'server_help',
 			label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 			click() {
-				shell.openExternal('https://gauzy.co');
+				shell.openExternal('https://i4net.co.il');
 			}
 		},
 		{
@@ -410,7 +410,7 @@ ipcMain.on('start_server', async (event, arg) => {
 });
 
 ipcMain.on('run_gauzy_server', async (event, arg) => {
-	console.log('Run Gauzy Server Event Handler');
+	console.log('Run i4net Server Event Handler');
 	await runServer();
 });
 
@@ -419,7 +419,7 @@ const stopServer = () => {
 };
 
 ipcMain.on('stop_gauzy_server', (event, arg) => {
-	console.log('Stop Gauzy Server Event Handler');
+	console.log('Stop i4net Server Event Handler');
 	stopServer();
 });
 

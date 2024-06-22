@@ -1,16 +1,16 @@
 {
-	"name": "gauzy-desktop-timer",
-	"productName": "Gauzy Desktop Timer",
+	"name": "i4net-desktop-timer",
+	"productName": "i4net Desktop Timer",
 	"version": "0.1.0",
-	"description": "Gauzy Desktop Timer",
+	"description": "i4net Desktop Timer",
 	"license": "AGPL-3.0",
-	"homepage": "https://gauzy.co",
+	"homepage": "https://i4net.co.il",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy.git"
+		"url": "https://github.com/i4net/i4net.git"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/i4net/i4net/issues"
 	},
 	"private": true,
 	"author": {
@@ -28,9 +28,9 @@
 		]
 	},
 	"build": {
-		"appId": "com.ever.gauzydesktoptimer",
+		"appId": "com.i4net.i4netdesktoptimer",
 		"artifactName": "${name}-${version}.${ext}",
-		"productName": "Gauzy Desktop Timer",
+		"productName": "i4net Desktop Timer",
 		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
 		"afterSign": "tools/notarize.js",
 		"dmg": {
@@ -52,14 +52,14 @@
 		"publish": [
 			{
 				"provider": "github",
-				"repo": "ever-gauzy-desktop-timer",
+				"repo": "i4net-desktop-timer",
 				"releaseType": "release"
 			},
 			{
 				"provider": "spaces",
 				"name": "ever",
 				"region": "sfo3",
-				"path": "/ever-gauzy-desktop-timer",
+				"path": "/i4net-desktop-timer",
 				"acl": "public-read"
 			}
 		],
@@ -78,7 +78,7 @@
 			"entitlementsInherit": "tools/build/entitlements.mas.plist",
 			"extendInfo": {
 				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup.",
-				"NSCameraUsageDescription": "Please allow access to Gauzy Desktop Timer to make screenshot"
+				"NSCameraUsageDescription": "Please allow access to i4net Desktop Timer to make screenshot"
 			}
 		},
 		"win": {
@@ -101,7 +101,7 @@
 				"deb",
 				"tar.gz"
 			],
-			"executableName": "gauzy-desktop-timer",
+			"executableName": "i4net-desktop-timer",
 			"artifactName": "${name}-${version}.${ext}",
 			"synopsis": "Desktop",
 			"category": "Development"

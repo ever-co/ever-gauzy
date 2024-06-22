@@ -44,8 +44,8 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		Github: {
 			description: this.getTranslation('INTEGRATIONS.GITHUB_PAGE.DESCRIPTION')
 		},
-		Gauzy_AI: {
-			description: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.DESCRIPTION')
+		i4net_AI: {
+			description: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.DESCRIPTION')
 		},
 		Hubstaff: {
 			description: this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.DESCRIPTION')
@@ -186,7 +186,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 				tap(() => this.subject$.next(true)),
 				//
 				tap((integration: IIntegrationTenant) => {
-					if (integration.name === IntegrationEnum.GAUZY_AI) {
+					if (integration.name === IntegrationEnum.i4net_AI) {
 						this.updateAIJobMatchingEntity();
 					}
 				}),
@@ -214,7 +214,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 		const integration$ = this._integrationsService.getIntegrationByOptions({
 			organizationId,
 			tenantId,
-			name: IntegrationEnum.GAUZY_AI,
+			name: IntegrationEnum.i4net_AI,
 			relations: ['entitySettings']
 		});
 
@@ -249,7 +249,7 @@ export class IntegrationListComponent extends TranslationBaseComponent implement
 					this.showDeletionSuccessMessage(integration);
 					this.subject$.next(true);
 
-					if (integration.name === IntegrationEnum.GAUZY_AI) {
+					if (integration.name === IntegrationEnum.i4net_AI) {
 						this.updateAIJobMatchingEntity();
 					}
 				}),

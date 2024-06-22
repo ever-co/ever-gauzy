@@ -46,15 +46,15 @@ export const DEFAULT_SYSTEM_INTEGRATIONS = [
  */
 export const DEFAULT_AI_INTEGRATIONS = [
     {
-        name: 'Gauzy AI',
+        name: 'i4net AI',
         imgSrc: 'gauzy-ai.svg',
         isComingSoon: false,
         integrationTypesMap: <string[]>[
             IntegrationTypeEnum.ALL_INTEGRATIONS
         ],
         order: 3,
-        redirectUrl: sluggable(IntegrationEnum.GAUZY_AI),
-        provider: IntegrationEnum.GAUZY_AI
+        redirectUrl: sluggable(IntegrationEnum.i4net_AI),
+        provider: IntegrationEnum.i4net_AI
     },
 ];
 

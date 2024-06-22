@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { SprintStoreService, TasksStoreService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
-import { GauzyEditableGridComponent } from '@gauzy/ui-core/shared';
+import { i4netEditableGridComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +16,7 @@ import { GauzyEditableGridComponent } from '@gauzy/ui-core/shared';
 	templateUrl: './tasks-sprint-view.component.html',
 	styleUrls: ['./tasks-sprint-view.component.scss']
 })
-export class TasksSprintViewComponent extends GauzyEditableGridComponent<ITask> implements OnInit, OnChanges {
+export class TasksSprintViewComponent extends i4netEditableGridComponent<ITask> implements OnInit, OnChanges {
 	sprints: IOrganizationSprint[] = [];
 	backlogTasks: ITask[] = [];
 

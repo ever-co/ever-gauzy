@@ -2,7 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { GauzyAIModule } from '@gauzy/integration-ai';
+import { i4netAIModule } from '@gauzy/integration-ai';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotController } from './screenshot.controller';
@@ -18,7 +18,7 @@ import { CommandHandlers } from './commands/handlers';
 	imports: [
 		TypeOrmModule.forFeature([Screenshot]),
 		MikroOrmModule.forFeature([Screenshot]),
-		GauzyAIModule.forRoot(),
+		i4netAIModule.forRoot(),
 		RolePermissionModule,
 		forwardRef(() => TimeSlotModule),
 		IntegrationTenantModule,

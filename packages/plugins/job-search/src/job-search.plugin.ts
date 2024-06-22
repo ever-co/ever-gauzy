@@ -1,6 +1,6 @@
 
 import * as chalk from 'chalk';
-import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
+import { i4netCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { SeederModule } from '@gauzy/core';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { EmployeeJobPostModule } from './employee-job/employee-job.module';

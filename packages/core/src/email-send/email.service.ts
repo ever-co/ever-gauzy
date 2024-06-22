@@ -1095,7 +1095,7 @@ export class EmailService {
 		// 	}
 		// });
 		const info = await transporter.sendMail({
-			from: 'Gauzy',
+			from: 'i4net',
 			to: user.email,
 			subject: 'Forgotten Password',
 			text: 'Forgot Password',

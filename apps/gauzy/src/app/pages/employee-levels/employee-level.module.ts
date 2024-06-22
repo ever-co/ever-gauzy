@@ -16,7 +16,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
@@ -47,11 +47,11 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule,
 		NbSpinnerModule
 	],
 	declarations: [EmployeeLevelComponent],
 	providers: []
 })
-export class EmployeeLevelModule {}
+export class EmployeeLevelModule { }

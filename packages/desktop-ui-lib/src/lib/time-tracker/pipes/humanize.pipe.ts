@@ -1,5 +1,3 @@
-// Copyright (c) 2019-2023 Ever Co. LTD
-
 // Modified code from https://github.com/urish/ngx-moment.
 // Originally MIT Licensed
 // - see https://github.com/urish/ngx-moment/blob/master/LICENSE

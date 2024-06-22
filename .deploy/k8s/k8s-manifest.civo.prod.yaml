@@ -1,372 +1,371 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: gauzy-prod
+spec:
+  selector:
+    app: gauzy-prod-webapp
+  ports:
+  - name: web
+    protocol: TCP
+    port: 4200
+    targetPort: 4200
 ---
 kind: Service
 apiVersion: v1
 metadata:
-    name: gauzy-prod
+  name: gauzy-prod-api
 spec:
-    selector:
-        app: gauzy-prod-webapp
-    ports:
-        - name: web
-          protocol: TCP
-          port: 4200
-          targetPort: 4200
+  selector:
+    app: gauzy-prod-api
+  ports:
+  - name: web
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
 ---
-kind: Service
-apiVersion: v1
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-    name: gauzy-prod-api
+  name: gauzy-prod-api
 spec:
-    selector:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-prod-api
+  template:
+    metadata:
+      labels:
         app: gauzy-prod-api
-    ports:
-        - name: web
+    spec:
+      containers:
+      - name: gauzy-prod-api
+        image: ghcr.io/i4net/gauzy-api:latest
+        env:
+        - name: API_HOST
+          value: 0.0.0.0
+        - name: DEMO
+          value: 'false'
+        - name: NODE_ENV
+          value: 'production'
+        - name: ADMIN_PASSWORD_RESET
+          value: 'true'
+        - name: LOG_LEVEL
+          value: 'info'
+        - name: CLOUD_PROVIDER
+          value: '$CLOUD_PROVIDER'
+        - name: SENTRY_DSN
+          value: '$SENTRY_DSN'
+        - name: SENTRY_HTTP_TRACING_ENABLED
+          value: '$SENTRY_HTTP_TRACING_ENABLED'
+        - name: SENTRY_PROFILING_ENABLED
+          value: '$SENTRY_PROFILING_ENABLED'
+        - name: SENTRY_POSTGRES_TRACKING_ENABLED
+          value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
+        - name: API_BASE_URL
+          value: 'https://apicivo.gauzy.co'
+        - name: CLIENT_BASE_URL
+          value: 'https://appcivo.gauzy.co'
+        - name: DB_URI
+          value: '$DB_URI'
+        - name: DB_HOST
+          value: '$DB_HOST'
+        - name: DB_SSL_MODE
+          value: '$DB_SSL_MODE'
+        - name: DB_CA_CERT
+          value: '$DB_CA_CERT'
+        - name: DB_USER
+          value: '$DB_USER'
+        - name: DB_PASS
+          value: '$DB_PASS'
+        - name: DB_TYPE
+          value: '$DB_TYPE'
+        - name: DB_NAME
+          value: '$DB_NAME'
+        - name: DB_PORT
+          value: '$DB_PORT'
+        - name: DB_POOL_SIZE
+          value: '$DB_POOL_SIZE'
+        - name: DB_POOL_SIZE_KNEX
+          value: '$DB_POOL_SIZE_KNEX'
+        - name: REDIS_ENABLED
+          value: '$REDIS_ENABLED'
+        - name: REDIS_URL
+          value: '$REDIS_URL'
+        - name: AWS_ACCESS_KEY_ID
+          value: '$AWS_ACCESS_KEY_ID'
+        - name: AWS_SECRET_ACCESS_KEY
+          value: '$AWS_SECRET_ACCESS_KEY'
+        - name: AWS_REGION
+          value: '$AWS_REGION'
+        - name: AWS_S3_BUCKET
+          value: '$AWS_S3_BUCKET'
+        - name: WASABI_ACCESS_KEY_ID
+          value: '$WASABI_ACCESS_KEY_ID'
+        - name: WASABI_SECRET_ACCESS_KEY
+          value: '$WASABI_SECRET_ACCESS_KEY'
+        - name: WASABI_REGION
+          value: '$WASABI_REGION'
+        - name: WASABI_SERVICE_URL
+          value: '$WASABI_SERVICE_URL'
+        - name: WASABI_S3_BUCKET
+          value: '$WASABI_S3_BUCKET'
+        - name: WASABI_S3_FORCE_PATH_STYLE
+          value: '$WASABI_S3_FORCE_PATH_STYLE'
+        - name: DIGITALOCEAN_ACCESS_KEY_ID
+          value: '$DIGITALOCEAN_ACCESS_KEY_ID'
+        - name: DIGITALOCEAN_SECRET_ACCESS_KEY
+          value: '$DIGITALOCEAN_SECRET_ACCESS_KEY'
+        - name: DIGITALOCEAN_REGION
+          value: '$DIGITALOCEAN_REGION'
+        - name: DIGITALOCEAN_SERVICE_URL
+          value: '$DIGITALOCEAN_SERVICE_URL'
+        - name: DIGITALOCEAN_CDN_URL
+          value: '$DIGITALOCEAN_CDN_URL'
+        - name: DIGITALOCEAN_S3_BUCKET
+          value: '$DIGITALOCEAN_S3_BUCKET'
+        - name: DIGITALOCEAN_S3_FORCE_PATH_STYLE
+          value: '$DIGITALOCEAN_S3_FORCE_PATH_STYLE'
+        - name: EXPRESS_SESSION_SECRET
+          value: '$EXPRESS_SESSION_SECRET'
+        - name: JWT_SECRET
+          value: '$JWT_SECRET'
+        - name: JWT_REFRESH_TOKEN_SECRET
+          value: '$JWT_REFRESH_TOKEN_SECRET'
+        - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+          value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
+        - name: CLOUDINARY_API_KEY
+          value: '$CLOUDINARY_API_KEY'
+        - name: CLOUDINARY_API_SECRET
+          value: '$CLOUDINARY_API_SECRET'
+        - name: CLOUDINARY_CLOUD_NAME
+          value: '$CLOUDINARY_CLOUD_NAME'
+        - name: DEFAULT_CURRENCY
+          value: 'USD'
+        - name: MAIL_FROM_ADDRESS
+          value: '$MAIL_FROM_ADDRESS'
+        - name: MAIL_HOST
+          value: '$MAIL_HOST'
+        - name: MAIL_PORT
+          value: '$MAIL_PORT'
+        - name: MAIL_USERNAME
+          value: '$MAIL_USERNAME'
+        - name: MAIL_PASSWORD
+          value: '$MAIL_PASSWORD'
+        - name: ALLOW_SUPER_ADMIN_ROLE
+          value: '$ALLOW_SUPER_ADMIN_ROLE'
+        - name: GOOGLE_CLIENT_ID
+          value: '$GOOGLE_CLIENT_ID'
+        - name: GOOGLE_CLIENT_SECRET
+          value: '$GOOGLE_CLIENT_SECRET'
+        - name: GOOGLE_CALLBACK_URL
+          value: '$GOOGLE_CALLBACK_URL'
+        - name: FACEBOOK_CLIENT_ID
+          value: '$FACEBOOK_CLIENT_ID'
+        - name: FACEBOOK_CLIENT_SECRET
+          value: '$FACEBOOK_CLIENT_SECRET'
+        - name: FACEBOOK_GRAPH_VERSION
+          value: '$FACEBOOK_GRAPH_VERSION'
+        - name: FACEBOOK_CALLBACK_URL
+          value: '$FACEBOOK_CALLBACK_URL'
+        - name: INTEGRATED_USER_DEFAULT_PASS
+          value: '$INTEGRATED_USER_DEFAULT_PASS'
+        - name: UPWORK_REDIRECT_URL
+          value: '$UPWORK_REDIRECT_URL'
+        - name: FILE_PROVIDER
+          value: '$FILE_PROVIDER'
+        - name: I4NET_AI_GRAPHQL_ENDPOINT
+          value: '$I4NET_AI_GRAPHQL_ENDPOINT'
+        - name: I4NET_AI_REST_ENDPOINT
+          value: '$I4NET_AI_REST_ENDPOINT'
+        - name: UNLEASH_APP_NAME
+          value: '$UNLEASH_APP_NAME'
+        - name: UNLEASH_API_URL
+          value: '$UNLEASH_API_URL'
+        - name: UNLEASH_INSTANCE_ID
+          value: '$UNLEASH_INSTANCE_ID'
+        - name: UNLEASH_REFRESH_INTERVAL
+          value: '$UNLEASH_REFRESH_INTERVAL'
+        - name: UNLEASH_METRICS_INTERVAL
+          value: '$UNLEASH_METRICS_INTERVAL'
+        - name: UNLEASH_API_KEY
+          value: '$UNLEASH_API_KEY'
+        - name: PM2_PUBLIC_KEY
+          value: '$PM2_PUBLIC_KEY'
+        - name: PM2_SECRET_KEY
+          value: '$PM2_SECRET_KEY'
+        - name: PM2_MACHINE_NAME
+          value: '$PM2_MACHINE_NAME'
+        - name: JITSU_SERVER_URL
+          value: '$JITSU_SERVER_URL'
+        - name: JITSU_SERVER_WRITE_KEY
+          value: '$JITSU_SERVER_WRITE_KEY'
+        - name: OTEL_ENABLED
+          value: '$OTEL_ENABLED'
+        - name: OTEL_PROVIDER
+          value: '$OTEL_PROVIDER'
+        - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          value: '$OTEL_EXPORTER_OTLP_HEADERS'
+        - name: I4NET_GITHUB_CLIENT_ID
+          value: '$I4NET_GITHUB_CLIENT_ID'
+        - name: I4NET_GITHUB_CLIENT_SECRET
+          value: '$I4NET_GITHUB_CLIENT_SECRET'
+        - name: I4NET_GITHUB_WEBHOOK_URL
+          value: '$I4NET_GITHUB_WEBHOOK_URL'
+        - name: I4NET_GITHUB_WEBHOOK_SECRET
+          value: '$I4NET_GITHUB_WEBHOOK_SECRET'
+        - name: I4NET_GITHUB_APP_PRIVATE_KEY
+          value: '$I4NET_GITHUB_APP_PRIVATE_KEY'
+        - name: I4NET_GITHUB_APP_ID
+          value: '$I4NET_GITHUB_APP_ID'
+        - name: I4NET_GITHUB_APP_NAME
+          value: '$I4NET_GITHUB_APP_NAME'
+        - name: I4NET_GITHUB_POST_INSTALL_URL
+          value: '$I4NET_GITHUB_POST_INSTALL_URL'
+        - name: I4NET_GITHUB_OAUTH_CLIENT_ID
+          value: '$I4NET_GITHUB_OAUTH_CLIENT_ID'
+        - name: I4NET_GITHUB_OAUTH_CLIENT_SECRET
+          value: '$I4NET_GITHUB_OAUTH_CLIENT_SECRET'
+        - name: I4NET_GITHUB_OAUTH_CALLBACK_URL
+          value: '$I4NET_GITHUB_OAUTH_CALLBACK_URL'
+        - name: MAGIC_CODE_EXPIRATION_TIME
+          value: '$MAGIC_CODE_EXPIRATION_TIME'
+        - name: APP_NAME
+          value: '$APP_NAME'
+        - name: APP_LOGO
+          value: '$APP_LOGO'
+        - name: APP_SIGNATURE
+          value: '$APP_SIGNATURE'
+        - name: APP_LINK
+          value: '$APP_LINK'
+        - name: APP_EMAIL_CONFIRMATION_URL
+          value: '$APP_EMAIL_CONFIRMATION_URL'
+        - name: APP_MAGIC_SIGN_URL
+          value: '$APP_MAGIC_SIGN_URL'
+        - name: COMPANY_LINK
+          value: '$COMPANY_LINK'
+        - name: COMPANY_NAME
+          value: '$COMPANY_NAME'
+
+        ports:
+        - containerPort: 3000
           protocol: TCP
-          port: 3000
-          targetPort: 3000
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: gauzy-prod-api
+  name: gauzy-prod-webapp
 spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: gauzy-prod-api
-    template:
-        metadata:
-            labels:
-                app: gauzy-prod-api
-        spec:
-            containers:
-                - name: gauzy-prod-api
-                  image: ghcr.io/ever-co/gauzy-api:latest
-                  env:
-                      - name: API_HOST
-                        value: 0.0.0.0
-                      - name: DEMO
-                        value: 'false'
-                      - name: NODE_ENV
-                        value: 'production'
-                      - name: ADMIN_PASSWORD_RESET
-                        value: 'true'
-                      - name: LOG_LEVEL
-                        value: 'info'
-                      - name: CLOUD_PROVIDER
-                        value: '$CLOUD_PROVIDER'
-                      - name: SENTRY_DSN
-                        value: '$SENTRY_DSN'
-                      - name: SENTRY_HTTP_TRACING_ENABLED
-                        value: '$SENTRY_HTTP_TRACING_ENABLED'
-                      - name: SENTRY_PROFILING_ENABLED
-                        value: '$SENTRY_PROFILING_ENABLED'
-                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
-                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
-                      - name: API_BASE_URL
-                        value: 'https://apicivo.gauzy.co'
-                      - name: CLIENT_BASE_URL
-                        value: 'https://appcivo.gauzy.co'
-                      - name: DB_URI
-                        value: '$DB_URI'
-                      - name: DB_HOST
-                        value: '$DB_HOST'
-                      - name: DB_SSL_MODE
-                        value: '$DB_SSL_MODE'
-                      - name: DB_CA_CERT
-                        value: '$DB_CA_CERT'
-                      - name: DB_USER
-                        value: '$DB_USER'
-                      - name: DB_PASS
-                        value: '$DB_PASS'
-                      - name: DB_TYPE
-                        value: '$DB_TYPE'
-                      - name: DB_NAME
-                        value: '$DB_NAME'
-                      - name: DB_PORT
-                        value: '$DB_PORT'
-                      - name: DB_POOL_SIZE
-                        value: '$DB_POOL_SIZE'
-                      - name: DB_POOL_SIZE_KNEX
-                        value: '$DB_POOL_SIZE_KNEX'
-                      - name: REDIS_ENABLED
-                        value: '$REDIS_ENABLED'
-                      - name: REDIS_URL
-                        value: '$REDIS_URL'
-                      - name: AWS_ACCESS_KEY_ID
-                        value: '$AWS_ACCESS_KEY_ID'
-                      - name: AWS_SECRET_ACCESS_KEY
-                        value: '$AWS_SECRET_ACCESS_KEY'
-                      - name: AWS_REGION
-                        value: '$AWS_REGION'
-                      - name: AWS_S3_BUCKET
-                        value: '$AWS_S3_BUCKET'
-                      - name: WASABI_ACCESS_KEY_ID
-                        value: '$WASABI_ACCESS_KEY_ID'
-                      - name: WASABI_SECRET_ACCESS_KEY
-                        value: '$WASABI_SECRET_ACCESS_KEY'
-                      - name: WASABI_REGION
-                        value: '$WASABI_REGION'
-                      - name: WASABI_SERVICE_URL
-                        value: '$WASABI_SERVICE_URL'
-                      - name: WASABI_S3_BUCKET
-                        value: '$WASABI_S3_BUCKET'
-                      - name: WASABI_S3_FORCE_PATH_STYLE
-                        value: '$WASABI_S3_FORCE_PATH_STYLE'
-                      - name: DIGITALOCEAN_ACCESS_KEY_ID
-                        value: '$DIGITALOCEAN_ACCESS_KEY_ID'
-                      - name: DIGITALOCEAN_SECRET_ACCESS_KEY
-                        value: '$DIGITALOCEAN_SECRET_ACCESS_KEY'
-                      - name: DIGITALOCEAN_REGION
-                        value: '$DIGITALOCEAN_REGION'
-                      - name: DIGITALOCEAN_SERVICE_URL
-                        value: '$DIGITALOCEAN_SERVICE_URL'
-                      - name: DIGITALOCEAN_CDN_URL
-                        value: '$DIGITALOCEAN_CDN_URL'
-                      - name: DIGITALOCEAN_S3_BUCKET
-                        value: '$DIGITALOCEAN_S3_BUCKET'
-                      - name: DIGITALOCEAN_S3_FORCE_PATH_STYLE
-                        value: '$DIGITALOCEAN_S3_FORCE_PATH_STYLE'
-                      - name: EXPRESS_SESSION_SECRET
-                        value: '$EXPRESS_SESSION_SECRET'
-                      - name: JWT_SECRET
-                        value: '$JWT_SECRET'
-                      - name: JWT_REFRESH_TOKEN_SECRET
-                        value: '$JWT_REFRESH_TOKEN_SECRET'
-                      - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
-                        value: '$JWT_REFRESH_TOKEN_EXPIRATION_TIME'
-                      - name: CLOUDINARY_API_KEY
-                        value: '$CLOUDINARY_API_KEY'
-                      - name: CLOUDINARY_API_SECRET
-                        value: '$CLOUDINARY_API_SECRET'
-                      - name: CLOUDINARY_CLOUD_NAME
-                        value: '$CLOUDINARY_CLOUD_NAME'
-                      - name: DEFAULT_CURRENCY
-                        value: 'USD'
-                      - name: MAIL_FROM_ADDRESS
-                        value: '$MAIL_FROM_ADDRESS'
-                      - name: MAIL_HOST
-                        value: '$MAIL_HOST'
-                      - name: MAIL_PORT
-                        value: '$MAIL_PORT'
-                      - name: MAIL_USERNAME
-                        value: '$MAIL_USERNAME'
-                      - name: MAIL_PASSWORD
-                        value: '$MAIL_PASSWORD'
-                      - name: ALLOW_SUPER_ADMIN_ROLE
-                        value: '$ALLOW_SUPER_ADMIN_ROLE'
-                      - name: GOOGLE_CLIENT_ID
-                        value: '$GOOGLE_CLIENT_ID'
-                      - name: GOOGLE_CLIENT_SECRET
-                        value: '$GOOGLE_CLIENT_SECRET'
-                      - name: GOOGLE_CALLBACK_URL
-                        value: '$GOOGLE_CALLBACK_URL'
-                      - name: FACEBOOK_CLIENT_ID
-                        value: '$FACEBOOK_CLIENT_ID'
-                      - name: FACEBOOK_CLIENT_SECRET
-                        value: '$FACEBOOK_CLIENT_SECRET'
-                      - name: FACEBOOK_GRAPH_VERSION
-                        value: '$FACEBOOK_GRAPH_VERSION'
-                      - name: FACEBOOK_CALLBACK_URL
-                        value: '$FACEBOOK_CALLBACK_URL'
-                      - name: INTEGRATED_USER_DEFAULT_PASS
-                        value: '$INTEGRATED_USER_DEFAULT_PASS'
-                      - name: UPWORK_REDIRECT_URL
-                        value: '$UPWORK_REDIRECT_URL'
-                      - name: FILE_PROVIDER
-                        value: '$FILE_PROVIDER'
-                      - name: GAUZY_AI_GRAPHQL_ENDPOINT
-                        value: '$GAUZY_AI_GRAPHQL_ENDPOINT'
-                      - name: GAUZY_AI_REST_ENDPOINT
-                        value: '$GAUZY_AI_REST_ENDPOINT'
-                      - name: UNLEASH_APP_NAME
-                        value: '$UNLEASH_APP_NAME'
-                      - name: UNLEASH_API_URL
-                        value: '$UNLEASH_API_URL'
-                      - name: UNLEASH_INSTANCE_ID
-                        value: '$UNLEASH_INSTANCE_ID'
-                      - name: UNLEASH_REFRESH_INTERVAL
-                        value: '$UNLEASH_REFRESH_INTERVAL'
-                      - name: UNLEASH_METRICS_INTERVAL
-                        value: '$UNLEASH_METRICS_INTERVAL'
-                      - name: UNLEASH_API_KEY
-                        value: '$UNLEASH_API_KEY'
-                      - name: PM2_PUBLIC_KEY
-                        value: '$PM2_PUBLIC_KEY'
-                      - name: PM2_SECRET_KEY
-                        value: '$PM2_SECRET_KEY'
-                      - name: PM2_MACHINE_NAME
-                        value: '$PM2_MACHINE_NAME'
-                      - name: JITSU_SERVER_URL
-                        value: '$JITSU_SERVER_URL'
-                      - name: JITSU_SERVER_WRITE_KEY
-                        value: '$JITSU_SERVER_WRITE_KEY'
-                      - name: OTEL_ENABLED
-                        value: '$OTEL_ENABLED'
-                      - name: OTEL_PROVIDER
-                        value: '$OTEL_PROVIDER'
-                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
-                      - name: OTEL_EXPORTER_OTLP_HEADERS
-                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
-                      - name: GAUZY_GITHUB_CLIENT_ID
-                        value: '$GAUZY_GITHUB_CLIENT_ID'
-                      - name: GAUZY_GITHUB_CLIENT_SECRET
-                        value: '$GAUZY_GITHUB_CLIENT_SECRET'
-                      - name: GAUZY_GITHUB_WEBHOOK_URL
-                        value: '$GAUZY_GITHUB_WEBHOOK_URL'
-                      - name: GAUZY_GITHUB_WEBHOOK_SECRET
-                        value: '$GAUZY_GITHUB_WEBHOOK_SECRET'
-                      - name: GAUZY_GITHUB_APP_PRIVATE_KEY
-                        value: '$GAUZY_GITHUB_APP_PRIVATE_KEY'
-                      - name: GAUZY_GITHUB_APP_ID
-                        value: '$GAUZY_GITHUB_APP_ID'
-                      - name: GAUZY_GITHUB_APP_NAME
-                        value: '$GAUZY_GITHUB_APP_NAME'
-                      - name: GAUZY_GITHUB_POST_INSTALL_URL
-                        value: '$GAUZY_GITHUB_POST_INSTALL_URL'
-                      - name: GAUZY_GITHUB_OAUTH_CLIENT_ID
-                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_ID'
-                      - name: GAUZY_GITHUB_OAUTH_CLIENT_SECRET
-                        value: '$GAUZY_GITHUB_OAUTH_CLIENT_SECRET'
-                      - name: GAUZY_GITHUB_OAUTH_CALLBACK_URL
-                        value: '$GAUZY_GITHUB_OAUTH_CALLBACK_URL'
-                      - name: MAGIC_CODE_EXPIRATION_TIME
-                        value: '$MAGIC_CODE_EXPIRATION_TIME'
-                      - name: APP_NAME
-                        value: '$APP_NAME'
-                      - name: APP_LOGO
-                        value: '$APP_LOGO'
-                      - name: APP_SIGNATURE
-                        value: '$APP_SIGNATURE'
-                      - name: APP_LINK
-                        value: '$APP_LINK'
-                      - name: APP_EMAIL_CONFIRMATION_URL
-                        value: '$APP_EMAIL_CONFIRMATION_URL'
-                      - name: APP_MAGIC_SIGN_URL
-                        value: '$APP_MAGIC_SIGN_URL'
-                      - name: COMPANY_LINK
-                        value: '$COMPANY_LINK'
-                      - name: COMPANY_NAME
-                        value: '$COMPANY_NAME'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-prod-webapp
+  template:
+    metadata:
+      labels:
+        app: gauzy-prod-webapp
+    spec:
+      containers:
+      - name: gauzy-prod-webapp
+        image: ghcr.io/i4net/gauzy-webapp:latest
+        env:
+        - name: DEMO
+          value: 'false'
+        - name: API_BASE_URL
+          value: 'https://apicivo.gauzy.co'
+        - name: CLIENT_BASE_URL
+          value: 'https://appcivo.gauzy.co'
+        - name: SENTRY_DSN
+          value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+        - name: CHATWOOT_SDK_TOKEN
+          value: 'fPgSSzSQoAWRuDqYyNXmpGLM'
+        - name: CLOUDINARY_API_KEY
+          value: '256868982483961'
+        - name: CLOUDINARY_CLOUD_NAME
+          value: 'dv6ezkfxg'
+        - name: GOOGLE_MAPS_API_KEY
+          value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
+        - name: GOOGLE_PLACE_AUTOCOMPLETE
+          value: 'true'
+        - name: DEFAULT_LATITUDE
+          value: '42.6459136'
+        - name: DEFAULT_LONGITUDE
+          value: '23.3332736'
+        - name: DEFAULT_CURRENCY
+          value: 'USD'
+        - name: I4NET_GITHUB_CLIENT_ID
+          value: '$I4NET_GITHUB_CLIENT_ID'
+        - name: I4NET_GITHUB_APP_NAME
+          value: '$I4NET_GITHUB_APP_NAME'
+        - name: I4NET_GITHUB_REDIRECT_URL
+          value: '$I4NET_GITHUB_REDIRECT_URL'
+        - name: I4NET_GITHUB_POST_INSTALL_URL
+          value: '$I4NET_GITHUB_POST_INSTALL_URL'
+        - name: I4NET_GITHUB_APP_ID
+          value: '$I4NET_GITHUB_APP_ID'
+        - name: JITSU_BROWSER_URL
+          value: '$JITSU_BROWSER_URL'
+        - name: JITSU_BROWSER_WRITE_KEY
+          value: '$JITSU_BROWSER_WRITE_KEY'
 
-                  ports:
-                      - containerPort: 3000
-                        protocol: TCP
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-    name: gauzy-prod-webapp
-spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: gauzy-prod-webapp
-    template:
-        metadata:
-            labels:
-                app: gauzy-prod-webapp
-        spec:
-            containers:
-                - name: gauzy-prod-webapp
-                  image: ghcr.io/ever-co/gauzy-webapp:latest
-                  env:
-                      - name: DEMO
-                        value: 'false'
-                      - name: API_BASE_URL
-                        value: 'https://apicivo.gauzy.co'
-                      - name: CLIENT_BASE_URL
-                        value: 'https://appcivo.gauzy.co'
-                      - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
-                      - name: CHATWOOT_SDK_TOKEN
-                        value: 'fPgSSzSQoAWRuDqYyNXmpGLM'
-                      - name: CLOUDINARY_API_KEY
-                        value: '256868982483961'
-                      - name: CLOUDINARY_CLOUD_NAME
-                        value: 'dv6ezkfxg'
-                      - name: GOOGLE_MAPS_API_KEY
-                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
-                      - name: GOOGLE_PLACE_AUTOCOMPLETE
-                        value: 'true'
-                      - name: DEFAULT_LATITUDE
-                        value: '42.6459136'
-                      - name: DEFAULT_LONGITUDE
-                        value: '23.3332736'
-                      - name: DEFAULT_CURRENCY
-                        value: 'USD'
-                      - name: GAUZY_GITHUB_CLIENT_ID
-                        value: '$GAUZY_GITHUB_CLIENT_ID'
-                      - name: GAUZY_GITHUB_APP_NAME
-                        value: '$GAUZY_GITHUB_APP_NAME'
-                      - name: GAUZY_GITHUB_REDIRECT_URL
-                        value: '$GAUZY_GITHUB_REDIRECT_URL'
-                      - name: GAUZY_GITHUB_POST_INSTALL_URL
-                        value: '$GAUZY_GITHUB_POST_INSTALL_URL'
-                      - name: GAUZY_GITHUB_APP_ID
-                        value: '$GAUZY_GITHUB_APP_ID'
-                      - name: JITSU_BROWSER_URL
-                        value: '$JITSU_BROWSER_URL'
-                      - name: JITSU_BROWSER_WRITE_KEY
-                        value: '$JITSU_BROWSER_WRITE_KEY'
-
-                  ports:
-                      - containerPort: 4200
-                        protocol: TCP
+        ports:
+        - containerPort: 4200
+          protocol: TCP
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
-    name: https-redirect
+  name: https-redirect
 spec:
-    redirectScheme:
-        permanent: true
-        scheme: https
+  redirectScheme:
+    permanent: true
+    scheme: https
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: gauzy-prod
-    annotations:
-        kubernetes.io/ingress.class: traefik
+  name: gauzy-prod
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
-    rules:
-        - host: appcivo.gauzy.co
-          http:
-              paths:
-                  - backend:
-                        service:
-                            name: gauzy-prod
-                            port:
-                                number: 4200
-                    path: /
-                    pathType: Prefix
-    tls:
-        - hosts:
-              - appcivo.gauzy.co
-          secretName: appcivo.gauzy.co-tls
+  rules:
+  - host: appcivo.gauzy.co
+    http:
+      paths:
+      - backend:
+          service:
+            name: gauzy-prod
+            port:
+              number: 4200
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - appcivo.gauzy.co
+    secretName: appcivo.gauzy.co-tls
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-    name: gauzy-prod-api
-    annotations:
-        kubernetes.io/ingress.class: traefik
+  name: gauzy-prod-api
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
-    rules:
-        - host: apicivo.gauzy.co
-          http:
-              paths:
-                  - backend:
-                        service:
-                            name: gauzy-prod-api
-                            port:
-                                number: 3000
-                    path: /
-                    pathType: Prefix
-    tls:
-        - hosts:
-              - apicivo.gauzy.co
-          secretName: apicivo.gauzy.co-tls
+  rules:
+  - host: apicivo.gauzy.co
+    http:
+      paths:
+      - backend:
+          service:
+            name: gauzy-prod-api
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - apicivo.gauzy.co
+    secretName: apicivo.gauzy.co-tls

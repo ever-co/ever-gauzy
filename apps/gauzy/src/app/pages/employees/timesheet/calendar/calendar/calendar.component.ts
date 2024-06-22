@@ -27,7 +27,7 @@ import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeForma
 import {
 	BaseSelectorFilterComponent,
 	EditTimeLogModalComponent,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	TimeZoneService,
 	ViewTimeLogModalComponent,
 	dayOfWeekAsString
@@ -42,7 +42,7 @@ import {
 export class CalendarComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	@ViewChild('calendar', { static: true }) calendar: FullCalendarComponent;
 	@ViewChild('viewLogTemplate', { static: true }) viewLogTemplate: TemplateRef<any>;
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
@@ -410,5 +410,5 @@ export class CalendarComponent extends BaseSelectorFilterComponent implements On
 		return moment(endDate).diff(moment(startDate), unitOfTime) > 0;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

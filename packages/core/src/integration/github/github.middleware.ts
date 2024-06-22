@@ -37,7 +37,7 @@ export class GithubMiddleware implements NestMiddleware {
 					try {
 						// Fetch integration settings from the service
 						if (this.logging) {
-							console.log(`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+							console.log(`Getting i4net integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
 						}
 
 						const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`;
@@ -46,7 +46,7 @@ export class GithubMiddleware implements NestMiddleware {
 
 						if (!integrationTenantSettings) {
 							if (this.logging) {
-								console.log(`Gauzy integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+								console.log(`i4net integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
 							}
 
 							const fromDb = await this._integrationTenantService.findOneByIdString(integrationId, {
@@ -72,12 +72,12 @@ export class GithubMiddleware implements NestMiddleware {
 								await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
 								if (this.logging) {
-									console.log(`Gauzy integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+									console.log(`i4net integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
 								}
 							}
 						} else {
 							if (this.logging) {
-								console.log(`Gauzy integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+								console.log(`i4net integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
 							}
 						}
 

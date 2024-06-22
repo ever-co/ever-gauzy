@@ -714,7 +714,7 @@ export class UpworkService {
 		});
 
 		if (!employeeId) {
-			const employee = await this._getUpworkGauzyEmployee(
+			const employee = await this._getUpworki4netEmployee(
 				providerReferenceId,
 				integrationId,
 				organizationId,
@@ -967,7 +967,7 @@ export class UpworkService {
 		});
 	}
 
-	private async _getUpworkGauzyEmployee(
+	private async _getUpworki4netEmployee(
 		providerReferenceId: string,
 		integrationId: string,
 		organizationId: string,

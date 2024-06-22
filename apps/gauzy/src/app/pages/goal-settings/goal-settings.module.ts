@@ -25,7 +25,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	GoalCustomUnitModule,
 	GoalTemplatesModule,
 	PaginationV2Module,
@@ -61,8 +61,8 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	]
 })
-export class GoalSettingsModule {}
+export class GoalSettingsModule { }

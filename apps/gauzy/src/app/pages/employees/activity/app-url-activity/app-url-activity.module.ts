@@ -5,7 +5,7 @@ import { NbSpinnerModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { AppUrlActivityRoutingModule } from './app-url-activity-routing.module';
 import { AppUrlActivityComponent } from './app-url-activity/app-url-activity.component';
-import { ActivityItemModule, GauzyFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ActivityItemModule, i4netFiltersModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 
 @NgModule({
 	declarations: [AppUrlActivityComponent],
@@ -16,8 +16,8 @@ import { ActivityItemModule, GauzyFiltersModule, NoDataMessageModule, SharedModu
 		I18nTranslateModule.forChild(),
 		SharedModule,
 		ActivityItemModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		NoDataMessageModule
 	]
 })
-export class AppUrlActivityModule {}
+export class AppUrlActivityModule { }

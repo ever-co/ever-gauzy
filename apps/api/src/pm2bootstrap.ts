@@ -5,7 +5,7 @@ const pm2 = require('pm2');
 
 const PRIVATE_KEY = process.env.PM2_SECRET_KEY || '';
 const PUBLIC_KEY = process.env.PM2_PUBLIC_KEY || '';
-const appName = process.env.PM2_API_NAME || 'GauzyApi';
+const appName = process.env.PM2_API_NAME || 'i4netApi';
 const instances = process.env.WEB_CONCURRENCY || 1;
 const maxMemory = process.env.WEB_MEMORY || 4096;
 const port = process.env.API_PORT || 3010;

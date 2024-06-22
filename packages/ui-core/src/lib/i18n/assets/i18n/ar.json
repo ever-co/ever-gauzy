@@ -64,7 +64,7 @@
 		"TO_INVOICE": "لإصدار فاتورة",
 		"PUBLIC_APPOINTMENT_BOOK": "حجز موعد عام للجمهور",
 		"SAVE_AS_DRAFT": "حفظ كمسودة",
-		"SAVE_AND_SEND_CONTACT": "حفظ وإرسال إلى جهة الاتصال في Gauzy",
+		"SAVE_AND_SEND_CONTACT": "حفظ وإرسال إلى جهة الاتصال في i4net",
 		"SAVE_AND_SEND_EMAIL": "حفظ وإرسال عبر البريد الإلكتروني",
 		"EVENT_TYPES": "أنواع الأحداث",
 		"SEARCH": "بحث",
@@ -617,8 +617,8 @@
 			"ALL_TEAMS": "كل الفرق",
 			"UPWORK_API_KEY": "مفتاح واجهة برمجة التطبيقات لـ Upwork",
 			"UPWORK_SECRET": "سرّ أبورك",
-			"GAUZY_API_KEY": "مفتاح Gauzy AI",
-			"GAUZY_API_SECRET": "سر Gauzy AI",
+			"GAUZY_API_KEY": "مفتاح i4net AI",
+			"GAUZY_API_SECRET": "سر i4net AI",
 			"SELECT_COMPANY": "اختر الشركة",
 			"TYPE_SEARCH_REQUEST": "اكتب طلب البحث الخاص بك هنا...",
 			"SELECT_ICON": "اختر الأيقونة",
@@ -803,7 +803,7 @@
 		"POSITIONS": "الوظائف",
 		"INTEGRATIONS": "التطبيقات والتكاملات",
 		"UPWORK": "أبوورك",
-		"GAUZY_AI": "جوزي الذكاء الاصطناعي",
+		"i4net_AI": "جوزي الذكاء الاصطناعي",
 		"PROPOSALS": "مقترحات",
 		"TIME_OFF": "وقت مرتاح",
 		"APPROVALS": "الموافقات",
@@ -852,11 +852,11 @@
 			"CORRECT_FILE_NAME": "يجب أن يكون اسم الملف: \"archive.zip\"",
 			"DOWNLOAD_TEMPLATES": "تحميل القوالب",
 			"MIGRATE_TO_CLOUD": "تهاجر إلى سحابة إيفر غوزي",
-			"IMPORT_INFO": "انقر على \"استيراد\" لاستيراد بياناتك إلى قاعدة بيانات Gauzy.",
-			"EXPORT_INFO": "انقر على \"تصدير\" لتصدير البيانات من قاعدة البيانات Gauzy.",
-			"DOWNLOAD_TEMPLATES_INFO": "انقر على \"تنزيل القوالب\" لتحميل أرشيف مضغوط بتنسيق CSV يحتوي على قوالب لبيانات Gauzy.",
-			"MIGRATE_TO_CLOUD_INFO": "انقر على \"انتقل إلى Ever Gauzy Cloud\" للانتقال من الإصدار المستضاف ذاتيًا إلى الإصدار السحابي.",
-			"MIGRATE_SUCCESSFULLY": "نقل Gauzy Cloud بنجاح لـ '{{ tenant }}'!",
+			"IMPORT_INFO": "انقر على \"استيراد\" لاستيراد بياناتك إلى قاعدة بيانات i4net.",
+			"EXPORT_INFO": "انقر على \"تصدير\" لتصدير البيانات من قاعدة البيانات i4net.",
+			"DOWNLOAD_TEMPLATES_INFO": "انقر على \"تنزيل القوالب\" لتحميل أرشيف مضغوط بتنسيق CSV يحتوي على قوالب لبيانات i4net.",
+			"MIGRATE_TO_CLOUD_INFO": "انقر على \"انتقل إلى i4net Cloud\" للانتقال من الإصدار المستضاف ذاتيًا إلى الإصدار السحابي.",
+			"MIGRATE_SUCCESSFULLY": "نقل i4net Cloud بنجاح لـ '{{ tenant }}'!",
 			"ACCOUNTING_TEMPLATE": "قالب المحاسبة",
 			"ACTIVITY": "النشاط",
 			"APPROVAL_POLICY": "سياسة الموافقة",
@@ -1066,7 +1066,7 @@
 		"ACCOUNTING_TEMPLATES": "قوالب المحاسبة",
 		"FOCUS": "التركيز",
 		"APPLICATIONS": "تطبيقات",
-		"OPEN_GA_BROWSER": "افتح Gauzy في المتصفح",
+		"OPEN_GA_BROWSER": "افتح i4net في المتصفح",
 		"START_SERVER": "تشغيل الخادم",
 		"STOP_SERVER": "توقف الخادم"
 	},
@@ -1106,7 +1106,7 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "ما الجديد؟",
 		"LEARN_MORE_URL": "تعلم المزيد",
-		"GAUZY_FEATURES": "ميزات Gauzy"
+		"GAUZY_FEATURES": "ميزات i4net"
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "أعضاء العمل",
@@ -1171,7 +1171,7 @@
 			"MANUAL_ACTIVITY": "لم يتم العثور على أي سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع.",
 			"AMOUNT_OWED": "لا يوجد مبلغ مستحق",
 			"WEEKLY_TIME_AND_ACTIVITY": "ليس لديك أي وقت أو نشاط متتبع حتى الآن لهذه الأيام.",
-			"DAILY_TIME_AND_ACTIVITY": "لا توجد وقت ونشاط تم تتبعه حتى الآن لهذا اليوم. يرجى استخدام تطبيق مؤقت سطح المكتب <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">Gauzy</a>.",
+			"DAILY_TIME_AND_ACTIVITY": "لا توجد وقت ونشاط تم تتبعه حتى الآن لهذا اليوم. يرجى استخدام تطبيق مؤقت سطح المكتب <a href={{downloadURL}} rel=\"noopener\" target=\"_blank\">i4net</a>.",
 			"PROJECT_BUDGET": "لم تقم بإنشاء أي مشروع بميزانية.",
 			"CLIENT_BUDGET": "لم تقم بإنشاء أي عميل بميزانية."
 		}
@@ -1190,7 +1190,7 @@
 			"DATE_RANGE_PLACEHOLDER": "اختر تاريخًا بين",
 			"CLIENT_ID": "معرف عميل Hubstaff",
 			"CLIENT_SECRET": "سر العميل في Hubstaff",
-			"GRANT_PERMISSION": "سيتم نقلك إلى Hubstaff التمكين لمنح إذن لـ Gauzy المقبلة.",
+			"GRANT_PERMISSION": "سيتم نقلك إلى Hubstaff التمكين لمنح إذن لـ i4net المقبلة.",
 			"ENTER_CLIENT_SECRET": "أدخل السر الخاص بالعميل للحصول على رمز الوصول."
 		},
 		"UPWORK_PAGE": {
@@ -1200,7 +1200,7 @@
 			"SUCCESSFULLY_AUTHORIZED": "تم التفويض بنجاح",
 			"API_KEY": "مفتاح واجهة برمجة التطبيقات لـ Upwork",
 			"SECRET": "سر أبورك",
-			"NEXT_STEP_INFO": "سيتم نقلك إلى Upwork لمنح إذن لـ Gauzy.",
+			"NEXT_STEP_INFO": "سيتم نقلك إلى Upwork لمنح إذن لـ i4net.",
 			"CONTRACTS": "عقود",
 			"SYNCED_CONTRACTS": "عقود متزامنة",
 			"SELECT_DATE": "اختر التاريخ",
@@ -1209,9 +1209,9 @@
 			"DATE_RANGE_PLACEHOLDER": "اختر تاريخًا بين",
 			"HOURLY": "بالساعة"
 		},
-		"GAUZY_AI_PAGE": {
-			"API_KEY": "مفتاح Gauzy AI",
-			"API_SECRET": "Gauzy AI سري"
+		"i4net_AI_PAGE": {
+			"API_KEY": "مفتاح i4net AI",
+			"API_SECRET": "i4net AI سري"
 		},
 		"COMING_SOON": "قريبًا",
 		"RE_INTEGRATE": "إعادة الاندماج",
@@ -3774,10 +3774,10 @@
 		"WAIT_FOR": "في انتظار {{ name }} للبدء...",
 		"SETUP": {
 			"WELCOME": "مرحبًا",
-			"TITLE": "مرحبًا بك في Ever® Gauzy™ - منصة إدارة الأعمال مفتوحة المصدر (ERP/CRM/HRM)",
+			"TITLE": "مرحبًا بك في Ever® i4net™ - منصة إدارة الأعمال مفتوحة المصدر (ERP/CRM/HRM)",
 			"LABEL": "يوفر تطبيق سطح المكتب الشفاف وظائف كاملة لمنصة الشفافية المتاحة مباشرة على جهاز الكمبيوتر المكتبي أو الكمبيوتر المحمول الخاص بك. بالإضافة إلى ذلك، يتيح تتبع وقت العمل وتسجيل النشاط، والقدرة على تلقي تذكيرات / إشعارات التتبع.",
-			"TITLE_SERVER": "معالج تثبيت خادم Gauzy",
-			"LABEL_SERVER": "تطبيق سطح المكتب Gauzy يوفر جميع وظائف منصة Gauzy بشكل كامل متاحة مباشرة على جهاز الكمبيوتر المكتبي أو الكمبيوتر المحمول الخاص بك. بالإضافة إلى ذلك، يتيح تتبع وقت العمل وتسجيل النشاط، والقدرة على تلقي تذكيرات/إشعارات التتبع.",
+			"TITLE_SERVER": "معالج تثبيت خادم i4net",
+			"LABEL_SERVER": "تطبيق سطح المكتب i4net يوفر جميع وظائف منصة i4net بشكل كامل متاحة مباشرة على جهاز الكمبيوتر المكتبي أو الكمبيوتر المحمول الخاص بك. بالإضافة إلى ذلك، يتيح تتبع وقت العمل وتسجيل النشاط، والقدرة على تلقي تذكيرات/إشعارات التتبع.",
 			"FUNCTIONALITIES": "وظائف",
 			"WHAT_WOULD_LIKE_USE": "ما الذي ترغب في استخدامه؟",
 			"SELECT_MULTIPLE_OPTIONS": "يمكنك اختيار خيار واحد فقط أو كل الخيارات.",
@@ -3786,7 +3786,7 @@
 			"HOW_GONNA_USE_GP": "كيف ستستخدم منصة جوزي؟",
 			"SELECT_ONE_OPTION": "يجب أن تختار خيار واحد فقط من الخيارات أدناه.",
 			"INTEGRATED": "مُتكامل",
-			"INSTALL_GP_LOCAL": "قم بتثبيت وتشغيل منصة Gauzy على جهاز الكمبيوتر المحلي الخاص بك.",
+			"INSTALL_GP_LOCAL": "قم بتثبيت وتشغيل منصة i4net على جهاز الكمبيوتر المحلي الخاص بك.",
 			"CUSTOM_NETWORK": "مخصص / شبكة",
 			"SEPARATE_SERVER": "الاتصال بخادم منفصل في شبكة عملك.",
 			"LIVE": "حي / مباشر",
@@ -3796,7 +3796,7 @@
 			"LEGAL_NOTE": "قانوني: جميع أسماء المنتجات وأسماء العلامات التجارية والشعارات والعلامات التجارية المسجلة هي ملك لأصحابها. ليس لدينا أي ارتباط أو تأييد أو رعاية أو دعم من الشركات الخارجية المذكورة أو العلامات التجارية أو المنتجات أو المواقع أو الخدمات. يتم توفير روابط البرمجيات الخارجية للراحة ولأغراض معلوماتية فقط؛ لا تشكل تأييدًا أو موافقة على أي من المنتجات أو الخدمات أو الآراء من قبل الشركة أو المنظمة أو الفرد. نستخدم الشعارات وأسماء العلامات التجارية المعنية فقط للإعلان عن أن منتجنا يستخدم منتجات وتقنيات مماثلة أو يحتوي على تكامل مدمج مع الخدمات المقابلة.",
 			"SETTING": "إعداد",
 			"READY_FOR_ADVANCED_SETTINGS": "هل أنت مستعد لبعض الإعدادات المتقدمة؟",
-			"FINAL_STEP_GP": "هذه هي الخطوة الأخيرة حيث يمكنك التفصيل في منصة Gauzy الخاصة بك.",
+			"FINAL_STEP_GP": "هذه هي الخطوة الأخيرة حيث يمكنك التفصيل في منصة i4net الخاصة بك.",
 			"PORT": "ميناء",
 			"PORT_API": "بورت آبي",
 			"UI": "واجهة المستخدم (UI)",
@@ -4248,7 +4248,7 @@
 			"email-invoice": "فاتورة البريد الإلكتروني",
 			"invite-employee": "دعوة الموظف",
 			"invite-user": "دعوة المستخدم",
-			"invite-gauzy-teams": "ادعُ فِرق Gauzy",
+			"invite-gauzy-teams": "ادعُ فِرق i4net",
 			"appointment-confirmation": "تأكيد الموعد",
 			"appointment-cancellation": "إلغاء الموعد",
 			"equipment": "إنشاء المعدات",
@@ -4562,7 +4562,7 @@
 	},
 	"WORKSPACES": {
 		"MENUS": {
-			"SING_ANOTHER_WORKSPACE": "تسجيل الدخول إلى مساحة عمل أخرى",
+			"SIGN_ANOTHER_WORKSPACE": "تسجيل الدخول إلى مساحة عمل أخرى",
 			"CREATE_NEW_WORKSPACE": "أنشئ مساحة عمل جديدة",
 			"FIND_WORKSPACE": "ابحث عن مساحة عمل"
 		},

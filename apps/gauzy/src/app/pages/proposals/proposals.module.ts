@@ -22,7 +22,7 @@ import { ProposalsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
 	ContactSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
@@ -71,7 +71,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 		PaginationV2Module,
 		ContactSelectModule,
 		TableFiltersModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		SelectorsModule
 	],
 	declarations: [
@@ -85,4 +85,4 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 	],
 	providers: [ProposalsService]
 })
-export class ProposalsModule {}
+export class ProposalsModule { }

@@ -10,7 +10,7 @@ export type Env = Readonly<{
 	// Set to true if build / runs in Docker
 	IS_DOCKER: boolean;
 
-	// Base URL of Gauzy UI website
+	// Base URL of i4net UI website
 	CLIENT_BASE_URL: string;
 
 	// Base API URL
@@ -62,7 +62,7 @@ export type Env = Readonly<{
 	//nebular chat map API key
 	CHAT_MESSAGE_GOOGLE_MAP: string;
 
-	GAUZY_CLOUD_APP: string;
+	I4NET_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
 
@@ -70,12 +70,12 @@ export type Env = Readonly<{
 	JITSU_BROWSER_URL: string;
 	JITSU_BROWSER_WRITE_KEY: string;
 
-	GAUZY_GITHUB_APP_NAME: string;
-	GAUZY_GITHUB_CLIENT_ID: string;
-	GAUZY_GITHUB_REDIRECT_URL: string;
-	GAUZY_GITHUB_POST_INSTALL_URL: string;
+	I4NET_GITHUB_APP_NAME: string;
+	I4NET_GITHUB_CLIENT_ID: string;
+	I4NET_GITHUB_REDIRECT_URL: string;
+	I4NET_GITHUB_POST_INSTALL_URL: string;
 
-	GAUZY_DESKTOP_LOGO_512X512: string;
+	I4NET_DESKTOP_LOGO_512X512: string;
 	PLATFORM_PRIVACY_URL: string;
 	PLATFORM_TOS_URL: string;
 	NO_INTERNET_LOGO: string;
@@ -139,26 +139,26 @@ export const env: Env = cleanEnv(
 
 		CLIENT_BASE_URL: str({ default: 'http://localhost:4200' }),
 
-		API_BASE_URL: str({ default: 'http://localhost:3000' }),
+		API_BASE_URL: str({ default: 'http://localhost:3800' }),
 
-		PLATFORM_WEBSITE_URL: str({ default: 'https://gauzy.co' }),
+		PLATFORM_WEBSITE_URL: str({ default: 'https://i4net.co.il' }),
 		PLATFORM_WEBSITE_DOWNLOAD_URL: str({
-			default: 'https://gauzy.co/downloads'
+			default: 'https://i4net.co.il/downloads'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_APPLE: str({
-			default: 'https://gauzy.co/downloads#desktop/apple'
+			default: 'https://i4net.co.il/downloads#desktop/apple'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_WINDOWS: str({
-			default: 'https://gauzy.co/downloads#desktop/windows'
+			default: 'https://i4net.co.il/downloads#desktop/windows'
 		}),
 		DESKTOP_APP_DOWNLOAD_LINK_LINUX: str({
-			default: 'https://gauzy.co/downloads#desktop/linux'
+			default: 'https://i4net.co.il/downloads#desktop/linux'
 		}),
 		MOBILE_APP_DOWNLOAD_LINK: str({
-			default: 'https://gauzy.co/downloads#mobile'
+			default: 'https://i4net.co.il/downloads#mobile'
 		}),
 		EXTENSION_DOWNLOAD_LINK: str({
-			default: 'https://gauzy.co/downloads#extensions'
+			default: 'https://i4net.co.il/downloads#extensions'
 		}),
 
 		SENTRY_DSN: str({ default: '' }),
@@ -187,139 +187,139 @@ export const env: Env = cleanEnv(
 
 		CHATWOOT_SDK_TOKEN: str({ default: '' }),
 		CHAT_MESSAGE_GOOGLE_MAP: str({ default: '' }),
-		GAUZY_CLOUD_APP: str({ default: 'https://app.gauzy.co/#' }),
+		I4NET_CLOUD_APP: str({ default: 'https://app.i4net.co.il/#' }),
 
 		FILE_PROVIDER: str({ default: 'LOCAL' }),
 
 		JITSU_BROWSER_URL: str({ default: '' }),
 		JITSU_BROWSER_WRITE_KEY: str({ default: '' }),
 
-		GAUZY_GITHUB_APP_NAME: str({ default: '' }),
-		GAUZY_GITHUB_CLIENT_ID: str({ default: '' }),
-		GAUZY_GITHUB_REDIRECT_URL: str({ default: '' }),
-		GAUZY_GITHUB_POST_INSTALL_URL: str({ default: '' }),
+		I4NET_GITHUB_APP_NAME: str({ default: '' }),
+		I4NET_GITHUB_CLIENT_ID: str({ default: '' }),
+		I4NET_GITHUB_REDIRECT_URL: str({ default: '' }),
+		I4NET_GITHUB_POST_INSTALL_URL: str({ default: '' }),
 
 		// Set default platform logo
 		PLATFORM_LOGO: str({
-			default: 'assets/images/logos/logo_Gauzy.svg'
+			default: 'assets/images/logos/logo_i4net.png'
 		}),
 
-		//Set default gauzy desktop logo 512x512 pixels
-		GAUZY_DESKTOP_LOGO_512X512: str({
+		//Set default i4net Desktop logo 512x512 pixels
+		I4NET_DESKTOP_LOGO_512X512: str({
 			default: 'assets/icons/icon_512x512.png'
 		}),
 
 		// Set default platform privacy link
 		PLATFORM_PRIVACY_URL: str({
-			default: 'https://gauzy.co/privacy'
+			default: 'https://i4net.co.il/privacy'
 		}),
 
 		// Set default platform terms of services link
 		PLATFORM_TOS_URL: str({
-			default: 'https://gauzy.co/tos'
+			default: 'https://i4net.co.il/tos'
 		}),
 
 		COMPANY_NAME: str({
-			default: 'Ever Co. LTD'
+			default: 'i4net'
 		}),
 		COMPANY_SITE: str({
-			default: 'Gauzy'
+			default: 'i4net'
 		}),
 		COMPANY_LINK: str({
-			default: 'https://ever.co'
+			default: 'https://i4net.co.il'
 		}),
 		COMPANY_SITE_LINK: str({
-			default: 'https://gauzy.co'
+			default: 'https://i4net.co.il'
 		}),
 		COMPANY_GITHUB_LINK: str({
-			default: 'https://github.com/ever-co'
+			default: 'https://github.com/i4net'
 		}),
 		COMPANY_GITLAB_LINK: str({
-			default: 'https://gitlab.com/ever-co'
+			default: 'https://gitlab.com/i4net'
 		}),
 		COMPANY_FACEBOOK_LINK: str({
-			default: 'https://www.facebook.com/gauzyplatform'
+			default: 'https://www.facebook.com/i4net'
 		}),
 		COMPANY_TWITTER_LINK: str({
-			default: 'https://twitter.com/gauzyplatform'
+			default: 'https://twitter.com/i4net'
 		}),
 		COMPANY_LINKEDIN_LINK: str({
-			default: 'https://www.linkedin.com/company/ever-co'
+			default: 'https://www.linkedin.com/company/i4net'
 		}),
 		NO_INTERNET_LOGO: str({
-			default: 'assets/images/logos/logo_Gauzy.svg'
+			default: 'assets/images/logos/logo_i4net.png'
 		}),
 		PROJECT_REPO: str({
-			default: 'https://github.com/ever-co/ever-gauzy.git'
+			default: 'https://github.com/i4net/i4net.git'
 		}),
 
 		DESKTOP_TIMER_APP_NAME: str({
-			default: 'gauzy-desktop-timer'
+			default: 'i4net-desktop-timer'
 		}),
 		DESKTOP_TIMER_APP_DESCRIPTION: str({
-			default: 'Gauzy Desktop Timer'
+			default: 'i4net Desktop Timer'
 		}),
 		DESKTOP_TIMER_APP_ID: str({
-			default: 'com.ever.gauzydesktoptimer'
+			default: 'com.i4net.i4netdesktoptimer'
 		}),
 		DESKTOP_TIMER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop-timer'
+			default: 'i4net-desktop-timer'
 		}),
-		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_TIMER_APP_REPO_OWNER: str({ default: 'i4net' }),
 		DESKTOP_TIMER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_TIMER_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		DESKTOP_APP_NAME: str({
-			default: 'gauzy-desktop'
+			default: 'i4net-desktop'
 		}),
 		DESKTOP_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Desktop'
+			default: 'i4net Desktop'
 		}),
 		DESKTOP_APP_ID: str({
-			default: 'com.ever.gauzydesktop'
+			default: 'com.i4net.i4netdesktop'
 		}),
 		DESKTOP_APP_REPO_NAME: str({
-			default: 'ever-gauzy-desktop'
+			default: 'i4net-desktop'
 		}),
-		DESKTOP_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_APP_REPO_OWNER: str({ default: 'i4net' }),
 		DESKTOP_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		DESKTOP_SERVER_APP_NAME: str({
-			default: 'gauzy-server'
+			default: 'i4net-server'
 		}),
 		DESKTOP_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy Server'
+			default: 'i4net Server'
 		}),
 		DESKTOP_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyserver'
+			default: 'com.i4net.i4netserver'
 		}),
 		DESKTOP_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-server'
+			default: 'i4net-server'
 		}),
-		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_SERVER_APP_REPO_OWNER: str({ default: 'i4net' }),
 		DESKTOP_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_SERVER_APP_WELCOME_CONTENT: str({ default: '' }),
 
 		I18N_FILES_URL: str({ default: '' }),
 		AWHost: str({ default: 'http://localhost:5600' }),
-		API_DEFAULT_PORT: num({ default: 3000 }),
+		API_DEFAULT_PORT: num({ default: 3800 }),
 		GAUZY_UI_DEFAULT_PORT: num({ default: 5621 }),
 		SCREENSHOTS_ENGINE_METHOD: str({ default: 'ScreenshotDesktopLib' }),
 
 		DESKTOP_API_SERVER_APP_NAME: str({
-			default: 'gauzy-api-server'
+			default: 'i4net-api-server'
 		}),
 		DESKTOP_API_SERVER_APP_DESCRIPTION: str({
-			default: 'Ever Gauzy API Server'
+			default: 'i4net API Server'
 		}),
 		DESKTOP_API_SERVER_APP_ID: str({
-			default: 'com.ever.gauzyapiserver'
+			default: 'com.i4net.i4netapiserver'
 		}),
 		DESKTOP_API_SERVER_APP_REPO_NAME: str({
-			default: 'ever-gauzy-api-server'
+			default: 'i4net-api-server'
 		}),
-		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'ever-co' }),
+		DESKTOP_API_SERVER_APP_REPO_OWNER: str({ default: 'i4net' }),
 		DESKTOP_API_SERVER_APP_WELCOME_TITLE: str({ default: '' }),
 		DESKTOP_API_SERVER_APP_WELCOME_CONTENT: str({ default: '' })
 	},

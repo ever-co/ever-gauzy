@@ -34,7 +34,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
 	@ViewChild('logServer') logAccordion;
 	active_index: any;
-	gauzyIcon: SafeResourceUrl = './assets/images/logos/logo_Gauzy.svg';
+	gauzyIcon: SafeResourceUrl = './assets/images/logos/logo_i4net.png';
 	running = false;
 	loading = false;
 	restart = false;
@@ -68,7 +68,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			};
 			this.running = arg;
 			event.sender.send('running_state', arg);
-			if(this.running) {
+			if (this.running) {
 				this.restart = false;
 			}
 			this._cdr.detectChanges();

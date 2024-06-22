@@ -39,7 +39,7 @@ import {
 	EmployeeMutationModule,
 	EmployeeRatesModule,
 	EmployeeStartWorkModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
@@ -145,7 +145,7 @@ const COMPONENTS = [
 		EmployeeRatesModule,
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		CardGridModule,
 		TimeZoneSelectorModule
@@ -153,4 +153,4 @@ const COMPONENTS = [
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }

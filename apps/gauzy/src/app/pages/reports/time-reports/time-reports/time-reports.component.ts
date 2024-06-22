@@ -16,7 +16,7 @@ import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	IChartData,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
@@ -35,7 +35,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	public datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -79,7 +79,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	/**
-	 * Gauzy timesheet default filters
+	 * i4net timesheet default filters
 	 *
 	 * @param filters
 	 */
@@ -187,5 +187,5 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

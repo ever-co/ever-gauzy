@@ -16,7 +16,7 @@ import { EventTypeService } from '@gauzy/ui-core/core';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
@@ -46,10 +46,10 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		CardGridModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]
 })
-export class EventTypeModule {}
+export class EventTypeModule { }

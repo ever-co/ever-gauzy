@@ -55,7 +55,7 @@ import {
 	CurrencyModule,
 	CurrencyPositionPipe,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
@@ -133,7 +133,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		ProjectSelectModule,
 		SharedModule,
 		NbAccordionModule,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	],
 	providers: [
 		InvoicesService,
@@ -182,4 +182,4 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 	],
 	exports: [InvoiceViewInnerComponent]
 })
-export class InvoicesModule {}
+export class InvoicesModule { }

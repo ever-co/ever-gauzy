@@ -22,7 +22,7 @@ import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	LeafletMapModule,
 	LocationFormModule,
@@ -59,7 +59,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		ImageUploaderModule,
 		LeafletMapModule,
 		LocationFormModule,
@@ -73,4 +73,4 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 	declarations: [...COMPONENTS],
 	providers: [OrganizationContactService, OrganizationProjectsService, InviteService]
 })
-export class ContactsModule {}
+export class ContactsModule { }

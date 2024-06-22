@@ -5,14 +5,14 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		icon: 'cube-outline',
 		title: 'See new features',
 		date: new Date(),
-		content: 'Now you can read latest features changelog directly in Gauzy',
+		content: 'Now you can read latest features changelog directly in i4net',
 		isFeature: false,
 		learnMoreUrl: '',
 		imageUrl: ''
 	},
 	{
 		icon: 'globe-outline',
-		title: 'Ready to give Gauzy a try?',
+		title: 'Ready to give i4net a try?',
 		date: new Date(),
 		isFeature: false,
 		content: 'Customer relationship management, enterprise resource planning, sales management, supply chain management and production management',
@@ -25,7 +25,7 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		date: new Date(),
 		isFeature: false,
 		content: 'You are welcome to check more information about the platform at our official website.',
-		learnMoreUrl: 'https://gauzy.co/',
+		learnMoreUrl: 'https://i4net.co.il/',
 		imageUrl: ''
 	},
 	{
@@ -33,7 +33,7 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		title: 'New CRM',
 		date: new Date(),
 		isFeature: true,
-		content: 'Now you can read latest features changelog directly in Gauzy',
+		content: 'Now you can read latest features changelog directly in i4net',
 		learnMoreUrl: '',
 		imageUrl: 'assets/images/features/macbook-2.png'
 	},

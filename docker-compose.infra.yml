@@ -101,7 +101,7 @@ services:
       discovery.type: single-node
       http.port: 9200
       http.cors.enabled: 'true'
-      http.cors.allow-origin: http://localhost:3000,http://127.0.0.1:3000,http://localhost:1358,http://127.0.0.1:1358
+      http.cors.allow-origin: http://localhost:3800,http://127.0.0.1:3800,http://localhost:1358,http://127.0.0.1:1358
       http.cors.allow-headers: X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
       http.cors.allow-credentials: 'true'
       bootstrap.memory_lock: 'true'
@@ -173,8 +173,8 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      MINIO_ROOT_USER: ever-gauzy-access-key
-      MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
+      MINIO_ROOT_USER: i4net-access-key
+      MINIO_ROOT_PASSWORD: i4net-secret-key
     command: server /data --address :9000 --console-address ":9001"
     ports:
       - 9000:9000
@@ -185,8 +185,8 @@ services:
   minio_create_buckets:
     image: minio/mc
     environment:
-      MINIO_ROOT_USER: ever-gauzy-access-key
-      MINIO_ROOT_PASSWORD: ever-gauzy-secret-key
+      MINIO_ROOT_USER: i4net-access-key
+      MINIO_ROOT_PASSWORD: i4net-secret-key
     entrypoint:
       - '/bin/sh'
       - '-c'
@@ -194,7 +194,7 @@ services:
       - "until (/usr/bin/mc alias set minio http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD) do
         echo 'Waiting to start minio...' && sleep 1;
         done;
-        /usr/bin/mc mb minio/ever-gauzy --region=eu-north-1;
+        /usr/bin/mc mb minio/i4net --region=eu-north-1;
         exit 0;"
     depends_on:
       - minio

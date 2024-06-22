@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod, forwardRef } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { GauzyAIModule } from '@gauzy/integration-ai';
+import { i4netAIModule } from '@gauzy/integration-ai';
 import { RolePermissionModule } from '../../role-permission/role-permission.module';
 import { IntegrationModule } from './../integration.module';
 import { IntegrationTenantModule } from './../../integration-tenant/integration-tenant.module';
@@ -13,7 +13,7 @@ import { IntegrationAIMiddleware } from './integration-ai.middleware';
 	imports: [
 		RolePermissionModule,
 		IntegrationTenantModule,
-		GauzyAIModule.forRoot(),
+		i4netAIModule.forRoot(),
 		forwardRef(() => IntegrationModule),
 		CqrsModule
 	],

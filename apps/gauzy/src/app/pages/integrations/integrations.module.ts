@@ -12,7 +12,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule
@@ -36,10 +36,10 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		TableComponentsModule,
 		NoDataMessageModule
 	],
 	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent]
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }

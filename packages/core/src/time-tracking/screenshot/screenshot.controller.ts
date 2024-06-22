@@ -151,7 +151,7 @@ export class ScreenshotController {
 			const screenshot = await this._screenshotService.create(entity);
 			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 
-			// Analyze image using Gauzy AI service
+			// Analyze image using i4net AI service
 			this._screenshotService.analyzeScreenshot(
 				screenshot,
 				data,

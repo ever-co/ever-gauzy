@@ -18,7 +18,7 @@ import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from
 import {
 	CardGridModule,
 	EquipmentSharingMutationModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
@@ -50,10 +50,10 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
 		PaginationV2Module,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NbTooltipModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService, EmployeesService],
 	declarations: [EquipmentSharingComponent, EquipmentSharingActionComponent, EquipmentSharingStatusComponent]
 })
-export class EquipmentSharingModule {}
+export class EquipmentSharingModule { }

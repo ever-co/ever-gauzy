@@ -57,11 +57,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(false))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
-          DESKTOP_APP_ID: 'com.ever.gauzydesktop'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_APP_NAME: 'i4net-desktop'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_APP_DESCRIPTION: 'i4net Desktop'
+          DESKTOP_APP_ID: 'com.i4net.i4netdesktop'
 
       - name: Build Desktop App
         run: 'yarn build:desktop:linux:release:gh'
@@ -118,11 +118,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(false))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
-          DESKTOP_APP_ID: 'com.ever.gauzydesktop'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_APP_NAME: 'i4net-desktop'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_APP_DESCRIPTION: 'i4net Desktop'
+          DESKTOP_APP_ID: 'com.i4net.i4netdesktop'
 
       - name: Build Desktop App
         run: 'yarn build:desktop:mac:release'
@@ -179,11 +179,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktop(false))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_APP_NAME: 'ever-gauzy-desktop'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_APP_DESCRIPTION: 'Ever Gauzy Desktop'
-          DESKTOP_APP_ID: 'com.ever.gauzydesktop'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_APP_NAME: 'i4net-desktop'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_APP_DESCRIPTION: 'i4net Desktop'
+          DESKTOP_APP_ID: 'com.i4net.i4netdesktop'
 
       - name: Build Desktop App
         run: 'yarn build:desktop:windows:release:gh'

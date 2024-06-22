@@ -15,7 +15,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	ProductMutationModule
 } from '@gauzy/ui-core/shared';
@@ -43,8 +43,8 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		ProductMutationModule,
 		CardGridModule,
 		PaginationV2Module,
-		GauzyButtonActionModule
+		i4netButtonActionModule
 	],
 	providers: [ProductCategoryService]
 })
-export class ProductCategoriesModule {}
+export class ProductCategoriesModule { }

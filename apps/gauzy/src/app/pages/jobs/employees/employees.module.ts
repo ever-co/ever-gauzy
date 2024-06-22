@@ -12,7 +12,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { GauzyButtonActionModule, PaginationV2Module, SmartTableToggleModule } from '@gauzy/ui-core/shared';
+import { i4netButtonActionModule, PaginationV2Module, SmartTableToggleModule } from '@gauzy/ui-core/shared';
 import { EmployeesRoutingModule } from './employees-routing.module';
 import { EmployeesComponent } from './employees/employees.component';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -35,9 +35,9 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		SharedModule,
 		Angular2SmartTableModule,
 		SmartTableToggleModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		WorkInProgressModule
 	]
 })
-export class EmployeesModule {}
+export class EmployeesModule { }

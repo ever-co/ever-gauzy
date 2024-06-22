@@ -34,10 +34,10 @@ export class IntegrationAIController {
 	 * @param input
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Update Gauzy AI integration.' })
+	@ApiOperation({ summary: 'Update i4net AI integration.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Update Gauzy AI integration',
+		description: 'Update i4net AI integration',
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,

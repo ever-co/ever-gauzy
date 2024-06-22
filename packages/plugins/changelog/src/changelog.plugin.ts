@@ -1,11 +1,11 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
+import { i4netCorePlugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { ChangelogModule } from './changelog.module';
 import { Changelog } from './changelog.entity';
 import { ChangelogSeederService } from './changelog-seeder.service';
 
-@GauzyCorePlugin({
+@i4netCorePlugin({
 	imports: [ChangelogModule, SeederModule],
 	entities: [Changelog],
 	providers: [ChangelogSeederService]

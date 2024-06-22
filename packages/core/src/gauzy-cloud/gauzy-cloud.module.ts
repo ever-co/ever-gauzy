@@ -5,13 +5,13 @@ import { RouterModule } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@gauzy/config';
 import { RoleModule } from './../role/role.module';
 import { RolePermissionModule } from './../role-permission/role-permission.module';
-import { GauzyCloudController } from './gauzy-cloud.controller';
-import { GauzyCloudService } from './gauzy-cloud.service';
+import { i4netCloudController } from './gauzy-cloud.controller';
+import { i4netCloudService } from './gauzy-cloud.service';
 import { CommandHandlers } from './commands/handlers';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/cloud/migrate', module: GauzyCloudModule }]),
+		RouterModule.register([{ path: '/cloud/migrate', module: i4netCloudModule }]),
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: async (configService: ConfigService) => ({
@@ -28,8 +28,8 @@ import { CommandHandlers } from './commands/handlers';
 		RoleModule,
 		RolePermissionModule
 	],
-	controllers: [GauzyCloudController],
-	providers: [GauzyCloudService, ...CommandHandlers],
+	controllers: [i4netCloudController],
+	providers: [i4netCloudService, ...CommandHandlers],
 	exports: []
 })
-export class GauzyCloudModule { }
+export class i4netCloudModule { }

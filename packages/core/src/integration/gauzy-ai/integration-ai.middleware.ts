@@ -41,20 +41,20 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
 			// Check if tenant and organization IDs are not empty
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
-				console.log(`Getting Gauzy AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+				console.log(`Getting i4net AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
 
-				const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.GAUZY_AI}`;
+				const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.i4net_AI}`;
 
 				// Fetch integration settings from the service
 				let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(cacheKey);
 
 				if (!integrationTenantSettings) {
-					console.log(`Gauzy AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+					console.log(`i4net AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
 
 					const fromDb = await this._integrationTenantService.getIntegrationTenantSettings({
 						tenantId,
 						organizationId,
-						name: IntegrationEnum.GAUZY_AI
+						name: IntegrationEnum.i4net_AI
 					});
 
 					if (fromDb && fromDb.settings) {
@@ -63,10 +63,10 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						const ttl = 5 * 60 * 1000 // 5 min caching period for Integration Tenant Settings
 						await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
-						console.log(`Gauzy AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+						console.log(`i4net AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
 					}
 				} else {
-					console.log(`Gauzy AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+					console.log(`i4net AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
 				}
 
 				if (integrationTenantSettings && integrationTenantSettings.length > 0) {

@@ -344,7 +344,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		const integration$ = this._integrationsService.getIntegrationByOptions({
 			organizationId,
 			tenantId,
-			name: IntegrationEnum.GAUZY_AI,
+			name: IntegrationEnum.i4net_AI,
 			relations: ['entitySettings']
 		});
 
@@ -401,5 +401,5 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		this.store.featureTenant = tenant.featureOrganizations.filter((item) => !item.organizationId);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

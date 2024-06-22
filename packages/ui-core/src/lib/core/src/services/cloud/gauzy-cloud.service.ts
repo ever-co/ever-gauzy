@@ -6,8 +6,8 @@ import { API_PREFIX } from '@gauzy/ui-core/common';
 @Injectable({
 	providedIn: 'root'
 })
-export class GauzyCloudService {
-	constructor(private readonly _http: HttpClient) {}
+export class i4netCloudService {
+	constructor(private readonly _http: HttpClient) { }
 
 	migrateIntoCloud(payload: IUserRegistrationInput) {
 		return this._http.post(`${API_PREFIX}/cloud/migrate`, payload);

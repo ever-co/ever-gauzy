@@ -15,7 +15,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	PaginationModule,
 	SharedModule,
@@ -46,7 +46,7 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationModule,
 		NbTabsetModule,
 		NoDataMessageModule,
@@ -56,4 +56,4 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 	declarations: [EmploymentTypesComponent],
 	providers: [OrganizationEmploymentTypesService]
 })
-export class EmploymentTypesModule {}
+export class EmploymentTypesModule { }

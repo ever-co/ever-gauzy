@@ -17,7 +17,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	IncomeMutationModule,
 	PaginationV2Module,
 	SharedModule,
@@ -52,9 +52,9 @@ import { IncomeRoutingModule } from './income-routing.module';
 		NgxPermissionsModule.forChild(),
 		PaginationV2Module,
 		TableFiltersModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		SharedModule
 	],
 	declarations: [IncomeComponent]
 })
-export class IncomeModule {}
+export class IncomeModule { }

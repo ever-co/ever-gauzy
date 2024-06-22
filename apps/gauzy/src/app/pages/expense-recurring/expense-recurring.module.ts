@@ -13,7 +13,7 @@ import {
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	RecurringExpenseBlockModule,
 	SharedModule
@@ -37,9 +37,9 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		RecurringExpenseBlockModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [ExpenseRecurringComponent]
 })
-export class ExpenseRecurringModule {}
+export class ExpenseRecurringModule { }

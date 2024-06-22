@@ -1,3 +1,3 @@
 # `@gauzy/auth`
 
-Gauzy Auth
+i4net Auth

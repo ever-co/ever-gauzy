@@ -182,7 +182,7 @@ export const RolesPermissionsPageData = {
 	ViewOrganizationEquipmentSharingAdmin: 96,
 	ViewOrganizationProductTypesAdmin: 97,
 	ViewOrganizationProductCategoriesAdmin: 98,
-	MigrateIntoGauzyCloud: 99,
+	MigrateIntoi4netCloud: 99,
 	AccessDeleteAccount: 100,
 	AccessDeleteAllData: 101
 };

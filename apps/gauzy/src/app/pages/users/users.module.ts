@@ -25,7 +25,7 @@ import {
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
@@ -91,7 +91,7 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		CardGridModule,
 		SharedModule
@@ -99,4 +99,4 @@ const COMPONENTS = [
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, UsersOrganizationsService, InviteGuard, UserIdService]
 })
-export class UsersModule {}
+export class UsersModule { }

@@ -134,7 +134,7 @@ import { AccountingTemplateModule } from './accounting-template/accounting-templ
 import { SeederModule } from './core/seeds/seeder.module';
 import { WarehouseModule } from './warehouse/warehouse.module';
 import { MerchantModule } from './merchant/merchant.module';
-import { GauzyCloudModule } from './gauzy-cloud/gauzy-cloud.module';
+import { i4netCloudModule } from './gauzy-cloud/gauzy-cloud.module';
 import { ContactModule } from './contact/contact.module';
 import { PublicShareModule } from './public-share/public-share.module';
 import { TransformInterceptor } from './core/interceptors';
@@ -300,7 +300,7 @@ if (environment.THROTTLE_ENABLED) {
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
-			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			// Webhook URL in GitHub will be: https://api.i4net.co.il/api/integration/github/webhook
 			path: 'integration/github/webhook',
 			config: {
 				/** Client Configuration */
@@ -453,7 +453,7 @@ if (environment.THROTTLE_ENABLED) {
 		SeederModule,
 		WarehouseModule,
 		MerchantModule,
-		GauzyCloudModule,
+		i4netCloudModule,
 		ContactModule,
 		PublicShareModule,
 		EmailResetModule,

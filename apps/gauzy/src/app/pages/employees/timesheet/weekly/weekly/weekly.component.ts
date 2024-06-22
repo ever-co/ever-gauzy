@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import {
 	BaseSelectorFilterComponent,
 	ViewTimeLogComponent,
-	GauzyFiltersComponent,
+	i4netFiltersComponent,
 	TimeZoneService,
 	EditTimeLogModalComponent
 } from '@gauzy/ui-core/shared';
@@ -39,7 +39,7 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 
 	futureDateAllowed: boolean;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
@@ -302,5 +302,5 @@ export class WeeklyComponent extends BaseSelectorFilterComponent implements OnIn
 		return futureDateAllowed || moment(date).isSameOrBefore(currentMoment);
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

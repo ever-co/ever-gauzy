@@ -31,11 +31,11 @@ jobs:
           load: true
           platforms: linux/amd64
           tags: |
-            ghcr.io/ever-co/gauzy-api-demo:latest
+            ghcr.io/i4net/gauzy-api-demo:latest
             everco/gauzy-api-demo:latest
             registry.digitalocean.com/ever/gauzy-api-demo:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
-          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-api-demo:latest
+            ${{ secrets.CW_DOCKER_REGISTRY }}/i4net/gauzy-api-demo:latest
+          cache-from: type=registry,ref=ghcr.io/i4net/gauzy-api-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
@@ -75,7 +75,7 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-api-demo:latest
+          docker push ghcr.io/i4net/gauzy-api-demo:latest
 
       - name: Login to CW Container Registry
         uses: docker/login-action@v3
@@ -86,7 +86,7 @@ jobs:
 
       - name: Push to CW Registry
         run: |
-          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-demo:latest
+          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/i4net/gauzy-api-demo:latest
 
   gauzy-webapp:
     runs-on: buildjet-8vcpu-ubuntu-2204
@@ -108,11 +108,11 @@ jobs:
           load: true
           platforms: linux/amd64
           tags: |
-            ghcr.io/ever-co/gauzy-webapp-demo:latest
+            ghcr.io/i4net/gauzy-webapp-demo:latest
             everco/gauzy-webapp-demo:latest
             registry.digitalocean.com/ever/gauzy-webapp-demo:latest
-            ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
-          cache-from: type=registry,ref=ghcr.io/ever-co/gauzy-webapp-demo:latest
+            ${{ secrets.CW_DOCKER_REGISTRY }}/i4net/gauzy-webapp-demo:latest
+          cache-from: type=registry,ref=ghcr.io/i4net/gauzy-webapp-demo:latest
           cache-to: type=inline
           build-args: |
             NODE_ENV=development
@@ -152,7 +152,7 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-webapp-demo:latest
+          docker push ghcr.io/i4net/gauzy-webapp-demo:latest
 
       - name: Login to CW Container Registry
         uses: docker/login-action@v3
@@ -163,4 +163,4 @@ jobs:
 
       - name: Push to CW Registry
         run: |
-          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-demo:latest
+          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/i4net/gauzy-webapp-demo:latest

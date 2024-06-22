@@ -1,6 +1,6 @@
 # `@gauzy/common-angular`
 
-Common code used in Gauzy Angular projects
+Common code used in i4net Angular projects
 
 ## Usage
 

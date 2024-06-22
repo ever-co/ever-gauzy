@@ -12,7 +12,7 @@ export class ServerConnectionService {
 		return new Promise((resolve, reject) => {
 			console.log(`Checking server connection in ServerConnectionService in desktop-ui-lib on URL: ${url}`);
 
-			if (endPoint !== 'http://localhost:3000') {
+			if (endPoint !== 'http://localhost:3800') {
 				try {
 					const requestObservable = this.httpClient.get(url);
 

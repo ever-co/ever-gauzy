@@ -104,7 +104,7 @@ export interface IOrganization extends IBasePerTenantEntityModel, IRelationalIma
 	daysUntilDue?: number;
 	accountingTemplates?: IAccountingTemplate[];
 	reportOrganizations?: IReportOrganization[];
-	/** Upwork Organization For Gauzy AI*/
+	/** Upwork Organization For i4net AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;
 }
@@ -167,7 +167,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isImporting?: boolean;
 	sourceId?: string;
 	userOrganizationSourceId?: string;
-	/** Upwork Organization For Gauzy AI*/
+	/** Upwork Organization For i4net AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;
 }

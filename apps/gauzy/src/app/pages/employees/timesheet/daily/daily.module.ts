@@ -19,8 +19,8 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
-	GauzyButtonActionModule,
-	GauzyFiltersModule,
+	i4netButtonActionModule,
+	i4netFiltersModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
@@ -57,12 +57,12 @@ import { DailyComponent } from './daily/daily.component';
 		TaskSelectModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	]
 })
-export class DailyModule {}
+export class DailyModule { }

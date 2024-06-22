@@ -1,24 +1,24 @@
 import log from 'electron-log';
-import { screen, BrowserWindow, ipcMain,  } from 'electron';
+import { screen, BrowserWindow, ipcMain, } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
 const Store = require('electron-store');
 const store = new Store();
-export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
-	log.info('createGauzyWindow started');
+export async function createi4netWindow(gauzyWindow, serve, config, filePath) {
+	log.info('createi4netWindow started');
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
-  	mainWindowSettings = windowSetting();
+	mainWindowSettings = windowSetting();
 
-  	gauzyWindow = new BrowserWindow(mainWindowSettings);
+	gauzyWindow = new BrowserWindow(mainWindowSettings);
 
 	remoteMain.enable(gauzyWindow.webContents);
 
 	let launchPath;
 
 	if (!config.gauzyWindow) {
-	 	gauzyWindow.hide();
+		gauzyWindow.hide();
 	}
 
 	if (serve) {
@@ -52,7 +52,7 @@ export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 
 	initMainListener();
 
-	log.info('createGauzyWindow completed');
+	log.info('createi4netWindow completed');
 
 	return gauzyWindow;
 }
@@ -76,7 +76,7 @@ const windowSetting = () => {
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: process.env.DESCRIPTION ||  'Gauzy Desktop',
+		title: process.env.DESCRIPTION || 'i4net Desktop',
 		show: false,
 		icon: filesPath.iconPath
 	};

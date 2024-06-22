@@ -48,7 +48,7 @@ export abstract class SecuredProxy extends BaseReverseProxy {
 				changeOrigin: true,
 				target: { host: 'localhost', port: this.port },
 				cookiePathRewrite: {
-					'http://localhost:3000/public': `${this.serverConfig.uiHostName}:${this.port}/public`
+					'http://localhost:3800/public': `${this.serverConfig.uiHostName}:${this.port}/public`
 				}
 			};
 

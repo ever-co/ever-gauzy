@@ -1,5 +1,5 @@
 export const AddTasksPageData = {
-	defaultTaskProject: 'Gauzy Web Site',
+	defaultTaskProject: 'i4net Web Site',
 	defaultTaskTitle: 'Feature: All Integrations should work with useHash',
 	editTaskTitle: 'Feature: Invite users with emails',
 	defaultTaskEstimateDays: 1,

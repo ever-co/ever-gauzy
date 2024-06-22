@@ -24,7 +24,7 @@ import { ActivityLevel, TimesheetFilterService } from '@gauzy/ui-core/core';
 	templateUrl: './gauzy-filters.component.html',
 	styleUrls: ['./gauzy-filters.component.scss']
 })
-export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class i4netFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	// declaration of variables
 	public PermissionsEnum = PermissionsEnum;
 	public TimeLogType = TimeLogType;
@@ -218,5 +218,5 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 		];
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

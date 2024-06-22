@@ -1,4 +1,4 @@
-# Ever Gauzy WakaTime integration
+# i4net WakaTime integration
 
 See more information about [WakaTime](https://wakatime.com).
 

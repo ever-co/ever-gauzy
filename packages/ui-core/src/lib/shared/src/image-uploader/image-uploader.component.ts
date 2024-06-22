@@ -58,7 +58,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	@Output() uploadedImageAsset = new EventEmitter<IImageAsset>();
 	@Output() uploadImageAssetError = new EventEmitter<any>();
 
-	constructor(private readonly store: Store) {}
+	constructor(private readonly store: Store) { }
 
 	ngOnInit() {
 		this.store.user$
@@ -128,5 +128,8 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 			headers: headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+		this.uploader.onBeforeUploadItem = (item => {
+			item.withCredentials = false;
+		});
 	}
 }

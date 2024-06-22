@@ -19,7 +19,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	RequestApprovalMutationModule,
 	SharedModule
@@ -51,10 +51,10 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		RequestApprovalMutationModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	providers: [RequestApprovalService]
 })
-export class ApprovalsModule {}
+export class ApprovalsModule { }

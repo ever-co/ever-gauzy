@@ -2,41 +2,23 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
-				<mj-text font-size="20px" font-family="helvetica"
-					>Изтриване на графика</mj-text
-				>
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica">Изтриване на графика</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>скъп {{candidateName}},</p>
-					<p>
-						Вашият лист за проект {{project}}, се изтрива успешно
-						... !!
-					</p>
+					<p>Вашият лист за проект {{project}}, се изтрива успешно ... !!</p>
 				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>С Най-Добри Пожелания,</p>
-					<p>Gauzy Team</p>
+					<p>i4net Team</p>
 				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica"
 					>© 2019,
-					<a href="{{appLink}}" style="color: #598bff"
-						>{{appName}}</a
-					>
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
 					by
-					<a href="{{companyLink}}" style="color: #598bff"
-						>{{companyName}}</a
-					>
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
 					All rights reserved.
 				</mj-text>
 			</mj-column>

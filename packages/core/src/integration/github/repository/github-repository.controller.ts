@@ -9,7 +9,7 @@ export class GitHubRepositoryController {
 	constructor(private readonly _githubRepositoryService: GithubRepositoryService) { }
 
 	/**
-	 * Sync a GitHub repository with Gauzy using provided data.
+	 * Sync a GitHub repository with i4net using provided data.
 	 *
 	 * @param entity The data needed for synchronization.
 	 * @returns The synchronized integration map.

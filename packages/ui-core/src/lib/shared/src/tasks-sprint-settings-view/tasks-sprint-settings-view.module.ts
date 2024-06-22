@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDatepickerModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { SharedModule } from '../shared.module';
-import { GauzyEditableGridModule } from '../editable-grid/gauzy-editable-grid.module';
+import { i4netEditableGridModule } from '../editable-grid/gauzy-editable-grid.module';
 import { SprintDialogComponent } from './sprint-dialog/sprint-dialog.component';
 import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.component';
 
@@ -20,9 +20,9 @@ import { TasksSprintSettingsViewComponent } from './tasks-sprint-settings-view.c
 		ReactiveFormsModule,
 		NbDatepickerModule,
 		I18nTranslateModule.forChild(),
-		GauzyEditableGridModule,
+		i4netEditableGridModule,
 		NbInputModule,
 		SharedModule
 	]
 })
-export class TasksSprintSettingsViewModule {}
+export class TasksSprintSettingsViewModule { }

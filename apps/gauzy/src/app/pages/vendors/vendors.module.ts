@@ -18,7 +18,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
@@ -50,9 +50,9 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TableComponentsModule,
 		VendorsRoutingModule,
 		CardGridModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [VendorsComponent]
 })
-export class VendorsModule {}
+export class VendorsModule { }

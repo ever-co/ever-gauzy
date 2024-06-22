@@ -64,7 +64,7 @@ import { initSentry } from './sentry';
 initSentry();
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
-// C:\Users\USERNAME\AppData\Roaming\gauzy-desktop-timer
+// C:\Users\USERNAME\AppData\Roaming\i4net-desktop-timer
 
 process.env.GAUZY_USER_PATH = app.getPath('userData');
 log.info(`GAUZY_USER_PATH: ${process.env.GAUZY_USER_PATH}`);
@@ -80,7 +80,7 @@ const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 const store = new Store();
 
 const args = process.argv.slice(1);
-const serverGauzy = null;
+const serveri4net = null;
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
@@ -232,12 +232,12 @@ async function startServer(value, restart = false) {
 			project: projectConfig
 				? projectConfig
 				: {
-						projectId: null,
-						taskId: null,
-						note: null,
-						aw,
-						organizationContactId: null
-				  }
+					projectId: null,
+					taskId: null,
+					note: null,
+					aw,
+					organizationContactId: null
+				}
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -495,7 +495,7 @@ ipcMain.on('restart_app', async (event, arg) => {
 	if (timeTrackerWindow && !timeTrackerWindow.isDestroyed()) {
 		timeTrackerWindow.destroy();
 	}
-	if (serverGauzy) serverGauzy.kill();
+	if (serveri4net) serveri4net.kill();
 	if (gauzyWindow && !gauzyWindow.isDestroyed()) {
 		gauzyWindow.destroy();
 		gauzyWindow = null;
@@ -529,7 +529,7 @@ ipcMain.on('restart_and_update', () => {
 		app.removeAllListeners('window-all-closed');
 		autoUpdater.quitAndInstall(false);
 		if (serverDesktop) serverDesktop.kill();
-		if (serverGauzy) serverGauzy.kill();
+		if (serveri4net) serveri4net.kill();
 		app.exit(0);
 	});
 });
@@ -632,11 +632,11 @@ app.on('before-quit', async (e) => {
 			}
 		}
 
-		if (serverGauzy) {
+		if (serveri4net) {
 			try {
-				serverGauzy.kill();
+				serveri4net.kill();
 			} catch (error) {
-				console.error('ERROR: Occurred while serverGauzy stop:' + error);
+				console.error('ERROR: Occurred while serveri4net stop:' + error);
 			}
 		}
 

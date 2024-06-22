@@ -20,7 +20,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	StatusBadgeModule
@@ -54,8 +54,8 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
 		DialogsModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module
 	]
 })
-export class ProposalTemplateModule {}
+export class ProposalTemplateModule { }

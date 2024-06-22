@@ -1,5 +1,5 @@
 export const OrganizationProjectsPageData = {
-	name: 'Gauzy Web Site',
+	name: 'i4net Web Site',
 	hours: 12,
 	editName: 'Ever',
 	description:

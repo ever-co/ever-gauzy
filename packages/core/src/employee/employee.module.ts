@@ -3,7 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { GauzyAIModule } from '@gauzy/integration-ai';
+import { i4netAIModule } from '@gauzy/integration-ai';
 import { TimeLog } from './../core/entities/internal';
 import { Employee } from './employee.entity';
 import { UserModule } from './../user/user.module';
@@ -31,7 +31,7 @@ import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.reposi
 		forwardRef(() => UserModule),
 		forwardRef(() => AuthModule),
 		RoleModule,
-		GauzyAIModule.forRoot(),
+		i4netAIModule.forRoot(),
 		CqrsModule
 	],
 	controllers: [EmployeeJobController, EmployeeController],

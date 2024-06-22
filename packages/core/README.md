@@ -1,6 +1,6 @@
 # `@gauzy/core`
 
-Gauzy Core - A headless ERP/CRM/HRM framework.
+i4net Core - A headless ERP/CRM/HRM framework.
 
 ## Usage
 

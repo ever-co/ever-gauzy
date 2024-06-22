@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,7 +16,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 export class AppsUrlsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	filters: IGetActivitiesInput;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	constructor(
@@ -30,7 +30,7 @@ export class AppsUrlsReportComponent extends BaseSelectorFilterComponent impleme
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
 
-	ngOnInit() {}
+	ngOnInit() { }
 
 	ngAfterViewInit() {
 		this.cd.detectChanges();
@@ -43,5 +43,5 @@ export class AppsUrlsReportComponent extends BaseSelectorFilterComponent impleme
 		this.filters = Object.assign({}, filters);
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() { }
 }

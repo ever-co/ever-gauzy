@@ -7,7 +7,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	ProductMutationModule,
 	TableComponentsModule
@@ -35,8 +35,8 @@ import { ProductTypesRoutingModule } from './product-types-routing.module';
 		CardGridModule,
 		ProductMutationModule,
 		PaginationV2Module,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		TableComponentsModule
 	]
 })
-export class ProductTypesModule {}
+export class ProductTypesModule { }

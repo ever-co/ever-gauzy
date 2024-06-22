@@ -1,167 +1,166 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: gauzy-demo-lb
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-name: 'demo.gauzy.co'
+    service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+    service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+    # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
+    service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
+    service.beta.kubernetes.io/do-loadbalancer-hostname: 'demo.gauzy.co'
+spec:
+  type: LoadBalancer
+  selector:
+    app: gauzy-demo-webapp
+  ports:
+  - name: http
+    protocol: TCP
+    port: 443
+    targetPort: 4200
 ---
 kind: Service
 apiVersion: v1
 metadata:
-    name: gauzy-demo-lb
-    annotations:
-        service.beta.kubernetes.io/do-loadbalancer-name: 'demo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
-        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
-        # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
-        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
-        service.beta.kubernetes.io/do-loadbalancer-hostname: 'demo.gauzy.co'
+  name: gauzy-demo-api-lb
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-name: 'apidemo.gauzy.co'
+    service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
+    service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
+    # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
+    service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
+    service.beta.kubernetes.io/do-loadbalancer-hostname: 'apidemo.gauzy.co'
 spec:
-    type: LoadBalancer
-    selector:
-        app: gauzy-demo-webapp
-    ports:
-        - name: http
-          protocol: TCP
-          port: 443
-          targetPort: 4200
+  type: LoadBalancer
+  selector:
+    app: gauzy-demo-api
+  ports:
+  - name: http
+    protocol: TCP
+    port: 443
+    targetPort: 3000
 ---
-kind: Service
-apiVersion: v1
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-    name: gauzy-demo-api-lb
-    annotations:
-        service.beta.kubernetes.io/do-loadbalancer-name: 'apidemo.gauzy.co'
-        service.beta.kubernetes.io/do-loadbalancer-protocol: 'http2'
-        service.beta.kubernetes.io/do-loadbalancer-http2-ports: '443'
-        # Replace with your Certificate Id. You can get a list of Ids with 'doctl compute certificate list'
-        service.beta.kubernetes.io/do-loadbalancer-certificate-id: '4bf6d197-6dbb-4394-815b-a543761d94d2'
-        service.beta.kubernetes.io/do-loadbalancer-size-slug: 'lb-small'
-        service.beta.kubernetes.io/do-loadbalancer-hostname: 'apidemo.gauzy.co'
+  name: gauzy-demo-api
 spec:
-    type: LoadBalancer
-    selector:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-demo-api
+  template:
+    metadata:
+      labels:
         app: gauzy-demo-api
-    ports:
-        - name: http
+    spec:
+      containers:
+      - name: gauzy-demo-api
+        image: registry.digitalocean.com/ever/gauzy-api-demo:latest
+        env:
+        - name: API_HOST
+          value: 0.0.0.0
+        - name: DEMO
+          value: 'true'
+        - name: CLOUD_PROVIDER
+          value: '$CLOUD_PROVIDER'
+        - name: NODE_ENV
+          value: 'development'
+        - name: ADMIN_PASSWORD_RESET
+          value: 'true'
+        - name: LOG_LEVEL
+          value: 'info'
+        - name: SENTRY_DSN
+          value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+        - name: SENTRY_HTTP_TRACING_ENABLED
+          value: '$SENTRY_HTTP_TRACING_ENABLED'
+        - name: SENTRY_PROFILING_ENABLED
+          value: '$SENTRY_PROFILING_ENABLED'
+        - name: SENTRY_POSTGRES_TRACKING_ENABLED
+          value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
+        - name: API_BASE_URL
+          value: 'https://apidemo.gauzy.co'
+        - name: CLIENT_BASE_URL
+          value: 'https://demo.gauzy.co'
+        - name: EXPRESS_SESSION_SECRET
+          value: 'gauzy'
+        - name: JWT_SECRET
+          value: 'secretKey'
+        - name: JWT_REFRESH_TOKEN_SECRET
+          value: 'refreshSecretKey'
+        - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
+          value: '86400'
+        - name: OTEL_ENABLED
+          value: '$OTEL_ENABLED'
+        - name: OTEL_PROVIDER
+          value: '$OTEL_PROVIDER'
+        - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+          value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
+        - name: OTEL_EXPORTER_OTLP_HEADERS
+          value: '$OTEL_EXPORTER_OTLP_HEADERS'
+        ports:
+        - containerPort: 3000
           protocol: TCP
-          port: 443
-          targetPort: 3000
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-    name: gauzy-demo-api
+  name: gauzy-demo-webapp
 spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: gauzy-demo-api
-    template:
-        metadata:
-            labels:
-                app: gauzy-demo-api
-        spec:
-            containers:
-                - name: gauzy-demo-api
-                  image: registry.digitalocean.com/ever/gauzy-api-demo:latest
-                  env:
-                      - name: API_HOST
-                        value: 0.0.0.0
-                      - name: DEMO
-                        value: 'true'
-                      - name: CLOUD_PROVIDER
-                        value: '$CLOUD_PROVIDER'
-                      - name: NODE_ENV
-                        value: 'development'
-                      - name: ADMIN_PASSWORD_RESET
-                        value: 'true'
-                      - name: LOG_LEVEL
-                        value: 'info'
-                      - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
-                      - name: SENTRY_HTTP_TRACING_ENABLED
-                        value: '$SENTRY_HTTP_TRACING_ENABLED'
-                      - name: SENTRY_PROFILING_ENABLED
-                        value: '$SENTRY_PROFILING_ENABLED'
-                      - name: SENTRY_POSTGRES_TRACKING_ENABLED
-                        value: '$SENTRY_POSTGRES_TRACKING_ENABLED'
-                      - name: API_BASE_URL
-                        value: 'https://apidemo.gauzy.co'
-                      - name: CLIENT_BASE_URL
-                        value: 'https://demo.gauzy.co'
-                      - name: EXPRESS_SESSION_SECRET
-                        value: 'gauzy'
-                      - name: JWT_SECRET
-                        value: 'secretKey'
-                      - name: JWT_REFRESH_TOKEN_SECRET
-                        value: 'refreshSecretKey'
-                      - name: JWT_REFRESH_TOKEN_EXPIRATION_TIME
-                        value: '86400'
-                      - name: OTEL_ENABLED
-                        value: '$OTEL_ENABLED'
-                      - name: OTEL_PROVIDER
-                        value: '$OTEL_PROVIDER'
-                      - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-                        value: '$OTEL_EXPORTER_OTLP_TRACES_ENDPOINT'
-                      - name: OTEL_EXPORTER_OTLP_HEADERS
-                        value: '$OTEL_EXPORTER_OTLP_HEADERS'
-                  ports:
-                      - containerPort: 3000
-                        protocol: TCP
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-    name: gauzy-demo-webapp
-spec:
-    replicas: 1
-    selector:
-        matchLabels:
-            app: gauzy-demo-webapp
-    template:
-        metadata:
-            labels:
-                app: gauzy-demo-webapp
-        spec:
-            containers:
-                - name: gauzy-demo-webapp
-                  image: registry.digitalocean.com/ever/gauzy-webapp-demo:latest
-                  env:
-                      - name: DEMO
-                        value: 'true'
-                      - name: API_BASE_URL
-                        value: 'https://apidemo.gauzy.co'
-                      - name: CLIENT_BASE_URL
-                        value: 'https://demo.gauzy.co'
-                      - name: SENTRY_DSN
-                        value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
-                      - name: CHATWOOT_SDK_TOKEN
-                        value: 'jFoSXEjGmqhUhqU3zfgkFfMt'
-                      - name: CLOUDINARY_API_KEY
-                        value: '256868982483961'
-                      - name: CLOUDINARY_CLOUD_NAME
-                        value: 'dv6ezkfxg'
-                      - name: GOOGLE_MAPS_API_KEY
-                        value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
-                      - name: GOOGLE_PLACE_AUTOCOMPLETE
-                        value: 'true'
-                      - name: DEFAULT_LATITUDE
-                        value: '42.6459136'
-                      - name: DEFAULT_LONGITUDE
-                        value: '23.3332736'
-                      - name: DEFAULT_CURRENCY
-                        value: 'USD'
-                      - name: GAUZY_GITHUB_CLIENT_ID
-                        value: '$GAUZY_GITHUB_CLIENT_ID'
-                      - name: GAUZY_GITHUB_APP_NAME
-                        value: '$GAUZY_GITHUB_APP_NAME'
-                      - name: GAUZY_GITHUB_REDIRECT_URL
-                        value: '$GAUZY_GITHUB_REDIRECT_URL'
-                      - name: GAUZY_GITHUB_POST_INSTALL_URL
-                        value: '$GAUZY_GITHUB_POST_INSTALL_URL'
-                      - name: GAUZY_GITHUB_APP_ID
-                        value: '$GAUZY_GITHUB_APP_ID'
-                      - name: JITSU_BROWSER_URL
-                        value: '$JITSU_BROWSER_URL'
-                      - name: JITSU_BROWSER_WRITE_KEY
-                        value: '$JITSU_BROWSER_WRITE_KEY'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gauzy-demo-webapp
+  template:
+    metadata:
+      labels:
+        app: gauzy-demo-webapp
+    spec:
+      containers:
+      - name: gauzy-demo-webapp
+        image: registry.digitalocean.com/ever/gauzy-webapp-demo:latest
+        env:
+        - name: DEMO
+          value: 'true'
+        - name: API_BASE_URL
+          value: 'https://apidemo.gauzy.co'
+        - name: CLIENT_BASE_URL
+          value: 'https://demo.gauzy.co'
+        - name: SENTRY_DSN
+          value: 'https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292'
+        - name: CHATWOOT_SDK_TOKEN
+          value: 'jFoSXEjGmqhUhqU3zfgkFfMt'
+        - name: CLOUDINARY_API_KEY
+          value: '256868982483961'
+        - name: CLOUDINARY_CLOUD_NAME
+          value: 'dv6ezkfxg'
+        - name: GOOGLE_MAPS_API_KEY
+          value: 'AIzaSyCJmnKzgTSq5Pc93HXar5bZrdmANTwtSIo'
+        - name: GOOGLE_PLACE_AUTOCOMPLETE
+          value: 'true'
+        - name: DEFAULT_LATITUDE
+          value: '42.6459136'
+        - name: DEFAULT_LONGITUDE
+          value: '23.3332736'
+        - name: DEFAULT_CURRENCY
+          value: 'USD'
+        - name: I4NET_GITHUB_CLIENT_ID
+          value: '$I4NET_GITHUB_CLIENT_ID'
+        - name: I4NET_GITHUB_APP_NAME
+          value: '$I4NET_GITHUB_APP_NAME'
+        - name: I4NET_GITHUB_REDIRECT_URL
+          value: '$I4NET_GITHUB_REDIRECT_URL'
+        - name: I4NET_GITHUB_POST_INSTALL_URL
+          value: '$I4NET_GITHUB_POST_INSTALL_URL'
+        - name: I4NET_GITHUB_APP_ID
+          value: '$I4NET_GITHUB_APP_ID'
+        - name: JITSU_BROWSER_URL
+          value: '$JITSU_BROWSER_URL'
+        - name: JITSU_BROWSER_WRITE_KEY
+          value: '$JITSU_BROWSER_WRITE_KEY'
 
-                  ports:
-                      - containerPort: 4200
-                        protocol: TCP
+        ports:
+        - containerPort: 4200
+          protocol: TCP

@@ -93,9 +93,9 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
 	allowScreenshotCapture?: boolean;
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For i4net AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For i4net AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -158,9 +158,9 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	upworkUrl?: string;
 	profile_link?: string;
 	allowScreenshotCapture?: boolean;
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For i4net AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For i4net AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -185,9 +185,9 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	description?: string;
 	originalUrl?: string;
 	isActive?: boolean;
-	/** Upwork ID For Gauzy AI*/
+	/** Upwork ID For i4net AI*/
 	upworkId?: string;
-	/** LinkedIn ID For Gauzy AI*/
+	/** LinkedIn ID For i4net AI*/
 	linkedInId?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;

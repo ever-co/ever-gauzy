@@ -20,7 +20,7 @@ import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } f
 import {
 	CardGridModule,
 	ExpensesMutationModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	PaginationV2Module,
 	SharedModule,
@@ -59,10 +59,10 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		CardGridModule,
 		TagsColorInputModule,
 		PaginationV2Module,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
 	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]
 })
-export class ExpensesModule {}
+export class ExpensesModule { }

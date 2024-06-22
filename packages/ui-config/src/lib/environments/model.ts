@@ -64,7 +64,7 @@ export interface Environment {
 	CHATWOOT_SDK_TOKEN: string;
 	CHAT_MESSAGE_GOOGLE_MAP: string;
 
-	GAUZY_CLOUD_APP: string;
+	I4NET_CLOUD_APP: string;
 
 	FILE_PROVIDER: string;
 
@@ -72,12 +72,12 @@ export interface Environment {
 	JITSU_BROWSER_WRITE_KEY?: string;
 
 	/** Github Integration */
-	GAUZY_GITHUB_APP_NAME: string;
-	GAUZY_GITHUB_CLIENT_ID: string;
-	GAUZY_GITHUB_REDIRECT_URL: string;
-	GAUZY_GITHUB_POST_INSTALL_URL: string;
+	I4NET_GITHUB_APP_NAME: string;
+	I4NET_GITHUB_CLIENT_ID: string;
+	I4NET_GITHUB_REDIRECT_URL: string;
+	I4NET_GITHUB_POST_INSTALL_URL: string;
 
-	GAUZY_DESKTOP_LOGO_512X512: string;
+	I4NET_DESKTOP_LOGO_512X512: string;
 	PLATFORM_PRIVACY_URL: string;
 	PLATFORM_TOS_URL: string;
 

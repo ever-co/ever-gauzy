@@ -5,7 +5,7 @@ import { Component, OnInit } from '@angular/core';
         <router-outlet></router-outlet>
     `
 })
-export class GauzyAILayoutComponent implements OnInit {
+export class i4netAILayoutComponent implements OnInit {
 
     ngOnInit() { }
 }

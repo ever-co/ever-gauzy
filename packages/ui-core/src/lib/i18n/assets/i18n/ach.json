@@ -3991,7 +3991,7 @@
 	},
 	"WORKSPACES": {
 		"MENUS": {
-			"SING_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
+			"SIGN_ANOTHER_WORKSPACE": "crwdns11058:0crwdne11058:0",
 			"CREATE_NEW_WORKSPACE": "crwdns11060:0crwdne11060:0",
 			"FIND_WORKSPACE": "crwdns11062:0crwdne11062:0"
 		}

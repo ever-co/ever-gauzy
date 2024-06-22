@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { ActivitiesReportGridModule, GauzyFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ActivitiesReportGridModule, i4netFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AppsUrlsReportRoutingModule } from './apps-urls-report-routing.module';
 import { AppsUrlsReportComponent } from './apps-urls-report/apps-urls-report.component';
 
@@ -20,7 +20,7 @@ import { AppsUrlsReportComponent } from './apps-urls-report/apps-urls-report.com
 		NbSelectModule,
 		FormsModule,
 		ActivitiesReportGridModule,
-		GauzyFiltersModule
+		i4netFiltersModule
 	]
 })
-export class AppsUrlsReportModule {}
+export class AppsUrlsReportModule { }

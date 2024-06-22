@@ -51,8 +51,8 @@ export class EmailTemplateGeneratePreviewHandler
 			total_hours: '16',
 			average_activates: '25',
 			log_type: 'tracked',
-			projects: ['Gauzy Web Site', 'Gauzy Platform(open-source)'],
-			project: 'Gauzy Web Site',
+			projects: ['i4net Web Site', 'i4net Platform(open-source)'],
+			project: 'i4net Web Site',
 			timesheet_action: 'APPROVE/REJECT',
 			equipment_status: 'APPROVE/REJECT',
 			reason: 'reason for this',
@@ -77,11 +77,11 @@ export class EmailTemplateGeneratePreviewHandler
 			task_update_estimate: 'estimate',
 			task_update_due_date: moment(new Date()).add(10, 'days').toDate(),
 			task_status: 'In Progress',
-			task_update_project: 'Gauzy Project',
+			task_update_project: 'i4net Project',
 			task_update_assign_by: 'Ruslan Konviser',
-			task_update_url: 'https://github.com/ever-co/ever-gauzy/issues/1688',
+			task_update_url: 'https://github.com/i4net/i4net/issues/1688',
 			inviteCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
-			teams: 'Gauzy Team',
+			teams: 'i4net Team',
 			verificationCode: generateRandomAlphaNumericCode(ALPHA_NUMERIC_CODE_LENGTH),
 			appName: appName,
 			appLogo: appLogo,
@@ -91,7 +91,7 @@ export class EmailTemplateGeneratePreviewHandler
 				{
 					tenantName: "Default",
 					userName: "Default",
-					resetLink: "https://github.com/ever-co/ever-gauzy"
+					resetLink: "https://github.com/i4net/i4net"
 				}
 			],
 			companyLink,

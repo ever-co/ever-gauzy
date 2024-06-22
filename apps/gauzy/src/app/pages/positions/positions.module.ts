@@ -14,7 +14,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
@@ -42,10 +42,10 @@ import { PositionsComponent } from './positions.component';
 		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		NoDataMessageModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]
 })
-export class PositionsModule {}
+export class PositionsModule { }

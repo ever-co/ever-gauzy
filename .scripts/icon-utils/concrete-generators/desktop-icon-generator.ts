@@ -10,11 +10,10 @@ import { DesktopEnvironmentManager } from '../../electron-desktop-environment/de
 
 export class DesktopIconGenerator
 	extends IconGenerator
-	implements IDesktopIconGenerator
-{
+	implements IDesktopIconGenerator {
 	constructor() {
 		super();
-		this.imageUrl = env.GAUZY_DESKTOP_LOGO_512X512;
+		this.imageUrl = env.I4NET_DESKTOP_LOGO_512X512;
 		this.destination = path.join('apps', this.desktop, 'src', 'icons');
 	}
 
@@ -37,7 +36,7 @@ export class DesktopIconGenerator
 					);
 					reject(error);
 				} else {
-					DesktopEnvironmentManager.environment.GAUZY_DESKTOP_LOGO_512X512 =
+					DesktopEnvironmentManager.environment.I4NET_DESKTOP_LOGO_512X512 =
 						'./assets/icons/desktop_logo_512x512.png';
 					console.log(
 						'✔ desktop logo 512x512 icons generated successfully.'
@@ -130,9 +129,9 @@ export class DesktopIconGenerator
 	}
 
 	public async generateMenuIcon(originalImage: Jimp): Promise<void> {
-		const iconSizes = [ 512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
+		const iconSizes = [512, 256, 192, 128, 96, 64, 48, 40, 32, 24, 20, 16];
 		// Remove 512x512 pixels for windows apps
-		if(process.platform === 'win32') {
+		if (process.platform === 'win32') {
 			iconSizes.shift();
 		}
 		const destination = path.join(
@@ -143,8 +142,8 @@ export class DesktopIconGenerator
 			'icons',
 			'menu'
 		);
-		for(const iconSize of iconSizes) {
-			const png = iconSize === iconSizes[0] ? 'icon.png' :`icon_${iconSize}x${iconSize}.png`;
+		for (const iconSize of iconSizes) {
+			const png = iconSize === iconSizes[0] ? 'icon.png' : `icon_${iconSize}x${iconSize}.png`;
 			const menuIconFilePath = path.join(destination, png);
 			await originalImage
 				.clone()

@@ -1,5 +1,5 @@
 import * as chalk from 'chalk';
-import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
+import { i4netCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { Proposal } from './proposal/proposal.entity';
 import { ProposalModule } from './proposal/proposal.moule';

@@ -7,7 +7,7 @@
 					[haveLink]="true"
 					[routerLink]="'/pages/integrations'"
 				></ngx-back-navigation>
-				{{ 'INTEGRATIONS.GAUZY_AI_PAGE.TITLE' | translate }}
+				{{ 'INTEGRATIONS.i4net_AI_PAGE.TITLE' | translate }}
 			</h5>
 		</div>
 		<div>
@@ -30,26 +30,26 @@
 	<nb-card-body>
 		<nb-tabset class="mt-4">
 			<nb-tab
-				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate"
+				[tabTitle]="'INTEGRATIONS.i4net_AI_PAGE.TAB.KEYS' | translate"
 				[tabIcon]="'list-outline'"
 			>
 				<ng-container *ngIf="(settings$ | async) as settings">
 					<ngx-integration-setting-card
-						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate"
+						[title]="'INTEGRATIONS.i4net_AI_PAGE.CONSUMER_KEYS' | translate"
 						[items]="settings"
 						(saved)="updateIntegrationSettings($event)"
 					></ngx-integration-setting-card>
 				</ng-container>
 				<ng-container *ngIf="(openAISettings$ | async) as openAISettings">
 					<ngx-integration-setting-card
-						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate"
+						[title]="'INTEGRATIONS.i4net_AI_PAGE.OPEN_AI_API_KEYS' | translate"
 						[items]="openAISettings"
 						(saved)="updateIntegrationSettings($event)"
 					></ngx-integration-setting-card>
 				</ng-container>
 			</nb-tab>
 			<nb-tab
-				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate"
+				[tabTitle]="'INTEGRATIONS.i4net_AI_PAGE.TAB.SETTINGS' | translate"
 				[tabIcon]="'settings-outline'"
 			>
 				<nb-card *ngIf="organization$ | async">
@@ -72,7 +72,7 @@
 											>
 												{{ 'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
 												<button
-													[nbTooltip]="'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
+													[nbTooltip]="'INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
 													ghost
 													nbButton
 													size="small"
@@ -100,7 +100,7 @@
 											>
 												{{ 'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
 												<button
-													[nbTooltip]="'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
+													[nbTooltip]="'INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
 													ghost
 													nbButton
 													size="small"

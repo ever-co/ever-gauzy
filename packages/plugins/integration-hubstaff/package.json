@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/integration-hubstaff",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for integration with HubStaff APIs",
+	"description": "i4net Platform plugin for integration with HubStaff APIs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",

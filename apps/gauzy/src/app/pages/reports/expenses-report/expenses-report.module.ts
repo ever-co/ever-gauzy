@@ -8,7 +8,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	ExpenseCategorySelectModule,
 	ExpensesReportGridModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
@@ -27,8 +27,8 @@ import {
 		FormsModule,
 		ExpensesReportGridModule,
 		LineChartModule,
-		GauzyFiltersModule,
+		i4netFiltersModule,
 		ExpenseCategorySelectModule
 	]
 })
-export class ExpensesReportModule {}
+export class ExpensesReportModule { }

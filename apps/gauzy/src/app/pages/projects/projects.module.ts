@@ -16,7 +16,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EntityWithMembersModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	ProjectMutationModule
 } from '@gauzy/ui-core/shared';
@@ -45,7 +45,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		CardGridModule,
 		ProjectMutationModule,
@@ -59,4 +59,4 @@ import { ProjectListComponent } from './components/project-list/list.component';
 	],
 	providers: []
 })
-export class ProjectsModule {}
+export class ProjectsModule { }

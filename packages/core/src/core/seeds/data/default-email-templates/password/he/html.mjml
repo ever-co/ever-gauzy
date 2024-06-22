@@ -2,42 +2,24 @@
 	<mj-body background-color="#fff">
 		<mj-section>
 			<mj-column>
-				<mj-image
-					width="100px"
-					src="{{appLogo}}"
-				></mj-image>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text>
 					<p>שלום {{userName}}!</p>
 					<p>
-						קיבלנו בקשה לשינוי סיסמה עבור חשבון Gauzy שלך עבור
+						קיבלנו בקשה לשינוי סיסמה עבור חשבון i4net שלך עבור
 						<strong>{{tenantName}}</strong>.
 					</p>
 					<p>אם ביקשת לאפס את הסיסמה שלך, לחץ על הכפתור למטה:</p>
 				</mj-text>
-				<mj-button
-					href="{{ generatedUrl }}"
-					font-family="Helvetica"
-					background-color="#3366ff"
-					color="white"
-				>
+				<mj-button href="{{ generatedUrl }}" font-family="Helvetica" background-color="#3366ff" color="white">
 					לאפס את הסיסמה
 				</mj-button>
-				<mj-text
-					font-size="14px"
-					font-family="helvetica"
-					color="#555"
-				>
+				<mj-text font-size="14px" font-family="helvetica" color="#555">
 					<p>אם לא ביקשת את השינוי הזה, אנא התעלם מאימייל זה.</p>
 					<p>קישור לאיפוס סיסמה זה יפוג בקרוב מטעמי אבטחה.</p>
 				</mj-text>
-				<mj-divider
-					border-color="#1B005D"
-					border-width="1px"
-				></mj-divider>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica">
 					© 2019,
 					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>

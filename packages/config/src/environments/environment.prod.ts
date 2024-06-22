@@ -8,17 +8,17 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { FileStorageProviderEnum } from '@gauzy/contracts';
-import { IEnvironment, IGauzyFeatures } from './ienvironment';
+import { IEnvironment, Ii4netFeatures } from './ienvironment';
 
 if (process.env.IS_ELECTRON && process.env.GAUZY_USER_PATH) {
 	require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 }
 
 export const environment: IEnvironment = {
-	port: process.env.API_PORT || 3000,
+	port: process.env.API_PORT || 3800,
 	host: process.env.API_HOST || 'http://localhost',
-	baseUrl: process.env.API_BASE_URL || 'https://api.gauzy.co',
-	clientBaseUrl: process.env.CLIENT_BASE_URL || 'https://app.gauzy.co',
+	baseUrl: process.env.API_BASE_URL || 'https://api.i4net.co.il',
+	clientBaseUrl: process.env.CLIENT_BASE_URL || 'https://app.i4net.co.il',
 	production: true,
 	envName: 'prod',
 
@@ -126,22 +126,22 @@ export const environment: IEnvironment = {
 
 	github: {
 		/** Github App Install Configuration  */
-		clientId: process.env.GAUZY_GITHUB_CLIENT_ID,
-		clientSecret: process.env.GAUZY_GITHUB_CLIENT_SECRET,
-		appId: process.env.GAUZY_GITHUB_APP_ID,
-		appName: process.env.GAUZY_GITHUB_APP_NAME,
-		appPrivateKey: process.env.GAUZY_GITHUB_APP_PRIVATE_KEY
-			? Buffer.from(process.env.GAUZY_GITHUB_APP_PRIVATE_KEY, 'base64').toString('ascii')
+		clientId: process.env.I4NET_GITHUB_CLIENT_ID,
+		clientSecret: process.env.I4NET_GITHUB_CLIENT_SECRET,
+		appId: process.env.I4NET_GITHUB_APP_ID,
+		appName: process.env.I4NET_GITHUB_APP_NAME,
+		appPrivateKey: process.env.I4NET_GITHUB_APP_PRIVATE_KEY
+			? Buffer.from(process.env.I4NET_GITHUB_APP_PRIVATE_KEY, 'base64').toString('ascii')
 			: '',
 
 		/** Github App Post Install Configuration */
 		postInstallUrl:
-			process.env.GAUZY_GITHUB_POST_INSTALL_URL ||
+			process.env.I4NET_GITHUB_POST_INSTALL_URL ||
 			`${process.env.CLIENT_BASE_URL}/#/pages/integrations/github/setup/installation`,
 
 		/** Github Webhook Configuration */
-		webhookSecret: process.env.GAUZY_GITHUB_WEBHOOK_SECRET,
-		webhookUrl: process.env.GAUZY_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
+		webhookSecret: process.env.I4NET_GITHUB_WEBHOOK_SECRET,
+		webhookUrl: process.env.I4NET_GITHUB_WEBHOOK_URL || `${process.env.API_BASE_URL}/api/integration/github/webhook`
 	},
 
 	jira: {
@@ -202,16 +202,16 @@ export const environment: IEnvironment = {
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
 
 	/**
-	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 * Endpoint for i4net AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
-	gauzyAIGraphQLEndpoint: process.env.GAUZY_AI_GRAPHQL_ENDPOINT,
+	gauzyAIGraphQLEndpoint: process.env.I4NET_AI_GRAPHQL_ENDPOINT,
 
 	/**
-	 * Endpoint for Gauzy AI REST API (optional), e.g.: http://localhost:3005/api
+	 * Endpoint for i4net AI REST API (optional), e.g.: http://localhost:3005/api
 	 */
-	gauzyAIRESTEndpoint: process.env.GAUZY_AI_REST_ENDPOINT,
+	gauzyAIRESTEndpoint: process.env.I4NET_AI_REST_ENDPOINT,
 
-	gauzyCloudEndpoint: process.env.GAUZY_CLOUD_ENDPOINT,
+	gauzyCloudEndpoint: process.env.I4NET_CLOUD_ENDPOINT,
 
 	smtpConfig: {
 		host: process.env.MAIL_HOST,
@@ -241,30 +241,30 @@ export const environment: IEnvironment = {
 	 * Email Template Config
 	 */
 	appIntegrationConfig: {
-		appName: process.env.APP_NAME || 'Gauzy',
-		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_Gauzy.png`,
-		appSignature: process.env.APP_SIGNATURE || 'Gauzy Team',
-		appLink: process.env.APP_LINK || 'https://app.gauzy.co/',
+		appName: process.env.APP_NAME || 'i4net',
+		appLogo: process.env.APP_LOGO || `${process.env.CLIENT_BASE_URL}/assets/images/logos/logo_i4net.png`,
+		appSignature: process.env.APP_SIGNATURE || 'i4net Team',
+		appLink: process.env.APP_LINK || 'https://app.i4net.co.il/',
 		appEmailConfirmationUrl:
 			process.env.APP_EMAIL_CONFIRMATION_URL || `${process.env.CLIENT_BASE_URL}/#/auth/confirm-email`,
 		appMagicSignUrl: process.env.APP_MAGIC_SIGN_URL || `${process.env.CLIENT_BASE_URL}/#/auth/magic-sign-in`,
-		companyLink: process.env.COMPANY_LINK || 'https://ever.co',
-		companyName: process.env.COMPANY_NAME || 'Ever Co. LTD'
+		companyLink: process.env.COMPANY_LINK || 'https://i4net.co.il',
+		companyName: process.env.COMPANY_NAME || 'i4net'
 	},
 
 	demo: process.env.DEMO === 'true' ? true : false,
 
 	demoCredentialConfig: {
-		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@ever.co`,
+		superAdminEmail: process.env.DEMO_SUPER_ADMIN_EMAIL || `admin@i4net.co.il`,
 		superAdminPassword: process.env.DEMO_SUPER_ADMIN_PASSWORD || `admin`,
-		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@ever.co`,
+		adminEmail: process.env.DEMO_ADMIN_EMAIL || `local.admin@i4net.co.il`,
 		adminPassword: process.env.DEMO_ADMIN_PASSWORD || `admin`,
-		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@ever.co`,
+		employeeEmail: process.env.DEMO_EMPLOYEE_EMAIL || `employee@i4net.co.il`,
 		employeePassword: process.env.DEMO_EMPLOYEE_PASSWORD || `123456`
 	}
 };
 
-export const gauzyToggleFeatures: IGauzyFeatures = {
+export const gauzyToggleFeatures: Ii4netFeatures = {
 	FEATURE_DASHBOARD: process.env.FEATURE_DASHBOARD === 'false' ? false : true,
 	FEATURE_TIME_TRACKING: process.env.FEATURE_TIME_TRACKING === 'false' ? false : true,
 	FEATURE_ESTIMATE: process.env.FEATURE_ESTIMATE === 'false' ? false : true,

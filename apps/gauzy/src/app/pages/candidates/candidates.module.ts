@@ -51,7 +51,7 @@ import {
 	EmployeeMultiSelectModule,
 	EmployeeRatesModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
@@ -194,7 +194,7 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		WorkInProgressModule
 	],
@@ -209,4 +209,4 @@ const COMPONENTS = [
 		CandidateTechnologiesService
 	]
 })
-export class CandidatesModule {}
+export class CandidatesModule { }

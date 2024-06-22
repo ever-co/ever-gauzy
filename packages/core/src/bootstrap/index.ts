@@ -247,12 +247,12 @@ export async function bootstrap(pluginConfig?: Partial<ApplicationPluginConfig>)
 	useContainer(app.select(SharedModule), { fallbackOnErrors: true });
 
 	// Start the server
-	const { port = 3000, host = '0.0.0.0' } = config.apiConfigOptions;
+	const { port = 3800, host = '0.0.0.0' } = config.apiConfigOptions;
 	console.log(chalk.green(`Configured Host: ${host}`));
 	console.log(chalk.green(`Configured Port: ${port}`));
 
 	// Configure Swagger for API documentation
-	const options = new DocumentBuilder().setTitle('Gauzy API').setVersion('1.0').addBearerAuth().build();
+	const options = new DocumentBuilder().setTitle('i4net API').setVersion('1.0').addBearerAuth().build();
 	const document = SwaggerModule.createDocument(app, options);
 	SwaggerModule.setup('swg', app, document);
 	console.log(chalk.green(`Swagger UI available at http://${host}:${port}/swg`));

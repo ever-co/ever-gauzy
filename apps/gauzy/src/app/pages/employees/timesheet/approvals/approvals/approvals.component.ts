@@ -14,7 +14,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Store, isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
-import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+import { BaseSelectorFilterComponent, i4netFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -32,7 +32,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 
 	TimesheetStatus = TimesheetStatus;
 
-	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(i4netFiltersComponent) gauzyFiltersComponent: i4netFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 
 	selectedTimesheet: {
@@ -349,5 +349,5 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 		return typeof timesheetIds === 'string' ? [timesheetIds] : timesheetIds;
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

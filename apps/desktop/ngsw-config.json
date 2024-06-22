@@ -21,7 +21,7 @@
 		{
 			"name": "gauzy-api",
 			"version": 1,
-			"urls": ["http://localhost:3000/api/**"],
+			"urls": ["http://localhost:3800/api/**"],
 			"cacheConfig": {
 				"strategy": "freshness",
 				"maxSize": 100,

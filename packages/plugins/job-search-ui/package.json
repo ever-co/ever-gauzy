@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/job-search-ui-plugin",
 	"version": "0.0.1",
-	"description": "UI plugin for job search in Gauzy",
+	"description": "UI plugin for job search in i4net",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -19,10 +19,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/i4net/i4net"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/i4net/i4net/issues"
 	},
 	"homepage": "https://ever.co",
 	"keywords": [

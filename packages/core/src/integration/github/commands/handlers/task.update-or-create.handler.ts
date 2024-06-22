@@ -32,7 +32,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 	) { }
 
 	/**
-	 * Command handler for the `GithubTaskUpdateOrCreateCommand`, responsible for processing actions when a task is opened in Gauzy.
+	 * Command handler for the `GithubTaskUpdateOrCreateCommand`, responsible for processing actions when a task is opened in i4net.
 	 *
 	 * @param command - The `GithubTaskUpdateOrCreateCommand` containing the task data to be processed.
 	 */

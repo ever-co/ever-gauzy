@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/ui-config",
 	"version": "0.1.0",
-	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
+	"description": "A configuration library for the i4net framework, providing environment settings and configurations to be shared across various Angular applications within the i4net ecosystem.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -48,10 +48,10 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+		"url": "https://github.com/i4net/i4net"
 	},
 	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
+		"url": "https://github.com/i4net/i4net/issues"
 	},
 	"homepage": "https://ever.co",
 	"keywords": [

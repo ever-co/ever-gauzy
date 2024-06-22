@@ -140,7 +140,7 @@ And('User can verify Super admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, checked);
 });
@@ -265,7 +265,7 @@ And('User can verify Admin administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, checked);
 });
@@ -392,7 +392,7 @@ And('User can verify Data Entry administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
@@ -519,7 +519,7 @@ And('User can verify Employee administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, checked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, checked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, checked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
@@ -646,7 +646,7 @@ And('User can verify Candidate administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
@@ -773,7 +773,7 @@ And('User can verify Manager administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });
@@ -900,7 +900,7 @@ And('User can verify Viewer administration roles and permissions', () => {
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationEquipmentSharingAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductTypesAdmin, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.ViewOrganizationProductCategoriesAdmin, notChecked);
-	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoGauzyCloud, notChecked);
+	rolesPermissionsPage.verifyState(RolesPermissionsPageData.MigrateIntoi4netCloud, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAccount, notChecked);
 	rolesPermissionsPage.verifyState(RolesPermissionsPageData.AccessDeleteAllData, notChecked);
 });

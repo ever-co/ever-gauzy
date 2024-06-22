@@ -1,6 +1,6 @@
 # `@gauzy/plugin`
 
-All Gauzy plugins should use that package with shared Plugin related code.
+All i4net plugins should use that package with shared Plugin related code.
 
 ## Usage
 

@@ -20,7 +20,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
 	EquipmentSharingPolicyMutationModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule
@@ -50,10 +50,10 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		EquipmentSharingPolicyRoutingModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		TableComponentsModule
 	],
 	declarations: [EquipmentSharingPolicyComponent]
 })
-export class EquipmentSharingPolicyModule {}
+export class EquipmentSharingPolicyModule { }

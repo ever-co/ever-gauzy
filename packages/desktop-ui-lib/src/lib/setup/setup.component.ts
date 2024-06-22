@@ -45,11 +45,11 @@ export class SetupComponent implements OnInit {
 		private readonly _domSanitizer: DomSanitizer
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
-			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
+			this.desktopFeatures.i4net = arg.gauzyWindow;
 			this.desktopFeatures.timeTracking = arg.timeTrackerWindow;
 			this.connectivity.integrated = arg.isLocalServer;
-			this.connectivity.custom = !arg.isLocalServer && arg.serverUrl !== 'https://api.gauzy.co';
-			this.connectivity.live = arg.serverUrl && arg.serverUrl === 'https://api.gauzy.co';
+			this.connectivity.custom = !arg.isLocalServer && arg.serverUrl !== 'https://api.i4net.co.il';
+			this.connectivity.live = arg.serverUrl && arg.serverUrl === 'https://api.i4net.co.il';
 			this.thirdParty.activityWatch = arg.aw;
 			this.databaseDriver.sqlite = arg.db === 'sqlite';
 			this.databaseDriver.postgre = arg.db === 'postgres';
@@ -108,10 +108,10 @@ export class SetupComponent implements OnInit {
 	buttonSave = false;
 	gauzyIcon: SafeResourceUrl =
 		this.isDesktopTimer || this.isServer
-			? './assets/images/logos/logo_Gauzy.svg'
-			: '../assets/images/logos/logo_Gauzy.svg';
+			? './assets/images/logos/logo_i4net.png'
+			: '../assets/images/logos/logo_i4net.png';
 	desktopFeatures: any = {
-		gauzyPlatform: !this.isDesktopTimer,
+		i4net: !this.isDesktopTimer,
 		timeTracking: !this.isServer
 	};
 
@@ -133,16 +133,16 @@ export class SetupComponent implements OnInit {
 
 	serverConfig: any = {
 		integrated: {
-			port: '3000',
+			port: '3800',
 			portUi: '4200',
 			host: '0.0.0.0'
 		},
 		custom: {
 			apiHost: '127.0.0.1',
-			port: '3000'
+			port: '3800'
 		},
 		live: {
-			url: 'https://api.gauzy.co'
+			url: 'https://api.i4net.co.il'
 		}
 	};
 
@@ -299,7 +299,7 @@ export class SetupComponent implements OnInit {
 
 	getFeature() {
 		return {
-			gauzyWindow: this.desktopFeatures.gauzyPlatform,
+			gauzyWindow: this.desktopFeatures.i4net,
 			timeTrackerWindow: this.desktopFeatures.timeTracking
 		};
 	}

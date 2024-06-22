@@ -1,3 +1,3 @@
 # `@gauzy/config`
 
-Gauzy Configuration Module
+i4net Configuration Module

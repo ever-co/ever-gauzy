@@ -54,8 +54,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`;
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -226,7 +226,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			if (isScreenUnauthorized()) {
 				log.info('Screen is Unauthorized');
 				const name = app.getName().split('-').join('');
-				resetPermissions({ bundleId: 'com.ever.' + name });
+				resetPermissions({ bundleId: 'com.i4net.' + name });
 			}
 		}
 	});

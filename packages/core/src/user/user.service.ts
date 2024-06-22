@@ -435,7 +435,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
-	 * To permanently delete your account from your Gauzy app:
+	 * To permanently delete your account from your i4net app:
 	 *
 	 * @param userId
 	 * @param options

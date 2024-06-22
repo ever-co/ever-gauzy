@@ -65,8 +65,8 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	menus = [];
 	gauzyIcon: SafeResourceUrl =
 		this.isDesktopTimer || this.isServer
-			? './assets/images/logos/logo_Gauzy.svg'
-			: '../assets/images/logos/logo_Gauzy.svg';
+			? './assets/images/logos/logo_i4net.png'
+			: '../assets/images/logos/logo_i4net.png';
 
 	private _monitorsOption$: BehaviorSubject<any> = new BehaviorSubject([
 		{
@@ -137,7 +137,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'TWITTER_CALLBACK_URL',
 					field: 'TWITTER_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/twitter/callback'
+					value: 'http://localhost:3800/api/auth/twitter/callback'
 				}
 			]
 		},
@@ -157,7 +157,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				{
 					name: 'GOOGLE_CALLBACK_URL',
 					field: 'GOOGLE_CALLBACK_URL',
-					value: 'http://localhost:3000/api/auth/google/callback'
+					value: 'http://localhost:3800/api/auth/google/callback'
 				}
 			]
 		},
@@ -190,18 +190,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			title: 'Github',
 			fields: [
 				{
-					name: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
-					field: 'GAUZY_GITHUB_OAUTH_CLIENT_ID',
+					name: 'I4NET_GITHUB_OAUTH_CLIENT_ID',
+					field: 'I4NET_GITHUB_OAUTH_CLIENT_ID',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
-					field: 'GAUZY_GITHUB_OAUTH_CLIENT_SECRET',
+					name: 'I4NET_GITHUB_OAUTH_CLIENT_SECRET',
+					field: 'I4NET_GITHUB_OAUTH_CLIENT_SECRET',
 					value: ''
 				},
 				{
-					name: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
-					field: 'GAUZY_GITHUB_OAUTH_CALLBACK_URL',
+					name: 'I4NET_GITHUB_OAUTH_CALLBACK_URL',
+					field: 'I4NET_GITHUB_OAUTH_CALLBACK_URL',
 					value: ''
 				}
 			]
@@ -379,7 +379,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		serverUrl: null,
 		awPort: null,
 		awHost: null,
-		port: 3000,
+		port: 3800,
 		portUi: 4200,
 		host: '0.0.0.0',
 		secureProxy: {
@@ -933,10 +933,10 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			case this.config.isLocalServer:
 				this.config.serverType = 'Integrated';
 				break;
-			case !this.config.isLocalServer && this.config.serverUrl !== 'https://api.gauzy.co':
+			case !this.config.isLocalServer && this.config.serverUrl !== 'https://api.i4net.co.il':
 				this.config.serverType = 'Custom';
 				break;
-			case !this.config.isLocalServer && this.config.serverUrl === 'https://api.gauzy.co':
+			case !this.config.isLocalServer && this.config.serverUrl === 'https://api.i4net.co.il':
 				this.config.serverType = 'Live';
 				break;
 			default:
@@ -1029,16 +1029,16 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		switch (val) {
 			case this.serverTypes.integrated:
 				this.config.isLocalServer = true;
-				this.config.port = 3000;
+				this.config.port = 3800;
 				this.config.serverUrl = null;
 				break;
 			case this.serverTypes.custom:
 				this.config.isLocalServer = false;
-				this.config.serverUrl = 'http://127.0.0.1:3000';
+				this.config.serverUrl = 'http://127.0.0.1:3800';
 				break;
 			case this.serverTypes.live:
 				this.config.isLocalServer = false;
-				this.config.serverUrl = 'https://api.gauzy.co';
+				this.config.serverUrl = 'https://api.i4net.co.il';
 				break;
 			default:
 				break;
@@ -1102,7 +1102,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 	}
 
 	public openLink() {
-		const url = 'https://gauzy.co';
+		const url = 'https://i4net.co.il';
 		this.electronService.shell.openExternal(url);
 	}
 

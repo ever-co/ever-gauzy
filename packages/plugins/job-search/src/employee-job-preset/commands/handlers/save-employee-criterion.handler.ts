@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import { IMatchingCriterions } from '@gauzy/contracts';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
@@ -12,7 +12,7 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 	constructor(
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly gauzyAIService: i4netAIService
 	) { }
 
 	/**
@@ -51,7 +51,7 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 			employeeId: input.employeeId,
 			jobPresetId: input.jobPresetId
 		})
-		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(
+		this.gauzyAIService.synci4netEmployeeJobSearchCriteria(
 			employee,
 			criteria
 		);

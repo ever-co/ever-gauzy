@@ -39,16 +39,16 @@
 		"desktop-timer": {
 			"tags": []
 		},
-		"gauzy-server": {
+		"i4net-server": {
 			"tags": []
 		},
-		"gauzy-server-ui": {
+		"i4net-server-ui": {
 			"tags": []
 		},
-		"gauzy-server-api": {
+		"i4net-server-api": {
 			"tags": []
 		},
-		"gauzy-api-server": {
+		"i4net-api-server": {
 			"tags": []
 		}
 	}

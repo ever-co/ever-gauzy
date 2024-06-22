@@ -1,5 +1,5 @@
 export const ClientsData = {
-	defaultProject: 'Gauzy Web Site',
+	defaultProject: 'i4net Web Site',
 	country: ' Bulgaria ',
 	defaultPhone: '00359878561239',
 	hours: 12,

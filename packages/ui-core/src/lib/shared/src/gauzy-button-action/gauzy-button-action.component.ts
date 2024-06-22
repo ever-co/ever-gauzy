@@ -6,7 +6,7 @@ import { ComponentEnum } from '@gauzy/ui-core/common';
 	templateUrl: './gauzy-button-action.component.html',
 	styleUrls: ['./gauzy-button-action.component.scss']
 })
-export class GauzyButtonActionComponent implements OnInit {
+export class i4netButtonActionComponent implements OnInit {
 	@Input() isDisable: boolean = true;
 	@Input() hasLayoutSelector: boolean = true;
 	@Input() componentName: ComponentEnum;
@@ -14,9 +14,9 @@ export class GauzyButtonActionComponent implements OnInit {
 	@Input() buttonTemplate: TemplateRef<HTMLElement>;
 	@Input() buttonTemplateVisible: TemplateRef<HTMLElement>;
 
-	constructor() {}
+	constructor() { }
 	/**
 	 * not implemented
 	 */
-	ngOnInit(): void {}
+	ngOnInit(): void { }
 }

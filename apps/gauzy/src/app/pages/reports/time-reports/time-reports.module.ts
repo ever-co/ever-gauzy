@@ -5,7 +5,7 @@ import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@ne
 import {
 	DailyGridModule,
 	DailyStatisticsModule,
-	GauzyFiltersModule,
+	i4netFiltersModule,
 	LineChartModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
@@ -28,7 +28,7 @@ import { TimeReportsComponent } from './time-reports/time-reports.component';
 		NbCardModule,
 		NbSelectModule,
 		FormsModule,
-		GauzyFiltersModule
+		i4netFiltersModule
 	]
 })
-export class TimeReportsModule {}
+export class TimeReportsModule { }

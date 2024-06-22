@@ -87,6 +87,9 @@ export class ImportComponent extends TranslationBaseComponent implements AfterVi
 				}
 			]
 		});
+		this.uploader.onBeforeUploadItem = (item => {
+			item.withCredentials = false;
+		});
 		this.uploader.onBuildItemForm = (item, form) => {
 			form.append('importType', this.importType);
 		};

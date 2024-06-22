@@ -30,8 +30,8 @@ import {
 	AddTaskDialogModule,
 	CardGridModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	GauzyEditableGridModule,
+	i4netButtonActionModule,
+	i4netEditableGridModule,
 	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
@@ -99,7 +99,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		CardGridModule,
 		AddTaskDialogModule,
 		EmployeeMultiSelectModule,
-		GauzyEditableGridModule,
+		i4netEditableGridModule,
 		TasksSprintSettingsViewModule,
 		TableFiltersModule,
 		PaginationV2Module,
@@ -107,8 +107,8 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,
 		TaskStatusSelectModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		TaskNumberFieldModule
 	]
 })
-export class TasksModule {}
+export class TasksModule { }

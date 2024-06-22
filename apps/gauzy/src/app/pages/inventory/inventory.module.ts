@@ -33,7 +33,7 @@ import {
 import {
 	CardGridModule,
 	CurrencyModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	ImageAssetModule,
 	LanguageSelectorModule,
 	PaginationV2Module,
@@ -108,7 +108,7 @@ const NB_MODULES = [
 		I18nTranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		ProductTypeSelectorModule,
 		ProductCategorySelectorModule,
 		NgxPermissionsModule.forChild()
@@ -124,4 +124,4 @@ const NB_MODULES = [
 		TranslatableService
 	]
 })
-export class InventoryModule {}
+export class InventoryModule { }

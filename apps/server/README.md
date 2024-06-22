@@ -1,4 +1,4 @@
-# Ever Gauzy Server
+# i4net Server
 
 how to:
 
@@ -49,9 +49,9 @@ build execute app
 build:desktop:windows:quick
 ```
 
-uninstall gauzy desktop macOS
+uninstall i4net Desktop macOS
 
 ```bash
 - delete app data
-$ rm -rf ~/Library/Application Support/gauzy-server
+$ rm -rf ~/Library/Application Support/i4net-server
 ```

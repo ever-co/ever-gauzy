@@ -73,13 +73,13 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 
 	public forgot(): void {
 		this.electronService.shell.openExternal(
-			'https://app.gauzy.co/#/auth/request-password'
+			'https://app.i4net.co.il/#/auth/request-password'
 		);
 	}
 
 	public register(): void {
 		this.electronService.shell.openExternal(
-			'https://app.gauzy.co/#/auth/register'
+			'https://app.i4net.co.il/#/auth/register'
 		);
 	}
 

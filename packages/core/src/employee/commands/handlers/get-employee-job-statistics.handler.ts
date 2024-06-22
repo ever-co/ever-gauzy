@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { i4netAIService } from '@gauzy/integration-ai';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { EmployeeService } from '../../employee.service';
 import { GetEmployeeJobStatisticsCommand } from '../get-employee-job-statistics.command';
@@ -13,7 +13,7 @@ export class GetEmployeeJobStatisticsHandler implements ICommandHandler<GetEmplo
 	 */
 	constructor(
 		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService
+		private readonly gauzyAIService: i4netAIService
 	) { }
 
 	/**

@@ -57,11 +57,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_TIMER_APP_DESCRIPTION: 'Ever Gauzy Desktop Timer'
-          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_TIMER_APP_NAME: 'i4net-desktop-timer'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'i4net Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.i4net.i4netdesktoptimer'
 
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:linux:release:gh'
@@ -118,11 +118,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_TIMER_APP_DESCRIPTION: 'Ever Gauzy Desktop Timer'
-          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_TIMER_APP_NAME: 'i4net-desktop-timer'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'i4net Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.i4net.i4netdesktoptimer'
 
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:mac:release'
@@ -179,11 +179,11 @@ jobs:
             const script = require('./.scripts/bump-version-electron.js')
             console.log(script.desktopTimer(true))
         env:
-          PROJECT_REPO: 'https://github.com/ever-co/ever-gauzy.git'
-          DESKTOP_TIMER_APP_NAME: 'ever-gauzy-desktop-timer'
-          COMPANY_SITE_LINK: 'https://gauzy.co'
-          DESKTOP_TIMER_APP_DESCRIPTION: 'Ever Gauzy Desktop Timer'
-          DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
+          PROJECT_REPO: 'https://github.com/i4net/i4net.git'
+          DESKTOP_TIMER_APP_NAME: 'i4net-desktop-timer'
+          COMPANY_SITE_LINK: 'https://i4net.co.il'
+          DESKTOP_TIMER_APP_DESCRIPTION: 'i4net Desktop Timer'
+          DESKTOP_TIMER_APP_ID: 'com.i4net.i4netdesktoptimer'
 
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:windows:release:gh'

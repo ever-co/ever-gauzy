@@ -49,7 +49,7 @@ export class ScreenCaptureComponent implements OnInit {
 
 	public get logoUrl(): SafeResourceUrl {
 		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.GAUZY_DESKTOP_LOGO_512X512
+			this._environment.I4NET_DESKTOP_LOGO_512X512
 		);
 	}
 }

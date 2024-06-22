@@ -23,7 +23,7 @@ import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
 	TimeOffMutationModule,
@@ -61,11 +61,11 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		PaginationV2Module,
 		NbToggleModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],
 	providers: [OrganizationsService, TimeOffService]
 })
-export class TimeOffModule {}
+export class TimeOffModule { }

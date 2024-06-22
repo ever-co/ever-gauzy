@@ -23,24 +23,24 @@ export class IntegrationSettingCardComponent extends TranslationBaseComponent {
 	// Define a mapping object for setting names to titles and information
 	public settingTitles: Record<string, string>[] = [
 		{
-			settingTitle: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_KEY'),
+			settingTitle: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.API_KEY'),
 			settingMatching: SettingTitlesEnum.API_KEY,
-			settingInformation: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_KEY')
+			settingInformation: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.API_KEY')
 		},
 		{
-			settingTitle: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.API_SECRET'),
+			settingTitle: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.API_SECRET'),
 			settingMatching: SettingTitlesEnum.API_SECRET,
-			settingInformation: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.API_SECRET')
+			settingInformation: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.API_SECRET')
 		},
 		{
-			settingTitle: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
+			settingTitle: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.OPEN_AI_API_SECRET_KEY'),
 			settingMatching: SettingTitlesEnum.OPEN_AI_API_SECRET_KEY,
-			settingInformation: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
+			settingInformation: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.OPEN_AI_API_SECRET_KEY')
 		},
 		{
-			settingTitle: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_ORGANIZATION_ID'),
+			settingTitle: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.OPEN_AI_ORGANIZATION_ID'),
 			settingMatching: SettingTitlesEnum.OPEN_AI_ORGANIZATION_ID,
-			settingInformation: this.getTranslation('INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.OPEN_AI_ORGANIZATION_ID')
+			settingInformation: this.getTranslation('INTEGRATIONS.i4net_AI_PAGE.TOOLTIP.OPEN_AI_ORGANIZATION_ID')
 		}
 	];
 

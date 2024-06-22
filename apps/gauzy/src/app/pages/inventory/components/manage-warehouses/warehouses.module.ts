@@ -19,7 +19,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	CardGridModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
 	PaginationV2Module,
@@ -77,9 +77,9 @@ const NB_MODULES = [
 		TagsColorInputModule,
 		PaginationV2Module,
 		CardGridModule,
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		InventoryTableComponentsModule
 	],
 	providers: []
 })
-export class WarehousesModule {}
+export class WarehousesModule { }

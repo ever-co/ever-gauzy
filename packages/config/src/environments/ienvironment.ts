@@ -35,7 +35,7 @@ export interface FileSystem {
 	name: FileStorageProviderEnum;
 }
 
-export interface IGauzyFeatures {
+export interface Ii4netFeatures {
 	[key: string]: boolean;
 }
 
@@ -125,12 +125,12 @@ export interface IEnvironment {
 	gauzySeedPath?: string;
 
 	/**
-	 * Endpoint for Gauzy AI API (optional), e.g.: http://localhost:3005/graphql
+	 * Endpoint for i4net AI API (optional), e.g.: http://localhost:3005/graphql
 	 */
 	gauzyAIGraphQLEndpoint?: string;
 
 	/**
-	 * Endpoint for Gauzy AI REST API (optional), e.g.: http://localhost:3005/api
+	 * Endpoint for i4net AI REST API (optional), e.g.: http://localhost:3005/api
 	 */
 	gauzyAIRESTEndpoint?: string;
 

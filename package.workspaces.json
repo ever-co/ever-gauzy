@@ -1,7 +1,7 @@
 {
 	"name": "gauzy",
 	"version": "0.1.0",
-	"repository": "https://github.com/ever-co/ever-gauzy.git",
+	"repository": "https://github.com/i4net/i4net.git",
 	"private": true,
 	"resolutions": {},
 	"workspaces": [

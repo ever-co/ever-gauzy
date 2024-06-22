@@ -5,7 +5,7 @@ import { ResponseHeaders as OctokitResponseHeaders } from '@octokit/types';
 import { parseConfig } from './probot.helpers';
 import { ModuleProviders, ProbotConfig } from './probot.types';
 
-const GITHUB_API_VERSION = process.env.GAUZY_GITHUB_API_VERSION || '2022-11-28'; // Define a default version
+const GITHUB_API_VERSION = process.env.I4NET_GITHUB_API_VERSION || '2022-11-28'; // Define a default version
 
 export interface OctokitResponse<T> {
 	data: T; // The response data received from the GitHub API.

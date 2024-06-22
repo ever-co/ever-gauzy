@@ -12,7 +12,7 @@ import {
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
+	i4netButtonActionModule,
 	NoDataMessageModule,
 	SharedModule,
 	SidebarModule,
@@ -41,10 +41,10 @@ import { AddArticleModule } from './add-article/add-article.module';
 		EmployeeMultiSelectModule,
 		SidebarModule,
 		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
+		i4netButtonActionModule,
 		SharedModule,
 		NoDataMessageModule
 	],
 	declarations: [HelpCenterComponent]
 })
-export class HelpCenterModule {}
+export class HelpCenterModule { }
