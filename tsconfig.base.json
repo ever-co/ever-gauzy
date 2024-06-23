@@ -1,0 +1,19 @@
+{
+	"compileOnSave": false,
+	"compilerOptions": {
+		"rootDir": ".",
+		"sourceMap": true,
+		"declaration": false,
+		"moduleResolution": "node",
+		"emitDecoratorMetadata": true,
+		"experimentalDecorators": true,
+		"importHelpers": true,
+		"target": "ES2022",
+		"module": "commonjs",
+		"lib": ["es2020", "dom", "es2018", "esnext.array"],
+		"skipLibCheck": true,
+		"skipDefaultLibCheck": true,
+		"baseUrl": "."
+	},
+	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
+}

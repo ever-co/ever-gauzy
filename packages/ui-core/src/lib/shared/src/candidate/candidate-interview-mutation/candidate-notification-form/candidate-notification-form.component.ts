@@ -4,8 +4,8 @@ import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
 	selector: 'ga-candidate-notification-form',
-	templateUrl: 'candidate-notification-form.component.html',
-	styleUrls: ['candidate-notification-form.component.scss']
+	templateUrl: './candidate-notification-form.component.html',
+	styleUrls: ['./candidate-notification-form.component.scss']
 })
 export class CandidateNotificationFormComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
@@ -22,7 +22,7 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 	@ViewChild('emailInterviewerForm')
 	emailInterviewerForm: CandidateEmailComponent;
 
-	constructor() { }
+	constructor() {}
 
 	notification() {
 		if (this.emailCandidateForm) {
@@ -41,5 +41,5 @@ export class CandidateNotificationFormComponent implements OnDestroy {
 		this.isInterviewerNotification = checked;
 	}
 
-	ngOnDestroy() { }
+	ngOnDestroy() {}
 }

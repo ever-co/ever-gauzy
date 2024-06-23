@@ -11,24 +11,12 @@
 								alt="Invalid image"
 								class="img-rounded"
 							/>
-							<button
-								class="trash-icon"
-								nbButton
-								status="basic"
-								size="small"
-                				(click)="deleteImageUrl()"
-							>
+							<button class="trash-icon" nbButton status="basic" size="small" (click)="deleteImageUrl()">
 								<nb-icon
 									status="danger"
-									[title]="
-										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
-											| translate
-									"
+									[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
 									icon="trash-2-outline"
-									[title]="
-										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
-											| translate
-									"
+									[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
 								></nb-icon>
 							</button>
 						</div>
@@ -36,18 +24,10 @@
 					<div class="row preview-img" [hidden]="showImageMeta">
 						<div class="image">
 							<i class="far fa-image"></i>
-							<button
-								class="trash-icon"
-								nbButton
-								status="basic"
-								size="small"
-							>
+							<button class="trash-icon" nbButton status="basic" size="small">
 								<nb-icon
 									status="danger"
-									[title]="
-										'FORM.PLACEHOLDERS.REMOVE_IMAGE'
-											| translate
-									"
+									[title]="'FORM.PLACEHOLDERS.REMOVE_IMAGE' | translate"
 									icon="trash-2-outline"
 								></nb-icon>
 							</button>
@@ -78,9 +58,9 @@
 	<div class="row">
 		<div class="col">
 			<div class="form-group">
-				<label for="firstName" class="label">{{
-					'FORM.LABELS.FIRST_NAME' | translate
-				}}</label>
+				<label for="firstName" class="label">
+					{{ 'FORM.LABELS.FIRST_NAME' | translate }}
+				</label>
 				<input
 					nbInput
 					type="text"
@@ -88,19 +68,13 @@
 					fullWidth
 					[placeholder]="'FORM.PLACEHOLDERS.FIRST_NAME' | translate"
 					formControlName="firstName"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'firstName')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'firstName') ? 'danger' : 'basic'"
 				/>
 			</div>
 		</div>
 		<div class="col">
 			<div class="form-group">
-				<label for="lastName" class="label">{{
-					'FORM.LABELS.LAST_NAME' | translate
-				}}</label>
+				<label for="lastName" class="label">{{ 'FORM.LABELS.LAST_NAME' | translate }}</label>
 				<input
 					nbInput
 					type="text"
@@ -108,11 +82,7 @@
 					fullWidth
 					[placeholder]="'FORM.PLACEHOLDERS.LAST_NAME' | translate"
 					formControlName="lastName"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'lastName')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'lastName') ? 'danger' : 'basic'"
 				/>
 			</div>
 		</div>
@@ -120,9 +90,7 @@
 	<div class="row">
 		<div class="col-4">
 			<div class="form-group">
-				<label for="username" class="label">{{
-					'FORM.USERNAME' | translate
-				}}</label>
+				<label for="username" class="label">{{ 'FORM.USERNAME' | translate }}</label>
 				<input
 					nbInput
 					type="text"
@@ -130,19 +98,13 @@
 					fullWidth
 					[placeholder]="'FORM.USERNAME' | translate"
 					formControlName="username"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'username')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'username') ? 'danger' : 'basic'"
 				/>
 			</div>
 		</div>
 		<div class="col-8">
 			<div class="form-group">
-				<label for="email" class="label">{{
-					'FORM.EMAIL' | translate
-				}}</label>
+				<label for="email" class="label">{{ 'FORM.EMAIL' | translate }}</label>
 				<input
 					nbInput
 					type="email"
@@ -150,11 +112,7 @@
 					fullWidth
 					[placeholder]="'FORM.EMAIL' | translate"
 					formControlName="email"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'email')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'email') ? 'danger' : 'basic'"
 				/>
 			</div>
 		</div>
@@ -185,9 +143,7 @@
 		</ng-container>
 		<div class="col" *ngIf="isEmployee">
 			<div class="form-group">
-				<label for="startedWork" class="label">{{
-					'FORM.LABELS.START_DATE' | translate
-				}}</label>
+				<label for="startedWork" class="label">{{ 'FORM.LABELS.START_DATE' | translate }}</label>
 				<input
 					[nbDatepicker]="startWorkOnDatepicker"
 					nbInput
@@ -196,13 +152,7 @@
 					formControlName="startedWorkOn"
 				/>
 				<nb-datepicker #startWorkOnDatepicker></nb-datepicker>
-				<div
-					class="notes"
-					*ngIf="
-						form.get('startedWorkOn').touched &&
-						form.get('startedWorkOn').value == null
-					"
-				>
+				<div class="notes" *ngIf="form.get('startedWorkOn').touched && form.get('startedWorkOn').value == null">
 					<p>
 						{{ 'FORM.NOTIFICATIONS.STARTED_WORK_ON' | translate }}
 					</p>
@@ -211,9 +161,7 @@
 		</div>
 		<div class="col" *ngIf="isCandidate">
 			<div class="form-group">
-				<label for="appliedDate" class="label">{{
-					'FORM.LABELS.APPLIED_DATE' | translate
-				}}</label>
+				<label for="appliedDate" class="label">{{ 'FORM.LABELS.APPLIED_DATE' | translate }}</label>
 				<input
 					fullWidth
 					id="appliedDate"
@@ -227,9 +175,7 @@
 		</div>
 		<div class="col" *ngIf="isEmployee || isCandidate">
 			<div class="form-group">
-				<label for="rejectDate" class="label">{{
-					'FORM.LABELS.REJECT_DATE' | translate
-				}}</label>
+				<label for="rejectDate" class="label">{{ 'FORM.LABELS.REJECT_DATE' | translate }}</label>
 				<input
 					fullWidth
 					id="rejectDate"
@@ -237,11 +183,7 @@
 					nbInput
 					[nbDatepicker]="rejectDatePicker"
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'rejectDate')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'rejectDate') ? 'danger' : 'basic'"
 				/>
 				<nb-datepicker #rejectDatePicker></nb-datepicker>
 			</div>
@@ -250,9 +192,7 @@
 	<div class="row" *ngIf="isEmployee">
 		<div class="col">
 			<div class="form-group">
-				<label for="offerDate" class="label">{{
-					'FORM.LABELS.OFFER_DATE' | translate
-				}}</label>
+				<label for="offerDate" class="label">{{ 'FORM.LABELS.OFFER_DATE' | translate }}</label>
 				<input
 					fullWidth
 					id="offerDate"
@@ -266,9 +206,7 @@
 		</div>
 		<div class="col">
 			<div class="form-group">
-				<label for="acceptDate" class="label">{{
-					'FORM.LABELS.ACCEPT_DATE' | translate
-				}}</label>
+				<label for="acceptDate" class="label">{{ 'FORM.LABELS.ACCEPT_DATE' | translate }}</label>
 				<input
 					fullWidth
 					id="acceptDate"
@@ -276,11 +214,7 @@
 					nbInput
 					[nbDatepicker]="acceptDatePicker"
 					[placeholder]="'POP_UPS.PICK_DATE' | translate"
-					[status]="
-						FormHelpers.isInvalidControl(form, 'acceptDate')
-							? 'danger'
-							: 'basic'
-					"
+					[status]="FormHelpers.isInvalidControl(form, 'acceptDate') ? 'danger' : 'basic'"
 				/>
 				<nb-datepicker #acceptDatePicker></nb-datepicker>
 			</div>
@@ -301,9 +235,7 @@
 	<div class="row" *ngIf="isCandidate">
 		<div class="col">
 			<div class="form-group">
-				<label for="source" class="label">{{
-					'FORM.LABELS.SOURCE' | translate
-				}}</label>
+				<label for="source" class="label">{{ 'FORM.LABELS.SOURCE' | translate }}</label>
 				<input
 					fullWidth
 					id="source"

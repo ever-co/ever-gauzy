@@ -334,15 +334,14 @@ export function validateDateRange(startedAt: Date, stoppedAt: Date): void {
 }
 
 /**
- * Function that returns intersection of 2 array
- * @param arr1
- * @param arr2
- * @returns
+ * Function that returns intersection of 2 arrays
+ * @param arr1 Array 1
+ * @param arr2 Array 2
+ * @returns Intersection of arr1 and arr2
  */
-export function findIntersection(arr1: any[], arr2: any[]) {
+export function getArrayIntersection(arr1: any[], arr2: any[]): any[] {
 	const set1 = new Set(arr1);
-	const intersection = arr2.filter((element) => set1.has(element));
-	return intersection;
+	return arr2.filter((element) => set1.has(element));
 }
 
 /**

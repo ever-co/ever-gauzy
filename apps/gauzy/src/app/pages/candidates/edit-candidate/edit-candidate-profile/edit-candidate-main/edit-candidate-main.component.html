@@ -21,26 +21,13 @@
 					/>
 				</defs>
 				<g fill="none" fill-rule="evenodd">
-					<circle
-						cx="34"
-						cy="34"
-						r="34"
-						fill="#0091FF"
-						opacity=".3"
-					/>
-					<circle
-						cx="34"
-						cy="34"
-						r="26"
-						fill="#0091FF"
-						opacity=".9"
-					/>
+					<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+					<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
 					<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 				</g>
 			</svg>
 			<div [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 			<img
-				*ngIf="form"
 				[src]="form.get('imageUrl').value"
 				alt="Profile Photo"
 				(mouseenter)="hoverState = true"
@@ -50,84 +37,73 @@
 	</div>
 
 	<div class="employee-form w-75 pl-3 pr-3">
-		<form [formGroup]="form">
+		<form [formGroup]="form" (ngSubmit)="onSubmit()">
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="usernameInput">{{
-							'FORM.USERNAME' | translate
-						}}</label>
+						<label class="label" for="usernameInput">
+							{{ 'FORM.USERNAME' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="usernameInput"
 							type="text"
 							nbInput
 							formControlName="username"
-							placeholder="{{ 'FORM.USERNAME' | translate }}"
+							[placeholder]="'FORM.USERNAME' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col">
 					<div class="form-group">
-						<label for="emailInput" class="label">{{
-							'FORM.EMAIL' | translate
-						}}</label>
+						<label for="emailInput" class="label">
+							{{ 'FORM.EMAIL' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="emailInput"
 							type="email"
 							nbInput
 							formControlName="email"
-							placeholder="{{ 'FORM.EMAIL' | translate }}"
+							[placeholder]="'FORM.EMAIL' | translate"
 						/>
 					</div>
 				</div>
 			</div>
-
 			<div class="row">
 				<div class="col">
 					<div class="form-group">
-						<label class="label" for="firstNameInput">{{
-							'FORM.LABELS.FIRST_NAME' | translate
-						}}</label>
+						<label class="label" for="firstNameInput">
+							{{ 'FORM.LABELS.FIRST_NAME' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="firstNameInput"
 							type="text"
 							nbInput
 							formControlName="firstName"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.FIRST_NAME' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.FIRST_NAME' | translate"
 						/>
 					</div>
 				</div>
 				<div class="col">
 					<div class="form-group">
-						<label for="lastNameInput" class="label">{{
-							'FORM.LABELS.LAST_NAME' | translate
-						}}</label>
+						<label for="lastNameInput" class="label">
+							{{ 'FORM.LABELS.LAST_NAME' | translate }}
+						</label>
 						<input
 							fullWidth
 							id="lastNameInput"
 							type="text"
 							nbInput
 							formControlName="lastName"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.LAST_NAME' | translate
-							}}"
+							[placeholder]="'FORM.PLACEHOLDERS.LAST_NAME' | translate"
 						/>
 					</div>
 				</div>
 			</div>
-
 			<div class="actions">
-				<button
-					[disabled]="form.invalid"
-					(click)="submitForm()"
-					nbButton
-					status="success"
-				>
+				<button type="submit" [disabled]="form.invalid" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</div>

@@ -6,7 +6,7 @@ export class StaticServer implements ILocalServer {
 	private readonly _app: Express;
 	private _port: number;
 	protected _isRunning: boolean;
-	private _server: Server<typeof IncomingMessage, typeof ServerResponse>;
+	private _server: Server;
 
 	protected constructor() {
 		this._app = express();
@@ -20,9 +20,7 @@ export class StaticServer implements ILocalServer {
 
 	public start(): void {
 		this._server = this._app.listen(this._port, () => {
-			console.log(
-				`⚡️[server]: Server is running at https://localhost:${this._port} 🚀`
-			);
+			console.log(`⚡️[server]: Server is running at https://localhost:${this._port} 🚀`);
 			this._isRunning = true;
 		});
 	}
@@ -54,11 +52,11 @@ export class StaticServer implements ILocalServer {
 		this._port = value;
 	}
 
-	protected get server(): Server<typeof IncomingMessage, typeof ServerResponse> {
+	protected get server(): Server {
 		return this._server;
 	}
 
-	protected set server(value: Server<typeof IncomingMessage, typeof ServerResponse>) {
-		 this._server = value;
+	protected set server(value: Server) {
+		this._server = value;
 	}
 }

@@ -307,7 +307,7 @@
 			"NAME": "Nome",
 			"PHONE_NUMBER": "Numero di telefono",
 			"WEBSITE": "Sito web",
-			"FIRST_NAME": "Nome di battesimo (opzionale)",
+			"FIRST_NAME": "Nome di battesimo",
 			"LAST_NAME": "Cognome (opzionale)",
 			"FROM": "Da",
 			"TO": "Per",

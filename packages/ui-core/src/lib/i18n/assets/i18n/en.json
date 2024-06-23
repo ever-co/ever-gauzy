@@ -327,7 +327,7 @@
 			"NAME": "Name",
 			"PHONE_NUMBER": "Phone Number",
 			"WEBSITE": "Website",
-			"FIRST_NAME": "First Name (optional)",
+			"FIRST_NAME": "First Name",
 			"LAST_NAME": "Last Name (optional)",
 			"FROM": "From",
 			"TO": "To",

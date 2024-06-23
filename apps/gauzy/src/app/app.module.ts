@@ -28,7 +28,8 @@ import { FeatureToggleModule } from 'ngx-feature-toggle';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
-import moment from 'moment';
+import * as moment from 'moment';
+import { UiAuthModule } from '@gauzy/ui-auth';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
@@ -88,6 +89,7 @@ const isProd = environment.production;
 			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
 		}),
 		NbEvaIconsModule,
+		UiAuthModule,
 		UiConfigModule.forRoot(),
 		UiCoreModule.forRoot(),
 		I18nTranslateModule.forRoot(),

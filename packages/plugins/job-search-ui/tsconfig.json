@@ -1,13 +1,29 @@
 {
-	"extends": "../../../tsconfig.json",
 	"compilerOptions": {
-		"declaration": true,
-		"sourceMap": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "jest"]
+		"target": "es2022",
+		"useDefineForClassFields": false,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"noImplicitOverride": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true
 	},
-	"include": ["./src/**/*.ts"],
-	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.lib.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	],
+	"extends": "../../../tsconfig.base.json",
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true
+	}
 }

@@ -76,6 +76,7 @@ COPY --chown=node:node packages/plugins/job-proposal/package.json ./packages/plu
 COPY --chown=node:node packages/plugins/job-search-ui/package.json ./packages/plugins/job-search-ui/
 COPY --chown=node:node packages/ui-core/package.json ./packages/ui-core/
 COPY --chown=node:node packages/ui-config/package.json ./packages/ui-config/
+COPY --chown=node:node packages/ui-auth/package.json ./packages/ui-auth/
 
 # We do not build here Wakatime plugin, because it used in Desktop Apps for now
 # COPY --chown=node:node packages/plugins/integration-wakatime/package.json ./packages/plugins/integration-wakatime/

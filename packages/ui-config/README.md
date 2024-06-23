@@ -18,3 +18,7 @@ To install the `@gauzy/ui-config` library, run the following command in your Ang
 yarn add @gauzy/ui-config
 
 ```
+
+## Running unit tests
+
+Run `nx test ui-config` to execute the unit tests.
