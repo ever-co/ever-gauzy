@@ -23,8 +23,8 @@ import { CandidateInterviewMutationComponent } from '../candidate-interview-muta
 })
 export class CandidateInterviewInfoComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() interviewId: any; //from calendar
-	@Input() interviewList: ICandidateInterview[];
-	@Input() isSlider: boolean;
+	@Input() interviews: ICandidateInterview[] = [];
+	@Input() isSlider: boolean = false;
 	@Input() selectedCandidate: ICandidate; //from profile
 
 	candidateId: string;
@@ -52,23 +52,9 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 		super(translateService);
 	}
 
-	async edit() {
-		this.currentInterview.interviewers = this.interviewers;
-		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
-			context: {
-				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'),
-				editData: this.currentInterview,
-				selectedCandidate: this.selectedCandidate,
-				interviewId: this.currentInterview.id,
-				interviews: this.interviewList
-			}
-		});
-		const data = await firstValueFrom(dialog.onClose);
-		if (data) {
-			this.toastrSuccess('UPDATED');
-			this.loadData();
-		}
-	}
+	/**
+	 *
+	 */
 	async ngOnInit() {
 		this.organization = this.store.selectedOrganization;
 		if (this.interviewId) {
@@ -80,8 +66,8 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 				)
 			);
 			if (interviews) {
-				this.interviewList = interviews.items;
-				this.currentInterview = this.interviewList.find((item) => item.id === this.interviewId);
+				this.interviews = interviews.items;
+				this.currentInterview = this.interviews.find((item) => item.id === this.interviewId);
 
 				const candidate = await this.candidatesService.getCandidateById(
 					this.currentInterview.candidateId,
@@ -93,10 +79,28 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 				}
 			}
 		} else {
-			this.currentInterview = this.interviewList[0];
+			this.currentInterview = this.interviews[0];
 		}
 
 		this.loadData();
+	}
+
+	async edit() {
+		this.currentInterview.interviewers = this.interviewers;
+		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
+			context: {
+				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.EDIT_INTERVIEW'),
+				editData: this.currentInterview,
+				selectedCandidate: this.selectedCandidate,
+				interviewId: this.currentInterview.id,
+				interviews: this.interviews
+			}
+		});
+		const data = await firstValueFrom(dialog.onClose);
+		if (data) {
+			this.toastrSuccess('UPDATED');
+			this.loadData();
+		}
 	}
 
 	loadData() {
@@ -125,9 +129,9 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 	previous() {
 		--this.index;
 		this.isNextBtn = true;
-		const currentIndex = this.interviewList.indexOf(this.currentInterview);
+		const currentIndex = this.interviews.indexOf(this.currentInterview);
 		const newIndex = currentIndex === 0 ? currentIndex : currentIndex - 1;
-		this.currentInterview = this.interviewList[newIndex];
+		this.currentInterview = this.interviews[newIndex];
 		this.loadData();
 		if (currentIndex === 1) {
 			this.isPreviousBtn = false;
@@ -137,11 +141,11 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 	next() {
 		++this.index;
 		this.isPreviousBtn = true;
-		const currentIndex = this.interviewList.indexOf(this.currentInterview);
-		const newIndex = currentIndex === this.interviewList.length - 1 ? currentIndex : currentIndex + 1;
-		this.currentInterview = this.interviewList[newIndex];
+		const currentIndex = this.interviews.indexOf(this.currentInterview);
+		const newIndex = currentIndex === this.interviews.length - 1 ? currentIndex : currentIndex + 1;
+		this.currentInterview = this.interviews[newIndex];
 		this.loadData();
-		if (currentIndex === this.interviewList.length - 2) {
+		if (currentIndex === this.interviews.length - 2) {
 			this.isNextBtn = false;
 		}
 	}

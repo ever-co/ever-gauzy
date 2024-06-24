@@ -10,7 +10,7 @@ import { CandidateEmailComponent } from './candidate-email/candidate-email.compo
 export class CandidateNotificationFormComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate;
-	@Input() employees: IEmployee[];
+	@Input() employees: IEmployee[] = [];
 
 	candidateForm: UntypedFormGroup;
 	interviewerForm: UntypedFormGroup;

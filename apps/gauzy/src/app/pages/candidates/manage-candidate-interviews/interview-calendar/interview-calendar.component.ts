@@ -1,6 +1,6 @@
 import { Component, OnDestroy, ViewChild, OnInit } from '@angular/core';
 import { FullCalendarComponent } from '@fullcalendar/angular';
-import { CalendarOptions, DateSelectArg, EventHoveringArg, EventInput } from '@fullcalendar/core';
+import { CalendarOptions, DateSelectArg, EventClickArg, EventHoveringArg, EventInput } from '@fullcalendar/core';
 import { disableCursor } from '@fullcalendar/core/internal';
 import { TranslateService } from '@ngx-translate/core';
 import bootstrapPlugin from '@fullcalendar/bootstrap';
@@ -8,21 +8,15 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGrigPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { NbDialogService } from '@nebular/theme';
-import { filter } from 'rxjs/operators';
-import { firstValueFrom, tap } from 'rxjs';
-import { IEmployee, IDateRange, ICandidateInterview, IOrganization } from '@gauzy/contracts';
+import { filter, map, tap, switchMap } from 'rxjs/operators';
+import { Observable, Subject, catchError, firstValueFrom, of } from 'rxjs';
+import { pluck } from 'underscore';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IEmployee, IDateRange, ICandidateInterview, IOrganization, IPagination } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import {
-	CandidateInterviewService,
-	CandidateInterviewersService,
-	CandidateStore,
-	EmployeesService,
-	ToastrService
-} from '@gauzy/ui-core/core';
+import { CandidateInterviewService, EmployeesService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import * as _ from 'underscore';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -32,216 +26,250 @@ import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } 
 	styleUrls: ['./interview-calendar.component.scss']
 })
 export class InterviewCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	@ViewChild('calendar', { static: true })
-	calendarComponent: FullCalendarComponent;
-	calendarOptions: CalendarOptions;
-	selectedInterview = true;
-	isCandidate = false;
-	candidateList: string[] = [];
-	employeeList: string[] = [];
-	isEmployee = false;
-	employees: IEmployee[] = [];
-	calendarEvents: EventInput[] = [];
-	interviewList: ICandidateInterview[];
-	organization: IOrganization;
+	public calendarOptions: CalendarOptions = { events: [] };
+	public selectedCandidates: string[] = [];
+	public selectedEmployees: string[] = [];
+	public calendarEvents: EventInput[] = [];
+	public organization: IOrganization;
+	public interviews: ICandidateInterview[] = [];
+	public organization$: Observable<IOrganization>;
+	public employees$: Observable<IEmployee[]>; // Observable for an array of Organization employees
+	public subject$: Subject<boolean> = new Subject();
+
+	@ViewChild('calendar', { static: true }) calendarComponent: FullCalendarComponent;
 
 	constructor(
 		public readonly translateService: TranslateService,
-		private readonly dialogService: NbDialogService,
-		private readonly candidateInterviewService: CandidateInterviewService,
-		private readonly candidateInterviewersService: CandidateInterviewersService,
-		private readonly toastrService: ToastrService,
-		private readonly employeesService: EmployeesService,
-		private readonly candidateStore: CandidateStore,
-		private readonly store: Store
+		private readonly _nbDialogService: NbDialogService,
+		private readonly _candidateInterviewService: CandidateInterviewService,
+		private readonly _toastrService: ToastrService,
+		private readonly _employeesService: EmployeesService,
+		private readonly _store: Store,
+		protected readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
+		this.getCalendarOption();
 	}
 
 	ngOnInit() {
-		this.store.selectedOrganization$
+		this.organization$ = this._store.selectedOrganization$.pipe(
+			filter((organization: IOrganization) => !!organization),
+			distinctUntilChange(),
+			tap((organization: IOrganization) => {
+				this.organization = organization;
+				this.subject$.next(true);
+			})
+		);
+		this.subject$
 			.pipe(
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap((organization: IOrganization) => (this.organization = organization)),
-				untilDestroyed(this)
-			)
-			.subscribe((organization: IOrganization) => {
-				if (organization) {
-					this.getEmployees();
+				filter(() => !!this.organization),
+				switchMap(() => {
+					// Extract organization properties
+					const { id: organizationId, tenantId } = this.organization;
 
-					this.candidateStore.interviewList$.pipe(untilDestroyed(this)).subscribe(() => {
-						this.loadInterviews();
-					});
-				}
-			});
-	}
-
-	/**
-	 *
-	 * @returns
-	 */
-	getEmployees() {
-		if (!this.organization) {
-			return;
-		}
-
-		const { id: organizationId, tenantId } = this.organization;
-		this.employeesService
-			.getAll(['user'], { organizationId, tenantId })
-			.pipe(
-				tap(({ items }) => {
-					this.employees = items;
-				}),
-				untilDestroyed(this)
+					return this._candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId }).pipe(
+						map(({ items }) => items),
+						tap((interviews: ICandidateInterview[]) => this.mappedInterviews(interviews)),
+						catchError((error) => {
+							// Handle and log errors
+							this._errorHandlingService.handleError(error);
+							return of([]);
+						}),
+						// Handle component lifecycle to avoid memory leaks
+						untilDestroyed(this)
+					);
+				})
 			)
 			.subscribe();
 	}
 
-	/**
-	 *
-	 */
-	async loadInterviews() {
-		const { id: organizationId, tenantId } = this.organization;
-		const res = await firstValueFrom(
-			this.candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId })
+	ngAfterViewInit() {
+		this.employees$ = this.organization$.pipe(
+			switchMap((organization: IOrganization) => {
+				// Extract organization properties
+				const { id: organizationId, tenantId } = organization;
+
+				return this._employeesService.getAll(['user'], { organizationId, tenantId }).pipe(
+					map(({ items }: IPagination<IEmployee>) => items),
+					catchError((error) => {
+						// Handle and log errors
+						this._errorHandlingService.handleError(error);
+						return of([]);
+					}),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this)
+				);
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
 		);
-		if (res) {
-			this.interviewList = res.items;
-			this.calendarOptions = {
-				eventClick: (event) => {
-					const id = event.event._def.extendedProps.id;
-					this.dialogService.open(CandidateInterviewInfoComponent, {
-						context: {
-							interviewId: id,
-							interviewList: this.interviewList,
-							isSlider: false
-						}
-					});
-				},
-				initialView: 'timeGridWeek',
-				headerToolbar: {
-					left: 'prev,next today',
-					center: 'title',
-					right: 'dayGridMonth,timeGridWeek,timeGridDay'
-				},
-				themeSystem: 'bootstrap',
-				plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin],
-				weekends: true,
-				height: 'auto',
-				selectable: true,
-				selectAllow: ({ start, end }) => moment(start).isSame(moment(end), 'day'),
-				select: this.handleEventSelect.bind(this),
-				dateClick: this.handleDateClick.bind(this),
-				eventMouseEnter: this.handleEventMouseEnter.bind(this),
-				eventMouseLeave: this.handleEventMouseLeave.bind(this)
-			};
-
-			this.calendarEvents = [];
-			for (const interview of res.items) {
-				const { interviewers = [] } = interview;
-				this.calendarEvents.push({
-					title: interview.title,
-					start: interview.startTime,
-					end: interview.endTime,
-					candidateId: interview.candidateId,
-					id: interview.id,
-					extendedProps: {
-						id: interview.id
-					},
-					backgroundColor: '#36f',
-					employeeIds: _.pluck(interviewers, 'employeeId')
-				});
-			}
-			this.mappedCalendarEvents();
-		}
-	}
-
-	async onCandidateSelected(ids: string[]) {
-		this.isCandidate = !ids.length ? false : true;
-		this.candidateList = ids;
-		this.mappedCalendarEvents();
-	}
-
-	async onEmployeeSelected(ids: string[]) {
-		this.isEmployee = !ids.length ? false : true;
-		this.employeeList = ids;
-		this.mappedCalendarEvents();
-	}
-
-	async mappedCalendarEvents() {
-		let result = [];
-		for (const event of this.calendarEvents as EventInput[]) {
-			if (this.isCandidate && this.isEmployee) {
-				let isMatchCandidate,
-					isMatchEmployee = false;
-				if (this.candidateList.includes(event.candidateId)) {
-					isMatchCandidate = true;
-				}
-				for (const id of this.employeeList) {
-					if (event.employeeIds.includes(id)) {
-						isMatchEmployee = true;
-					}
-				}
-				if (isMatchCandidate && isMatchEmployee) {
-					result.push(event);
-				}
-			} else if (this.isCandidate) {
-				if (this.candidateList.includes(event.candidateId)) {
-					result.push(event);
-				}
-			} else if (this.isEmployee) {
-				let isMatchEmployee = false;
-				for (const id of this.employeeList) {
-					if (event.employeeIds.includes(id)) {
-						isMatchEmployee = true;
-					}
-				}
-				if (isMatchEmployee) {
-					result.push(event);
-				}
-			} else {
-				result = this.calendarEvents;
-			}
-		}
-		this.calendarOptions.events = result;
 	}
 
 	/**
+	 * Returns the configuration options for the calendar.
 	 *
-	 * @returns
+	 * @returns An object containing calendar options.
 	 */
-	async getInterviewers() {
-		for (const event of this.calendarOptions.events as EventInput[]) {
-			return await this.candidateInterviewersService.findByInterviewId(event.id as string);
-		}
+	getCalendarOption() {
+		this.calendarOptions = {
+			initialView: 'timeGridWeek',
+			headerToolbar: {
+				left: 'prev,next today',
+				center: 'title',
+				right: 'dayGridMonth,timeGridWeek,timeGridDay'
+			},
+			themeSystem: 'bootstrap',
+			plugins: [dayGridPlugin, timeGrigPlugin, interactionPlugin, bootstrapPlugin],
+			weekends: true,
+			height: 'auto',
+			selectable: true,
+			select: this.handleEventSelect.bind(this),
+			dateClick: this.handleDateClick.bind(this),
+			eventMouseEnter: this.handleEventMouseEnter.bind(this),
+			eventMouseLeave: this.handleEventMouseLeave.bind(this),
+			eventClick: this.handleEventClick.bind(this)
+		};
 	}
 
 	/**
+	 * Maps an array of candidate interviews to calendar events and updates the calendarEvents property.
+	 * Each interview is converted into an event object and added to the calendarEvents array.
+	 * After processing all interviews, the mappedCalendarEvents method is called.
 	 *
-	 * @param selectedRange
+	 * @param interviews - An array of candidate interviews to be mapped to calendar events.
+	 */
+	mappedInterviews(interviews: ICandidateInterview[]) {
+		this.calendarEvents = interviews.map((interview) => ({
+			title: interview.title,
+			start: interview.startTime,
+			end: interview.endTime,
+			candidateId: interview.candidateId,
+			id: interview.id,
+			extendedProps: { id: interview.id },
+			backgroundColor: '#36f',
+			employeeIds: pluck(interview.interviewers, 'employeeId')
+		}));
+
+		// Maps an array of calendar events and updates the calendarEvents property.
+		this.mappedCalendarEvents();
+	}
+
+	/**
+	 * Handles the selection of candidates.
+	 * Updates the isCandidate flag and selectedCandidates with the selected candidate IDs,
+	 * and triggers the mapping of calendar events.
+	 *
+	 * @param ids - An array of selected candidate IDs.
+	 */
+	async onCandidateSelected(ids: string[]) {
+		this.selectedCandidates = ids;
+		this.mappedCalendarEvents();
+	}
+
+	/**
+	 * Handles the selection of employees.
+	 * Updates the isEmployee flag and selectedEmployees with the selected employee IDs,
+	 * and triggers the mapping of calendar events.
+	 *
+	 * @param ids - An array of selected employee IDs.
+	 */
+	async onEmployeeSelected(ids: string[]) {
+		this.selectedEmployees = ids;
+		this.mappedCalendarEvents();
+	}
+
+	/**
+	 * Handles any additional processing or updates needed after mapping calendar events.
+	 * Filters calendar events based on the selected candidates and employees.
+	 */
+	async mappedCalendarEvents() {
+		let events: EventInput[] = [];
+
+		const isCandidateSelected = this.selectedCandidates.length;
+		const isEmployeeSelected = this.selectedEmployees.length;
+
+		if (isCandidateSelected === 0 && isEmployeeSelected === 0) {
+			// If there are no filters, use all calendar events
+			this.calendarOptions.events = this.calendarEvents;
+			return;
+		}
+
+		for (const event of this.calendarEvents as EventInput[]) {
+			const isMatchCandidate = this.selectedCandidates.includes(event.candidateId);
+			const isMatchEmployee = event.employeeIds.some((id: string) => this.selectedEmployees.includes(id));
+
+			if (
+				(isMatchCandidate && isMatchEmployee) ||
+				(isCandidateSelected > 0 && isMatchCandidate) ||
+				(isEmployeeSelected > 0 && isMatchEmployee)
+			) {
+				events.push(event);
+			}
+		}
+
+		this.calendarOptions.events = events;
+	}
+
+	/**
+	 * Opens a dialog for scheduling an interview within the selected date range.
+	 * If the dialog closes with data, a success message is displayed.
+	 *
+	 * @param selectedRange - The date range for scheduling an interview (optional).
 	 */
 	async add(selectedRange?: IDateRange) {
-		const dialog = this.dialogService.open(CandidateInterviewMutationComponent, {
-			context: {
-				headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
-				isCalendar: true,
-				selectedRangeCalendar: selectedRange,
-				interviews: this.interviewList
-			}
-		});
-		const data = await firstValueFrom(dialog.onClose);
-		if (data) {
-			this.toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, {
-				name: data.title
+		try {
+			const dialog = this._nbDialogService.open(CandidateInterviewMutationComponent, {
+				context: {
+					headerTitle: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.SCHEDULE_INTERVIEW'),
+					isCalendar: true,
+					selectedRangeCalendar: selectedRange,
+					interviews: this.interviews
+				}
 			});
-			this.loadInterviews();
+
+			const data = await firstValueFrom(dialog.onClose);
+			if (data) {
+				this._toastrService.success(`TOASTR.MESSAGE.CANDIDATE_EDIT_CREATED`, { name: data.title });
+			}
+		} catch (error) {
+			// Handle and log errors
+			this._errorHandlingService.handleError(error);
+		} finally {
+			this.subject$.next(true);
 		}
 	}
 
 	/**
+	 * Determines if the date selection is allowed based on the criteria.
 	 *
-	 * @param event
+	 * @param param0 - An object containing the start and end dates of the selection.
+	 * @returns {boolean} - Returns true if the selection is allowed, false otherwise.
+	 */
+	selectAllow({ start, end }): boolean {
+		return moment(start).isSame(moment(end), 'day');
+	}
+
+	/**
+	 * Handles the event click action by opening a modal dialog to view the time log details.
+	 *
+	 * @param param0 - An object containing the clicked event.
+	 */
+	handleEventClick({ event }: EventClickArg) {
+		const id = event._def.extendedProps.id;
+		this._nbDialogService.open(CandidateInterviewInfoComponent, {
+			context: {
+				interviewId: id,
+				interviews: this.interviews,
+				isSlider: false
+			}
+		});
+	}
+
+	/**
+	 * Handles the date click event in the calendar.
+	 * If the current view is 'dayGridMonth', changes the view to 'timeGridWeek' starting from the clicked date.
+	 *
+	 * @param event - The event object containing details about the clicked date.
 	 */
 	handleDateClick(event: DateClickArg) {
 		if (event.view.type === 'dayGridMonth') {
@@ -252,8 +280,10 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	}
 
 	/**
+	 * Handles the event selection in the calendar.
+	 * If the selected event's start time is in the future, adds the event. Otherwise, disables the cursor.
 	 *
-	 * @param event
+	 * @param event - The event object containing details about the selected event.
 	 */
 	handleEventSelect(event: DateSelectArg) {
 		const now = new Date().getTime();
@@ -265,8 +295,10 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	}
 
 	/**
+	 * Handles the mouse enter event over a calendar event.
+	 * Checks if the event element has overflow and, if so, unsets its position style.
 	 *
-	 * @param param0
+	 * @param param0 - The event object containing details about the hovered element.
 	 */
 	handleEventMouseEnter({ el }: EventHoveringArg) {
 		if (this.hasOverflow(el.querySelector('.fc-event-main'))) {
@@ -275,17 +307,22 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	}
 
 	/**
+	 * Handles the mouse leave event over a calendar event.
+	 * Removes the style attribute from the event element.
 	 *
-	 * @param param0
+	 * @param param0 - The event object containing details about the hovered element.
 	 */
 	handleEventMouseLeave({ el }: EventHoveringArg) {
 		el.removeAttribute('style');
 	}
 
 	/**
+	 * Checks if a given element has overflow.
+	 * Temporarily sets the overflow style to 'hidden' if it is not already set,
+	 * checks for overflow, and then restores the original overflow style.
 	 *
-	 * @param el
-	 * @returns
+	 * @param el - The element to check for overflow.
+	 * @returns A boolean indicating whether the element has overflow.
 	 */
 	hasOverflow(el: HTMLElement) {
 		if (!el) {

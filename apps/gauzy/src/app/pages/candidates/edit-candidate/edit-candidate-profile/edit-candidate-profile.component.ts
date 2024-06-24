@@ -95,7 +95,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 		if (this.futureInterviews.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.futureInterviews,
+					interviews: this.futureInterviews,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}

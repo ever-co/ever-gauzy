@@ -49,6 +49,7 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 			this.candidateName = checkUsername ? checkUsername : 'Candidate';
 		});
 	}
+
 	private async loadInterview() {
 		const interviews = await firstValueFrom(
 			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
@@ -60,11 +61,12 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 			this.interviewList = interviews.items;
 		}
 	}
+
 	async interviewInfo() {
 		if (this.interviewList.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList,
+					interviews: this.interviewList,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}
