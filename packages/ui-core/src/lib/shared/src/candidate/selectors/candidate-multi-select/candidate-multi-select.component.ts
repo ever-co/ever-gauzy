@@ -1,5 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ICandidate } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 import { BaseCandidateSelectorComponent } from '../base-candidate-selector.component';
 
 @Component({
@@ -10,6 +12,10 @@ import { BaseCandidateSelectorComponent } from '../base-candidate-selector.compo
 export class CandidateMultiSelectComponent extends BaseCandidateSelectorComponent implements OnInit {
 	@Input() selectedCandidateIds: string[] = [];
 	@Output() selectedChange = new EventEmitter();
+
+	constructor(store: Store, candidatesService: CandidatesService, errorHandlingService: ErrorHandlingService) {
+		super(store, candidatesService, errorHandlingService);
+	}
 
 	override ngOnInit(): void {
 		super.ngOnInit(); // Call the parent class's ngOnInit function

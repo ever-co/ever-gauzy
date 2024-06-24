@@ -4,32 +4,18 @@
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				<ngx-header-title [allowEmployee]="false">
-					{{
-						'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS'
-							| translate
-					}}
+					{{ 'CANDIDATES_PAGE.MANAGE_INTERVIEWS.MANAGE_INTERVIEWS' | translate }}
 				</ngx-header-title>
 			</h4>
 		</div>
 	</nb-card-header>
 	<nb-card-body class="p-0">
-		<div *ngIf="currentTab !== TAB_ID" class="add-btn">
-			<button
-				nbButton
-				size="small"
-				status="primary"
-				(click)="addInterview()"
-			>
+		<div *ngIf="currentTab !== TAB_ID" class="add-btn mt-2 mb-2">
+			<button nbButton size="small" status="primary" (click)="addInterview()">
 				<nb-icon icon="plus-outline"></nb-icon>
-				{{
-					'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW'
-						| translate
-				}}
+				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW' | translate }}
 			</button>
 		</div>
-		<nb-route-tabset
-			(changeTab)="onChangeTab($event)"
-			[tabs]="tabs"
-		></nb-route-tabset>
+		<nb-route-tabset (changeTab)="onChangeTab($event)" [tabs]="tabs"></nb-route-tabset>
 	</nb-card-body>
 </nb-card>

@@ -13,6 +13,7 @@ import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { CandidateInterviewService } from '@gauzy/ui-core/core';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -85,10 +86,12 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		const { id: organizationId } = this.organization;
 
 		const interviews = (
-			await this.candidateInterviewService.getAll(['interviewers'], {
-				tenantId,
-				organizationId
-			})
+			await firstValueFrom(
+				this.candidateInterviewService.getAll(['interviewers'], {
+					tenantId,
+					organizationId
+				})
+			)
 		).items;
 
 		this.calendarEvents = [];

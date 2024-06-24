@@ -21,3 +21,5 @@ export * from './selectors/candidate-multi-select/candidate-multi-select.compone
 export * from './selectors/candidate-multi-select/candidate-multi-select.module';
 export * from './selectors/candidate-select/candidate-select.component';
 export * from './selectors/candidate-select/candidate-select.module';
+export * from './selectors/candidate-interviewer-select/candidate-interviewer-select.component';
+export * from './selectors/candidate-interviewer-select/candidate-interviewer-select.module';

@@ -1,5 +1,5 @@
 <nb-card class="card-scroll">
-	<nb-card-header style="display: flex;">
+	<nb-card-header style="display: flex">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
 			<ngx-header-title [allowEmployee]="false">
@@ -10,72 +10,61 @@
 	<nb-card-body>
 		<nb-accordion>
 			<nb-accordion-item>
-				<nb-accordion-item-header
-					><h6>
-						{{ 'CANDIDATES_PAGE.STATISTIC.RATING' | translate }}
-					</h6></nb-accordion-item-header
-				>
+				<nb-accordion-item-header>
+					<h6>{{ 'CANDIDATES_PAGE.STATISTIC.RATING' | translate }}</h6>
+				</nb-accordion-item-header>
 				<nb-accordion-item-body>
-					<ga-overall-rating-chart
-						*ngIf="candidates"
-						[candidates]="candidates"
-						[employeeList]="employeeList"
-					></ga-overall-rating-chart>
+					<ng-container *ngIf="candidates$ | async as candidates">
+						<ng-template [ngIf]="candidates.length > 0">
+							<ga-overall-rating-chart [candidates]="candidates"></ga-overall-rating-chart>
+						</ng-template>
+					</ng-container>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
-
 			<nb-accordion-item>
-				<nb-accordion-item-header
-					><h6>
-						{{
-							'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT'
-								| translate
-						}}
-					</h6></nb-accordion-item-header
-				>
+				<nb-accordion-item-header>
+					<h6>{{ 'CANDIDATES_PAGE.STATISTIC.INTERVIEWER_ASSESSMENT' | translate }}</h6>
+				</nb-accordion-item-header>
 				<nb-accordion-item-body>
-					<ga-interview-rating-chart
-						*ngIf="candidates"
-						[interviewList]="interviewList"
-						[candidates]="candidates"
-						[employeeList]="employeeList"
-					></ga-interview-rating-chart>
+					<ng-container *ngIf="candidates$ | async as candidates">
+						<ng-template [ngIf]="candidates.length > 0">
+							<ga-interview-rating-chart
+								[candidates]="candidates"
+								[employees]="employees$ | async"
+							></ga-interview-rating-chart>
+						</ng-template>
+					</ng-container>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
-
 			<nb-accordion-item>
-				<nb-accordion-item-header
-					><h6>
-						{{
-							'CANDIDATES_PAGE.STATISTIC.CRITERIONS_RATING'
-								| translate
-						}}
-					</h6></nb-accordion-item-header
-				>
+				<nb-accordion-item-header>
+					<h6>{{ 'CANDIDATES_PAGE.STATISTIC.CRITERIONS_RATING' | translate }}</h6>
+				</nb-accordion-item-header>
 				<nb-accordion-item-body>
-					<ga-criterions-rating-chart
-						*ngIf="candidates"
-						[candidates]="candidates"
-						[interviewList]="interviewList"
-					></ga-criterions-rating-chart>
+					<ng-container *ngIf="candidates$ | async as candidates">
+						<ng-template [ngIf]="candidates.length > 0">
+							<ga-criterions-rating-chart
+								[candidates]="candidates"
+								[interviews]="interviews$ | async"
+								[employees]="employees$ | async"
+							></ga-criterions-rating-chart>
+						</ng-template>
+					</ng-container>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
-
 			<nb-accordion-item>
-				<nb-accordion-item-header
-					><h6>
-						{{
-							'CANDIDATES_PAGE.STATISTIC.CANDIDATE_CRITERIONS_RATING'
-								| translate
-						}}
-					</h6></nb-accordion-item-header
-				>
+				<nb-accordion-item-header>
+					<h6>{{ 'CANDIDATES_PAGE.STATISTIC.CANDIDATE_CRITERIONS_RATING' | translate }}</h6>
+				</nb-accordion-item-header>
 				<nb-accordion-item-body>
-					<ga-average-criterions-rating-chart
-						*ngIf="candidates"
-						[candidates]="candidates"
-						[interviewList]="interviewList"
-					></ga-average-criterions-rating-chart>
+					<ng-container *ngIf="candidates$ | async as candidates">
+						<ng-template [ngIf]="candidates.length > 0">
+							<ga-average-criterions-rating-chart
+								[candidates]="candidates"
+								[interviews]="interviews$ | async"
+							></ga-average-criterions-rating-chart>
+						</ng-template>
+					</ng-container>
 				</nb-accordion-item-body>
 			</nb-accordion-item>
 		</nb-accordion>

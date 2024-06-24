@@ -23,7 +23,11 @@ export class CandidatesService {
 		});
 	}
 
-	getCandidateById(id: ICandidate['id'], relations: string[] = [], where?: ICandidateFindInput): Promise<ICandidate> {
+	getCandidateById(
+		id: ICandidate['id'],
+		relations: string[] = [],
+		where: ICandidateFindInput = {}
+	): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				params: toParams({ where, relations })

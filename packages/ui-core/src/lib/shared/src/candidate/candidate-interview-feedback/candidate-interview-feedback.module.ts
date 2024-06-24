@@ -18,6 +18,7 @@ import {
 import { CandidateInterviewFeedbackComponent } from './candidate-interview-feedback.component';
 import { StarRatingInputModule } from '../../star-rating/star-rating-input/star-rating-input.module';
 import { CandidateSelectModule } from '../selectors/candidate-select/candidate-select.module';
+import { CandidateInterviewerSelectModule } from '../selectors/candidate-interviewer-select/candidate-interviewer-select.module';
 import { StarRatingOutputModule } from '../../star-rating/star-rating-output/star-rating-output.module';
 
 @NgModule({
@@ -33,6 +34,7 @@ import { StarRatingOutputModule } from '../../star-rating/star-rating-output/sta
 		StarRatingInputModule,
 		StarRatingOutputModule,
 		CandidateSelectModule,
+		CandidateInterviewerSelectModule,
 		NbAccordionModule,
 		I18nTranslateModule.forChild()
 	],

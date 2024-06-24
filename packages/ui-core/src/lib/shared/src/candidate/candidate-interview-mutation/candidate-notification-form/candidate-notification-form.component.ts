@@ -1,6 +1,6 @@
 import { Component, OnDestroy, Input, ViewChild } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import { ICandidateInterview, ICandidate } from '@gauzy/contracts';
+import { ICandidateInterview, ICandidate, IEmployee } from '@gauzy/contracts';
 import { CandidateEmailComponent } from './candidate-email/candidate-email.component';
 @Component({
 	selector: 'ga-candidate-notification-form',
@@ -10,7 +10,8 @@ import { CandidateEmailComponent } from './candidate-email/candidate-email.compo
 export class CandidateNotificationFormComponent implements OnDestroy {
 	@Input() interview: ICandidateInterview;
 	@Input() selectedCandidate: ICandidate;
-	@Input() employees: any[];
+	@Input() employees: IEmployee[];
+
 	candidateForm: UntypedFormGroup;
 	interviewerForm: UntypedFormGroup;
 	isCandidateNotification = false;

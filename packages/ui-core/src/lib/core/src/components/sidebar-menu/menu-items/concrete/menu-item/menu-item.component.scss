@@ -84,7 +84,7 @@
     letter-spacing: 0em;
     gap: 0.625rem;
   }
-  
+
   a {
     text-decoration: none;
     color: unset;
@@ -92,7 +92,7 @@
 }
 
 :host .sub-item {
-  padding: 0px 10px;
+  padding: 0px 9px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -125,14 +125,14 @@
     align-items: center;
     flex-wrap: nowrap;
     position: absolute;
-    top: 0;     
+    top: 0;
     left: 0;
   }
 }
 
 .info {
   padding: 11px 0;
-  span{
+  span {
     margin: 0 0.625rem;
   }
 }
