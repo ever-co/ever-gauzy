@@ -64,7 +64,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 			.pipe(
 				filter(() => !!this.organization),
 				switchMap(() => {
-					// Extract project properties
+					// Extract organization properties
 					const { id: organizationId, tenantId } = this.organization;
 
 					return this._candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId }).pipe(
@@ -86,7 +86,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	ngAfterViewInit() {
 		this.employees$ = this.organization$.pipe(
 			switchMap((organization: IOrganization) => {
-				// Extract project properties
+				// Extract organization properties
 				const { id: organizationId, tenantId } = organization;
 
 				return this._employeesService.getAll(['user'], { organizationId, tenantId }).pipe(
