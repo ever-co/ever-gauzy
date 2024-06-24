@@ -22,6 +22,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -77,13 +78,12 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 
 	private async loadInterviews() {
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const interviews = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
 				candidateId: this.selectedCandidate.id,
 				organizationId,
 				tenantId
-			}
+			})
 		);
 		if (interviews) {
 			this.interviewList = interviews.items;
@@ -185,11 +185,12 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 	private async submitCandidateForm(value: ICandidateUpdateInput) {
 		if (value) {
 			try {
+				const { organizationId, tenantId } = this.selectedCandidate;
 				await this.candidatesService.update(this.selectedCandidate.id, {
 					...value,
-					organizationId: this.selectedCandidate.organizationId
+					organizationId,
+					tenantId
 				});
-
 				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE', {
 					name: this.candidateName
 				});

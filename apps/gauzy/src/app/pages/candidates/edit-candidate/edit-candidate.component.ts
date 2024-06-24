@@ -50,9 +50,10 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 		});
 	}
 	private async loadInterview() {
-		const interviews = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{ candidateId: this.selectedCandidate.id }
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
+				candidateId: this.selectedCandidate.id
+			})
 		);
 
 		if (interviews) {

@@ -1,56 +1,36 @@
 <div class="selectors" *ngIf="candidates.length > 0">
 	<nb-select
-		placeholder="{{
-			'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW' | translate
-		}}"
 		class="select"
+		[placeholder]="'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW' | translate"
 		(selectedChange)="onInterviewSelected($event)"
 	>
-		<nb-option-group
-			*ngFor="let candidate of candidates"
-			title="{{ candidate.user.name }}"
-		>
-			<nb-option
-				*ngFor="let interview of candidate.interview"
-				[value]="interview"
-			>
+		<nb-option-group *ngFor="let candidate of candidates" [title]="candidate.user.name">
+			<nb-option *ngFor="let interview of candidate.interview" [value]="interview">
 				{{ interview.title }}
 			</nb-option>
 		</nb-option-group>
 	</nb-select>
-
 	<div class="select-interviewer">
-		<ga-candidate-select
+		<ga-candidate-interviewer-select
 			[reset]="isResetSelect"
 			[disabled]="currentInterview ? false : true"
 			[isAllMembers]="true"
 			[disabledIds]="disabledIds"
-			[allCandidates]="currentEmployee"
-			[placeholder]="
-				'FORM.PLACEHOLDERS.ADD_REMOVE_INTERVIEWER' | translate
-			"
+			[interviewers]="currentEmployee"
+			[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_INTERVIEWER' | translate"
 			(selectedChange)="onMembersSelected($event)"
-		>
-		</ga-candidate-select>
+		></ga-candidate-interviewer-select>
 	</div>
 </div>
-
 <div *ngIf="rating.length === 0" class="no-data">
 	<nb-icon icon="info-outline" class="no-data-icon"></nb-icon>
-	<span class="no-data-text">{{
-		'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
-	}}</span>
+	<span class="no-data-text">{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
 	<span class="no-data-text" *ngIf="candidates.length > 0">
-		{{
-			'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW_INTERVIEWER' | translate
-		}}
+		{{ 'CANDIDATES_PAGE.STATISTIC.SELECT_INTERVIEW_INTERVIEWER' | translate }}
 	</span>
 </div>
-<canvas
-	*ngIf="rating.length > 0"
-	style="height: 400px; width: 100%"
-	baseChart
-	[type]="'bar'"
-	[data]="data"
-	[options]="options"
-></canvas>
+{{ rating | json }}
+
+<ng-container *ngIf="rating?.length > 0">
+	<canvas style="height: 400px; width: 100%" baseChart [type]="'bar'" [data]="data" [options]="options"></canvas>
+</ng-container>

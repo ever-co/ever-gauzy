@@ -73,9 +73,11 @@ export class CandidateInterviewInfoComponent extends TranslationBaseComponent im
 		this.organization = this.store.selectedOrganization;
 		if (this.interviewId) {
 			const { id: organizationId, tenantId } = this.organization;
-			const interviews = await this.candidateInterviewService.getAll(
-				['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-				{ organizationId, tenantId }
+			const interviews = await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
+					{ organizationId, tenantId }
+				)
 			);
 			if (interviews) {
 				this.interviewList = interviews.items;

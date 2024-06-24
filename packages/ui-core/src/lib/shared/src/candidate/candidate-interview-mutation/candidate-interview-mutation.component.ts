@@ -340,8 +340,22 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		}
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	async onCandidateSelected(id: string) {
-		const candidate = await this.candidatesService.getCandidateById(id, ['user']);
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+		const candidate = await this.candidatesService.getCandidateById(id, ['user'], {
+			organizationId,
+			tenantId
+		});
+
 		this.selectedCandidate = candidate;
 	}
 

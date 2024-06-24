@@ -103,7 +103,9 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 	 */
 	async loadInterviews() {
 		const { id: organizationId, tenantId } = this.organization;
-		const res = await this.candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId });
+		const res = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId })
+		);
 		if (res) {
 			this.interviewList = res.items;
 			this.calendarOptions = {

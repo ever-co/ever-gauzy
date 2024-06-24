@@ -1,0 +1,23 @@
+<nb-select
+	fullWidth
+	[formControl]="select"
+	(selectedChange)="onInterviewerSelected($event)"
+	[disabled]="disabled"
+	[placeholder]="placeholder"
+>
+	<nb-option *ngIf="isAllMembers" value="all">
+		<ngx-avatar size="sm" [src]="'https://i.imgur.com/XwA2T62.jpg'" [name]="'All'" [isOption]="true"></ngx-avatar>
+	</nb-option>
+	<nb-option
+		*ngFor="let interviewer of interviewers"
+		[value]="interviewer.id"
+		[disabled]="disabledIds?.includes(interviewer.id) ? true : false"
+	>
+		<ngx-avatar
+			size="sm"
+			[src]="interviewer.user?.imageUrl"
+			[name]="interviewer.user?.name"
+			[isOption]="true"
+		></ngx-avatar>
+	</nb-option>
+</nb-select>

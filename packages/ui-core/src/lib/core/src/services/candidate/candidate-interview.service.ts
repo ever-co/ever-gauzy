@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
 	ICandidateInterviewFindInput,
 	ICandidateInterviewCreateInput,
@@ -21,12 +21,13 @@ export class CandidateInterviewService {
 		return firstValueFrom(this.http.post<ICandidateInterview>(`${API_PREFIX}/candidate-interview`, input));
 	}
 
-	getAll(relations: string[] = [], where?: ICandidateInterviewFindInput): Promise<IPagination<ICandidateInterview>> {
-		return firstValueFrom(
-			this.http.get<IPagination<ICandidateInterview>>(`${API_PREFIX}/candidate-interview`, {
-				params: toParams({ where, relations })
-			})
-		);
+	getAll(
+		relations: string[] = [],
+		where?: ICandidateInterviewFindInput
+	): Observable<IPagination<ICandidateInterview>> {
+		return this.http.get<IPagination<ICandidateInterview>>(`${API_PREFIX}/candidate-interview`, {
+			params: toParams({ where, relations })
+		});
 	}
 
 	findById(id: ICandidateInterview['id'], relations: string[] = []): Promise<ICandidateInterview> {
