@@ -4,33 +4,13 @@
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.HEADER' | translate }}
-				<span
-					*ngIf="
-						selectedCandidate?.user?.firstName ||
-						selectedCandidate?.user?.lastName
-					"
-				>
-					{{ selectedCandidate?.user?.firstName }}
-					{{ selectedCandidate?.user?.lastName }}
-				</span>
+				<ng-template [ngIf]="selectedCandidate?.user?.name">
+					<span>{{ selectedCandidate?.user?.name }}</span>
+				</ng-template>
 				<span *ngIf="selectedCandidate?.user?.username">
-					<ng-container
-						*ngIf="
-							selectedCandidate?.user.firstName ||
-								selectedCandidate?.user.lastName;
-							then withBraces;
-							else withQuotes
-						"
-					>
-					</ng-container>
-
-					<ng-template #withBraces>
-						({{ selectedCandidate?.user.username }})
-					</ng-template>
-
-					<ng-template #withQuotes>
-						'{{ selectedCandidate?.user.username }}'
-					</ng-template>
+					<ng-container *ngIf="selectedCandidate?.user.name; then withBraces; else withQuotes"></ng-container>
+					<ng-template #withBraces> ({{ selectedCandidate?.user.username }}) </ng-template>
+					<ng-template #withQuotes> '{{ selectedCandidate?.user.username }}' </ng-template>
 				</span>
 			</h4>
 		</div>

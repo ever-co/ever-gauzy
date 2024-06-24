@@ -17,13 +17,17 @@ import {
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmCandidateInterviewRepository } from './repository/mikro-orm-candidate-interview.repository';
 
 @MultiORMEntity('candidate_interview', { mikroOrmRepository: () => MikroOrmCandidateInterviewRepository })
-export class CandidateInterview extends TenantOrganizationBaseEntity
-	implements ICandidateInterview {
-
+export class CandidateInterview extends TenantOrganizationBaseEntity implements ICandidateInterview {
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn()
 	title: string;
@@ -43,7 +47,6 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn({ nullable: true })
 	note?: string;
-
 
 	@ApiPropertyOptional({ type: () => Number })
 	@MultiORMColumn({
@@ -105,5 +108,5 @@ export class CandidateInterview extends TenantOrganizationBaseEntity
 	@RelationId((it: CandidateInterview) => it.candidate)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	candidateId?: string;
+	candidateId?: ICandidate['id'];
 }

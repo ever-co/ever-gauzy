@@ -6,11 +6,10 @@
 		<div class="buttons">
 			<ga-employee-multi-select
 				class="multi-select"
-				[allEmployees]="employees"
+				[allEmployees]="employees$ | async"
 				[label]="false"
 				(selectedChange)="onEmployeeSelected($event)"
-			>
-			</ga-employee-multi-select>
+			></ga-employee-multi-select>
 			<ga-candidate-multi-select
 				class="multi-select"
 				(selectedChange)="onCandidateSelected($event)"
@@ -18,11 +17,8 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<full-calendar
-			class="custom-calendar"
-			*ngIf="calendarOptions"
-			#calendar
-			[options]="calendarOptions"
-		></full-calendar>
+		<ng-container *ngIf="calendarOptions">
+			<full-calendar class="custom-calendar" #calendar [options]="calendarOptions"></full-calendar>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
