@@ -67,17 +67,24 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 					// Extract organization properties
 					const { id: organizationId, tenantId } = this.organization;
 
-					return this._candidateInterviewService.getAll(['interviewers'], { organizationId, tenantId }).pipe(
-						map(({ items }) => items),
-						tap((interviews: ICandidateInterview[]) => this.mappedInterviews(interviews)),
-						catchError((error) => {
-							// Handle and log errors
-							this._errorHandlingService.handleError(error);
-							return of([]);
-						}),
-						// Handle component lifecycle to avoid memory leaks
-						untilDestroyed(this)
-					);
+					return this._candidateInterviewService
+						.getAll(['interviewers'], {
+							organizationId,
+							tenantId,
+							isActive: true,
+							isArchived: false
+						})
+						.pipe(
+							map(({ items }) => items),
+							tap((interviews: ICandidateInterview[]) => this.mappedInterviews(interviews)),
+							catchError((error) => {
+								// Handle and log errors
+								this._errorHandlingService.handleError(error);
+								return of([]);
+							}),
+							// Handle component lifecycle to avoid memory leaks
+							untilDestroyed(this)
+						);
 				})
 			)
 			.subscribe();

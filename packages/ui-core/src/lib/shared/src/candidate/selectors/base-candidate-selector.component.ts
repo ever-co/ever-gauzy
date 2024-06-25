@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EMPTY, Observable, catchError, filter, map, of, switchMap } from 'rxjs';
-import { ICandidate, IOrganization, IPagination } from '@gauzy/contracts';
+import { CandidateStatusEnum, ICandidate, IOrganization, IPagination } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 
@@ -30,16 +30,24 @@ export class BaseCandidateSelectorComponent implements OnInit {
 					return of([]); // No valid organization, return empty array of candidates
 				}
 
-				return this._candidatesService.getAll(['user'], { organizationId, tenantId }).pipe(
-					map(({ items }: IPagination<ICandidate>) => items),
-					catchError((error) => {
-						// Handle and log errors
-						this._errorHandlingService.handleError(error);
-						return EMPTY;
-					}),
-					// Handle component lifecycle to avoid memory leaks
-					untilDestroyed(this)
-				);
+				return this._candidatesService
+					.getAll(['user'], {
+						organizationId,
+						tenantId,
+						isActive: true,
+						isArchived: false,
+						status: CandidateStatusEnum.APPLIED
+					})
+					.pipe(
+						map(({ items }: IPagination<ICandidate>) => items),
+						catchError((error) => {
+							// Handle and log errors
+							this._errorHandlingService.handleError(error);
+							return EMPTY;
+						}),
+						// Handle component lifecycle to avoid memory leaks
+						untilDestroyed(this)
+					);
 			}),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this)

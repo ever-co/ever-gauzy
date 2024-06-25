@@ -13,10 +13,7 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
 					[settings]="settingsSmartTable"
@@ -24,14 +21,11 @@
 					(userRowSelect)="selectOrganization($event)"
 					style="cursor: pointer"
 					#organizationsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container align-self-end">
 				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -46,15 +40,9 @@
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="actions">
-		<ng-template
-			[ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']"
-		>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
 			<button
 				nbButton
 				[disabled]="!selectedItem && disableButton"
@@ -63,13 +51,10 @@
 				size="small"
 				underConstruction
 			>
-				<nb-icon class="mr-1" icon="eye-outline"></nb-icon
-				>{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 		</ng-template>
-		<ng-template
-			[ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']"
-		>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_EXPENSES_EDIT']">
 			<button
 				nbButton
 				[disabled]="!selectedItem && disableButton"
@@ -78,8 +63,7 @@
 				class="action primary"
 				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.MANAGE' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.MANAGE' | translate }}
 			</button>
 		</ng-template>
 		<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
@@ -99,15 +83,8 @@
 </ng-template>
 <ng-template #visible>
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT']">
-		<button
-			nbButton
-			status="success"
-			class="action"
-			size="small"
-			(click)="addOrganization()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+		<button nbButton status="success" class="action" size="small" (click)="addOrganization()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
