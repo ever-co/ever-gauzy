@@ -57,15 +57,14 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			if (entity.user) {
 				await this.createSlug(entity);
 			}
+
 			// Set a default avatar image if none is provided
 			if (!entity.user.imageUrl) {
 				entity.user.imageUrl = getUserDummyImage(entity.user);
 			}
-			// Enable time tracking and set the employee as active if the start work date is provided
-			if (entity.startedWorkOn) {
-				entity.isTrackingEnabled = true;
-				entity.isActive = true;
-			}
+
+			//
+			this.updateEmployeeStatus(entity);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -75,23 +74,13 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	}
 
 	/**
-	 * Called before entity is updated in the database.
+	 * Called before the entity is updated in the database.
 	 *
-	 * @param entity
+	 * @param entity - The employee entity to be updated.
 	 */
 	async beforeEntityUpdate(entity: Employee): Promise<void> {
 		try {
-			// Enable time tracking and activate the employee if the start work date is set.
-			if (entity.startedWorkOn) {
-				entity.isTrackingEnabled = true;
-				entity.isActive = true;
-			}
-
-			// Disable time tracking and deactivate the employee if the end work date is set.
-			if (entity.endWork) {
-				entity.isTrackingEnabled = false;
-				entity.isActive = false;
-			}
+			this.updateEmployeeStatus(entity);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
@@ -187,5 +176,34 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		} catch (error) {
 			console.error('EmployeeSubscriber: Error while updating total employee count of the organization:', error);
 		}
+	}
+
+	/**
+	 * Updates the employee's status based on the start and end work dates.
+	 *
+	 * @param entity - The employee entity to be updated.
+	 */
+	private updateEmployeeStatus(entity: Employee): void {
+		if (entity.startedWorkOn) {
+			this.setEmployeeStatus(entity, true, false);
+			entity.endWork = null; // Ensure end work date is cleared
+		}
+		if (entity.endWork) {
+			this.setEmployeeStatus(entity, false, true);
+		}
+	}
+
+	/**
+	 * Sets the employee's status flags.
+	 *
+	 * @param entity - The employee entity.
+	 * @param isActive - The active status of the employee.
+	 * @param isArchived - The archived status of the employee.
+	 */
+	private setEmployeeStatus(entity: Employee, isActive: boolean, isArchived: boolean): void {
+		entity.isTrackingEnabled = isActive;
+		entity.allowScreenshotCapture = isActive;
+		entity.isActive = isActive;
+		entity.isArchived = isArchived;
 	}
 }
