@@ -1,6 +1,15 @@
 import { ITenant } from './tenant.model';
 import { IOrganization } from './organization.model';
 
+/**
+ * @description
+ * An entity ID. Represents a unique identifier as a string.
+ *
+ * @docsCategory Type Definitions
+ * @docsSubcategory Identifiers
+ */
+export type ID = string;
+
 // Common properties for entities with relations
 export interface IBaseRelationsEntityModel {
 	relations?: string[]; // List of related entities
@@ -13,7 +22,7 @@ export interface IBaseSoftDeleteEntityModel {
 
 // Common properties for entities
 export interface IBaseEntityModel extends IBaseSoftDeleteEntityModel {
-	id?: string; // Unique identifier
+	id?: ID; // Unique identifier
 
 	readonly createdAt?: Date; // Date when the record was created
 	readonly updatedAt?: Date; // Date when the record was last updated
@@ -29,8 +38,9 @@ export interface IBasePerTenantEntityModel extends IBaseEntityModel {
 }
 
 // Mutation input properties for entities associated with a tenant
-export interface IBasePerTenantEntityMutationInput extends
-	Pick<IBasePerTenantEntityModel, 'tenantId'>, IBaseEntityModel {
+export interface IBasePerTenantEntityMutationInput
+	extends Pick<IBasePerTenantEntityModel, 'tenantId'>,
+		IBaseEntityModel {
 	tenant?: Pick<ITenant, 'id'>;
 }
 
@@ -41,8 +51,8 @@ export interface IBasePerTenantAndOrganizationEntityModel extends IBasePerTenant
 }
 
 // Mutation input properties for entities associated with both tenant and organization
-export interface IBasePerTenantAndOrganizationEntityMutationInput extends
-	Pick<IBasePerTenantAndOrganizationEntityModel, 'organizationId'>,
-	Partial<IBasePerTenantEntityMutationInput> {
+export interface IBasePerTenantAndOrganizationEntityMutationInput
+	extends Pick<IBasePerTenantAndOrganizationEntityModel, 'organizationId'>,
+		Partial<IBasePerTenantEntityMutationInput> {
 	organization?: Pick<IOrganization, 'id'>;
 }

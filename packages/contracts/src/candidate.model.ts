@@ -65,8 +65,7 @@ export enum CandidateStatusEnum {
 export interface ICandidateFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	id?: string;
 	user?: IUserFindInput;
-	valueDate?: Date;
-	isArchived?: boolean;
+	status?: CandidateStatusEnum;
 }
 
 export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
