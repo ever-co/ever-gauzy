@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as mjml2html from 'mjml';
 import { EmailTemplateEnum, IEmailTemplate, IPagination, LanguagesEnum } from '@gauzy/contracts';
@@ -8,28 +7,23 @@ import { EmailTemplate } from './email-template.entity';
 import { CrudService, PaginationParams } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
-import { MikroOrmEmailTemplateRepository } from './repository/mikro-orm-email-template.repository';
+import { MikroOrmEmailTemplateRepository, TypeOrmEmailTemplateRepository } from './repository';
 
 @Injectable()
 export class EmailTemplateService extends CrudService<EmailTemplate> {
 	constructor(
-		@InjectRepository(EmailTemplate)
 		typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
-
 		mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository
 	) {
 		super(typeOrmEmailTemplateRepository, mikroOrmEmailTemplateRepository);
 	}
 
 	/**
-	* Get Email Templates
-	* @param params
-	* @returns
-	*/
-	async findAll(
-		params: PaginationParams<EmailTemplate>
-	): Promise<IPagination<IEmailTemplate>> {
+	 * Get Email Templates
+	 * @param params
+	 * @returns
+	 */
+	async findAll(params: PaginationParams<EmailTemplate>): Promise<IPagination<IEmailTemplate>> {
 		const query = this.typeOrmRepository.createQueryBuilder('email_template');
 		query.setFindOptions({
 			select: {
@@ -39,16 +33,16 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					brandColor: true
 				}
 			},
-			...(
-				(params && params.relations) ? {
-					relations: params.relations
-				} : {}
-			),
-			...(
-				(params && params.order) ? {
-					order: params.order
-				} : {}
-			)
+			...(params && params.relations
+				? {
+						relations: params.relations
+				  }
+				: {}),
+			...(params && params.order
+				? {
+						order: params.order
+				  }
+				: {})
 		});
 		query.where((qb: SelectQueryBuilder<EmailTemplate>) => {
 			qb.where(
@@ -76,7 +70,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 					web.andWhere(p(`"${qb.alias}"."organizationId" IS NULL`));
 					web.andWhere(p(`"${qb.alias}"."tenantId" IS NULL`));
 				})
-			)
+			);
 		});
 		const [items, total] = await query.getManyAndCount();
 		return { items, total };
@@ -101,7 +95,7 @@ export class EmailTemplateService extends CrudService<EmailTemplate> {
 		type: 'html' | 'subject',
 		organizationId: string,
 		tenantId: string,
-		content: IEmailTemplate,
+		content: IEmailTemplate
 	): Promise<IEmailTemplate> {
 		let entity: IEmailTemplate;
 		try {

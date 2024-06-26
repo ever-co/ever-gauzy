@@ -3,7 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { HttpModule } from '@nestjs/axios';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAuthModule } from '@gauzy/auth';
+import { EventBusModule } from '../event-bus/event-bus.module';
 import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
 import { EmailSendModule } from './../email-send/email-send.module';
 import { AuthController } from './auth.controller';
@@ -18,7 +20,6 @@ import { PasswordResetModule } from './../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
 import { FeatureModule } from './../feature/feature.module';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAccountService } from './social-account/social-account.service';
 import { SocialAccountModule } from './social-account/social-account.module';
 
@@ -39,6 +40,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			imports: [
 				TypeOrmModule.forFeature([OrganizationTeam]),
 				MikroOrmModule.forFeature([OrganizationTeam]),
+				HttpModule,
 				AuthModule,
 				EmailSendModule,
 				UserModule,
@@ -47,7 +49,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				PasswordResetModule,
 				CqrsModule,
 				SocialAccountModule,
-				HttpModule
+				EventBusModule
 			],
 			useClass: AuthService
 		}),
@@ -59,7 +61,8 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 		RoleModule,
 		PasswordResetModule,
 		FeatureModule,
-		CqrsModule
+		CqrsModule,
+		EventBusModule
 	],
 	controllers: [AuthController, EmailVerificationController],
 	providers: [...providers, ...CommandHandlers, ...strategies],
