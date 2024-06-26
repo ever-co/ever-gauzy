@@ -33,7 +33,6 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	FormHelpers: typeof FormHelpers = FormHelpers;
 
 	invitationTypeEnum = InvitationTypeEnum;
-	invitationExpiryOptions: any = [];
 
 	@Input() public organizationProjects: IOrganizationProject[] = [];
 	@Input() public organizationContacts: IOrganizationContact[] = [];
@@ -43,7 +42,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	/*
 	 * Getter & Setter for InvitationTypeEnum
 	 */
-	_invitationType: InvitationTypeEnum;
+	private _invitationType: InvitationTypeEnum;
 	get invitationType(): InvitationTypeEnum {
 		return this._invitationType;
 	}
@@ -56,48 +55,66 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * Build email invite form group
 	 *
 	 */
-	public form: UntypedFormGroup = EmailInviteFormComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		return fb.group(
-			{
-				emails: ['', Validators.required],
-				projects: [],
-				startedWorkOn: [new Date()],
-				appliedDate: [],
-				departments: [],
-				organizationContacts: [],
-				role: [],
-				invitationExpirationPeriod: [],
-				teams: []
-			},
-			{
-				validators: [EmailValidator.pattern('emails')]
-			}
-		);
-	}
+	public form: UntypedFormGroup = this._fb.group(
+		{
+			emails: [null, Validators.required],
+			projects: [[]],
+			startedWorkOn: [new Date()],
+			appliedDate: [],
+			departments: [[]],
+			organizationContacts: [[]],
+			role: [],
+			invitationExpirationPeriod: [],
+			teams: [[]]
+		},
+		{
+			validators: [EmailValidator.pattern('emails')]
+		}
+	);
 
 	@ViewChild(NbTagInputDirective, { read: ElementRef })
 	tagInput: ElementRef<HTMLInputElement>;
 
 	public user: IUser;
 	public organization: IOrganization;
-
-	emails: Set<string> = new Set([]);
-	excludes: RolesEnum[] = [];
+	public emails: Set<string> = new Set([]);
+	public excludes: RolesEnum[] = [];
+	public invitationExpiryOptions = [
+		{
+			label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.DAY'),
+			value: InvitationExpirationEnum.DAY
+		},
+		{
+			label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.WEEK'),
+			value: InvitationExpirationEnum.WEEK
+		},
+		{
+			label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.TWO_WEEK'),
+			value: InvitationExpirationEnum.TWO_WEEK
+		},
+		{
+			label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.MONTH'),
+			value: InvitationExpirationEnum.MONTH
+		},
+		{
+			label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.NEVER'),
+			value: InvitationExpirationEnum.NEVER
+		}
+	];
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly inviteService: InviteService,
-		private readonly rolesService: RoleService,
-		private readonly store: Store,
 		public readonly translateService: TranslateService,
-		private readonly authService: AuthService
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _inviteService: InviteService,
+		private readonly _rolesService: RoleService,
+		private readonly _store: Store,
+		private readonly _authService: AuthService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.store.user$
+		this._store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap((user: IUser) => (this.user = user)),
@@ -105,62 +122,34 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.renderInvitationExpiryOptions()),
-				filter((organization) => !!organization.invitesAllowed),
-				tap((organization) => this.setInvitationPeriodFormValue(organization)),
+				tap((organization: IOrganization) => this.setInvitationPeriodFormValue(organization)),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
+	ngAfterViewInit() {}
+
 	/**
 	 * Exclude roles
 	 */
 	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
+		const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		this.excludes = [RolesEnum.EMPLOYEE];
 		if (!hasSuperAdminRole) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
 	}
 
-	/**
-	 * Render Invitation Expiry Options
-	 */
-	renderInvitationExpiryOptions() {
-		this.invitationExpiryOptions = [
-			{
-				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.DAY'),
-				value: InvitationExpirationEnum.DAY
-			},
-			{
-				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.WEEK'),
-				value: InvitationExpirationEnum.WEEK
-			},
-			{
-				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.TWO_WEEK'),
-				value: InvitationExpirationEnum.TWO_WEEK
-			},
-			{
-				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.MONTH'),
-				value: InvitationExpirationEnum.MONTH
-			},
-			{
-				label: this.getTranslation('INVITE_PAGE.INVITATION_EXPIRATION_OPTIONS.NEVER'),
-				value: InvitationExpirationEnum.NEVER
-			}
-		];
-	}
-
-	isEmployeeInvitation() {
+	isEmployeeInvitation(): boolean {
 		return this.invitationType === InvitationTypeEnum.EMPLOYEE;
 	}
 
-	isCandidateInvitation() {
+	isCandidateInvitation(): boolean {
 		return this.invitationType === InvitationTypeEnum.CANDIDATE;
 	}
 
@@ -168,69 +157,74 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * SELECT all organization projects
 	 */
 	selectAllProjects() {
-		const organizationProjects = this.organizationProjects
-			.filter((project) => !!project.id)
-			.map((project) => project.id);
+		const organizationProjects = this.organizationProjects.map((project) => project.id).filter(Boolean);
 
 		this.form.get('projects').setValue(organizationProjects);
 		this.form.get('projects').updateValueAndValidity();
 	}
 
 	/**
-	 * SELECT all organization departments
+	 * SELECT all organization departments and update form control value
 	 */
 	selectAllDepartments() {
-		const organizationDepartments = this.organizationDepartments
-			.filter((department) => !!department.id)
-			.map((department) => department.id);
+		const departmentIds = this.organizationDepartments.map((department) => department.id).filter(Boolean);
 
-		this.form.get('departments').setValue(organizationDepartments);
-		this.form.get('departments').updateValueAndValidity();
+		this.form.patchValue({
+			departments: departmentIds
+		});
 	}
 
 	/**
-	 * SELECT all organization contacts
+	 * SELECT all organization contacts and update form control value
 	 */
 	selectAllOrganizationContacts() {
-		const organizationContacts = this.organizationContacts
-			.filter((organizationContact) => !!organizationContact.id)
-			.map((organizationContact) => organizationContact.id);
+		const organizationContactIds = this.organizationContacts.map((contact) => contact.id).filter(Boolean);
 
-		this.form.get('organizationContacts').setValue(organizationContacts);
-		this.form.get('organizationContacts').updateValueAndValidity();
+		this.form.patchValue({
+			organizationContacts: organizationContactIds
+		});
 	}
 
 	/**
-	 * SELECT all organization teams
+	 * SELECT all organization teams and update form control value
 	 */
 	selectAllTeams() {
-		const organizationTeams = this.organizationTeams
-			.filter((department) => !!department.id)
-			.map((department) => department.id);
+		const organizationTeamsIds = this.organizationTeams.map((team) => team.id).filter(Boolean);
 
-		this.form.get('teams').setValue(organizationTeams);
-		this.form.get('teams').updateValueAndValidity();
+		this.form.patchValue({
+			teams: organizationTeamsIds
+		});
 	}
 
-	getRoleFromForm = () => {
+	/**
+	 * Retrieves the role from the form based on the invitation type.
+	 * Defaults to a viewer role if no specific role is found in the form.
+	 * @returns The role enum value.
+	 */
+	getRoleFromForm(): RolesEnum {
 		if (this.isEmployeeInvitation()) {
 			return RolesEnum.EMPLOYEE;
 		}
 		if (this.isCandidateInvitation()) {
 			return RolesEnum.CANDIDATE;
 		}
-		return this.form.get('role').value.name || RolesEnum.VIEWER;
-	};
 
+		// Default to viewer role if form role value is not set
+		const formRole = this.form.get('role').value;
+		return formRole ? formRole.name : RolesEnum.VIEWER;
+	}
+
+	/**
+	 *
+	 * @returns
+	 */
 	async saveInvites(): Promise<ICreateEmailInvitesOutput> {
 		if (this.form.invalid) {
 			return;
 		}
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		const role = await firstValueFrom(
-			this.rolesService.getRoleByOptions({
+		const { id: organizationId, tenantId } = this.organization;
+		const role: IRole = await firstValueFrom(
+			this._rolesService.getRoleByOptions({
 				name: this.getRoleFromForm(),
 				tenantId
 			})
@@ -247,7 +241,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 			teams = []
 		} = this.form.value;
 
-		return await this.inviteService.createWithEmails({
+		return await this._inviteService.createWithEmails({
 			emailIds: emails,
 			projectIds: projects,
 			departmentIds: departments,
@@ -328,7 +322,7 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 		} else {
 			this.form.get('role').setValidators([Validators.required]);
 		}
-		this.form.updateValueAndValidity();
+		this.form.get('role').updateValueAndValidity();
 	}
 
 	/**
@@ -337,10 +331,12 @@ export class EmailInviteFormComponent extends TranslationBaseComponent implement
 	 * @param organization
 	 */
 	setInvitationPeriodFormValue(organization: IOrganization) {
-		this.form
-			.get('invitationExpirationPeriod')
-			.setValue(organization.inviteExpiryPeriod || InvitationExpirationEnum.TWO_WEEK);
-		this.form.get('invitationExpirationPeriod').updateValueAndValidity();
+		if (organization.invitesAllowed) {
+			const inviteExpiryPeriod = organization.inviteExpiryPeriod || InvitationExpirationEnum.TWO_WEEK;
+
+			this.form.get('invitationExpirationPeriod').setValue(inviteExpiryPeriod);
+			this.form.get('invitationExpirationPeriod').updateValueAndValidity();
+		}
 	}
 
 	/**

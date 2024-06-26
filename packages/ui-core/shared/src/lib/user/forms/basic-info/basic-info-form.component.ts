@@ -82,20 +82,20 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): UntypedFormGroup {
 		return fb.group(
 			{
-				firstName: [],
-				lastName: [],
-				username: [],
-				email: ['', Validators.compose([Validators.required, Validators.email])],
-				imageUrl: [{ value: null, disabled: true }],
-				imageId: [],
-				password: ['', Validators.compose([Validators.required, Validators.minLength(4)])],
-				startedWorkOn: [],
-				role: [],
-				offerDate: [],
-				acceptDate: [],
-				appliedDate: [],
-				rejectDate: [],
-				source: [],
+				firstName: [null, Validators.required],
+				lastName: [null],
+				username: [null],
+				email: [null, [Validators.required, Validators.email]],
+				imageUrl: { value: null, disabled: true },
+				imageId: [null],
+				password: [null, [Validators.required, Validators.minLength(4)]],
+				startedWorkOn: [null],
+				role: [null],
+				offerDate: [null],
+				acceptDate: [null],
+				appliedDate: [null],
+				rejectDate: [null],
+				source: [null],
 				tags: [self.selectedTags],
 				featureAsEmployee: [false]
 			},
@@ -180,7 +180,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 			delete tenant['featureOrganizations'];
 		}
 
-		const role = await firstValueFrom(
+		const role: IRole = await firstValueFrom(
 			this.roleService.getRoleByOptions({
 				name: name || defaultRoleName,
 				tenantId
@@ -197,6 +197,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 			tenant: tenant,
 			tags: tags
 		};
+
 		if (role.name === RolesEnum.EMPLOYEE) {
 			return this.createEmployee(user);
 		} else if (role.name === RolesEnum.CANDIDATE) {

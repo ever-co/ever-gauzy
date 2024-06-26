@@ -9,16 +9,12 @@
 				disabled: isPastInterview(currentInterview)
 			}"
 		></nb-icon>
-		<nb-icon
-			icon="close-outline"
-			class="icons"
-			(click)="closeDialog()"
-		></nb-icon>
+		<nb-icon icon="close-outline" class="icons" (click)="closeDialog()"></nb-icon>
 	</div>
 
 	<div class="card">
 		<nb-icon
-			*ngIf="isSlider && interviewList.length > 1"
+			*ngIf="isSlider && interviews.length > 1"
 			icon="arrow-ios-back"
 			class="arrow-icon"
 			(click)="previous()"
@@ -32,10 +28,7 @@
 						{{ currentInterview?.title }}
 					</h5>
 					<p class="interview-info">
-						{{
-							'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.SCHEDULED'
-								| translate
-						}}
+						{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.SCHEDULED' | translate }}
 						{{ timeUpdate }}
 					</p>
 				</div>
@@ -43,44 +36,32 @@
 			<nb-card-body>
 				<div>
 					<div class="interview-info">
-						<nb-icon
-							icon="calendar-outline"
-							class="icons"
-						></nb-icon>
+						<nb-icon icon="calendar-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DATE'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.DATE' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview?.startTime | date: 'fullDate' }}
+						{{ currentInterview?.startTime | date : 'fullDate' }}
 					</p>
 				</div>
 				<div>
 					<div class="interview-info">
 						<nb-icon icon="clock-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.TIME'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.TIME' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">
-						{{ currentInterview?.startTime | date: 'shortTime' }} -
-						{{ currentInterview?.endTime | date: 'shortTime' }}
+						{{ currentInterview?.startTime | date : 'shortTime' }} -
+						{{ currentInterview?.endTime | date : 'shortTime' }}
 					</p>
 				</div>
 				<div>
 					<div class="interview-info">
 						<nb-icon icon="person-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.CANDIDATE'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.CANDIDATE' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">
@@ -92,10 +73,7 @@
 					<div class="interview-info">
 						<nb-icon icon="people-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWERS'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWERS' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">
@@ -104,15 +82,9 @@
 				</div>
 				<div *ngIf="currentInterview?.location">
 					<div class="interview-info">
-						<nb-icon
-							icon="navigation-2-outline"
-							class="icons"
-						></nb-icon>
+						<nb-icon icon="navigation-2-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.LOCATION'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.LOCATION' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">
@@ -123,10 +95,7 @@
 					<div class="interview-info">
 						<nb-icon icon="edit-outline" class="icons"></nb-icon>
 						<p class="interview-text">
-							{{
-								'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.NOTE'
-									| translate
-							}}
+							{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.NOTE' | translate }}
 						</p>
 					</div>
 					<p class="interview-data">{{ currentInterview?.note }}</p>
@@ -135,22 +104,19 @@
 		</div>
 
 		<nb-icon
-			*ngIf="isSlider && interviewList.length > 1"
+			*ngIf="isSlider && interviews.length > 1"
 			icon="arrow-ios-forward"
 			class="arrow-icon"
 			(click)="next()"
 			[ngClass]="{ disable: !isNextBtn, show: isNextBtn }"
 		></nb-icon>
 	</div>
-	<div class="pages" *ngIf="isSlider && interviewList.length > 1">
+	<div class="pages" *ngIf="isSlider && interviews.length > 1">
 		<div class="interview-text">
 			{{ index }}
 			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.OF' | translate }}
-			{{ interviewList.length }}
-			{{
-				'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWS_LOWER_CASE'
-					| translate
-			}}
+			{{ interviews.length }}
+			{{ 'CANDIDATES_PAGE.INTERVIEW_INFO_MODAL.INTERVIEWS_LOWER_CASE' | translate }}
 		</div>
 	</div>
 </nb-card>

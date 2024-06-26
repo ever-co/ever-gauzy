@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { ComponentLayoutStyleEnum, ICandidate, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import { CandidateStatusEnum, ComponentLayoutStyleEnum, ICandidate, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { UserCreateCommand } from './../../../user/commands';
 import { CandidateCreateCommand } from '../candidate.create.command';
@@ -11,9 +11,7 @@ import { UserOrganizationService } from './../../../user-organization/user-organ
 import { EmailService } from './../../../email-send/email.service';
 
 @CommandHandler(CandidateCreateCommand)
-export class CandidateCreateHandler
-	implements ICommandHandler<CandidateCreateCommand> {
-
+export class CandidateCreateHandler implements ICommandHandler<CandidateCreateCommand> {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _authService: AuthService,
@@ -21,14 +19,20 @@ export class CandidateCreateHandler
 		private readonly _roleService: RoleService,
 		private readonly _userOrganizationService: UserOrganizationService,
 		private readonly _emailService: EmailService
-	) { }
+	) {}
 
+	/**
+	 * Executes the candidate creation process.
+	 *
+	 * @param command - The command containing the necessary information to create a candidate.
+	 * @returns A promise that resolves to the created candidate.
+	 * @throws BadRequestException if any error occurs during the candidate creation process.
+	 */
 	public async execute(command: CandidateCreateCommand): Promise<ICandidate> {
 		try {
 			const { input, originUrl = environment.clientBaseUrl, languageCode } = command;
-			/**
-			 * Find candidate role for relative tenant
-			 */
+
+			// Find candidate role for the relative tenant
 			const role = await this._roleService.findOneByWhereOptions({
 				name: RolesEnum.CANDIDATE
 			});
@@ -47,24 +51,17 @@ export class CandidateCreateHandler
 			// 2. Create candidate for specific user
 			const candidate = await this._candidateService.create({
 				...input,
+				status: CandidateStatusEnum.APPLIED,
 				user
 			});
 
 			// 3. Assign organization to the candidate user
 			if (candidate.organizationId) {
-				await this._userOrganizationService.addUserToOrganization(
-					user,
-					candidate.organizationId
-				);
+				await this._userOrganizationService.addUserToOrganization(user, candidate.organizationId);
 			}
 
 			// 4. Send welcome email to candidate user
-			this._emailService.welcomeUser(
-				user,
-				languageCode,
-				candidate.organizationId,
-				originUrl
-			);
+			this._emailService.welcomeUser(user, languageCode, candidate.organizationId, originUrl);
 			return candidate;
 		} catch (error) {
 			throw new BadRequestException(error);

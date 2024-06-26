@@ -49,21 +49,24 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 			this.candidateName = checkUsername ? checkUsername : 'Candidate';
 		});
 	}
+
 	private async loadInterview() {
-		const interviews = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{ candidateId: this.selectedCandidate.id }
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
+				candidateId: this.selectedCandidate.id
+			})
 		);
 
 		if (interviews) {
 			this.interviewList = interviews.items;
 		}
 	}
+
 	async interviewInfo() {
 		if (this.interviewList.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList,
+					interviews: this.interviewList,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}

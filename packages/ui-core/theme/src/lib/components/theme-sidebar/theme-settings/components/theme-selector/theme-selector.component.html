@@ -13,9 +13,7 @@
 			size="small"
 			outline
 		>
-			<nb-option *ngFor="let theme of themes" [value]="theme.value">
-				{{ theme.name | translate }}</nb-option
-			>
+			<nb-option *ngFor="let theme of themes" [value]="theme.value"> {{ theme.name | translate }}</nb-option>
 		</nb-select>
 	</div>
 </ng-template>

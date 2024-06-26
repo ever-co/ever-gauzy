@@ -6,11 +6,9 @@ import { NbDialogRef } from '@nebular/theme';
 	styleUrls: ['./organizations-mutation.component.scss']
 })
 export class OrganizationsMutationComponent implements OnInit {
-	constructor(
-		protected dialogRef: NbDialogRef<OrganizationsMutationComponent>
-	) {}
+	constructor(protected readonly dialogRef: NbDialogRef<OrganizationsMutationComponent>) {}
 
-	async ngOnInit() {}
+	ngOnInit() {}
 
 	addOrganization(consolidatedFormValues) {
 		this.dialogRef.close(consolidatedFormValues);

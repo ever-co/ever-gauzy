@@ -210,9 +210,11 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 			);
 			this.employeeList = items;
 
-			const interviews = await this.candidateInterviewService.getAll(
-				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-				{ organizationId, tenantId }
+			const interviews = await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+					{ organizationId, tenantId }
+				)
 			);
 			if (interviews) {
 				this.interviewList = interviews.items;

@@ -34,6 +34,8 @@ import {
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
 import { IAppIntegrationConfig, deepMerge, isNotEmpty } from '@gauzy/common';
+import { AccountRegistrationEvent } from '../event-bus/events';
+import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
 import { User } from '../user/user.entity';
@@ -63,10 +65,8 @@ export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
 		private typeOrmUserRepository: TypeOrmUserRepository,
-
 		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
-
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
 		private readonly employeeService: EmployeeService,
@@ -75,7 +75,8 @@ export class AuthService extends SocialAuthService {
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly commandBus: CommandBus,
 		private readonly httpService: HttpService,
-		private readonly socialAccountService: SocialAccountService
+		private readonly socialAccountService: SocialAccountService,
+		private readonly eventBus: EventBus
 	) {
 		super();
 	}
@@ -597,9 +598,13 @@ export class AuthService extends SocialAuthService {
 			this.emailConfirmationService.sendEmailVerification(user, integration);
 		}
 
+		// Publish the account registration event
+		const ctx = RequestContext.currentRequestContext();
+		const event = new AccountRegistrationEvent(ctx, user); // ToDo: Send a welcome email to user from events
+		await this.eventBus.publish(event);
+
 		// 8. Send a welcome email to the user
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
-
 		return user;
 	}
 

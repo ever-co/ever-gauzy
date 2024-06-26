@@ -8,11 +8,11 @@ import { OnboardingComponent } from './onboarding.component';
 
 @NgModule({
 	imports: [
-		OnboardingRoutingModule,
-		ThemeModule,
 		NbLayoutModule,
-		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
+		ThemeModule,
+		I18nTranslateModule.forChild(),
+		OnboardingRoutingModule,
 		ThemeSettingsModule
 	],
 	declarations: [OnboardingComponent],

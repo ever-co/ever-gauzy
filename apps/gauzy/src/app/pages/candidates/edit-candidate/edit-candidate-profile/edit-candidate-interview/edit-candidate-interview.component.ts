@@ -252,9 +252,11 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 		);
 		this.employeeList = items;
 
-		const interviews = await this.candidateInterviewService.getAll(
-			['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-			{ candidateId: this.candidateId, organizationId, tenantId }
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(
+				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+				{ candidateId: this.candidateId, organizationId, tenantId }
+			)
 		);
 
 		if (interviews) {
