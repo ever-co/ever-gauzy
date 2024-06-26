@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import * as nodemailer from 'nodemailer';
 import { IsNull } from 'typeorm';
 import {
@@ -25,7 +24,7 @@ import { environment as env } from '@gauzy/config';
 import { deepMerge, IAppIntegrationConfig } from '@gauzy/common';
 import { RequestContext } from '../core/context';
 import { EmailSendService } from './../email-send/email-send.service';
-import { EmailTemplate, Organization, EmailHistory } from './../core/entities/internal';
+import { Organization, EmailHistory } from './../core/entities/internal';
 import { TypeOrmEmailHistoryRepository } from './../email-history/repository/type-orm-email-history.repository';
 import { MikroOrmEmailHistoryRepository } from './../email-history/repository/mikro-orm-email-history.repository';
 import { TypeOrmEmailTemplateRepository } from './../email-template/repository/type-orm-email-template.repository';
@@ -38,19 +37,14 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
 @Injectable()
 export class EmailService {
 	constructor(
-		@InjectRepository(EmailHistory)
-		private typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
+		readonly typeOrmEmailHistoryRepository: TypeOrmEmailHistoryRepository,
 		readonly mikroOrmEmailHistoryRepository: MikroOrmEmailHistoryRepository,
-
-		@InjectRepository(EmailTemplate)
-		private readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
+		readonly typeOrmEmailTemplateRepository: TypeOrmEmailTemplateRepository,
 		readonly mikroOrmEmailTemplateRepository: MikroOrmEmailTemplateRepository,
-
 		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
 		readonly mikroOrmOrganizationRepository: MikroOrmOrganizationRepository,
-
-		private readonly _emailSendService: EmailSendService
-	) { }
+		readonly emailSendService: EmailSendService
+	) {}
 
 	/**
 	 *
@@ -106,7 +100,7 @@ export class EmailService {
 		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const sendResult = await instance.send(sendOptions);
 
 				body.message = sendResult.originalMessage;
@@ -178,7 +172,7 @@ export class EmailService {
 		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -238,7 +232,7 @@ export class EmailService {
 		const isEmailBlocked = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!isEmailBlocked) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -285,7 +279,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -334,7 +328,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -380,7 +374,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -422,7 +416,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -486,7 +480,7 @@ export class EmailService {
 			const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 			if (!match) {
 				try {
-					const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+					const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 					const send = await instance.send(sendOptions);
 
 					body['message'] = send.originalMessage;
@@ -543,7 +537,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getInstance();
+				const instance = await this.emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -587,7 +581,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getInstance();
+				const instance = await this.emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -660,7 +654,7 @@ export class EmailService {
 		if (!match) {
 			try {
 				// TODO : Which Organization to prefer while sending email
-				const instance = await this._emailSendService.getInstance();
+				const instance = await this.emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -710,7 +704,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -760,7 +754,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -811,7 +805,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -876,7 +870,7 @@ export class EmailService {
 		if (!match) {
 			try {
 				// Get the email sending service instance
-				const instance = await this._emailSendService.getInstance();
+				const instance = await this.emailSendService.getInstance();
 
 				if (instance) {
 					// Send the email
@@ -930,7 +924,7 @@ export class EmailService {
 			try {
 				const { id: organizationId, tenantId } = organization;
 
-				const instance = await this._emailSendService.getEmailInstance({ organizationId, tenantId });
+				const instance = await this.emailSendService.getEmailInstance({ organizationId, tenantId });
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -986,7 +980,7 @@ export class EmailService {
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
-				const instance = await this._emailSendService.getInstance();
+				const instance = await this.emailSendService.getInstance();
 				const send = await instance.send(sendOptions);
 
 				body['message'] = send.originalMessage;
@@ -1029,7 +1023,7 @@ export class EmailService {
 
 		if (!isEmailBlocked) {
 			try {
-				const instance = await this._emailSendService.getEmailInstance({
+				const instance = await this.emailSendService.getEmailInstance({
 					organizationId: organization.id,
 					tenantId: emailHistory.tenantId
 				});
