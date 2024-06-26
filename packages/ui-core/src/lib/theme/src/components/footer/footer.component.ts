@@ -38,7 +38,7 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 		this.companyGitlabLink = environment.COMPANY_GITLAB_LINK;
 		this.companyFacebookLink = environment.COMPANY_FACEBOOK_LINK;
 		this.companyTwitterLink = environment.COMPANY_TWITTER_LINK;
-		this.companyLinkedinLink = environment.COMPANY_LINKEDIN_LINK;
+		this.companyLinkedinLink = environment.COMPANY_IN_LINK;
 	}
 
 	ngOnInit() {

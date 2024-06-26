@@ -88,7 +88,7 @@ export type Env = Readonly<{
 	COMPANY_GITLAB_LINK: string;
 	COMPANY_FACEBOOK_LINK: string;
 	COMPANY_TWITTER_LINK: string;
-	COMPANY_LINKEDIN_LINK: string;
+	COMPANY_IN_LINK: string;
 	PROJECT_REPO: string;
 
 	DESKTOP_TIMER_APP_NAME: string;
@@ -243,7 +243,7 @@ export const env: Env = cleanEnv(
 		COMPANY_TWITTER_LINK: str({
 			default: 'https://twitter.com/gauzyplatform'
 		}),
-		COMPANY_LINKEDIN_LINK: str({
+		COMPANY_IN_LINK: str({
 			default: 'https://www.linkedin.com/company/ever-co'
 		}),
 		NO_INTERNET_LOGO: str({

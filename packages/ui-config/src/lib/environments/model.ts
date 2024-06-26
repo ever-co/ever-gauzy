@@ -21,7 +21,7 @@ export interface Environment {
 	COMPANY_GITLAB_LINK: string;
 	COMPANY_FACEBOOK_LINK: string;
 	COMPANY_TWITTER_LINK: string;
-	COMPANY_LINKEDIN_LINK: string;
+	COMPANY_IN_LINK: string;
 
 	GOOGLE_AUTH_LINK: string;
 	FACEBOOK_AUTH_LINK: string;
