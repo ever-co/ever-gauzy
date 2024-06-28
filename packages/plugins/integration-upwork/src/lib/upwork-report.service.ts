@@ -7,19 +7,13 @@ import { Time } from 'upwork-api/lib/routers/reports/time.js';
 import { IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
 
 const DEFAULT_DATE_RANGE = {
-	start: moment()
-		.quarter(moment().quarter())
-		.startOf('quarter')
-		.format('YYYY-MM-DD'),
-	end: moment()
-		.quarter(moment().quarter())
-		.endOf('quarter')
-		.format('YYYY-MM-DD')
+	start: moment().quarter(moment().quarter()).startOf('quarter').format('YYYY-MM-DD'),
+	end: moment().quarter(moment().quarter()).endOf('quarter').format('YYYY-MM-DD')
 };
 
 @Injectable()
 export class UpworkReportService {
-	constructor() { }
+	constructor() {}
 
 	/*
 	 * Get freelancer specific time reports
@@ -27,7 +21,7 @@ export class UpworkReportService {
 	 */
 	public async getFullReportByFreelancer(
 		config: IUpworkApiConfig,
-		providerId,
+		providerId: string,
 		dateRange: IUpworkDateRange
 	): Promise<any> {
 		try {
@@ -54,24 +48,14 @@ export class UpworkReportService {
 							assignment_ref`;
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						reports.getByFreelancerFull(
-							providerId,
-							{
-								tq: select
-							},
-							(err, data) => (err ? reject(err) : resolve(data))
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					reports.getByFreelancerFull(providerId, { tq: select }, (error: any, data: any) =>
+						error ? reject(error) : resolve(data)
+					);
+				});
 			});
 		} catch {
-			throw new BadRequestException(
-				'Cannot get freelancer income report'
-			);
+			throw new BadRequestException('Cannot get freelancer income report');
 		}
 	}
 
@@ -81,7 +65,7 @@ export class UpworkReportService {
 	 */
 	public async getLimitedReportByFreelance(
 		config: IUpworkApiConfig,
-		providerId,
+		providerId: string,
 		dateRange: IUpworkDateRange
 	): Promise<any> {
 		try {
@@ -108,24 +92,14 @@ export class UpworkReportService {
 							assignment_ref`;
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						reports.getByFreelancerLimited(
-							providerId,
-							{
-								tq: select
-							},
-							(err, data) => (err ? reject(err) : resolve(data))
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					reports.getByFreelancerLimited(providerId, { tq: select }, (error: any, data: any) =>
+						error ? reject(error) : resolve(data)
+					);
+				});
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				'Cannot get freelancer income report'
-			);
+			throw new BadRequestException('Cannot get freelancer income report');
 		}
 	}
 
@@ -135,7 +109,7 @@ export class UpworkReportService {
 	 */
 	public async getBillingReportByFreelancer(
 		config: IUpworkApiConfig,
-		providerReferenceId,
+		providerReferenceId: string,
 		dateRange: IUpworkDateRange
 	) {
 		try {
@@ -153,24 +127,14 @@ export class UpworkReportService {
 								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						billings.getByFreelancer(
-							providerReferenceId,
-							{
-								tq: select
-							},
-							(err, data) => (err ? reject(err) : resolve(data))
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					billings.getByFreelancer(providerReferenceId, { tq: select }, (error: any, data: any) =>
+						error ? reject(error) : resolve(data)
+					);
+				});
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				'Cannot get freelancer billing report'
-			);
+			throw new BadRequestException('Cannot get freelancer billing report');
 		}
 	}
 
@@ -203,24 +167,14 @@ export class UpworkReportService {
 								date <= '${end || DEFAULT_DATE_RANGE.end}'`;
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						earnings.getByFreelancer(
-							providerReferenceId,
-							{
-								tq: select
-							},
-							(err, data) => (err ? reject(err) : resolve(data))
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					earnings.getByFreelancer(providerReferenceId, { tq: select }, (error: any, data: any) =>
+						error ? reject(error) : resolve(data)
+					);
+				});
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				'Cannot get freelancer earning report'
-			);
+			throw new BadRequestException('Cannot get freelancer earning report');
 		}
 	}
 }

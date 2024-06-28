@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@gauzy/changelog-plugin": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
+		"@gauzy/integration-upwork": "^0.1.0",
 		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
 		"@gauzy/job-proposal-plugin": "^0.1.0",
 		"@gauzy/job-search-plugin": "^0.1.0",

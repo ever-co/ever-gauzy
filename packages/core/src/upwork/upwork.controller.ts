@@ -34,12 +34,12 @@ import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 @ApiTags('Upwork Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
-@Controller()
+@Controller('/integrations/upwork')
 export class UpworkController {
 	constructor(
 		private readonly _upworkTransactionService: UpworkTransactionService,
-		private readonly _upworkService: UpworkService,
-	) { }
+		private readonly _upworkService: UpworkService
+	) {}
 
 	/**
 	 *
@@ -63,10 +63,7 @@ export class UpworkController {
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
 	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
-		return await this._upworkTransactionService.handleTransactions(
-			file,
-			organizationDto
-		);
+		return await this._upworkTransactionService.handleTransactions(file, organizationDto);
 	}
 
 	/**
@@ -93,10 +90,7 @@ export class UpworkController {
 		@Body() config: IUpworkClientSecretPair,
 		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<IAccessTokenSecretPair> {
-		return await this._upworkService.getAccessTokenSecretPair(
-			config,
-			organizationId
-		);
+		return await this._upworkService.getAccessTokenSecretPair(config, organizationId);
 	}
 
 	/**
@@ -123,10 +117,7 @@ export class UpworkController {
 		@Body() accessTokenDto: IAccessTokenDto,
 		@Param('organizationId', UUIDValidationPipe) organizationId: string
 	): Promise<IAccessToken> {
-		return await this._upworkService.getAccessToken(
-			accessTokenDto,
-			organizationId
-		);
+		return await this._upworkService.getAccessToken(accessTokenDto, organizationId);
 	}
 
 	/**
@@ -148,9 +139,7 @@ export class UpworkController {
 		description: 'Invalid request'
 	})
 	@Get('work-diary')
-	async getWorkDiary(
-		@Query('data', ParseJsonPipe) data: IGetWorkDiaryDto
-	): Promise<any> {
+	async getWorkDiary(@Query('data', ParseJsonPipe) data: IGetWorkDiaryDto): Promise<any> {
 		return await this._upworkService.getWorkDiary(data);
 	}
 
@@ -173,9 +162,7 @@ export class UpworkController {
 		description: 'Invalid request'
 	})
 	@Get('freelancer-contracts')
-	async getContracts(
-		@Query('data', ParseJsonPipe) data: IGetContractsDto
-	): Promise<IEngagement[]> {
+	async getContracts(@Query('data', ParseJsonPipe) data: IGetContractsDto): Promise<IEngagement[]> {
 		return await this._upworkService.getContractsForFreelancer(data);
 	}
 
@@ -281,10 +268,6 @@ export class UpworkController {
 		@Query('data', ParseJsonPipe) data: any
 	): Promise<IPagination<any>> {
 		const { relations, filter } = data;
-		return await this._upworkService.getReportListByIntegration(
-			integrationId,
-			filter,
-			relations
-		);
+		return await this._upworkService.getReportListByIntegration(integrationId, filter, relations);
 	}
 }
