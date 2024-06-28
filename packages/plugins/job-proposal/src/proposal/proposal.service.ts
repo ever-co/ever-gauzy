@@ -64,7 +64,7 @@ export class ProposalService extends TenantAwareCrudService<Proposal> {
 		if ('jobPostContent' in where) {
 			// If 'jobPostContent' property exists, construct a raw SQL query to perform a like search
 			const { jobPostContent } = where;
-			filter['where']['jobPostContent'] = Raw(alias => `${alias} ${likeOperator} '%${jobPostContent}%'`);
+			filter['where']['jobPostContent'] = Raw((alias) => `${alias} ${likeOperator} '%${jobPostContent}%'`);
 		}
 
 		// Return the paginated data after applying any modifications

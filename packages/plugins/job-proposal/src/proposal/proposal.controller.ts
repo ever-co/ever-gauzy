@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	UseGuards,
-	Put,
-	Param
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Get, Query, UseGuards, Put, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -46,10 +36,7 @@ export class ProposalController extends CrudFactory<
 	IProposalCreateInput,
 	IProposalFindInput
 >(PaginationParams, CreateProposalDTO, UpdateProposalDTO, CountQueryDTO) {
-	constructor(
-		private readonly _proposalService: ProposalService,
-		private readonly _commandBus: CommandBus
-	) {
+	constructor(private readonly _proposalService: ProposalService, private readonly _commandBus: CommandBus) {
 		super(_proposalService);
 	}
 
@@ -62,22 +49,20 @@ export class ProposalController extends CrudFactory<
 	@ApiOperation({ summary: 'Get proposal count in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the proposal count.',
+		description: 'Successfully retrieved the proposal count.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid query parameters. Please check your input.',
+		description: 'Invalid query parameters. Please check your input.'
 	})
 	@ApiResponse({
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
-		description: 'An error occurred while retrieving the proposal count.',
+		description: 'An error occurred while retrieving the proposal count.'
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('count')
 	@UseValidationPipe()
-	async getCount(
-		@Query() options: CountQueryDTO<Proposal>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<Proposal>): Promise<number> {
 		return await this._proposalService.countBy(options);
 	}
 
@@ -95,23 +80,21 @@ export class ProposalController extends CrudFactory<
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid pagination parameters provided',
+		description: 'Invalid pagination parameters provided'
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() params: PaginationParams<Proposal>
-	): Promise<IPagination<IProposal>> {
+	async pagination(@Query() params: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
 		return await this._proposalService.pagination(params);
 	}
 
 	/**
-	* Find all proposals based on the provided options.
-	*
-	* @param data The options for finding proposals.
-	* @returns The found proposals.
-	*/
+	 * Find all proposals based on the provided options.
+	 *
+	 * @param data The options for finding proposals.
+	 * @returns The found proposals.
+	 */
 	@ApiOperation({ summary: 'Find all proposals' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -120,14 +103,12 @@ export class ProposalController extends CrudFactory<
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No proposals found',
+		description: 'No proposals found'
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(
-		@Query() options: PaginationParams<Proposal>
-	): Promise<IPagination<IProposal>> {
+	async findAll(@Query() options: PaginationParams<Proposal>): Promise<IPagination<IProposal>> {
 		return await this._proposalService.findAll(options);
 	}
 
@@ -146,13 +127,13 @@ export class ProposalController extends CrudFactory<
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Proposal not found',
+		description: 'Proposal not found'
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSALS_VIEW)
 	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: string,
-		@Query() options: OptionParams<Proposal>,
+		@Query() options: OptionParams<Proposal>
 	): Promise<IProposal> {
 		return await this._proposalService.findOneByIdString(id, { relations: options.relations || [] });
 	}
@@ -171,16 +152,12 @@ export class ProposalController extends CrudFactory<
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues as to what went wrong',
+		description: 'Invalid input. The response body may contain clues as to what went wrong'
 	})
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async create(
-		@Body() entity: CreateProposalDTO
-	): Promise<IProposal> {
-		return await this._commandBus.execute(
-			new ProposalCreateCommand(entity),
-		);
+	async create(@Body() entity: CreateProposalDTO): Promise<IProposal> {
+		return await this._commandBus.execute(new ProposalCreateCommand(entity));
 	}
 
 	/**
@@ -198,16 +175,11 @@ export class ProposalController extends CrudFactory<
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Proposal not found',
+		description: 'Proposal not found'
 	})
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProposalDTO,
-	): Promise<IProposal> {
-		return await this._commandBus.execute(
-			new ProposalUpdateCommand(id, entity),
-		);
+	async update(@Param('id', UUIDValidationPipe) id: string, @Body() entity: UpdateProposalDTO): Promise<IProposal> {
+		return await this._commandBus.execute(new ProposalUpdateCommand(id, entity));
 	}
 }
