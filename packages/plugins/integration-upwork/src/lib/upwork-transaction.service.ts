@@ -5,16 +5,19 @@ import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as csv from 'csv-parser';
 import { OrganizationVendorEnum, ExpenseCategoriesEnum, IncomeTypeEnum } from '@gauzy/contracts';
-import { reflect } from '../core/utils';
-import { RequestContext } from '../core/context';
-import { Expense, Income } from '../core/entities/internal';
-import { EmployeeService } from '../employee/employee.service';
-import { UserService } from '../user/user.service';
-import { IncomeCreateCommand } from '../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
+import {
+	EmployeeService,
+	Expense,
+	ExpenseCategoriesService,
+	ExpenseCreateCommand,
+	Income,
+	IncomeCreateCommand,
+	OrganizationContactService,
+	OrganizationVendorService,
+	RequestContext,
+	UserService,
+	reflect
+} from '@gauzy/core';
 
 @Injectable()
 export class UpworkTransactionService {
@@ -37,12 +40,12 @@ export class UpworkTransactionService {
 		}
 	};
 	constructor(
-		private _userService: UserService,
-		private _employeeService: EmployeeService,
-		private _orgVendorService: OrganizationVendorService,
-		private _orgClientService: OrganizationContactService,
-		private _expenseCategoryService: ExpenseCategoriesService,
-		private commandBus: CommandBus
+		private readonly _userService: UserService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _orgVendorService: OrganizationVendorService,
+		private readonly _orgClientService: OrganizationContactService,
+		private readonly _expenseCategoryService: ExpenseCategoriesService,
+		private readonly _commandBus: CommandBus
 	) {}
 
 	async handleTransactions(file, { organizationId }) {
@@ -134,7 +137,7 @@ export class UpworkTransactionService {
 
 						const cmd = this.commandBusMapper[result.Type];
 
-						return await this.commandBus.execute(
+						return await this._commandBus.execute(
 							cmd.command({
 								dto,
 								client,

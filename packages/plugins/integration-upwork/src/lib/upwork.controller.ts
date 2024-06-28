@@ -24,12 +24,9 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
+import { ParseJsonPipe, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
-import { Expense, Income } from './../core/entities/internal';
-import { Permissions } from './../shared/decorators';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
 
 @ApiTags('Upwork Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -42,27 +39,28 @@ export class UpworkController {
 	) {}
 
 	/**
+	 * Handles the uploading of Upwork transactions.
 	 *
-	 * @param file
-	 * @param organizationDto
-	 * @returns
+	 * @param file - The uploaded file containing transaction data.
+	 * @param organizationDto - The DTO containing organization information.
+	 * @returns A promise that resolves with the result of handling the transactions.
 	 */
-	@ApiOperation({ summary: 'Upload Upwork transaction.' })
+	@ApiOperation({ summary: 'Upload Upwork transaction' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Uploaded transaction'
+		description: 'The transaction has been successfully uploaded.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Freelancer not found'
+		description: 'The request was invalid or the freelancer was not found.'
 	})
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
-	async create(@UploadedFile() file, @Body() organizationDto): Promise<any> {
+	async create(@UploadedFile() file: any, @Body() organizationDto: any): Promise<any> {
 		return await this._upworkTransactionService.handleTransactions(file, organizationDto);
 	}
 
@@ -251,8 +249,7 @@ export class UpworkController {
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found income & expense',
-		type: Income || Expense
+		description: 'Found income & expense'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,

@@ -45,6 +45,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^17.0.33",
+		"@types/multer": "^1.4.11",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},

@@ -1,8 +1,9 @@
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
+import { UpworkModule } from './upwork.module';
 
 @Plugin({
-	imports: [],
+	imports: [UpworkModule],
 	configuration: (config: ApplicationPluginConfig) => config
 })
 export class IntegrationUpworkPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
