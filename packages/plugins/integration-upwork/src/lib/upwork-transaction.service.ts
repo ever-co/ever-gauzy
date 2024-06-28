@@ -48,11 +48,15 @@ export class UpworkTransactionService {
 		private readonly _commandBus: CommandBus
 	) {}
 
-	async handleTransactions(file, { organizationId }) {
+	/**
+	 *
+	 */
+	async handleTransactions(file: Express.Multer.File, { organizationId }) {
 		const uuid = uuidv4();
-		const dirPath = `./apps/api/src/app/integrations/upwork/csv/${uuid}`;
+		const dirPath = `./upwork/csv/${uuid}`;
 		const csvData = file.buffer.toString();
 		const filePath = `${dirPath}/${file.originalname}`;
+
 		let results = [];
 
 		fs.mkdirSync(dirPath, { recursive: true });
@@ -154,13 +158,20 @@ export class UpworkTransactionService {
 				if (rejectedTransactions.length) {
 					const errors = rejectedTransactions.map(({ error }) => error.response.message);
 					const message = this._formatErrorMesage([...new Set(errors)], totalExpenses, totalIncomes);
-					reject(new BadRequestException(message));
+					return reject(new BadRequestException(message));
 				}
 				resolve({ totalExpenses, totalIncomes });
 			});
 		});
 	}
 
+	/**
+	 *
+	 * @param errors
+	 * @param totalExpenses
+	 * @param totalIncomes
+	 * @returns
+	 */
 	private _formatErrorMesage(errors, totalExpenses, totalIncomes): string {
 		return `Total succeed expenses transactions: ${totalExpenses}.
 			Total succeed incomes transactions: ${totalIncomes}.
@@ -168,6 +179,11 @@ export class UpworkTransactionService {
 		`;
 	}
 
+	/**
+	 *
+	 * @param processedTransactions
+	 * @returns
+	 */
 	private _proccessTransactions(processedTransactions) {
 		const { rejectedTransactions, totalExpenses, totalIncomes } = processedTransactions.reduce(
 			(prev, current) => {
@@ -198,6 +214,13 @@ export class UpworkTransactionService {
 		};
 	}
 
+	/**
+	 *
+	 * @param service
+	 * @param condition
+	 * @param errorMsg
+	 * @returns
+	 */
 	private async _findRecordOrThrow(service, condition, errorMsg) {
 		const response = await service.findOneOrFailByOptions(condition);
 		if (response.success) {

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Express } from 'express';
 import {
 	IAccessToken,
 	IAccessTokenSecretPair,
@@ -22,7 +23,8 @@ import {
 	IUpworkApiConfig,
 	IUpworkClientSecretPair,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	IIntegrationMap
 } from '@gauzy/contracts';
 import { ParseJsonPipe, PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { UpworkTransactionService } from './upwork-transaction.service';
@@ -60,28 +62,29 @@ export class UpworkController {
 	})
 	@Post('/transactions')
 	@UseInterceptors(FileInterceptor('file'))
-	async create(@UploadedFile() file: any, @Body() organizationDto: any): Promise<any> {
+	async create(@UploadedFile() file: Express.Multer.File, @Body() organizationDto: any): Promise<any> {
 		return await this._upworkTransactionService.handleTransactions(file, organizationDto);
 	}
 
 	/**
+	 * Authorizes Upwork by generating an access token and secret pair.
 	 *
-	 * @param config
-	 * @param organizationId
-	 * @returns
+	 * @param config - The configuration containing client secret pair.
+	 * @param organizationId - The ID of the organization.
+	 * @returns A promise that resolves with the access token and secret pair.
 	 */
-	@ApiOperation({ summary: 'Authorize Upwork.' })
+	@ApiOperation({ summary: 'Authorize Upwork' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Authorized Upwork'
+		description: 'The Upwork account has been successfully authorized.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Cannot Authorize'
+		description: 'Authorization failed due to invalid request.'
 	})
 	@Post('/token-secret-pair/:organizationId')
 	async getAccessTokenSecretPair(
@@ -92,23 +95,24 @@ export class UpworkController {
 	}
 
 	/**
+	 * Retrieves the access token for the specified organization.
 	 *
-	 * @param accessTokenDto
-	 * @param organizationId
-	 * @returns
+	 * @param accessTokenDto - The DTO containing the access token information.
+	 * @param organizationId - The ID of the organization.
+	 * @returns A promise that resolves with the access token.
 	 */
-	@ApiOperation({ summary: 'Get Access Token.' })
+	@ApiOperation({ summary: 'Get Access Token' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Get Access Token'
+		description: 'The access token has been successfully retrieved.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'Invalid request.'
 	})
 	@Post('/access-token/:organizationId')
 	async getAccessToken(
@@ -119,71 +123,74 @@ export class UpworkController {
 	}
 
 	/**
+	 * Retrieves the work diary for the specified data.
 	 *
-	 * @param data
-	 * @returns
+	 * @param data - The DTO containing the query parameters for the work diary.
+	 * @returns A promise that resolves with the work diary data.
 	 */
-	@ApiOperation({ summary: 'Get Work Diary.' })
+	@ApiOperation({ summary: 'Get Work Diary' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Get Work Diary'
+		status: HttpStatus.OK,
+		description: 'Work Diary retrieved successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'Invalid request.'
 	})
-	@Get('work-diary')
+	@Get('/work-diary')
 	async getWorkDiary(@Query('data', ParseJsonPipe) data: IGetWorkDiaryDto): Promise<any> {
 		return await this._upworkService.getWorkDiary(data);
 	}
 
 	/**
+	 * Retrieves the contracts for the specified data.
 	 *
-	 * @param data
-	 * @returns
+	 * @param data - The DTO containing the query parameters for the contracts.
+	 * @returns A promise that resolves with the list of engagements.
 	 */
-	@ApiOperation({ summary: 'Get Contracts.' })
+	@ApiOperation({ summary: 'Get Contracts' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Get Contracts'
+		status: HttpStatus.OK,
+		description: 'Contracts retrieved successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'Invalid request.'
 	})
-	@Get('freelancer-contracts')
+	@Get('/freelancer-contracts')
 	async getContracts(@Query('data', ParseJsonPipe) data: IGetContractsDto): Promise<IEngagement[]> {
 		return await this._upworkService.getContractsForFreelancer(data);
 	}
 
 	/**
+	 * Retrieves the configuration for the specified integration ID.
 	 *
-	 * @param integrationId
-	 * @param data
-	 * @returns
+	 * @param integrationId - The UUID of the integration.
+	 * @param data - The query parameters, parsed as JSON.
+	 * @returns A promise that resolves with the configuration data.
 	 */
-	@ApiOperation({ summary: 'Get Config.' })
+	@ApiOperation({ summary: 'Get Config' })
 	@ApiResponse({
-		status: HttpStatus.CREATED,
-		description: 'Get Config'
+		status: HttpStatus.OK,
+		description: 'Configuration retrieved successfully.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'Invalid request.'
 	})
-	@Get('config/:integrationId')
+	@Get('/config/:integrationId')
 	async getConfig(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Query('data', ParseJsonPipe) data: any
@@ -193,73 +200,77 @@ export class UpworkController {
 	}
 
 	/**
+	 * Syncs contracts with the provided data.
 	 *
-	 * @param syncContractsDto
-	 * @returns
+	 * @param syncContractsDto - The data transfer object containing contract details to sync.
+	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
-	@ApiOperation({ summary: 'Sync Contracts.' })
+	@ApiOperation({ summary: 'Sync Contracts' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Sync Contracts'
+		description: 'Contracts have been successfully synced.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'The request is invalid.'
 	})
-	@Post('sync-contracts')
-	async syncContracts(@Body() syncContractsDto: any): Promise<any> {
+	@Post('/sync-contracts')
+	async syncContracts(@Body() syncContractsDto: any): Promise<IIntegrationMap[]> {
 		return await this._upworkService.syncContracts(syncContractsDto);
 	}
 
 	/**
+	 * Syncs contracts related data with the provided data transfer object.
 	 *
-	 * @param dto
-	 * @returns
+	 * @param dto - The data transfer object containing details for contracts related data synchronization.
+	 * @returns A promise that resolves with the result of the synchronization process.
 	 */
-	@ApiOperation({ summary: 'Sync Contracts Related Data.' })
+	@ApiOperation({ summary: 'Sync Contracts Related Data' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Sync Contracts Related Data'
+		description: 'Contracts related data have been successfully synced.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'The request is invalid.'
 	})
-	@Post('sync-contracts-related-data')
-	async syncContractsRelatedData(@Body() dto): Promise<any> {
+	@Post('/sync-contracts-related-data')
+	async syncContractsRelatedData(@Body() dto: any): Promise<any> {
 		return await this._upworkService.syncContractsRelatedData(dto);
 	}
 
 	/**
+	 * Retrieves income and expense reports for the specified Upwork integration.
 	 *
-	 * @param integrationId
-	 * @param data
-	 * @returns
+	 * @param integrationId - The ID of the Upwork integration.
+	 * @param data - Optional query parameters for filtering and relations.
+	 * @returns A promise that resolves with the paginated list of income and expense reports.
 	 */
+
 	@ApiOperation({
-		summary: 'Find all expense and income for logged upwork user.'
+		summary: 'Find all expenses and incomes for logged Upwork user.'
 	})
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found income & expense'
+		description: 'Successfully retrieved income and expense data.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
+		description: 'The specified record was not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid request'
+		description: 'The request is invalid.'
 	})
-	@Get('report/:integrationId')
+	@Get('/report/:integrationId')
 	async getReports(
 		@Param('integrationId', UUIDValidationPipe) integrationId: string,
 		@Query('data', ParseJsonPipe) data: any

@@ -6,7 +6,7 @@
 		"baseUrl": "./src",
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["node", "jest"],
+		"types": ["node", "jest", "multer"],
 		"target": "es6"
 	},
 	"include": ["src/**/*.ts"],
