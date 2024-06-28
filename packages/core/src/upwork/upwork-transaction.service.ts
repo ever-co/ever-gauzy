@@ -7,6 +7,7 @@ import * as csv from 'csv-parser';
 import { OrganizationVendorEnum, ExpenseCategoriesEnum, IncomeTypeEnum } from '@gauzy/contracts';
 import { reflect } from '../core/utils';
 import { RequestContext } from '../core/context';
+import { Expense, Income } from '../core/entities/internal';
 import { EmployeeService } from '../employee/employee.service';
 import { UserService } from '../user/user.service';
 import { IncomeCreateCommand } from '../income/commands/income.create.command';
@@ -14,8 +15,6 @@ import { ExpenseCreateCommand } from '../expense/commands/expense.create.command
 import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
 import { OrganizationContactService } from '../organization-contact/organization-contact.service';
 import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
-import { Expense } from '../expense/expense.entity';
-import { Income } from '../income/income.entity';
 
 @Injectable()
 export class UpworkTransactionService {

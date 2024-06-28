@@ -17,8 +17,11 @@ export { OrganizationContactModule, OrganizationContactService } from './organiz
 
 export * from './employee';
 
+export { IntegrationMapModule, IntegrationMapService } from './integration-map';
 export { IncomeModule, IncomeService } from './income';
 export { ExpenseModule, ExpenseService } from './expense';
+export { ExpenseCategoriesModule, ExpenseCategoriesService } from './expense-categories';
+export { TimeSlotModule, TimeSlotService } from './time-tracking/time-slot';
 
 export * from './tags';
 export * from './database';
