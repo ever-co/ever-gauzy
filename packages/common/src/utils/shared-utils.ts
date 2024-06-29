@@ -236,3 +236,21 @@ export const addHttpsPrefix = (url: string, prefix = 'https'): string => {
 
 	return url;
 };
+
+/**
+ * Creates a query parameters string from an object of query parameters.
+ * @param queryParams An object containing query parameters.
+ * @returns A string representation of the query parameters.
+ */
+export function createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
+	return Object.keys(queryParams)
+		.map((key) => {
+			const value = queryParams[key];
+			if (Array.isArray(value)) {
+				return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join('&');
+			} else {
+				return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+			}
+		})
+		.join('&');
+}

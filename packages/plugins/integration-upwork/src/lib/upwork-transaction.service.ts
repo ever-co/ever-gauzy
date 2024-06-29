@@ -1,25 +1,23 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { EmployeeService } from '../employee/employee.service';
-import { UserService } from '../user/user.service';
+import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as csv from 'csv-parser';
-import { IncomeCreateCommand } from '../income/commands/income.create.command';
-import { ExpenseCreateCommand } from '../expense/commands/expense.create.command';
-import { OrganizationVendorService } from '../organization-vendor/organization-vendor.service';
-import { OrganizationContactService } from '../organization-contact/organization-contact.service';
-import { ExpenseCategoriesService } from '../expense-categories/expense-categories.service';
+import { OrganizationVendorEnum, ExpenseCategoriesEnum, IncomeTypeEnum } from '@gauzy/contracts';
 import {
-	OrganizationVendorEnum,
-	ExpenseCategoriesEnum,
-	IncomeTypeEnum
-} from '@gauzy/contracts';
-import { Expense } from '../expense/expense.entity';
-import { Income } from '../income/income.entity';
-import { reflect } from '../core';
-import { v4 as uuidv4 } from 'uuid';
-import { RequestContext } from '../core/context';
+	EmployeeService,
+	Expense,
+	ExpenseCategoriesService,
+	ExpenseCreateCommand,
+	Income,
+	IncomeCreateCommand,
+	OrganizationContactService,
+	OrganizationVendorService,
+	RequestContext,
+	UserService,
+	reflect
+} from '@gauzy/core';
 
 @Injectable()
 export class UpworkTransactionService {
@@ -42,19 +40,23 @@ export class UpworkTransactionService {
 		}
 	};
 	constructor(
-		private _userService: UserService,
-		private _employeeService: EmployeeService,
-		private _orgVendorService: OrganizationVendorService,
-		private _orgClientService: OrganizationContactService,
-		private _expenseCategoryService: ExpenseCategoriesService,
-		private commandBus: CommandBus
+		private readonly _userService: UserService,
+		private readonly _employeeService: EmployeeService,
+		private readonly _orgVendorService: OrganizationVendorService,
+		private readonly _orgClientService: OrganizationContactService,
+		private readonly _expenseCategoryService: ExpenseCategoriesService,
+		private readonly _commandBus: CommandBus
 	) {}
 
-	async handleTransactions(file, { organizationId }) {
+	/**
+	 *
+	 */
+	async handleTransactions(file: Express.Multer.File, { organizationId }) {
 		const uuid = uuidv4();
-		const dirPath = `./apps/api/src/app/integrations/upwork/csv/${uuid}`;
+		const dirPath = `./upwork/csv/${uuid}`;
 		const csvData = file.buffer.toString();
 		const filePath = `${dirPath}/${file.originalname}`;
+
 		let results = [];
 
 		fs.mkdirSync(dirPath, { recursive: true });
@@ -73,17 +75,10 @@ export class UpworkTransactionService {
 				const transactions = results
 					.filter(
 						(result) =>
-							result.Type === IncomeTypeEnum.HOURLY ||
-							result.Type === ExpenseCategoriesEnum.SERVICE_FEE
+							result.Type === IncomeTypeEnum.HOURLY || result.Type === ExpenseCategoriesEnum.SERVICE_FEE
 					)
 					.map(async (result) => {
-						const {
-							Date: date,
-							Amount,
-							Freelancer,
-							Currency,
-							Team
-						} = result;
+						const { Date: date, Amount, Freelancer, Currency, Team } = result;
 						const [firstName, lastName] = Freelancer.split(' ');
 
 						const { record: user } = await this._findRecordOrThrow(
@@ -97,17 +92,13 @@ export class UpworkTransactionService {
 							`User: ${Freelancer} not found`
 						);
 
-						const {
-							record: employee
-						} = await this._findRecordOrThrow(
+						const { record: employee } = await this._findRecordOrThrow(
 							this._employeeService,
 							{ where: { user, organizationId, tenantId } },
 							`Employee ${Freelancer} not found`
 						);
 
-						const {
-							record: category
-						} = await this._findRecordOrThrow(
+						const { record: category } = await this._findRecordOrThrow(
 							this._expenseCategoryService,
 							{
 								where: {
@@ -119,9 +110,7 @@ export class UpworkTransactionService {
 							`Category: ${ExpenseCategoriesEnum.SERVICE_FEE} not found`
 						);
 
-						const {
-							record: vendor
-						} = await this._findRecordOrThrow(
+						const { record: vendor } = await this._findRecordOrThrow(
 							this._orgVendorService,
 							{
 								where: {
@@ -133,9 +122,7 @@ export class UpworkTransactionService {
 							`Vendor: ${OrganizationVendorEnum.UPWORK} not found`
 						);
 
-						const {
-							record: client
-						} = await this._findRecordOrThrow(
+						const { record: client } = await this._findRecordOrThrow(
 							this._orgClientService,
 							{
 								where: { name: Team, organizationId, tenantId }
@@ -154,7 +141,7 @@ export class UpworkTransactionService {
 
 						const cmd = this.commandBusMapper[result.Type];
 
-						return await this.commandBus.execute(
+						return await this._commandBus.execute(
 							cmd.command({
 								dto,
 								client,
@@ -164,31 +151,27 @@ export class UpworkTransactionService {
 						);
 					});
 
-				const processedTransactions = await Promise.all(
-					transactions.map(reflect)
-				);
-				const {
-					rejectedTransactions,
-					totalExpenses,
-					totalIncomes
-				} = this._proccessTransactions(processedTransactions);
+				const processedTransactions = await Promise.all(transactions.map(reflect));
+				const { rejectedTransactions, totalExpenses, totalIncomes } =
+					this._proccessTransactions(processedTransactions);
 
 				if (rejectedTransactions.length) {
-					const errors = rejectedTransactions.map(
-						({ error }) => error.response.message
-					);
-					const message = this._formatErrorMesage(
-						[...new Set(errors)],
-						totalExpenses,
-						totalIncomes
-					);
-					reject(new BadRequestException(message));
+					const errors = rejectedTransactions.map(({ error }) => error.response.message);
+					const message = this._formatErrorMesage([...new Set(errors)], totalExpenses, totalIncomes);
+					return reject(new BadRequestException(message));
 				}
 				resolve({ totalExpenses, totalIncomes });
 			});
 		});
 	}
 
+	/**
+	 *
+	 * @param errors
+	 * @param totalExpenses
+	 * @param totalIncomes
+	 * @returns
+	 */
 	private _formatErrorMesage(errors, totalExpenses, totalIncomes): string {
 		return `Total succeed expenses transactions: ${totalExpenses}.
 			Total succeed incomes transactions: ${totalIncomes}.
@@ -196,12 +179,13 @@ export class UpworkTransactionService {
 		`;
 	}
 
+	/**
+	 *
+	 * @param processedTransactions
+	 * @returns
+	 */
 	private _proccessTransactions(processedTransactions) {
-		const {
-			rejectedTransactions,
-			totalExpenses,
-			totalIncomes
-		} = processedTransactions.reduce(
+		const { rejectedTransactions, totalExpenses, totalIncomes } = processedTransactions.reduce(
 			(prev, current) => {
 				return {
 					rejectedTransactions:
@@ -213,9 +197,7 @@ export class UpworkTransactionService {
 							? (prev.totalExpenses++, prev.totalExpenses)
 							: prev.totalExpenses,
 					totalIncomes:
-						current.item instanceof Income
-							? (prev.totalIncomes++, prev.totalIncomes)
-							: prev.totalIncomes
+						current.item instanceof Income ? (prev.totalIncomes++, prev.totalIncomes) : prev.totalIncomes
 				};
 			},
 			{
@@ -232,6 +214,13 @@ export class UpworkTransactionService {
 		};
 	}
 
+	/**
+	 *
+	 * @param service
+	 * @param condition
+	 * @param errorMsg
+	 * @returns
+	 */
 	private async _findRecordOrThrow(service, condition, errorMsg) {
 		const response = await service.findOneOrFailByOptions(condition);
 		if (response.success) {

@@ -15,13 +15,8 @@ import { IntegrationSetting } from './integration-setting.entity';
 		RolePermissionModule,
 		CqrsModule
 	],
-	controllers: [
-		IntegrationSettingController
-	],
-	providers: [
-		IntegrationSettingService,
-		...CommandHandlers
-	],
+	controllers: [IntegrationSettingController],
+	providers: [IntegrationSettingService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, IntegrationSettingService]
 })
-export class IntegrationSettingModule { }
+export class IntegrationSettingModule {}
