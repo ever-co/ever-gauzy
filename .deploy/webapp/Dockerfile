@@ -72,7 +72,7 @@ RUN apk --update add bash && \
 RUN node --version
 RUN npm --version
 
-COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
+COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
 
 RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh && dos2unix /entrypoint.prod.sh
 
@@ -120,7 +120,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /
+COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed  /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -149,7 +149,7 @@ FROM nginx:alpine AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh ./
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed ./
 COPY --chown=nginx:nginx .deploy/webapp/nginx.compose.conf /etc/nginx/conf.d/compose.conf.template
 COPY --chown=nginx:nginx .deploy/webapp/nginx.prod.conf /etc/nginx/conf.d/prod.conf.template
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
