@@ -22,4 +22,4 @@ import { TypeOrmExpenseCategoryRepository } from './repository';
 	providers: [ExpenseCategoriesService, TypeOrmExpenseCategoryRepository, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, ExpenseCategoriesService, TypeOrmExpenseCategoryRepository]
 })
-export class ExpenseCategoriesModule { }
+export class ExpenseCategoriesModule {}

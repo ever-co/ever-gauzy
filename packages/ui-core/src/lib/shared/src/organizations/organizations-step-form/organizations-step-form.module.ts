@@ -12,7 +12,8 @@ import {
 	NbListModule,
 	NbStepperModule,
 	NbToggleModule,
-	NbTooltipModule
+	NbTooltipModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
@@ -29,14 +30,13 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 @NgModule({
 	imports: [
 		CommonModule,
-		TagsColorInputModule,
+		FormsModule,
+		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
 		NgSelectModule,
-		ReactiveFormsModule,
 		NbInputModule,
-		FormsModule,
 		NbDatepickerModule,
 		ImageUploaderModule,
 		NbSelectModule,
@@ -44,9 +44,11 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 		NbListModule,
 		NbStepperModule,
 		NbToggleModule,
+		NbSpinnerModule,
 		RemoveLodashModule,
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
+		TagsColorInputModule,
 		CurrencyModule,
 		CountryModule,
 		LocationFormModule,

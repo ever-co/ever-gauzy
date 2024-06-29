@@ -26,10 +26,10 @@ import {
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { DeleteFeedbackComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 import { InterviewersTableComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewStarRatingComponent } from '../../../manage-candidate-interviews/interview-panel/table-components/rating/rating.component';
 import { FeedbackStatusTableComponent } from './table-components';
-import { DeleteFeedbackComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -274,9 +274,12 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.selectedOrganization;
 
-		const result = await this.candidateInterviewService.getAll(
-			['feedbacks', 'interviewers', 'technologies', 'personalQualities'],
-			{ candidateId: this.candidateId, organizationId, tenantId }
+		const result = await firstValueFrom(
+			this.candidateInterviewService.getAll(['feedbacks', 'interviewers', 'technologies', 'personalQualities'], {
+				candidateId: this.candidateId,
+				organizationId,
+				tenantId
+			})
 		);
 		const { items } = await firstValueFrom(
 			this.candidatesService.getAll(['user', 'interview', 'feedbacks'], {

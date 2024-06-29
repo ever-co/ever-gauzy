@@ -1,17 +1,18 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ViewTimeLogComponent } from './view-time-log.component';
 import {
-	NbListModule,
 	NbButtonModule,
 	NbDialogModule,
 	NbIconModule,
-	NbUserModule,
-	NbTooltipModule
+	NbListModule,
+	NbTooltipModule,
+	NbUserModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { SharedModule } from '../../shared.module';
+import { ViewTimeLogComponent } from './view-time-log.component';
 import { EditTimeLogModalModule } from '../edit-time-log-modal/edit-time-log-modal.module';
 import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-modal.module';
 
@@ -20,17 +21,18 @@ import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-mod
 	exports: [ViewTimeLogComponent],
 	imports: [
 		CommonModule,
-		NbListModule,
-		SharedModule,
 		NbButtonModule,
-		NbTooltipModule,
 		NbDialogModule.forChild(),
-		EditTimeLogModalModule,
-		ViewTimeLogModalModule,
 		NbIconModule,
+		NbListModule,
+		NbTooltipModule,
 		NbUserModule,
+		NgxPermissionsModule,
+		I18nTranslateModule.forChild(),
+		SharedModule,
 		DialogsModule,
-		I18nTranslateModule.forChild()
+		EditTimeLogModalModule,
+		ViewTimeLogModalModule
 	]
 })
 export class ViewTimeLogModule {}

@@ -9,9 +9,7 @@ import {
 	ICreateEmailInvitesInput,
 	ICreateEmailInvitesOutput,
 	InviteStatusEnum,
-	IOrganizationProject,
 	IOrganizationContact,
-	IOrganizationDepartment,
 	IUser,
 	ICreateOrganizationContactInviteInput,
 	RolesEnum,
@@ -35,14 +33,13 @@ import { ALPHA_NUMERIC_CODE_LENGTH } from './../constants';
 import { RequestContext } from './../core/context';
 import {
 	MultiORMEnum,
-	findIntersection,
 	freshTimestamp,
 	generateRandomAlphaNumericCode,
+	getArrayIntersection,
 	parseTypeORMFindToMikroOrm
 } from './../core/utils';
 import { EmailService } from './../email-send/email.service';
 import { UserService } from '../user/user.service';
-import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from './../role/role.service';
 import { OrganizationService } from './../organization/organization.service';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
@@ -75,7 +72,6 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		readonly mikroOrmOrganizationTeamEmployeeRepository: MikroOrmOrganizationTeamEmployeeRepository,
 		private readonly configService: ConfigService,
 		private readonly emailService: EmailService,
-		private readonly employeeService: EmployeeService,
 		private readonly organizationContactService: OrganizationContactService,
 		private readonly organizationDepartmentService: OrganizationDepartmentService,
 		private readonly organizationProjectService: OrganizationProjectService,
@@ -95,154 +91,123 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	 * the existing invite and then create a new row with the email address.
 	 * @param emailInvites Emails Ids to send invite
 	 */
-	async createBulk(
-		emailInvites: ICreateEmailInvitesInput,
-		languageCode: LanguagesEnum
-	): Promise<ICreateEmailInvitesOutput> {
+	async createBulk(input: ICreateEmailInvitesInput, languageCode: LanguagesEnum): Promise<ICreateEmailInvitesOutput> {
 		const originUrl = this.configService.get('clientBaseUrl') as string;
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const {
-			emailIds,
+			emailIds = [],
+			projectIds = [],
+			organizationContactIds = [],
+			departmentIds = [],
+			teamIds = [],
 			roleId,
-			projectIds,
-			organizationContactIds,
-			departmentIds,
-			teamIds,
 			organizationId,
 			startedWorkOn,
 			appliedDate,
 			invitationExpirationPeriod,
 			fullName,
 			callbackUrl
-		} = emailInvites;
+		} = input;
 
-		const organizationProjects: IOrganizationProject[] = await this.organizationProjectService.find({
-			where: {
-				id: In(projectIds || []),
-				organizationId
-			}
+		const organizationProjectsPromise = this.organizationProjectService.find({
+			where: { id: In(projectIds || []), organizationId, tenantId }
 		});
-		const organizationDepartments: IOrganizationDepartment[] = await this.organizationDepartmentService.find({
-			where: {
-				id: In(departmentIds || []),
-				organizationId
-			}
+		const organizationDepartmentsPromise = this.organizationDepartmentService.find({
+			where: { id: In(departmentIds || []), organizationId, tenantId }
 		});
-		const organizationContacts: IOrganizationContact[] = await this.organizationContactService.find({
-			where: {
-				id: In(organizationContactIds || []),
-				organizationId
-			}
+		const organizationContactsPromise = this.organizationContactService.find({
+			where: { id: In(organizationContactIds || []), organizationId, tenantId }
 		});
-		const organizationTeams: IOrganizationTeam[] = await this.organizationTeamService.find({
-			where: {
-				id: In(teamIds || []),
-				organizationId
-			}
+		const organizationTeamsPromise = this.organizationTeamService.find({
+			where: { id: In(teamIds || []), organizationId, tenantId }
 		});
 
-		/**
-		 * Invited by the user
-		 */
-		const invitedBy: IUser = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
-			relations: {
-				role: true
-			}
+		const promisesAll = await Promise.all([
+			organizationProjectsPromise,
+			organizationDepartmentsPromise,
+			organizationContactsPromise,
+			organizationTeamsPromise
+		]);
+		const [organizationProjects, organizationDepartments, organizationContacts, organizationTeams] = promisesAll;
+
+		// Invited User
+		const invitedById = RequestContext.currentUserId();
+		const invitedBy: IUser = await this.userService.findOneByIdString(invitedById, {
+			relations: { role: true }
 		});
-		/**
-		 * Invited organization
-		 */
+
+		// Invited Organization
 		const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
-		/**
-		 * Invited for role
-		 */
+
+		// Invited Role
 		let role: IRole;
+
 		try {
-			// Employee can invite other user for employee role only
-			role = await this.roleService.findOneByIdString(RequestContext.currentRoleId(), {
-				where: {
-					name: RolesEnum.EMPLOYEE
-				}
+			const currentRoleId = RequestContext.currentRoleId();
+
+			// Ensure the current role can only invite others with the 'EMPLOYEE' role
+			role = await this.roleService.findOneByIdString(currentRoleId, {
+				where: { name: RolesEnum.EMPLOYEE }
 			});
 		} catch (error) {
+			// If the current role is not an 'EMPLOYEE' role, fallback to specified 'roleId'
 			role = await this.roleService.findOneByIdString(roleId);
-			if (role.name === RolesEnum.SUPER_ADMIN) {
-				if (invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
-					throw new UnauthorizedException();
-				}
+
+			// Handle unauthorized access if the invitedBy user is not a 'SUPER_ADMIN'
+			if (role.name === RolesEnum.SUPER_ADMIN && invitedBy.role.name !== RolesEnum.SUPER_ADMIN) {
+				throw new UnauthorizedException();
 			}
 		}
 
-		let expireDate: any;
+		let expireDate: Date | null;
 		if (invitationExpirationPeriod === InvitationExpirationEnum.NEVER) {
 			expireDate = null;
 		} else {
-			if (invitationExpirationPeriod) {
-				const inviteExpiryPeriod = invitationExpirationPeriod;
-				expireDate = addDays(new Date(), inviteExpiryPeriod as number);
-			} else {
-				const inviteExpiryPeriod = organization.inviteExpiryPeriod || DEFAULT_INVITE_EXPIRY_PERIOD;
-				expireDate = addDays(new Date(), inviteExpiryPeriod as number);
-			}
+			const inviteExpiryPeriod = invitationExpirationPeriod || organization.inviteExpiryPeriod;
+			expireDate = addDays(new Date(), (inviteExpiryPeriod as number) || DEFAULT_INVITE_EXPIRY_PERIOD);
 		}
 
 		// already existed invites
 		const { items: existedInvites } = await this.findAll({
-			...(isNotEmpty(teamIds)
-				? {
-						relations: {
-							teams: true
-						}
-				  }
-				: {}),
+			...(isNotEmpty(teamIds) ? { relations: { teams: true } } : {}),
 			where: {
-				tenantId: RequestContext.currentTenantId(),
-				...(isNotEmpty(organizationId)
-					? {
-							organizationId
-					  }
-					: {}),
-				...(isNotEmpty(emailIds)
-					? {
-							email: In(emailIds)
-					  }
-					: {})
+				tenantId,
+				...(isNotEmpty(organizationId) ? { organizationId } : {}),
+				...(isNotEmpty(emailIds) ? { email: In(emailIds) } : {})
 			}
 		});
 
 		let ignoreInvites = 0;
 		const invites: Invite[] = [];
 		for await (const email of emailIds) {
+			let alreadyInTeamIds: string[] = [];
+			const code = generateRandomAlphaNumericCode(6);
+			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+
 			const organizationTeamEmployees = await this.typeOrmOrganizationTeamEmployeeRepository.find({
 				where: {
-					employee: {
-						user: {
-							email
-						}
-					},
+					employee: { user: { email } },
 					organizationTeamId: In(teamIds)
 				}
 			});
-			const alreadyInTeamIds = organizationTeamEmployees.map(
-				(organizationTeamEmployee) => organizationTeamEmployee.organizationTeamId
-			);
-
-			const code = generateRandomAlphaNumericCode(6);
-			const token: string = sign({ email, code }, environment.JWT_SECRET, {});
+			if (organizationTeamEmployees.length > 0) {
+				alreadyInTeamIds = organizationTeamEmployees.map(
+					(organizationTeamEmployee) => organizationTeamEmployee.organizationTeamId
+				);
+			}
 
 			const matchedInvites = existedInvites.filter(
 				(invite: IInvite) =>
 					invite.email === email &&
-					// Check is invitation is already having for team id from teamIds
-					findIntersection(
-						invite.teams.map((team) => team.id),
-						teamIds
-					).length > 0
+					getArrayIntersection(invite.teams?.map((team: IOrganizationTeam) => team.id) || [], teamIds)
+						.length > 0
 			);
+
 			if (isNotEmpty(matchedInvites)) {
 				const needsToInviteTeams = organizationTeams.filter(
-					(item: IOrganizationTeam) =>
-						!alreadyInTeamIds.includes(item.id) &&
-						matchedInvites.every((item) => item.status !== InviteStatusEnum.INVITED)
+					(team: IOrganizationTeam) =>
+						!alreadyInTeamIds.includes(team.id) &&
+						matchedInvites.every((invite) => invite.status !== InviteStatusEnum.INVITED)
 				);
 				if (isNotEmpty(needsToInviteTeams)) {
 					invites.push(
@@ -251,8 +216,8 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 							email,
 							roleId,
 							organizationId,
-							tenantId: RequestContext.currentTenantId(),
-							invitedById: RequestContext.currentUserId(),
+							invitedById,
+							tenantId,
 							status: InviteStatusEnum.INVITED,
 							expireDate,
 							projects: organizationProjects,
@@ -290,53 +255,96 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			}
 		}
 		const items = await this.typeOrmRepository.save(invites);
-		items.forEach((item) => {
-			const registerUrl = `${originUrl}/#/auth/accept-invite?email=${item.email}&token=${item.token}`;
-			if (emailInvites.inviteType === InvitationTypeEnum.USER) {
-				this.emailService.inviteUser({
+
+		items.forEach((item: IInvite) => {
+			let inviteLink: string = this.createAcceptInvitationUrl(originUrl, item.email, item.token);
+
+			if (input.inviteType === InvitationTypeEnum.TEAM && callbackUrl) {
+				// Convert query params object to string
+				const queryParamsString = this.createQueryParamsString({
 					email: item.email,
-					role: role.name,
-					organization: organization,
-					registerUrl,
-					originUrl,
-					languageCode,
-					invitedBy
+					code: item.code
 				});
-			} else if (
-				emailInvites.inviteType === InvitationTypeEnum.EMPLOYEE ||
-				emailInvites.inviteType === InvitationTypeEnum.CANDIDATE
-			) {
-				this.emailService.inviteEmployee({
-					email: item.email,
-					registerUrl,
-					organizationContacts,
-					departments: organizationDepartments,
-					originUrl,
-					organization: organization,
-					languageCode,
-					invitedBy
-				});
-			} else if (emailInvites.inviteType === InvitationTypeEnum.TEAM) {
-				let inviteLink: string;
-				if (callbackUrl) {
-					inviteLink = `${callbackUrl}?email=${encodeURIComponent(item.email)}&code=${item.code}`;
-				} else {
-					inviteLink = `${registerUrl}`;
-				}
-				this.emailService.inviteTeamMember({
-					email: item.email,
-					teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
-					languageCode,
-					invitedBy,
-					organization,
-					inviteCode: item.code,
-					inviteLink,
-					originUrl
-				});
+				inviteLink = [callbackUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
+			}
+
+			switch (input.inviteType) {
+				case InvitationTypeEnum.USER:
+					this.emailService.inviteUser({
+						email: item.email,
+						role: role.name,
+						organization: organization,
+						registerUrl: inviteLink,
+						originUrl,
+						languageCode,
+						invitedBy
+					});
+					break;
+
+				case InvitationTypeEnum.EMPLOYEE:
+				case InvitationTypeEnum.CANDIDATE:
+					this.emailService.inviteEmployee({
+						email: item.email,
+						registerUrl: inviteLink,
+						organizationContacts,
+						departments: organizationDepartments,
+						originUrl,
+						organization: organization,
+						languageCode,
+						invitedBy
+					});
+					break;
+
+				case InvitationTypeEnum.TEAM:
+					this.emailService.inviteTeamMember({
+						email: item.email,
+						teams: item.teams.map((team: IOrganizationTeam) => team.name).join(', '),
+						languageCode,
+						invitedBy,
+						organization,
+						inviteCode: item.code,
+						inviteLink,
+						originUrl
+					});
+					break;
+
+				default:
+					throw new Error(`Unknown invitation type: ${input.inviteType}`);
 			}
 		});
 
 		return { items, total: items.length, ignored: ignoreInvites };
+	}
+
+	/**
+	 * Generates the register URL for accepting invites.
+	 * @param origin - The base URL.
+	 * @param email - The email of the invitee.
+	 * @param token - The token for the invite.
+	 * @returns The full URL with query parameters.
+	 */
+	private createAcceptInvitationUrl(origin: string, email: string, token: string): string {
+		const acceptInviteUrl = `${origin}/#/auth/accept-invite`;
+		const queryParamsString = this.createQueryParamsString({ email, token });
+		return [acceptInviteUrl, queryParamsString].filter(Boolean).join('?'); // Combine current URL with updated query params
+	}
+
+	/**
+	 * Creates a query parameters string from an object of query parameters.
+	 * @param queryParams An object containing query parameters.
+	 * @returns A string representation of the query parameters.
+	 */
+	private createQueryParamsString(queryParams: { [key: string]: string | string[] | boolean }): string {
+		return Object.keys(queryParams)
+			.map((key) => {
+				const value = queryParams[key];
+				if (Array.isArray(value)) {
+					return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join('&');
+				} else {
+					return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+				}
+			})
+			.join('&');
 	}
 
 	async resendEmail(input: IInviteResendInput, languageCode: LanguagesEnum) {

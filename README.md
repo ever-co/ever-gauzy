@@ -12,16 +12,18 @@
 
 We released [Ever Teams](https://github.com/ever-co/ever-teams) platform for Work & Project Management.
 Please check <https://github.com/ever-co/ever-teams> and make it ⭐ on GitHub!
-It's built with a React / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/swg).
+It's built with a React (NextJs) / ReactNative (Expo) stack and connects to headless [Ever Gauzy Platform APIs](https://api.gauzy.co/swg).
 
 ## 🌟 What is it
 
 [Ever® Gauzy™][uri_gauzy] - **Open Business Management Platform** for Collaborative, On-Demand and Sharing Economies.
 
--   **Enterprise Resource Planning** (ERP) software.
--   **Customer Relationship Management** (CRM) software.
--   **Human Resource Management** (HRM) software with employee **Time and Activity Tracking** functionality.
--   **Work and Project Management** software.
+-   **Enterprise Resource Planning** (ERP)
+-   **Customer Relationship Management** (CRM)
+-   **Human Resource Management** (HRM)
+-   **Applicant Tracking System** (ATS)
+-   **Work and Project Management** (PM)
+-   **Employee Time-Tracking, Activity & Productivity Tracking**
 
 ![overview](https://docs.gauzy.co/overview.png)
 
@@ -45,7 +47,8 @@ A more detailed list of the features available in the platform:
 -   Dashboard (provides an overview of different metrics, such as company income/expenses, employee bonuses, etc.)
 -   Time Management / Time Tracking / Activity Tracking / Timesheets
 -   Employees Management (register of company employees/contractors, rates of employees, etc.)
--   Employee Onboarding / Candidates Interviews
+-   Employee Onboarding
+-   Applicant Tracking System (ATS) / Candidates Interviews
 -   Contacts Management (Clients / Customers / Leads / etc.)
 -   Schedules / Appointments / Events
 -   Project Management / Tasks
@@ -98,6 +101,10 @@ Read more [about Gauzy](https://github.com/ever-co/ever-gauzy/wiki/About-Gauzy) 
 ## 🔗 Links
 
 -   **<https://gauzy.co>** - check more information about the platform at the official website.
+-   **<https://app.gauzy.co>** - SaaS (Important: it's currently in Alpha version/testing mode, please use it cautiously).
+-   **<https://demo.gauzy.co>** - Online Demo (see more info below).
+-   **<https://gauzy.co/downloads>** - Download Platform & Apps (see also more info below about available downloads).
+-   **<https://docs.gauzy.co>** - Platform Documentation (WIP). See also our [Wiki](https://github.com/ever-co/ever-gauzy/wiki).
 -   **<https://ever.co>** - get more information about our company products.
 
 ## 📊 Activity
@@ -131,7 +138,7 @@ In addition, all downloads are also available from the following pages:
 
 Ever® Gauzy™ Platform SaaS is available at <https://app.gauzy.co>.
 
-Note: it's currently in Alpha version / in testing mode, please use it with caution!
+Note: it's currently in Alpha version/testing mode, please use it cautiously!
 
 ### Staging
 
@@ -169,10 +176,10 @@ More information about our Server & Desktop Apps:
 
 For Production, we recommend:
 
--   [PostgreSQL](https://www.postgresql.org)
--   [PM2](https://github.com/Unitech/pm2)
+-   [PostgreSQL](https://www.postgresql.org) or [MySQL](https://dev.mysql.com)
+-   [Kubernetes](https://kubernetes.io), [Docker](https://www.docker.com) or [PM2](https://github.com/Unitech/pm2)
 
-Note: thanks to TypeORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql, MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others, with minimal changes.
+Note: thanks to TypeORM / MikroORM, Gauzy will support lots of DBs: SQLite (default, for demos), PostgreSQL (development/production), MySql (development/production), MariaDb, CockroachDb, MS SQL, Oracle, MongoDb, and others (with minimal changes).
 
 #### See also README.md and CREDITS.md files in relevant folders for lists of libraries and software included in the Platform, information about licenses, and other details
 
@@ -185,7 +192,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 ### With Docker Compose
 
 -   Clone repo.
--   Make sure you have latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
+-   Make sure you have the latest Docker Compose [installed locally](https://docs.docker.com/compose/install). Important: you need a minimum [v2.20](https://docs.docker.com/compose/release-notes/#2200).
 -   Run `docker-compose -f docker-compose.demo.yml up`, if you want to run the platform in basic configuration (e.g. for Demo / explore functionality / quick run) using our prebuilt Docker images. Check `.env.demo.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose up`, if you want to run the platform in production configuration using our prebuilt Docker images. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
 -   Run `docker-compose -f docker-compose.build.yml up`, if you want to build everything (code and Docker images) locally. Check `.env.compose` file for different settings (optionally), e.g. DB type. _(Note: this is extremely long process because it builds whole platform locally. Other options above are much faster!)_
@@ -197,7 +204,7 @@ Please refer to our official [Platform Documentation](https://docs.gauzy.co) and
 
 Notes:
 
--   while demo `docker-compose.demo.yml` runs minimum amount of containers (API, Web UI and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
+-   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up` command. We already doing it using `include` in our main docker compose files.
 
 Together with Gauzy, Docker Compose (i.e. `docker-compose.yml` and `docker-compose.build.yml`, not Demo `docker-compose.demo.yml`) will run the following:
@@ -308,11 +315,11 @@ This software is available under the following licenses:
 ## ™️ Trademarks
 
 **Ever**® is a registered trademark of [Ever Co. LTD](https://ever.co).
-**Ever® Demand™**, **Ever® Gauzy™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
+**Ever® Demand™**, **Ever® Gauzy™**, **Ever® Teams™**, **Ever® Recu™**, **Ever® Clokr™** and **Ever® OpenSaaS™** are all trademarks of [Ever Co. LTD](https://ever.co).
 
 The trademarks may only be used with the written permission of Ever Co. LTD. and may not be used to promote or otherwise market competitive products or services.
 
-All other brand and product names are trademarks, registered trademarks or service marks of their respective holders.
+All other brand and product names are trademarks, registered trademarks, or service marks of their respective holders.
 
 ## 🍺 Contribute
 
@@ -343,14 +350,11 @@ You can also view a full list of our [contributors tracked by Github](https://gi
 
 #### Copyright © 2019-present, Ever Co. LTD. All rights reserved
 
-[![huntr](https://cdn.huntr.dev/huntr_security_badge_mono.svg)](https://huntr.dev)
 [![Circle CI](https://circleci.com/gh/ever-co/ever-gauzy.svg?style=svg)](https://circleci.com/gh/ever-co/ever-gauzy)
 [![codecov](https://codecov.io/gh/ever-co/ever-gauzy/branch/master/graph/badge.svg)](https://codecov.io/gh/ever-co/ever-gauzy)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8c46f9eb9df64aa9859dea4d572059ac)](https://www.codacy.com/gh/ever-co/ever-gauzy/dashboard?utm_source=github.com&utm_medium=referral&utm_content=ever-co/ever-gauzy&utm_campaign=Badge_Grade)
 [![DeepScan grade](https://deepscan.io/api/teams/3293/projects/16703/branches/363423/badge/grade.svg)](https://deepscan.io/dashboard#view=project&tid=3293&pid=16703&bid=363423)
 [![Known Vulnerabilities](https://snyk.io/test/github/ever-co/ever-gauzy/badge.svg)](https://snyk.io/test/github/ever-co/ever-gauzy)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/ever-co/ever-gauzy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/ever-co/ever-gauzy/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/ever-co/ever-gauzy.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/ever-co/ever-gauzy/context:javascript)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fever-co%2Fever-gauzy.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fever-co%2Fgauzy?ref=badge_shield)
 [![Crowdin](https://badges.crowdin.net/e/1d2b3405d65a56ec116d0984fd579cc9/localized.svg)](https://ever.crowdin.com/gauzy)
 

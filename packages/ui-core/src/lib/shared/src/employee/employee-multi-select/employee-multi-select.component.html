@@ -7,7 +7,7 @@
 		fullWidth
 		[disabled]="disabled"
 		[(selected)]="preSelected"
-		placeholder="{{ placeholder | translate }}"
+		[placeholder]="placeholder | translate"
 	>
 		<nb-option *ngFor="let employee of employees" [value]="employee.id">
 			<ngx-avatar

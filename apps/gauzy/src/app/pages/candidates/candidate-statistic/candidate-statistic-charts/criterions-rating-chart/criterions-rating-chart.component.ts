@@ -1,10 +1,10 @@
 import { Component, Input, OnDestroy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidate, ICandidateInterview, IEmployee, ICandidateFeedback } from '@gauzy/contracts';
 import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-criterions-rating-chart',
 	templateUrl: './criterions-rating-chart.component.html',
@@ -13,23 +13,25 @@ import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
 export class CriterionsRatingChartComponent implements OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
-	interviews = [];
 	currentEmployee: IEmployee[] = [];
 	disabledIds = [];
 	feedbacks: ICandidateFeedback[];
-	@Input() candidates: ICandidate[];
-	@Input() interviewList: ICandidateInterview[];
-	@Input() employeeList: IEmployee[];
+	@Input() candidates: ICandidate[] = [];
+	@Input() interviews: ICandidateInterview[] = [];
+	@Input() employees: IEmployee[] = [];
 	data: any;
 	options: any;
 	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
 	isResetSelect: boolean;
-	private _ngDestroy$ = new Subject<void>();
 
-	constructor(private themeService: NbThemeService, private candidateFeedbacksService: CandidateFeedbacksService) {}
+	constructor(
+		private readonly themeService: NbThemeService,
+		private readonly candidateFeedbacksService: CandidateFeedbacksService
+	) {}
 
 	async onMembersSelected(id: string) {
+		alert(id);
 		this.isResetSelect = false;
 		const ratings = [];
 		const res = await this.candidateFeedbacksService.getAll(['interviewer', 'criterionsRating'], {
@@ -94,7 +96,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	async onInterviewSelected(interview: ICandidateInterview) {
 		this.rating = [];
 		this.labels = [];
-		this.interviewList.forEach((interviewItem) =>
+		this.interviews.forEach((interviewItem) =>
 			interviewItem.id === interview.id ? (this.currentInterview = interviewItem) : null
 		);
 		this.isResetSelect = true;
@@ -117,8 +119,8 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 			if (this.currentInterview) {
 				for (const interviewer of this.currentInterview.interviewers) {
 					allIds.push(interviewer.employeeId);
-					if (this.employeeList) {
-						this.employeeList.forEach((item) => {
+					if (this.employees) {
+						this.employees.forEach((item) => {
 							if (interviewer.employeeId === item.id) {
 								interviewer.employeeName = item.user.name;
 								interviewer.employeeImageUrl = item.user.imageUrl;
@@ -135,7 +137,7 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 	private loadChart() {
 		this.themeService
 			.getJsTheme()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
 				this.data = {
 					labels: this.labels,
@@ -148,7 +150,6 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 						}
 					]
 				};
-
 				this.options = {
 					responsive: true,
 					maintainAspectRatio: false,
@@ -169,14 +170,13 @@ export class CriterionsRatingChartComponent implements OnDestroy {
 				};
 			});
 	}
+
 	loadColor(feedback: ICandidateFeedback) {
 		for (let i = 0; i < feedback.criterionsRating.length; i++) {
 			const color = i % 2 === 0 ? 'rgba(255, 206, 86, 0.2)' : 'rgba(255, 99, 132, 0.2)';
 			this.backgroundColor.push(color);
 		}
 	}
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+
+	ngOnDestroy() {}
 }

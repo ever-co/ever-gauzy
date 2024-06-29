@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
+import { CandidateInterviewService } from '@gauzy/ui-core/core';
+import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { FullCalendarComponent } from '@fullcalendar/angular';
 import { CalendarOptions, EventInput, DateSelectArg, EventHoveringArg } from '@fullcalendar/core';
@@ -12,7 +14,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { CandidateInterviewService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -85,10 +86,12 @@ export class CandidateCalendarInfoComponent implements OnInit {
 		const { id: organizationId } = this.organization;
 
 		const interviews = (
-			await this.candidateInterviewService.getAll(['interviewers'], {
-				tenantId,
-				organizationId
-			})
+			await firstValueFrom(
+				this.candidateInterviewService.getAll(['interviewers'], {
+					tenantId,
+					organizationId
+				})
+			)
 		).items;
 
 		this.calendarEvents = [];

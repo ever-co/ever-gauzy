@@ -9,12 +9,11 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 import { EmailHistoryService } from './email-history.service';
 import { CommandHandlers } from './commands/handler';
 import { EmailSendModule } from './../email-send/email-send.module';
+import { TypeOrmEmailHistoryRepository } from './repository/type-orm-email-history.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/email', module: EmailHistoryModule }
-		]),
+		RouterModule.register([{ path: '/email', module: EmailHistoryModule }]),
 		TypeOrmModule.forFeature([EmailHistory]),
 		MikroOrmModule.forFeature([EmailHistory]),
 		forwardRef(() => RolePermissionModule),
@@ -22,7 +21,7 @@ import { EmailSendModule } from './../email-send/email-send.module';
 		CqrsModule
 	],
 	controllers: [EmailHistoryController],
-	providers: [EmailHistoryService, ...CommandHandlers],
-	exports: [TypeOrmModule, MikroOrmModule, EmailHistoryService]
+	providers: [EmailHistoryService, TypeOrmEmailHistoryRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, EmailHistoryService, TypeOrmEmailHistoryRepository]
 })
-export class EmailHistoryModule { }
+export class EmailHistoryModule {}

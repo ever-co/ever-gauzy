@@ -91,7 +91,6 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	interviewerForm: UntypedFormGroup;
 	interview: any;
 	employees: IEmployee[] = [];
-	candidates: ICandidate[] = [];
 	selectedInterviewers: string[] = [];
 	criterionsId = null;
 	isTitleExist = false;
@@ -121,24 +120,9 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 			.pipe(
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.loadCandidates()),
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	async loadCandidates() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.candidates = (
-			await firstValueFrom(
-				this.candidatesService.getAll(['user'], {
-					organizationId,
-					tenantId
-				})
-			)
-		).items;
 	}
 
 	titleExist(value: boolean) {
@@ -180,6 +164,10 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		this.getEmployees(interviewForm.interviewers);
 	}
 
+	/**
+	 *
+	 * @param employeeIds
+	 */
 	async getEmployees(employeeIds: string[]) {
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
@@ -352,8 +340,22 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		}
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @returns
+	 */
 	async onCandidateSelected(id: string) {
-		const candidate = await this.candidatesService.getCandidateById(id, ['user']);
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+		const candidate = await this.candidatesService.getCandidateById(id, ['user'], {
+			organizationId,
+			tenantId
+		});
+
 		this.selectedCandidate = candidate;
 	}
 

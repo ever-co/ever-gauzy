@@ -1,3 +1,6 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
+import { IsOptional } from 'class-validator';
 import {
 	ICandidate,
 	ICandidateInterview,
@@ -15,10 +18,9 @@ import {
 	IContact,
 	ITag,
 	IUser,
-	IEmployee
+	IEmployee,
+	ID
 } from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import {
 	CandidateDocument,
 	CandidateEducation,
@@ -140,26 +142,30 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	contact?: IContact;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@RelationId((it: Candidate) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	contactId?: string;
+	contactId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => OrganizationPosition })
-	@MultiORMManyToOne(() => OrganizationPosition, { nullable: true })
+	@MultiORMManyToOne(() => OrganizationPosition, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true
+	})
 	@JoinColumn()
 	organizationPosition?: IOrganizationPosition;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@RelationId((it: Candidate) => it.organizationPosition)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationPositionId?: IOrganizationPosition['id'];
+	organizationPositionId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -188,7 +194,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@RelationId((it: Candidate) => it.source)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	sourceId?: ICandidateSource['id'];
+	sourceId?: ID;
 
 	/**
 	 * User
@@ -211,7 +217,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@RelationId((it: Candidate) => it.user)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	userId: IUser['id'];
+	userId: ID;
 
 	/**
 	 * Employee
@@ -231,43 +237,73 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@RelationId((it: Candidate) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateEducation entities.
+	 * Each candidate can have multiple educations associated with them.
+	 * When a candidate is deleted, the related education entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateEducation, (education) => education.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	educations?: ICandidateEducation[];
 
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateInterview entities.
+	 * Each candidate can have multiple interviews associated with them.
+	 * When a candidate is deleted, the related interview entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateInterview, (interview) => interview.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	interview?: ICandidateInterview[];
 
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateExperience entities.
+	 * Each candidate can have multiple experiences associated with them.
+	 * When a candidate is deleted, the related experience entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateExperience, (experience) => experience.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	experience?: ICandidateExperience[];
 
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateSkill entities.
+	 * Each candidate can have multiple skills associated with them.
+	 * When a candidate is deleted, the related skill entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateSkill, (skill) => skill.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	skills?: ICandidateSkill[];
 
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateDocument entities.
+	 * Each candidate can have multiple documents associated with them.
+	 * When a candidate is deleted, the related document entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateDocument, (document) => document.candidate, {
 		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	documents?: ICandidateDocument[];
 
+	/**
+	 * Represents a one-to-many relationship between the Candidate and CandidateFeedback entities.
+	 * Each candidate can have multiple feedbacks associated with them.
+	 * When a candidate is deleted, the related feedback entries are set to NULL.
+	 */
 	@MultiORMOneToMany(() => CandidateFeedback, (feedback) => feedback.candidate, {
 		onDelete: 'SET NULL'
 	})

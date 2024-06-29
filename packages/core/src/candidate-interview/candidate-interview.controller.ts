@@ -1,14 +1,4 @@
-import {
-	Controller,
-	HttpStatus,
-	Get,
-	Query,
-	Body,
-	Post,
-	UseGuards,
-	Param,
-	Put
-} from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Body, Post, UseGuards, Param, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { FindOptionsWhere, UpdateResult } from 'typeorm';
 import {
@@ -90,7 +80,7 @@ export class CandidateInterviewController extends CrudController<CandidateInterv
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<CandidateInterview>): Promise<IPagination<ICandidateInterview>> {
-		return this.candidateInterviewService.paginate(params);
+		return await this.candidateInterviewService.paginate(params);
 	}
 
 	/**

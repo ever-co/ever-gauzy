@@ -8,31 +8,40 @@ import { UserService } from './../../../user/user.service';
 import { RoleService } from './../../../role/role.service';
 
 @CommandHandler(CandidateHiredCommand)
-export class CandidateHiredHandler
-	implements ICommandHandler<CandidateHiredCommand> {
-
+export class CandidateHiredHandler implements ICommandHandler<CandidateHiredCommand> {
 	constructor(
 		private readonly candidateService: CandidateService,
 		private readonly employeeService: EmployeeService,
 		private readonly userService: UserService,
 		private readonly roleService: RoleService
-	) { }
+	) {}
 
-	public async execute(command: CandidateHiredCommand): Promise<ICandidate> {
-		const { id } = command;
+	/**
+	 * Executes the process of hiring a candidate.
+	 *
+	 * @param {CandidateHiredCommand} command - The command containing the candidate ID.
+	 * @returns {Promise<ICandidate>} - The updated candidate object.
+	 * @throws {ConflictException} - If the candidate is already hired.
+	 * @throws {BadRequestException} - If there is an error during the update process.
+	 */
+	public async execute({ id }: CandidateHiredCommand): Promise<ICandidate> {
+		// Fetch the candidate with the necessary relations
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
 			relations: {
 				user: true,
 				tags: true
 			}
 		});
+
+		// Check if the candidate is already hired
 		if (candidate.alreadyHired) {
-			throw new ConflictException('The candidate is already hired, you can not hired it.');
+			throw new ConflictException('The candidate is already hired, you cannot hire them again.');
 		}
+
 		try {
 			const hiredDate = new Date();
 
-			//1. Create employee for respective candidate
+			// Step 1: Create an employee for the respective candidate
 			const employee = await this.employeeService.create({
 				billRateValue: candidate.billRateValue,
 				billRateCurrency: candidate.billRateCurrency,
@@ -48,27 +57,27 @@ export class CandidateHiredHandler
 				startedWorkOn: hiredDate
 			});
 
-			//2. Migrate CANDIDATE role to EMPLOYEE role
-			const role: IRole = await this.roleService.findOneByWhereOptions({
-				name: RolesEnum.EMPLOYEE
-			});
+			// Step 2: Migrate CANDIDATE role to EMPLOYEE role
+			const role: IRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.EMPLOYEE });
 
 			await this.userService.create({
 				id: candidate.userId,
 				role
 			});
 
-			//3. Convert candidate to employee user
-			//4. Update hired candidate details
+			// Step 3 & 4: Convert candidate to employee user and update hired candidate details
 			return await this.candidateService.create({
 				id,
 				status: CandidateStatusEnum.HIRED,
 				hiredDate: hiredDate,
 				rejectDate: null,
-				employee
+				employee,
+				isActive: true,
+				isArchived: false
 			});
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Handle any errors that occur during the update process
+			throw new BadRequestException(error.message || error);
 		}
 	}
 }

@@ -10,6 +10,7 @@ import { EmailTemplateController } from './email-template.controller';
 import { QueryHandlers } from './queries/handlers';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmEmailTemplateRepository } from './repository/type-orm-email-template.repository';
 
 @Module({
 	imports: [
@@ -23,9 +24,10 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	providers: [
 		EmailTemplateService,
 		EmailTemplateReaderService,
+		TypeOrmEmailTemplateRepository,
 		...QueryHandlers,
 		...CommandHandlers
 	],
-	exports: [TypeOrmModule, MikroOrmModule, EmailTemplateService]
+	exports: [TypeOrmModule, MikroOrmModule, EmailTemplateService, TypeOrmEmailTemplateRepository]
 })
-export class EmailTemplateModule { }
+export class EmailTemplateModule {}

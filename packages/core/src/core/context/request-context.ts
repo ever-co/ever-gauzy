@@ -3,6 +3,8 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { ClsService } from 'nestjs-cls';
+import { v4 as uuidv4 } from 'uuid';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
 import { JsonWebTokenError, verify } from 'jsonwebtoken';
@@ -10,14 +12,32 @@ import { IUser, PermissionsEnum, LanguagesEnum, RolesEnum } from '@gauzy/contrac
 import { environment as env } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/common';
 import { SerializedRequestContext } from './types';
-import { ClsService } from 'nestjs-cls';
-import { v4 as uuidv4 } from 'uuid';
 
 export class RequestContext {
+	private static logging: boolean = true;
 	protected readonly _id: string;
 	protected readonly _res: Response;
 	private readonly _req: Request;
 	private readonly _languageCode: LanguagesEnum;
+	protected static clsService: ClsService;
+
+	/**
+	 * Gets the language code.
+	 *
+	 * @returns The language code.
+	 */
+	get languageCode(): LanguagesEnum {
+		return this._languageCode;
+	}
+
+	/**
+	 * Gets the id.
+	 *
+	 * @returns The id.
+	 */
+	get id(): string {
+		return this._id;
+	}
 
 	/**
 	 * Creates an instance of RequestContext.
@@ -37,36 +57,41 @@ export class RequestContext {
 	}) {
 		// Destructure options to extract individual properties.
 		const { req, res, id, languageCode } = options;
-
-		// If 'id' is not provided, generate a random ID.
-		this._id = id || uuidv4().toString();
-
-		console.log('RequestContext: setting context with Id:', this._id);
-
 		// Assign values to instance properties.
+		this._id = id || uuidv4().toString(); // If 'id' is not provided, generate a random ID.
 		this._req = req;
 		this._res = res;
-
 		this._languageCode = languageCode;
+
+		if (RequestContext.logging) console.log('RequestContext: setting context with Id:', this._id);
 	}
 
-	protected static clsService: ClsService;
-
+	/**
+	 * Sets the ClsService instance to be used by RequestContext.
+	 *
+	 * @param service - The ClsService instance to set.
+	 */
 	static setClsService(service: ClsService) {
 		RequestContext.clsService = service;
 	}
 
+	/**
+	 * Gets the current request context.
+	 *
+	 * @returns The current RequestContext instance.
+	 */
 	static currentRequestContext(): RequestContext {
-		console.log('RequestContext: getting context ...');
+		if (RequestContext?.logging) console.log('RequestContext: getting context ...');
 		const context = RequestContext?.clsService?.get(RequestContext.name);
-		console.log('RequestContext: got context with Id:', context?._id);
+		if (RequestContext?.logging) console.log('RequestContext: got context with Id:', context?._id);
 		return context;
 	}
 
 	/**
+	 * Deserializes a serialized request context object into a RequestContext instance.
 	 *
-	 * @param ctx
-	 * @returns
+	 * @param ctxObject - The serialized request context object.
+	 * @returns A new RequestContext instance.
 	 */
 	static deserialize(ctxObject: SerializedRequestContext): RequestContext {
 		return new RequestContext({
@@ -86,28 +111,12 @@ export class RequestContext {
 	}
 
 	/**
+	 * Gets the current request.
 	 *
+	 * @returns The current Request object or null if no context is available.
 	 */
-	get languageCode(): LanguagesEnum {
-		return this._languageCode;
-	}
-
-	get id(): string {
-		return this._id;
-	}
-
-	/**
-	 *
-	 * @returns
-	 */
-	static currentRequest(): Request {
-		const requestContext = RequestContext.currentRequestContext();
-
-		if (requestContext) {
-			return requestContext._req;
-		}
-
-		return null;
+	static currentRequest(): any {
+		return RequestContext.currentRequestContext()?._req || null;
 	}
 
 	/**
@@ -240,76 +249,78 @@ export class RequestContext {
 		return lang || LanguagesEnum.ENGLISH;
 	}
 
-	static hasPermissions(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
+	/**
+	 * Checks if the current request context has the specified permissions.
+	 *
+	 * @param permissions - An array of permissions to check.
+	 * @param throwError - Whether to throw an error if permissions are not found.
+	 * @returns True if the required permissions are found, otherwise false.
+	 */
+	static hasPermissions(permissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
-
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
-				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext._req as any);
-
+				const token = this.currentToken();
 				if (token) {
-					const { permissions } = verify(token, env.JWT_SECRET) as {
+					const jwtPayload = verify(token, env.JWT_SECRET) as {
 						id: string;
 						permissions: PermissionsEnum[];
 					};
-					if (permissions) {
-						const found = permissions.filter((value) => findPermissions.indexOf(value) >= 0);
-
-						if (found.length === findPermissions.length) {
-							return true;
-						}
-					} else {
-						return false;
-					}
+					return permissions.every((permission: PermissionsEnum) =>
+						(jwtPayload.permissions ?? []).includes(permission)
+					);
 				}
 			} catch (error) {
 				// Do nothing here, we throw below anyway if needed
 				console.log(error);
 			}
 		}
-
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
-
 		return false;
 	}
 
-	static hasAnyPermission(findPermissions: PermissionsEnum[], throwError?: boolean): boolean {
+	/**
+	 * Checks if the current request context has any of the specified permissions.
+	 *
+	 * @param permissions - An array of permissions to check.
+	 * @param throwError - Whether to throw an error if no permissions are found.
+	 * @returns True if any of the required permissions are found, otherwise false.
+	 */
+	static hasAnyPermission(permissions: PermissionsEnum[], throwError?: boolean): boolean {
 		const requestContext = RequestContext.currentRequestContext();
-
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
-				const token = ExtractJwt.fromAuthHeaderAsBearerToken()(requestContext._req as any);
-
+				const token = this.currentToken();
 				if (token) {
-					const { permissions } = verify(token, env.JWT_SECRET) as {
+					const jwtPayload = verify(token, env.JWT_SECRET) as {
 						id: string;
 						permissions: PermissionsEnum[];
 					};
-					const found = permissions.filter((value) => findPermissions.indexOf(value) >= 0);
-					if (found.length > 0) {
-						return true;
-					}
+					return (jwtPayload.permissions ?? []).some((permission) => permissions.includes(permission));
 				}
 			} catch (error) {
 				// Do nothing here, we throw below anyway if needed
 				console.log(error);
 			}
 		}
-
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
-
 		return false;
 	}
 
+	/**
+	 * Extracts the current JWT token from the request context.
+	 *
+	 * @param throwError - Whether to throw an error if no token is found.
+	 * @returns The extracted token if found, otherwise null.
+	 */
 	static currentToken(throwError?: boolean): any {
 		const requestContext = RequestContext.currentRequestContext();
-
 		if (requestContext) {
 			try {
 				// tslint:disable-next-line
@@ -319,11 +330,9 @@ export class RequestContext {
 				console.log(error);
 			}
 		}
-
 		if (throwError) {
 			throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
 		}
-
 		return null;
 	}
 
@@ -337,17 +346,22 @@ export class RequestContext {
 		return this.hasRoles([role], throwError);
 	}
 
+	/**
+	 * Checks if the current request context has any of the specified roles.
+	 *
+	 * @param roles - An array of roles to check.
+	 * @param throwError - Whether to throw an error if no roles are found.
+	 * @returns True if any of the required roles are found, otherwise false.
+	 */
 	static hasRoles(roles: RolesEnum[], throwError?: boolean): boolean {
 		const context = RequestContext.currentRequestContext();
 		if (context) {
 			try {
+				// tslint:disable-next-line
 				const token = this.currentToken();
 				if (token) {
-					const { role } = verify(token, env.JWT_SECRET) as {
-						id: string;
-						role: RolesEnum;
-					};
-					return role ? roles.includes(role) : false;
+					const { role } = verify(token, env.JWT_SECRET) as { id: string; role: RolesEnum };
+					return roles.includes(role ?? null);
 				}
 			} catch (error) {
 				if (error instanceof JsonWebTokenError) {

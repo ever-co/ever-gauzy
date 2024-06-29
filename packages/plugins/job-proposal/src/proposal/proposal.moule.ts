@@ -11,15 +11,15 @@ import { ProposalSeederService } from './proposal-seeder.service';
 import { TypeOrmProposalRepository } from './repository';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Proposal]),
-        MikroOrmModule.forFeature([Proposal]),
-        RolePermissionModule,
-        SeederModule,
-        CqrsModule
-    ],
-    controllers: [ProposalController],
-    providers: [ProposalService, ProposalSeederService, TypeOrmProposalRepository, ...CommandHandlers],
-    exports: [ProposalSeederService]
+	imports: [
+		TypeOrmModule.forFeature([Proposal]),
+		MikroOrmModule.forFeature([Proposal]),
+		RolePermissionModule,
+		SeederModule,
+		CqrsModule
+	],
+	controllers: [ProposalController],
+	providers: [ProposalService, ProposalSeederService, TypeOrmProposalRepository, ...CommandHandlers],
+	exports: [ProposalSeederService]
 })
-export class ProposalModule { }
+export class ProposalModule {}
