@@ -8,6 +8,22 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"angular",
+		"configuration",
+		"environment",
+		"settings",
+		"library"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -23,10 +39,10 @@
 	},
 	"scripts": {
 		"build": "rimraf dist && yarn run compile",
-		"build:prod": "node replaceEnvFiles.js && yarn build",
-		"compile": "tsc -p tsconfig.build.json"
+		"build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && yarn build",
+		"compile": "tsc -p tsconfig.build.json",
+		"clean": "rimraf dist"
 	},
-	"keywords": [],
 	"dependencies": {
 		"@nestjs/config": "^3.2.0",
 		"dotenv": "^16.0.3",
@@ -36,6 +52,7 @@
 		"@gauzy/common": "^0.1.0",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
+		"cross-env": "^7.0.3",
 		"typescript": "5.1.6"
 	}
 }
