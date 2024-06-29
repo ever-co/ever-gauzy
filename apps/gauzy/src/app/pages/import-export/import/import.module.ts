@@ -1,50 +1,47 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import {
-	NbCardModule,
-	NbButtonModule,
-	NbInputModule,
-	NbIconModule,
-	NbRadioModule,
-	NbToastrModule,
-	NbBadgeModule,
-	NbTooltipModule,
-	NbSpinnerModule
-} from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
+import {
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbInputModule,
+	NbRadioModule,
+	NbSpinnerModule,
+	NbToastrModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { ImportComponent } from './import.component';
 import { FileUploadModule } from 'ng2-file-upload';
-import { ThemeModule } from '../../../@theme/theme.module';
+import { ExportAllService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { FileUploaderModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
+import { ImportComponent } from './import.component';
 import { ImportRoutingModule } from './import-routing.module';
-import { ExportAllService } from '@gauzy/ui-sdk/core';
-import { FileUploaderModule } from '../../../@shared/file-uploader-input/file-uploader-input.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { SharedModule } from '../../../@shared/shared.module';
-import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
 
 @NgModule({
 	imports: [
-		ImportRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
+		FileUploadModule,
+		HttpClientModule,
+		NbBadgeModule,
 		NbButtonModule,
-		FileUploaderModule,
+		NbCardModule,
 		NbIconModule,
 		NbInputModule,
 		NbRadioModule,
-		FileUploadModule,
-		HttpClientModule,
+		NbSpinnerModule,
 		NbToastrModule.forRoot(),
-		I18nTranslateModule.forChild(),
-		NgxPermissionsModule.forChild(),
-		SharedModule,
-		NbBadgeModule,
 		NbTooltipModule,
-		GauzyButtonActionModule,
+		ImportRoutingModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
 		SharedModule,
-		NbSpinnerModule
+		FileUploaderModule,
+		GauzyButtonActionModule
 	],
 	declarations: [ImportComponent],
 	exports: [ImportComponent],

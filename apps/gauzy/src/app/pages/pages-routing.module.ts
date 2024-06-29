@@ -1,10 +1,10 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { PermissionsGuard, UserResolver } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard, UserResolver } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { PagesComponent } from './pages.component';
 import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
-import { DateRangePickerResolver } from '../@theme/components/header/selectors/date-range-picker';
 
 const routes: Routes = [
 	{

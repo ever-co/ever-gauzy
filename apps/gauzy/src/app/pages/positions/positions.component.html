@@ -13,40 +13,26 @@
 				[componentName]="viewComponentName"
 				[buttonTemplateVisible]="visibleButton"
 				[isDisable]="disabled"
-			>
-			</ngx-gauzy-button-action>
+			></ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
-				positions?.length
-			"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && positions?.length">
 			<div class="table-scroll-container">
 				<nb-card class="p-0" *ngFor="let position of positions">
 					<nb-card-body
 						class="custom-table"
 						[ngClass]="{
-							selected:
-								selected?.state &&
-								position === selected?.position
+							selected: selected?.state && position === selected?.position
 						}"
 						(click)="selectPosition(position)"
 					>
-						<ga-notes-with-tags [rowData]="position">
-						</ga-notes-with-tags>
+						<ga-notes-with-tags [rowData]="position"> </ga-notes-with-tags>
 					</nb-card-body>
 				</nb-card>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="
-				dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID &&
-				positions?.length
-			"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && positions?.length">
 			<ga-card-grid
 				[totalItems]="pagination?.totalItems"
 				[settings]="settingsSmartTable"
@@ -78,9 +64,7 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			(click)="
-				removePosition(selected.position.id, selected.position.name)
-			"
+			(click)="removePosition(selected.position.id, selected.position.name)"
 			nbButton
 			status="basic"
 			class="action"
@@ -93,12 +77,7 @@
 	</div>
 </ng-template>
 <ng-template #visibleButton>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		(click)="openDialog(addTemplate, false)"
-	>
+	<button nbButton status="success" size="small" (click)="openDialog(addTemplate, false)">
 		<nb-icon icon="plus-outline"> </nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
@@ -108,10 +87,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -119,16 +95,12 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
-					}}</label>
+					<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate }}</label>
 					<input
 						#addInput="ngModel"
 						nbInput
 						type="text"
-						[placeholder]="
-							'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
-						"
+						[placeholder]="'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate"
 						fullWidth
 						[ngModel]="isGridEdit ? selectPosition.level : ''"
 						required
@@ -147,13 +119,7 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12"></div>
-				<button
-					class="delete mr-3 ml-3"
-					(click)="ref.close(); disabled = true"
-					nbButton
-					status="basic"
-					outline
-				>
+				<button class="delete mr-3 ml-3" (click)="ref.close(); disabled = true" nbButton status="basic" outline>
 					{{ 'BUTTONS.CANCEL' | translate }}
 				</button>
 				<button
@@ -173,10 +139,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -186,16 +149,12 @@
 			</div>
 			<div class="row mb-3">
 				<div class="col-sm-12 d-flex flex-column">
-					<label class="label">{{
-						'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
-					}}</label>
+					<label class="label">{{ 'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate }}</label>
 					<input
 						#editInput="ngModel"
 						nbInput
 						type="text"
-						[placeholder]="
-							'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate
-						"
+						[placeholder]="'ORGANIZATIONS_PAGE.EDIT.POSITION_NAME' | translate"
 						fullWidth
 						[ngModel]="isGridEdit ? selectedPosition.name : ''"
 						required
@@ -224,11 +183,7 @@
 						{{ 'BUTTONS.CANCEL' | translate }}
 					</button>
 					<button
-						(click)="
-							editPosition(selected.position.id, editInput.value);
-							disabled = true;
-							ref.close()
-						"
+						(click)="editPosition(selected.position.id, editInput.value); disabled = true; ref.close()"
 						nbButton
 						status="success"
 						[disabled]="disabled"

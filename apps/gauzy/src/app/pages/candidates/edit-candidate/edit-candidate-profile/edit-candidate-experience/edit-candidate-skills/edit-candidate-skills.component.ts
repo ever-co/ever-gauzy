@@ -1,13 +1,13 @@
 import { OnInit, OnDestroy, Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum, Store } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { CandidateSkillsService, CandidateStore, ToastrService } from '@gauzy/ui-sdk/core';
+import { CandidateSkillsService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',

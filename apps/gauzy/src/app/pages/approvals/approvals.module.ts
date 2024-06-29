@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -13,27 +14,25 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
-import { ApprovalsComponent } from './approvals.component';
-import { SharedModule } from '../../@shared/shared.module';
-import { ApprovalsRoutingModule } from './approvals-routing.module';
-import { RequestApprovalService } from '@gauzy/ui-sdk/core';
-import { RequestApprovalMutationModule } from '../../@shared/approvals/approvals-mutation.module';
-import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { CommonModule } from '@angular/common';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	RequestApprovalMutationModule,
+	SharedModule
+} from '@gauzy/ui-core/shared';
+import { RequestApprovalService } from '@gauzy/ui-core/core';
+import { ApprovalsComponent } from './approvals.component';
+import { ApprovalsRoutingModule } from './approvals-routing.module';
+import { RequestApprovalActionComponent } from './table-components/request-approval-action/request-approval-action.component';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		SharedModule,
-		ThemeModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -52,7 +51,6 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		RequestApprovalMutationModule,
 		I18nTranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	],

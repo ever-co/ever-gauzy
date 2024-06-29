@@ -16,29 +16,29 @@ import {
 	ITag,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	InvoicesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { InvoiceEstimateTotalValueComponent, InvoicePaidComponent } from '../table-components';
+} from '@gauzy/ui-core/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
-	NotesWithTagsComponent,
-	TagsOnlyComponent
-} from '../../../@shared/table-components';
-import { InputFilterComponent, TagsColorFilterComponent } from '../../../@shared/table-filters';
-import { StatusBadgeComponent } from '../../../@shared/status-badge';
-import {
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../../@shared/pagination/pagination-filter-base.component';
+	InputFilterComponent,
+	InvoiceTotalValueComponent,
+	NotesWithTagsComponent,
+	PaginationFilterBaseComponent,
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
+import { InvoicePaidComponent } from '../table-components';
 import { InvoiceDownloadMutationComponent } from '../invoice-download/invoice-download-mutation.component';
-import { getAdjustDateRangeFutureAllowed } from '../../../@theme/components/header/selectors/date-range-picker';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -379,7 +379,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 					type: 'custom',
-					renderComponent: InvoiceEstimateTotalValueComponent,
+					renderComponent: InvoiceTotalValueComponent,
 					width: '12%',
 					filter: {
 						type: 'custom',
@@ -388,7 +388,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					filterFunction: (totalValue) => {
 						this.setFilter({ field: 'totalValue', search: totalValue });
 					},
-					componentInitFunction: (instance: InvoiceEstimateTotalValueComponent, cell: Cell) => {
+					componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					}

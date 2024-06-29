@@ -5,13 +5,14 @@ import { ISocialAccount, ISocialAccountBase } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud';
 import { SocialAccount } from './social-account.entity';
 import { MicroOrmSocialAccountRepository, TypeOrmSocialAccountRepository } from './repository';
-import { User } from '../../user';
+import { User, UserService } from '../../user';
 
 @Injectable()
 export class SocialAccountService extends TenantAwareCrudService<SocialAccount> {
 	constructor(
 		@InjectRepository(SocialAccount) readonly typeOrmSocialAccountRepository: TypeOrmSocialAccountRepository,
-		readonly mikroOrmSocialAccountRepository: MicroOrmSocialAccountRepository
+		readonly mikroOrmSocialAccountRepository: MicroOrmSocialAccountRepository,
+		private readonly userService: UserService
 	) {
 		super(typeOrmSocialAccountRepository, mikroOrmSocialAccountRepository);
 	}
@@ -35,6 +36,21 @@ export class SocialAccountService extends TenantAwareCrudService<SocialAccount> 
 	}
 
 	async findUserBySocialId(input: ISocialAccountBase): Promise<User> {
-		return (await this.findAccountByProvider(input)).user;
+		try {
+			const account = await this.findAccountByProvider(input);
+			const user = account?.user;
+			if (!user) {
+				throw new BadRequestException('The user with this accoubt details does not exists');
+			}
+			return user;
+		} catch (error) {
+			throw new BadRequestException('The user with this accoubt details does not exists');
+		}
+	}
+
+	async signupFindUserByEmail(email: string): Promise<boolean> {
+		const user = await this.userService.getUserByEmail(email);
+		if (!user) return false;
+		return true;
 	}
 }

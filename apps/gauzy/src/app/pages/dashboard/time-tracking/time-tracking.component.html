@@ -296,7 +296,7 @@
 			</ng-template>
 			<ng-template #noScreenshot>
 				<ng-container *ngIf="!timeSlotLoading" [ngSwitch]="selectedPeriod">
-					<div class="text-center p-3">
+					<div class="text-center">
 						<ng-template [ngSwitchCase]="RangePeriod.DAY">
 							{{ 'TIMESHEET.NO_SCREENSHOT_DAY' | translate }}
 						</ng-template>
@@ -627,7 +627,7 @@
 			</ng-template>
 			<ng-template #noMember>
 				<ng-container *ngIf="!memberLoading" [ngSwitch]="selectedPeriod">
-					<div class="text-center p-3">
+					<div class="text-center">
 						<ng-template [ngSwitchCase]="RangePeriod.DAY">
 							{{ 'TIMESHEET.NO_MEMBER_ACTIVITY_DAY' | translate }}
 						</ng-template>

@@ -7,27 +7,26 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-sdk/common';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
+	OrganizationEditStore,
 	OrganizationsService,
 	ToastrService,
 	UsersOrganizationsService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { OrganizationEditStore } from '@gauzy/ui-sdk/core';
-import { OrganizationsMutationComponent } from '../../@shared/organizations/organizations-mutation/organizations-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+} from '@gauzy/ui-core/core';
+import {
+	DeleteConfirmationComponent,
+	IPaginationBase,
+	OrganizationWithTagsComponent,
+	OrganizationsMutationComponent,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-core/shared';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { OrganizationWithTagsComponent } from '../../@shared/table-components/organization-with-tags/organization-with-tags.component';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -192,33 +191,39 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 			.subscribe();
 	}
 
+	/**
+	 * Opens a dialog to add a new organization and handles the result.
+	 */
 	async addOrganization() {
-		const result = await firstValueFrom(this.dialogService.open(OrganizationsMutationComponent).onClose);
-		if (result) {
-			try {
-				this.organizationsService
-					.create(result)
-					.then((organization: IOrganization) => {
-						if (organization) {
-							this._organizationEditStore.organizationAction = {
-								organization,
-								action: CrudActionEnum.CREATED
-							};
-							this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION', {
-								name: result.name
-							});
-						}
-					})
-					.catch((error) => {
-						this.errorHandler.handleError(error);
-					})
-					.finally(() => {
-						this._refresh$.next(true);
-						this.subject$.next(true);
-					});
-			} catch (error) {
-				this.errorHandler.handleError(error);
+		try {
+			// Opens the dialog for adding a new organization and returns the result.
+			const dialog = this.dialogService.open(OrganizationsMutationComponent);
+			const data = await firstValueFrom(dialog.onClose);
+
+			if (data) {
+				this.loading = true; // Indicate loading state
+
+				// Organization service to create a new organization
+				const organization = await this.organizationsService.create(data);
+
+				// Handles operations after successfully creating an organization
+				if (organization) {
+					this._organizationEditStore.organizationAction = {
+						organization,
+						action: CrudActionEnum.CREATED
+					};
+					this.toastrService.success('NOTES.ORGANIZATIONS.ADD_NEW_ORGANIZATION', { name: organization.name });
+				}
+
+				// Finalizes operations after adding an organization, such as updating subjects.
+				this._refresh$.next(true);
+				this.subject$.next(true);
 			}
+		} catch (error) {
+			// Handles errors occurred during the operation
+			this.errorHandler.handleError(error);
+		} finally {
+			this.loading = false; // Update loading state
 		}
 	}
 

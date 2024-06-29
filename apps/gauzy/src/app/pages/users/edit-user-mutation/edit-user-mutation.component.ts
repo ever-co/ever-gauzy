@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IOrganization, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
-import { UsersOrganizationsService } from '@gauzy/ui-sdk/core';
-import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/basic-info-form.component';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { UsersOrganizationsService } from '@gauzy/ui-core/core';
+import { BasicInfoFormComponent } from '@gauzy/ui-core/shared';
 
 @Component({
 	selector: 'ga-edit-user-mutation',
@@ -13,17 +13,12 @@ import { BasicInfoFormComponent } from '../../../@shared/user/forms/basic-info/b
 	styleUrls: ['./edit-user-mutation.component.scss']
 })
 export class EditUserMutationComponent extends TranslationBaseComponent implements OnInit {
-	@ViewChild('userBasicInfo')
-	userBasicInfo: BasicInfoFormComponent;
-	@Input()
-	userOrganization: IUserOrganization;
-	@Input()
-	organization: IOrganization;
+	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;
+	@Input() userOrganization: IUserOrganization;
+	@Input() organization: IOrganization;
 
-	@Output()
-	canceled = new EventEmitter();
-	@Output()
-	addOrEditUser = new EventEmitter();
+	@Output() canceled = new EventEmitter();
+	@Output() addOrEditUser = new EventEmitter();
 
 	form: UntypedFormGroup;
 	users: string[];

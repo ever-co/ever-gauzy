@@ -13,8 +13,26 @@ import {
 	ServerDataSource,
 	TasksStoreService,
 	TeamTasksStoreService
-} from '@gauzy/ui-sdk/core';
-import { HashNumberPipe } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import {
+	AddTaskDialogComponent,
+	ALL_PROJECT_SELECTED,
+	AssignedToComponent,
+	CreateByComponent,
+	CreatedAtComponent,
+	DateViewComponent,
+	DeleteConfirmationComponent,
+	EmployeesMergedTeamsComponent,
+	HashNumberPipe,
+	InputFilterComponent,
+	IPaginationBase,
+	NotesWithTagsComponent,
+	OrganizationTeamFilterComponent,
+	PaginationFilterBaseComponent,
+	ProjectComponent,
+	StatusViewComponent,
+	TaskStatusFilterComponent
+} from '@gauzy/ui-core/shared';
 import {
 	ComponentLayoutStyleEnum,
 	IOrganization,
@@ -24,31 +42,9 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from '../../../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
-import { AddTaskDialogComponent } from '../../../../@shared/tasks/add-task-dialog/add-task-dialog.component';
-import {
-	AssignedToComponent,
-	CreateByComponent,
-	CreatedAtComponent,
-	DateViewComponent,
-	EmployeesMergedTeamsComponent,
-	NotesWithTagsComponent,
-	ProjectComponent,
-	StatusViewComponent
-} from './../../../../@shared/table-components';
-import { ALL_PROJECT_SELECTED } from './../../../../@shared/project-select/project/default-project';
-import {
-	InputFilterComponent,
-	OrganizationTeamFilterComponent,
-	TaskStatusFilterComponent
-} from './../../../../@shared/table-filters';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

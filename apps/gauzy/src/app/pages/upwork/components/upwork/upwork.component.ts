@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NbMenuItem } from '@nebular/theme';
+import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
 import { tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { IOrganization } from '@gauzy/contracts';
+import { ID, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
-import { UpworkStoreService } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { UpworkStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,10 +16,10 @@ import { UpworkStoreService } from '@gauzy/ui-sdk/core';
 	templateUrl: './upwork.component.html'
 })
 export class UpworkComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	tabs: any[];
-	supportContextActions: NbMenuItem[];
-	integrationId: string;
-	organization: IOrganization;
+	public tabs: NbRouteTab[] = [];
+	public menus: NbMenuItem[] = [];
+	public integrationId: ID;
+	public organization: IOrganization;
 
 	constructor(
 		private readonly _router: Router,
@@ -38,7 +38,7 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 		this._activatedRoute.params
 			.pipe(
 				tap((params: Params) => (this.integrationId = params['id'])),
-				tap(() => this._loadActions())
+				tap(() => this._loadMenus())
 			)
 			.subscribe();
 		this._store.selectedOrganization$
@@ -51,17 +51,27 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 			.subscribe();
 	}
 
+	/**
+	 *
+	 */
 	private _getConfig() {
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const integrationId = this.integrationId;
 		this._upworkStore.getConfig({ integrationId, organizationId, tenantId }).pipe(untilDestroyed(this)).subscribe();
 	}
 
+	/**
+	 *
+	 * @param tabName
+	 * @returns
+	 */
 	getRoute(tabName: string) {
 		return `./${tabName}`;
 	}
 
+	/**
+	 *
+	 */
 	private _loadTabs() {
 		this.tabs = [
 			{
@@ -91,8 +101,11 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 		];
 	}
 
-	private _loadActions() {
-		this.supportContextActions = [
+	/**
+	 *
+	 */
+	private _loadMenus() {
+		this.menus = [
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
@@ -106,19 +119,20 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 		];
 	}
 
+	/**
+	 *
+	 */
 	private _applyTranslationOnTabsActions() {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => {
 					this._loadTabs();
-					this._loadActions();
+					this._loadMenus();
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
-
-	ngOnDestroy(): void {}
 
 	/**
 	 * Navigate to the "Integrations" page.
@@ -126,4 +140,6 @@ export class UpworkComponent extends TranslationBaseComponent implements OnInit,
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
 	}
+
+	ngOnDestroy(): void {}
 }

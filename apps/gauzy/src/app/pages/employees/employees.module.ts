@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
@@ -21,18 +22,38 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { InviteGuard, OrganizationsService } from '@gauzy/ui-sdk/core';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { EditEmployeeMembershipFormModule } from '../../@shared/employee/edit-employee-membership-form/edit-employee-membership-form.module';
-import { EmployeeEndWorkModule } from '../../@shared/employee/employee-end-work-popup/employee-end-work.module';
-import { EmployeeMutationModule } from '../../@shared/employee/employee-mutation/employee-mutation.module';
-import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
-import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { InviteMutationModule } from '../../@shared/invite/invite-mutation/invite-mutation.module';
-import { InviteTableModule } from '../../@shared/invite/invites/invites.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import {
+	CandidatesService,
+	InviteGuard,
+	OrganizationEmploymentTypesService,
+	OrganizationsService,
+	SkillsService
+} from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	EditEmployeeMembershipFormModule,
+	EmployeeEndWorkModule,
+	EmployeeLocationModule,
+	EmployeeMutationModule,
+	EmployeeRatesModule,
+	EmployeeStartWorkModule,
+	GauzyButtonActionModule,
+	ImageUploaderModule,
+	InviteMutationModule,
+	InviteTableModule,
+	LanguageSelectorModule,
+	PaginationV2Module,
+	RecurringExpenseBlockModule,
+	RecurringExpenseDeleteConfirmationModule,
+	RecurringExpenseMutationModule,
+	SharedModule,
+	SkillsInputModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	TimeZoneSelectorModule
+} from '@gauzy/ui-core/shared';
 import {
 	EditEmployeeContactComponent,
 	EditEmployeeEmploymentComponent,
@@ -56,21 +77,7 @@ import {
 	EmployeeWorkStatusComponent,
 	EmployeeTimeTrackingStatusComponent
 } from './table-components';
-import { SharedModule } from '../../@shared/shared.module';
-import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { SkillsInputModule } from '../../@shared/skills/skills-input/skills-input.module';
-import { EmployeeLocationModule } from '../../@shared/employee/employee-location/employee-location.module';
-import { EmployeeRatesModule } from '../../@shared/employee/employee-rates/employee-rates.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 import { EditEmployeeNetworksComponent } from './edit-employee/edit-employee-profile/edit-employee-networks/edit-employee-networks.component';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { LanguageSelectorModule } from '../../@shared/language/language-selector/language-selector.module';
-import { CandidatesService, OrganizationEmploymentTypesService, SkillsService } from '@gauzy/ui-sdk/core';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { TimeZoneSelectorModule } from '../../@shared/selectors';
 
 const COMPONENTS = [
 	EmployeesComponent,
@@ -96,52 +103,52 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		TableComponentsModule,
-		SharedModule,
-		EmployeesRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbAccordionModule,
-		NbButtonModule,
-		NbInputModule,
-		NbIconModule,
 		Angular2SmartTableModule,
+		CKEditorModule,
+		NbAccordionModule,
+		NbActionsModule,
+		NbBadgeModule,
+		NbButtonModule,
+		NbCardModule,
+		NbCheckboxModule,
+		NbDatepickerModule,
 		NbDialogModule.forChild(),
-		EmployeeMutationModule,
-		EmployeeEndWorkModule,
+		NbIconModule,
+		NbInputModule,
+		NbRouteTabsetModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		NbTabsetModule,
+		NbToggleModule,
 		NbTooltipModule,
 		NgSelectModule,
-		NbSelectModule,
+		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
+		EmployeesRoutingModule,
+		SharedModule,
+		TableComponentsModule,
+		EmployeeMutationModule,
+		EmployeeEndWorkModule,
 		RecurringExpenseMutationModule,
 		ImageUploaderModule,
-		NbBadgeModule,
-		NbRouteTabsetModule,
-		NbCheckboxModule,
-		I18nTranslateModule.forChild(),
-		NbSpinnerModule,
 		InviteMutationModule,
 		InviteTableModule,
 		RecurringExpenseDeleteConfirmationModule,
-		NbActionsModule,
 		EditEmployeeMembershipFormModule,
-		NbDatepickerModule,
 		RecurringExpenseBlockModule,
 		TagsColorInputModule,
 		SkillsInputModule,
 		EmployeeLocationModule,
 		EmployeeRatesModule,
-		CKEditorModule,
-		HeaderTitleModule,
+		EmployeeStartWorkModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,
-		NbTabsetModule,
-		NbToggleModule,
 		PaginationV2Module,
 		CardGridModule,
-		TimeZoneSelectorModule,
-		DirectivesModule
+		TimeZoneSelectorModule
 	],
 	declarations: [...COMPONENTS],
 	providers: [OrganizationsService, InviteGuard, CandidatesService, OrganizationEmploymentTypesService, SkillsService]

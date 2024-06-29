@@ -3,12 +3,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { PermissionsEnum, ICandidate, ICandidateInterview } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
-import { Store } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { takeUntil } from 'rxjs/operators';
-import { CandidateInterviewService, CandidatesService } from '@gauzy/ui-sdk/core';
-import { CandidateInterviewInfoComponent } from '../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { CandidateInterviewService, CandidatesService } from '@gauzy/ui-core/core';
 import { NbDialogService } from '@nebular/theme';
+import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
 
 @Component({
 	selector: 'ga-edit-candidate',
@@ -49,21 +49,24 @@ export class EditCandidateComponent extends TranslationBaseComponent implements 
 			this.candidateName = checkUsername ? checkUsername : 'Candidate';
 		});
 	}
+
 	private async loadInterview() {
-		const interviews = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{ candidateId: this.selectedCandidate.id }
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
+				candidateId: this.selectedCandidate.id
+			})
 		);
 
 		if (interviews) {
 			this.interviewList = interviews.items;
 		}
 	}
+
 	async interviewInfo() {
 		if (this.interviewList.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.interviewList,
+					interviews: this.interviewList,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}

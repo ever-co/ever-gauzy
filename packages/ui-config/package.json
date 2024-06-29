@@ -28,9 +28,9 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"lib:build": "ng build @gauzy/ui-config --configuration development",
-		"lib:build:prod": "yarn ts-node scripts/replace-env-files.ts && ng build @gauzy/ui-config --configuration production",
-		"lib:watch": "ng build @gauzy/ui-config --watch --configuration development",
+		"lib:build": "ng build ui-config --configuration development",
+		"lib:build:prod": "yarn ts-node scripts/replace-env-files.ts && ng build ui-config --configuration production",
+		"lib:watch": "ng build ui-config --watch --configuration development",
 		"clean": "rimraf dist"
 	},
 	"peerDependencies": {
@@ -41,10 +41,8 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
-		"@types/node": "^17.0.33",
-		"rimraf": "^3.0.2",
-		"typescript": "5.1.6",
-		"ng-packagr": "16.2.3"
+		"@types/node": "^20.14.9",
+		"rimraf": "^3.0.2"
 	},
 	"repository": {
 		"type": "git",

@@ -19,34 +19,30 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-sdk/common';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ExpensesService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { ReplacePipe } from '@gauzy/ui-sdk/shared';
-import { ExpensesMutationComponent } from '../../@shared/expenses/expenses-mutation/expenses-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+} from '@gauzy/ui-core/core';
 import {
+	ALL_EMPLOYEES_SELECTED,
 	DateViewComponent,
+	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
-	IncomeExpenseAmountComponent
-} from '../../@shared/table-components';
-import {
 	ExpenseCategoryFilterComponent,
-	InputFilterComponent,
-	VendorFilterComponent
-} from '../../@shared/table-filters';
-import {
+	ExpensesMutationComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { ALL_EMPLOYEES_SELECTED } from '../../@theme/components/header/selectors/employee';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+	IncomeExpenseAmountComponent,
+	InputFilterComponent,
+	PaginationFilterBaseComponent,
+	ReplacePipe,
+	StatusBadgeComponent,
+	VendorFilterComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

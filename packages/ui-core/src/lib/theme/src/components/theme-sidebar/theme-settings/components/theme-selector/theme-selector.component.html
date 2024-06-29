@@ -1,0 +1,23 @@
+<ng-container>
+	<ng-template [ngTemplateOutlet]="isClassic ? classic : card"></ng-template>
+</ng-container>
+
+<ng-template #classic>
+	<div class="theme-container">
+		{{ 'SETTINGS_MENU.THEMES' | translate }}
+		<nb-select
+			[(selected)]="currentTheme"
+			placeholder="{{ themes[0] | translate }}"
+			(selectedChange)="toggleTheme()"
+			status="basic"
+			size="small"
+			outline
+		>
+			<nb-option *ngFor="let theme of themes" [value]="theme.value"> {{ theme.name | translate }}</nb-option>
+		</nb-select>
+	</div>
+</ng-template>
+
+<ng-template #card>
+	<gauzy-theme-selector-image></gauzy-theme-selector-image>
+</ng-template>

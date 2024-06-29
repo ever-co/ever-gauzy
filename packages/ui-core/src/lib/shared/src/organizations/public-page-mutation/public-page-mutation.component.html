@@ -1,0 +1,505 @@
+<nb-card class="main" xmlns="http://www.w3.org/1999/html">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</span>
+		<h5 class="title">
+			{{ 'POP_UPS.EDIT_PAGE' | translate }}
+		</h5>
+	</nb-card-header>
+	<nb-card-body class="body">
+		<form [formGroup]="form" *ngIf="form">
+			<nb-tabset class="tab_sections">
+				<nb-tab tabTitle="{{ 'POP_UPS.MAIN' | translate }}" tabIcon="person-outline" responsive>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label for="addCompanyName">{{ 'POP_UPS.COMPANY_NAME' | translate }}</label>
+								<input
+									id="addCompanyName"
+									nbInput
+									type="text"
+									fullWidth
+									placeholder="{{ 'POP_UPS.COMPANY_NAME' | translate }}"
+									formControlName="name"
+									[ngClass]="{
+										'status-danger': name?.invalid && (name.dirty || name.touched),
+										'status-success': name?.valid && (name.dirty || name.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="companySize">{{ 'POP_UPS.COMPANY_SIZE' | translate }}</label>
+								<input
+									id="companySize"
+									nbInput
+									type="number"
+									[min]="0"
+									fullWidth
+									placeholder="{{ 'POP_UPS.SIZE' | translate }}"
+									formControlName="totalEmployees"
+									[ngClass]="{
+										'status-danger':
+											totalEmployees?.invalid && (totalEmployees.dirty || totalEmployees.touched),
+										'status-success':
+											totalEmployees?.valid && (totalEmployees.dirty || totalEmployees.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+						<div class="col-sm-3">
+							<div class="form-group">
+								<label for="yearFounded">{{ 'POP_UPS.YEAR_FOUNDED' | translate }}</label>
+								<input
+									id="yearFounded"
+									nbInput
+									type="text"
+									fullWidth
+									placeholder="{{ 'POP_UPS.YEAR_FOUNDED' | translate }}"
+									formControlName="founded"
+									[ngClass]="{
+										'status-danger': founded?.invalid && (founded.dirty || founded.touched),
+										'status-success': founded?.valid && (founded.dirty || founded.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="Banner">{{ 'POP_UPS.BANNER' | translate }}</label>
+								<nb-icon
+									class="info-btn"
+									status="info"
+									nbTooltip="{{ 'POP_UPS.BANNER' | translate }}"
+									icon="info-outline"
+								></nb-icon>
+								<input
+									id="Banner"
+									nbInput
+									type="text"
+									fullWidth
+									placeholder="{{ 'POP_UPS.BANNER' | translate }}"
+									formControlName="banner"
+									class="banner"
+									[ngClass]="{
+										'status-danger': banner?.invalid && (banner.dirty || banner.touched),
+										'status-success': banner?.valid && (banner.dirty || banner.touched)
+									}"
+									autocomplete="off"
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="minimumProjectSize" class="label"
+									>{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }} {{ organization.currency }}</label
+								>
+								<nb-select
+									class="d-block"
+									fullWidth
+									placeholder="{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }}"
+									formControlName="minimumProjectSize"
+									id="minimumProjectSize"
+								>
+									<nb-option
+										*ngFor="let minimumProjectSize of minimumProjectSizes"
+										value="{{ minimumProjectSize }}"
+										>{{ organization.currency }}
+										{{ minimumProjectSize }}
+									</nb-option>
+								</nb-select>
+							</div>
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="addClientFocus">{{ 'POP_UPS.CLIENT_FOCUS' | translate }}</label>
+								<ng-select
+									[items]="client_focus"
+									[multiple]="true"
+									[(ngModel)]="selectedClientFocus"
+									[closeOnSelect]="true"
+									id="addClientFocus"
+									(change)="selectedClientFocusHandler($event)"
+									[ngModelOptions]="{ standalone: true }"
+									placeholder=""
+									appendTo="body"
+								>
+									<ng-template ng-label-tmp let-item="item" let-clear="clear">
+										<span class="ng-value-label">
+											<nb-badge
+												style="position: static !important"
+												width="20px"
+												height="20px"
+												text="{{ item }}"
+											></nb-badge>
+										</span>
+										<span class="ng-value-icon right" (click)="clear(item)" aria-hidden="true"
+											>×</span
+										>
+									</ng-template>
+								</ng-select>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="{{ 'POP_UPS.DESCRIPTION' | translate }}" tabIcon="alert-circle-outline" responsive>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<label for="shortDescription">{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}</label>
+								<textarea
+									id="shortDescription"
+									nbInput
+									fullWidth
+									rows="3"
+									placeholder="{{ 'POP_UPS.SHORT_DESCRIPTION' | translate }}"
+									formControlName="short_description"
+									class="short_description"
+									[ngClass]="{
+										'status-danger':
+											short_description?.invalid &&
+											(short_description.dirty || short_description.touched),
+										'status-success':
+											short_description?.valid &&
+											(short_description.dirty || short_description.touched)
+									}"
+								>
+								</textarea>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="form-group">
+								<p class="label">
+									{{ 'POP_UPS.OVERVIEW' | translate }}
+								</p>
+								<div class="ck-editor">
+									<ckeditor
+										formControlName="overview"
+										class="overview"
+										[config]="ckConfig"
+										[ngClass]="{
+											'status-danger': overview?.invalid && (overview.dirty || overview.touched),
+											'status-success': overview?.valid && (overview.dirty || overview.touched)
+										}"
+									></ckeditor>
+								</div>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="{{ 'POP_UPS.AWARDS' | translate }}" tabIcon="award-outline" responsive>
+					<div class="row">
+						<div class="col">
+							<div class="row" *ngIf="awardExist">
+								<div class="col">
+									<nb-tag-list>
+										<nb-tag
+											*ngFor="let award of awards"
+											(remove)="removeAward(award)"
+											[text]="award.name + ' (' + award.year + ')'"
+											removable
+										></nb-tag>
+									</nb-tag-list>
+								</div>
+							</div>
+							<div *ngIf="!showAddAward" (click)="showAddAward = !showAddAward" class="button-add-award">
+								<button nbButton status="success" outline size="small">
+									<i class="fas fa-plus"></i>
+								</button>
+								<span class="heading_title">{{ 'POP_UPS.AWARDS' | translate }}</span>
+							</div>
+							<div class="row mt-3 show-add-award" *ngIf="showAddAward">
+								<div class="col-sm-4 d-flex flex-column justify-content-end">
+									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
+									<input
+										#addInputName
+										nbInput
+										class="input_name"
+										type="text"
+										placeholder="{{ 'POP_UPS.NAME' | translate }}"
+										fullWidth
+									/>
+								</div>
+								<div class="col d-flex flex-column justify-content-end">
+									<label class="label">{{ 'POP_UPS.YEAR' | translate }}</label>
+									<input
+										#addInputYear
+										nbInput
+										class="input_year"
+										type="number"
+										[min]="0"
+										placeholder="{{ 'POP_UPS.YEAR' | translate }}"
+										fullWidth
+									/>
+								</div>
+
+								<span class="col d-flex align-items-end">
+									<button
+										(click)="addAward(addInputName.value, addInputYear.value)"
+										nbButton
+										status="success"
+										size="small"
+										class="mr-3"
+									>
+										{{ 'BUTTONS.SAVE' | translate }}</button
+									><button
+										(click)="showAddAward = !showAddAward"
+										nbButton
+										status="basic"
+										size="small"
+										outline
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+								</span>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="{{ 'POP_UPS.SKILLS' | translate }}" tabIcon="briefcase-outline" responsive>
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="form-group">
+								<ngx-skills-input
+									[form]="form"
+									[selectedSkills]="organization.skills"
+									(selectedSkillsEvent)="selectedSkillsHandler($event)"
+								>
+								</ngx-skills-input>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="tab_min_height"></div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="{{ 'POP_UPS.LANGUAGES' | translate }}" tabIcon="globe-outline" responsive>
+					<div class="row">
+						<div class="col">
+							<div class="row" *ngIf="languageExist">
+								<div class="col">
+									<nb-tag-list>
+										<nb-tag
+											*ngFor="let lang of organization_languages"
+											(remove)="removeLanguage(lang)"
+											[text]="lang.name + ' (' + lang.level + ')'"
+											removable
+										></nb-tag>
+									</nb-tag-list>
+								</div>
+							</div>
+							<div
+								*ngIf="!showAddLanguage"
+								(click)="showAddLanguage = !showAddLanguage"
+								class="button-add-language"
+							>
+								<button nbButton status="success" outline size="small">
+									<i class="fas fa-plus"></i>
+								</button>
+								<span class="heading_title"> {{ 'POP_UPS.ADD_LANGUAGE' | translate }}</span>
+							</div>
+							<div class="row mt-3 show-add-language" *ngIf="showAddLanguage">
+								<div class="col d-flex flex-column justify-content-end">
+									<label class="label">{{ 'POP_UPS.NAME' | translate }}</label>
+									<ngx-language-selector
+										[clearable]="true"
+										[addTag]="true"
+										[template]="'ng-select'"
+										selectBy="object"
+										(selectedLanguageEvent)="selectedLanguageHandler($event)"
+									></ngx-language-selector>
+								</div>
+								<div class="col d-flex flex-column justify-content-end">
+									<label class="label">{{ 'POP_UPS.LEVEL' | translate }}</label>
+									<nb-select placeholder="Select Showcase" [(selected)]="selectedLanguageLevel">
+										<nb-option value="conversational">{{
+											'LANGUAGE_LEVELS.CONVERSATIONAL' | translate
+										}}</nb-option>
+										<nb-option value="native">{{ 'LANGUAGE_LEVELS.NATIVE' | translate }}</nb-option>
+										<nb-option value="fluent">{{ 'LANGUAGE_LEVELS.FLUENT' | translate }}</nb-option>
+									</nb-select>
+								</div>
+								<span class="col d-flex align-items-end">
+									<button
+										(click)="
+											addLanguage(
+												selectedLanguage,
+												selectedLanguageLevel,
+												organization,
+												selectedLanguage.name
+											)
+										"
+										nbButton
+										status="success"
+										size="small"
+										class="mr-3"
+									>
+										{{ 'BUTTONS.SAVE' | translate }}
+									</button>
+									<button
+										(click)="showAddLanguage = !showAddLanguage"
+										nbButton
+										status="basic"
+										outline
+										size="small"
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+								</span>
+							</div>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col">
+							<div class="tab_min_height"></div>
+						</div>
+					</div>
+				</nb-tab>
+				<nb-tab tabTitle="{{ 'POP_UPS.PRIVACY' | translate }}" tabIcon="shield-outline" responsive>
+					<div class="row">
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showIncome"
+									[(checked)]="organization.show_income"
+									(change)="changeShowAction('show_income')"
+								>
+									<label class="check" for="showIncome">{{
+										'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showProfits"
+									[(checked)]="organization.show_profits"
+									(change)="changeShowAction('show_profits')"
+									><label class="check" for="showProfits">{{ 'POP_UPS.PROFITS' | translate }}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showBusinessPaid"
+									[(checked)]="organization.show_bonuses_paid"
+									(change)="changeShowAction('show_bonuses_paid')"
+									><label class="check" for="showBusinessPaid">{{
+										'POP_UPS.BONUSES_PAID' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showTotalHours"
+									[(checked)]="organization.show_total_hours"
+									(change)="changeShowAction('show_total_hours')"
+									><label class="check" for="showTotalHours">{{
+										'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showMinimumProjectSize"
+									[(checked)]="organization.show_minimum_project_size"
+									(change)="changeShowAction('show_minimum_project_size')"
+									><label class="check" for="showMinimumProjectSize">{{
+										'POP_UPS.MINIMUM_PROJECT_SIZE' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showProjectsCount"
+									[(checked)]="organization.show_projects_count"
+									(change)="changeShowAction('show_projects_count')"
+									><label class="check" for="showProjectsCount">{{
+										'POP_UPS.PROJECTS_COUNT' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showClientsCount"
+									[(checked)]="organization.show_clients_count"
+									(change)="changeShowAction('show_clients_count')"
+									><label class="check" for="showClientsCount">{{
+										'POP_UPS.CLIENTS_COUNT' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="show_clients"
+									[(checked)]="organization.show_clients"
+									(change)="changeShowAction('show_clients')"
+									><label class="check" for="show_clients">{{
+										'POP_UPS.SHOW_CLIENTS' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+
+						<div class="col-sm-6">
+							<div class="form-group extra_padding">
+								<nb-toggle
+									class="nb_toggle"
+									id="showEmployeesCount"
+									[(checked)]="organization.show_employees_count"
+									(change)="changeShowAction('show_employees_count')"
+									><label class="check" for="showEmployeesCount">{{
+										'POP_UPS.EMPLOYEES_COUNT' | translate
+									}}</label>
+								</nb-toggle>
+							</div>
+						</div>
+					</div>
+				</nb-tab>
+			</nb-tabset>
+		</form>
+	</nb-card-body>
+	<nb-card-footer>
+		<button (click)="editPublicPage()" status="success" size="small" nbButton>
+			{{ 'BUTTONS.UPDATE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

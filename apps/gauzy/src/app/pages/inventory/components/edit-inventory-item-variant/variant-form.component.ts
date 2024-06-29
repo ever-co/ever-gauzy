@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { BillingInvoicingPolicyEnum, IProductVariant, IOrganization, IImageAsset } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -8,15 +8,15 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Location } from '@angular/common';
 import { NbDialogService } from '@nebular/theme';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import {
 	InventoryStore,
 	ProductVariantPriceService,
 	ProductVariantService,
 	ProductVariantSettingService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 export interface IOptionCreateInput {
 	name: string;

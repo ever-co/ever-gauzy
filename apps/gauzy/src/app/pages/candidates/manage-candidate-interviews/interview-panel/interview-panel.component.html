@@ -1,7 +1,7 @@
 <nb-card-body class="card">
 	<div class="card-header">
 		<div class="d-flex flex-column">
-			<div class="d-flex flex-column align-items-end gauzy-action">
+			<div class="d-flex flex-column align-items-end gauzy-action mt-2">
 				<ngx-gauzy-button-action
 					[buttonTemplate]="actions"
 					[buttonTemplateVisible]="visible"
@@ -10,49 +10,37 @@
 				></ngx-gauzy-button-action>
 			</div>
 			<div class="header">
-				<ga-employee-multi-select
-					*ngIf="allInterviews?.length > 0"
-					class="select"
-					[multiple]="true"
-					[label]="false"
-					[allEmployees]="employeeList"
-					(selectedChange)="onEmployeeSelected($event)"
-					[reset]="isResetSelect"
-				>
-				</ga-employee-multi-select>
-				<div class="btn" *ngIf="allInterviews?.length > 0">
-					<nb-checkbox
-						(checkedChange)="changePast($event)"
-						status="basic"
-						[checked]="onlyPast"
-						>{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
+				<ng-container *ngIf="allInterviews?.length > 0">
+					<ga-employee-multi-select
+						class="select"
+						[multiple]="true"
+						[label]="false"
+						[allEmployees]="employeeList"
+						(selectedChange)="onEmployeeSelected($event)"
+						[reset]="isResetSelect"
+					></ga-employee-multi-select>
+				</ng-container>
+				<div class="btn">
+					<nb-checkbox (checkedChange)="changePast($event)" status="basic" [checked]="onlyPast">
+						{{ 'FORM.CHECKBOXES.ONLY_PAST' | translate }}
 					</nb-checkbox>
-					<nb-checkbox
-						(checkedChange)="changeFuture($event)"
-						status="basic"
-						[checked]="onlyFuture"
-						>{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
+					<nb-checkbox (checkedChange)="changeFuture($event)" status="basic" [checked]="onlyFuture">
+						{{ 'FORM.CHECKBOXES.ONLY_FUTURE' | translate }}
 					</nb-checkbox>
-					<nb-checkbox
-						(checkedChange)="changeIncludeArchived($event)"
-						status="basic"
-						>{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+					<nb-checkbox (checkedChange)="changeIncludeArchived($event)" status="basic">
+						{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
 					</nb-checkbox>
 				</div>
 			</div>
 		</div>
 	</div>
-
 	<div
 		[nbSpinner]="loading"
 		nbSpinnerSize="giant"
 		nbSpinnerStatus="primary"
 		class="card-body d-flex flex-column justify-content-between interview-panel"
 	>
-		<ng-template
-			[ngIf]="dataLayoutStyle === 'TABLE'"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === 'TABLE'" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container custom-table">
 				<angular2-smart-table
 					class="interviews-table"
@@ -61,14 +49,11 @@
 					[source]="sourceSmartTable"
 					(userRowSelect)="selectInterview($event)"
 					#interviewsTable
-				>
-				</angular2-smart-table>
+				></angular2-smart-table>
 			</div>
 			<div class="pagination-container">
 				<ng-container *ngIf="smartTableSource">
-					<ngx-pagination
-						[source]="smartTableSource"
-					></ngx-pagination>
+					<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -87,28 +72,14 @@
 </nb-card-body>
 
 <ng-template #visible>
-	<button
-		nbButton
-		status="primary"
-		size="small"
-		class="action"
-		(click)="addInterview()"
-	>
-		<nb-icon icon="plus-outline"></nb-icon
-		>{{
-			'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW' | translate
-		}}
+	<button nbButton status="primary" size="small" class="action" (click)="addInterview()">
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ADD_INTERVIEW' | translate }}
 	</button>
 </ng-template>
 <ng-template #actions>
 	<div class="btn-group actions">
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action secondary"
-			(click)="addFeedback(selectedInterview)"
-		>
+		<button nbButton status="basic" size="small" class="action secondary" (click)="addFeedback(selectedInterview)">
 			<nb-icon class="mr-1" icon="message-square-outline"></nb-icon>
 			{{ 'BUTTONS.FEEDBACK' | translate }}
 		</button>
@@ -122,13 +93,7 @@
 			<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action secondary"
-			(click)="archive(selectedInterview)"
-		>
+		<button nbButton status="basic" size="small" class="action secondary" (click)="archive(selectedInterview)">
 			<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
 			{{ 'BUTTONS.ARCHIVE' | translate }}
 		</button>

@@ -6,7 +6,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-sdk/core';
+import { ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -21,17 +21,19 @@ import {
 	ITag,
 	IEmployee
 } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
-import { UserMutationComponent } from '../../@shared/user/user-mutation/user-mutation.component';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	DeleteConfirmationComponent,
+	EmailComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { TagsColorFilterComponent } from '../../@shared/table-filters';
-import { EmailComponent, RoleComponent } from '../../@shared/table-components';
+	InviteMutationComponent,
+	PaginationFilterBaseComponent,
+	PictureNameTagsComponent,
+	RoleComponent,
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	UserMutationComponent
+} from '@gauzy/ui-core/shared';
 import { EmployeeWorkStatusComponent } from '../employees/table-components';
 
 @UntilDestroy({ checkProperties: true })

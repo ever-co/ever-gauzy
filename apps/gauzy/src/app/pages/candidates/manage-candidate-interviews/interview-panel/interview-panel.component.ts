@@ -13,28 +13,29 @@ import {
 import { tap, debounceTime } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { LocalDataSource } from 'angular2-smart-table';
+import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidateInterviewMutationComponent } from './../../../../@shared/candidate/candidate-interview-mutation/candidate-interview-mutation.component';
-import { DeleteInterviewComponent } from './../../../../@shared/candidate/candidate-confirmation/delete-interview/delete-interview.component';
+import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
-import { PictureNameTagsComponent } from './../../../../@shared/table-components/picture-name-tags/picture-name-tags.component';
-import { ComponentEnum } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
+import { ComponentEnum } from '@gauzy/ui-core/common';
 import {
 	CandidateFeedbacksService,
 	CandidateInterviewService,
 	CandidatesService,
 	CandidateStore,
-	EmployeesService
-} from '@gauzy/ui-sdk/core';
-import { ArchiveConfirmationComponent } from './../../../../@shared/user/forms/archive-confirmation/archive-confirmation.component';
-import { CandidateInterviewFeedbackComponent } from './../../../../@shared/candidate/candidate-interview-feedback/candidate-interview-feedback.component';
+	EmployeesService,
+	ErrorHandlingService,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import {
+	ArchiveConfirmationComponent,
+	CandidateInterviewFeedbackComponent,
+	CandidateInterviewMutationComponent,
+	DeleteInterviewComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from './../../../../@shared/pagination/pagination-filter-base.component';
+	PaginationFilterBaseComponent,
+	PictureNameTagsComponent
+} from '@gauzy/ui-core/shared';
 import {
 	InterviewActionsTableComponent,
 	InterviewCriterionsTableComponent,
@@ -92,6 +93,8 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	}
 
 	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
 		this.subject$
 			.pipe(
 				debounceTime(300),
@@ -118,19 +121,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 			)
 			.subscribe((organization: IOrganization) => {
 				if (organization) {
-					const { tenantId } = this.store.user;
-					const { id: organizationId } = organization;
-
-					this.candidatesService
-						.getAll(['user'], {
-							organizationId,
-							tenantId
-						})
-						.pipe(
-							tap((candidates) => (this.candidates = candidates.items)),
-							untilDestroyed(this)
-						)
-						.subscribe();
+					this.getCandidates();
 					this.candidateStore.interviewList$.pipe(untilDestroyed(this)).subscribe();
 				}
 			});
@@ -142,8 +133,28 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
+	}
+
+	/**
+	 *
+	 * @returns
+	 */
+	getCandidates() {
+		if (!this.organization) {
+			return;
+		}
+
+		const { id: organizationId, tenantId } = this.organization;
+		const candidates$ = this.candidatesService.getAll(['user'], {
+			organizationId,
+			tenantId
+		});
+		candidates$
+			.pipe(
+				tap(({ items }) => (this.candidates = items)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	onEmployeeSelected(empIds: string[]) {
@@ -178,85 +189,94 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 	}
 
 	async loadInterviews() {
-		if (!this.organization) return;
-		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-		const { activePage, itemsPerPage } = this.getPagination();
-		const res = await this.candidateFeedbacksService.getAll(['interviewer'], { organizationId, tenantId });
-		if (res) {
-			this.allFeedbacks = res.items;
+		if (!this.organization) {
+			return;
 		}
+		const { id: organizationId, tenantId } = this.organization;
 
-		const { items } = await firstValueFrom(
-			this.employeesService.getAll(['user'], {
-				organizationId,
-				tenantId
-			})
-		);
-		this.employeeList = items;
+		try {
+			this.loading = true;
+			const { activePage, itemsPerPage } = this.getPagination();
+			const res = await this.candidateFeedbacksService.getAll(['interviewer'], { organizationId, tenantId });
+			if (res) {
+				this.allFeedbacks = res.items;
+			}
 
-		const interviews = await this.candidateInterviewService.getAll(
-			['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-			{ organizationId, tenantId }
-		);
-		if (interviews) {
-			this.interviewList = interviews.items;
-			this.allInterviews = interviews.items;
-			let tableInterviewList = [];
-			const result = [];
-			this.interviewList.forEach((interview) => {
-				const employees = [];
-				interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
-					this.employeeList.forEach((employee: IEmployee) => {
-						if (interviewer.employeeId === employee.id) {
-							interviewer.employeeImageUrl = employee.user.imageUrl;
-							interviewer.employeeName = employee.user.name;
-							employees.push(employee);
+			const { items } = await firstValueFrom(
+				this.employeesService.getAll(['user'], {
+					organizationId,
+					tenantId
+				})
+			);
+			this.employeeList = items;
+
+			const interviews = await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+					{ organizationId, tenantId }
+				)
+			);
+			if (interviews) {
+				this.interviewList = interviews.items;
+				this.allInterviews = interviews.items;
+				let tableInterviewList = [];
+				const result = [];
+				this.interviewList.forEach((interview) => {
+					const employees = [];
+					interview.interviewers.forEach((interviewer: ICandidateInterviewers) => {
+						this.employeeList.forEach((employee: IEmployee) => {
+							if (interviewer.employeeId === employee.id) {
+								interviewer.employeeImageUrl = employee.user.imageUrl;
+								interviewer.employeeName = employee.user.name;
+								employees.push(employee);
+							}
+						});
+					});
+					this.candidates.forEach((candidate) => {
+						if (candidate.id === interview?.candidate?.id) {
+							interview.candidate.user = candidate.user;
+							result.push({
+								...interview,
+								fullName: candidate.user.name,
+								imageUrl: candidate.user.imageUrl,
+								employees: employees,
+								showArchive: true,
+								allFeedbacks: this.allFeedbacks,
+								hideActions: true
+							});
 						}
 					});
 				});
-				this.candidates.forEach((item) => {
-					if (item.id === interview.candidate.id) {
-						interview.candidate.user = item.user;
-						result.push({
-							...interview,
-							fullName: item.user.name,
-							imageUrl: item.user.imageUrl,
-							employees: employees,
-							showArchive: true,
-							allFeedbacks: this.allFeedbacks,
-							hideActions: true
-						});
-					}
+				// for grid view
+				this.interviewList = this.onlyPast
+					? this.filterInterviewByTime(this.interviewList, true)
+					: this.interviewList;
+
+				this.interviewList = this.onlyFuture
+					? this.filterInterviewByTime(this.interviewList, false)
+					: this.interviewList;
+
+				this.interviewList = this.includeArchivedCheck(this.includeArchived, this.interviewList);
+				//for table view
+				tableInterviewList = this.includeArchivedCheck(this.includeArchived, result);
+				tableInterviewList = this.onlyPast
+					? this.filterInterviewByTime(tableInterviewList, true)
+					: tableInterviewList;
+
+				tableInterviewList = this.onlyFuture
+					? this.filterInterviewByTime(tableInterviewList, false)
+					: tableInterviewList;
+				this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+				this.sourceSmartTable.load(this._getUniquesById(tableInterviewList));
+				this._loadGridLayoutData();
+				this.setPagination({
+					...this.getPagination(),
+					totalItems: this.sourceSmartTable.count()
 				});
-			});
-			// for grid view
-			this.interviewList = this.onlyPast
-				? this.filterInterviewByTime(this.interviewList, true)
-				: this.interviewList;
-
-			this.interviewList = this.onlyFuture
-				? this.filterInterviewByTime(this.interviewList, false)
-				: this.interviewList;
-
-			this.interviewList = this.includeArchivedCheck(this.includeArchived, this.interviewList);
-			//for table view
-			tableInterviewList = this.includeArchivedCheck(this.includeArchived, result);
-			tableInterviewList = this.onlyPast
-				? this.filterInterviewByTime(tableInterviewList, true)
-				: tableInterviewList;
-
-			tableInterviewList = this.onlyFuture
-				? this.filterInterviewByTime(tableInterviewList, false)
-				: tableInterviewList;
-			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
-			this.sourceSmartTable.load(this._getUniquesById(tableInterviewList));
-			this._loadGridLayoutData();
-			this.setPagination({
-				...this.getPagination(),
-				totalItems: this.sourceSmartTable.count()
-			});
+			}
+		} catch (error) {
+			console.log('Error while getting candidate inteviews', error);
+		} finally {
 			this.loading = false;
 		}
 	}
@@ -298,12 +318,20 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 		this.settingsSmartTable = {
 			actions: false,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.INTERVIEW'),
+			pager: {
+				display: false,
+				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
+			},
 			columns: {
 				fullName: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CANDIDATE'),
 					type: 'custom',
+					class: 'align-row',
 					renderComponent: PictureNameTagsComponent,
-					class: 'align-row'
+					componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+						instance.value = cell.getValue();
+					}
 				},
 				title: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.TITLE'),
@@ -313,27 +341,39 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'),
 					type: 'custom',
 					width: '120px',
+					filter: false,
 					renderComponent: InterviewDateTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewDateTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				rating: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
+					filter: false,
 					renderComponent: InterviewStarRatingComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				employees: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'),
 					type: 'custom',
 					width: '155px',
+					filter: false,
 					renderComponent: InterviewersTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				criterions: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 					type: 'custom',
+					filter: false,
 					renderComponent: InterviewCriterionsTableComponent,
-					filter: false
+					componentInitFunction: (instance: InterviewCriterionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
+					}
 				},
 				location: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.LOCATION'),
@@ -348,9 +388,10 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '10%',
 					type: 'custom',
-					renderComponent: InterviewActionsTableComponent,
 					filter: false,
-					onComponentInitFunction: (instance) => {
+					renderComponent: InterviewActionsTableComponent,
+					componentInitFunction: (instance: InterviewActionsTableComponent, cell: Cell) => {
+						instance.rowData = cell.getRow().getData();
 						instance.updateResult.subscribe((params) => {
 							switch (params.type) {
 								case 'feedback':
@@ -369,10 +410,6 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 						});
 					}
 				}
-			},
-			pager: {
-				display: false,
-				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			}
 		};
 	}

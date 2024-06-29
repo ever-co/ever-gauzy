@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -15,16 +16,23 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { OrganizationEmploymentTypesService } from '@gauzy/ui-sdk/core';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { RecurringExpenseDeleteConfirmationModule } from '../../@shared/expenses/recurring-expense-delete-confirmation/recurring-expense-delete-confirmation.module';
-import { RecurringExpenseMutationModule } from '../../@shared/expenses/recurring-expense-mutation/recurring-expense-mutation.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
-import { OrganizationsMutationModule } from '../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { RemoveLodashModule } from '../../@shared/remove-lodash/remove-lodash.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { ThemeModule } from '../../@theme/theme.module';
+import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
+import {
+	CardGridModule,
+	DirectivesModule,
+	GauzyButtonActionModule,
+	ImageUploaderModule,
+	OrganizationsMutationModule,
+	PaginationV2Module,
+	RecurringExpenseBlockModule,
+	RecurringExpenseDeleteConfirmationModule,
+	RecurringExpenseHistoryModule,
+	RecurringExpenseMutationModule,
+	RemoveLodashModule,
+	TableComponentsModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
@@ -33,21 +41,15 @@ import {
 	OrganizationsFullnameComponent,
 	OrganizationsStatusComponent
 } from './table-components';
-import { RecurringExpenseHistoryModule } from '../../@shared/expenses/recurring-expense-history/recurring-expense-history.module';
-import { RecurringExpenseBlockModule } from '../../@shared/expenses/recurring-expense-block/recurring-expense-block.module';
-import { TableComponentsModule } from '../../@shared/table-components';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
-		TableComponentsModule,
-		OrganizationsRoutingModule,
-		ThemeModule,
-		NbCardModule,
+		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
+		TableComponentsModule,
+		OrganizationsRoutingModule,
+		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
 		Angular2SmartTableModule,

@@ -19,39 +19,20 @@
 			</ngx-gauzy-button-action>
 		</div>
 		<nb-tabset class="mt-4">
-			<nb-tab
-				[tabTitle]="'ORGANIZATIONS_PAGE.BROWSE' | translate"
-				[tabId]="employmentTypeTabsEnum.BROWSE"
-			>
+			<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.BROWSE' | translate" [tabId]="employmentTypeTabsEnum.BROWSE">
 				<ng-template
-					[ngIf]="
-						dataLayoutStyle === componentLayoutStyleEnum.TABLE &&
-						organizationEmploymentTypes?.length
-					"
+					[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE && organizationEmploymentTypes?.length"
 				>
 					<div class="table-scroll-container">
-						<nb-card
-							class="p-0"
-							*ngFor="
-								let employmentType of organizationEmploymentTypes
-							"
-						>
+						<nb-card class="p-0" *ngFor="let employmentType of organizationEmploymentTypes">
 							<nb-card-body
 								class="custom-table"
 								[ngClass]="{
-									selected:
-										selected?.state &&
-										employmentType ===
-											selected?.employmentType
+									selected: selected?.state && employmentType === selected?.employmentType
 								}"
-								(click)="
-									selectOrganizationEmploymentType(
-										employmentType
-									)
-								"
+								(click)="selectOrganizationEmploymentType(employmentType)"
 							>
-								<ga-notes-with-tags [rowData]="employmentType">
-								</ga-notes-with-tags>
+								<ga-notes-with-tags [rowData]="employmentType"> </ga-notes-with-tags>
 							</nb-card-body>
 						</nb-card>
 					</div>
@@ -59,17 +40,13 @@
 				<ng-template [ngIf]="organizationEmploymentTypes?.length == 0">
 					<div class="no-data">
 						<ngx-no-data-message
-							[message]="
-								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NO_DATA_MESSAGE' | translate
-							"
+							[message]="'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NO_DATA_MESSAGE' | translate"
 						></ngx-no-data-message>
 					</div>
 				</ng-template>
 				<ng-template
 					[ngIf]="
-						dataLayoutStyle ===
-							componentLayoutStyleEnum.CARDS_GRID &&
-						organizationEmploymentTypes?.length
+						dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID && organizationEmploymentTypes?.length
 					"
 				>
 					<div class="grid">
@@ -77,30 +54,20 @@
 							[totalItems]="pagination?.totalItems"
 							[settings]="settingsSmartTable"
 							[source]="organizationEmploymentTypes"
-							(onSelectedItem)="
-								selectOrganizationEmploymentType($event)
-							"
+							(onSelectedItem)="selectOrganizationEmploymentType($event)"
 							(scroll)="onScroll()"
 						></ga-card-grid>
 					</div>
 				</ng-template>
 			</nb-tab>
-			<nb-tab
-				[tabTitle]="'ORGANIZATIONS_PAGE.SEARCH' | translate"
-				[tabId]="employmentTypeTabsEnum.SEARCH"
-			>
+			<nb-tab [tabTitle]="'ORGANIZATIONS_PAGE.SEARCH' | translate" [tabId]="employmentTypeTabsEnum.SEARCH">
 				<ga-wip></ga-wip>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
 <ng-template #visibleButton>
-	<button
-		(click)="openDialog(editableTemplate, false)"
-		nbButton
-		status="success"
-		size="small"
-	>
+	<button (click)="openDialog(editableTemplate, false)" nbButton status="success" size="small">
 		<nb-icon icon="plus-outline"></nb-icon>
 		{{ 'BUTTONS.ADD' | translate }}
 	</button>
@@ -120,12 +87,7 @@
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
-			(click)="
-				deleteEmploymentType(
-					selected.employmentType.id,
-					selected.employmentType.name
-				)
-			"
+			(click)="deleteEmploymentType(selected.employmentType.id, selected.employmentType.name)"
 			nbButton
 			status="basic"
 			class="action"
@@ -142,10 +104,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col-sm-12 d-flex justify-content-end">
-					<i
-						class="fas fa-times"
-						(click)="ref.close(); disabled = true"
-					></i>
+					<i class="fas fa-times" (click)="ref.close(); disabled = true"></i>
 				</div>
 			</div>
 			<div class="row mb-3">
@@ -160,19 +119,13 @@
 			<form [formGroup]="form" *ngIf="form">
 				<div class="row mb-3">
 					<div class="col-sm-12 d-flex flex-column">
-						<label class="label">{{
-							'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
-								| translate
-						}}</label>
+						<label class="label">{{ 'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate }}</label>
 						<input
 							required
 							formControlName="name"
 							nbInput
 							type="text"
-							[placeholder]="
-								'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME'
-									| translate
-							"
+							[placeholder]="'ORGANIZATIONS_PAGE.EMPLOYMENT_TYPE_NAME' | translate"
 							fullWidth
 						/>
 					</div>

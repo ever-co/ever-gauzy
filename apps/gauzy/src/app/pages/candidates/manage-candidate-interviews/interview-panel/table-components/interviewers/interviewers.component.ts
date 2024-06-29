@@ -10,7 +10,5 @@ import { Component, Input } from '@angular/core';
 	`
 })
 export class InterviewersTableComponent {
-	@Input()
-	rowData: any;
-	constructor() {}
+	@Input() rowData: any;
 }

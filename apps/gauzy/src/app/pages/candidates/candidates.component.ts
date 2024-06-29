@@ -11,22 +11,25 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
-import { finalize, firstValueFrom, Subject } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { CandidateMutationComponent } from '../../@shared/candidate/candidate-mutation/candidate-mutation.component';
-import { InviteMutationComponent } from '../../@shared/invite/invite-mutation/invite-mutation.component';
-import { DateViewComponent, PictureNameTagsComponent, TagsOnlyComponent } from '../../@shared/table-components';
-import { ArchiveConfirmationComponent, CandidateActionConfirmationComponent } from '../../@shared/user/forms';
-import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { InputFilterComponent } from '../../@shared/table-filters';
+	IPaginationBase,
+	PictureNameTagsComponent,
+	DateViewComponent,
+	TagsOnlyComponent,
+	ArchiveConfirmationComponent,
+	CandidateActionConfirmationComponent,
+	InviteMutationComponent,
+	InputFilterComponent,
+	CandidateMutationComponent
+} from '@gauzy/ui-core/shared';
+import { CandidateStatusComponent, CandidateSourceComponent } from './table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,10 +115,17 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 			.subscribe();
 	}
 
+	/**
+	 *
+	 * @param page
+	 */
 	goTo(page: string) {
 		this.router.navigate([`/pages/employees/candidates/${page}`]);
 	}
 
+	/**
+	 *
+	 */
 	setView() {
 		this.viewComponentName = ComponentEnum.CANDIDATES;
 		this.store
@@ -132,11 +142,18 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 			.subscribe();
 	}
 
+	/**
+	 *
+	 * @param param0
+	 */
 	selectCandidate({ isSelected, data }) {
 		this.disableButton = !isSelected;
 		this.selectedCandidate = isSelected ? data : null;
 	}
 
+	/**
+	 *
+	 */
 	async add() {
 		try {
 			const { name } = this.organization;
@@ -164,6 +181,11 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		}
 	}
 
+	/**
+	 *
+	 * @param selectedItem
+	 * @returns
+	 */
 	edit(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
 			this.selectCandidate({
@@ -179,48 +201,9 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		this.router.navigate(['/pages/employees/candidates/edit', candidateId, 'profile']);
 	}
 
-	async archive(selectedItem?: ICandidateViewModel) {
-		if (selectedItem) {
-			this.selectCandidate({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-		this.dialogService
-			.open(ArchiveConfirmationComponent, {
-				context: {
-					recordType:
-						this.selectedCandidate.fullName +
-						' ' +
-						this.getTranslation('FORM.ARCHIVE_CONFIRMATION.CANDIDATE')
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (result) => {
-				if (result) {
-					try {
-						const { id: organizationId } = this.organization;
-						const { tenantId } = this.store.user;
-
-						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsArchived(id, {
-							organizationId,
-							tenantId
-						});
-
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', {
-							name: fullName
-						});
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					} finally {
-						this._refresh$.next(true);
-						this.candidates$.next(true);
-					}
-				}
-			});
-	}
-
+	/**
+	 *
+	 */
 	async invite() {
 		const dialog = this.dialogService.open(InviteMutationComponent, {
 			context: {
@@ -230,22 +213,31 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		await firstValueFrom(dialog.onClose);
 	}
 
+	/**
+	 *
+	 */
 	manageInvites() {
 		this.router.navigate(['/pages/employees/candidates/invites']);
 	}
 
+	/**
+	 *
+	 */
 	manageInterviews() {
 		this.router.navigate(['/pages/employees/candidates/interviews']);
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	private setSmartTableSource() {
 		if (!this.organization) {
 			return;
 		}
 
 		this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		this.sourceSmartTable = new ServerDataSource(this.http, {
 			endPoint: API_PREFIX + '/candidate/pagination',
@@ -290,6 +282,9 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		});
 	}
 
+	/**
+	 *
+	 */
 	private get _isGridLayout(): boolean {
 		return this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID;
 	}
@@ -307,6 +302,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 			this.setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.sourceSmartTable.setPaging(activePage, itemsPerPage, false);
+
 			if (this._isGridLayout) this._loadCardLayoutData();
 		} catch (error) {
 			this.toastrService.danger(error, this.getTranslation('TOASTR.TITLE.ERROR'));
@@ -432,81 +428,145 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 		};
 	}
 
+	/**
+	 *
+	 * @param checked
+	 */
 	changeIncludeArchived(checked: boolean) {
 		this.includeArchived = checked;
 		this.candidates$.next(true);
 	}
 
-	async reject(selectedItem?: ICandidateViewModel) {
+	/**
+	 * Archive a candidate with confirmation.
+	 * @param selectedItem - The candidate to be achived.
+	 */
+	async archive(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidate({
-				isSelected: true,
-				data: selectedItem
-			});
+			this.selectCandidate({ isSelected: true, data: selectedItem });
 		}
-		this.dialogService
-			.open(CandidateActionConfirmationComponent, {
-				context: {
-					recordType: this.selectedCandidate.fullName,
-					isReject: true
-				}
-			})
-			.onClose.pipe(
-				finalize(() => {
-					this._refresh$.next(true);
-					this.candidates$.next(true);
-				}),
-				untilDestroyed(this)
+
+		// Open a confirmation dialog for the hiring action.
+		const dialogRef = this.dialogService.open(ArchiveConfirmationComponent, {
+			context: {
+				recordType:
+					this.selectedCandidate.fullName + ' ' + this.getTranslation('FORM.ARCHIVE_CONFIRMATION.CANDIDATE')
+			}
+		});
+
+		dialogRef.onClose
+			.pipe(
+				untilDestroyed(this) // Ensures the observable is properly managed to prevent memory leaks.
 			)
 			.subscribe(async (result) => {
-				if (result) {
-					try {
-						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsRejected(id);
+				if (!result) return; // If the dialog is closed without confirmation, exit the function.
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', {
-							name: fullName
-						});
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
+				try {
+					const { id: organizationId, tenantId } = this.organization;
+					const { id, fullName } = this.selectedCandidate;
+
+					await this.candidatesService.setCandidateAsArchived(id, {
+						organizationId,
+						tenantId
+					}); // Set the candidate as Archived.
+
+					this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_ARCHIVED', { name: fullName });
+				} catch (error) {
+					// Handle any errors that occur during the process.
+
+					this.errorHandler.handleError(error);
+				} finally {
+					// Refresh the candidate list and update the UI.
+
+					this._refresh$.next(true);
+					this.candidates$.next(true);
 				}
 			});
 	}
 
-	async hire(selectedItem?: ICandidateViewModel) {
+	/**
+	 * Rejects a candidate with confirmation.
+	 * @param selectedItem - The candidate to be rejected.
+	 */
+	async reject(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {
-			this.selectCandidate({
-				isSelected: true,
-				data: selectedItem
-			});
+			this.selectCandidate({ isSelected: true, data: selectedItem });
 		}
-		this.dialogService
-			.open(CandidateActionConfirmationComponent, {
-				context: {
-					recordType: this.selectedCandidate.fullName,
-					isReject: false
-				}
-			})
-			.onClose.pipe(
-				finalize(() => {
-					this._refresh$.next(true);
-					this.candidates$.next(true);
-				}),
-				untilDestroyed(this)
+
+		// Open a confirmation dialog for the hiring action.
+		const dialogRef = this.dialogService.open(CandidateActionConfirmationComponent, {
+			context: {
+				recordType: this.selectedCandidate.fullName,
+				isReject: true
+			}
+		});
+
+		// Handle the dialog close event.
+		dialogRef.onClose
+			.pipe(
+				untilDestroyed(this) // Ensures the observable is properly managed to prevent memory leaks.
 			)
 			.subscribe(async (result) => {
-				if (result) {
-					try {
-						const { id, fullName } = this.selectedCandidate;
-						await this.candidatesService.setCandidateAsHired(id);
+				if (!result) return; // If the dialog is closed without confirmation, exit the function.
 
-						this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_HIRED', {
-							name: fullName
-						});
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					}
+				try {
+					const { id, fullName } = this.selectedCandidate;
+					await this.candidatesService.setCandidateAsRejected(id); // Set the candidate status to 'rejected'.
+
+					// Show a success message using the toastr service.
+					this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_REJECTED', { name: fullName });
+				} catch (error) {
+					// Handle any errors that occur during the process.
+					this.errorHandler.handleError(error);
+				} finally {
+					// Refresh the candidate list and update the UI.
+					this._refresh$.next(true);
+					this.candidates$.next(true);
+				}
+			});
+	}
+
+	/**
+	 * Initiates the hiring process for a selected candidate.
+	 * Opens a confirmation dialog, and if confirmed, sets the candidate status to 'hired'.
+	 *
+	 * @param selectedItem - Optional candidate data to be selected and processed.
+	 */
+	async hire(selectedItem?: ICandidateViewModel): Promise<void> {
+		// If a specific candidate is passed, select it.
+		if (selectedItem) {
+			this.selectCandidate({ isSelected: true, data: selectedItem });
+		}
+
+		// Open a confirmation dialog for the hiring action.
+		const dialogRef = this.dialogService.open(CandidateActionConfirmationComponent, {
+			context: {
+				recordType: this.selectedCandidate.fullName,
+				isReject: false
+			}
+		});
+
+		// Handle the dialog close event.
+		dialogRef.onClose
+			.pipe(
+				untilDestroyed(this) // Ensures the observable is properly managed to prevent memory leaks.
+			)
+			.subscribe(async (result) => {
+				if (!result) return; // If the dialog is closed without confirmation, exit the function.
+
+				try {
+					const { id, fullName } = this.selectedCandidate;
+					await this.candidatesService.setCandidateAsHired(id); // Set the candidate status to 'hired'.
+
+					// Show a success message using the toastr service.
+					this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_HIRED', { name: fullName });
+				} catch (error) {
+					// Handle any errors that occur during the process.
+					this.errorHandler.handleError(error);
+				} finally {
+					// Refresh the candidate list and update the UI.
+					this._refresh$.next(true);
+					this.candidates$.next(true);
 				}
 			});
 	}

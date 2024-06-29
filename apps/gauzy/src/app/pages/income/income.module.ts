@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
@@ -13,26 +14,25 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { IncomeService } from '@gauzy/ui-sdk/core';
-import { DirectivesModule } from '@gauzy/ui-sdk/shared';
-import { ThemeModule } from '../../@theme/theme.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	IncomeMutationModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule,
+	TableFiltersModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
 import { IncomeComponent } from './income.component';
 import { IncomeRoutingModule } from './income-routing.module';
-import { UserFormsModule } from '../../@shared/user/forms/user-forms.module';
-import { IncomeMutationModule } from '../../@shared/income/income-mutation/income-mutation.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { TableFiltersModule } from '../../@shared/table-filters/table-filters.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		NbBadgeModule,
 		IncomeRoutingModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -50,13 +50,11 @@ import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagin
 		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		HeaderTitleModule,
 		PaginationV2Module,
 		TableFiltersModule,
 		GauzyButtonActionModule,
-		DirectivesModule
+		SharedModule
 	],
-	declarations: [IncomeComponent],
-	providers: [IncomeService]
+	declarations: [IncomeComponent]
 })
 export class IncomeModule {}

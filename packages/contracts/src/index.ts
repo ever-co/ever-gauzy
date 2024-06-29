@@ -128,7 +128,7 @@ export * from './user.model';
 export * from './wakatime.model';
 export * from './activity-watch.model';
 
-export { IBaseEntityModel as BaseEntityModel } from './base-entity.model';
+export { IBaseEntityModel as BaseEntityModel, ID } from './base-entity.model';
 export {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,

@@ -1,0 +1,21 @@
+<label class="label" *ngIf="label">{{ label | translate }}</label>
+<ng-template [ngIf]="loaded">
+	<nb-select
+		[formControl]="select"
+		[multiple]="multiple"
+		(selectedChange)="onMembersSelected($event)"
+		fullWidth
+		[disabled]="disabled"
+		[(selected)]="preSelected"
+		[placeholder]="placeholder | translate"
+	>
+		<nb-option *ngFor="let employee of employees" [value]="employee.id">
+			<ngx-avatar
+				size="sm"
+				[src]="employee.user?.imageUrl"
+				[name]="employee.user?.name"
+				[isOption]="true"
+			></ngx-avatar>
+		</nb-option>
+	</nb-select>
+</ng-template>

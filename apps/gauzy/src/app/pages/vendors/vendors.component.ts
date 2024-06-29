@@ -8,16 +8,18 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
-import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
+import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { EmailComponent, TagsOnlyComponent, CompanyLogoComponent } from './../../@shared/table-components';
-import { DeleteConfirmationComponent } from './../../@shared/user/forms';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	CompanyLogoComponent,
+	DeleteConfirmationComponent,
+	EmailComponent,
+	ExternalLinkComponent,
 	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { ExternalLinkComponent } from '../../@shared/table-components/external-link/external-link.component';
+	PaginationFilterBaseComponent,
+	TagsOnlyComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

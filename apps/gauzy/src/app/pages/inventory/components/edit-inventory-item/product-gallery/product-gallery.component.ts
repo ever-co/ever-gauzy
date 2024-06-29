@@ -1,17 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { GalleryComponent } from 'apps/gauzy/src/app/@shared/gallery/gallery.component';
-import { GalleryService } from 'apps/gauzy/src/app/@shared/gallery/gallery.service';
-import { ImageAssetComponent } from 'apps/gauzy/src/app/@shared/image-asset/image-asset.component';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { SelectAssetComponent } from 'apps/gauzy/src/app/@shared/select-asset-modal/select-asset.component';
 import { Subject, firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { IImageAsset, IOrganization } from '@gauzy/contracts';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

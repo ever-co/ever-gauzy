@@ -8,7 +8,7 @@ import {
 	OrganizationTeamsService,
 	TimesheetService,
 	TimesheetStatisticsService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import {
 	IGetCountsStatistics,
 	IGetTimeLogReportInput,
@@ -18,9 +18,8 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
-import { BaseSelectorFilterComponent } from '../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { TimeZoneService } from '../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { Store } from '@gauzy/ui-core/common';
+import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

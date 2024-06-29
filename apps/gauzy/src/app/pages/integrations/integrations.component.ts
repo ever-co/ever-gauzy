@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IIntegrationViewModel, IntegrationFilterEnum } from '@gauzy/contracts';
-import { InitialFilter, IntegrationsStoreService } from '@gauzy/ui-sdk/core';
+import { InitialFilter, IntegrationsStoreService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ngx-integrations',

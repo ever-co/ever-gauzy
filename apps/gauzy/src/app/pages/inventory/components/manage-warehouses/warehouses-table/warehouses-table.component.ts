@@ -8,18 +8,15 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ComponentLayoutStyleEnum, IOrganization, IWarehouse, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { DeleteConfirmationComponent } from './../../../../../@shared/user/forms';
-import { API_PREFIX, ComponentEnum } from '@gauzy/ui-sdk/common';
-import { Store } from '@gauzy/ui-sdk/common';
-import { WarehouseService } from '@gauzy/ui-sdk/core';
-import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ServerDataSource, ToastrService, WarehouseService } from '@gauzy/ui-core/core';
 import {
+	DeleteConfirmationComponent,
 	IPaginationBase,
+	InputFilterComponent,
 	PaginationFilterBaseComponent
-} from './../../../../../@shared/pagination/pagination-filter-base.component';
-import { ServerDataSource, ToastrService } from '@gauzy/ui-sdk/core';
-import { InputFilterComponent } from './../../../../../@shared/table-filters';
+} from '@gauzy/ui-core/shared';
+import { ContactRowComponent, EnabledStatusComponent, ItemImgTagsComponent } from '../../inventory-table-components';
 import { DescriptionComponent } from '../../inventory-table-components/description/description.component';
 
 @UntilDestroy({ checkProperties: true })

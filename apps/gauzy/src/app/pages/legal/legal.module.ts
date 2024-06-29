@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { MainLegalModule } from '../../@shared/legal/legal.module';
+import { MainLegalModule } from '@gauzy/ui-core/shared';
 import { PageLegalRoutingModule } from './legal-routing.module';
 
 @NgModule({

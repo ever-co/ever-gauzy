@@ -5,19 +5,16 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
-import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-sdk/core';
-import { EmployeesService, EmployeeStore } from '@gauzy/ui-sdk/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-core/core';
+import { EmployeesService, EmployeeStore } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-employee-profile',
 	templateUrl: './edit-employee-profile.component.html',
-	styleUrls: [
-		'./edit-employee-profile.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./edit-employee-profile.component.scss'],
 	providers: [EmployeeStore]
 })
 export class EditEmployeeProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

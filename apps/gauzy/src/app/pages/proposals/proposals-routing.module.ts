@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { ProposalsComponent } from './proposals.component';
 import { ProposalRegisterComponent } from './proposal-register/proposal-register.component';
 import { ProposalDetailsComponent } from './proposal-details/proposal-details.component';
 import { ProposalEditComponent } from './proposal-edit/proposal-edit.component';
-import { DateRangePickerResolver } from '../../@theme/components/header/selectors/date-range-picker';
 import { ProposalEditOrDetailsResolver } from './proposal-edit-or-details.resolver';
 
 export function redirectTo() {
@@ -30,9 +30,7 @@ const routes: Routes = [
 				unitOfTime: 'month'
 			}
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	},
 	{
 		path: 'register',

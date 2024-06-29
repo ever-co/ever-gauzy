@@ -2,11 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ICandidateTechnologies, IOrganization } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
-import { CandidateTechnologiesService, ToastrService } from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
+import { CandidateTechnologiesService, ToastrService } from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
 
 @Component({
 	selector: 'ga-candidate-technologies',

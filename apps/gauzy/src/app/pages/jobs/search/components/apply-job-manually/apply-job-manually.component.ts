@@ -19,12 +19,11 @@ import {
 	IUser,
 	JobPostSourceEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-sdk/common';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { FormHelpers, ckEditorConfig } from '@gauzy/ui-sdk/shared';
-import { JobService, ToastrService } from '@gauzy/ui-sdk/core';
 import { environment } from '@gauzy/ui-config';
-import { EmployeeSelectorComponent } from './../../../../../@theme/components/header/selectors/employee';
+import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
+import { JobService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

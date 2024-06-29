@@ -8,7 +8,7 @@ import {
 	KeyResultUpdateService,
 	OrganizationTeamsService,
 	TasksService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import {
@@ -26,7 +26,7 @@ import {
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
 import { endOfTomorrow } from 'date-fns';
 
 @Component({

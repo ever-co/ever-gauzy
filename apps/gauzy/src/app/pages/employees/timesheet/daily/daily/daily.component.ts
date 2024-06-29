@@ -1,7 +1,7 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap } from '@angular/router';
-import { TimeTrackerService, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
+import { TimeTrackerService, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
 import { filter, map, debounceTime, tap } from 'rxjs/operators';
 import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from, of, switchMap } from 'rxjs';
@@ -16,13 +16,16 @@ import {
 	TimesheetFilterService,
 	TimesheetService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { Store } from '@gauzy/ui-sdk/common';
-import { EditTimeLogModalComponent, ViewTimeLogModalComponent } from './../../../../../@shared/timesheet';
-import { BaseSelectorFilterComponent } from './../../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { GauzyFiltersComponent } from './../../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../../@shared/timesheet/gauzy-filters/timezone-filter';
-import { ConfirmComponent } from '@gauzy/ui-sdk/shared';
+} from '@gauzy/ui-core/core';
+import { Store } from '@gauzy/ui-core/common';
+import {
+	BaseSelectorFilterComponent,
+	ConfirmComponent,
+	EditTimeLogModalComponent,
+	GauzyFiltersComponent,
+	TimeZoneService,
+	ViewTimeLogModalComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

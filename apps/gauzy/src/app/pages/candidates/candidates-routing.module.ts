@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { InviteGuard, PermissionsGuard } from '@gauzy/ui-sdk/core';
+import { InviteGuard, PermissionsGuard } from '@gauzy/ui-core/core';
 import { EditCandidateInterviewComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-interview/edit-candidate-interview.component';
 import { CandidatesComponent } from './candidates.component';
 import { ManageCandidateInviteComponent } from './manage-candidate-invite/manage-candidate-invite.component';
@@ -235,7 +235,8 @@ const routes: Routes = [
 					selectors: {
 						project: false,
 						employee: false,
-						date: false
+						date: false,
+						team: false
 					}
 				}
 			},
@@ -246,7 +247,8 @@ const routes: Routes = [
 					selectors: {
 						project: false,
 						employee: false,
-						date: false
+						date: false,
+						team: false
 					}
 				}
 			},
@@ -257,7 +259,8 @@ const routes: Routes = [
 					selectors: {
 						project: false,
 						employee: false,
-						date: false
+						date: false,
+						team: false
 					}
 				}
 			}

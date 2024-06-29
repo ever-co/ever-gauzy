@@ -9,11 +9,7 @@
 	<div class="row centered">
 		<ng-container *ngFor="let row of block">
 			<div class="col-3">
-				<nb-card
-					class="shortcut-card"
-					[status]="row?.status"
-					(click)="navigateTo(row?.link)"
-				>
+				<nb-card class="shortcut-card" [status]="row?.status" (click)="navigateTo(row?.link)">
 					<nb-card-header>
 						<nb-icon [icon]="row?.icon" *ngIf="row?.icon"></nb-icon>
 						{{ row?.name }}

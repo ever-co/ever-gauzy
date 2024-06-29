@@ -47,7 +47,7 @@
 	},
 	"devDependencies": {
 		"@types/bcrypt": "^5.0.0",
-		"@types/node": "^17.0.33",
+		"@types/node": "^20.14.9",
 		"@types/passport": "^1.0.9",
 		"@types/passport-facebook": "^2.1.10",
 		"@types/passport-github2": "^1.2.9",

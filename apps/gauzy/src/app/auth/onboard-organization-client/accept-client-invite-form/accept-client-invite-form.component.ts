@@ -10,10 +10,9 @@ import {
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
-import { MatchValidator } from '@gauzy/ui-sdk/core';
-import { FormHelpers } from '@gauzy/ui-sdk/shared';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { OrganizationsMutationComponent } from '../../../@shared/organizations/organizations-mutation/organizations-mutation.component';
+import { MatchValidator } from '@gauzy/ui-core/core';
+import { FormHelpers, OrganizationsMutationComponent } from '@gauzy/ui-core/shared';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
 	selector: 'ga-accept-client-invite-form',

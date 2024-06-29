@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest, debounceTime, firstValueFrom } from 'rxjs';
@@ -6,24 +7,26 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { pluck } from 'underscore';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	DateRangePickerBuilderService,
 	EmployeeStatisticsService,
 	EmployeesService,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
+} from '@gauzy/ui-core/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-sdk/common';
-import { ALL_EMPLOYEES_SELECTED } from '../../../@theme/components/header/selectors/employee';
-import { IChartData } from '../../../@shared/report/charts/line-chart';
-import { ChartUtil } from '../../../@shared/report/charts/line-chart/chart-utils';
+import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-core/common';
+import { ALL_EMPLOYEES_SELECTED, ChartUtil, IChartData } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-dashboard-accounting',
 	templateUrl: './accounting.component.html',
-	styleUrls: ['../../organizations/edit-organization/edit-organization.component.scss', './accounting.component.scss']
+	styleUrls: [
+		'../../organizations/edit-organization/edit-organization.component.scss',
+		'./accounting.component.scss'
+	],
+	providers: [CurrencyPipe]
 })
 export class AccountingComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public aggregatedEmployeeStatistics: IAggregatedEmployeeStatistic;

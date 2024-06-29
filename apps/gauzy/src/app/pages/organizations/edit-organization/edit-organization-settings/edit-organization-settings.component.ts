@@ -5,16 +5,13 @@ import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-edit-organization-settings',
 	templateUrl: './edit-organization-settings.component.html',
-	styleUrls: [
-		'./edit-organization-settings.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	]
+	styleUrls: ['./edit-organization-settings.component.scss']
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {
 	@Input() organization: IOrganization;

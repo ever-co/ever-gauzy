@@ -1,7 +1,7 @@
 import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { fromEvent } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { WarehouseService } from '@gauzy/ui-sdk/core';
+import { WarehouseService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-manage-warehouse-quantity-selector',

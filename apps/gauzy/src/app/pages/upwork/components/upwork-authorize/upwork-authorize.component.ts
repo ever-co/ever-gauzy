@@ -11,8 +11,8 @@ import {
 	IUpworkClientSecretPair,
 	IntegrationEnum
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-sdk/common';
-import { IntegrationsService, UpworkService } from '@gauzy/ui-sdk/core';
+import { Store } from '@gauzy/ui-core/common';
+import { IntegrationsService, UpworkService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -9,10 +9,9 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
 import * as moment from 'moment';
 import { IEngagement } from '@gauzy/contracts';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-sdk/core';
-import { UpworkStoreService } from '@gauzy/ui-sdk/core';
-import { DateViewComponent } from './../../../../@shared/table-components';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { ErrorHandlingService, ToastrService, UpworkStoreService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { DateViewComponent } from '@gauzy/ui-core/shared';
 import { SyncDataSelectionComponent } from '../sync-data-selection/sync-data-selection.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -28,15 +27,34 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 	public selectedContracts: IEngagement[] = [];
 
 	constructor(
-		private readonly _upworkStoreServices: UpworkStoreService,
-		private readonly toastrService: ToastrService,
-		private readonly _errorHandlingService: ErrorHandlingService,
 		public readonly translateService: TranslateService,
+		private readonly _upworkStoreServices: UpworkStoreService,
+		private readonly _toastrService: ToastrService,
+		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _nbDialogService: NbDialogService,
-		private readonly route: ActivatedRoute,
-		private readonly titleCasePipe: TitleCasePipe
+		private readonly _route: ActivatedRoute,
+		private readonly _titleCasePipe: TitleCasePipe
 	) {
 		super(translateService);
+	}
+
+	ngOnInit() {
+		this._loadSmartTableSettings();
+		this._applyTranslationOnSmartTable();
+		this._loadContracts();
+
+		// Subscribe to changes in the query parameters
+		this._route.queryParamMap
+			.pipe(
+				// Filter out unwanted changes and only proceed if 'openAddDialog' is 'true'
+				filter((params) => !!params && params.get('openAddDialog') === 'true'),
+				// Debounce the changes to avoid rapid triggering
+				// Execute the addIncome method when conditions are met
+				tap(() => this.manageEntitiesSync()),
+				// Unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -59,32 +77,14 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 			.subscribe();
 	}
 
-	ngOnInit() {
-		this._loadSmartTableSettings();
-		this._applyTranslationOnSmartTable();
-		this._loadContracts();
-
-		// Subscribe to changes in the query parameters
-		this.route.queryParamMap
-			.pipe(
-				// Filter out unwanted changes and only proceed if 'openAddDialog' is 'true'
-				filter((params) => !!params && params.get('openAddDialog') === 'true'),
-				// Debounce the changes to avoid rapid triggering
-				// Execute the addIncome method when conditions are met
-				tap(() => this.manageEntitiesSync()),
-				// Unsubscribe when the component is destroyed
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
 	/**
 	 * Loads Smart Table settings for displaying contracts.
 	 * This method configures the select mode, actions, mode, and columns for the Smart Table.
 	 */
-	_loadSmartTableSettings(): void {
+	private _loadSmartTableSettings(): void {
 		// Configure Smart Table settings
 		this.smartTableSettings = {
+			selectedRowIndex: -1, // Initialize the selected row index
 			selectMode: 'multi',
 			actions: {
 				add: false,
@@ -122,31 +122,38 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'string',
-					valuePrepareFunction: (value: string) => this.titleCasePipe.transform(value)
+					valuePrepareFunction: (value: string) => this._titleCasePipe.transform(value)
 				}
 			}
 		};
 	}
 
 	/**
+	 * Handles selection of contracts.
 	 *
-	 * @param param0
+	 * @param selected The selected contracts array.
 	 */
-	selectContract({ selected }) {
+	selectContract({ selected }): void {
 		this.selectedContracts = selected;
 	}
 
+	/**
+	 * Opens a dialog to manage entity synchronization.
+	 * Waits for the dialog to close before resolving.
+	 */
 	async manageEntitiesSync(): Promise<void> {
 		try {
-			// Open the dialog for syncing data selection
-			const dialog = this._nbDialogService.open(SyncDataSelectionComponent, {
-				context: {
-					contracts: this.selectedContracts
-				}
-			});
+			if (this.selectedContracts.length > 0) {
+				// Open the dialog for syncing data selection
+				const dialog = this._nbDialogService.open(SyncDataSelectionComponent, {
+					context: {
+						contracts: this.selectedContracts
+					}
+				});
 
-			// Wait for the dialog to close using firstValueFrom
-			await firstValueFrom(dialog.onClose);
+				// Wait for the dialog to close using firstValueFrom
+				await firstValueFrom(dialog.onClose);
+			}
 		} catch (error) {
 			// Handle any errors that may occur during the process
 			console.error('Error in manageEntitiesSync:', error);
@@ -165,7 +172,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 			.pipe(
 				// Display a success toast upon successful synchronization
 				tap(() => {
-					this.toastrService.success(
+					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.UPWORK_PAGE.SYNCED_CONTRACTS'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);

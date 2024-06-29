@@ -17,20 +17,18 @@ import {
 	ErrorHandlingService,
 	ToastrService,
 	UsersService
-} from '@gauzy/ui-sdk/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
-import { Store } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CandidateInterviewInfoComponent } from '../../../../@shared/candidate/candidate-interview-info/candidate-interview-info.component';
+import { CandidateInterviewInfoComponent } from '@gauzy/ui-core/shared';
+import { firstValueFrom } from 'rxjs';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-candidate-profile',
 	templateUrl: './edit-candidate-profile.component.html',
-	styleUrls: [
-		'./edit-candidate-profile.component.scss',
-		'../../../../@shared/user/edit-profile-form/edit-profile-form.component.scss'
-	],
+	styleUrls: ['./edit-candidate-profile.component.scss'],
 	providers: [CandidateStore]
 })
 export class EditCandidateProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
@@ -80,13 +78,12 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 
 	private async loadInterviews() {
 		const { id: organizationId, tenantId } = this.selectedOrganization;
-		const interviews = await this.candidateInterviewService.getAll(
-			['interviewers', 'technologies', 'personalQualities', 'feedbacks'],
-			{
+		const interviews = await firstValueFrom(
+			this.candidateInterviewService.getAll(['interviewers', 'technologies', 'personalQualities', 'feedbacks'], {
 				candidateId: this.selectedCandidate.id,
 				organizationId,
 				tenantId
-			}
+			})
 		);
 		if (interviews) {
 			this.interviewList = interviews.items;
@@ -98,7 +95,7 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 		if (this.futureInterviews.length > 0) {
 			this.dialogService.open(CandidateInterviewInfoComponent, {
 				context: {
-					interviewList: this.futureInterviews,
+					interviews: this.futureInterviews,
 					selectedCandidate: this.selectedCandidate,
 					isSlider: true
 				}
@@ -188,11 +185,12 @@ export class EditCandidateProfileComponent extends TranslationBaseComponent impl
 	private async submitCandidateForm(value: ICandidateUpdateInput) {
 		if (value) {
 			try {
+				const { organizationId, tenantId } = this.selectedCandidate;
 				await this.candidatesService.update(this.selectedCandidate.id, {
 					...value,
-					organizationId: this.selectedCandidate.organizationId
+					organizationId,
+					tenantId
 				});
-
 				this.toastrService.success('TOASTR.MESSAGE.CANDIDATE_PROFILE_UPDATE', {
 					name: this.candidateName
 				});

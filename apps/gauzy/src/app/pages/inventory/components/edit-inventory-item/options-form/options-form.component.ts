@@ -6,14 +6,14 @@ import {
 	IProductOptionTranslatable
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { InventoryStore } from '@gauzy/ui-sdk/core';
+import { InventoryStore } from '@gauzy/ui-core/core';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { ProductOptionGroupTranslationsComponent } from 'apps/gauzy/src/app/@shared/product-mutation/product-option-group-translation/product-option-group-translation.component';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
+import { ProductOptionGroupTranslationsComponent } from '@gauzy/ui-core/shared';
 
 export interface OptionCreateInput {
 	name: string;

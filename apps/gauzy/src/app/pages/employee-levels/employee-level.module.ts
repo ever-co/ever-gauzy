@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,23 +11,24 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
-import { TagsColorInputModule } from '../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
-import { SharedModule } from '../../@shared/shared.module';
+import { NgxPermissionsModule } from 'ngx-permissions';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	NoDataMessageModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule
+} from '@gauzy/ui-core/shared';
 import { EmployeeLevelComponent } from './employee-level.component';
 import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { CardGridModule } from '../../@shared/card-grid/card-grid.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		SharedModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
@@ -43,7 +45,7 @@ import { NoDataMessageModule } from '../../@shared/no-data-message/no-data-messa
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
+		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule,

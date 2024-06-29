@@ -1,58 +1,48 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
-import { ICandidate, IEmployee } from '@gauzy/contracts';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ICandidate } from '@gauzy/contracts';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-overall-rating-chart',
 	template: `
-		<canvas
-			style="height: 400px; width: 100%;"
-			[type]="'bar'"
-			baseChart
-			[data]="data"
-			[options]="options"
-			*ngIf="rating?.length > 0 && candidates.length > 0"
-		></canvas>
-		<div
-			*ngIf="candidates.length === 0 || rating?.length === 0"
-			style="display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			border: 1px #e5e5e5 solid;
-			height: 150px;"
-		>
-			<nb-icon icon="info-outline" style="color: #909cb4;"></nb-icon>
-			<span style="color: #909cb4;">{{
-				'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate
-			}}</span>
-		</div>
+		<ng-container *ngIf="rating?.length > 0 && candidates?.length > 0; else noDataTemplate">
+			<canvas
+				style="height: 400px; width: 100%;"
+				[type]="'bar'"
+				baseChart
+				[data]="data"
+				[options]="options"
+			></canvas>
+		</ng-container>
+		<ng-template #noDataTemplate>
+			<div class="no-data">
+				<nb-icon icon="info-outline" class="info-icon"></nb-icon>
+				<span>{{ 'CANDIDATES_PAGE.STATISTIC.NO_DATA' | translate }}</span>
+			</div>
+		</ng-template>
 	`
 })
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
-	@Input() candidates: ICandidate[];
-	@Input() employeeList: IEmployee[];
 	data: any;
 	options: any;
 	backgroundColor: string[] = [];
-	private _ngDestroy$ = new Subject<void>();
 
-	constructor(private themeService: NbThemeService) { }
+	@Input() candidates: ICandidate[] = [];
+
+	constructor(private readonly themeService: NbThemeService) {}
 
 	ngOnInit() {
-		this.loadData();
-		this.loadChart();
-	}
+		this.initializeChart();
 
-	private loadChart() {
 		this.themeService
 			.getJsTheme()
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe(() => {
+				// Set chart data with labels, ratings, and background colors
 				this.data = {
 					labels: this.labels,
 					datasets: [
@@ -86,24 +76,28 @@ export class CandidateRatingChartComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	async loadData() {
-		for (let i = 0; i < this.candidates.length; i++) {
-			this.labels.push(this.candidates[i].user.name);
-			if (this.candidates[i].rating) {
-				this.rating.push(
-					parseFloat(this.candidates[i].rating.toFixed(2))
-				);
+	/**
+	 * Initializes the chart data based on candidates' ratings and names.
+	 */
+	private initializeChart(): void {
+		const colors = ['rgba(89, 139, 255, 0.2)', 'rgba(0, 214, 143, 0.2)'];
+
+		this.candidates.forEach((candidate: ICandidate, index: number) => {
+			// Determine background color based on index
+			const backgroundColor = colors[index % 2];
+			this.backgroundColor.push(backgroundColor);
+
+			// Push candidate's name to labels array
+			const candidateName = candidate.user?.name || 'Unknown';
+			this.labels.push(candidateName);
+
+			// Push candidate's ratings, formatted to 2 decimal places, to ratings array if available
+			if (candidate.ratings) {
+				const formattedRating = parseFloat(candidate.ratings.toFixed(2));
+				this.rating.push(formattedRating);
 			}
-			const color =
-				i % 2 === 0
-					? 'rgba(89, 139, 255, 0.2)'
-					: 'rgba(0, 214, 143, 0.2)';
-			this.backgroundColor.push(color);
-		}
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

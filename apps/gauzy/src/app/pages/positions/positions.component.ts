@@ -5,14 +5,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { OrganizationPositionsService, ToastrService } from '@gauzy/ui-sdk/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-sdk/common';
-import { NotesWithTagsComponent } from '../../@shared/table-components/notes-with-tags/notes-with-tags.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms/delete-confirmation/delete-confirmation.component';
+import { OrganizationPositionsService, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
-	IPaginationBase
-} from '../../@shared/pagination/pagination-filter-base.component';
+	IPaginationBase,
+	NotesWithTagsComponent,
+	DeleteConfirmationComponent
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

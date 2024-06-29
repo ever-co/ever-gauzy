@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { IProductOptionTranslatable, LanguagesEnum, VariantCreateInput } from '@gauzy/contracts';
 import { Router } from '@angular/router';
-import { InventoryStore, TranslatableService } from '@gauzy/ui-sdk/core';
+import { InventoryStore, TranslatableService } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-sdk/common';
+import { Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy()
 @Component({

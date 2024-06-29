@@ -1,16 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AmountsOwedReportRoutingModule } from './amounts-owed-report-routing.module';
-import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-report.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { AmountsOwedGridModule } from '../../../@shared/report/amounts-owed-grid/amounts-owed-grid.module';
-import { LineChartModule } from '../../../@shared/report/charts/line-chart/line-chart.module';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { SharedModule } from '../../../@shared/shared.module';
-import { DateRangeTitleModule } from '../../../@shared/components/date-range-title/date-range-title.module';
-import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gauzy-filters.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { AmountsOwedGridModule, GauzyFiltersModule, LineChartModule, SharedModule } from '@gauzy/ui-core/shared';
+import { AmountsOwedReportRoutingModule } from './amounts-owed-report-routing.module';
+import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-report.component';
 
 @NgModule({
 	declarations: [AmountsOwedReportComponent],
@@ -26,8 +21,6 @@ import { GauzyFiltersModule } from '../../../@shared/timesheet/gauzy-filters/gau
 		FormsModule,
 		AmountsOwedGridModule,
 		LineChartModule,
-		HeaderTitleModule,
-		DateRangeTitleModule,
 		GauzyFiltersModule
 	]
 })

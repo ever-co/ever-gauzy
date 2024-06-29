@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
@@ -21,7 +22,7 @@ import {
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeStore,
 	InviteService,
@@ -31,34 +32,36 @@ import {
 	OrganizationExpenseCategoriesService,
 	OrganizationPositionsService,
 	OrganizationVendorsService
-} from '@gauzy/ui-sdk/core';
-import { CurrencyModule, LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
-import { EmployeeMultiSelectModule } from '../../../../@shared/employee/employee-multi-select/employee-multi-select.module';
-import { EntityWithMembersModule } from '../../../../@shared/entity-with-members-card/entity-with-members-card.module';
-import { ImageUploaderModule } from '../../../../@shared/image-uploader/image-uploader.module';
-import { OrganizationsMutationModule } from '../../../../@shared/organizations/organizations-mutation/organizations-mutation.module';
-import { RemoveLodashModule } from '../../../../@shared/remove-lodash/remove-lodash.module';
-import { UserFormsModule } from '../../../../@shared/user/forms/user-forms.module';
-import { EmployeeSelectorsModule } from '../../../../@theme/components/header/selectors/employee/employee.module';
-import { ThemeModule } from '../../../../@theme/theme.module';
+} from '@gauzy/ui-core/core';
+import {
+	CurrencyModule,
+	EmployeeMultiSelectModule,
+	EntityWithMembersModule,
+	FileUploaderModule,
+	ImageUploaderModule,
+	LeafletMapModule,
+	LocationFormModule,
+	OrganizationsMutationModule,
+	RemoveLodashModule,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	TimeZoneSelectorModule,
+	TimerPickerModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
 import { OrganizationListComponent } from '../organization-list/organization-list.component';
 import { EditOrganizationLocationComponent } from './edit-organization-location/edit-organization-location.component';
 import { EditOrganizationMainComponent } from './edit-organization-main/edit-organization-main.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-other-settings/edit-organization-other-settings.component';
 import { EditOrganizationSettingsComponent } from './edit-organization-settings.component';
-import { TagsColorInputModule } from '../../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../../../@shared/table-components/table-components.module';
-import { FileUploaderModule } from '../../../../@shared/file-uploader-input/file-uploader-input.module';
-import { SharedModule } from '../../../../@shared/shared.module';
-import { TimerPickerModule } from '../../../../@shared/timer-picker/timer-picker.module';
-import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 
 @NgModule({
 	imports: [
+		CommonModule,
 		NbBadgeModule,
 		TableComponentsModule,
 		TagsColorInputModule,
-		ThemeModule,
 		NbCardModule,
 		FormsModule,
 		ReactiveFormsModule,
@@ -83,7 +86,6 @@ import { TimeZoneSelectorModule } from '../../../../@shared/selectors';
 		NbRouteTabsetModule,
 		NbDatepickerModule,
 		NbToggleModule,
-		EmployeeSelectorsModule,
 		EntityWithMembersModule,
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,

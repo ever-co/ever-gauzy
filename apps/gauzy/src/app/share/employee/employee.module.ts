@@ -1,44 +1,45 @@
 import { NgModule } from '@angular/core';
-import { ThemeModule } from '../../@theme/theme.module';
+import { CommonModule } from '@angular/common';
 import {
-	NbCardModule,
 	NbButtonModule,
-	NbInputModule,
+	NbCardModule,
 	NbIconModule,
+	NbInputModule,
 	NbListModule,
-	NbUserModule,
 	NbTabsetModule,
-	NbTagModule
+	NbTagModule,
+	NbUserModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	ImageUploaderModule,
+	PublicPageEmployeeMutationModule,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { EmployeeRoutingModule } from './employee-routing.module';
-import { ImageUploaderModule } from '../../@shared/image-uploader/image-uploader.module';
 import { EmployeeComponent } from './employee.component';
-import { PublicPageEmployeeMutationModule } from '../../@shared/employee/public-page-employee-mutation/public-page-employee-mutation.module';
 import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
-import { SharedModule } from '../../@shared/shared.module';
-import { TableComponentsModule } from '../../@shared';
 
 @NgModule({
 	imports: [
-		ThemeModule,
-		SharedModule,
-		EmployeeRoutingModule,
-		NbCardModule,
+		CommonModule,
 		NbButtonModule,
+		NbCardModule,
 		NbIconModule,
 		NbInputModule,
+		NbListModule,
+		NbTabsetModule,
+		NbTagModule,
+		NbUserModule,
+		SharedModule,
+		EmployeeRoutingModule,
 		ImageUploaderModule,
 		PublicPageEmployeeMutationModule,
 		I18nTranslateModule.forChild(),
-		NbListModule,
-		NbUserModule,
-		NbTabsetModule,
-		NbTagModule,
 		WorkInProgressModule,
 		TableComponentsModule
 	],
-	declarations: [EmployeeComponent],
-	providers: []
+	declarations: [EmployeeComponent]
 })
 export class EmployeeModule {}

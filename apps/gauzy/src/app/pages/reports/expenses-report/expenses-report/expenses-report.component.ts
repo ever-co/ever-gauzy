@@ -6,13 +6,15 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-sdk/common';
-import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-sdk/core';
-import { BaseSelectorFilterComponent } from './../../../../@shared/timesheet/gauzy-filters/base-selector-filter/base-selector-filter.component';
-import { IChartData } from './../../../../@shared/report/charts/line-chart';
-import { ChartUtil } from './../../../../@shared/report/charts/line-chart/chart-utils';
-import { GauzyFiltersComponent } from './../../../../@shared/timesheet/gauzy-filters/gauzy-filters.component';
-import { TimeZoneService } from '../../../../@shared/timesheet/gauzy-filters/timezone-filter';
+import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-core/core';
+import {
+	BaseSelectorFilterComponent,
+	ChartUtil,
+	GauzyFiltersComponent,
+	IChartData,
+	TimeZoneService
+} from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

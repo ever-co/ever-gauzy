@@ -1,22 +1,25 @@
 import { Component, OnInit } from '@angular/core';
-import { TranslationBaseComponent } from '@gauzy/ui-sdk/i18n';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { PaymentMutationComponent } from './payment-mutation/payment-mutation.component';
 import { NbDialogService } from '@nebular/theme';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { saveAs } from 'file-saver';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { DeleteConfirmationComponent } from '../../../@shared/user/forms';
-import { StatusBadgeComponent } from '../../../@shared/status-badge/status-badge.component';
-import { generateCsv } from '../../../@shared/invoice/generate-csv';
-import { Store } from '@gauzy/ui-sdk/common';
+import { saveAs } from 'file-saver';
+import { IInvoice, IPayment, InvoiceStatusTypesEnum, IOrganization, IUser } from '@gauzy/contracts';
+import { Store } from '@gauzy/ui-core/common';
+import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, ToastrService } from '@gauzy/ui-core/core';
+import {
+	DateViewComponent,
+	DeleteConfirmationComponent,
+	IncomeExpenseAmountComponent,
+	StatusBadgeComponent,
+	generateCsv
+} from '@gauzy/ui-core/shared';
 import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutation/payment-receipt-mutation.component';
-import { InvoiceEstimateHistoryService, InvoicesService, PaymentService, ToastrService } from '@gauzy/ui-sdk/core';
-import { DateViewComponent, IncomeExpenseAmountComponent } from '../../../@shared/table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -460,7 +463,6 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		];
 
 		const fileName = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT');
-
 		generateCsv(data, headers, fileName);
 	}
 

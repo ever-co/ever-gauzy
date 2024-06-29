@@ -1,5 +1,5 @@
-@import "themes";
-@import "../reusable";
+@import 'themes';
+@import '@shared/reusable';
 
 .login-container {
   width: 765px;
@@ -134,8 +134,8 @@
       background: nb-theme(color-primary-700);
       & .custom-btn {
         color: white;
-        background: #6E49E8;
-        border: 1px solid #6E49E8;
+        background: #6e49e8;
+        border: 1px solid #6e49e8;
       }
     }
   }
@@ -167,7 +167,7 @@
     text-align: left;
     margin-bottom: 20px;
     padding-left: 13px;
-    color: #7E7E8F;
+    color: #7e7e8f;
   }
   & .custom-btn {
     -webkit-box-shadow: 3px 11px 30px -17px #3366ff;
@@ -212,7 +212,8 @@
   & * {
     z-index: 6;
   }
-  &, .demo-credentials-select-item {
+  &,
+  .demo-credentials-select-item {
     border-radius: nb-theme(button-rectangle-border-radius);
     box-sizing: border-box;
   }
@@ -255,7 +256,8 @@
       & * {
         text-align: center;
       }
-      & .title, .sub-title {
+      & .title,
+      .sub-title {
         text-align: center;
       }
     }
@@ -271,7 +273,8 @@
       & .headings {
         & .headings-inner {
           width: 100%;
-          & .title, .sub-title {
+          & .title,
+          .sub-title {
             width: 100%;
             text-align: center;
           }
@@ -318,7 +321,8 @@
       & * {
         text-align: left;
       }
-      & .title, .sub-title {
+      & .title,
+      .sub-title {
         text-align: left;
       }
     }
@@ -335,7 +339,7 @@
   }
 }
 // input fields color
-  @include input-fields-color;
+@include input-fields-color;
 
 ::ng-deep .remember-me .text {
   font-family: Inter;

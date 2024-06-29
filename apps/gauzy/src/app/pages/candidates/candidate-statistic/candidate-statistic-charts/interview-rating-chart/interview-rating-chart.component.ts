@@ -1,10 +1,11 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
-import { CandidateFeedbacksService, CandidateInterviewService } from '@gauzy/ui-sdk/core';
+import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
+import { tap } from 'rxjs/operators';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-interview-rating-chart',
 	templateUrl: './interview-rating-chart.component.html',
@@ -14,94 +15,103 @@ export class InterviewRatingChartComponent implements OnInit, OnDestroy {
 	labels: string[] = [];
 	rating: number[] = [];
 	interviews = [];
-	@Input() candidates: ICandidate[];
-	@Input() interviewList: ICandidate[];
-	@Input() employeeList: IEmployee[];
 	data: any;
 	options: any;
-	currentInterview: ICandidateInterview;
 	backgroundColor: string[] = [];
-	private _ngDestroy$ = new Subject<void>();
+	@Input() candidates: ICandidate[] = [];
+	@Input() employees: IEmployee[] = [];
 
 	constructor(
-		private themeService: NbThemeService,
-		private candidateFeedbacksService: CandidateFeedbacksService,
-		private candidateInterviewService: CandidateInterviewService
+		private readonly themeService: NbThemeService,
+		private readonly candidateFeedbacksService: CandidateFeedbacksService
 	) {}
 
 	ngOnInit() {
-		this.loadData();
-		this.loadChart();
+		this.initializeChartBackgroundColor();
+		this.themeService
+			.getJsTheme()
+			.pipe(
+				tap(() => this.initializeChartOptions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
+
+	/**
+	 *
+	 * @param interview
+	 */
 	async onInterviewSelected(interview: ICandidateInterview) {
-		this.currentInterview = interview;
 		this.rating = [];
 		this.labels = [];
-		const res = await this.candidateFeedbacksService.getAll(['interviewer'], {
+
+		const { items = [] } = await this.candidateFeedbacksService.getAll(['interviewer', 'interviewer.employee'], {
 			candidateId: interview.candidateId
 		});
-		if (res) {
-			const feedbacks = res.items.filter((item) => item.interviewId && item.interviewId === interview.id);
+		if (items) {
+			const feedbacks = items.filter((item) => item.interviewId && item.interviewId === interview.id);
 			for (const item of feedbacks) {
 				this.rating.push(parseFloat((+item.rating).toFixed(2)));
-				this.employeeList.forEach((employee) => {
-					if (item.interviewer.employeeId === employee.id) {
-						this.labels.push(employee.user.name);
+				this.employees.forEach((employee) => {
+					if (item.interviewer?.employeeId) {
+						if (item.interviewer?.employeeId === employee.id) {
+							this.labels.push(employee.user.name);
+						}
 					}
 				});
 			}
-			this.loadChart();
+			this.initializeChartOptions();
 		}
 	}
-	private loadChart() {
-		this.themeService
-			.getJsTheme()
-			.pipe(takeUntil(this._ngDestroy$))
-			.subscribe(() => {
-				this.data = {
-					labels: this.labels,
-					datasets: [
-						{
-							maxBarThickness: 150,
-							label: 'Rating per interview',
-							backgroundColor: this.backgroundColor,
-							data: this.rating
-						}
-					]
-				};
 
-				this.options = {
-					responsive: true,
-					maintainAspectRatio: false,
-					elements: {
-						rectangle: {
-							borderWidth: 2
+	/**
+	 * Initializes chart data and options.
+	 */
+	private initializeChartOptions() {
+		this.data = {
+			labels: this.labels,
+			datasets: [
+				{
+					maxBarThickness: 150,
+					label: 'Rating per interview',
+					backgroundColor: this.backgroundColor,
+					data: this.rating
+				}
+			]
+		};
+
+		this.options = {
+			responsive: true,
+			maintainAspectRatio: false,
+			elements: {
+				rectangle: {
+					borderWidth: 2
+				}
+			},
+			scales: {
+				yAxes: [
+					{
+						ticks: {
+							beginAtZero: true
 						}
-					},
-					scales: {
-						yAxes: [
-							{
-								ticks: {
-									beginAtZero: true
-								}
-							}
-						]
 					}
-				};
-			});
+				]
+			}
+		};
 	}
 
-	async loadData() {
-		for (let i = 0; i < this.candidates.length; i++) {
-			const interview = await this.candidateInterviewService.findByCandidateId(this.candidates[i].id);
-			this.candidates[i].interview = interview ? interview : null;
-			const color = i % 2 === 0 ? 'rgba(153, 102, 255, 0.2)' : 'rgba(255, 159, 64, 0.2)';
-			this.backgroundColor.push(color);
-		}
+	/**
+	 * Initializes the chart data based on candidates' ratings and names.
+	 */
+	private initializeChartBackgroundColor(): void {
+		const colors = ['rgba(153, 102, 255, 0.2)', 'rgba(255, 159, 64, 0.2)'];
+
+		this.candidates.forEach((candidate: ICandidate, index: number) => {
+			// Determine background color based on index
+			const backgroundColor = colors[index % 2];
+			this.backgroundColor.push(backgroundColor);
+		});
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 }

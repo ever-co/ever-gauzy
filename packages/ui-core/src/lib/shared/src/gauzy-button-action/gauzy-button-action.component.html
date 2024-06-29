@@ -1,0 +1,13 @@
+<div class="actions-container">
+	<div class="transition-container">
+		<div [ngClass]="!isDisable ? 'transition show' : 'transition hide'">
+			<span [ngClass]="!isDisable ? 'transition show' : 'transition show-button'">
+				<ng-content select="[buttonTemplateVisible]"></ng-content>
+				<ng-container *ngTemplateOutlet="buttonTemplateVisible"></ng-container>
+			</span>
+			<ng-container *ngTemplateOutlet="buttonTemplate"></ng-container>
+			<ng-content select="[buttonTemplate]"></ng-content>
+		</div>
+	</div>
+	<ga-layout-selector *ngIf="hasLayoutSelector" [componentName]="componentName"></ga-layout-selector>
+</div>

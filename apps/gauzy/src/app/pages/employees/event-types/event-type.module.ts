@@ -10,31 +10,29 @@ import {
 	NbDialogModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { ThemeModule } from '../../../@theme/theme.module';
 import { EventTypeRoutingModule } from './event-type.routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { EventTypeService } from '@gauzy/ui-core/core';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
 import { EventTypeComponent } from './event-type.component';
-import { EmployeeSelectorsModule } from '../../../@theme/components/header/selectors/employee/employee.module';
 import { EventTypeMutationModule } from './event-type-mutation/event-type-mutation.module';
-import { EventTypeService } from '@gauzy/ui-sdk/core';
-import { UserFormsModule } from '../../../@shared/user/forms/user-forms.module';
-import { TagsColorInputModule } from '../../../@shared/tags/tags-color-input/tags-color-input.module';
-import { TableComponentsModule } from '../../../@shared/table-components/table-components.module';
-import { CardGridModule } from '../../../@shared/card-grid/card-grid.module';
-import { BackNavigationModule } from '../../../@shared/back-navigation/back-navigation.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pagination-v2.module';
 
 @NgModule({
 	imports: [
 		TableComponentsModule,
 		TagsColorInputModule,
 		EventTypeRoutingModule,
-		ThemeModule,
+		SharedModule,
 		NbToastrModule,
-		EmployeeSelectorsModule,
 		NbCardModule,
 		FormsModule,
 		NbButtonModule,
@@ -46,10 +44,8 @@ import { PaginationV2Module } from '../../../@shared/pagination/pagination-v2/pa
 		EventTypeMutationModule,
 		UserFormsModule,
 		CardGridModule,
-		BackNavigationModule,
 		NbDialogModule.forChild(),
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
 	],

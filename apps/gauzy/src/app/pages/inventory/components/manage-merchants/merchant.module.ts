@@ -16,20 +16,22 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	CurrencyModule,
+	GauzyButtonActionModule,
+	LeafletMapModule,
+	LocationFormModule,
+	PaginationV2Module,
+	SharedModule,
+	TagsColorInputModule
+} from '@gauzy/ui-core/shared';
 import { MerchantComponent } from './merchant.component';
 import { MerchantFormComponent } from './merchant-form/merchant-form.component';
 import { MerchantTableComponent } from './merchant-table/merchant-table.component';
 import { MerchantRoutingModule } from './merchant-routing.module';
-import { ThemeModule } from './../../../../@theme/theme.module';
-import { CardGridModule } from './../../../../@shared/card-grid/card-grid.module';
-import { GauzyButtonActionModule } from './../../../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { HeaderTitleModule } from './../../../../@shared/components/header-title/header-title.module';
-import { PaginationV2Module } from '../../../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { SharedModule } from './../../../../@shared/shared.module';
-import { TagsColorInputModule } from './../../../../@shared/tags/tags-color-input/tags-color-input.module';
 import { InventoryTableComponentsModule } from '../inventory-table-components';
-import { CurrencyModule, LeafletMapModule, LocationFormModule } from '@gauzy/ui-sdk/shared';
 
 const NB_MODULES = [
 	NbCardModule,
@@ -56,12 +58,10 @@ const NB_MODULES = [
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
-		ThemeModule,
 		I18nTranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,
 		GauzyButtonActionModule,
-		HeaderTitleModule,
 		InventoryTableComponentsModule,
 		LeafletMapModule,
 		LocationFormModule,

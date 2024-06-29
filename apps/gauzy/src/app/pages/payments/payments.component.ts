@@ -13,8 +13,8 @@ import {
 	ErrorHandlingService,
 	ServerDataSource,
 	ToastrService
-} from '@gauzy/ui-sdk/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-sdk/common';
+} from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import { environment as ENV } from '@gauzy/ui-config';
 import {
 	IPayment,
@@ -25,27 +25,23 @@ import {
 	IOrganizationContact,
 	IDateRangePicker
 } from '@gauzy/contracts';
-import {
-	IPaginationBase,
-	PaginationFilterBaseComponent
-} from '../../@shared/pagination/pagination-filter-base.component';
-import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
-import { DeleteConfirmationComponent } from '../../@shared/user/forms';
+import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-core/core';
 import {
 	ContactLinksComponent,
 	DateViewComponent,
+	DeleteConfirmationComponent,
+	IPaginationBase,
 	IncomeExpenseAmountComponent,
-	TagsOnlyComponent
-} from '../../@shared/table-components';
-import { StatusBadgeComponent } from '../../@shared/status-badge';
-import { InvoiceEstimateHistoryService, PaymentService } from '@gauzy/ui-sdk/core';
-import {
 	InputFilterComponent,
 	OrganizationContactFilterComponent,
+	PaginationFilterBaseComponent,
 	PaymentMethodFilterComponent,
-	TagsColorFilterComponent
-} from '../../@shared/table-filters';
-import { getAdjustDateRangeFutureAllowed } from '../../@theme/components/header/selectors/date-range-picker';
+	StatusBadgeComponent,
+	TagsColorFilterComponent,
+	TagsOnlyComponent,
+	getAdjustDateRangeFutureAllowed
+} from '@gauzy/ui-core/shared';
+import { PaymentMutationComponent } from '../invoices/invoice-payments/payment-mutation/payment-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -211,8 +207,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 		}
 		this.loading = true;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
 		this.smartTableSource = new ServerDataSource(this.httpClient, {

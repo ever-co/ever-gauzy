@@ -8,9 +8,9 @@ import {
 	IReport,
 	UpdateReportMenuInput
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-sdk/common';
+import { toParams } from '@gauzy/ui-core/common';
 import { Query, Store, StoreConfig } from '@datorama/akita';
-import { API_PREFIX } from '@gauzy/ui-sdk/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
 import { firstValueFrom } from 'rxjs';
 
 export function initialReportFilterState(): IReport[] {

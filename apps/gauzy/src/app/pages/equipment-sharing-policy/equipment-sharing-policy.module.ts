@@ -1,4 +1,3 @@
-import { CardGridModule } from './../../@shared/card-grid/card-grid.module';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -15,25 +14,24 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { ThemeModule } from '../../@theme/theme.module';
-import { SharedModule } from '../../@shared/shared.module';
-import { BackNavigationModule } from '../../@shared/back-navigation/back-navigation.module';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import {
+	CardGridModule,
+	EquipmentSharingPolicyMutationModule,
+	GauzyButtonActionModule,
+	PaginationV2Module,
+	SharedModule,
+	TableComponentsModule
+} from '@gauzy/ui-core/shared';
 import { EquipmentSharingPolicyComponent } from './equipment-sharing-policy.component';
-import { EquipmentSharingPolicyService } from '@gauzy/ui-sdk/core';
 import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.routing.module';
-import { EquipmentSharingPolicyMutationModule } from '../../@shared/equipment-sharing-policy/equipment-sharing-policy-mutation.module';
-import { I18nTranslateModule } from '@gauzy/ui-sdk/i18n';
-import { HeaderTitleModule } from '../../@shared/components/header-title/header-title.module';
-import { GauzyButtonActionModule } from '../../@shared/gauzy-button-action/gauzy-button-action.module';
-import { PaginationV2Module } from '../../@shared/pagination/pagination-v2/pagination-v2.module';
-import { TableComponentsModule } from '../../@shared/table-components/table-components.module';
 
 @NgModule({
 	imports: [
 		CommonModule,
 		SharedModule,
-		ThemeModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -49,15 +47,13 @@ import { TableComponentsModule } from '../../@shared/table-components/table-comp
 		NbRadioModule,
 		CardGridModule,
 		EquipmentSharingPolicyMutationModule,
-		BackNavigationModule,
 		EquipmentSharingPolicyRoutingModule,
 		I18nTranslateModule.forChild(),
-		HeaderTitleModule,
+		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationV2Module,
 		TableComponentsModule
 	],
-	declarations: [EquipmentSharingPolicyComponent],
-	providers: [EquipmentSharingPolicyService]
+	declarations: [EquipmentSharingPolicyComponent]
 })
 export class EquipmentSharingPolicyModule {}

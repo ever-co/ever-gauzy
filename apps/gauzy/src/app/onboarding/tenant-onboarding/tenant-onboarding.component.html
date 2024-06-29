@@ -1,0 +1,13 @@
+<gauzy-switch-theme class="switch-theme" [hasText]="false"></gauzy-switch-theme>
+
+<div class="logo">
+	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
+	{{ 'ONBOARDING.FIRST_ORGANIZATION' | translate }}
+</div>
+
+<ga-organizations-step-form
+	class="step-form"
+	[loading]="loading"
+	[isOnboarding]="true"
+	(createOrganization)="onboardUser($event)"
+></ga-organizations-step-form>
