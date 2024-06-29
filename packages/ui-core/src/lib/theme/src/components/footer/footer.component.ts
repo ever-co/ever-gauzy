@@ -31,8 +31,8 @@ export class FooterComponent extends TranslationBaseComponent implements OnInit 
 		super(translationService);
 
 		this.companyName = environment.COMPANY_NAME;
-		this.companySite = environment.COMPANY_SITE;
 		this.companyLink = environment.COMPANY_LINK;
+		this.companySite = environment.COMPANY_SITE_NAME;
 		this.companySiteLink = environment.COMPANY_SITE_LINK;
 		this.companyGithubLink = environment.COMPANY_GITHUB_LINK;
 		this.companyGitlabLink = environment.COMPANY_GITLAB_LINK;

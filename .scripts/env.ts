@@ -81,8 +81,8 @@ export type Env = Readonly<{
 	NO_INTERNET_LOGO: string;
 
 	COMPANY_NAME: string;
-	COMPANY_SITE: string;
 	COMPANY_LINK: string;
+	COMPANY_SITE_NAME: string;
 	COMPANY_SITE_LINK: string;
 	COMPANY_GITHUB_LINK: string;
 	COMPANY_GITLAB_LINK: string;
@@ -222,11 +222,11 @@ export const env: Env = cleanEnv(
 		COMPANY_NAME: str({
 			default: 'Ever Co. LTD'
 		}),
-		COMPANY_SITE: str({
-			default: 'Gauzy'
-		}),
 		COMPANY_LINK: str({
 			default: 'https://ever.co'
+		}),
+		COMPANY_SITE_NAME: str({
+			default: 'Gauzy'
 		}),
 		COMPANY_SITE_LINK: str({
 			default: 'https://gauzy.co'
@@ -244,7 +244,7 @@ export const env: Env = cleanEnv(
 			default: 'https://twitter.com/gauzyplatform'
 		}),
 		COMPANY_IN_LINK: str({
-			default: 'https://www.linkedin.com/company/ever-co'
+			default: 'https://www.linkedin.com/company/everhq'
 		}),
 		NO_INTERNET_LOGO: str({
 			default: 'assets/images/logos/logo_Gauzy.svg'
