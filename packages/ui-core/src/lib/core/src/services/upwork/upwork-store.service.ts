@@ -1,15 +1,14 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { tap, switchMap, map } from 'rxjs/operators';
-import moment from 'moment';
-import { IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
+import * as moment from 'moment';
+import { ID, IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/common';
 import { UpworkService } from './upwork.service';
 
-const TODAY = new Date();
 const DEFAULT_DATE_RANGE = {
 	start: new Date(moment().subtract(1, 'months').format('YYYY-MM-DD')),
-	end: TODAY
+	end: new Date()
 };
 
 const contractSettings = {
@@ -54,7 +53,7 @@ const contractSettings = {
 export class UpworkStoreService {
 	private _config$: BehaviorSubject<IUpworkApiConfig> = new BehaviorSubject(null);
 
-	private _contracts$: BehaviorSubject<IEngagement[]> = new BehaviorSubject(null);
+	private _contracts$: BehaviorSubject<IEngagement[]> = new BehaviorSubject([]);
 	public contracts$: Observable<IEngagement[]> = this._contracts$.asObservable();
 
 	private _selectedIntegrationId$: BehaviorSubject<string> = new BehaviorSubject(null);
@@ -62,7 +61,7 @@ export class UpworkStoreService {
 	private _contractsSettings$: BehaviorSubject<any> = new BehaviorSubject(contractSettings);
 	public contractsSettings$: Observable<any> = this._contractsSettings$.asObservable();
 
-	private employeeId: string;
+	private employeeId: ID;
 
 	private _dateRangeActivity$: BehaviorSubject<IUpworkDateRange> = new BehaviorSubject(DEFAULT_DATE_RANGE);
 	public dateRangeActivity$: Observable<IUpworkDateRange> = this._dateRangeActivity$.asObservable();
@@ -70,13 +69,19 @@ export class UpworkStoreService {
 	private _reports$: BehaviorSubject<any[]> = new BehaviorSubject(null);
 	public reports$: Observable<any> = this._reports$.asObservable();
 
-	constructor(private _upworkService: UpworkService, private _storeService: Store) {}
+	constructor(private readonly _upworkService: UpworkService, private readonly _storeService: Store) {}
 
+	/**
+	 * Retrieves contracts from Upwork service.
+	 *
+	 * @returns An observable stream of IEngagement[] representing contracts.
+	 */
 	getContracts(): Observable<IEngagement[]> {
 		const contracts$ = this._contracts$.getValue();
 		if (contracts$) {
-			return EMPTY;
+			return EMPTY; // Return empty observable if contracts$ already has a value
 		}
+
 		return this._config$.pipe(
 			switchMap((config) => (config ? this._upworkService.getContracts(config) : EMPTY)),
 			tap((contracts) => this._contracts$.next(contracts))
@@ -105,43 +110,61 @@ export class UpworkStoreService {
 		);
 	}
 
-	setSelectedIntegrationId(integrationId) {
+	/**
+	 * Sets the selected integration ID.
+	 * @param integrationId The ID of the integration to set.
+	 */
+	setSelectedIntegrationId(integrationId: ID): void {
 		this._selectedIntegrationId$.next(integrationId);
 	}
 
-	syncContracts(contracts) {
+	/**
+	 * Syncs contracts with Upwork.
+	 * @param contracts The contracts to sync.
+	 * @returns An observable that completes after syncing contracts.
+	 */
+	syncContracts(contracts: IEngagement[]) {
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const { id: organizationId } = this.getSelectedOrganization();
+		const { id: organizationId, tenantId } = this.getSelectedOrganization();
+
 		return this._upworkService.syncContracts({
 			integrationId,
 			organizationId,
+			tenantId,
 			contracts,
 			employeeId: this.employeeId
 		});
 	}
 
-	syncDataWithContractRelated(contracts) {
+	/**
+	 * Syncs data related to contracts with Upwork.
+	 * @param contracts The contracts to sync data for.
+	 * @returns An observable that completes after syncing data related to contracts.
+	 */
+	syncDataWithContractRelated(contracts: IEngagement[]): Observable<any> {
 		const config = this._config$.getValue();
 		const settings = this._contractsSettings$.getValue();
+
 		if (settings.onlyContracts) {
 			return this.syncContracts(contracts);
 		}
+
 		const entitiesToSync = settings.entitiesToSync.filter((entity) => entity.sync);
 		if (!entitiesToSync.length) {
-			return;
+			return EMPTY;
 		}
 
 		const integrationId = this._selectedIntegrationId$.getValue();
-		const { id: organizationId } = this.getSelectedOrganization();
+		const { id: organizationId, tenantId } = this.getSelectedOrganization();
 
-		//map contract provider to get authorize info
 		const { provider__reference: providerReferenceId, provider__id: providerId } = contracts.find(
-			(contract: IEngagement) => true
+			(contract: IEngagement) => true // Modify condition based on your logic to find provider details
 		);
 
 		return this._upworkService.syncContractsRelatedData({
 			integrationId,
 			organizationId,
+			tenantId,
 			contracts,
 			entitiesToSync,
 			config,
@@ -151,24 +174,41 @@ export class UpworkStoreService {
 		});
 	}
 
-	setSelectedEmployeeId(employeeId: string) {
+	/**
+	 * Sets the selected employee ID.
+	 * @param employeeId The ID of the employee to set.
+	 */
+	setSelectedEmployeeId(employeeId: ID) {
 		this.employeeId = employeeId;
 	}
 
-	setFilterDateRange({ start, end }: IUpworkDateRange) {
+	/**
+	 * Sets the filter date range for Upwork activities.
+	 * @param dateRange The date range to set.
+	 */
+	setFilterDateRange(dateRange: IUpworkDateRange): void {
+		const { start, end } = dateRange;
+
 		this._dateRangeActivity$.next({
 			start: start || DEFAULT_DATE_RANGE.start,
 			end: end || DEFAULT_DATE_RANGE.end
 		});
 	}
 
-	getConfig(findInput): Observable<IUpworkApiConfig> {
-		const { integrationId, organizationId, tenantId } = findInput;
+	/**
+	 * Gets the configuration for Upwork API.
+	 * @param input The input parameters to find the configuration.
+	 * @returns An observable of the Upwork API configuration.
+	 */
+	getConfig(input): Observable<IUpworkApiConfig> {
+		const { integrationId, organizationId, tenantId } = input;
 		this.setSelectedIntegrationId(integrationId);
+
 		const config$ = this._config$.getValue();
 		if (config$) {
 			return EMPTY;
 		}
+
 		const data = JSON.stringify({
 			filter: { ...{ organizationId, tenantId } }
 		});

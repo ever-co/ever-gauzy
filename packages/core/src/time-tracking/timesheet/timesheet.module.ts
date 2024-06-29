@@ -12,9 +12,7 @@ import { TimeSheetService } from './timesheet.service';
 import { Timesheet } from './timesheet.entity';
 
 @Module({
-	controllers: [
-		TimeSheetController
-	],
+	controllers: [TimeSheetController],
 	imports: [
 		TypeOrmModule.forFeature([Timesheet]),
 		MikroOrmModule.forFeature([Timesheet]),
@@ -24,14 +22,7 @@ import { Timesheet } from './timesheet.entity';
 		TimeSlotModule,
 		EmployeeModule
 	],
-	providers: [
-		TimeSheetService,
-		...CommandHandlers
-	],
-	exports: [
-		TimeSheetService,
-		TypeOrmModule,
-		MikroOrmModule
-	]
+	providers: [TimeSheetService, ...CommandHandlers],
+	exports: [TimeSheetService, TypeOrmModule, MikroOrmModule]
 })
-export class TimesheetModule { }
+export class TimesheetModule {}

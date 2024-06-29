@@ -306,7 +306,7 @@
 			"NAME": "Име",
 			"PHONE_NUMBER": "телефонен номер",
 			"WEBSITE": "Website",
-			"FIRST_NAME": "Име (незадължително)",
+			"FIRST_NAME": "Име",
 			"LAST_NAME": "Фамилия (незадължително)",
 			"FROM": "From",
 			"TO": "To",

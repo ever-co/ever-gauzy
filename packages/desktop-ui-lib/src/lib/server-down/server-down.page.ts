@@ -32,7 +32,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	}
 
 	public get companySite() {
-		return this.environment.COMPANY_SITE;
+		return this.environment.COMPANY_SITE_NAME;
 	}
 
 	private checkConnection() {

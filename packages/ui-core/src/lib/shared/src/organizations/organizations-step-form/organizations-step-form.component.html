@@ -1,8 +1,8 @@
-<nb-card>
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" nbSpinnerMessage="">
 	<nb-card-header>
-		<span *ngIf="closable" class="cancel"
-			><i class="fas fa-times" (click)="close()"></i
-		></span>
+		<span *ngIf="closable" class="cancel">
+			<i class="fas fa-times" (click)="close()"></i>
+		</span>
 		<h5 class="title">
 			{{ 'ORGANIZATIONS_PAGE.ORGANIZATION_ADD' | translate }}
 		</h5>
@@ -32,10 +32,7 @@
 								[ngStyle]="{
 									opacity: hoverState ? '1' : '0.3'
 								}"
-								*ngIf="
-									orgMainForm &&
-									orgMainForm.get('imageUrl').value
-								"
+								*ngIf="orgMainForm && orgMainForm.get('imageUrl').value"
 							>
 								<defs>
 									<path
@@ -44,31 +41,12 @@
 									/>
 								</defs>
 								<g fill="none" fill-rule="evenodd">
-									<circle
-										cx="34"
-										cy="34"
-										r="34"
-										fill="#0091FF"
-										opacity=".3"
-									/>
-									<circle
-										cx="34"
-										cy="34"
-										r="26"
-										fill="#0091FF"
-										opacity=".9"
-									/>
-									<use
-										fill="#FFF"
-										fill-rule="nonzero"
-										xlink:href="#a"
-									/>
+									<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+									<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+									<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 								</g>
 							</svg>
-							<div
-								class="image-overlay"
-								[ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"
-							></div>
+							<div class="image-overlay" [ngStyle]="{ opacity: hoverState ? '0.2' : '0' }"></div>
 							<ng-template [ngIf]="orgMainForm.get('imageUrl').value" [ngIfElse]="noImageTemplate">
 								<img
 									[src]="orgMainForm.get('imageUrl').value"
@@ -84,11 +62,7 @@
 							</ng-template>
 						</div>
 					</div>
-					<form
-						class="step-container"
-						[formGroup]="orgMainForm"
-						(ngSubmit)="orgMainForm.markAsDirty()"
-					>
+					<form class="step-container" [formGroup]="orgMainForm" (ngSubmit)="orgMainForm.markAsDirty()">
 						<div class="fields">
 							<div class="row">
 								<div class="col">
@@ -103,7 +77,9 @@
 											nbInput
 											formControlName="name"
 											[placeholder]="'FORM.LABELS.ORGANIZATION_NAME' | translate"
-											[status]="FormHelpers.isInvalidControl(orgMainForm, 'name') ? 'danger' : 'basic'"
+											[status]="
+												FormHelpers.isInvalidControl(orgMainForm, 'name') ? 'danger' : 'basic'
+											"
 										/>
 									</div>
 								</div>
@@ -205,41 +181,20 @@
 					</div>
 					<div class="leaflet col-7">
 						<ng-container *ngIf="stepper._selectedIndex === 1">
-							<ga-leaflet-map
-								#leafletTemplate
-								(mapClicked)="onMapClicked($event)"
-							></ga-leaflet-map>
+							<ga-leaflet-map #leafletTemplate (mapClicked)="onMapClicked($event)"></ga-leaflet-map>
 						</ng-container>
 					</div>
 					<div class="stepper-buttons two">
-						<button
-							nbButton
-							class="gray"
-							status="basic"
-							outline
-							nbStepperPrevious
-						>
+						<button nbButton class="gray" status="basic" outline nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<ng-template [ngIf]="locationFormBlank" [ngIfElse]="nextButton">
-							<button
-								nbButton
-								class="green"
-								status="basic"
-								outline
-								nbStepperNext
-							>
-								{{ 'BUTTONS.SKIP_CONTINUE' | translate: { label: 'address' } }}
+							<button nbButton class="green" status="basic" outline nbStepperNext>
+								{{ 'BUTTONS.SKIP_CONTINUE' | translate : { label: 'address' } }}
 							</button>
 						</ng-template>
 						<ng-template #nextButton>
-							<button
-								nbButton
-								class="green"
-								status="basic"
-								outline
-								nbStepperNext
-							>
+							<button nbButton class="green" status="basic" outline nbStepperNext>
 								{{ 'BUTTONS.NEXT' | translate }}
 							</button>
 						</ng-template>
@@ -253,11 +208,7 @@
 				<ng-template #bonus>
 					{{ 'SM_TABLE.BONUS' | translate }}
 				</ng-template>
-				<form
-					class="step-container"
-					[formGroup]="orgBonusForm"
-					(ngSubmit)="orgBonusForm.markAsDirty()"
-				>
+				<form class="step-container" [formGroup]="orgBonusForm" (ngSubmit)="orgBonusForm.markAsDirty()">
 					<div class="row justify-content-center">
 						<div [ngClass]="isOnboarding ? 'col-3' : 'col-6'">
 							<div class="form-group">
@@ -275,10 +226,7 @@
 									<nb-option [value]="null">
 										{{ 'SM_TABLE.NONE' | translate }}
 									</nb-option>
-									<nb-option
-										*ngFor="let type of defaultBonusTypes"
-										[value]="type"
-									>
+									<nb-option *ngFor="let type of defaultBonusTypes" [value]="type">
 										{{ 'SM_TABLE.' + type | translate }}
 									</nb-option>
 								</nb-select>
@@ -297,19 +245,17 @@
 									[placeholder]="'FORM.PLACEHOLDERS.BONUS_PERCENTAGE' | translate"
 									fullWidth
 									class="d-block"
-									[status]="FormHelpers.isInvalidControl(orgBonusForm, 'bonusPercentage') ? 'danger' : 'basic'"
+									[status]="
+										FormHelpers.isInvalidControl(orgBonusForm, 'bonusPercentage')
+											? 'danger'
+											: 'basic'
+									"
 								/>
 							</div>
 						</div>
 					</div>
 					<div class="stepper-buttons">
-						<button
-							nbButton
-							class="gray"
-							status="basic"
-							outline
-							nbStepperPrevious
-						>
+						<button nbButton class="gray" status="basic" outline nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<button
@@ -332,23 +278,17 @@
 				<ng-template #settings>
 					{{ 'ORGANIZATIONS_PAGE.SETTINGS' | translate }}
 				</ng-template>
-				<form
-					class="step-container"
-					[formGroup]="orgSettingsForm"
-					(ngSubmit)="orgSettingsForm.markAsDirty()"
-				>
+				<form class="step-container" [formGroup]="orgSettingsForm" (ngSubmit)="orgSettingsForm.markAsDirty()">
 					<div class="fields">
 						<div class="row">
 							<div class="col-6">
-								<ga-timezone-selector
-									formControlName="timeZone"
-								></ga-timezone-selector>
+								<ga-timezone-selector formControlName="timeZone"></ga-timezone-selector>
 							</div>
 							<div class="col-6">
 								<div class="form-group">
 									<label class="label" for="startWeekOnSelect">
 										{{ 'FORM.LABELS.START_WEEK_ON' | translate }}
-									</label >
+									</label>
 									<nb-select
 										class="d-block"
 										size="medium"
@@ -357,10 +297,7 @@
 										[placeholder]="'FORM.PLACEHOLDERS.START_WEEK_ON' | translate"
 										fullWidth="true"
 									>
-										<nb-option
-											*ngFor="let weekday of weekdays"
-											[value]="weekday"
-										>
+										<nb-option *ngFor="let weekday of weekdays" [value]="weekday">
 											{{ 'SM_TABLE.' + weekday | translate }}
 										</nb-option>
 									</nb-select>
@@ -416,7 +353,7 @@
 										formControlName="numberFormat"
 										fullWidth
 									>
-										<nb-option *ngFor="let numFormat of numberFormats " [value]="numFormat" >
+										<nb-option *ngFor="let numFormat of numberFormats" [value]="numFormat">
 											{{ numberFormatPreview(numFormat) }}
 										</nb-option>
 									</nb-select>
@@ -434,7 +371,7 @@
 										[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_FORMAT' | translate"
 										fullWidth
 									>
-										<nb-option *ngFor="let format of listOfDateFormats " [value]="format">
+										<nb-option *ngFor="let format of listOfDateFormats" [value]="format">
 											{{ dateFormatPreview(format) }}
 										</nb-option>
 									</nb-select>
@@ -501,20 +438,18 @@
 										[placeholder]="'FORM.PLACEHOLDERS.INVITE_EXPIRY_PERIOD' | translate"
 										fullWidth
 										class="d-block"
-										[status]="FormHelpers.isInvalidControl(orgSettingsForm, 'inviteExpiryPeriod') ? 'danger' : 'basic'"
+										[status]="
+											FormHelpers.isInvalidControl(orgSettingsForm, 'inviteExpiryPeriod')
+												? 'danger'
+												: 'basic'
+										"
 									/>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div class="stepper-buttons">
-						<button
-							nbButton
-							class="gray"
-							status="basic"
-							outline
-							nbStepperPrevious
-						>
+						<button nbButton class="gray" status="basic" outline nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<ng-template [ngIf]="isOnboarding" [ngIfElse]="addButton">
@@ -550,11 +485,7 @@
 				<ng-template #employeeFeature>
 					{{ 'ORGANIZATIONS_PAGE.REGISTER_AS_EMPLOYEE' | translate }}
 				</ng-template>
-				<form
-					class="step-container"
-					[formGroup]="employeeFeatureForm"
-					(ngSubmit)="submitEmployeeFeature()"
-				>
+				<form class="step-container" [formGroup]="employeeFeatureForm" (ngSubmit)="submitEmployeeFeature()">
 					<div class="fields">
 						<div class="row justify-content-center">
 							<div class="col-6">
@@ -599,21 +530,11 @@
 						</div>
 					</div>
 					<div class="stepper-buttons">
-						<button
-							nbButton
-							class="gray"
-							status="basic"
-							outline
-							nbStepperPrevious
-						>
+						<button nbButton class="gray" status="basic" outline nbStepperPrevious>
 							{{ 'BUTTONS.PREVIOUS' | translate }}
 						</button>
 						<ng-template [ngIf]="isOnboarding">
-							<button
-								[disabled]="employeeFeatureForm.invalid"
-								nbButton
-								status="success"
-							>
+							<button [disabled]="employeeFeatureForm.invalid" nbButton status="success">
 								{{ 'BUTTONS.ADD' | translate }}
 							</button>
 						</ng-template>

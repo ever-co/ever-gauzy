@@ -13,9 +13,7 @@ import {
 	PermissionsEnum,
 	TimeFormatEnum
 } from '@gauzy/contracts';
-import { isNotEmpty, progressStatus } from '@gauzy/ui-core/common';
-import { TimeLogsLabel } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/common';
+import { TimeLogsLabel, isNotEmpty, progressStatus, Store } from '@gauzy/ui-core/common';
 import { TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { ViewTimeLogModalComponent } from '../../view-time-log-modal';
 import { TimeZoneService } from '../../gauzy-filters/timezone-filter';

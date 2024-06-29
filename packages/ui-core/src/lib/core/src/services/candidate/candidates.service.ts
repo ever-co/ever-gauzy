@@ -23,7 +23,11 @@ export class CandidatesService {
 		});
 	}
 
-	getCandidateById(id: ICandidate['id'], relations: string[] = [], where?: ICandidateFindInput): Promise<ICandidate> {
+	getCandidateById(
+		id: ICandidate['id'],
+		relations: string[] = [],
+		where: ICandidateFindInput = {}
+	): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.get<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				params: toParams({ where, relations })
@@ -54,11 +58,11 @@ export class CandidatesService {
 	 * @param body
 	 * @returns
 	 */
-	setCandidateAsArchived(id: ICandidate['id'], body: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
+	setCandidateAsArchived(id: ICandidate['id'], input: IBasePerTenantAndOrganizationEntityModel): Promise<ICandidate> {
 		return firstValueFrom(
 			this.http.put<ICandidate>(`${API_PREFIX}/candidate/${id}`, {
 				isArchived: true,
-				...body
+				...input
 			})
 		);
 	}

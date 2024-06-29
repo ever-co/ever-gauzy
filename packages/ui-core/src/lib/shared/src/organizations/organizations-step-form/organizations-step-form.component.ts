@@ -56,7 +56,6 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 	regionCode: string;
 	numberFormats = ['USD', 'BGN', 'ILS'];
 	listOfDateFormats = DEFAULT_DATE_FORMATS;
-
 	user: IUser;
 	retrieveEmail: string;
 
@@ -87,6 +86,8 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 	@Input() set closable(value: boolean) {
 		this._closable = value;
 	}
+
+	@Input() loading: boolean = false;
 
 	/*
 	 * Organization Main Mutation Form

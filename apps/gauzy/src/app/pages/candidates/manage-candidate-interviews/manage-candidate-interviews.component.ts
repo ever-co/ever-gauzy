@@ -116,12 +116,14 @@ export class ManageCandidateInterviewsComponent
 		const { id: organizationId } = this.organization;
 
 		this.interviews = (
-			await this.candidateInterviewService.getAll(
-				['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
-				{
-					organizationId,
-					tenantId
-				}
+			await firstValueFrom(
+				this.candidateInterviewService.getAll(
+					['feedbacks', 'interviewers', 'technologies', 'personalQualities', 'candidate'],
+					{
+						organizationId,
+						tenantId
+					}
+				)
 			)
 		).items;
 	}
