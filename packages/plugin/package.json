@@ -36,7 +36,7 @@
 		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
-		"@types/node": "^17.0.33",
+		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
