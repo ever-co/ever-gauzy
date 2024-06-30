@@ -7,8 +7,8 @@ function replaceFilesForProduction() {
 	console.log(`Current NODE_ENV: ${process.env['NODE_ENV']}`);
 
 	if (env === 'production') {
-		const sourceFile = path.join(path.resolve(`./src/lib/environments`), 'environment.prod.ts');
-		const targetFile = path.join(path.resolve(`./src/lib/environments`), 'environment.ts');
+		const sourceFile = path.join(path.resolve('./src/environments'), 'environment.prod.ts');
+		const targetFile = path.join(path.resolve('./src/environments'), 'environment.ts');
 
 		fs.copyFileSync(sourceFile, targetFile);
 		console.log(`Replaced environment file with ${sourceFile}`);

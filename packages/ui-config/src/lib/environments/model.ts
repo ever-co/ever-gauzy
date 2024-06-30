@@ -14,8 +14,8 @@ export interface Environment {
 	PLATFORM_LOGO?: string;
 
 	COMPANY_NAME: string;
-	COMPANY_SITE: string;
 	COMPANY_LINK: string;
+	COMPANY_SITE_NAME: string;
 	COMPANY_SITE_LINK: string;
 	COMPANY_GITHUB_LINK: string;
 	COMPANY_GITLAB_LINK: string;

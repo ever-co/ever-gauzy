@@ -84,9 +84,9 @@ jobs:
           username: ${{ secrets.CW_DOCKER_USER }}
           password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
 
-      - name: Push to CW Registry
-        run: |
-          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
+    #  - name: Push to CW Registry
+    #    run: |
+    #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
 
   gauzy-webapp:
     runs-on: buildjet-8vcpu-ubuntu-2204
@@ -161,6 +161,6 @@ jobs:
           username: ${{ secrets.CW_DOCKER_USER }}
           password: ${{ secrets.CW_DOCKER_USER_PASSWORD }}
 
-      - name: Push to CW Registry
-        run: |
-          docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
+    #  - name: Push to CW Registry
+    #    run: |
+    #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
