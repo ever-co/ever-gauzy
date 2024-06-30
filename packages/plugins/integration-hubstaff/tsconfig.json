@@ -1,13 +1,16 @@
 {
-	"extends": "../../../tsconfig.json",
+	"extends": "../../../tsconfig.base.json",
 	"compilerOptions": {
-		"declaration": true,
-		"sourceMap": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "jest"]
+		"module": "commonjs"
 	},
-	"include": ["./src/**/*.ts"],
-	"exclude": ["node_modules", "dist"]
+	"files": [],
+	"include": [],
+	"references": [
+		{
+			"path": "./tsconfig.lib.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	]
 }

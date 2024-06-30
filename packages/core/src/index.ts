@@ -30,13 +30,25 @@ export {
 
 export * from './employee';
 
+export { IntegrationModule, IntegrationService } from './integration';
 export {
 	IntegrationTenantModule,
 	IntegrationTenantService,
 	IntegrationTenantGetCommand,
 	IntegrationTenantUpdateOrCreateCommand
 } from './integration-tenant';
-export { IntegrationMapModule, IntegrationMapService, IntegrationMapSyncEntityCommand } from './integration-map';
+export {
+	IntegrationMapModule,
+	IntegrationMapService,
+	IntegrationMapSyncActivityCommand,
+	IntegrationMapSyncEntityCommand,
+	IntegrationMapSyncOrganizationCommand,
+	IntegrationMapSyncProjectCommand,
+	IntegrationMapSyncScreenshotCommand,
+	IntegrationMapSyncTaskCommand,
+	IntegrationMapSyncTimeLogCommand,
+	IntegrationMapSyncTimeSlotCommand
+} from './integration-map';
 export {
 	IntegrationSettingModule,
 	IntegrationSettingService,
@@ -44,6 +56,16 @@ export {
 	IntegrationSettingGetCommand,
 	IntegrationSettingGetManyCommand
 } from './integration-setting';
+export {
+	IntegrationEntitySettingModule,
+	IntegrationEntitySettingService,
+	DEFAULT_ENTITY_SETTINGS
+} from './integration-entity-setting';
+export {
+	IntegrationEntitySettingTiedModule,
+	IntegrationEntitySettingTiedService,
+	PROJECT_TIED_ENTITIES
+} from './integration-entity-setting-tied';
 
 export { IncomeModule, IncomeService, IncomeCreateCommand } from './income';
 export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './expense';

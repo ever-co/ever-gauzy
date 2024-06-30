@@ -5,6 +5,7 @@ import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
 import { JobProposalPlugin } from '@gauzy/job-proposal-plugin';
 import { JobSearchPlugin } from '@gauzy/job-search-plugin';
 import { IntegrationUpworkPlugin } from '@gauzy/integration-upwork';
+import { IntegrationHubstaffPlugin } from '@gauzy/integration-hubstaff';
 import { SentryTracing as SentryPlugin } from './sentry';
 
 const { jitsu, sentry } = environment;
@@ -33,5 +34,7 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
 	JobSearchPlugin,
 	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
-	IntegrationUpworkPlugin
+	IntegrationUpworkPlugin,
+	// Indicates the inclusion or intention to use the IntegrationHubstaffPlugin in the codebase.
+	IntegrationHubstaffPlugin
 ];
