@@ -2,7 +2,7 @@ import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { Proposal } from './proposal/proposal.entity';
-import { ProposalModule } from './proposal/proposal.moule';
+import { ProposalModule } from './proposal/proposal.module';
 import { EmployeeProposalTemplateModule } from './proposal-template/employee-proposal-template.module';
 import { EmployeeProposalTemplate } from './proposal-template/employee-proposal-template.entity';
 import { ProposalSeederService } from './proposal/proposal-seeder.service';
@@ -25,13 +25,10 @@ import { ProposalSeederService } from './proposal/proposal-seeder.service';
 	}
 })
 export class JobProposalPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
-
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
-	constructor(
-		private readonly _proposalSeederService: ProposalSeederService
-	) { }
+	constructor(private readonly _proposalSeederService: ProposalSeederService) {}
 
 	/**
 	 * Called when the plugin is being initialized.
