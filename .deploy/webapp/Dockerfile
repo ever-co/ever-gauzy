@@ -41,14 +41,14 @@ ARG PLATFORM_TOS_URL
 ARG PROJECT_REPO
 ARG I18N_FILES_URL
 ARG COMPANY_NAME
-ARG COMPANY_SITE
 ARG COMPANY_LINK
+ARG COMPANY_SITE_NAME
 ARG COMPANY_SITE_LINK
 ARG COMPANY_GITHUB_LINK
 ARG COMPANY_GITLAB_LINK
 ARG COMPANY_FACEBOOK_LINK
 ARG COMPANY_TWITTER_LINK
-ARG COMPANY_LINKEDIN_LINK
+ARG COMPANY_IN_LINK
 ARG PLATFORM_WEBSITE_URL
 ARG PLATFORM_WEBSITE_DOWNLOAD_URL
 ARG DESKTOP_APP_DOWNLOAD_LINK_APPLE
@@ -72,7 +72,7 @@ RUN apk --update add bash && \
 RUN node --version
 RUN npm --version
 
-COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh /
+COPY wait .deploy/webapp/entrypoint.compose.sh .deploy/webapp/entrypoint.prod.sh .deploy/webapp/replacements.sed /
 
 RUN chmod +x /wait /entrypoint.compose.sh /entrypoint.prod.sh && dos2unix /entrypoint.compose.sh && dos2unix /entrypoint.prod.sh
 
@@ -120,7 +120,7 @@ USER node:node
 
 WORKDIR /srv/gauzy
 
-COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /
+COPY --chown=node:node --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed  /
 COPY --chown=node:node --from=dependencies /srv/gauzy .
 COPY . .
 
@@ -149,7 +149,7 @@ FROM nginx:alpine AS production
 
 WORKDIR /srv/gauzy
 
-COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh ./
+COPY --chown=nginx:nginx --from=dependencies /wait /entrypoint.compose.sh /entrypoint.prod.sh /replacements.sed ./
 COPY --chown=nginx:nginx .deploy/webapp/nginx.compose.conf /etc/nginx/conf.d/compose.conf.template
 COPY --chown=nginx:nginx .deploy/webapp/nginx.prod.conf /etc/nginx/conf.d/prod.conf.template
 COPY --chown=nginx:nginx --from=build /srv/gauzy/dist/apps/gauzy .
@@ -198,14 +198,14 @@ ENV PLATFORM_TOS_URL=${PLATFORM_TOS_URL:-"https://gauzy.co/tos"}
 ENV PROJECT_REPO=${PROJECT_REPO:-"https://github.com/ever-co/ever-gauzy.git"}
 ENV I18N_FILES_URL=${I18N_FILES_URL}
 ENV COMPANY_NAME=${COMPANY_NAME:-"Ever Co. LTD"}
-ENV COMPANY_SITE=${COMPANY_SITE:-"Gauzy"}
 ENV COMPANY_LINK=${COMPANY_LINK:-"https://ever.co"}
+ENV COMPANY_SITE_NAME=${COMPANY_SITE_NAME:-"Gauzy"}
 ENV COMPANY_SITE_LINK=${COMPANY_SITE_LINK:-"https://gauzy.co"}
 ENV COMPANY_GITHUB_LINK=${COMPANY_GITHUB_LINK:-"https://github.com/ever-co"}
 ENV COMPANY_GITLAB_LINK=${COMPANY_GITLAB_LINK:-"https://gitlab.com/ever-co"}
 ENV COMPANY_FACEBOOK_LINK=${COMPANY_FACEBOOK_LINK:-"https://www.facebook.com/gauzyplatform"}
 ENV COMPANY_TWITTER_LINK=${COMPANY_TWITTER_LINK:-"https://twitter.com/gauzyplatform"}
-ENV COMPANY_LINKEDIN_LINK=${COMPANY_LINKEDIN_LINK:-"https://www.linkedin.com/company/ever-co"}
+ENV COMPANY_IN_LINK=${COMPANY_IN_LINK:-"https://www.linkedin.com/company/everhq"}
 ENV PLATFORM_WEBSITE_URL=${PLATFORM_WEBSITE_URL:-"https://gauzy.co"}
 ENV PLATFORM_WEBSITE_DOWNLOAD_URL=${PLATFORM_WEBSITE_DOWNLOAD_URL:-"https://gauzy.co/downloads"}
 ENV DESKTOP_APP_DOWNLOAD_LINK_APPLE=${DESKTOP_APP_DOWNLOAD_LINK_APPLE:-"https://gauzy.co/downloads#desktop/apple"}

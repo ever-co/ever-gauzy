@@ -30,4 +30,4 @@ import { IntegrationMap } from './integration-map.entity';
 	providers: [IntegrationMapService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, IntegrationMapService]
 })
-export class IntegrationMapModule { }
+export class IntegrationMapModule {}

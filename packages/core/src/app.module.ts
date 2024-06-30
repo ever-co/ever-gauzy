@@ -75,7 +75,6 @@ import { EquipmentSharingModule } from './equipment-sharing/equipment-sharing.mo
 import { OrganizationEmploymentTypeModule } from './organization-employment-type/organization-employment-type.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ExpenseCategoriesModule } from './expense-categories/expense-categories.module';
-import { UpworkModule } from './upwork/upwork.module';
 import { CandidateModule } from './candidate/candidate.module';
 import { ProductCategoryModule } from './product-category/product-category.module';
 import { ProductTypeModule } from './product-type/product-type.module';
@@ -201,84 +200,84 @@ if (environment.THROTTLE_ENABLED) {
 		}),
 		...(process.env.REDIS_ENABLED === 'true'
 			? [
-				CacheModule.registerAsync({
-					isGlobal: true,
-					useFactory: async () => {
-						const url =
-							process.env.REDIS_URL ||
-							(process.env.REDIS_TLS === 'true'
-								? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-								: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
+					CacheModule.registerAsync({
+						isGlobal: true,
+						useFactory: async () => {
+							const url =
+								process.env.REDIS_URL ||
+								(process.env.REDIS_TLS === 'true'
+									? `rediss://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
+									: `redis://${process.env.REDIS_USER}:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`);
 
-						console.log('REDIS_URL: ', url);
+							console.log('REDIS_URL: ', url);
 
-						let host, port, username, password;
+							let host, port, username, password;
 
-						const isTls = url.startsWith('rediss://');
+							const isTls = url.startsWith('rediss://');
 
-						// Removing the protocol part
-						let authPart = url.split('://')[1];
+							// Removing the protocol part
+							let authPart = url.split('://')[1];
 
-						// Check if the URL contains '@' (indicating the presence of username/password)
-						if (authPart.includes('@')) {
-							// Splitting user:password and host:port
-							let [userPass, hostPort] = authPart.split('@');
-							[username, password] = userPass.split(':');
-							[host, port] = hostPort.split(':');
-						} else {
-							// If there is no '@', it means there is no username/password
-							[host, port] = authPart.split(':');
+							// Check if the URL contains '@' (indicating the presence of username/password)
+							if (authPart.includes('@')) {
+								// Splitting user:password and host:port
+								let [userPass, hostPort] = authPart.split('@');
+								[username, password] = userPass.split(':');
+								[host, port] = hostPort.split(':');
+							} else {
+								// If there is no '@', it means there is no username/password
+								[host, port] = authPart.split(':');
+							}
+
+							port = parseInt(port);
+
+							const storeOptions = {
+								url: url,
+								username: username,
+								password: password,
+								isolationPoolOptions: {
+									min: 1,
+									max: 100
+								},
+								socket: {
+									tls: isTls,
+									host: host,
+									port: port,
+									passphrase: password,
+									rejectUnauthorized: process.env.NODE_ENV === 'production'
+								},
+								ttl: 60 * 60 * 24 * 7 // 1 week,
+							};
+
+							const store = await redisStore(storeOptions);
+
+							store.client
+								.on('error', (err) => {
+									console.log('Redis Cache Client Error: ', err);
+								})
+								.on('connect', () => {
+									console.log('Redis Cache Client Connected');
+								})
+								.on('ready', () => {
+									console.log('Redis Cache Client Ready');
+								})
+								.on('reconnecting', () => {
+									console.log('Redis Cache Client Reconnecting');
+								})
+								.on('end', () => {
+									console.log('Redis Cache Client End');
+								});
+
+							// ping Redis
+							const res = await store.client.ping();
+							console.log('Redis Cache Client Cache Ping: ', res);
+
+							return {
+								store: () => store
+							};
 						}
-
-						port = parseInt(port);
-
-						const storeOptions = {
-							url: url,
-							username: username,
-							password: password,
-							isolationPoolOptions: {
-								min: 1,
-								max: 100
-							},
-							socket: {
-								tls: isTls,
-								host: host,
-								port: port,
-								passphrase: password,
-								rejectUnauthorized: process.env.NODE_ENV === 'production'
-							},
-							ttl: 60 * 60 * 24 * 7 // 1 week,
-						};
-
-						const store = await redisStore(storeOptions);
-
-						store.client
-							.on('error', (err) => {
-								console.log('Redis Cache Client Error: ', err);
-							})
-							.on('connect', () => {
-								console.log('Redis Cache Client Connected');
-							})
-							.on('ready', () => {
-								console.log('Redis Cache Client Ready');
-							})
-							.on('reconnecting', () => {
-								console.log('Redis Cache Client Reconnecting');
-							})
-							.on('end', () => {
-								console.log('Redis Cache Client End');
-							});
-
-						// ping Redis
-						const res = await store.client.ping();
-						console.log('Redis Cache Client Cache Ping: ', res);
-
-						return {
-							store: () => store
-						};
-					}
-				})
-			]
+					})
+			  ]
 			: [CacheModule.register({ isGlobal: true })]),
 		ServeStaticModule.forRootAsync({
 			useFactory: async (configService: ConfigService): Promise<ServeStaticModuleOptions[]> => {
@@ -324,18 +323,18 @@ if (environment.THROTTLE_ENABLED) {
 		}),
 		...(environment.THROTTLE_ENABLED
 			? [
-				ThrottlerModule.forRootAsync({
-					inject: [ConfigService],
-					useFactory: () => {
-						return [
-							{
-								ttl: environment.THROTTLE_TTL,
-								limit: environment.THROTTLE_LIMIT
-							}
-						];
-					}
-				})
-			]
+					ThrottlerModule.forRootAsync({
+						inject: [ConfigService],
+						useFactory: () => {
+							return [
+								{
+									ttl: environment.THROTTLE_TTL,
+									limit: environment.THROTTLE_LIMIT
+								}
+							];
+						}
+					})
+			  ]
 			: []),
 		HealthModule,
 		CoreModule,
@@ -430,7 +429,6 @@ if (environment.THROTTLE_ENABLED) {
 		TimeTrackingModule,
 		FeatureModule,
 		ReportModule,
-		UpworkModule,
 		ExpenseCategoriesModule,
 		ProductCategoryModule,
 		ProductTypeModule,
@@ -467,11 +465,11 @@ if (environment.THROTTLE_ENABLED) {
 		AppService,
 		...(environment.THROTTLE_ENABLED
 			? [
-				{
-					provide: APP_GUARD,
-					useClass: ThrottlerBehindProxyGuard
-				}
-			]
+					{
+						provide: APP_GUARD,
+						useClass: ThrottlerBehindProxyGuard
+					}
+			  ]
 			: []),
 		{
 			provide: APP_INTERCEPTOR,

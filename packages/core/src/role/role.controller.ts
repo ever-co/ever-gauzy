@@ -28,7 +28,7 @@ import { Permissions } from './../shared/decorators';
 @ApiTags('Role')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.CHANGE_ROLES_PERMISSIONS)
-@Controller()
+@Controller('/roles')
 export class RoleController extends CrudController<Role> {
 	constructor(private readonly roleService: RoleService) {
 		super(roleService);

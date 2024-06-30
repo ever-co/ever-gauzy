@@ -34,6 +34,7 @@
 		"@gauzy/plugin": "^0.1.0",
 		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.3.7",
+		"@nestjs/cqrs": "^10.2.7",
 		"@nestjs/mapped-types": "^2.0.5",
 		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
@@ -42,7 +43,7 @@
 		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
-		"@types/node": "^17.0.33",
+		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	}

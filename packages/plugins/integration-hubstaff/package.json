@@ -8,6 +8,14 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -31,7 +39,7 @@
 		"@gauzy/contracts": "^0.1.0"
 	},
 	"devDependencies": {
-		"@types/node": "^17.0.33",
+		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	}

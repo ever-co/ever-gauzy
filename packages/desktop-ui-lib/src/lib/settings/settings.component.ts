@@ -493,11 +493,9 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		this._simpleScreenshotNotification$ = new BehaviorSubject(false);
 		this._isRestart$ = new BehaviorSubject(false);
 		this.companyName = this._environment.COMPANY_NAME;
-		this.companySite = this._environment.COMPANY_SITE;
+		this.companySite = this._environment.COMPANY_SITE_NAME;
 		this.companyLink = this._environment.COMPANY_LINK;
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO
-		);
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 
 	ngOnInit(): void {
@@ -521,9 +519,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			.subscribe();
 		this.isRestart$
 			.pipe(
-				tap((isRestart: boolean) =>
-					this._restartDisable$.next(isRestart)
-				),
+				tap((isRestart: boolean) => this._restartDisable$.next(isRestart)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -577,12 +573,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 				this.menus = this.isServer
 					? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
 					: [
-						...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
-						'TIMER_TRACKER.TIMER',
-						'TIMER_TRACKER.SETTINGS.UPDATE',
-						'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
-						'MENU.ABOUT'
-					];
+							...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
+							'TIMER_TRACKER.TIMER',
+							'TIMER_TRACKER.SETTINGS.UPDATE',
+							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+							'MENU.ABOUT'
+					  ];
 				const lastMenu =
 					this._selectedMenu && this.menus.includes(this._selectedMenu) ? this._selectedMenu : this.menus[0];
 				this._selectedMenu$.next(lastMenu);
@@ -666,7 +662,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					{
 						current: Math.floor(arg.transferred / 1000000),
 						total: Math.floor(arg.total / 1000000),
-						bandwidth: Math.floor(arg.bytesPerSecond / 1000),
+						bandwidth: Math.floor(arg.bytesPerSecond / 1000)
 					}
 				);
 				this.scrollToBottom();
@@ -735,26 +731,17 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this.electronService.ipcRenderer.on(
-			'preferred_language_change',
-			(event, language: LanguagesEnum) => {
-				this._ngZone.run(() => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-					TimeTrackerDateManager.locale(language);
-				});
-			}
-		);
+		this.electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
+			this._ngZone.run(() => {
+				this._languageSelectorService.setLanguage(language, this._translateService);
+				TimeTrackerDateManager.locale(language);
+			});
+		});
 
 		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
 			.pipe(
 				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
+					this._languageSelectorService.setLanguage(language, this._translateService);
 					TimeTrackerDateManager.locale(language);
 				}),
 				untilDestroyed(this)
@@ -1006,19 +993,14 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		let isLogout = true;
 
 		if (this.appSetting?.timerStarted) {
-			isLogout = await this.electronService.ipcRenderer.invoke(
-				'LOGOUT_STOP'
-			);
+			isLogout = await this.electronService.ipcRenderer.invoke('LOGOUT_STOP');
 		} else {
 			localStorage.clear();
 		}
 
 		if (isLogout) {
 			console.log('On Logout');
-			this.electronService.ipcRenderer.send(
-				'logout_desktop',
-				isAfterUpgrade
-			);
+			this.electronService.ipcRenderer.send('logout_desktop', isAfterUpgrade);
 		} else {
 			console.log('Logout Cancelled');
 		}

@@ -2,11 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import * as UpworkApi from 'upwork-api';
 import { Offers } from 'upwork-api/lib/routers/hr/freelancers/offers.js';
 import { Applications } from 'upwork-api/lib/routers/hr/freelancers/applications.js';
-import {
-	IUpworkApiConfig,
-	IUpworkProposalStatusEnum,
-	IUpworkOfferStatusEnum
-} from '@gauzy/contracts';
+import { IUpworkApiConfig, IUpworkProposalStatusEnum, IUpworkOfferStatusEnum } from '@gauzy/contracts';
 
 @Injectable()
 export class UpworkOffersService {
@@ -16,10 +12,7 @@ export class UpworkOffersService {
 	 * List freelancer’s offers
 	 * This call retrieves a list of offers received by a freelancer.
 	 */
-	public async getOffersListByFreelancer(
-		config: IUpworkApiConfig,
-		status: IUpworkOfferStatusEnum
-	): Promise<any> {
+	public async getOffersListByFreelancer(config: IUpworkApiConfig, status: IUpworkOfferStatusEnum): Promise<any> {
 		try {
 			const api = new UpworkApi(config);
 			const offers = new Offers(api);
@@ -27,17 +20,10 @@ export class UpworkOffersService {
 				status,
 				offset: 0
 			};
-
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						offers.getList(params, (err, data) =>
-							err ? reject(err) : resolve(data)
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					offers.getList(params, (error: any, data: any) => (error ? reject(error) : resolve(data)));
+				});
 			});
 		} catch (error) {
 			throw new BadRequestException('Cannot get offers list');
@@ -48,24 +34,15 @@ export class UpworkOffersService {
 	 * Get freelancer’s offer
 	 * This call retrieves details about a specific offer received by a freelancer.
 	 */
-	public async getOfferByKey(
-		config: IUpworkApiConfig,
-		offerKey: string
-	): Promise<any> {
+	public async getOfferByKey(config: IUpworkApiConfig, offerKey: string): Promise<any> {
 		try {
 			const api = new UpworkApi(config);
 			const offers = new Offers(api);
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						offers.getSpecific(offerKey, (err, data) =>
-							err ? reject(err) : resolve(data)
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					offers.getSpecific(offerKey, (error: any, data: any) => (error ? reject(error) : resolve(data)));
+				});
 			});
 		} catch (error) {
 			throw new BadRequestException('Cannot get freelancer offers');
@@ -76,10 +53,7 @@ export class UpworkOffersService {
 	 * List job applications as freelancer
 	 * This call lists all job applications made by a freelancer.
 	 */
-	public async getProposalLisByFreelancer(
-		config: IUpworkApiConfig,
-		status: IUpworkProposalStatusEnum
-	): Promise<any> {
+	public async getProposalLisByFreelancer(config: IUpworkApiConfig, status: IUpworkProposalStatusEnum): Promise<any> {
 		try {
 			const api = new UpworkApi(config);
 			const applications = new Applications(api);
@@ -89,15 +63,9 @@ export class UpworkOffersService {
 			};
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						applications.getList(params, (err, data) =>
-							err ? reject(err) : resolve(data)
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					applications.getList(params, (error: any, data: any) => (error ? reject(error) : resolve(data)));
+				});
 			});
 		} catch (error) {
 			throw new BadRequestException('Cannot get proposal list');
@@ -108,29 +76,20 @@ export class UpworkOffersService {
 	 * Get job application as freelancer
 	 * This call retrieves details about a specific job application made by a freelancer.
 	 */
-	public getProposalBykey(
-		config: IUpworkApiConfig,
-		applicationId: string
-	): Promise<any> {
+	public getProposalBykey(config: IUpworkApiConfig, applicationId: string): Promise<any> {
 		try {
 			const api = new UpworkApi(config);
 			const applications = new Applications(api);
 
 			return new Promise((resolve, reject) => {
-				api.setAccessToken(
-					config.accessToken,
-					config.accessSecret,
-					() => {
-						applications.getSpecific(applicationId, (err, data) =>
-							err ? reject(err) : resolve(data)
-						);
-					}
-				);
+				api.setAccessToken(config.accessToken, config.accessSecret, () => {
+					applications.getSpecific(applicationId, (error: any, data: any) =>
+						error ? reject(error) : resolve(data)
+					);
+				});
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				'Cannot get proposal by applicationId'
-			);
+			throw new BadRequestException('Cannot get proposal by applicationId');
 		}
 	}
 }
