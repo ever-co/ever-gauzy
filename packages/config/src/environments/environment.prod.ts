@@ -59,6 +59,7 @@ export const environment: IEnvironment = {
 	 */
 	THROTTLE_TTL: parseInt(process.env.THROTTLE_TTL) || 60 * 1000,
 	THROTTLE_LIMIT: parseInt(process.env.THROTTLE_LIMIT) || 60000,
+	THROTTLE_ENABLED: process.env.THROTTLE_ENABLED == 'true',
 
 	/**
 	 * Jitsu Server Configuration
