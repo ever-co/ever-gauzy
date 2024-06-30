@@ -8,18 +8,44 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"upwork",
+		"integration",
+		"plugin",
+		"nestjs",
+		"ever-co",
+		"typescript",
+		"api",
+		"cqrs",
+		"express",
+		"nestjs-plugin"
+	],
 	"private": true,
-	"type": "commonjs",
-	"main": "dist/src/index.js",
-	"types": "dist/src/index.d.ts",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
 	"directories": {
-		"lib": "dist"
+		"lib": "dist",
+		"test": "__test__"
 	},
 	"publishConfig": {
 		"access": "restricted"
+	},
+	"scripts": {
+		"test:e2e": "jest --config ./jest.config.ts",
+		"build": "rimraf dist && yarn run compile",
+		"compile": "tsc -p tsconfig.lib.json"
 	},
 	"peerDependencies": {
 		"tslib": "^2.6.2"
@@ -55,26 +81,5 @@
 		"@types/uuid": "^3.4.4",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	},
-	"keywords": [
-		"gauzy",
-		"upwork",
-		"integration",
-		"plugin",
-		"nestjs",
-		"ever-co",
-		"typescript",
-		"api",
-		"cqrs",
-		"express",
-		"nestjs-plugin"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
-	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
-	},
-	"homepage": "https://ever.co"
+	}
 }
