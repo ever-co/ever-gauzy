@@ -101,6 +101,7 @@ export class HubstaffService {
 	 */
 	authorizeClient(client_id: string): void {
 		const { HUBSTAFF_REDIRECT_URL, API_BASE_URL } = environment;
+		const HUBSTAFF_AUTHORIZATION_URL = `https://account.hubstaff.com`;
 
 		// Set default redirect URI if HUBSTAFF_REDIRECT_URL is not defined
 		const redirect_uri = HUBSTAFF_REDIRECT_URL || `${API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
@@ -117,7 +118,7 @@ export class HubstaffService {
 		});
 
 		// Construct the external URL with the query parameters
-		const externalUrl = `https://account.hubstaff.com/authorizations/new?${queryParams.toString()}`;
+		const externalUrl = `${HUBSTAFF_AUTHORIZATION_URL}/authorizations/new?${queryParams.toString()}`;
 
 		// Navigate to the external URL with query parameters
 		window.location.replace(externalUrl);
