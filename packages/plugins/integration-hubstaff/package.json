@@ -55,10 +55,26 @@
 		"tslib": "^2.6.2"
 	},
 	"dependencies": {
-		"@gauzy/contracts": "^0.1.0"
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@nestjs/axios": "^3.0.2",
+		"@nestjs/common": "^10.3.7",
+		"@nestjs/cqrs": "^10.2.7",
+		"@nestjs/platform-express": "^10.3.7",
+		"@nestjs/swagger": "^7.3.0",
+		"@nestjs/typeorm": "^10.0.2",
+		"axios": "^1.6.8",
+		"express": "^4.18.2",
+		"moment": "^2.30.1",
+		"rxjs": "^7.4.0",
+		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
+		"@types/express": "^4.17.13",
 		"@types/node": "^20.14.9",
+		"@types/fs-extra": "5.0.2",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	}
