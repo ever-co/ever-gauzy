@@ -15,7 +15,7 @@
 		"@gauzy/ui-core": {
 			"tags": []
 		},
-		"job-search-ui-plugin": {
+		"plugin-job-search-ui": {
 			"tags": []
 		},
 		"gauzy": {

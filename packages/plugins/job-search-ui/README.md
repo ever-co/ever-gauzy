@@ -1,24 +1,24 @@
-# @gauzy/job-search-ui-plugin
+# @gauzy/plugin-job-search-ui
 
 This library was generated with [Nx](https://nx.dev).
 
 ## Code scaffolding
 
-Run `ng generate component component-name --project job-search-ui-plugin` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project job-search-ui-plugin`.
+Run `ng generate component component-name --project plugin-job-search-ui` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module --project plugin-job-search-ui`.
 
-> Note: Don't forget to add `--project job-search-ui-plugin` or else it will be added to the default project in your `angular.json` file.
+> Note: Don't forget to add `--project plugin-job-search-ui` or else it will be added to the default project in your `angular.json` file.
 
 ## Build
 
-Run `ng build job-search-ui-plugin` to build the project. The build artifacts will be stored in the `dist/plugins/` directory.
+Run `ng build plugin-job-search-ui` to build the project. The build artifacts will be stored in the `dist/plugins/` directory.
 
 ## Publishing
 
-After building your library with `ng build job-search-ui-plugin`, go to the dist folder `cd dist/packages/plugins/job-search-ui` and run `npm publish`.
+After building your library with `ng build plugin-job-search-ui`, go to the dist folder `cd dist/packages/plugins/job-search-ui` and run `npm publish`.
 
 ## Running unit tests
 
-Run `ng test job-search-ui-plugin` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `ng test plugin-job-search-ui` to execute the unit tests via [Karma](https://karma-runner.github.io).
 
 ## Further help
 

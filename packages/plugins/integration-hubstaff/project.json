@@ -1,5 +1,5 @@
 {
-	"name": "integration-hubstaff",
+	"name": "plugin-integration-hubstaff",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-hubstaff/src",
 	"projectType": "library",

@@ -14,7 +14,7 @@ The Job Search Plugin is a powerful tool designed to enhance your job search exp
 To install the Job Search Plugin, simply run the following command in your terminal:
 
 ```bash
-npm install @gauzy/job-search-plugin
+npm install @gauzy/plugin-job-search
 # or
-yarn add @gauzy/job-search-plugin
+yarn add @gauzy/plugin-job-search
 ```

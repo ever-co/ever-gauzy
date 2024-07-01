@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/integration-hubstaff",
+	"name": "@gauzy/plugin-integration-hubstaff",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform plugin for integration with HubStaff APIs",
 	"author": {
@@ -77,5 +77,10 @@
 		"@types/fs-extra": "5.0.2",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

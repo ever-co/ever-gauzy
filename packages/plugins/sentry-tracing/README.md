@@ -15,7 +15,7 @@ The Gauzy Sentry Plugin seamlessly integrates your server with the [Sentry](http
 Install the Gauzy Sentry Plugin using your preferred package manager:
 
 ```bash
-npm install @gauzy/sentry-plugin
+npm install @gauzy/plugin-sentry
 # or
-yarn add @gauzy/sentry-plugin
+yarn add @gauzy/plugin-sentry
 ```
