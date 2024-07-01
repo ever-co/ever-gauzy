@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/sentry-plugin",
+	"name": "@gauzy/plugin-sentry",
 	"version": "0.1.0",
 	"description": "Gauzy Sentry Plugin - Seamless integration with Sentry for advanced error tracking and monitoring in Gauzy Platform.",
 	"author": {

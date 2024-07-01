@@ -14,7 +14,7 @@ import {
 	TimeSlotModule,
 	UserModule
 } from '@gauzy/core';
-import { ProposalModule } from '@gauzy/job-proposal-plugin';
+import { ProposalModule } from '@gauzy/plugin-job-proposal';
 import { UpworkTransactionService } from './upwork-transaction.service';
 import { UpworkService } from './upwork.service';
 import { UpworkJobService } from './upwork-job.service';

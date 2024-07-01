@@ -70,7 +70,7 @@ import {
 	TimeLogCreateCommand,
 	TimeSlotCreateCommand
 } from '@gauzy/core';
-import { ProposalCreateCommand } from '@gauzy/job-proposal-plugin';
+import { ProposalCreateCommand } from '@gauzy/plugin-job-proposal';
 import { UpworkReportService } from './upwork-report.service';
 import { UpworkJobService } from './upwork-job.service';
 import { UpworkOffersService } from './upwork-offers.service';

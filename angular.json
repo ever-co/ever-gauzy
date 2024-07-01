@@ -287,7 +287,7 @@
 				}
 			}
 		},
-		"job-search-ui-plugin": {
+		"plugin-job-search-ui": {
 			"projectType": "library",
 			"root": "packages/plugins/job-search-ui",
 			"sourceRoot": "packages/plugins/job-search-ui",
