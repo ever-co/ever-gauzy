@@ -5,13 +5,8 @@ import { lastValueFrom, map } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
-import { GITHUB_API_URL } from '@gauzy/integration-github';
-import {
-	IGetTaskOptions,
-	IOrganization,
-	ITag,
-	ITenant
-} from '@gauzy/contracts';
+import { GITHUB_API_URL } from '@gauzy/plugin-integration-github';
+import { IGetTaskOptions, IOrganization, ITag, ITenant } from '@gauzy/contracts';
 import {
 	Organization,
 	OrganizationProject,
@@ -19,15 +14,11 @@ import {
 	Tag,
 	Task,
 	User,
-	Employee,
+	Employee
 } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
 
-export const createDefaultTask = async (
-	dataSource: DataSource,
-	tenant: ITenant,
-	organization: IOrganization
-) => {
+export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant, organization: IOrganization) => {
 	const httpService = new HttpService();
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
@@ -43,18 +34,11 @@ export const createDefaultTask = async (
 	});
 
 	labels = uniq(labels, (label) => label.name);
-	const tags: ITag[] = await createTags(
-		dataSource,
-		labels,
-		tenant,
-		organization
-	);
+	const tags: ITag[] = await createTags(dataSource, labels, tenant, organization);
 
 	const defaultProjects = await dataSource.manager.find(OrganizationProject);
 	if (!defaultProjects) {
-		console.warn(
-			'Warning: projects not found, DefaultTasks will not be created'
-		);
+		console.warn('Warning: projects not found, DefaultTasks will not be created');
 		return;
 	}
 	const teams = await dataSource.manager.find(OrganizationTeam);
@@ -67,15 +51,11 @@ export const createDefaultTask = async (
 		const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
 			tenantId: tenant.id,
 			organizationId: organization.id,
-			projectId: project.id,
+			projectId: project.id
 		});
 
 		const task = new Task();
-		task.tags = filter(
-			tags,
-			(tag: ITag) =>
-				!!issue.labels.find((label: any) => label.name === tag.name)
-		);
+		task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 		task.tenant = tenant;
 		task.organization = organization;
 		task.title = issue.title;
@@ -98,10 +78,7 @@ export const createDefaultTask = async (
 	}
 };
 
-export const createRandomTask = async (
-	dataSource: DataSource,
-	tenants: ITenant[]
-) => {
+export const createRandomTask = async (dataSource: DataSource, tenants: ITenant[]) => {
 	const httpService = new HttpService();
 
 	console.log(`${GITHUB_API_URL}/repos/ever-co/ever-gauzy/issues`);
@@ -122,65 +99,46 @@ export const createRandomTask = async (
 		const { id: tenantId } = tenant;
 		const users = await dataSource.manager.find(User, {
 			where: {
-				tenantId,
-			},
+				tenantId
+			}
 		});
 		const organizations = await dataSource.manager.find(Organization, {
 			where: {
-				tenantId,
-			},
+				tenantId
+			}
 		});
 		for await (const organization of organizations) {
 			const { id: organizationId } = organization;
-			const projects = await dataSource.manager.findBy(
-				OrganizationProject,
-				{
-					tenantId,
-					organizationId,
-				}
-			);
+			const projects = await dataSource.manager.findBy(OrganizationProject, {
+				tenantId,
+				organizationId
+			});
 			if (!projects) {
-				console.warn(
-					'Warning: projects not found, RandomTasks will not be created'
-				);
+				console.warn('Warning: projects not found, RandomTasks will not be created');
 				continue;
 			}
 			const teams = await dataSource.manager.findBy(OrganizationTeam, {
 				tenantId,
-				organizationId,
+				organizationId
 			});
 
-			const tags: ITag[] = await createTags(
-				dataSource,
-				labels,
-				tenant,
-				organization
-			);
+			const tags: ITag[] = await createTags(dataSource, labels, tenant, organization);
 			const employees = await dataSource.manager.findBy(Employee, {
 				tenantId,
-				organizationId,
+				organizationId
 			});
 			let count = 0;
 
 			for await (const issue of issues) {
 				const project = faker.helpers.arrayElement(projects);
-				const maxTaskNumber = await getMaxTaskNumberByProject(
-					dataSource,
-					{
-						tenantId: tenant.id,
-						organizationId: organization.id,
-						projectId: project.id,
-					}
-				);
+				const maxTaskNumber = await getMaxTaskNumberByProject(dataSource, {
+					tenantId: tenant.id,
+					organizationId: organization.id,
+					projectId: project.id
+				});
 
 				const task = new Task();
-				task.tags = filter(
-					tags,
-					(tag: ITag) =>
-						!!issue.labels.find(
-							(label: any) => label.name === tag.name
-						)
-				);
+				task.tags = filter(tags, (tag: ITag) => !!issue.labels.find((label: any) => label.name === tag.name));
 				task.title = issue.title;
 				task.description = issue.body;
 				task.status = issue.state;
@@ -207,12 +165,7 @@ export const createRandomTask = async (
 	}
 };
 
-export async function createTags(
-	dataSource: DataSource,
-	labels,
-	tenant: ITenant,
-	organization: IOrganization
-) {
+export async function createTags(dataSource: DataSource, labels, tenant: ITenant, organization: IOrganization) {
 	if (labels.length === 0) {
 		return [];
 	}
@@ -224,7 +177,7 @@ export async function createTags(
 				description: label.description,
 				color: `#${label.color}`,
 				tenant,
-				organization,
+				organization
 			})
 	);
 
@@ -237,10 +190,7 @@ export async function createTags(
  *
  * @param options
  */
-export async function getMaxTaskNumberByProject(
-	dataSource: DataSource,
-	options: IGetTaskOptions
-) {
+export async function getMaxTaskNumberByProject(dataSource: DataSource, options: IGetTaskOptions) {
 	const { tenantId, organizationId, projectId } = options;
 	/**
 	 * GET maximum task number by project

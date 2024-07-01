@@ -44,10 +44,10 @@ export interface ProbotModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'
 
 // Define enums for metadata and module providers
 export enum ProbotMetadata {
-	name = 'probot/metadata/hook',
+	name = 'probot/metadata/hook'
 }
 
 export enum ModuleProviders {
 	// Provider key for Probot configuration
-	ProbotConfig = 'probot/provider/config',
+	ProbotConfig = 'probot/provider/config'
 }

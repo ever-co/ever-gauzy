@@ -1,21 +1,11 @@
-import {
-	Controller,
-	Get,
-	HttpException,
-	HttpStatus,
-	Logger,
-	Param,
-	Query,
-	Req,
-	UseGuards
-} from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Logger, Param, Query, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
-import { OctokitResponse, OctokitService } from '@gauzy/integration-github';
+import { OctokitResponse, OctokitService } from '@gauzy/plugin-integration-github';
 import { IGithubIssue, IGithubRepository, IGithubRepositoryResponse, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 import { UseValidationPipe } from '../../shared/pipes';
-import { TenantOrganizationBaseDTO } from 'core/dto';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 import { GithubIssuesQueryDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -24,7 +14,7 @@ import { GithubIssuesQueryDTO } from './dto';
 export class GitHubIntegrationController {
 	private readonly logger = new Logger('GitHubIntegrationController');
 
-	constructor(private readonly _octokitService: OctokitService) { }
+	constructor(private readonly _octokitService: OctokitService) {}
 
 	/**
 	 * Get GitHub installation metadata for a specific integration.

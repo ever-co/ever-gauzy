@@ -16,7 +16,9 @@ export const GITHUB_API_URL = 'https://api.github.com';
  */
 export const parseConfig = (config: ProbotConfig): Record<string, any> => ({
 	appId: config.appId,
-	privateKey: getPrivateKey({ env: { PRIVATE_KEY: config.privateKey ? config.privateKey.replace(/\\n/g, '\n') : '' } }) as string,
+	privateKey: getPrivateKey({
+		env: { PRIVATE_KEY: config.privateKey ? config.privateKey.replace(/\\n/g, '\n') : '' }
+	}) as string,
 	webhookSecret: config.webhookSecret,
 	ghUrl: config.ghUrl || GITHUB_API_URL,
 	webhookProxy: config.webhookProxy,
@@ -40,7 +42,7 @@ export const createProbot = (config: ProbotConfig): Probot => {
 	}
 
 	return new Probot({
-		...parsedConfig, // Spread the parsed configuration properties
+		...parsedConfig // Spread the parsed configuration properties
 	});
 };
 
@@ -54,7 +56,7 @@ export const createSmee = (config: ProbotConfig): SmeeClient => {
 	return new SmeeClient({
 		source: parsedConfig.webhookProxy as string,
 		target: parsedConfig.webhookPath as string,
-		logger: console,
+		logger: console
 	});
 };
 
@@ -75,7 +77,7 @@ export const createOctokit = (config: OctokitConfig): Octokit => {
 			privateKey: probot.privateKey,
 			clientId: probot.clientId,
 			clientSecret: probot.clientSecret,
-			...config.auth, // Include other auth options if needed
-		},
+			...config.auth // Include other auth options if needed
+		}
 	});
 };

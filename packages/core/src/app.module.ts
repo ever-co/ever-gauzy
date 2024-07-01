@@ -13,7 +13,7 @@ import * as path from 'path';
 import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
-import { ProbotModule } from '@gauzy/integration-github';
+import { ProbotModule } from '@gauzy/plugin-integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
 import { CoreModule } from './core/core.module';
 import { RequestContext } from './core/context/request-context';

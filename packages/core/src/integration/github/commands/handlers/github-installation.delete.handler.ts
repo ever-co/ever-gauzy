@@ -1,15 +1,12 @@
-import { CommandHandler, ICommandHandler } from "@nestjs/cqrs";
-import { HttpException, HttpStatus } from "@nestjs/common";
-import { OctokitService } from "@gauzy/integration-github";
-import { arrayToObject } from "core/utils";
-import { GithubInstallationDeleteCommand } from "../github-installation.delete.command";
+import { HttpException, HttpStatus } from '@nestjs/common';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { OctokitService } from '@gauzy/plugin-integration-github';
+import { arrayToObject } from '../../../../core/utils';
+import { GithubInstallationDeleteCommand } from '../github-installation.delete.command';
 
 @CommandHandler(GithubInstallationDeleteCommand)
 export class GithubInstallationDeleteCommandHandler implements ICommandHandler<GithubInstallationDeleteCommand> {
-
-	constructor(
-		private readonly _octokitService: OctokitService
-	) { }
+	constructor(private readonly _octokitService: OctokitService) {}
 
 	/**
 	 * Execute the GitHub installation deletion command.
@@ -23,7 +20,10 @@ export class GithubInstallationDeleteCommandHandler implements ICommandHandler<G
 
 		// Check if the required installation_id is present in settings
 		if (!settings || !settings.installation_id) {
-			throw new HttpException('Invalid request parameter: Missing or unauthorized integration', HttpStatus.UNAUTHORIZED);
+			throw new HttpException(
+				'Invalid request parameter: Missing or unauthorized integration',
+				HttpStatus.UNAUTHORIZED
+			);
 		}
 
 		// Retrieve installation_id from settings

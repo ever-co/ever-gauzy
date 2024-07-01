@@ -6,11 +6,11 @@ import {
 	Logger,
 	OnApplicationBootstrap,
 	OnApplicationShutdown,
-	OnModuleInit,
+	OnModuleInit
 } from '@nestjs/common';
 import { Probot } from 'probot';
 import SmeeClient from 'smee-client';
-import * as _ from 'underscore';
+import { isEmpty } from 'underscore';
 import * as chalk from 'chalk';
 import { v4 } from 'uuid';
 import { ModuleProviders, ProbotConfig } from './probot.types';
@@ -19,11 +19,10 @@ import { HookMetadataAccessor } from './hook-metadata.accessor';
 
 @Injectable()
 export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, OnApplicationShutdown {
-
 	private readonly logger = new Logger('ProbotDiscovery');
 	private readonly hooks: Map<string, any>;
-	private smee: SmeeClient;
 	private readonly probot: Probot;
+	private smee: SmeeClient;
 
 	constructor(
 		private readonly discoveryService: DiscoveryService,
@@ -47,7 +46,8 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	}
 
 	/**
-	 *
+	 * Called automatically when the module has been initialized.
+	 * It discovers and initializes instance wrappers used within the module.
 	 */
 	public async onModuleInit() {
 		this.discoverInstanceWrappers();
@@ -60,7 +60,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 */
 	onApplicationBootstrap(): any {
 		// Check if webhookProxy is configured
-		if (!_.isEmpty(this.config.webhookProxy)) {
+		if (!isEmpty(this.config.webhookProxy)) {
 			// Create and start a SmeeClient if webhookProxy is configured
 			this.smee = createSmee(this.config);
 			this.smee.start();
@@ -88,13 +88,11 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 			return;
 		}
 		this.probot
-			.load((app: {
-				on: (eventName: any, callback: (context: any) => Promise<void>) => any;
-			}) => {
+			.load((app: { on: (eventName: any, callback: (context: any) => Promise<void>) => any }) => {
 				// Iterate through registered hooks and add event listeners
 				this.hooks.forEach((hook) => {
 					app.on(
-						hook.eventOrEvents,        // The event name or names to listen for
+						hook.eventOrEvents, // The event name or names to listen for
 						this.initContext(hook.target) // The callback function for the event
 					);
 				});
@@ -124,12 +122,12 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		// Get all instance wrappers for controllers and providers
 		const instanceWrappers: InstanceWrapper[] = [
 			...this.discoveryService.getControllers(),
-			...this.discoveryService.getProviders(),
+			...this.discoveryService.getProviders()
 		];
 
 		// Filter instance wrappers with static dependency trees
-		const staticInstanceWrappers = instanceWrappers.filter(
-			(wrapper: InstanceWrapper) => wrapper.isDependencyTreeStatic()
+		const staticInstanceWrappers = instanceWrappers.filter((wrapper: InstanceWrapper) =>
+			wrapper.isDependencyTreeStatic()
 		);
 
 		// Iterate through static instance wrappers and explore methods
@@ -169,14 +167,14 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		const hookFn = this.wrapFunctionInTryCatchBlocks(methodRef, instance);
 
 		// If no webhook event definition, skip
-		if (_.isEmpty(hookMetadata)) {
+		if (isEmpty(hookMetadata)) {
 			return null;
 		}
 
 		// Generate a unique key and store the hook information
 		return this.hooks.set(v4(), {
 			target: hookFn,
-			eventOrEvents: hookMetadata,
+			eventOrEvents: hookMetadata
 		});
 	}
 
@@ -186,10 +184,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 	 * @param instance The instance to which the method belongs.
 	 * @returns An asynchronous function that handles errors and logs them.
 	 */
-	private wrapFunctionInTryCatchBlocks(
-		methodRef: () => any,
-		instance: Record<string, any>
-	) {
+	private wrapFunctionInTryCatchBlocks(methodRef: () => any, instance: Record<string, any>) {
 		// Return an asynchronous function that wraps the method reference
 		return async (...args: unknown[]) => {
 			try {
@@ -211,6 +206,7 @@ export class ProbotDiscovery implements OnModuleInit, OnApplicationBootstrap, On
 		if (!this.probot) {
 			return;
 		}
+
 		// Extract relevant information from the request
 		const id = request.headers['x-github-delivery'] as string;
 		const event = request.headers['x-github-event'];

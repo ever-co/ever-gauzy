@@ -148,7 +148,7 @@
 		"build:package:plugin:integration-upwork": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork build",
 		"build:package:plugin:integration-upwork:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-upwork build:prod",
 		"build:package:plugin:integration-github": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-github build",
-		"build:package:plugin:integration-github:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-github build",
+		"build:package:plugin:integration-github:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-github build:prod",
 		"build:package:plugin:integration-jira": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-jira build",
 		"build:package:plugin:integration-jira:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/integration-jira build",
 		"build:package:plugin:sentry": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/sentry-tracing build",

@@ -4,7 +4,7 @@ import { EmitterWebhookEventName } from '@octokit/webhooks/dist-types/types';
 
 @Injectable()
 export class HookMetadataAccessor {
-	constructor(private readonly reflector: Reflector) { }
+	constructor(private readonly reflector: Reflector) {}
 
 	/**
 	 * Get the webhook events associated with a target.
