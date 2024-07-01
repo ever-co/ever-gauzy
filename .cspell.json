@@ -453,7 +453,16 @@
 		"TIMESTAMPDIFF",
 		"listbox",
 		"combobox",
-		"tabid"
+		"tabid",
+		"fesm",
+		"Seedable",
+		"npmignore",
+		"undici",
+		"libsql",
+		"knexjs",
+		"zipkin",
+		"honeycombio",
+		"gauzyapiserver"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

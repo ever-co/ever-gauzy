@@ -73,7 +73,6 @@
 						"allowedCommonJsDependencies": [
 							"@gauzy/contracts",
 							"@gauzy/ui-config",
-							"@gauzy/integration-hubstaff",
 							"brace",
 							"brace/mode/handlebars",
 							"camelcase",

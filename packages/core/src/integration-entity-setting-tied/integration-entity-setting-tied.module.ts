@@ -25,4 +25,4 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	providers: [IntegrationEntitySettingTiedService],
 	exports: [TypeOrmModule, MikroOrmModule, IntegrationEntitySettingTiedService]
 })
-export class IntegrationEntitySettingTiedModule { }
+export class IntegrationEntitySettingTiedModule {}
