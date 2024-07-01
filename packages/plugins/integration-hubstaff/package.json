@@ -48,8 +48,8 @@
 	},
 	"scripts": {
 		"test:e2e": "jest --config ./jest.config.js",
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.lib.json"
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
 	"peerDependencies": {
 		"tslib": "^2.6.2"
