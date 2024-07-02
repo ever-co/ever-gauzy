@@ -52,13 +52,19 @@ import {
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
+	EmbeddedColumn,
 	MultiORMColumn,
 	MultiORMEntity,
 	MultiORMManyToMany,
 	MultiORMManyToOne,
 	MultiORMOneToMany
-} from './../core/decorators/entity';
+} from '../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import {
+	MikroOrmOrganizationProjectEntityCustomFields,
+	OrganizationProjectEntityCustomFields,
+	TypeOrmOrganizationProjectEntityCustomFields
+} from '../core/entities/custom-entity-fields/organization-project';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
@@ -204,7 +210,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 
 	/**
 	 * ImageAsset Relationship
@@ -231,7 +237,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@RelationId((it: OrganizationProject) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -327,7 +333,6 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_project',
-
 		joinColumn: 'organizationProjectId',
 		inverseJoinColumn: 'tagId'
 	})
@@ -364,4 +369,15 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		name: 'organization_project_team'
 	})
 	teams?: IOrganizationTeam[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Embeddable Columns
+	|--------------------------------------------------------------------------
+	*/
+	@EmbeddedColumn({
+		mikroOrmEmbeddableEntity: () => MikroOrmOrganizationProjectEntityCustomFields,
+		typeOrmEmbeddableEntity: () => TypeOrmOrganizationProjectEntityCustomFields
+	})
+	customFields?: OrganizationProjectEntityCustomFields;
 }
