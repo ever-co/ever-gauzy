@@ -93,5 +93,4 @@ export {
 	ExpenseCategoriesService,
 	ExpenseCategoryFirstOrCreateCommand
 } from './expense-categories';
-
-export { RelationalTagDTO, TagModule, Taggable, TagQueryByLevelDTO } from './tags';
+export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './tags';
