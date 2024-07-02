@@ -9,27 +9,26 @@ import {
 	IOrganizationProject,
 	IIntegrationTenant
 } from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
-import { arrayToObject } from 'core/utils';
-import { OrganizationProjectService } from 'organization-project/organization-project.service';
-import { IntegrationTenantGetCommand } from 'integration-tenant/commands';
-import { IntegrationSyncGithubRepositoryIssueCommand } from 'integration/github/repository/issue/commands';
-import { IntegrationMapSyncEntityCommand } from 'integration-map/commands';
-import { IntegrationMapService } from 'integration-map/integration-map.service';
+import { RequestContext } from '../../../../core/context';
+import { arrayToObject } from '../../../../core/utils';
+import { OrganizationProjectService } from '../../../../organization-project/organization-project.service';
+import { IntegrationTenantGetCommand } from '../../../../integration-tenant/commands';
+import { IntegrationSyncGithubRepositoryIssueCommand } from '../../../../integration/github/repository/issue/commands';
+import { IntegrationMapSyncEntityCommand } from '../../../../integration-map/commands';
+import { IntegrationMapService } from '../../../../integration-map/integration-map.service';
 import { GithubRepositoryIssueService } from './../../repository/issue/github-repository-issue.service';
 import { GithubSyncService } from '../../github-sync.service';
 import { GithubTaskUpdateOrCreateCommand } from '../task.update-or-create.command';
 
 @CommandHandler(GithubTaskUpdateOrCreateCommand)
 export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<GithubTaskUpdateOrCreateCommand> {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _githubSyncService: GithubSyncService,
 		private readonly _organizationProjectService: OrganizationProjectService,
 		private readonly _integrationMapService: IntegrationMapService,
 		private readonly _githubRepositoryIssueService: GithubRepositoryIssueService
-	) { }
+	) {}
 
 	/**
 	 * Command handler for the `GithubTaskUpdateOrCreateCommand`, responsible for processing actions when a task is opened in Gauzy.
@@ -54,12 +53,12 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 						integration: {
 							provider: IntegrationEnum.GITHUB,
 							isActive: true,
-							isArchived: false,
-						},
+							isArchived: false
+						}
 					},
 					relations: {
-						settings: true,
-					},
+						settings: true
+					}
 				})
 			);
 
@@ -104,7 +103,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 								owner: repository.owner,
 								title: task.title,
 								body: task.description,
-								labels: this._mapIssueLabelPayload(task.tags || []),
+								labels: this._mapIssueLabelPayload(task.tags || [])
 							};
 
 							const syncTag = settings['sync_tag'];
@@ -124,12 +123,13 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 									});
 									try {
 										/** */
-										const syncIssue = await this._githubRepositoryIssueService.findOneByWhereOptions({
-											organizationId,
-											tenantId,
-											repositoryId: repository.id,
-											issueId: parseInt(integrationMap.sourceId)
-										});
+										const syncIssue =
+											await this._githubRepositoryIssueService.findOneByWhereOptions({
+												organizationId,
+												tenantId,
+												repositoryId: repository.id,
+												issueId: parseInt(integrationMap.sourceId)
+											});
 										payload.issue_number = syncIssue.issueNumber;
 
 										await this._githubSyncService.createOrUpdateIssue(installationId, payload);
@@ -138,7 +138,10 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 									}
 								} catch (error) {
 									// Step 9: Open the GitHub issue
-									const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(installationId, payload);
+									const issue: IGithubIssue = await this._githubSyncService.createOrUpdateIssue(
+										installationId,
+										payload
+									);
 
 									// Step 10: Synchronized GitHub repository issue.
 									const { repositoryId } = repository;
@@ -159,7 +162,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 										new IntegrationMapSyncEntityCommand({
 											gauzyId: task.id,
 											integrationId,
-											sourceId: (issue.id).toString(),
+											sourceId: issue.id.toString(),
 											entity: IntegrationEntity.ISSUE,
 											organizationId,
 											tenantId
@@ -185,11 +188,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 	 * @param issue - The GitHub issue to be synchronized.
 	 * @returns A boolean indicating whether the issue should be synchronized.
 	 */
-	private shouldSyncIssue(
-		project: IOrganizationProject,
-		labels: IGithubIssueLabel[] = [],
-		syncTag: string
-	): boolean {
+	private shouldSyncIssue(project: IOrganizationProject, labels: IGithubIssueLabel[] = [], syncTag: string): boolean {
 		if (!project || !project.isTasksAutoSync) {
 			return false;
 		}

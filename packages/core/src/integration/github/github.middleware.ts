@@ -14,7 +14,7 @@ export class GithubMiddleware implements NestMiddleware {
 	constructor(
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _integrationTenantService: IntegrationTenantService
-	) { }
+	) {}
 
 	/**
 	 *
@@ -37,7 +37,9 @@ export class GithubMiddleware implements NestMiddleware {
 					try {
 						// Fetch integration settings from the service
 						if (this.logging) {
-							console.log(`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+							console.log(
+								`Getting Gauzy integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+							);
 						}
 
 						const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${integrationId}`;
@@ -46,7 +48,9 @@ export class GithubMiddleware implements NestMiddleware {
 
 						if (!integrationTenantSettings) {
 							if (this.logging) {
-								console.log(`Gauzy integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+								console.log(
+									`Gauzy integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+								);
 							}
 
 							const fromDb = await this._integrationTenantService.findOneByIdString(integrationId, {
@@ -68,16 +72,20 @@ export class GithubMiddleware implements NestMiddleware {
 							if (fromDb && fromDb.settings) {
 								integrationTenantSettings = fromDb.settings;
 
-								const ttl = 5 * 60 * 1000 // 5 min caching period for GitHub Integration Tenant Settings
+								const ttl = 5 * 60 * 1000; // 5 min caching period for GitHub Integration Tenant Settings
 								await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
 								if (this.logging) {
-									console.log(`Gauzy integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+									console.log(
+										`Gauzy integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+									);
 								}
 							}
 						} else {
 							if (this.logging) {
-								console.log(`Gauzy integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`);
+								console.log(
+									`Gauzy integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}, integrationId: ${integrationId}`
+								);
 							}
 						}
 
@@ -92,13 +100,19 @@ export class GithubMiddleware implements NestMiddleware {
 							});
 						}
 					} catch (error) {
-						console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);
+						console.log(
+							`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`,
+							error?.message
+						);
 						console.log(request.path, request.url);
 					}
 				}
 			}
 		} catch (error) {
-			console.log(`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`, error?.message);
+			console.log(
+				`Error while getting integration (${IntegrationEnum.GITHUB}) tenant inside middleware: %s`,
+				error?.message
+			);
 			console.log(request.path, request.url);
 		}
 

@@ -1,18 +1,22 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { IOrganizationGithubRepository, IOrganizationGithubRepositoryFindInput, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
+import {
+	IOrganizationGithubRepository,
+	IOrganizationGithubRepositoryFindInput,
+	IOrganizationGithubRepositoryIssue
+} from '@gauzy/contracts';
 import { RequestContext } from '../../../../../../core/context';
 import { IntegrationSyncGithubRepositoryIssueCommand } from '../integration-sync-github-repository-issue.command';
 import { TypeOrmOrganizationGithubRepositoryRepository } from '../../../repository/type-orm-organization-github-repository.repository';
 import { TypeOrmOrganizationGithubRepositoryIssueRepository } from '../../repository/type-orm-github-repository-issue.repository';
 
 @CommandHandler(IntegrationSyncGithubRepositoryIssueCommand)
-export class IntegrationSyncGithubRepositoryIssueCommandHandler implements ICommandHandler<IntegrationSyncGithubRepositoryIssueCommand> {
-
+export class IntegrationSyncGithubRepositoryIssueCommandHandler
+	implements ICommandHandler<IntegrationSyncGithubRepositoryIssueCommand>
+{
 	constructor(
 		private readonly typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
-
-		private readonly typeOrmOrganizationGithubRepositoryIssueRepository: TypeOrmOrganizationGithubRepositoryIssueRepository,
-	) { }
+		private readonly typeOrmOrganizationGithubRepositoryIssueRepository: TypeOrmOrganizationGithubRepositoryIssueRepository
+	) {}
 
 	/**
 	 * Execute a command to synchronize a GitHub repository issue and store it in the local database.
@@ -20,7 +24,9 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 	 * @param command - The command containing input parameters for the synchronization.
 	 * @returns A Promise that resolves to the synchronized organization's GitHub repository issue.
 	 */
-	public async execute(command: IntegrationSyncGithubRepositoryIssueCommand): Promise<IOrganizationGithubRepositoryIssue> {
+	public async execute(
+		command: IntegrationSyncGithubRepositoryIssueCommand
+	): Promise<IOrganizationGithubRepositoryIssue> {
 		try {
 			// Extract input parameters from the command
 			const { input, repositoryId, issue } = command;
@@ -84,7 +90,7 @@ export class IntegrationSyncGithubRepositoryIssueCommandHandler implements IComm
 			organizationId,
 			tenantId,
 			integrationId,
-			repositoryId,
+			repositoryId
 		});
 	}
 }

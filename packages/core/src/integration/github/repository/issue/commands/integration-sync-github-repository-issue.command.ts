@@ -7,6 +7,6 @@ export class IntegrationSyncGithubRepositoryIssueCommand implements ICommand {
 	constructor(
 		public readonly input: IIntegrationMapSyncBase,
 		public readonly repositoryId: IOrganizationGithubRepository['repositoryId'],
-		public readonly issue: IGithubIssue,
-	) { }
+		public readonly issue: IGithubIssue
+	) {}
 }

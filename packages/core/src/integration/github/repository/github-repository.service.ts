@@ -1,11 +1,13 @@
 import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
-import { TenantAwareCrudService } from 'core/crud';
+import { TenantAwareCrudService } from '../../../core/crud';
 import { OrganizationGithubRepository } from './github-repository.entity';
 import { IntegrationSyncGithubRepositoryCommand } from '../commands';
-import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
-import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/type-orm-organization-github-repository.repository';
+import {
+	MikroOrmOrganizationGithubRepositoryRepository,
+	TypeOrmOrganizationGithubRepositoryRepository
+} from './repository';
 
 @Injectable()
 export class GithubRepositoryService extends TenantAwareCrudService<OrganizationGithubRepository> {
@@ -13,9 +15,7 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
 
 	constructor(
 		typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
-
 		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository,
-
 		private readonly _commandBus: CommandBus
 	) {
 		super(typeOrmOrganizationGithubRepositoryRepository, mikroOrmOrganizationGithubRepositoryRepository);
@@ -29,9 +29,7 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
 	 */
 	async syncGithubRepository(input: IIntegrationMapSyncRepository): Promise<IOrganizationGithubRepository> {
 		try {
-			return await this._commandBus.execute(
-				new IntegrationSyncGithubRepositoryCommand(input)
-			);
+			return await this._commandBus.execute(new IntegrationSyncGithubRepositoryCommand(input));
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			this.logger.error('Error while sync github integration repository', error.message);

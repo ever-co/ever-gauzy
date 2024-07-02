@@ -1,9 +1,5 @@
-import { IGetTaskOptions, ITask } from "@gauzy/contracts";
+import { IGetTaskOptions, ITask } from '@gauzy/contracts';
 
 export class GithubTaskUpdateOrCreateCommand {
-
-    constructor(
-        public readonly task: ITask,
-        public readonly options: IGetTaskOptions,
-    ) { }
+	constructor(public readonly task: ITask, public readonly options: IGetTaskOptions) {}
 }

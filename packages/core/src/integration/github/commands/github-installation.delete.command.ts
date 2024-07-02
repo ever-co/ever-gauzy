@@ -1,8 +1,5 @@
-import { IIntegrationTenant } from "@gauzy/contracts";
+import { IIntegrationTenant } from '@gauzy/contracts';
 
 export class GithubInstallationDeleteCommand {
-
-    constructor(
-        public readonly integration: IIntegrationTenant
-    ) { }
+	constructor(public readonly integration: IIntegrationTenant) {}
 }

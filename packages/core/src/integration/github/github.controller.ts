@@ -10,7 +10,7 @@ import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class GitHubController {
-	constructor(private readonly _githubService: GithubService) { }
+	constructor(private readonly _githubService: GithubService) {}
 
 	/**
 	 *

@@ -4,8 +4,8 @@ import { IntegrationSyncGithubRepositoryCommandHandler } from './integration-syn
 import { IntegrationSyncGithubRepositoryIssueCommandHandler } from './../../repository/issue/commands/handlers';
 
 export const CommandHandlers = [
-    GithubInstallationDeleteCommandHandler,
-    GithubTaskUpdateOrCreateCommandHandler,
-    IntegrationSyncGithubRepositoryCommandHandler,
-    IntegrationSyncGithubRepositoryIssueCommandHandler,
+	GithubInstallationDeleteCommandHandler,
+	GithubTaskUpdateOrCreateCommandHandler,
+	IntegrationSyncGithubRepositoryCommandHandler,
+	IntegrationSyncGithubRepositoryIssueCommandHandler
 ];

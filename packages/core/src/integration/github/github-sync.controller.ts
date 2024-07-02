@@ -24,7 +24,7 @@ import { ProcessGithubIssueSyncDTO } from './dto';
 export class GitHubSyncController {
 	private readonly logger = new Logger('GitHubSyncController');
 
-	constructor(private readonly _githubSyncService: GithubSyncService) { }
+	constructor(private readonly _githubSyncService: GithubSyncService) {}
 
 	/**
 	 * Handle an HTTP POST request to manually synchronize GitHub issues and labels.

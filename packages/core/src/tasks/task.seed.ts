@@ -5,7 +5,6 @@ import { lastValueFrom, map } from 'rxjs';
 import { isNotEmpty } from '@gauzy/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosResponse } from 'axios';
-import { GITHUB_API_URL } from '@gauzy/plugin-integration-github';
 import { IGetTaskOptions, IOrganization, ITag, ITenant } from '@gauzy/contracts';
 import {
 	Organization,
@@ -17,6 +16,9 @@ import {
 	Employee
 } from './../core/entities/internal';
 import { prepareSQLQuery as p } from './../database/database.helper';
+
+// GITHUB API URL
+export const GITHUB_API_URL = 'https://api.github.com';
 
 export const createDefaultTask = async (dataSource: DataSource, tenant: ITenant, organization: IOrganization) => {
 	const httpService = new HttpService();

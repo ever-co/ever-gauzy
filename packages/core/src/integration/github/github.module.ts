@@ -61,10 +61,7 @@ import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository
 		// Define handlers heres
 		...CommandHandlers
 	],
-	exports: [
-		TypeOrmOrganizationGithubRepositoryRepository,
-		TypeOrmOrganizationGithubRepositoryIssueRepository
-	],
+	exports: [TypeOrmOrganizationGithubRepositoryRepository, TypeOrmOrganizationGithubRepositoryIssueRepository]
 })
 export class GithubModule implements NestModule {
 	/**
@@ -76,24 +73,24 @@ export class GithubModule implements NestModule {
 		consumer.apply(GithubMiddleware).forRoutes(
 			{
 				path: '/integration/github/:integrationId/metadata',
-				method: RequestMethod.GET,
+				method: RequestMethod.GET
 			},
 			{
 				path: '/integration/github/:integrationId/repositories',
-				method: RequestMethod.GET,
+				method: RequestMethod.GET
 			},
 			{
 				path: '/integration/github/:integrationId/:owner/:repo/issues',
-				method: RequestMethod.GET,
+				method: RequestMethod.GET
 			},
 			/** */
 			{
 				path: '/integration/github/:integrationId/manual-sync/issues',
-				method: RequestMethod.POST,
+				method: RequestMethod.POST
 			},
 			{
 				path: '/integration/github/:integrationId/auto-sync/issues',
-				method: RequestMethod.POST,
+				method: RequestMethod.POST
 			}
 		); // Apply to specific routes and methods
 	}

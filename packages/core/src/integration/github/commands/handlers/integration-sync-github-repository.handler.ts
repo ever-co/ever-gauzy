@@ -1,15 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GithubRepositoryStatusEnum, IOrganizationGithubRepository } from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
+import { RequestContext } from '../../../../core/context';
 import { GithubRepositoryService } from './../../repository/github-repository.service';
 import { IntegrationSyncGithubRepositoryCommand } from '../integration-sync-github-repository.command';
 
 @CommandHandler(IntegrationSyncGithubRepositoryCommand)
-export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHandler<IntegrationSyncGithubRepositoryCommand> {
-
-	constructor(
-		private readonly _githubRepositoryService: GithubRepositoryService
-	) { }
+export class IntegrationSyncGithubRepositoryCommandHandler
+	implements ICommandHandler<IntegrationSyncGithubRepositoryCommand>
+{
+	constructor(private readonly _githubRepositoryService: GithubRepositoryService) {}
 
 	/**
 	 * Execute a synchronization of a GitHub repository for an integration.
@@ -25,7 +24,7 @@ export class IntegrationSyncGithubRepositoryCommandHandler implements ICommandHa
 
 		// Destructure the repository object for better readability
 		const { id: repositoryId, full_name, name, owner, open_issues_count } = repository;
-		const status: GithubRepositoryStatusEnum = repository.status || GithubRepositoryStatusEnum.SYNCING
+		const status: GithubRepositoryStatusEnum = repository.status || GithubRepositoryStatusEnum.SYNCING;
 
 		try {
 			/**

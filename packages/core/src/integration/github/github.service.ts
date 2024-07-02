@@ -12,11 +12,11 @@ import {
 	IntegrationEnum,
 	SYNC_TAG_GITHUB
 } from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
-import { IntegrationTenantUpdateOrCreateCommand } from 'integration-tenant/commands';
-import { IntegrationService } from 'integration/integration.service';
-import { GITHUB_ACCESS_TOKEN_URL } from './github.config';
-import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES, } from './github-entity-settings';
+import { RequestContext } from '../../core/context';
+import { IntegrationTenantUpdateOrCreateCommand } from '../../integration-tenant/commands';
+import { IntegrationService } from '../../integration/integration.service';
+import { GITHUB_ACCESS_TOKEN_URL } from '@gauzy/plugin-integration-github';
+import { DEFAULT_ENTITY_SETTINGS, ISSUE_TIED_ENTITIES } from '@gauzy/plugin-integration-github';
 const { github } = environment;
 
 @Injectable()
@@ -27,7 +27,7 @@ export class GithubService {
 		private readonly _http: HttpService,
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationService: IntegrationService
-	) { }
+	) {}
 
 	/**
 	 * Adds a GitHub App installation by validating input data, fetching an access token, and creating integration tenant settings.
@@ -36,9 +36,7 @@ export class GithubService {
 	 * @returns A promise that resolves to the access token data.
 	 * @throws Error if any step of the process fails.
 	 */
-	public async addGithubAppInstallation(
-		input: IGithubAppInstallInput
-	): Promise<IIntegrationTenant> {
+	public async addGithubAppInstallation(input: IGithubAppInstallInput): Promise<IIntegrationTenant> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!input || !input.installation_id || !input.setup_action) {
@@ -80,7 +78,7 @@ export class GithubService {
 					{
 						name: IntegrationEnum.GITHUB,
 						integration: {
-							provider: IntegrationEnum.GITHUB,
+							provider: IntegrationEnum.GITHUB
 						},
 						tenantId,
 						organizationId
@@ -96,21 +94,21 @@ export class GithubService {
 						settings: [
 							{
 								settingsName: GithubPropertyMapEnum.INSTALLATION_ID,
-								settingsValue: installation_id,
+								settingsValue: installation_id
 							},
 							{
 								settingsName: GithubPropertyMapEnum.SETUP_ACTION,
-								settingsValue: setup_action,
+								settingsValue: setup_action
 							},
 							{
 								settingsName: GithubPropertyMapEnum.SYNC_TAG,
-								settingsValue: SYNC_TAG_GITHUB,
+								settingsValue: SYNC_TAG_GITHUB
 							}
 						].map((setting) => ({
 							...setting,
 							tenantId,
 							organizationId
-						})),
+						}))
 					}
 				)
 			);
@@ -149,67 +147,69 @@ export class GithubService {
 			urlParams.append('client_secret', github.clientSecret);
 			urlParams.append('code', code);
 
-			const tokens$ = this._http.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {
-				headers: {
-					accept: 'application/json',
-				}
-			}).pipe(
-				switchMap(async ({ data }) => {
-					if (!data.error) {
-						// Token retrieval was successful, return the token data
-						return await this._commandBus.execute(
-							new IntegrationTenantUpdateOrCreateCommand(
-								{
-									name: IntegrationEnum.GITHUB,
-									integration: {
-										provider: IntegrationEnum.GITHUB,
-									},
-									tenantId,
-									organizationId
-								},
-								{
-									name: IntegrationEnum.GITHUB,
-									integration,
-									tenantId,
-									organizationId,
-									entitySettings: [],
-									isActive: true,
-									isArchived: false,
-									settings: [
-										{
-											settingsName: GithubPropertyMapEnum.ACCESS_TOKEN,
-											settingsValue: data.access_token
-										},
-										{
-											settingsName: GithubPropertyMapEnum.EXPIRES_IN,
-											settingsValue: data.expires_in.toString()
-										},
-										{
-											settingsName: GithubPropertyMapEnum.REFRESH_TOKEN,
-											settingsValue: data.refresh_token
-										},
-										{
-											settingsName: GithubPropertyMapEnum.REFRESH_TOKEN_EXPIRES_IN,
-											settingsValue: data.refresh_token_expires_in.toString()
-										},
-										{
-											settingsName: GithubPropertyMapEnum.TOKEN_TYPE,
-											settingsValue: data.token_type
-										}
-									].map((setting) => ({
-										...setting,
-										tenantId,
-										organizationId
-									})),
-								}
-							)
-						);
-					} else {
-						// Token retrieval failed, Throw an error to handle the failure
-						throw new BadRequestException('Token retrieval failed', data);
+			const tokens$ = this._http
+				.post(GITHUB_ACCESS_TOKEN_URL, urlParams, {
+					headers: {
+						accept: 'application/json'
 					}
 				})
-			);
+				.pipe(
+					switchMap(async ({ data }) => {
+						if (!data.error) {
+							// Token retrieval was successful, return the token data
+							return await this._commandBus.execute(
+								new IntegrationTenantUpdateOrCreateCommand(
+									{
+										name: IntegrationEnum.GITHUB,
+										integration: {
+											provider: IntegrationEnum.GITHUB
+										},
+										tenantId,
+										organizationId
+									},
+									{
+										name: IntegrationEnum.GITHUB,
+										integration,
+										tenantId,
+										organizationId,
+										entitySettings: [],
+										isActive: true,
+										isArchived: false,
+										settings: [
+											{
+												settingsName: GithubPropertyMapEnum.ACCESS_TOKEN,
+												settingsValue: data.access_token
+											},
+											{
+												settingsName: GithubPropertyMapEnum.EXPIRES_IN,
+												settingsValue: data.expires_in.toString()
+											},
+											{
+												settingsName: GithubPropertyMapEnum.REFRESH_TOKEN,
+												settingsValue: data.refresh_token
+											},
+											{
+												settingsName: GithubPropertyMapEnum.REFRESH_TOKEN_EXPIRES_IN,
+												settingsValue: data.refresh_token_expires_in.toString()
+											},
+											{
+												settingsName: GithubPropertyMapEnum.TOKEN_TYPE,
+												settingsValue: data.token_type
+											}
+										].map((setting) => ({
+											...setting,
+											tenantId,
+											organizationId
+										}))
+									}
+								)
+							);
+						} else {
+							// Token retrieval failed, Throw an error to handle the failure
+							throw new BadRequestException('Token retrieval failed', data);
+						}
+					})
+				);
 			return await firstValueFrom(tokens$);
 		} catch (error) {
 			// Handle errors and return an appropriate error response

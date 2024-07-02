@@ -6,7 +6,7 @@ import { UpdateGithubRepositoryDTO } from './dto';
 
 @Controller('repository')
 export class GitHubRepositoryController {
-	constructor(private readonly _githubRepositoryService: GithubRepositoryService) { }
+	constructor(private readonly _githubRepositoryService: GithubRepositoryService) {}
 
 	/**
 	 * Sync a GitHub repository with Gauzy using provided data.
