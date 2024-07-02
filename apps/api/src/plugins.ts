@@ -1,10 +1,10 @@
 import { environment } from '@gauzy/config';
+import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
-import { ChangelogPlugin } from '@gauzy/plugin-changelog';
+import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
 import { JobSearchPlugin } from '@gauzy/plugin-job-search';
-import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { SentryTracing as SentryPlugin } from './sentry';
 
