@@ -106,12 +106,32 @@ export class AlterOrganizationGithubRepositoryIssueEntityTable1719994643595 impl
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`DROP INDEX \`IDX_055f310a04a928343494a5255a\` ON \`organization_github_repository_issue\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_github_repository_issue\` MODIFY COLUMN \`issueId\` bigint NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_055f310a04a928343494a5255a\` ON \`organization_github_repository_issue\` (\`issueId\`)`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`DROP INDEX \`IDX_055f310a04a928343494a5255a\` ON \`organization_github_repository_issue\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_github_repository_issue\` MODIFY COLUMN \`issueId\` int NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_055f310a04a928343494a5255a\` ON \`organization_github_repository_issue\` (\`issueId\`)`
+		);
+	}
 }
