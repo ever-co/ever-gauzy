@@ -1,19 +1,13 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	ID,
 	IIntegrationTenant,
 	IOrganizationGithubRepository,
-	IOrganizationGithubRepositoryIssue,
-	IOrganizationProject
+	IOrganizationGithubRepositoryIssue
 } from '@gauzy/contracts';
-import {
-	IntegrationTenant,
-	OrganizationGithubRepositoryIssue,
-	OrganizationProject,
-	TenantOrganizationBaseEntity
-} from '@gauzy/core';
+import { IntegrationTenant, OrganizationGithubRepositoryIssue, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
 
@@ -28,7 +22,7 @@ export class OrganizationGithubRepository
 	@IsNotEmpty()
 	@IsNumber()
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'bigint' })
 	repositoryId: number;
 
 	@ApiProperty({ type: () => String })
@@ -86,7 +80,6 @@ export class OrganizationGithubRepository
     */
 
 	/** What integration tenant sync to */
-	@ApiProperty({ type: () => IntegrationTenant })
 	@MultiORMManyToOne(() => IntegrationTenant, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -111,14 +104,6 @@ export class OrganizationGithubRepository
     */
 
 	/** Repository Sync Organization Projects */
-	@MultiORMOneToMany(() => OrganizationProject, (it) => it.repository, {
-		cascade: true
-	})
-	projects?: IOrganizationProject[];
-
-	/** Repository Sync Organization Projects */
-	@MultiORMOneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, {
-		cascade: true
-	})
+	@MultiORMOneToMany(() => OrganizationGithubRepositoryIssue, (it) => it.repository, { cascade: true })
 	issues?: IOrganizationGithubRepositoryIssue[];
 }

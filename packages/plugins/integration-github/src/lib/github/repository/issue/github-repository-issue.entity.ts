@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ID, IOrganizationGithubRepository, IOrganizationGithubRepositoryIssue } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity } from '@gauzy/core';
@@ -18,7 +18,7 @@ export class OrganizationGithubRepositoryIssue
 	@IsNotEmpty()
 	@IsNumber()
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'bigint' })
 	issueId: number;
 
 	@ApiProperty({ type: () => Number })

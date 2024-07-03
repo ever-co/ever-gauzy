@@ -313,7 +313,7 @@ export class GithubSyncService {
 
 				// Step 9: Update Integration Last Synced Date
 				await this._integrationTenantService.update(integrationId, {
-					lastSyncedAt: moment()
+					lastSyncedAt: moment().toDate()
 				});
 
 				// Call the success callback function if provided
