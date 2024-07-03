@@ -3,7 +3,7 @@ import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class AlterOrganizationGithubRepositoryEntityTable1719937371312 implements MigrationInterface {
-	name = 'AlterOrganizationGithubRepositoryTable1719937371312';
+	name = 'AlterOrganizationGithubRepositoryEntityTable1719937371312';
 
 	/**
 	 * Up Migration
@@ -58,8 +58,9 @@ export class AlterOrganizationGithubRepositoryEntityTable1719937371312 implement
 	 */
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`DROP INDEX IF EXISTS "public"."IDX_ca0fa80f50baed7287a499dc2c"`);
+		await queryRunner.query(`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" TYPE bigint`);
 		await queryRunner.query(
-			`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" TYPE bigint NOT NULL`
+			`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" SET NOT NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_ca0fa80f50baed7287a499dc2c" ON "organization_github_repository" ("repositoryId")`
@@ -74,7 +75,10 @@ export class AlterOrganizationGithubRepositoryEntityTable1719937371312 implement
 	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		await queryRunner.query(`DROP INDEX "public"."IDX_ca0fa80f50baed7287a499dc2c"`);
 		await queryRunner.query(
-			`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" integer NOT NULL`
+			`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" TYPE integer`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "organization_github_repository" ALTER COLUMN "repositoryId" SET NOT NULL`
 		);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_ca0fa80f50baed7287a499dc2c" ON "organization_github_repository" ("repositoryId") `
