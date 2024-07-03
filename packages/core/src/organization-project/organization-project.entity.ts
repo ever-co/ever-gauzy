@@ -164,7 +164,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * OrganizationGithubRepository Relationship
 	 */
-	@MultiORMManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationGithubRepository, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
