@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AlterOrganizationGithubRepositoryTable1719937371312 implements MigrationInterface {
+export class AlterOrganizationGithubRepositoryEntityTable1719937371312 implements MigrationInterface {
 	name = 'AlterOrganizationGithubRepositoryTable1719937371312';
 
 	/**
