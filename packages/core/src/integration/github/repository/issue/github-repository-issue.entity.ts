@@ -18,7 +18,7 @@ export class OrganizationGithubRepositoryIssue
 	@IsNotEmpty()
 	@IsNumber()
 	@ColumnIndex()
-	@MultiORMColumn()
+	@MultiORMColumn({ type: 'bigint' })
 	issueId: number;
 
 	@ApiProperty({ type: () => Number })
