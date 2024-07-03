@@ -11,17 +11,12 @@ import { PluginLifecycleMethods } from './plugin.interface';
  * @param metadataKey The metadata key to retrieve from plugins.
  * @returns An array of classes obtained from the provided plugins and metadata key.
  */
-function getClassesFromPlugins(
-	plugins: Array<Type<any> | DynamicModule>,
-	metadataKey: string
-): Array<Type<any>> {
+function getClassesFromPlugins(plugins: Array<Type<any> | DynamicModule>, metadataKey: string): Array<Type<any>> {
 	if (!plugins) {
 		return [];
 	}
 
-	return plugins.flatMap((plugin: Type<any> | DynamicModule) =>
-		reflectMetadata(plugin, metadataKey) ?? []
-	);
+	return plugins.flatMap((plugin: Type<any> | DynamicModule) => reflectMetadata(plugin, metadataKey) ?? []);
 }
 
 /**
@@ -29,9 +24,7 @@ function getClassesFromPlugins(
  * @param plugins An array of plugins containing entity metadata.
  * @returns An array of entity classes obtained from the provided plugins.
  */
-export function getEntitiesFromPlugins(
-	plugins?: Array<Type<any> | DynamicModule>
-): Array<Type<any>> {
+export function getEntitiesFromPlugins(plugins?: Array<Type<any> | DynamicModule>): Array<Type<any>> {
 	return getClassesFromPlugins(plugins, PLUGIN_METADATA.ENTITIES);
 }
 
@@ -40,9 +33,7 @@ export function getEntitiesFromPlugins(
  * @param plugins An array of plugins containing subscriber metadata.
  * @returns An array of subscriber classes obtained from the provided plugins.
  */
-export function getSubscribersFromPlugins(
-	plugins?: Array<Type<any> | DynamicModule>
-): Array<Type<any>> {
+export function getSubscribersFromPlugins(plugins?: Array<Type<any> | DynamicModule>): Array<Type<any>> {
 	return getClassesFromPlugins(plugins, PLUGIN_METADATA.SUBSCRIBERS);
 }
 
@@ -56,8 +47,8 @@ export function getPluginExtensions(plugins: Array<Type<any> | DynamicModule>) {
 		return [];
 	}
 
-	return plugins.flatMap((plugin: Type<any> | DynamicModule) =>
-		reflectMetadata(plugin, PLUGIN_METADATA.EXTENSIONS) ?? []
+	return plugins.flatMap(
+		(plugin: Type<any> | DynamicModule) => reflectMetadata(plugin, PLUGIN_METADATA.EXTENSIONS) ?? []
 	);
 }
 
@@ -71,8 +62,8 @@ export function getPluginConfigurations(plugins: (Type<any> | DynamicModule)[] =
 		return [];
 	}
 
-	return plugins.flatMap((plugin: Type<any> | DynamicModule) =>
-		reflectMetadata(plugin, PLUGIN_METADATA.CONFIGURATION) || []
+	return plugins.flatMap(
+		(plugin: Type<any> | DynamicModule) => reflectMetadata(plugin, PLUGIN_METADATA.CONFIGURATION) || []
 	);
 }
 
@@ -81,9 +72,7 @@ export function getPluginConfigurations(plugins: (Type<any> | DynamicModule)[] =
  * @param plugins An array of plugins.
  * @returns An array of modules obtained from the provided plugins.
  */
-export function getPluginModules(
-	plugins: Array<Type<any> | DynamicModule>
-): Array<Type<any>> {
+export function getPluginModules(plugins: Array<Type<any> | DynamicModule>): Array<Type<any>> {
 	return plugins.map((plugin: Type<any> | DynamicModule) => {
 		if (isDynamicModule(plugin)) {
 			const { module } = plugin;
@@ -99,10 +88,7 @@ export function getPluginModules(
  * @param metadataKey The key for the metadata to be reflected.
  * @returns The metadata associated with the given key.
  */
-function reflectMetadata(
-	metatype: Type<any> | DynamicModule,
-	metadataKey: string
-) {
+function reflectMetadata(metatype: Type<any> | DynamicModule, metadataKey: string) {
 	// Extract the module property if the metatype is a DynamicModule
 	const target = isDynamicModule(metatype) ? metatype.module : metatype;
 
@@ -128,9 +114,7 @@ export function hasLifecycleMethod<M extends keyof PluginLifecycleMethods>(
  * @param type The type to check.
  * @returns True if the type is a DynamicModule, false otherwise.
  */
-export function isDynamicModule(
-	type: Type<any> | DynamicModule
-): type is DynamicModule {
+export function isDynamicModule(type: Type<any> | DynamicModule): type is DynamicModule {
 	return !!(type as DynamicModule).module;
 }
 
@@ -145,7 +129,7 @@ export function reflectDynamicModuleMetadata(module: Type<any>) {
 		controllers: reflectMetadata(module, MODULE_METADATA.CONTROLLERS) || [],
 		providers: reflectMetadata(module, MODULE_METADATA.PROVIDERS) || [],
 		imports: reflectMetadata(module, MODULE_METADATA.IMPORTS) || [],
-		exports: reflectMetadata(module, MODULE_METADATA.EXPORTS) || [],
+		exports: reflectMetadata(module, MODULE_METADATA.EXPORTS) || []
 	};
 }
 
@@ -156,14 +140,16 @@ export function reflectDynamicModuleMetadata(module: Type<any>) {
 export function getDynamicPluginsModules(): DynamicModule[] {
 	const plugins = getConfig().plugins;
 
-	return plugins.map((plugin: Type<any> | DynamicModule) => {
-		const pluginModule = isDynamicModule(plugin) ? plugin.module : plugin;
-		const { imports, providers, exports } = reflectDynamicModuleMetadata(pluginModule);
-		return {
-			module: pluginModule,
-			imports,
-			exports,
-			providers: [...providers]
-		};
-	}).filter(isNotEmpty);
+	return plugins
+		.map((plugin: Type<any> | DynamicModule) => {
+			const pluginModule = isDynamicModule(plugin) ? plugin.module : plugin;
+			const { imports, providers, exports } = reflectDynamicModuleMetadata(pluginModule);
+			return {
+				module: pluginModule,
+				imports,
+				exports,
+				providers: [...providers]
+			};
+		})
+		.filter(isNotEmpty);
 }

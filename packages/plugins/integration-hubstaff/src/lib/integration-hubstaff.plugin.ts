@@ -1,10 +1,8 @@
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
-import { ApplicationPluginConfig } from '@gauzy/common';
 import { HubstaffModule } from './hubstaff.module';
 
 @Plugin({
-	imports: [HubstaffModule],
-	configuration: (config: ApplicationPluginConfig) => config
+	imports: [HubstaffModule]
 })
 export class IntegrationHubstaffPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We disable by default additional logging for each event to avoid cluttering the logs

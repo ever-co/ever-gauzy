@@ -7,9 +7,10 @@ import {
 	IOrganizationGithubRepository,
 	IOrganizationGithubRepositoryIssue
 } from '@gauzy/contracts';
-import { IntegrationTenant, OrganizationGithubRepositoryIssue, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { IntegrationTenant, TenantOrganizationBaseEntity } from '@gauzy/core';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from '@gauzy/core';
 import { MikroOrmOrganizationGithubRepositoryRepository } from './repository/mikro-orm-organization-github-repository.repository';
+import { OrganizationGithubRepositoryIssue } from './issue/github-repository-issue.entity';
 
 @MultiORMEntity('organization_github_repository', {
 	mikroOrmRepository: () => MikroOrmOrganizationGithubRepositoryRepository
