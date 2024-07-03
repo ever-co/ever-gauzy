@@ -462,7 +462,8 @@
 		"knexjs",
 		"zipkin",
 		"honeycombio",
-		"gauzyapiserver"
+		"gauzyapiserver",
+		"Embeddable"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
