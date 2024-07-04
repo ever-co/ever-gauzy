@@ -29,14 +29,17 @@
 	"keywords": [],
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
+		"@gauzy/contracts": "^0.1.0",
 		"@nestjs/axios": "^3.0.2",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/config": "^3.2.0",
 		"axios": "^1.6.8",
 		"chalk": "4.1.2",
-		"form-data": "^3.0.0"
+		"form-data": "^3.0.0",
+		"rxjs": "^7.4.0"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
