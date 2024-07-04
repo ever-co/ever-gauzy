@@ -1,32 +1,20 @@
 <nb-card>
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
-		<h5 class="title">{{ 'USERS_PAGE.ADD_USER' | translate }}</h5>
+		<span class="cancel">
+			<i class="fas fa-times" (click)="closeDialog()"></i>
+		</span>
+		<h5 class="title">
+			{{ 'USERS_PAGE.ADD_USER' | translate }}
+		</h5>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-user-basic-info-form
-			[isShowRole]="true"
-			#userBasicInfo
-		></ga-user-basic-info-form>
+		<ga-user-basic-info-form [isShowRole]="true" #userBasicInfo></ga-user-basic-info-form>
 	</nb-card-body>
 	<nb-card-footer class="text-left">
-		<button
-			[disabled]="userBasicInfo.form.invalid"
-			status="basic"
-			class="green"
-			outline
-			(click)="add()"
-			nbButton
-		>
+		<button [disabled]="userBasicInfo.form.invalid" status="basic" class="green" outline (click)="add()" nbButton>
 			{{ 'USERS_PAGE.ADD_USER' | translate }}
 		</button>
-		<button
-			status="basic"
-			class="mr-3 ml-3"
-			outline
-			(click)="closeDialog()"
-			nbButton
-		>
+		<button status="basic" class="mr-3 ml-3" outline (click)="closeDialog()" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 	</nb-card-footer>

@@ -38,20 +38,20 @@ import { AccountRegistrationEvent } from '../event-bus/events';
 import { EventBus } from '../event-bus/event-bus';
 import { ALPHA_NUMERIC_CODE_LENGTH, DEMO_PASSWORD_LESS_MAGIC_CODE } from './../constants';
 import { EmailService } from './../email-send/email.service';
-import { User } from '../user/user.entity';
 import { UserService } from '../user/user.service';
+import { EmployeeService } from '../employee/employee.service';
 import { RoleService } from './../role/role.service';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
 import { PasswordResetCreateCommand, PasswordResetGetCommand } from './../password-reset/commands';
 import { RequestContext } from './../core/context';
 import { freshTimestamp, generateRandomAlphaNumericCode } from './../core/utils';
-import { OrganizationTeam, Tenant } from './../core/entities/internal';
+import { Employee, OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmUserRepository } from './../user/repository/type-orm-user.repository';
+import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { TypeOrmOrganizationTeamRepository } from './../organization-team/repository/type-orm-organization-team.repository';
-import { EmployeeService } from '../employee/employee.service';
 import {
 	verifyFacebookToken,
 	verifyGithubToken,
@@ -64,12 +64,14 @@ import { SocialAccountService } from './social-account/social-account.service';
 export class AuthService extends SocialAuthService {
 	constructor(
 		@InjectRepository(User)
-		private typeOrmUserRepository: TypeOrmUserRepository,
+		private readonly typeOrmUserRepository: TypeOrmUserRepository,
+		@InjectRepository(Employee)
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		@InjectRepository(OrganizationTeam)
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
-		private readonly employeeService: EmployeeService,
+		private readonly _employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
@@ -103,7 +105,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			const employee = await this._employeeService.findOneByUserId(user.id);
 
 			// Check if the employee is active and not archived. If not, throw an error.
 			if (employee && (!employee.isActive || employee.isArchived)) {
@@ -529,6 +531,8 @@ export class AuthService extends SocialAuthService {
 		languageCode: LanguagesEnum
 	): Promise<User> {
 		let tenant = input.user.tenant;
+		const { organizationId } = input;
+
 		// 1. If createdById is provided, get the creating user and use their tenant
 		if (input.createdById) {
 			const creatingUser = await this.userService.findOneByIdString(input.createdById, {
@@ -540,36 +544,45 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// 2. Register new user
-		const userToCreate = this.typeOrmUserRepository.create({
-			...input.user,
-			tenant,
-			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
-		});
-		const createdUser = await this.typeOrmUserRepository.save(userToCreate);
+		const createdUser = await this.typeOrmUserRepository.save(
+			this.typeOrmUserRepository.create({
+				...input.user,
+				...(input.password ? { hash: await this.getPasswordHash(input.password) } : {}),
+				tenant
+			})
+		);
 
-		// 3. Email is automatically verified after accepting an invitation
-		if (input.inviteId) {
-			await this.typeOrmUserRepository.update(createdUser.id, {
-				emailVerifiedAt: freshTimestamp()
-			});
+		// 3. Create employee for specific user
+		if (input.featureAsEmployee) {
+			await this.typeOrmEmployeeRepository.save(
+				this.typeOrmEmployeeRepository.create({
+					...input,
+					user: createdUser,
+					tenantId: tenant.id,
+					tenant: { id: tenant.id },
+					organizationId,
+					organization: { id: organizationId }
+				})
+			);
 		}
 
-		// 4. Find the latest registered user with role
+		// 4. Email is automatically verified after accepting an invitation
+		if (input.inviteId) {
+			await this.typeOrmUserRepository.update(createdUser.id, { emailVerifiedAt: freshTimestamp() });
+		}
+
+		// 5. Find the latest registered user with role
 		const user = await this.typeOrmUserRepository.findOne({
-			where: {
-				id: createdUser.id
-			},
-			relations: {
-				role: true
-			}
+			where: { id: createdUser.id },
+			relations: { role: true }
 		});
 
-		// 5. If organizationId is provided, add the user to the organization
+		// 6. If organizationId is provided, add the user to the organization
 		if (isNotEmpty(input.organizationId)) {
 			await this.userOrganizationService.addUserToOrganization(user, input.organizationId);
 		}
 
-		// 6. Create Import Records while migrating for a relative user
+		// 7. Create Import Records while migrating for a relative user
 		const { isImporting = false, sourceId = null } = input;
 		if (isImporting && sourceId) {
 			const { sourceId } = input;
@@ -593,7 +606,7 @@ export class AuthService extends SocialAuthService {
 			'companyName'
 		]);
 
-		// 7. If the user's email is not verified, send an email verification
+		// 8. If the user's email is not verified, send an email verification
 		if (!user.emailVerifiedAt) {
 			this.emailConfirmationService.sendEmailVerification(user, integration);
 		}
@@ -603,7 +616,7 @@ export class AuthService extends SocialAuthService {
 		const event = new AccountRegistrationEvent(ctx, user); // ToDo: Send a welcome email to user from events
 		await this.eventBus.publish(event);
 
-		// 8. Send a welcome email to the user
+		// 9. Send a welcome email to the user
 		this.emailService.welcomeUser(input.user, languageCode, input.organizationId, input.originalUrl, integration);
 		return user;
 	}
@@ -762,7 +775,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this.employeeService.findOneByUserId(user.id);
+			const employee = await this._employeeService.findOneByUserId(user.id);
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
@@ -1038,7 +1051,7 @@ export class AuthService extends SocialAuthService {
 				);
 
 				// Retrieve the employee details associated with the user.
-				const employee = await this.employeeService.findOneByUserId(user.id);
+				const employee = await this._employeeService.findOneByUserId(user.id);
 
 				// Check if the employee is active and not archived. If not, throw an error.
 				if (employee && (!employee.isActive || employee.isArchived)) {
@@ -1217,7 +1230,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
-		const employeeId = await this.employeeService.findEmployeeIdByUserId(user.id);
+		const employeeId = await this._employeeService.findEmployeeIdByUserId(user.id);
 
 		const workspace: IWorkspaceResponse = {
 			user: this.createUserObject(user),
