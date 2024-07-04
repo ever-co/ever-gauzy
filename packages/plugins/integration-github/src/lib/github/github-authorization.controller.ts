@@ -4,7 +4,7 @@ import { ConfigService } from '@gauzy/config';
 import { IGithubAppInstallInput } from '@gauzy/contracts';
 import { IGithubIntegrationConfig, Public } from '@gauzy/common';
 
-@Controller()
+@Controller('/integration/github')
 export class GitHubAuthorizationController {
 	constructor(private readonly _config: ConfigService) {}
 

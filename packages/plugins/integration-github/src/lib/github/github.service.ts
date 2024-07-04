@@ -46,9 +46,7 @@ export class GithubService {
 
 			/** Find the GitHub integration */
 			const integration = await this._integrationService.findOneByOptions({
-				where: {
-					provider: IntegrationEnum.GITHUB
-				}
+				where: { provider: IntegrationEnum.GITHUB }
 			});
 
 			const tiedEntities = ISSUE_TIED_ENTITIES.map((entity) => ({
@@ -75,9 +73,7 @@ export class GithubService {
 				new IntegrationTenantUpdateOrCreateCommand(
 					{
 						name: IntegrationEnum.GITHUB,
-						integration: {
-							provider: IntegrationEnum.GITHUB
-						},
+						integration: { provider: IntegrationEnum.GITHUB },
 						tenantId,
 						organizationId
 					},

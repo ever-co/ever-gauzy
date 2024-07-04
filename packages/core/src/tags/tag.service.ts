@@ -93,7 +93,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			if (customFields.length > 0) {
 				customFields.forEach((field) => {
 					if (field.relationType === 'many-to-many') {
-						query.leftJoin(`${query.alias}.customFields.${field.propertyPath}`, field.propertyPath);
+						query.leftJoin(`${query.alias}.customFields.${field.name}`, field.name);
 					}
 				});
 			}
@@ -137,8 +137,8 @@ export class TagService extends TenantAwareCrudService<Tag> {
 			if (customFields.length > 0) {
 				customFields.forEach((field) => {
 					if (field.relationType === 'many-to-many') {
-						const selectionAliasName = `${field.propertyPath}_counter`;
-						query.addSelect(`CAST(COUNT(${field.propertyPath}.id) AS INTEGER)`, selectionAliasName);
+						const selectionAliasName = `${field.name}_counter`;
+						query.addSelect(`CAST(COUNT(${field.name}.id) AS INTEGER)`, selectionAliasName);
 					}
 				});
 			}

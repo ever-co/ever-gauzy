@@ -6,7 +6,7 @@ import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
-@Controller()
+@Controller('/integration/github')
 export class GitHubController {
 	constructor(private readonly _githubService: GithubService) {}
 

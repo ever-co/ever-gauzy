@@ -4,7 +4,7 @@ import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { GithubRepositoryService } from './github-repository.service';
 import { UpdateGithubRepositoryDTO } from './dto';
 
-@Controller('repository')
+@Controller('/integration/github/repository')
 export class GitHubRepositoryController {
 	constructor(private readonly _githubRepositoryService: GithubRepositoryService) {}
 

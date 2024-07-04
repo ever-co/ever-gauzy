@@ -5,7 +5,7 @@ import { Hook } from '../probot/hook.decorator';
 import { GithubHooksService } from './github.hooks.service';
 
 @Public()
-@Controller('webhook')
+@Controller('/integration/github/webhook')
 export class GitHubHooksController {
 	constructor(private readonly _githubHooksService: GithubHooksService) {}
 

@@ -18,7 +18,7 @@ import { ProcessGithubIssueSyncDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
-@Controller(':integrationId')
+@Controller('/integration/github/:integrationId')
 export class GitHubSyncController {
 	private readonly logger = new Logger('GitHubSyncController');
 

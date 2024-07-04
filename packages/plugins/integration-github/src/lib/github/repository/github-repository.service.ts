@@ -14,9 +14,9 @@ export class GithubRepositoryService extends TenantAwareCrudService<Organization
 	private readonly logger = new Logger('GithubRepositoryService');
 
 	constructor(
+		private readonly _commandBus: CommandBus,
 		typeOrmOrganizationGithubRepositoryRepository: TypeOrmOrganizationGithubRepositoryRepository,
-		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository,
-		private readonly _commandBus: CommandBus
+		mikroOrmOrganizationGithubRepositoryRepository: MikroOrmOrganizationGithubRepositoryRepository
 	) {
 		super(typeOrmOrganizationGithubRepositoryRepository, mikroOrmOrganizationGithubRepositoryRepository);
 	}
