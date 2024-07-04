@@ -71,7 +71,7 @@ export class AuthService extends SocialAuthService {
 		private readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		private readonly emailConfirmationService: EmailConfirmationService,
 		private readonly userService: UserService,
-		private readonly _employeeService: EmployeeService,
+		private readonly employeeService: EmployeeService,
 		private readonly roleService: RoleService,
 		private readonly emailService: EmailService,
 		private readonly userOrganizationService: UserOrganizationService,
@@ -105,7 +105,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this._employeeService.findOneByUserId(user.id);
+			const employee = await this.employeeService.findOneByUserId(user.id);
 
 			// Check if the employee is active and not archived. If not, throw an error.
 			if (employee && (!employee.isActive || employee.isArchived)) {
@@ -544,20 +544,19 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// 2. Register new user
-		const createdUser = await this.typeOrmUserRepository.save(
-			this.typeOrmUserRepository.create({
-				...input.user,
-				...(input.password ? { hash: await this.getPasswordHash(input.password) } : {}),
-				tenant
-			})
-		);
+		const entity = this.typeOrmUserRepository.create({
+			...input.user,
+			tenant,
+			...(input.password ? { hash: await this.getPasswordHash(input.password) } : {})
+		});
+		let user = await this.typeOrmUserRepository.save(entity);
 
 		// 3. Create employee for specific user
 		if (input.featureAsEmployee) {
 			await this.typeOrmEmployeeRepository.save(
 				this.typeOrmEmployeeRepository.create({
 					...input,
-					user: createdUser,
+					user,
 					tenantId: tenant.id,
 					tenant: { id: tenant.id },
 					organizationId,
@@ -568,12 +567,14 @@ export class AuthService extends SocialAuthService {
 
 		// 4. Email is automatically verified after accepting an invitation
 		if (input.inviteId) {
-			await this.typeOrmUserRepository.update(createdUser.id, { emailVerifiedAt: freshTimestamp() });
+			await this.typeOrmUserRepository.update(user.id, {
+				emailVerifiedAt: freshTimestamp()
+			});
 		}
 
 		// 5. Find the latest registered user with role
-		const user = await this.typeOrmUserRepository.findOne({
-			where: { id: createdUser.id },
+		user = await this.typeOrmUserRepository.findOne({
+			where: { id: user.id },
 			relations: { role: true }
 		});
 
@@ -583,13 +584,11 @@ export class AuthService extends SocialAuthService {
 		}
 
 		// 7. Create Import Records while migrating for a relative user
-		const { isImporting = false, sourceId = null } = input;
-		if (isImporting && sourceId) {
-			const { sourceId } = input;
+		if (input.isImporting && input.sourceId) {
 			this.commandBus.execute(
 				new ImportRecordUpdateOrCreateCommand({
 					entityType: this.typeOrmUserRepository.metadata.tableName,
-					sourceId,
+					sourceId: input.sourceId,
 					destinationId: user.id
 				})
 			);
@@ -775,7 +774,7 @@ export class AuthService extends SocialAuthService {
 			}
 
 			// Retrieve the employee details associated with the user.
-			const employee = await this._employeeService.findOneByUserId(user.id);
+			const employee = await this.employeeService.findOneByUserId(user.id);
 
 			// Create a payload for the JWT token
 			const payload: JwtPayload = {
@@ -1051,7 +1050,7 @@ export class AuthService extends SocialAuthService {
 				);
 
 				// Retrieve the employee details associated with the user.
-				const employee = await this._employeeService.findOneByUserId(user.id);
+				const employee = await this.employeeService.findOneByUserId(user.id);
 
 				// Check if the employee is active and not archived. If not, throw an error.
 				if (employee && (!employee.isActive || employee.isArchived)) {
@@ -1230,7 +1229,7 @@ export class AuthService extends SocialAuthService {
 	 */
 	private async createWorkspace(user: IUser, code: string, includeTeams: boolean): Promise<IWorkspaceResponse> {
 		const tenantId = user.tenant ? user.tenantId : null;
-		const employeeId = await this._employeeService.findEmployeeIdByUserId(user.id);
+		const employeeId = await this.employeeService.findEmployeeIdByUserId(user.id);
 
 		const workspace: IWorkspaceResponse = {
 			user: this.createUserObject(user),
