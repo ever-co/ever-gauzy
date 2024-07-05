@@ -1,10 +1,5 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import {
-	ComponentLayoutStyleEnum,
-	IEmployee,
-	LanguagesEnum,
-	RolesEnum
-} from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IEmployee, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/common';
 import { RequestContext } from './../../../core/context';
@@ -18,9 +13,7 @@ import { RoleService } from './../../../role/role.service';
 import { UserService } from './../../../user/user.service';
 
 @CommandHandler(EmployeeCreateCommand)
-export class EmployeeCreateHandler
-	implements ICommandHandler<EmployeeCreateCommand> {
-
+export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateCommand> {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _employeeService: EmployeeService,
@@ -29,7 +22,7 @@ export class EmployeeCreateHandler
 		private readonly _emailService: EmailService,
 		private readonly _roleService: RoleService,
 		private readonly _userService: UserService
-	) { }
+	) {}
 
 	/**
 	 * Execute the employee creation command.
@@ -39,7 +32,6 @@ export class EmployeeCreateHandler
 	 * @throws SomeAppropriateException if an error occurs during the process.
 	 */
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
-
 		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
 		const { organizationId } = input;
@@ -69,6 +61,7 @@ export class EmployeeCreateHandler
 			const employee = await this._employeeService.create({
 				...input,
 				user,
+				organizationId,
 				organization: { id: organizationId }
 			});
 
@@ -88,6 +81,7 @@ export class EmployeeCreateHandler
 				return await this._employeeService.create({
 					...input,
 					user,
+					organizationId,
 					organization: { id: organizationId }
 				});
 			} catch (error) {

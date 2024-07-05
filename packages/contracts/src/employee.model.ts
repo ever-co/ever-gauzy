@@ -1,4 +1,7 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantAndOrganizationEntityMutationInput
+} from './base-entity.model';
 import { IContact } from './contact.model';
 import { IEmployeeJobsStatistics } from './employee-job.model';
 import { IOrganizationDepartment } from './organization-department.model';
@@ -170,7 +173,7 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	isAway?: boolean;
 }
 
-export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput {
 	user?: IUser;
 	userId?: IUser['id'];
 	password?: string;

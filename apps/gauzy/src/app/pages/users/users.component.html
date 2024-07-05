@@ -7,12 +7,7 @@
 				</ngx-header-title>
 			</h4>
 			<ng-template ngxPermissionsOnly="ORG_USERS_EDIT">
-				<ng-template
-					[ngxPermissionsOnly]="[
-						'ORG_INVITE_VIEW',
-						'ORG_INVITE_EDIT'
-					]"
-				>
+				<ng-template [ngxPermissionsOnly]="['ORG_INVITE_VIEW', 'ORG_INVITE_EDIT']">
 					<button
 						nbButton
 						class="action"
@@ -49,10 +44,7 @@
 				</ng-template>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
+		<ng-template [ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE" [ngIfElse]="gridLayout">
 			<div class="table-scroll-container">
 				<angular2-smart-table
 					style="cursor: pointer"
@@ -63,9 +55,7 @@
 			</div>
 			<div class="pagination-container align-self-end">
 				<ng-container *ngIf="sourceSmartTable">
-					<ngx-pagination
-						[source]="sourceSmartTable"
-					></ngx-pagination>
+					<ngx-pagination [source]="sourceSmartTable"></ngx-pagination>
 				</ng-container>
 			</div>
 		</ng-template>
@@ -93,8 +83,7 @@
 				size="small"
 				underConstruction
 			>
-				<nb-icon class="mr-1" icon="eye-outline"></nb-icon
-				>{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}
 			</button>
 			<button
 				nbButton
@@ -104,13 +93,12 @@
 				class="action primary"
 				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
 				[disabled]="!selectedItem && disableButton"
-				(click)="remove(selectedUser, selectedItem)"
+				(click)="removeUserFromOrganization(selectedUser, selectedItem)"
 				status="basic"
 				class="action"
 				size="small"
@@ -131,30 +119,17 @@
 			class="action info"
 			size="small"
 		>
-			<nb-icon icon="email-outline"></nb-icon
-			>{{ 'BUTTONS.INVITE' | translate }}
+			<nb-icon icon="email-outline"></nb-icon>{{ 'BUTTONS.INVITE' | translate }}
 		</button>
 	</ng-template>
-	<button
-		nbButton
-		status="success"
-		size="small"
-		(click)="add()"
-		class="action"
-	>
-		<nb-icon icon="plus-outline"></nb-icon
-		>{{ 'BUTTONS.ADD_NEW' | translate }}
+	<button nbButton status="success" size="small" (click)="add()" class="action">
+		<nb-icon icon="plus-outline"></nb-icon>
+		{{ 'BUTTONS.ADD_NEW' | translate }}
 	</button>
 	<ng-template ngxPermissionsOnly="TENANT_ADD_EXISTING_USER">
-		<button
-			(click)="showAddCard = !showAddCard"
-			nbButton
-			status="warning"
-			class="action"
-			size="small"
-		>
-			<nb-icon icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD_EXISTING' | translate }}
+		<button (click)="showAddCard = !showAddCard" nbButton status="warning" class="action" size="small">
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD_EXISTING' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

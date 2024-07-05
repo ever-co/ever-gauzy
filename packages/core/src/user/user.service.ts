@@ -2,12 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import {
-	ForbiddenException,
-	Injectable,
-	NotFoundException,
-	UnauthorizedException
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import {
 	InsertResult,
 	SelectQueryBuilder,
@@ -19,7 +14,15 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
-import { ComponentLayoutStyleEnum, IEmployee, IFindMeUser, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	IEmployee,
+	IFindMeUser,
+	IUser,
+	LanguagesEnum,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -111,19 +114,25 @@ export class UserService extends TenantAwareCrudService<User> {
 	public async markEmailAsVerified(id: IUser['id']) {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				return await this.mikroOrmRepository.nativeUpdate({ id }, {
-					emailVerifiedAt: freshTimestamp(),
-					emailToken: null,
-					code: null,
-					codeExpireAt: null
-				})
+				return await this.mikroOrmRepository.nativeUpdate(
+					{ id },
+					{
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					}
+				);
 			case MultiORMEnum.TypeORM:
-				return await this.typeOrmRepository.update({ id }, {
-					emailVerifiedAt: freshTimestamp(),
-					emailToken: null,
-					code: null,
-					codeExpireAt: null
-				});
+				return await this.typeOrmRepository.update(
+					{ id },
+					{
+						emailVerifiedAt: freshTimestamp(),
+						emailToken: null,
+						code: null,
+						codeExpireAt: null
+					}
+				);
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
@@ -275,7 +284,7 @@ export class UserService extends TenantAwareCrudService<User> {
 					id: id as string,
 					tenantId: RequestContext.currentTenantId()
 				});
-			} catch { }
+			} catch {}
 		} catch (error) {
 			throw new ForbiddenException();
 		}
@@ -426,12 +435,19 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Asynchronously generates a bcrypt hash from the provided password.
 	 *
-	 * @param password
-	 * @returns
+	 * @param password The password to hash.
+	 * @returns A promise resolving to the bcrypt hash of the password.
 	 */
 	private async getPasswordHash(password: string): Promise<string> {
-		return bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+		try {
+			// Generate bcrypt hash using provided password and salt rounds from environment
+			return await bcrypt.hash(password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
+		} catch (error) {
+			// Handle any errors during hashing process
+			console.error('Error generating password hash:', error);
+		}
 	}
 
 	/**
@@ -467,7 +483,9 @@ export class UserService extends TenantAwareCrudService<User> {
 			// TODO: Unassign all the task assigned to this user
 			// Best to raise some event and handle it in the subscriber that remove tasks!
 			const employee = await this._employeeService.findOneByUserId(user.id);
-			if (employee) { await this._taskService.unassignEmployeeFromTeamTasks(employee.id); }
+			if (employee) {
+				await this._taskService.unassignEmployeeFromTeamTasks(employee.id);
+			}
 
 			return await super.delete(userId);
 		} catch (error) {

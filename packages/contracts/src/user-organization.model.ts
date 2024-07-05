@@ -1,30 +1,19 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { LanguagesEnum, IUser } from './user.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IUser } from './user.model';
 
-export interface IUserOrganization
-	extends IBasePerTenantAndOrganizationEntityModel {
-	userId: string;
+// Define the base interface for shared properties
+export interface IBaseUserOrganization extends IBasePerTenantAndOrganizationEntityModel {
+	userId?: ID;
 	isDefault: boolean;
+}
+
+// Extend the base interface for specific use cases
+export interface IUserOrganization extends IBaseUserOrganization {
 	user?: IUser;
 }
 
-export interface IUserOrganizationFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
-	userId?: string;
-	isDefault?: boolean;
-	isActive?: boolean;
-}
+// Use the base interface directly for find input
+export interface IUserOrganizationFindInput extends Partial<IBaseUserOrganization> {}
 
-export interface IUserOrganizationCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
-	userId: string;
-	isDefault?: boolean;
-	isActive?: boolean;
-}
-
-export interface IUserOrganizationDeleteInput {
-	userOrganizationId: string;
-	requestingUser: IUser;
-	language?: LanguagesEnum;
-}
+// Use the base interface directly for create input
+export interface IUserOrganizationCreateInput extends IBaseUserOrganization {}

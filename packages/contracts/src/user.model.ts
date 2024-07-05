@@ -83,6 +83,7 @@ export interface IUserRegistrationInput {
 	isImporting?: boolean;
 	sourceId?: string;
 	inviteId?: string;
+	featureAsEmployee?: boolean;
 }
 
 /**
