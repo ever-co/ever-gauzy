@@ -264,7 +264,10 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		const { userOrganizationId } = selectedOrganization;
 		const fullName = selectedOrganization.fullName.trim() || selectedOrganization.email;
 
-		// Determine if the user belongs to multiple organizations
+		/**
+		 *  User belongs to only 1 organization -> delete user
+		 *	User belongs multiple organizations -> remove user from Organization
+		 */
 		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
 		const confirmationMessage =
 			count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
