@@ -1,37 +1,37 @@
 <div class="form-group">
-    <label class="label">
-        {{ 'FORM.LABELS.GITHUB_REPOSITORY' | translate }}
-    </label>
-    <ng-select
-        #select
-        class="mb-2"
-        [items]="repositories$ | async"
-        [searchable]="false"
-        [clearable]="true"
-        [loading]="loading"
-        (change)="selectRepository($event)"
-        [(ngModel)]="sourceId"
-        [placeholder]="placeholder || 'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
-        bindLabel="full_name"
-        bindValue="id"
-        appendTo="body"
-        dropdownPosition="bottom"
-    >
-        <ng-template ng-header-tmp>
-            <input
-                type="search"
-                class="form-control"
-                (input)="select.filter($event.target.value)"
-                [placeholder]="'INTEGRATIONS.GITHUB_PAGE.SEARCH_REPOSITORY' | translate"
-            >
-        </ng-template>
-        <ng-template ng-label-tmp let-item="item">
-            <img src="assets/images/integrations/github.svg"/>
-            <span class="ml-1">{{ item.full_name }}</span>
+	<label class="label">
+		{{ 'FORM.LABELS.GITHUB_REPOSITORY' | translate }}
+	</label>
+	<ng-select
+		#select
+		class="mb-2"
+		[items]="repositories$ | async"
+		[searchable]="false"
+		[clearable]="true"
+		[loading]="loading"
+		(change)="selectRepository($event)"
+		[(ngModel)]="sourceId"
+		[placeholder]="placeholder || 'INTEGRATIONS.GITHUB_PAGE.SELECT_REPOSITORY' | translate"
+		bindLabel="full_name"
+		bindValue="id"
+		appendTo="body"
+		dropdownPosition="bottom"
+	>
+		<ng-template ng-header-tmp>
+			<input
+				type="search"
+				class="form-control"
+				(input)="select.filter($event.target.value)"
+				[placeholder]="'INTEGRATIONS.GITHUB_PAGE.SEARCH_REPOSITORY' | translate"
+			/>
 		</ng-template>
-        <ng-template ng-option-tmp let-item="item">
-            <img src="assets/images/integrations/github.svg"/>
-            <span class="ml-1">{{ item.full_name }}</span>
+		<ng-template ng-label-tmp let-item="item">
+			<img src="assets/images/integrations/github.svg" />
+			<span class="ml-1">{{ item.full_name }}</span>
 		</ng-template>
-    </ng-select>
+		<ng-template ng-option-tmp let-item="item">
+			<img src="assets/images/integrations/github.svg" />
+			<span class="ml-1">{{ item.full_name }}</span>
+		</ng-template>
+	</ng-select>
 </div>

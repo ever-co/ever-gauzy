@@ -11,6 +11,8 @@ import {
 	OrganizationProjectModule,
 	RolePermissionModule
 } from '@gauzy/core';
+import { environment } from '@gauzy/config';
+import { ProbotModule } from '../probot/probot.module';
 import { CommandHandlers } from './commands/handlers';
 import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
@@ -29,18 +31,35 @@ import { GithubRepositoryIssueService } from './repository/issue/github-reposito
 import { TypeOrmOrganizationGithubRepositoryRepository } from './repository/repository';
 import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository/issue/repository';
 
+//
+const { github } = environment;
+
 @Module({
 	imports: [
 		HttpModule,
+		CqrsModule,
 		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
+		// Probot Configuration
+		ProbotModule.forRoot({
+			isGlobal: true,
+			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
+			path: 'integration/github/webhook',
+			config: {
+				/** Client Configuration */
+				clientId: github.clientId,
+				clientSecret: github.clientSecret,
+				appId: github.appId,
+				privateKey: github.appPrivateKey,
+				webhookSecret: github.webhookSecret
+			}
+		}),
 		RolePermissionModule,
 		forwardRef(() => OrganizationProjectModule),
 		forwardRef(() => IntegrationModule),
 		forwardRef(() => IntegrationTenantModule),
 		forwardRef(() => IntegrationSettingModule),
-		forwardRef(() => IntegrationMapModule),
-		CqrsModule
+		forwardRef(() => IntegrationMapModule)
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -51,13 +70,15 @@ import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository
 		GitHubRepositoryController
 	],
 	providers: [
+		// Define middleware heres
+		GithubMiddleware,
+		// Define services heres
 		GithubService,
 		GithubSyncService,
 		GithubHooksService,
 		GithubRepositoryService,
 		GithubRepositoryIssueService,
-		// Define middleware heres
-		GithubMiddleware,
+		// Define repositories heres
 		TypeOrmOrganizationGithubRepositoryRepository,
 		TypeOrmOrganizationGithubRepositoryIssueRepository,
 		// Define handlers heres
@@ -67,12 +88,14 @@ import { TypeOrmOrganizationGithubRepositoryIssueRepository } from './repository
 })
 export class GithubModule implements NestModule {
 	/**
+	 * Configures middleware for specific routes.
 	 *
-	 * @param consumer
+	 * @param consumer - The middleware consumer to apply the middlewares.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		// Apply middlewares to specific controllers
+		// Apply the GithubMiddleware to specific routes
 		consumer.apply(GithubMiddleware).forRoutes(
+			// Define routes and HTTP methods for which the middleware should be applied
 			{
 				path: '/integration/github/:integrationId/metadata',
 				method: RequestMethod.GET
@@ -85,7 +108,6 @@ export class GithubModule implements NestModule {
 				path: '/integration/github/:integrationId/:owner/:repo/issues',
 				method: RequestMethod.GET
 			},
-			/** */
 			{
 				path: '/integration/github/:integrationId/manual-sync/issues',
 				method: RequestMethod.POST
@@ -94,6 +116,6 @@ export class GithubModule implements NestModule {
 				path: '/integration/github/:integrationId/auto-sync/issues',
 				method: RequestMethod.POST
 			}
-		); // Apply to specific routes and methods
+		); // Apply the middleware to specific routes and methods
 	}
 }

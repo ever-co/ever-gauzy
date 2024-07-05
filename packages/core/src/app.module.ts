@@ -13,7 +13,6 @@ import * as path from 'path';
 import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
-import { ProbotModule } from '@gauzy/plugin-integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
 import { CoreModule } from './core/core.module';
 import { RequestContext } from './core/context/request-context';
@@ -295,20 +294,6 @@ if (environment.THROTTLE_ENABLED) {
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		}),
-		// Probot Configuration
-		ProbotModule.forRoot({
-			isGlobal: true,
-			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
-			path: 'integration/github/webhook',
-			config: {
-				/** Client Configuration */
-				clientId: github.clientId,
-				clientSecret: github.clientSecret,
-				appId: github.appId,
-				privateKey: github.appPrivateKey,
-				webhookSecret: github.webhookSecret
-			}
 		}),
 		JiraModule.forRoot({
 			isGlobal: true,

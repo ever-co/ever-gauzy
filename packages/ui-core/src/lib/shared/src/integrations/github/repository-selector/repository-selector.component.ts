@@ -99,7 +99,9 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {
+	) {}
+
+	ngOnInit(): void {
 		this.subject$
 			.pipe(
 				tap(() => this._getRepositories()),
@@ -108,17 +110,21 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 			.subscribe();
 	}
 
-	ngOnInit(): void {}
-
 	ngAfterViewInit(): void {}
 
 	/**
+	 * Pre-selects a repository based on the provided source ID.
 	 *
-	 * @param sourceId
+	 * @param sourceId - The ID of the source repository to pre-select.
 	 */
 	private _preSelectedRepository(sourceId: IGithubRepository['id']) {
+		// Find the repository in the list of repositories using the source ID
 		const repository = this.repositories.find((repository: IGithubRepository) => repository.id === sourceId);
-		this.selectRepository(repository);
+
+		// If the repository is found, select it
+		if (repository) {
+			this.selectRepository(repository);
+		}
 	}
 
 	/**
@@ -141,11 +147,6 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 				tenantId
 			})
 			.pipe(
-				tap((response: IGithubRepositoryResponse) => {
-					if (response['status'] == HttpStatus.INTERNAL_SERVER_ERROR) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
 				map(({ repositories }: IGithubRepositoryResponse) => repositories),
 				// Update component state with fetched repositories
 				tap((repositories: IGithubRepository[]) => {

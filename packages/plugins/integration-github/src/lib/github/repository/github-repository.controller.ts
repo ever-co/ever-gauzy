@@ -1,5 +1,5 @@
 import { Body, Controller, Param, Post, Put } from '@nestjs/common';
-import { IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
+import { ID, IIntegrationMapSyncRepository, IOrganizationGithubRepository } from '@gauzy/contracts';
 import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { GithubRepositoryService } from './github-repository.service';
 import { UpdateGithubRepositoryDTO } from './dto';
@@ -16,12 +16,7 @@ export class GitHubRepositoryController {
 	 */
 	@Post('/sync')
 	async syncRepository(@Body() entity: IIntegrationMapSyncRepository): Promise<IOrganizationGithubRepository> {
-		try {
-			return await this._githubRepositoryService.syncGithubRepository(entity);
-		} catch (error) {
-			// Handle errors, e.g., return an error response.
-			throw new Error('Failed to sync GitHub repository');
-		}
+		return await this._githubRepositoryService.syncGithubRepository(entity);
 	}
 
 	/**
@@ -33,21 +28,16 @@ export class GitHubRepositoryController {
 	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: UpdateGithubRepositoryDTO
 	): Promise<IOrganizationGithubRepository> {
-		try {
-			// Ensure that a GitHub repository with the provided identifier exists.
-			await this._githubRepositoryService.findOneByIdString(id);
+		// Ensure that a GitHub repository with the provided identifier exists.
+		await this._githubRepositoryService.findOneByIdString(id);
 
-			// Attempt to update the GitHub repository using the provided data.
-			return await this._githubRepositoryService.create({
-				...input,
-				id
-			});
-		} catch (error) {
-			// Handle errors, e.g., return an error response.
-			throw new Error('Failed to update GitHub repository fields');
-		}
+		// Attempt to update the GitHub repository using the provided data.
+		return await this._githubRepositoryService.create({
+			...input,
+			id
+		});
 	}
 }

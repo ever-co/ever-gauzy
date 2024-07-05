@@ -12,15 +12,6 @@ export class DebounceClickDirective implements OnInit, OnDestroy {
 	@Input() debounceTime = 300;
 	@Output() throttledClick = new EventEmitter();
 
-	ngOnInit() {
-		this.subscription = this.clicks
-			.pipe(
-				debounceTime(this.debounceTime),
-				tap((e) => this.throttledClick.emit(e))
-			)
-			.subscribe();
-	}
-
 	/**
 	 * Handles the click event and emits it after a debounce time.
 	 *
@@ -32,6 +23,15 @@ export class DebounceClickDirective implements OnInit, OnDestroy {
 		event.preventDefault();
 		event.stopPropagation();
 		this.clicks.next(event);
+	}
+
+	ngOnInit() {
+		this.subscription = this.clicks
+			.pipe(
+				debounceTime(this.debounceTime),
+				tap((e) => this.throttledClick.emit(e))
+			)
+			.subscribe();
 	}
 
 	ngOnDestroy() {
