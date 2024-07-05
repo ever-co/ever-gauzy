@@ -463,7 +463,9 @@
 		"zipkin",
 		"honeycombio",
 		"gauzyapiserver",
-		"Embeddable"
+		"Embeddable",
+		"locutus",
+		"woot"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
