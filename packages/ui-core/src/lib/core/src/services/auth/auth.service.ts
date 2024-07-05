@@ -103,8 +103,8 @@ export class AuthService {
 		return this.http.get<boolean>(`${API_PREFIX}/auth/logout`);
 	}
 
-	register(registerInput: IUserRegistrationInput): Observable<IUser> {
-		return this.http.post<IUser>(`${API_PREFIX}/auth/register`, registerInput);
+	register(input: IUserRegistrationInput): Observable<IUser> {
+		return this.http.post<IUser>(`${API_PREFIX}/auth/register`, input);
 	}
 
 	requestPassword(requestPasswordInput): Observable<{ id?: string; token?: string }> {
