@@ -1,7 +1,7 @@
-import { JoinColumn, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsUUID } from 'class-validator';
-import { IUser, IUserOrganization } from '@gauzy/contracts';
+import { ID, IUser, IUserOrganization } from '@gauzy/contracts';
 import { TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmUserOrganizationRepository } from './repository/mikro-orm-user-organization.repository';
@@ -33,5 +33,5 @@ export class UserOrganization extends TenantOrganizationBaseEntity implements IU
 	@IsUUID()
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	userId: IUser['id'];
+	userId?: ID;
 }
