@@ -302,6 +302,33 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	}
 
 	/**
+	 * Fetches user organizations with necessary relations.
+	 *
+	 * @returns A promise that resolves to an array of IUserOrganization.
+	 */
+	private async _fetchUserOrganizations(): Promise<IUserOrganization[]> {
+		// If organization is not available, return undefined
+		if (!this.organization) {
+			return;
+		}
+
+		// Destructure organization properties for readability
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Fetch user organizations with required relations
+		const userOrganizations = await this.userOrganizationsService.getAll(
+			['user', 'user.role', 'user.tags'],
+			{ organizationId, tenantId },
+			true
+		);
+
+		// Filter out user organizations that are not active or don't have a user with a role
+		return userOrganizations.items.filter(
+			(organization: IUserOrganization) => organization.isActive && organization.user?.role
+		);
+	}
+
+	/**
 	 * Fetches users from user organizations, maps them to the required format, and loads them into the smart table.
 	 */
 	private async getUsers(): Promise<void> {
@@ -311,17 +338,19 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 			const organizations = await this._fetchUserOrganizations();
 
 			// Mapping fetched organizations to required user format
-			const users = organizations.map(({ id: userOrganizationId, user, isActive }) => ({
-				id: user.id,
-				fullName: user.name,
-				email: user.email,
-				tags: user.tags,
-				imageUrl: user.imageUrl,
-				role: user.role,
-				isActive,
-				userOrganizationId,
-				...this.employeeMapper(user.employee)
-			}));
+			const users = organizations
+				.filter(({ user }) => !!user)
+				.map(({ id: userOrganizationId, user, isActive }) => ({
+					id: user.id,
+					fullName: user.name,
+					email: user.email,
+					tags: user.tags,
+					imageUrl: user.imageUrl,
+					role: user.role,
+					isActive,
+					userOrganizationId,
+					...this.employeeMapper(user.employee)
+				}));
 
 			// Initialize Smart Table and load users
 			this.loadUsersToSmartTable(users);
@@ -365,31 +394,6 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 	}
 
 	/**
-	 * Fetches user organizations with necessary relations.
-	 *
-	 * @returns A promise that resolves to an array of IUserOrganization.
-	 */
-	private async _fetchUserOrganizations(): Promise<IUserOrganization[]> {
-		// If organization is not available, return undefined
-		if (!this.organization) {
-			return;
-		}
-
-		// Destructure organization properties for readability
-		const { id: organizationId, tenantId } = this.organization;
-
-		// Fetch user organizations with required relations
-		const userOrganizations = await this.userOrganizationsService.getAll(
-			['user', 'user.role', 'user.tags'],
-			{ organizationId, tenantId },
-			true
-		);
-
-		// Filter user organizations based on isActive and user role
-		return userOrganizations.items.filter((organization) => organization.isActive && organization.user.role);
-	}
-
-	/**
 	 * Loads unique user data into the users array if the grid layout is enabled.
 	 */
 	private async _loadDataGridLayout(): Promise<void> {
@@ -403,7 +407,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 
 		// Filter unique users based on their IDs
 		const uniqueUsers = elements.filter(
-			(user, index, self) => index === self.findIndex(({ id }) => user.id === id)
+			(user: IUserOrganization, index: number, self: any) => index === self.findIndex(({ id }) => user.id === id)
 		);
 
 		// Add unique users to the users array

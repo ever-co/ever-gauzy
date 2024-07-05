@@ -42,7 +42,7 @@ export class UserOrganizationController extends CrudController<UserOrganization>
 		@Query() params: PaginationParams<UserOrganization>,
 		@Query() query: FindMeUserOrganizationDTO
 	): Promise<IPagination<IUserOrganization>> {
-		return await this.userOrganizationService.findAllUserOrganizations(params, query.includeEmployee);
+		return await this.userOrganizationService.findUserOrganizations(params, query.includeEmployee);
 	}
 
 	/**

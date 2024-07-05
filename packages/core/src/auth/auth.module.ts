@@ -6,20 +6,21 @@ import { HttpModule } from '@nestjs/axios';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { SocialAuthModule } from '@gauzy/auth';
 import { EventBusModule } from '../event-bus/event-bus.module';
-import { Organization, OrganizationTeam, UserOrganization } from './../core/entities/internal';
-import { EmailSendModule } from './../email-send/email-send.module';
+import { OrganizationTeam, UserOrganization } from '../core/entities/internal';
+import { EmailSendModule } from '../email-send/email-send.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
 import { JwtRefreshTokenStrategy, JwtStrategy } from './strategies';
 import { UserOrganizationService } from '../user-organization/user-organization.services';
-import { UserModule } from './../user/user.module';
-import { EmployeeModule } from './../employee/employee.module';
-import { RoleModule } from './../role/role.module';
-import { PasswordResetModule } from './../password-reset/password-reset.module';
+import { UserModule } from '../user/user.module';
+import { EmployeeModule } from '../employee/employee.module';
+import { RoleModule } from '../role/role.module';
+import { OrganizationModule } from '../organization/organization.module';
+import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { EmailVerificationController } from './email-verification.controller';
-import { FeatureModule } from './../feature/feature.module';
+import { FeatureModule } from '../feature/feature.module';
 import { SocialAccountService } from './social-account/social-account.service';
 import { SocialAccountModule } from './social-account/social-account.module';
 
@@ -46,6 +47,7 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 				UserModule,
 				EmployeeModule,
 				RoleModule,
+				OrganizationModule,
 				PasswordResetModule,
 				CqrsModule,
 				SocialAccountModule,
@@ -53,12 +55,13 @@ const strategies = [JwtStrategy, JwtRefreshTokenStrategy];
 			],
 			useClass: AuthService
 		}),
-		TypeOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
-		MikroOrmModule.forFeature([UserOrganization, Organization, OrganizationTeam]),
+		TypeOrmModule.forFeature([UserOrganization, OrganizationTeam]),
+		MikroOrmModule.forFeature([UserOrganization, OrganizationTeam]),
 		EmailSendModule,
 		UserModule,
 		EmployeeModule,
 		RoleModule,
+		OrganizationModule,
 		PasswordResetModule,
 		FeatureModule,
 		CqrsModule,
