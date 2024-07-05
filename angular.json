@@ -84,7 +84,8 @@
 							"moment-timezone",
 							"randomcolor",
 							"underscore.string",
-							"slugify"
+							"slugify",
+							"eva-icons"
 						]
 					},
 					"configurations": {

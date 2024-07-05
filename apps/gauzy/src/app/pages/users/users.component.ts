@@ -6,7 +6,7 @@ import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ToastrService, UsersOrganizationsService, monthNames } from '@gauzy/ui-core/core';
 import {
 	InvitationTypeEnum,
 	PermissionsEnum,
@@ -67,6 +67,7 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
+		private readonly errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
 		private readonly userOrganizationsService: UsersOrganizationsService
@@ -254,38 +255,48 @@ export class UsersComponent extends PaginationFilterBaseComponent implements OnI
 		this.showAddCard = false;
 	}
 
-	async remove(selectedOrganization: IUserViewModel) {
+	/**
+	 * Remove user from organization based on user organization ID.
+	 *
+	 * @param selectedOrganization The selected user organization to remove the user from.
+	 */
+	async removeUserFromOrganization(selectedOrganization: IUserViewModel) {
 		const { userOrganizationId } = selectedOrganization;
 		const fullName = selectedOrganization.fullName.trim() || selectedOrganization.email;
 
-		/**
-		 *  User belongs to only 1 organization -> delete user
-		 *	User belongs multiple organizations -> remove user from Organization
-		 *
-		 */
+		// Determine if the user belongs to multiple organizations
 		const count = await this.userOrganizationsService.getUserOrganizationCount(userOrganizationId);
 		const confirmationMessage =
 			count === 1 ? 'FORM.DELETE_CONFIRMATION.DELETE_USER' : 'FORM.DELETE_CONFIRMATION.REMOVE_USER';
 
-		this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType: `${fullName} ${this.getTranslation(confirmationMessage)}`
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
+		// Open a confirmation dialog for the hiring action.
+		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
+			context: {
+				recordType: `${fullName} ${this.getTranslation(confirmationMessage)}`
+			}
+		});
+
+		// Open confirmation dialog for user action
+		dialogRef.onClose
+			.pipe(
+				untilDestroyed(this) // Ensures the observable is properly managed to prevent memory leaks.
+			)
 			.subscribe(async (result) => {
-				if (result) {
-					try {
-						await this.userOrganizationsService.removeUserFromOrg(userOrganizationId);
-						this.toastrService.success('USERS_PAGE.REMOVE_USER', {
-							name: fullName
-						});
-						this._refresh$.next(true);
-						this.subject$.next(true);
-					} catch (error) {
-						this.toastrService.danger(error);
-					}
+				if (!result) return; // If the dialog is closed without confirmation, exit the function.
+
+				try {
+					// If user confirms deletion, proceed with removal from organization
+					await this.userOrganizationsService.removeUserFromOrg(userOrganizationId);
+
+					this.toastrService.success('USERS_PAGE.REMOVE_USER', { name: fullName });
+				} catch (error) {
+					console.error('Failed to remove user from organization:', error.message);
+					// Handle errors during the removal process
+					this.errorHandlingService.handleError(error);
+				} finally {
+					// Perform cleanup or refresh actions
+					this._refresh$.next(true);
+					this.subject$.next(true);
 				}
 			});
 	}

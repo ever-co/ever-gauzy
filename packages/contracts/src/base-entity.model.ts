@@ -33,7 +33,7 @@ export interface IBaseEntityModel extends IBaseSoftDeleteEntityModel {
 
 // Common properties for entities associated with a tenant
 export interface IBasePerTenantEntityModel extends IBaseEntityModel {
-	tenantId?: ITenant['id']; // Identifier of the associated tenant
+	tenantId?: ID; // Identifier of the associated tenant
 	tenant?: ITenant; // Reference to the associated tenant
 }
 
@@ -46,7 +46,7 @@ export interface IBasePerTenantEntityMutationInput
 
 // Common properties for entities associated with both tenant and organization
 export interface IBasePerTenantAndOrganizationEntityModel extends IBasePerTenantEntityModel {
-	organizationId?: IOrganization['id']; // Identifier of the associated organization
+	organizationId?: ID; // Identifier of the associated organization
 	organization?: IOrganization; // Reference to the associated organization
 }
 
