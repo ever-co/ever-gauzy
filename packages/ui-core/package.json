@@ -76,7 +76,7 @@
 		"date-holidays": "^1.6.1",
 		"echarts": "^5.0.1",
 		"eva-icons": "^1.1.3",
-		"ckeditor4": "4.22.1",
+		"ckeditor4": "4.24.0",
 		"ckeditor4-angular": "4.0.1",
 		"file-saver": "^2.0.5",
 		"fullcalendar": "^6.1.8",
