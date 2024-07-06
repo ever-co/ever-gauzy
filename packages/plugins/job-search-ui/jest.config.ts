@@ -1,9 +1,9 @@
 /* eslint-disable */
 export default {
-	displayName: 'plugins-job-search-ui-plugin',
+	displayName: 'plugin-job-search-ui',
 	preset: '../../../jest.preset.js',
 	setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-	coverageDirectory: '../../../coverage/packages/plugins/job-search-ui-plugin',
+	coverageDirectory: '../../../coverage/packages/plugins/plugin-job-search-ui',
 	transform: {
 		'^.+\\.(ts|mjs|js|html)$': [
 			'jest-preset-angular',

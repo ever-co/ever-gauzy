@@ -446,7 +446,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Perform the soft delete operation
 			return await super.softRemove(employeeId, {
 				where: { organizationId, tenantId },
-				relations: { user: true, teams: true }
+				relations: { user: { organizations: true }, teams: true }
 			});
 		} catch (error) {
 			console.error('Error during soft delete for employee', error);
@@ -477,7 +477,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
 			return await super.softRecover(employeeId, {
 				where: { organizationId, tenantId },
-				relations: { user: true, teams: true },
+				relations: { user: { organizations: true }, teams: true },
 				withDeleted: true
 			});
 		} catch (error) {

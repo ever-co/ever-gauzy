@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/job-search-ui-plugin",
+	"name": "@gauzy/plugin-job-search-ui",
 	"version": "0.1.0",
 	"description": "A UI plugin for job search functionality in the Gauzy platform.",
 	"author": {
@@ -10,9 +10,9 @@
 	"license": "AGPL-3.0",
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build job-search-ui-plugin --configuration=development",
-		"lib:build:prod": "ng build job-search-ui-plugin --configuration=production",
-		"lib:watch": "ng build job-search-ui-plugin--watch --configuration=development",
+		"lib:build": "ng build plugin-job-search-ui --configuration=development",
+		"lib:build:prod": "ng build plugin-job-search-ui --configuration=production",
+		"lib:watch": "ng build plugin-job-search-ui--watch --configuration=development",
 		"clean": "rimraf dist"
 	},
 	"peerDependencies": {

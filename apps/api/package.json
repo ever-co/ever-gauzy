@@ -40,14 +40,15 @@
 		"seed:prod:build": "yarn ng run api:seed -c=production"
 	},
 	"dependencies": {
-		"@gauzy/changelog-plugin": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/integration-upwork": "^0.1.0",
-		"@gauzy/jitsu-analytics-plugin": "^0.1.0",
-		"@gauzy/job-proposal-plugin": "^0.1.0",
-		"@gauzy/job-search-plugin": "^0.1.0",
-		"@gauzy/knowledge-base-plugin": "^0.1.0",
-		"@gauzy/sentry-plugin": "^0.1.0",
+		"@gauzy/plugin-changelog": "^0.1.0",
+		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
+		"@gauzy/plugin-integration-upwork": "^0.1.0",
+		"@gauzy/plugin-jitsu-analytics": "^0.1.0",
+		"@gauzy/plugin-job-proposal": "^0.1.0",
+		"@gauzy/plugin-job-search": "^0.1.0",
+		"@gauzy/plugin-knowledge-base": "^0.1.0",
+		"@gauzy/plugin-sentry": "^0.1.0",
 		"dotenv": "^16.0.3",
 		"yargs": "^17.5.0"
 	},

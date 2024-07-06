@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/job-search-plugin",
+	"name": "@gauzy/plugin-job-search",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Job Search Plugin",
 	"author": {

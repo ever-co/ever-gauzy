@@ -6,13 +6,12 @@ import {
 	HttpException,
 	BadRequestException
 } from '@nestjs/common';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class TransformInterceptor implements NestInterceptor {
-
 	/**
 	 * Intercepts the execution context and the call handler.
 	 * Transforms the data using class-transformer's instanceToPlain.
@@ -29,14 +28,10 @@ export class TransformInterceptor implements NestInterceptor {
 			catchError((error: any) => {
 				// If it's a BadRequestException, return a new instance of BadRequestException
 				if (error instanceof BadRequestException) {
-					return of(
-						new BadRequestException(error.getResponse())
-					);
+					throw new BadRequestException(error.getResponse());
 				}
 				// For other errors, return a new instance of HttpException
-				return of(
-					new HttpException(error.message, error.status)
-				);
+				throw new HttpException(error.message, error.status);
 			})
 		);
 	}

@@ -16,7 +16,7 @@ The Jitsu Analytics Plugin seamlessly integrates your server with Jitsu Analytic
 Install the Jitsu Analytics Plugin using your preferred package manager:
 
 ```bash
-npm install @jitsu/analytics-plugin
+npm install @gauzy/plugin-jitsu-analytics
 # or
-yarn add @jitsu/analytics-plugin
+yarn add @gauzy/plugin-jitsu-analytics
 ```

@@ -2,19 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganization, IPagination, ITenant, IUser, IUserOrganization, RolesEnum } from '@gauzy/contracts';
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
-import { Employee, Organization } from './../core/entities/internal';
+import { Employee } from './../core/entities/internal';
+import { EmployeeService } from '../employee/employee.service';
 import { TypeOrmOrganizationRepository } from '../organization/repository';
 import { UserOrganization } from './user-organization.entity';
 import { MikroOrmUserOrganizationRepository, TypeOrmUserOrganizationRepository } from './repository';
-import { EmployeeService } from '../employee/employee.service';
 
 @Injectable()
 export class UserOrganizationService extends TenantAwareCrudService<UserOrganization> {
 	constructor(
-		@InjectRepository(UserOrganization) readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
+		@InjectRepository(UserOrganization)
+		readonly typeOrmUserOrganizationRepository: TypeOrmUserOrganizationRepository,
 		readonly mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
-		@InjectRepository(Organization) readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
-		private readonly employeeService: EmployeeService,
+		readonly typeOrmOrganizationRepository: TypeOrmOrganizationRepository,
+		readonly employeeService: EmployeeService
 	) {
 		super(typeOrmUserOrganizationRepository, mikroOrmUserOrganizationRepository);
 	}
@@ -25,30 +26,32 @@ export class UserOrganizationService extends TenantAwareCrudService<UserOrganiza
 	 * @param filter Optional filter options to apply when querying user organizations.
 	 * @returns A promise resolving to an array of user organizations.
 	 */
-	async findAllUserOrganizations(
+	async findUserOrganizations(
 		filter: PaginationParams<UserOrganization>,
 		includeEmployee: boolean
 	): Promise<IPagination<UserOrganization>> {
 		// Call the base class method to find all user organizations
-		const { items, total } = await super.findAll(filter);
+		let { items, total } = await super.findAll(filter);
 
 		// If 'includeEmployee' is set to true, fetch employee details associated with each user organization
 		if (includeEmployee) {
 			try {
 				// Extract user IDs from the items array
-				const userIds = items.map((organization: IUserOrganization) => organization.user.id);
+				const userIds = items
+					.filter((organization: IUserOrganization) => organization.user) // Filter out user organizations without a user object
+					.map((organization: IUserOrganization) => organization.user.id);
 
 				// Fetch all employee details in bulk for the extracted user IDs
 				const employees = await this.employeeService.findEmployeesByUserIds(userIds);
 
 				// Map employee details to a dictionary for easier lookup
 				const employeeMap = new Map<string, Employee>();
-				employees.forEach((employee) => {
+				employees.forEach((employee: Employee) => {
 					employeeMap.set(employee.userId, employee);
 				});
 
 				// Merge employee details into each user organization object
-				const itemsWithEmployees = items.map(organization => {
+				const itemsWithEmployees = items.map((organization: UserOrganization) => {
 					const employee = employeeMap.get(organization.user.id);
 					return { ...organization, user: { ...organization.user, employee } };
 				});
