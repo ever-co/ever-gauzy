@@ -9,11 +9,13 @@ import {
 	IntegrationSettingModule,
 	IntegrationTenantModule,
 	OrganizationProjectModule,
+	PluginCommonModule,
 	RolePermissionModule
 } from '@gauzy/core';
 import { environment } from '@gauzy/config';
 import { ProbotModule } from '../probot/probot.module';
 import { CommandHandlers } from './commands/handlers';
+import { GithubEventSubscriber } from './github-event.subscriber';
 import { GitHubAuthorizationController } from './github-authorization.controller';
 import { GitHubIntegrationController } from './github-integration.controller';
 import { GitHubController } from './github.controller';
@@ -40,6 +42,13 @@ const { github } = environment;
 		CqrsModule,
 		TypeOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
 		MikroOrmModule.forFeature([OrganizationGithubRepository, OrganizationGithubRepositoryIssue]),
+		PluginCommonModule,
+		RolePermissionModule,
+		forwardRef(() => OrganizationProjectModule),
+		forwardRef(() => IntegrationModule),
+		forwardRef(() => IntegrationTenantModule),
+		forwardRef(() => IntegrationSettingModule),
+		forwardRef(() => IntegrationMapModule),
 		// Probot Configuration
 		ProbotModule.forRoot({
 			isGlobal: true,
@@ -53,13 +62,7 @@ const { github } = environment;
 				privateKey: github.appPrivateKey,
 				webhookSecret: github.webhookSecret
 			}
-		}),
-		RolePermissionModule,
-		forwardRef(() => OrganizationProjectModule),
-		forwardRef(() => IntegrationModule),
-		forwardRef(() => IntegrationTenantModule),
-		forwardRef(() => IntegrationSettingModule),
-		forwardRef(() => IntegrationMapModule)
+		})
 	],
 	controllers: [
 		GitHubAuthorizationController,
@@ -73,6 +76,7 @@ const { github } = environment;
 		// Define middleware heres
 		GithubMiddleware,
 		// Define services heres
+		GithubEventSubscriber,
 		GithubService,
 		GithubSyncService,
 		GithubHooksService,
