@@ -1,9 +1,47 @@
-import { JoinColumn, JoinTable } from 'typeorm';
+import { Column, JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { ApplicationPluginConfig, CustomEmbeddedFields, RelationCustomEmbeddedFieldConfig } from '@gauzy/common';
-import { MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
+import { getColumnType } from '../../../core/decorators/entity/column.helper';
+import { ColumnIndex, MultiORMColumn, MultiORMManyToMany, MultiORMManyToOne } from '../../../core/decorators';
 import { ColumnDataType, ColumnOptions } from '../../../core/decorators/entity/column-options.types';
+import { getDBType } from '../../../core/utils';
 import { mikroOrmCustomEntityFieldRegistrations, typeOrmCustomEntityFieldRegistrations } from './custom-entity-fields';
 import { __FIX_RELATIONAL_CUSTOM_FIELDS__ } from './mikro-orm-base-custom-entity-field';
+
+/**
+ * Defines a column with or without a relation ID and optional indexing.
+ *
+ * @param customField - Configuration for the custom field.
+ * @param name - The name of the field.
+ * @param instance - The instance of the class where the field is defined.
+ */
+const defineColumn = (
+	config: ApplicationPluginConfig,
+	customField: RelationCustomEmbeddedFieldConfig,
+	name: string,
+	instance: any
+) => {
+	const { nullable, relationId, index = false } = customField;
+
+	// Get the database type from the connection options
+	let dbEngine = getDBType(config.dbConnectionOptions);
+
+	const options: ColumnDataType | ColumnOptions<any> = {
+		type: getColumnType(dbEngine, customField.type),
+		name,
+		nullable: nullable === false ? false : true,
+		unique: customField.unique ?? false
+	};
+
+	if (relationId) {
+		RelationId((it: any) => it.customFields[customField.relation])(instance, name);
+	}
+
+	if (index) {
+		ColumnIndex()(instance, name);
+	}
+
+	Column(options)(instance, name);
+};
 
 /**
  * Registers a custom field for an entity based on the custom field configuration.
@@ -13,35 +51,38 @@ import { __FIX_RELATIONAL_CUSTOM_FIELDS__ } from './mikro-orm-base-custom-entity
  * @param instance - The entity instance to which the field is being registered.
  */
 export const registerFields = async (
+	config: ApplicationPluginConfig,
 	customField: RelationCustomEmbeddedFieldConfig,
 	name: string,
 	instance: any
 ): Promise<void> => {
 	if (customField.type === 'relation') {
-		if (customField.relationType === 'many-to-many') {
-			// Register Many-to-Many relation with additional options
-			const relationOptions = {
-				...(customField.pivotTable && { pivotTable: customField.pivotTable }),
-				...(customField.joinColumn && { joinColumn: customField.joinColumn }),
-				...(customField.inverseJoinColumn && { inverseJoinColumn: customField.inverseJoinColumn })
-			};
-			// Register a Many-to-Many relation
-			MultiORMManyToMany(() => customField.entity, customField.inverseSide, relationOptions)(instance, name);
-			JoinTable({ name: customField.pivotTable })(instance, name);
-		} else if (customField.relationType === 'many-to-one') {
-			// Register a Many-to-One relation
-			MultiORMManyToOne(() => customField.entity, customField.inverseSide)(instance, name);
-			JoinColumn()(instance, name);
+		switch (customField.relationType) {
+			case 'many-to-many': {
+				const options = {
+					...(customField.pivotTable && { pivotTable: customField.pivotTable }),
+					...(customField.joinColumn && { joinColumn: customField.joinColumn }),
+					...(customField.inverseJoinColumn && { inverseJoinColumn: customField.inverseJoinColumn })
+				};
+				MultiORMManyToMany(() => customField.entity, customField.inverseSide, options)(instance, name);
+				JoinTable({ name: customField.pivotTable })(instance, name);
+				break;
+			}
+			case 'many-to-one': {
+				const options = {
+					nullable: customField.nullable === false ? false : true,
+					unique: customField.unique ?? false,
+					...(customField.onDelete && { onDelete: customField.onDelete })
+				};
+				MultiORMManyToOne(() => customField.entity, customField.inverseSide, options)(instance, name);
+				JoinColumn()(instance, name);
+				break;
+			}
+			default:
+				throw new Error(`Unsupported relation type: ${customField.relationType}`);
 		}
 	} else {
-		// Register a custom column
-		const { nullable, unique } = customField.options;
-		const options: ColumnDataType | ColumnOptions<any> = {
-			name,
-			nullable: nullable === false ? false : true,
-			unique: unique ?? false
-		};
-		MultiORMColumn(options)(instance, name);
+		defineColumn(config, customField, name, instance);
 	}
 };
 
@@ -66,8 +107,8 @@ async function registerCustomFieldsForEntity<T>(
 	// Register each custom field
 	await Promise.all(
 		customFields.map(async (customField) => {
-			const { propertyPath } = customField; // Destructure to get property path
-			await registerFields(customField, propertyPath, instance); // Register the custom column
+			const { name } = customField; // Destructure to get property path
+			await registerFields(config, customField, name, instance); // Register the custom column
 		})
 	);
 
