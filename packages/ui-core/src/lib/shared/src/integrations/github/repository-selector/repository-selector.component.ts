@@ -1,16 +1,10 @@
-import { Component, OnInit, forwardRef, OnDestroy, AfterViewInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, forwardRef, OnDestroy, Input, Output, EventEmitter } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Subject, of } from 'rxjs';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import {
-	HttpStatus,
-	IGithubRepository,
-	IGithubRepositoryResponse,
-	IIntegrationTenant,
-	IOrganization
-} from '@gauzy/contracts';
+import { IGithubRepository, IGithubRepositoryResponse, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, GithubService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
 
@@ -27,7 +21,7 @@ import { Store } from '@gauzy/ui-core/common';
 		}
 	]
 })
-export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDestroy {
+export class RepositorySelectorComponent implements OnInit, OnDestroy {
 	public preSelected: boolean = false;
 	public loading: boolean = false;
 	private subject$: Subject<IIntegrationTenant> = new Subject<IIntegrationTenant>();
@@ -99,9 +93,7 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
-
-	ngOnInit(): void {
+	) {
 		this.subject$
 			.pipe(
 				tap(() => this._getRepositories()),
@@ -110,7 +102,7 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 			.subscribe();
 	}
 
-	ngAfterViewInit(): void {}
+	ngOnInit(): void {}
 
 	/**
 	 * Pre-selects a repository based on the provided source ID.
@@ -135,35 +127,35 @@ export class RepositorySelectorComponent implements AfterViewInit, OnInit, OnDes
 		if (!this.organization) {
 			return;
 		}
+
 		this.loading = true;
 
 		// Extract organization properties
 		const { id: organizationId, tenantId } = this.organization;
 		const { id: integrationId } = this.integration;
 
-		this.repositories$ = this._githubService
-			.getRepositories(integrationId, {
-				organizationId,
-				tenantId
-			})
-			.pipe(
-				map(({ repositories }: IGithubRepositoryResponse) => repositories),
-				// Update component state with fetched repositories
-				tap((repositories: IGithubRepository[]) => {
-					this.repositories = repositories;
-					this.afterLoad.emit(this.repositories || []);
-				}),
-				catchError((error) => {
-					// Handle and log errors
-					this._errorHandlingService.handleError(error);
-					return of([]);
-				}),
-				finalize(() => {
-					this.loading = false;
-				}),
-				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			);
+		const repositories$ = this._githubService.getRepositories(integrationId, {
+			organizationId,
+			tenantId
+		});
+		this.repositories$ = repositories$.pipe(
+			map(({ repositories }: IGithubRepositoryResponse) => repositories),
+			// Update component state with fetched repositories
+			tap((repositories: IGithubRepository[]) => {
+				this.repositories = repositories;
+				this.afterLoad.emit(this.repositories || []);
+			}),
+			catchError((error) => {
+				// Handle and log errors
+				this._errorHandlingService.handleError(error);
+				return of([]);
+			}),
+			finalize(() => {
+				this.loading = false;
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
 	}
 
 	/**

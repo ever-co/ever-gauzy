@@ -34,7 +34,7 @@ export class IntegrationTenantDeleteHandler implements ICommandHandler<Integrati
 			// Check the provider type of the integration and perform actions accordingly
 			switch (integration.integration.provider) {
 				case IntegrationEnum.GITHUB:
-					// Publish the account registration event
+					// Publish the integration delete event
 					const ctx = RequestContext.currentRequestContext();
 					const event = new IntegrationDeleteEvent(ctx, integration);
 					await this._eventBus.publish(event);

@@ -1,35 +1,33 @@
 import { IEmployee } from './employee.model';
 import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
-import {
-	CrudActionEnum,
-	ProjectBillingEnum,
-	ProjectOwnerEnum
-} from './organization.model';
-import { IBaseEntityWithMembers } from './entity-with-members.model';
+import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { ITag } from './tag.model';
 import { ITask } from './task.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IPayment } from './payment.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { CurrenciesEnum } from './currency.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
-import { IOrganizationGithubRepository } from './github.model';
-
+import { CustomFieldsObject } from './shared-types';
+``;
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 }
 
 export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizationEntityModel {
-	repositoryId?: IOrganizationGithubRepository['id'];
+	customFields?: CustomFieldsObject;
 	isTasksAutoSync?: boolean;
 	isTasksAutoSyncOnLabel?: boolean;
 	syncTag?: string;
 }
 
-export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationalImageAsset, IRelationalOrganizationContact, IOrganizationProjectSetting {
+export interface IOrganizationProject
+	extends IRelationalImageAsset,
+		IRelationalOrganizationContact,
+		IOrganizationProjectSetting {
 	name: string;
 	startDate?: Date;
 	endDate?: Date;
@@ -61,9 +59,6 @@ export interface IOrganizationProject extends IBaseEntityWithMembers, IRelationa
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
-	/** Project Sync With Repository */
-	repository?: IOrganizationGithubRepository;
-	repositoryId?: IOrganizationGithubRepository['id'];
 }
 
 export enum TaskListTypeEnum {
@@ -86,7 +81,9 @@ export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganiz
 	billingFlat?: boolean;
 }
 
-export interface IOrganizationProjectCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
+export interface IOrganizationProjectCreateInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalImageAsset {
 	name?: string;
 	organizationContact?: IOrganizationContact;
 	organizationContactId?: IOrganizationContact['id'];
@@ -112,7 +109,6 @@ export interface IOrganizationProjectCreateInput extends IBasePerTenantAndOrgani
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
 	id?: IOrganizationContact['id'];
-
 }
 
 export interface IOrganizationProjectStoreState {

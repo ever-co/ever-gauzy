@@ -82,22 +82,24 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 								tenantId,
 								isActive: true,
 								isArchived: false,
-								repository: {
-									organizationId,
-									tenantId,
-									hasSyncEnabled: true,
-									isActive: true,
-									isArchived: false
+								customFields: {
+									repository: {
+										organizationId,
+										tenantId,
+										hasSyncEnabled: true,
+										isActive: true,
+										isArchived: false
+									}
 								}
 							},
 							relations: {
-								repository: true
+								customFields: { repository: true }
 							}
 						});
 
 						// Step 5: Check if the project and its repository are available
-						if (!!project && !!project.repository) {
-							const repository = project.repository;
+						if (!!project && !!project.customFields['repository']) {
+							const repository = project.customFields['repository'];
 
 							// Step 6: Prepare the payload for opening the GitHub issue
 							const payload: IGithubIssueCreateOrUpdatePayload = {
@@ -107,9 +109,8 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 								body: task.description,
 								labels: this._mapIssueLabelPayload(task.tags || [])
 							};
+							const syncTag = settings['sync_tag']; // Check if the issue should be synchronized for this project
 
-							const syncTag = settings['sync_tag'];
-							// Check if the issue should be synchronized for this project
 							// Step 7: Continue execution based on auto-sync label setting
 							if (!!this.shouldSyncIssue(project, payload.labels, syncTag)) {
 								try {
@@ -123,6 +124,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 										isActive: true,
 										isArchived: false
 									});
+
 									try {
 										/** */
 										const syncIssue =
@@ -133,7 +135,6 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 												issueId: parseInt(integrationMap.sourceId)
 											});
 										payload.issue_number = syncIssue.issueNumber;
-
 										await this._githubSyncService.createOrUpdateIssue(installationId, payload);
 									} catch (error) {
 										console.log('Error while getting synced issue', error?.message);
@@ -180,6 +181,7 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 			}
 		} catch (error) {
 			// Handle errors gracefully, for example, log them
+			console.log('Error while getting synced issue', error?.message);
 		}
 	}
 
