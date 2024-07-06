@@ -15486,10 +15486,10 @@ cjs-module-lexer@^1.0.0, cjs-module-lexer@^1.2.2:
   resolved "https://registry.yarnpkg.com/cjs-module-lexer/-/cjs-module-lexer-1.2.3.tgz#6c370ab19f8a3394e318fe682686ec0ac684d107"
   integrity sha512-0TNiGstbQmCFwt4akjjBg5pLRTSyj/PkWQ1ZoO2zntmg9yLqSRxwEa4iCfQLGjqhiqBfOJa7W/E8wfGrTDmlZQ==
 
-ckeditor4-angular@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/ckeditor4-angular/-/ckeditor4-angular-5.1.0.tgz#2c0c3ad27edb7c74e5b756def0cd1147e4861abe"
-  integrity sha512-/aLikcbjFKgPryvGhgPcWF646CW/ERRxbAFvK08oAjyXuKNQy8aXZ8r5R9GTX5xd59pSRIarB5otTr7zBNnWYg==
+ckeditor4-angular@4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/ckeditor4-angular/-/ckeditor4-angular-4.0.1.tgz#fb8e3cd815be2fa6ec3aaa20c9970ee5ce5c5247"
+  integrity sha512-oiPQ9pCBhXhLpja8TGRiVn9puQJ21em6A3+H9Z1uZ8gJRHCptPfdumCvjFqD76Pog8KymbvHl24GBee67nhqMw==
   dependencies:
     ckeditor4-integrations-common "^1.0.0"
     tslib "^2.3.0"
@@ -15499,10 +15499,10 @@ ckeditor4-integrations-common@^1.0.0:
   resolved "https://registry.yarnpkg.com/ckeditor4-integrations-common/-/ckeditor4-integrations-common-1.0.0.tgz#a8afc33b94877b4d01362c7c73aa9eec162b2d20"
   integrity sha512-OAoQT/gYrHkg0qgzf6MS/rndYhq3SScLVQ3rtXQeuCE8ju7nFHg3qZ7WGA2XpFxcZzsMP6hhugXqdel5vbcC3g==
 
-ckeditor4@^4.24.0:
-  version "4.24.0"
-  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.24.0.tgz#9699ddbce7eaa9cb1063f7f7d75b0ae761106405"
-  integrity sha512-ShtIqZMMNmP5r8AhZqnysSaONsx+qKjI/zf5AkU9wKxl0yHVw2/CSxWYmdd40u3dMjJR2kOthQ6USahz528lbw==
+ckeditor4@4.22.1:
+  version "4.22.1"
+  resolved "https://registry.yarnpkg.com/ckeditor4/-/ckeditor4-4.22.1.tgz#a4e79db1bac2ccb9a672c47e601ba4882afaf455"
+  integrity sha512-Yj4vTHX5YxHwc48gNqUqTm+KLkRr9tuyb4O2VIABu4oKHWRNVIdLdy6vUNe/XNx+RiTavMejfA1MVOU/MxLjqQ==
 
 class-transformer@^0.5.1:
   version "0.5.1"
