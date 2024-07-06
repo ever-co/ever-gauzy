@@ -9,7 +9,7 @@
 To install the Job Proposal Plugin, simply run the following command in your terminal:
 
 ```bash
-npm install @gauzy/job-proposal-plugin
+npm install @gauzy/plugin-job-proposal
 # or
-yarn add @gauzy/job-proposal-plugin
+yarn add @gauzy/plugin-job-proposal
 ```

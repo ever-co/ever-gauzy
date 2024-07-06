@@ -73,7 +73,6 @@
 						"allowedCommonJsDependencies": [
 							"@gauzy/contracts",
 							"@gauzy/ui-config",
-							"@gauzy/integration-hubstaff",
 							"brace",
 							"brace/mode/handlebars",
 							"camelcase",
@@ -85,7 +84,8 @@
 							"moment-timezone",
 							"randomcolor",
 							"underscore.string",
-							"slugify"
+							"slugify",
+							"eva-icons"
 						]
 					},
 					"configurations": {
@@ -288,7 +288,7 @@
 				}
 			}
 		},
-		"job-search-ui-plugin": {
+		"plugin-job-search-ui": {
 			"projectType": "library",
 			"root": "packages/plugins/job-search-ui",
 			"sourceRoot": "packages/plugins/job-search-ui",

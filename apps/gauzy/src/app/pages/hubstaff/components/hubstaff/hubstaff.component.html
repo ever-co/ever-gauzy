@@ -8,10 +8,7 @@
 		<nb-actions class="float-left pt-2" size="small">
 			<nb-action class="toggle-layout p-0">
 				<h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.NAME' | translate }}</h5>
-				<nb-icon
-					icon="settings-2-outline"
-					[nbContextMenu]="supportContextActions"
-				></nb-icon>
+				<nb-icon icon="settings-2-outline" [nbContextMenu]="menus"></nb-icon>
 			</nb-action>
 		</nb-actions>
 	</nb-card-header>
@@ -19,17 +16,17 @@
 		<div class="mb-3">
 			<button
 				nbButton
-				[disabled]="!selectedProjects"
+				[disabled]="selectedProjects.length === 0"
 				(click)="syncProjects()"
 				status="primary"
 				class="mr-2"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.SYNC' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.SYNC' | translate }}
 			</button>
 			<button nbButton (click)="autoSync()" status="primary" class="mr-2">
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.AUTO_SYNC' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.AUTO_SYNC' | translate }}
 			</button>
 		</div>
 		<div class="hubstaff-container">
@@ -41,13 +38,12 @@
 				[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.SELECT_ORGANIZATION' | translate"
 				(change)="selectOrganization($event)"
 				appendTo="body"
-			>
-			</ng-select>
+			></ng-select>
 			<angular2-smart-table
 				[settings]="settingsSmartTable"
 				[source]="projects$ | async"
 				(userRowSelect)="selectProject($event)"
-				style="cursor: pointer;"
+				style="cursor: pointer"
 				#projectsTable
 			></angular2-smart-table>
 		</div>

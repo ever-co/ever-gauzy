@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/integration-upwork",
+	"name": "@gauzy/plugin-integration-upwork",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform plugin for integration with Upwork APIs",
 	"author": {
@@ -8,18 +8,44 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"upwork",
+		"integration",
+		"plugin",
+		"nestjs",
+		"ever-co",
+		"typescript",
+		"api",
+		"cqrs",
+		"express",
+		"nestjs-plugin"
+	],
 	"private": true,
-	"type": "commonjs",
-	"main": "dist/src/index.js",
-	"types": "dist/src/index.d.ts",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
 	"files": [
 		"dist"
 	],
 	"directories": {
-		"lib": "dist"
+		"lib": "dist",
+		"test": "__test__"
 	},
 	"publishConfig": {
 		"access": "restricted"
+	},
+	"scripts": {
+		"test:e2e": "jest --config ./jest.config.js",
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
 	"peerDependencies": {
 		"tslib": "^2.6.2"
@@ -29,7 +55,7 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/job-proposal-plugin": "^0.1.0",
+		"@gauzy/plugin-job-proposal": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@mikro-orm/nestjs": "^5.2.3",
 		"@nestjs/common": "^10.3.7",
@@ -56,25 +82,9 @@
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
 	},
-	"keywords": [
-		"gauzy",
-		"upwork",
-		"integration",
-		"plugin",
-		"nestjs",
-		"ever-co",
-		"typescript",
-		"api",
-		"cqrs",
-		"express",
-		"nestjs-plugin"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/ever-co/ever-gauzy"
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
 	},
-	"bugs": {
-		"url": "https://github.com/ever-co/ever-gauzy/issues"
-	},
-	"homepage": "https://ever.co"
+	"sideEffects": false
 }

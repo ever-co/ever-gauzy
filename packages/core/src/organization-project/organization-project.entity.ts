@@ -1,13 +1,10 @@
-import {
-	JoinColumn,
-	RelationId,
-	JoinTable,
-} from 'typeorm';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
+	ID,
 	IEmployee,
 	IExpense,
 	IImageAsset,
@@ -29,7 +26,7 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	TaskListTypeEnum,
+	TaskListTypeEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -53,12 +50,24 @@ import {
 	TenantOrganizationBaseEntity,
 	TimeLog
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	EmbeddedColumn,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from '../core/decorators/entity';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import {
+	MikroOrmOrganizationProjectEntityCustomFields,
+	OrganizationProjectEntityCustomFields,
+	TypeOrmOrganizationProjectEntityCustomFields
+} from '../core/entities/custom-entity-fields/organization-project';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
 export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
-
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -115,10 +124,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@MultiORMColumn({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
-		...(isMySQL() ?
-			{ type: 'enum', enum: OrganizationProjectBudgetTypeEnum }
-			: { type: 'text' }
-		)
+		...(isMySQL() ? { type: 'enum', enum: OrganizationProjectBudgetTypeEnum } : { type: 'text' })
 	})
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 
@@ -158,7 +164,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	/**
 	 * OrganizationGithubRepository Relationship
 	 */
-	@MultiORMManyToOne(() => OrganizationGithubRepository, (it) => it.projects, {
+	@MultiORMManyToOne(() => OrganizationGithubRepository, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,
 
@@ -204,7 +210,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@RelationId((it: OrganizationProject) => it.organizationContact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 
 	/**
 	 * ImageAsset Relationship
@@ -217,7 +223,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'SET NULL',
 
 		/** Eager relations are always loaded automatically when relation's owner entity is loaded using find* methods. */
-		eager: true,
+		eager: true
 	})
 	@JoinColumn()
 	image?: IImageAsset;
@@ -231,7 +237,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	@RelationId((it: OrganizationProject) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -327,12 +333,11 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'tag_organization_project',
-
 		joinColumn: 'organizationProjectId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
-		name: 'tag_organization_project',
+		name: 'tag_organization_project'
 	})
 	tags: ITag[];
 
@@ -343,7 +348,7 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	members?: IEmployee[];
 
@@ -358,10 +363,21 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 		owner: true,
 		pivotTable: 'organization_project_team',
 		joinColumn: 'organizationProjectId',
-		inverseJoinColumn: 'organizationTeamId',
+		inverseJoinColumn: 'organizationTeamId'
 	})
 	@JoinTable({
 		name: 'organization_project_team'
 	})
 	teams?: IOrganizationTeam[];
+
+	/*
+	|--------------------------------------------------------------------------
+	| Embeddable Columns
+	|--------------------------------------------------------------------------
+	*/
+	@EmbeddedColumn({
+		mikroOrmEmbeddableEntity: () => MikroOrmOrganizationProjectEntityCustomFields,
+		typeOrmEmbeddableEntity: () => TypeOrmOrganizationProjectEntityCustomFields
+	})
+	customFields?: OrganizationProjectEntityCustomFields;
 }

@@ -16,10 +16,8 @@ import {
 	IDateRangeActivityFilter,
 	IEntitySettingToSync
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-core/common';
-import { HUBSTAFF_AUTHORIZATION_URL } from '@gauzy/integration-hubstaff';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { environment } from '@gauzy/ui-config';
-import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const TODAY = new Date();
 
@@ -102,9 +100,11 @@ export class HubstaffService {
 	 * @param client_id The client ID for the Hubstaff integration.
 	 */
 	authorizeClient(client_id: string): void {
-		const redirect_uri =
-			environment.HUBSTAFF_REDIRECT_URL ||
-			`${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+		const { HUBSTAFF_REDIRECT_URL, API_BASE_URL } = environment;
+		const HUBSTAFF_AUTHORIZATION_URL = `https://account.hubstaff.com`;
+
+		// Set default redirect URI if HUBSTAFF_REDIRECT_URL is not defined
+		const redirect_uri = HUBSTAFF_REDIRECT_URL || `${API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		// Define your query parameters
 		const queryParams = toParams({
@@ -124,10 +124,17 @@ export class HubstaffService {
 		window.location.replace(externalUrl);
 	}
 
+	/**
+	 * Add a new integration for Hubstaff.
+	 *
+	 * @param param0 - The integration parameters including code, client_secret, client_id, and organizationId.
+	 * @returns An Observable of the created integration tenant.
+	 */
 	addIntegration({ code, client_secret, client_id, organizationId }): Observable<IIntegrationTenant> {
-		const redirect_uri =
-			environment.HUBSTAFF_REDIRECT_URL ||
-			`${environment.API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
+		const { HUBSTAFF_REDIRECT_URL, API_BASE_URL } = environment;
+
+		// Set default redirect URI if HUBSTAFF_REDIRECT_URL is not defined
+		const redirect_uri = HUBSTAFF_REDIRECT_URL || `${API_BASE_URL}${API_PREFIX}/integration/hubstaff/callback`;
 
 		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/hubstaff/integration`, {
 			client_id,

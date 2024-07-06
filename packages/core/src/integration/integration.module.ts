@@ -4,7 +4,6 @@ import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { HubstaffModule } from './hubstaff/hubstaff.module';
 import { IntegrationType } from './integration-type.entity';
 import { Integration } from './integration.entity';
 import { IntegrationService } from './integration.service';
@@ -21,7 +20,6 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 				path: '/integration',
 				module: IntegrationModule,
 				children: [
-					{ path: '/hubstaff', module: HubstaffModule },
 					{ path: '/github', module: GithubModule },
 					{ path: '/gauzy-ai', module: IntegrationAIModule },
 					{ path: '/', module: IntegrationModule }
@@ -33,7 +31,6 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		IntegrationTenantModule,
 		RolePermissionModule,
 		forwardRef(() => GithubModule),
-		forwardRef(() => HubstaffModule),
 		forwardRef(() => IntegrationAIModule),
 		CqrsModule
 	],
@@ -41,4 +38,4 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 	providers: [IntegrationService, ...CommandHandlers],
 	exports: [TypeOrmModule, MikroOrmModule, IntegrationService]
 })
-export class IntegrationModule { }
+export class IntegrationModule {}

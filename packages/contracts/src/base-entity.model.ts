@@ -33,7 +33,7 @@ export interface IBaseEntityModel extends IBaseSoftDeleteEntityModel {
 
 // Common properties for entities associated with a tenant
 export interface IBasePerTenantEntityModel extends IBaseEntityModel {
-	tenantId?: ITenant['id']; // Identifier of the associated tenant
+	tenantId?: ID; // Identifier of the associated tenant
 	tenant?: ITenant; // Reference to the associated tenant
 }
 
@@ -41,12 +41,12 @@ export interface IBasePerTenantEntityModel extends IBaseEntityModel {
 export interface IBasePerTenantEntityMutationInput
 	extends Pick<IBasePerTenantEntityModel, 'tenantId'>,
 		IBaseEntityModel {
-	tenant?: Pick<ITenant, 'id'>;
+	tenant?: Pick<ITenant, 'id'> & Partial<ITenant>; // Optional fields from ITenant
 }
 
 // Common properties for entities associated with both tenant and organization
 export interface IBasePerTenantAndOrganizationEntityModel extends IBasePerTenantEntityModel {
-	organizationId?: IOrganization['id']; // Identifier of the associated organization
+	organizationId?: ID; // Identifier of the associated organization
 	organization?: IOrganization; // Reference to the associated organization
 }
 
@@ -54,5 +54,5 @@ export interface IBasePerTenantAndOrganizationEntityModel extends IBasePerTenant
 export interface IBasePerTenantAndOrganizationEntityMutationInput
 	extends Pick<IBasePerTenantAndOrganizationEntityModel, 'organizationId'>,
 		Partial<IBasePerTenantEntityMutationInput> {
-	organization?: Pick<IOrganization, 'id'>;
+	organization?: Pick<IOrganization, 'id'> & Partial<IOrganization>; // Allow additional fields from IOrganization
 }

@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/changelog-plugin",
+	"name": "@gauzy/plugin-changelog",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Change Log plugin",
 	"author": {
@@ -8,6 +8,14 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",

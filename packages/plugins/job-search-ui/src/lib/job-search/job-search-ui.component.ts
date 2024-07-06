@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 
 @Component({
-	selector: 'job-search-ui-plugin',
+	selector: 'job-search-ui-component',
 	template: `<p>job-search-ui plugin works!!!!!!!!!!</p>`,
 	styles: []
 })

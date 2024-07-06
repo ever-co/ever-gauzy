@@ -17,7 +17,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee } from '@gauzy/contracts';
+import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,
@@ -32,12 +32,7 @@ import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe, UseValida
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import {
-	EmployeeBulkInputDTO,
-	CreateEmployeeDTO,
-	UpdateEmployeeDTO,
-	UpdateProfileDTO
-} from './dto';
+import { EmployeeBulkInputDTO, CreateEmployeeDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
 import { RequestContext } from './../core/context';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 
@@ -46,10 +41,7 @@ import { TenantOrganizationBaseDTO } from './../core/dto';
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
 @Controller()
 export class EmployeeController extends CrudController<Employee> {
-	constructor(
-		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
-	) {
+	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {
 		super(_employeeService);
 	}
 
@@ -70,17 +62,13 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No working employees found',
+		description: 'No working employees found'
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 	@Get('working')
-	async findAllWorkingEmployees(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<IPagination<IEmployee>> {
+	async findAllWorkingEmployees(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployee>> {
 		const { findInput } = data;
-		return await this._commandBus.execute(
-			new WorkingEmployeeGetCommand(findInput)
-		);
+		return await this._commandBus.execute(new WorkingEmployeeGetCommand(findInput));
 	}
 
 	/**
@@ -96,17 +84,15 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Get the total count of all working employees.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Found the total count of working employees',
+		description: 'Found the total count of working employees'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Working employees count not found',
+		description: 'Working employees count not found'
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
 	@Get('working/count')
-	async findAllWorkingEmployeesCount(
-		@Query('data', ParseJsonPipe) data: any
-	): Promise<{ total: number }> {
+	async findAllWorkingEmployeesCount(@Query('data', ParseJsonPipe) data: any): Promise<{ total: number }> {
 		const { findInput } = data;
 		const { organizationId, forRange } = findInput;
 		return await this._employeeService.findWorkingEmployeesCount(organizationId, forRange);
@@ -127,11 +113,11 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Create multiple employee records in bulk' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Records have been successfully created.',
+		description: 'Records have been successfully created.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. The response body may contain clues about what went wrong.',
+		description: 'Invalid input. The response body may contain clues about what went wrong.'
 	})
 	@Post('bulk')
 	async createBulk(
@@ -158,22 +144,20 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Get employee count in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved the employee count.',
+		description: 'Successfully retrieved the employee count.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid query parameters. Please check your input.',
+		description: 'Invalid query parameters. Please check your input.'
 	})
 	@ApiResponse({
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
-		description: 'An error occurred while retrieving the employee count.',
+		description: 'An error occurred while retrieving the employee count.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('count')
 	@UseValidationPipe()
-	async getCount(
-		@Query() options: CountQueryDTO<Employee>
-	): Promise<number> {
+	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
 		return await this._employeeService.countBy(options);
 	}
 
@@ -189,22 +173,20 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Get employees by pagination in the same tenant' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully retrieved paginated employees.',
+		description: 'Successfully retrieved paginated employees.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid query parameters. Please check your input.',
+		description: 'Invalid query parameters. Please check your input.'
 	})
 	@ApiResponse({
 		status: HttpStatus.INTERNAL_SERVER_ERROR,
-		description: 'An error occurred while retrieving paginated employees.',
+		description: 'An error occurred while retrieving paginated employees.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
-	async pagination(
-		@Query() params: PaginationParams<Employee>
-	): Promise<IPagination<IEmployee>> {
+	async pagination(@Query() params: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
 		return await this._employeeService.pagination(params);
 	}
 
@@ -220,22 +202,20 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Find all employees in the same tenant.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Successfully found employees in the tenant.',
+		description: 'Successfully found employees in the tenant.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'No employees found for the given criteria.',
+		description: 'No employees found for the given criteria.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid query parameters. Please check your input.',
+		description: 'Invalid query parameters. Please check your input.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
 	@Get()
 	@UseValidationPipe()
-	async findAll(
-		@Query() options: PaginationParams<Employee>
-	): Promise<IPagination<IEmployee>> {
+	async findAll(@Query() options: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
 		// Enforce that only active, non-archived users are retrieved
 		const where = {
 			...(options.where || {}),
@@ -262,16 +242,16 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Employee record not found.',
+		description: 'Employee record not found.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. Check your query parameters.',
+		description: 'Invalid input. Check your query parameters.'
 	})
 	@Permissions()
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) id: IEmployee['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Employee>
 	): Promise<IEmployee> {
 		const currentEmployeeId = RequestContext.currentEmployeeId();
@@ -279,15 +259,15 @@ export class EmployeeController extends CrudController<Employee> {
 		// Check permissions to determine the correct ID to retrieve
 		const searchCriteria = {
 			where: {
-				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ? { id } : { id: currentEmployeeId })
+				...(RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+					? { id }
+					: { id: currentEmployeeId })
 			},
 			...(params.relations ? { relations: params.relations } : {}),
 			withDeleted: true
 		};
 
-		return await this._commandBus.execute(
-			new EmployeeGetCommand(searchCriteria)
-		);
+		return await this._commandBus.execute(new EmployeeGetCommand(searchCriteria));
 	}
 
 	/**
@@ -317,9 +297,7 @@ export class EmployeeController extends CrudController<Employee> {
 		@Headers('origin') origin: string,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IEmployee> {
-		return await this._commandBus.execute(
-			new EmployeeCreateCommand(entity, languageCode, origin)
-		);
+		return await this._commandBus.execute(new EmployeeCreateCommand(entity, languageCode, origin));
 	}
 
 	/**
@@ -334,7 +312,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Update an existing employee by ID' })
 	@ApiResponse({
 		status: HttpStatus.ACCEPTED,
-		description: 'The employee record has been successfully updated.',
+		description: 'The employee record has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
@@ -347,16 +325,9 @@ export class EmployeeController extends CrudController<Employee> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: IEmployee['id'],
-		@Body() entity: UpdateEmployeeDTO
-	): Promise<IEmployee> {
-		return await this._commandBus.execute(
-			new EmployeeUpdateCommand(id, entity)
-		);
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateEmployeeDTO): Promise<IEmployee> {
+		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
 	}
-
-
 
 	/**
 	 * Update employee's own profile by themselves
@@ -370,22 +341,17 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Update Employee Own Profile' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Profile has been successfully updated.',
+		description: 'Profile has been successfully updated.'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input. Check the response body for more details.',
+		description: 'Invalid input. Check the response body for more details.'
 	})
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
 	@Put(':id/profile')
 	@UseValidationPipe({ whitelist: true })
-	async updateProfile(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: UpdateProfileDTO
-	): Promise<IEmployee> {
-		return await this._commandBus.execute(
-			new EmployeeUpdateCommand(id, entity)
-		);
+	async updateProfile(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateProfileDTO): Promise<IEmployee> {
+		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
 	}
 
 	/**
@@ -407,10 +373,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Delete(':id')
 	@UseValidationPipe({ whitelist: true })
 	async delete(
-		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: TenantOrganizationBaseDTO
 	): Promise<DeleteResult> {
-		return await this._employeeService.delete(employeeId, { where: { ...options } });
+		return await this._employeeService.delete(id, { where: { ...options } });
 	}
 
 	/**
@@ -425,21 +391,21 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Soft delete employee record' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The record has been successfully soft-deleted',
+		description: 'The record has been successfully soft-deleted'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Employee record not found',
+		description: 'Employee record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id/soft')
 	@UseValidationPipe({ whitelist: true })
 	async softRemove(
-		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: TenantOrganizationBaseDTO
 	): Promise<Employee> {
 		// Soft remove the employee by ID
-		return await this._employeeService.softRemovedById(employeeId, params);
+		return await this._employeeService.softRemovedById(id, params);
 	}
 
 	/**
@@ -454,20 +420,20 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiOperation({ summary: 'Restore a soft-deleted employee record' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'The record has been successfully restored',
+		description: 'The record has been successfully restored'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Employee record not found',
+		description: 'Employee record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id/recover')
 	@UseValidationPipe({ whitelist: true })
 	async softRecover(
-		@Param('id', UUIDValidationPipe) employeeId: IEmployee['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() params: TenantOrganizationBaseDTO
 	): Promise<Employee> {
 		// Attempt to recover the soft-removed employee
-		return await this._employeeService.softRecoverById(employeeId, params);
+		return await this._employeeService.softRecoverById(id, params);
 	}
 }
