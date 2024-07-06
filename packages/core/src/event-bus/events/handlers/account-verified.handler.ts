@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Subscription, tap } from 'rxjs';
 import { EventBus } from '../../event-bus';
-import { AccountVerifiedEvent } from '../account-verified-event';
+import { AccountVerifiedEvent } from '../account-verified.event';
 
 @Injectable()
 export class AccountVerifiedHandler implements OnModuleInit, OnModuleDestroy {

@@ -11,6 +11,7 @@ export * from './logger';
 export * from './core';
 export * from './core/seeds';
 export * from './shared';
+export * from './event-bus';
 
 export * from './tenant';
 export { RoleModule, RoleService } from './role';
