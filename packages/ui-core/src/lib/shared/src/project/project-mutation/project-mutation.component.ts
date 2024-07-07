@@ -26,7 +26,6 @@ import {
 	IIntegrationTenant,
 	IGithubRepository,
 	IOrganizationProjectSetting,
-	HttpStatus,
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
 	SYNC_TAG_GAUZY

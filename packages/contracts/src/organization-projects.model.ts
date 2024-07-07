@@ -11,7 +11,7 @@ import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { CustomFieldsObject } from './shared-types';
-``;
+
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
 	projectId?: ID;

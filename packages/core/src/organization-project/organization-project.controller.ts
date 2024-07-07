@@ -17,7 +17,6 @@ import { DeleteResult } from 'typeorm';
 import {
 	ID,
 	IEditEntityByMemberInput,
-	IEmployee,
 	IOrganizationProject,
 	IOrganizationProjectSetting,
 	IPagination,
