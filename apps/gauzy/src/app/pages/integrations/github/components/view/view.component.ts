@@ -775,7 +775,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				.subscribe();
 		} catch (error) {
 			// Handle errors (e.g., display an error message or log the error)
-			console.log('Error while resyncing issues from repository:', error.message);
+			console.log('Error while re-syncing issues from repository:', error.message);
 
 			// Optionally, you can provide error feedback to the user
 			this._errorHandlingService.handleError(error);
