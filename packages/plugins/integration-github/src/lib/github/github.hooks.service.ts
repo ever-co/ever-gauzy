@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Context } from 'probot';
+import * as chalk from 'chalk';
 import {
 	GithubPropertyMapEnum,
 	IGithubInstallation,
@@ -87,6 +88,7 @@ export class GithubHooksService {
 			const installation = context.payload['installation'] as IGithubInstallation;
 			const issue = context.payload['issue'] as IGithubIssue;
 			const repository = context.payload['repository'] as IGithubRepository;
+			console.log(chalk.magenta(`Syncing GitHub Automation ID: %s`), context.payload['action']);
 
 			/** Synchronizes automation issues for a GitHub installation. */
 			await this.syncAutomationIssue({ installation, issue, repository });
@@ -106,6 +108,7 @@ export class GithubHooksService {
 			const installation = context.payload['installation'] as IGithubInstallation;
 			const issue = context.payload['issue'] as IGithubIssue;
 			const repository = context.payload['repository'] as IGithubRepository;
+			console.log(chalk.magenta(`Syncing GitHub Automation ID: %s`), context.payload['action']);
 
 			/** Synchronizes automation issues for a GitHub installation. */
 			await this.syncAutomationIssue({ installation, issue, repository });
@@ -125,6 +128,7 @@ export class GithubHooksService {
 			const installation = context.payload['installation'] as IGithubInstallation;
 			const issue = context.payload['issue'] as IGithubIssue;
 			const repository = context.payload['repository'] as IGithubRepository;
+			console.log(chalk.magenta(`Syncing GitHub Automation ID: %s`), context.payload['action']);
 
 			/** Synchronizes automation issues for a GitHub installation. */
 			await this.syncAutomationIssue({ installation, issue, repository });
@@ -144,6 +148,7 @@ export class GithubHooksService {
 			const installation = context.payload['installation'] as IGithubInstallation;
 			const issue = context.payload['issue'] as IGithubIssue;
 			const repository = context.payload['repository'] as IGithubRepository;
+			console.log(chalk.magenta(`Syncing GitHub Automation ID: %s`), context.payload['action']);
 
 			/** Synchronizes automation issues for a GitHub installation. */
 			await this.syncAutomationIssue({ installation, issue, repository });
@@ -170,11 +175,7 @@ export class GithubHooksService {
 			const setting: IIntegrationSetting = await this.getInstallationSetting(installation);
 			if (!!setting && !!setting.integration) {
 				const integration = setting.integration;
-				await this._githubSyncService.syncAutomationIssue({
-					integration,
-					issue,
-					repository
-				});
+				await this._githubSyncService.syncAutomationIssue({ integration, issue, repository });
 			}
 		} catch (error) {
 			this.logger.error(`Failed to sync GitHub automation issue: ${installation?.id}`, error.message);
@@ -198,17 +199,12 @@ export class GithubHooksService {
 						settingsValue: installation_id,
 						isActive: true,
 						isArchived: false,
-						integration: {
-							isActive: true,
-							isArchived: false
-						}
+						integration: { isActive: true, isArchived: false }
 					},
 					relations: {
 						integration: {
 							settings: true,
-							entitySettings: {
-								tiedEntities: true
-							}
+							entitySettings: { tiedEntities: true }
 						}
 					}
 				})

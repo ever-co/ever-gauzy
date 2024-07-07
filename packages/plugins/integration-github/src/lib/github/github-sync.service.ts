@@ -365,13 +365,8 @@ export class GithubSyncService {
 		try {
 			// Retrieve integration settings
 			const integration = await this._integrationTenantService.findOneByIdString(integrationId, {
-				where: {
-					isActive: true,
-					isArchived: false
-				},
-				relations: {
-					settings: true
-				}
+				where: { isActive: true, isArchived: false },
+				relations: { settings: true }
 			});
 
 			const settings = arrayToObject(integration.settings, 'settingsName', 'settingsValue');
@@ -401,7 +396,7 @@ export class GithubSyncService {
 						});
 						labels = response.data;
 					} catch (error) {
-						console.log('Error while creating missing labels: ', error.message);
+						console.log(chalk.red(`Error while creating missing labels with payload: %s`), error);
 					}
 				}
 
@@ -409,6 +404,7 @@ export class GithubSyncService {
 				return await Promise.all(
 					labels.map(async (label: IGithubIssueLabel) => {
 						const { id: sourceId, name, color, description } = label;
+						console.log(chalk.magenta(`Syncing GitHub Automation Issue Label: %s`), label);
 
 						return await this._commandBus.execute(
 							new IntegrationMapSyncLabelCommand({
@@ -444,6 +440,7 @@ export class GithubSyncService {
 	public async syncAutomationIssue(input: IGithubAutomationIssuePayload) {
 		const { integration, repository, issue } = input;
 		const { entitySettings } = integration;
+
 		try {
 			/** Extract necessary data from integration */
 			const tenantId = integration['tenantId'];
@@ -451,14 +448,14 @@ export class GithubSyncService {
 			const integrationId = integration['id'];
 
 			/** Get a list of projects for the repository */
-			const projects: IOrganizationProject[] =
-				await this._organizationProjectService.getProjectsByGithubRepository(repository.id, {
-					organizationId,
-					tenantId,
-					integrationId
-				});
+			const projects = await this._organizationProjectService.getProjectsByGithubRepository(repository.id, {
+				organizationId,
+				tenantId,
+				integrationId
+			});
 
 			for await (const project of projects) {
+				console.log(chalk.magenta(`Syncing GitHub Automation Issues for Project: %s`), project.name);
 				// Check if the issue should be synchronized for this project
 				if (!!this.shouldSyncIssue(project, issue)) {
 					const issues: IGithubIssue[] = this._mapIssuePayload(Array.isArray(issue) ? issue : [issue]);
@@ -479,11 +476,11 @@ export class GithubSyncService {
 
 										// Check for label synchronization settings
 										try {
-											const labelSetting: IIntegrationEntitySetting =
-												entitySetting.tiedEntities.find(
-													({ entity }: IIntegrationEntitySettingTied) =>
-														entity === IntegrationEntity.LABEL
-												);
+											const labelSetting = entitySetting.tiedEntities.find(
+												({ entity }: IIntegrationEntitySettingTied) =>
+													entity === IntegrationEntity.LABEL
+											);
+
 											if (!!labelSetting && labelSetting.sync) {
 												/** Sync GitHub Issue Labels */
 												tags = await Promise.all(
