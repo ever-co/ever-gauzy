@@ -3,7 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Subject } from 'rxjs';
 import { catchError, filter, takeUntil, tap } from 'rxjs/operators';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { EventBus, IntegrationDeleteEvent, RequestContext, TaskEvent } from '@gauzy/core';
+import { BaseEntityEventTypeEnum, EventBus, IntegrationEvent, RequestContext, TaskEvent } from '@gauzy/core';
 import { GithubInstallationDeleteCommand, GithubTaskUpdateOrCreateCommand } from './commands';
 
 @Injectable()
@@ -14,38 +14,43 @@ export class GithubEventSubscriber implements OnModuleInit, OnModuleDestroy {
 	constructor(private readonly _eventBus: EventBus, private readonly _commandBus: CommandBus) {}
 
 	/**
-	 * Initializes the module and sets up a subscription to listen for IntegrationDeleteEvent events.
+	 * Initializes the module and sets up a subscription to listen for IntegrationEvent events.
 	 * The subscription filters the events to only process those related to GitHub integrations.
 	 * When an event is received, a GithubInstallationDeleteCommand is executed.
 	 */
 	async onModuleInit() {
-		this.setupIntegrationDeleteEvent();
+		this.setupIntegrationEvent();
 		this.setupTaskEvent();
 	}
 
 	/**
-	 * Sets up subscription to handle IntegrationDeleteEvent events.
-	 * Executes GithubInstallationDeleteCommand for GitHub integrations.
+	 * Sets up a subscription to listen for IntegrationEvent events.
+	 * Depending on the event type, it will execute the appropriate command.
 	 */
-	private setupIntegrationDeleteEvent() {
+	private setupIntegrationEvent() {
 		this._eventBus
-			.ofType(IntegrationDeleteEvent)
+			.ofType(IntegrationEvent)
 			.pipe(
-				filter((event: IntegrationDeleteEvent) => !!event.integration),
-				filter(
-					(event: IntegrationDeleteEvent) => event.integration.integration.provider === IntegrationEnum.GITHUB
-				),
-				tap(async (event: IntegrationDeleteEvent) => {
-					const command = new GithubInstallationDeleteCommand(event.integration);
-					await this._commandBus.execute(command);
+				filter((event: IntegrationEvent) => !!event.entity),
+				filter((event: IntegrationEvent) => event.entity.integration.provider === IntegrationEnum.GITHUB),
+				tap(async (event: IntegrationEvent) => {
+					switch (event.type) {
+						case BaseEntityEventTypeEnum.DELETED:
+							const command = new GithubInstallationDeleteCommand(event.entity);
+							await this._commandBus.execute(command);
+							break;
+						default:
+							this.logger.warn(`Unhandled event type: ${event.type}`);
+							break;
+					}
 				}),
 				catchError((error) => {
 					// Handle errors and return an appropriate error response
-					console.error(`Error processing IntegrationDeleteEvent: ${error.message}`, error);
+					this.logger.error(`Error processing IntegrationEvent: ${error.message}`, error.message);
 
 					// Throw an HttpException to propagate the error
 					throw new HttpException(
-						`Error processing IntegrationDeleteEvent: ${error.message}`,
+						`Error processing IntegrationEvent: ${error.message}`,
 						HttpStatus.INTERNAL_SERVER_ERROR
 					);
 				}),
@@ -68,17 +73,16 @@ export class GithubEventSubscriber implements OnModuleInit, OnModuleDestroy {
 						const tenantId = RequestContext.currentTenantId() || event.input.tenantId;
 
 						switch (event.type) {
-							case 'created':
-							case 'updated':
+							case BaseEntityEventTypeEnum.CREATED:
+							case BaseEntityEventTypeEnum.UPDATED:
 								// Only execute command if projectId exists
 								if (projectId) {
-									await this._commandBus.execute(
-										new GithubTaskUpdateOrCreateCommand(event.entity, {
-											tenantId,
-											organizationId,
-											projectId
-										})
-									);
+									const command = new GithubTaskUpdateOrCreateCommand(event.entity, {
+										tenantId,
+										organizationId,
+										projectId
+									});
+									await this._commandBus.execute(command);
 								}
 								break;
 							default:
@@ -95,6 +99,7 @@ export class GithubEventSubscriber implements OnModuleInit, OnModuleDestroy {
 				}),
 				catchError((error) => {
 					this.logger.error('Error in event subscription', error.message);
+
 					throw new HttpException(
 						`Error in event subscription: ${error.message}`,
 						HttpStatus.INTERNAL_SERVER_ERROR

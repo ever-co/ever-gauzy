@@ -4,7 +4,8 @@ import { DeleteResult } from 'typeorm';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { EventBus } from '../../../event-bus/event-bus';
-import { IntegrationDeleteEvent } from '../../../event-bus/events';
+import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
+import { IntegrationEvent } from '../../../event-bus/events';
 import { IntegrationTenantService } from '../../integration-tenant.service';
 import { IntegrationTenantDeleteCommand } from '../integration-tenant.delete.command';
 
@@ -36,7 +37,7 @@ export class IntegrationTenantDeleteHandler implements ICommandHandler<Integrati
 				case IntegrationEnum.GITHUB:
 					// Publish the integration delete event
 					const ctx = RequestContext.currentRequestContext();
-					const event = new IntegrationDeleteEvent(ctx, integration);
+					const event = new IntegrationEvent(ctx, integration, BaseEntityEventTypeEnum.DELETED);
 					await this._eventBus.publish(event);
 					break;
 				// Add cases for other integration providers if needed
