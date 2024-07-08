@@ -473,7 +473,8 @@
 		"trasp",
 		"policyicon",
 		"wbars",
-		"allcaps"
+		"allcaps",
+		"iubgreen"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

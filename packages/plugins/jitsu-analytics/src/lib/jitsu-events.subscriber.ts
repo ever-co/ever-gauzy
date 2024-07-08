@@ -80,7 +80,7 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 				this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(entity));
 			}
 
-			// Track the updation event with Jitsu Analytics asynchronously
+			// Track the update event with Jitsu Analytics asynchronously
 			this.analyticsTrack('afterEntityUpdate', { data: { entity } });
 		} catch (error) {
 			// Error handling logic
