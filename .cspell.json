@@ -466,7 +466,15 @@
 		"Embeddable",
 		"locutus",
 		"woot",
-		"proto"
+		"proto",
+		"iubenda",
+		"iconed",
+		"cust",
+		"trasp",
+		"policyicon",
+		"wbars",
+		"allcaps",
+		"iubgreen"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

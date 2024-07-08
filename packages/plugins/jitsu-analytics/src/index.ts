@@ -1,1 +1,1 @@
-export * from './jitsu-analytics.plugin';
+export * from './lib/jitsu-analytics.plugin';
