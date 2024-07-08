@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/integration-ai';
 import { IEmployee, IPagination } from '@gauzy/contracts';
-import { EmployeeService } from '../../employee.service';
+import { EmployeeService } from '@gauzy/core';
 import { GetEmployeeJobStatisticsCommand } from '../get-employee-job-statistics.command';
 
 @CommandHandler(GetEmployeeJobStatisticsCommand)
@@ -11,10 +11,7 @@ export class GetEmployeeJobStatisticsHandler implements ICommandHandler<GetEmplo
 	 * @param employeeService
 	 * @param gauzyAIService
 	 */
-	constructor(
-		private readonly employeeService: EmployeeService,
-		private readonly gauzyAIService: GauzyAIService
-	) { }
+	constructor(private readonly employeeService: EmployeeService, private readonly gauzyAIService: GauzyAIService) {}
 
 	/**
 	 * Executes the GetEmployeeJobStatisticsCommand to fetch paginated employee data
@@ -42,7 +39,7 @@ export class GetEmployeeJobStatisticsHandler implements ICommandHandler<GetEmplo
 		// Combine mappings into a single map function
 		items = items.map((employee: IEmployee) => ({
 			...employee,
-			...employeesStatisticsById.get(employee.id) || {} // Use empty object if not found
+			...(employeesStatisticsById.get(employee.id) || {}) // Use empty object if not found
 		}));
 
 		return { items, total };
