@@ -1,16 +1,15 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { DeleteResult } from 'typeorm';
 import { ProductDeleteCommand } from '../product.delete.command';
 import { ProductService } from '../../product.service';
 import { ProductVariantService } from '../../../product-variant/product-variant.service';
-import { DeleteResult } from 'typeorm';
 import { ProductVariantSettingService } from '../../../product-setting/product-setting.service';
 import { ProductVariantPriceService } from '../../../product-variant-price/product-variant-price.service';
-import { ProductOptionService } from 'product-option/product-option.service';
-import { ProductOptionGroupService } from 'product-option/product-option-group.service';
+import { ProductOptionService } from '../../../product-option/product-option.service';
+import { ProductOptionGroupService } from '../../../product-option/product-option-group.service';
 
 @CommandHandler(ProductDeleteCommand)
-export class ProductDeleteHandler
-	implements ICommandHandler<ProductDeleteCommand> {
+export class ProductDeleteHandler implements ICommandHandler<ProductDeleteCommand> {
 	constructor(
 		private productService: ProductService,
 		private productOptionService: ProductOptionService,
@@ -20,9 +19,7 @@ export class ProductDeleteHandler
 		private productVariantPricesService: ProductVariantPriceService
 	) {}
 
-	public async execute(
-		command?: ProductDeleteCommand
-	): Promise<DeleteResult> {
+	public async execute(command?: ProductDeleteCommand): Promise<DeleteResult> {
 		const { productId } = command;
 
 		const product = await this.productService.findOneByOptions({
@@ -44,27 +41,21 @@ export class ProductDeleteHandler
 
 		for await (const optionGroup of optionGroups) {
 			optionGroup.options.forEach(async (option) => {
-				await this.productOptionService.deleteOptionTranslationsBulk(
-					option.translations
-				);
+				await this.productOptionService.deleteOptionTranslationsBulk(option.translations);
 			});
 
 			await this.productOptionService.deleteBulk(optionGroup.options);
 		}
 
 		for await (const group of optionGroups) {
-			await this.productOptionsGroupService.deleteGroupTranslationsBulk(
-				group.translations
-			);
+			await this.productOptionsGroupService.deleteGroupTranslationsBulk(group.translations);
 		}
 
 		await this.productOptionsGroupService.deleteBulk(optionGroups);
 
 		const deleteRes = [
 			await this.productVariantService.deleteMany(product.variants),
-			await this.productVariantSettingsService.deleteMany(
-				settingsToDelete
-			),
+			await this.productVariantSettingsService.deleteMany(settingsToDelete),
 			await this.productVariantPricesService.deleteMany(pricesToDelete),
 			await this.productService.delete(product.id)
 		];

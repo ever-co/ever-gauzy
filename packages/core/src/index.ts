@@ -1,11 +1,19 @@
 export { bootstrap } from './bootstrap';
-
+export {
+	createMigration,
+	ConnectionEntityManager,
+	generateMigration,
+	prepareSQLQuery,
+	revertLastDatabaseMigration,
+	runDatabaseMigrations
+} from './database';
 export * from './logger';
 export * from './core';
 export * from './core/seeds';
 export * from './shared';
-export * from './tenant';
+export * from './event-bus';
 
+export * from './tenant';
 export { RoleModule, RoleService } from './role';
 export { RolePermissionModule, RolePermissionService } from './role-permission';
 export { UserModule, UserService } from './user';
@@ -29,6 +37,7 @@ export {
 } from './organization-project';
 
 export * from './employee';
+export { TaskModule, TaskService, TaskCreateCommand, TaskUpdateCommand, AutomationTaskSyncCommand } from './tasks';
 
 export { IntegrationModule, IntegrationService } from './integration';
 export {
@@ -47,7 +56,9 @@ export {
 	IntegrationMapSyncScreenshotCommand,
 	IntegrationMapSyncTaskCommand,
 	IntegrationMapSyncTimeLogCommand,
-	IntegrationMapSyncTimeSlotCommand
+	IntegrationMapSyncTimeSlotCommand,
+	IntegrationMapSyncIssueCommand,
+	IntegrationMapSyncLabelCommand
 } from './integration-map';
 export {
 	IntegrationSettingModule,
@@ -67,13 +78,6 @@ export {
 	PROJECT_TIED_ENTITIES
 } from './integration-entity-setting-tied';
 
-export { IncomeModule, IncomeService, IncomeCreateCommand } from './income';
-export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './expense';
-export {
-	ExpenseCategoriesModule,
-	ExpenseCategoriesService,
-	ExpenseCategoryFirstOrCreateCommand
-} from './expense-categories';
 export {
 	TimeSlotModule,
 	TimeSlotService,
@@ -83,5 +87,11 @@ export {
 export { TimeLogModule, TimeLogService, TimeLogCreateCommand } from './time-tracking/time-log';
 export { ScreenshotModule, ScreenshotService, ScreenshotCreateCommand } from './time-tracking/screenshot';
 
-export * from './tags';
-export * from './database';
+export { IncomeModule, IncomeService, IncomeCreateCommand } from './income';
+export { ExpenseModule, ExpenseService, ExpenseCreateCommand } from './expense';
+export {
+	ExpenseCategoriesModule,
+	ExpenseCategoriesService,
+	ExpenseCategoryFirstOrCreateCommand
+} from './expense-categories';
+export { TagModule, TagService, Taggable, AutomationLabelSyncCommand, RelationalTagDTO } from './tags';

@@ -1,15 +1,12 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { IIntegrationSetting } from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
+import { RequestContext } from '../../../core/context';
 import { IntegrationSettingGetCommand } from './../integration-setting.get.command';
 import { IntegrationSettingService } from '../../integration-setting.service';
 
 @CommandHandler(IntegrationSettingGetCommand)
 export class IntegrationSettingGetHandler implements ICommandHandler<IntegrationSettingGetCommand> {
-
-	constructor(
-		private readonly integrationSettingService: IntegrationSettingService
-	) { }
+	constructor(private readonly integrationSettingService: IntegrationSettingService) {}
 
 	/**
 	 * Executes the 'IntegrationSettingGetCommand' to retrieve an integration setting.

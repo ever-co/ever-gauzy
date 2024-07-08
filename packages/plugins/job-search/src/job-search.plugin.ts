@@ -1,4 +1,3 @@
-
 import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { SeederModule } from '@gauzy/core';
@@ -14,7 +13,7 @@ import { JobSeederService } from './employee-job-preset/job-seeder.service';
 	configuration: (config: ApplicationPluginConfig) => {
 		// Configuration object for custom fields in the Employee entity.
 		config.customFields.Employee.push({
-			propertyPath: 'jobPresets',
+			name: 'jobPresets',
 			type: 'relation',
 			relationType: 'many-to-many',
 			pivotTable: 'employee_job_preset',
@@ -28,11 +27,10 @@ import { JobSeederService } from './employee-job-preset/job-seeder.service';
 	providers: [JobSeederService]
 })
 export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
-
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
-	constructor(private readonly jobSeederService: JobSeederService) { }
+	constructor(private readonly jobSeederService: JobSeederService) {}
 
 	/**
 	 * Called when the plugin is being initialized.

@@ -12,7 +12,7 @@ import { ProposalSeederService } from './proposal/proposal-seeder.service';
 	entities: [Proposal, EmployeeProposalTemplate],
 	configuration: (config: ApplicationPluginConfig) => {
 		config.customFields.Tag.push({
-			propertyPath: 'proposals',
+			name: 'proposals',
 			type: 'relation',
 			relationType: 'many-to-many',
 			pivotTable: 'tag_proposal',

@@ -1,9 +1,4 @@
-<nb-card
-	class="card-scroll"
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card class="card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<h5>
@@ -17,13 +12,7 @@
 		</div>
 		<div>
 			<div>
-				<button
-					nbButton
-					status="primary"
-					class="mr-2"
-					size="small"
-					(click)="navigateToResetIntegration()"
-				>
+				<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
 					<div class="sync-container">
 						<nb-icon class="sync" icon="sync-outline"></nb-icon>
 						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
@@ -44,13 +33,13 @@
 	</nb-card-header>
 	<nb-card-body class="p-0" *ngIf="integration$ | async">
 		<ng-container
-			*ngIf="integration?.isActive; then ngxIntegrationSync; else ngxIntegrationSyncExcept">
-		</ng-container>
+			*ngIf="integration?.isActive; then ngxIntegrationSync; else ngxIntegrationSyncExcept"
+		></ng-container>
 		<ng-template #ngxIntegrationSyncExcept>
-            <div>
-                <!-- Content to display if the user does not have 'active' integration -->
-            </div>
-        </ng-template>
+			<div>
+				<!-- Content to display if the user does not have 'active' integration -->
+			</div>
+		</ng-template>
 		<ng-template #ngxIntegrationSync>
 			<nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
 				<nb-tab
@@ -88,7 +77,7 @@
 										</div>
 										<div class="sync-process-button">
 											<button
-												[disabled]="(!project || !repository)"
+												[disabled]="!project || !repository"
 												nbButton
 												status="success"
 												class="mr-2"
@@ -96,8 +85,14 @@
 												debounceClick
 												(throttledClick)="autoSyncIssues()"
 											>
-												<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
-												{{ (syncing ? 'BUTTONS.AUTO_SYNCING' : 'BUTTONS.AUTO_SYNC') | translate }}
+												<nb-icon
+													class="sync"
+													icon="sync-outline"
+													[ngClass]="{ spin: syncing }"
+												></nb-icon>
+												{{
+													(syncing ? 'BUTTONS.AUTO_SYNCING' : 'BUTTONS.AUTO_SYNC') | translate
+												}}
 											</button>
 										</div>
 									</div>
@@ -106,13 +101,13 @@
 									<div class="table-scroll-container">
 										<div class="mb-2">
 											<h6 class="subtitle">
-												{{'INTEGRATIONS.GITHUB_PAGE.AUTO_SYNC_TABLE_LABEL' | translate}}
+												{{ 'INTEGRATIONS.GITHUB_PAGE.AUTO_SYNC_TABLE_LABEL' | translate }}
 											</h6>
 										</div>
 										<angular2-smart-table
 											[settings]="settingsSmartTableProjects"
 											[source]="projects$ | async"
-											style="cursor: pointer;"
+											style="cursor: pointer"
 										></angular2-smart-table>
 									</div>
 								</nb-card-body>
@@ -132,7 +127,7 @@
 										<div class="col-4">
 											<ngx-github-repository-selector
 												id="manual-repository"
-												[sourceId]="(project$ | async)?.repository?.repositoryId"
+												[sourceId]="(project$ | async)?.customFields?.repository?.repositoryId"
 												[integration]="integration"
 												(onChanged)="selectManualRepository($event)"
 												[selected]="true"
@@ -154,7 +149,7 @@
 										</div>
 										<div class="sync-process-button">
 											<button
-												[disabled]="(selectedIssues.length == 0) || (!project || !repository)"
+												[disabled]="selectedIssues.length == 0 || !project || !repository"
 												nbButton
 												status="success"
 												class="mr-2"
@@ -163,8 +158,13 @@
 												(throttledClick)="manualSyncIssues()"
 											>
 												<div class="sync-container">
-													<nb-icon class="sync" icon="sync-outline" [ngClass]="{ 'spin' : syncing }"></nb-icon>
-													{{ (syncing ? 'BUTTONS.SYNCING' : 'BUTTONS.SYNC') | translate }} {{ 'BUTTONS.SELECTED_TASKS' | translate }}
+													<nb-icon
+														class="sync"
+														icon="sync-outline"
+														[ngClass]="{ spin: syncing }"
+													></nb-icon>
+													{{ (syncing ? 'BUTTONS.SYNCING' : 'BUTTONS.SYNC') | translate }}
+													{{ 'BUTTONS.SELECTED_TASKS' | translate }}
 												</div>
 											</button>
 										</div>
@@ -176,16 +176,14 @@
 											[settings]="settingsSmartTableIssues"
 											[source]="issues"
 											(userRowSelect)="selectIssues($event)"
-											style="cursor: pointer;"
+											style="cursor: pointer"
 											#issuesTable
 										></angular2-smart-table>
 									</div>
-									<ng-container *ngIf="(page$ | async)">
+									<ng-container *ngIf="page$ | async">
 										<div class="pagination-container">
 											<ng-container *ngIf="smartTableSource">
-												<ngx-pagination
-													[source]="smartTableSource"
-												></ngx-pagination>
+												<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 											</ng-container>
 										</div>
 									</ng-container>
@@ -201,8 +199,5 @@
 
 <!-- Integration Setting Popover -->
 <ng-template #settingsPopover>
-	<ngx-github-settings
-		[integration]="integration"
-		(canceled)="openSettingModalPopover()"
-	></ngx-github-settings>
+	<ngx-github-settings [integration]="integration" (canceled)="openSettingModalPopover()"></ngx-github-settings>
 </ng-template>

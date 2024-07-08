@@ -4,7 +4,7 @@ import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { IntegrationMap } from 'core/entities/internal';
+import { IntegrationMap } from '../core/entities/internal';
 import { TagController } from './tag.controller';
 import { TagService } from './tag.service';
 import { Tag } from './tag.entity';

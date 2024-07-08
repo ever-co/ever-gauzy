@@ -465,7 +465,8 @@
 		"gauzyapiserver",
 		"Embeddable",
 		"locutus",
-		"woot"
+		"woot",
+		"proto"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

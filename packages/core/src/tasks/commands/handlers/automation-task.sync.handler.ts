@@ -1,25 +1,18 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-	IIntegrationMap,
-	IOrganization,
-	IOrganizationProject,
-	ITask,
-	ITaskCreateInput,
-	ITaskUpdateInput
-} from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
-import { IntegrationMap, TaskStatus } from 'core/entities/internal';
+import * as chalk from 'chalk';
+import { ID, IIntegrationMap, ITask, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
+import { IntegrationMap, TaskStatus } from '../../../core/entities/internal';
 import { AutomationTaskSyncCommand } from './../automation-task.sync.command';
 import { TaskService } from './../../task.service';
 import { Task } from './../../task.entity';
 import { TypeOrmIntegrationMapRepository } from '../../../integration-map/repository/type-orm-integration-map.repository';
-import { TypeOrmTaskStatusRepository } from 'tasks/statuses/repository/type-orm-task-status.repository';
-import { TypeOrmTaskRepository } from 'tasks/repository/type-orm-task.repository';
+import { TypeOrmTaskStatusRepository } from '../../statuses/repository/type-orm-task-status.repository';
+import { TypeOrmTaskRepository } from '../../repository/type-orm-task.repository';
 
 @CommandHandler(AutomationTaskSyncCommand)
 export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTaskSyncCommand> {
-
 	constructor(
 		@InjectRepository(Task)
 		private readonly typeOrmTaskRepository: TypeOrmTaskRepository,
@@ -31,8 +24,14 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 
 		private readonly _taskService: TaskService
-	) { }
+	) {}
 
+	/**
+	 * Executes the synchronization of automation tasks with the integration map.
+	 *
+	 * @param {AutomationTaskSyncCommand} command - The command containing the input data.
+	 * @returns {Promise<IIntegrationMap>} - The integration map after synchronization.
+	 */
 	async execute(command: AutomationTaskSyncCommand): Promise<IIntegrationMap> {
 		try {
 			const { input } = command;
@@ -40,13 +39,17 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			const { projectId } = entity;
 			const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
-			const taskStatus = await this.typeOrmTaskStatusRepository.findOneBy({
-				tenantId,
-				organizationId,
-				projectId,
-				name: entity.status
-			});
-			entity.taskStatus = taskStatus;
+			try {
+				const taskStatus = await this.typeOrmTaskStatusRepository.findOneBy({
+					tenantId,
+					organizationId,
+					projectId,
+					name: entity.status
+				});
+				entity.taskStatus = taskStatus;
+			} catch (error) {
+				console.log(chalk.red(`Syncing GitHub Automation Task Status: %s`), entity.status);
+			}
 
 			try {
 				// Check if an integration map already exists for the issue
@@ -71,25 +74,21 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 					});
 				} catch (error) {
 					// Create a new task with the provided entity data
-					await this.createTask({
-						projectId,
-						organizationId,
-						tenantId
-					}, {
-						...entity,
-						id: integrationMap.gauzyId
-					});
+					await this.createTask(
+						{ projectId, organizationId, tenantId },
+						{
+							...entity,
+							id: integrationMap.gauzyId
+						}
+					);
 				}
 
 				// Return the integration map
 				return integrationMap;
 			} catch (error) {
 				// Create a new task with the provided entity data
-				const task = await this.createTask({
-					projectId,
-					organizationId,
-					tenantId
-				}, entity);
+				const task = await this.createTask({ projectId, organizationId, tenantId }, entity);
+
 				// Create a new integration map for the issue
 				return await this.typeOrmIntegrationMapRepository.save(
 					this.typeOrmIntegrationMapRepository.create({
@@ -113,11 +112,10 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	 * @param options - An object containing parameters for task creation.
 	 * @returns A Promise that resolves to the newly created task.
 	 */
-	async createTask(options: {
-		projectId: IOrganizationProject['id'];
-		organizationId: IOrganization['id'];
-		tenantId: IOrganization['tenantId'];
-	}, entity: ITaskCreateInput | ITaskUpdateInput): Promise<ITask> {
+	async createTask(
+		options: { projectId: ID; organizationId: ID; tenantId: ID },
+		entity: ITaskCreateInput | ITaskUpdateInput
+	): Promise<ITask> {
 		try {
 			// Retrieve the maximum task number for the project
 			const maxNumber = await this._taskService.getMaxTaskNumberByProject(options);
@@ -130,12 +128,14 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 				tenantId: options.tenantId
 			});
 
+			console.log(chalk.magenta(`Syncing GitHub Automation Task: %s`), newTask);
+
 			// Save the new task
 			const createdTask = await this.typeOrmTaskRepository.save(newTask);
 			return createdTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
-			console.error('Error automation syncing a task:', error);
+			console.log(chalk.red(`Error automation syncing a task with payload: %s`, error.message), entity);
 		}
 	}
 
@@ -146,10 +146,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 	 * @param entity - The new data for the task.
 	 * @returns A Promise that resolves to the updated task.
 	 */
-	async updateTask(
-		id: ITaskUpdateInput['id'],
-		entity: ITaskUpdateInput
-	): Promise<ITask> {
+	async updateTask(id: ITaskUpdateInput['id'], entity: ITaskUpdateInput): Promise<ITask> {
 		try {
 			// Find the existing task by its ID
 			const existingTask = await this._taskService.findOneByIdString(id);
@@ -165,7 +162,7 @@ export class AutomationTaskSyncHandler implements ICommandHandler<AutomationTask
 			return updatedTask;
 		} catch (error) {
 			// Handle and log errors, and return a rejected promise or throw an exception.
-			console.error('Error automation syncing a task:', error);
+			console.log(chalk.red(`Error automation syncing a task with payload: %s`, error), entity);
 		}
 	}
 }
