@@ -1,20 +1,19 @@
 import { CommandHandler, ICommandHandler, CommandBus } from '@nestjs/cqrs';
 import { ITag, IntegrationEntity } from '@gauzy/contracts';
-import { RequestContext } from 'core/context';
-import { TagCreateCommand, TagUpdateCommand } from 'tags/commands';
-import { TagService } from 'tags/tag.service';
+import { RequestContext } from '../../../core/context';
+import { TagCreateCommand, TagUpdateCommand } from '../../../tags/commands';
+import { TagService } from '../../../tags/tag.service';
 import { IntegrationMapSyncEntityCommand } from './../integration-map.sync-entity.command';
 import { IntegrationMapSyncLabelCommand } from './../integration-map.sync-label.command';
 import { IntegrationMapService } from '../../integration-map.service';
 
 @CommandHandler(IntegrationMapSyncLabelCommand)
 export class IntegrationMapSyncLabelHandler implements ICommandHandler<IntegrationMapSyncLabelCommand> {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationMapService: IntegrationMapService,
-		private readonly _tagService: TagService,
-	) { }
+		private readonly _tagService: TagService
+	) {}
 
 	/**
 	 * Execute the IntegrationMapSyncLabelCommand to sync GitHub labels and update tags.
@@ -41,9 +40,7 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 			try {
 				await this._tagService.findOneByIdString(integrationMap.gauzyId);
 				// Update the corresponding task with the new input data
-				return await this._commandBus.execute(
-					new TagUpdateCommand(integrationMap.gauzyId, entity)
-				);
+				return await this._commandBus.execute(new TagUpdateCommand(integrationMap.gauzyId, entity));
 			} catch (error) {
 				// Create a corresponding tag with the new input data
 				return await this._commandBus.execute(
@@ -69,14 +66,16 @@ export class IntegrationMapSyncLabelHandler implements ICommandHandler<Integrati
 					tenantId
 				})
 			);
-			await this._commandBus.execute(new IntegrationMapSyncEntityCommand({
-				gauzyId: tag.id,
-				entity: IntegrationEntity.LABEL,
-				integrationId,
-				sourceId,
-				organizationId,
-				tenantId
-			}));
+			await this._commandBus.execute(
+				new IntegrationMapSyncEntityCommand({
+					gauzyId: tag.id,
+					entity: IntegrationEntity.LABEL,
+					integrationId,
+					sourceId,
+					organizationId,
+					tenantId
+				})
+			);
 			return tag;
 		}
 	}

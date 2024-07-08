@@ -1,4 +1,3 @@
-import { Public } from '@gauzy/common';
 import { Controller, Get } from '@nestjs/common';
 import {
 	HealthCheckService,
@@ -6,16 +5,16 @@ import {
 	DiskHealthIndicator,
 	MikroOrmHealthIndicator
 } from '@nestjs/terminus';
-import { CacheHealthIndicator } from './indicators/cache-health.indicator';
-import { RedisHealthIndicator } from './indicators/redis-health.indicator';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import { DataSource, QueryRunner } from 'typeorm';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { getORMType, MultiORM, MultiORMEnum } from 'core/utils';
-import { User } from 'user/user.entity';
-import { TypeOrmUserRepository } from 'user/repository/type-orm-user.repository';
-import { MikroOrmUserRepository } from 'user/repository/mikro-orm-user.repository';
+import { Public } from '@gauzy/common';
+import { User } from '../core/entities/internal';
+import { CacheHealthIndicator } from './indicators/cache-health.indicator';
+import { RedisHealthIndicator } from './indicators/redis-health.indicator';
+import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
+import { MikroOrmUserRepository, TypeOrmUserRepository } from '../user/repository';
 
 @Controller('health')
 export class HealthController {
@@ -36,7 +35,6 @@ export class HealthController {
 	}
 
 	private readonly ormType: MultiORM;
-
 	private readonly checkDb = true;
 	private readonly checkStorage = true;
 	private readonly checkCache = true;

@@ -8,12 +8,11 @@ import {
 	ProductOptionGroup,
 	ProductOptionTranslation,
 	ProductOptionGroupTranslation
-} from 'core';
-import { ProductOptionGroupService } from 'product-option/product-option-group.service';
+} from '../../../core/entities/internal';
+import { ProductOptionGroupService } from '../../../product-option/product-option-group.service';
 
 @CommandHandler(ProductCreateCommand)
-export class ProductCreateHandler
-	implements ICommandHandler<ProductCreateCommand> {
+export class ProductCreateHandler implements ICommandHandler<ProductCreateCommand> {
 	constructor(
 		private productOptionService: ProductOptionService,
 		private productService: ProductService,
@@ -41,20 +40,15 @@ export class ProductCreateHandler
 
 					const optionsTranslationEntites = await Promise.all(
 						option.translations.map((optionTranslation) => {
-							let optionTranslationEntity = Object.assign(
-								new ProductOptionTranslation(),
-								{ ...optionTranslation }
-							);
-							return this.productOptionService.saveProductOptionTranslation(
-								optionTranslationEntity
-							);
+							let optionTranslationEntity = Object.assign(new ProductOptionTranslation(), {
+								...optionTranslation
+							});
+							return this.productOptionService.saveProductOptionTranslation(optionTranslationEntity);
 						})
 					);
 
 					option.translations = optionsTranslationEntites;
-					const optionEntity = await this.productOptionService.save(
-						option
-					);
+					const optionEntity = await this.productOptionService.save(option);
 
 					if (optionEntity) {
 						newGroup.options.push(optionEntity);
@@ -64,13 +58,10 @@ export class ProductCreateHandler
 				//save group translations
 				const groupTranslationsEntites = Promise.all(
 					group.translations.map((groupTranslation) => {
-						let groupTranslationObj = Object.assign(
-							new ProductOptionGroupTranslation(),
-							{ ...groupTranslation }
-						);
-						return this.productOptionsGroupService.createTranslation(
-							groupTranslationObj
-						);
+						let groupTranslationObj = Object.assign(new ProductOptionGroupTranslation(), {
+							...groupTranslation
+						});
+						return this.productOptionsGroupService.createTranslation(groupTranslationObj);
 					})
 				);
 
@@ -79,12 +70,8 @@ export class ProductCreateHandler
 			})
 		);
 
-		product.optionGroups = await this.productOptionsGroupService.saveBulk(
-			optionsGroupsCreate
-		);
-		const updatedProduct = await this.productService.saveProduct(
-			product as any
-		);
+		product.optionGroups = await this.productOptionsGroupService.saveBulk(optionsGroupsCreate);
+		const updatedProduct = await this.productService.saveProduct(product as any);
 
 		return updatedProduct;
 	}
