@@ -38,7 +38,7 @@ export class ProductCreateHandler implements ICommandHandler<ProductCreateComman
 						...optionInput
 					});
 
-					const optionsTranslationEntites = await Promise.all(
+					const optionsTranslationEntities = await Promise.all(
 						option.translations.map((optionTranslation) => {
 							let optionTranslationEntity = Object.assign(new ProductOptionTranslation(), {
 								...optionTranslation
@@ -47,7 +47,7 @@ export class ProductCreateHandler implements ICommandHandler<ProductCreateComman
 						})
 					);
 
-					option.translations = optionsTranslationEntites;
+					option.translations = optionsTranslationEntities;
 					const optionEntity = await this.productOptionService.save(option);
 
 					if (optionEntity) {
@@ -56,7 +56,7 @@ export class ProductCreateHandler implements ICommandHandler<ProductCreateComman
 				}
 
 				//save group translations
-				const groupTranslationsEntites = Promise.all(
+				const groupTranslationsEntities = Promise.all(
 					group.translations.map((groupTranslation) => {
 						let groupTranslationObj = Object.assign(new ProductOptionGroupTranslation(), {
 							...groupTranslation
@@ -65,7 +65,7 @@ export class ProductCreateHandler implements ICommandHandler<ProductCreateComman
 					})
 				);
 
-				newGroup.translations = await groupTranslationsEntites;
+				newGroup.translations = await groupTranslationsEntities;
 				return newGroup;
 			})
 		);
