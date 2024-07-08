@@ -3,6 +3,7 @@ import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ITask } from '@gauzy/contracts';
 import { EventBus } from '../../../event-bus';
 import { TaskEvent } from '../../../event-bus/events';
+import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
 import { RequestContext } from './../../../core/context';
 import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
 import { TaskCreateCommand } from './../task-create.command';
@@ -63,7 +64,7 @@ export class TaskCreateHandler implements ICommandHandler<TaskCreateCommand> {
 			if (triggeredEvent) {
 				// Publish the task created event
 				const ctx = RequestContext.currentRequestContext(); // Get current request context;
-				const event = new TaskEvent(ctx, createdTask, 'created', input);
+				const event = new TaskEvent(ctx, createdTask, BaseEntityEventTypeEnum.CREATED, input);
 				this._eventBus.publish(event); // Publish the event using EventBus
 			}
 

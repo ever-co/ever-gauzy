@@ -3,6 +3,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ID, ITask, ITaskUpdateInput } from '@gauzy/contracts';
 import { TaskEvent } from '../../../event-bus/events';
 import { EventBus } from '../../../event-bus/event-bus';
+import { BaseEntityEventTypeEnum } from '../../../event-bus/base-entity-event';
 import { RequestContext } from '../../../core/context';
 import { TaskService } from '../../task.service';
 import { TaskUpdateCommand } from '../task-update.command';
@@ -67,7 +68,7 @@ export class TaskUpdateHandler implements ICommandHandler<TaskUpdateCommand> {
 			if (triggeredEvent) {
 				// Publish the task created event
 				const ctx = RequestContext.currentRequestContext(); // Get current request context;
-				const event = new TaskEvent(ctx, updatedTask, 'updated', input);
+				const event = new TaskEvent(ctx, updatedTask, BaseEntityEventTypeEnum.UPDATED, input);
 				this._eventBus.publish(event); // Publish the event using EventBus
 			}
 
