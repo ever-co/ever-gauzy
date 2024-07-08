@@ -128,8 +128,8 @@ export class GauzyAIService {
 			// Define default headers
 			...defaultHeaders,
 			// Add your custom headers here
-			'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
-			'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
+			'X-APP-ID': this._configService.get<string>('gauzyAI.gauzyAiApiKey'),
+			'X-API-KEY': this._configService.get<string>('gauzyAI.gauzyAiApiSecret'),
 
 			/** */
 			...(apiKey ? { 'X-APP-ID': apiKey } : {}),
@@ -1201,8 +1201,8 @@ export class GauzyAIService {
 			const customHeaders = {
 				'Content-Type': 'application/json',
 				// Set your initial headers here
-				'X-APP-ID': this._configService.get<string>('guazyAI.gauzyAiApiKey'),
-				'X-API-KEY': this._configService.get<string>('guazyAI.gauzyAiApiSecret'),
+				'X-APP-ID': this._configService.get<string>('gauzyAI.gauzyAiApiKey'),
+				'X-API-KEY': this._configService.get<string>('gauzyAI.gauzyAiApiSecret'),
 
 				...(apiKey ? { 'X-APP-ID': apiKey } : {}),
 				...(apiSecret ? { 'X-API-KEY': apiSecret } : {}),
@@ -1245,11 +1245,11 @@ export class GauzyAIService {
 
 	private init() {
 		try {
-			const gauzyAIRESTEndpoint = this._configService.get<string>('guazyAI.gauzyAIRESTEndpoint');
+			const gauzyAIRESTEndpoint = this._configService.get<string>('gauzyAI.gauzyAIRESTEndpoint');
 
 			console.log(chalk.magenta(`GauzyAI REST Endpoint: ${gauzyAIRESTEndpoint}`));
 
-			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('guazyAI.gauzyAIGraphQLEndpoint');
+			this.gauzyAIGraphQLEndpoint = this._configService.get<string>('gauzyAI.gauzyAIGraphQLEndpoint');
 
 			console.log(chalk.magenta(`GauzyAI GraphQL Endpoint: ${this.gauzyAIGraphQLEndpoint}`));
 

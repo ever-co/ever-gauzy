@@ -12,13 +12,13 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: (config: ConfigService) => ({
-				baseURL: config.get<string>('guazyAI.gauzyAIRESTEndpoint'),
-				timeout: config.get<number>('guazyAI.gauzyAIRequestTimeout'),
+				baseURL: config.get<string>('gauzyAI.gauzyAIRESTEndpoint'),
+				timeout: config.get<number>('gauzyAI.gauzyAIRequestTimeout'),
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
-					apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
-					apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret')
+					apiKey: config.get<string>('gauzyAI.gauzyAiApiKey'),
+					apiSecret: config.get<string>('gauzyAI.gauzyAiApiSecret')
 				}
 			}),
 			inject: [ConfigService]
