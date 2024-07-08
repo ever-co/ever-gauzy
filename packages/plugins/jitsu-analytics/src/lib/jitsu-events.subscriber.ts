@@ -12,7 +12,6 @@ const { jitsu } = environment;
 /* Global Entity Subscriber - Listens to all entity inserts updates and removal then sends to Jitsu */
 @EventSubscriber()
 export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
-
 	private readonly logger = new Logger(JitsuEventsSubscriber.name);
 	private readonly jitsuAnalytics: AnalyticsInterface;
 
@@ -125,7 +124,10 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 
 		try {
 			if (this.logEnabled) {
-				this.logger.log(`Before Jitsu Tracking Entity Events: ${event}`, chalk.magenta(JSON.stringify(properties)));
+				this.logger.log(
+					`Before Jitsu Tracking Entity Events: ${event}`,
+					chalk.magenta(JSON.stringify(properties))
+				);
 			}
 
 			// Track the event

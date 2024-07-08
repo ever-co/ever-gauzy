@@ -1,21 +1,19 @@
 import { DynamicModule } from '@nestjs/common';
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
 import { parseOptions } from './jitsu-helper';
 import { JitsuAnalyticsService } from './jitsu-analytics.service';
 import { JitsuEventsSubscriber } from './jitsu-events.subscriber';
 
-@GauzyCorePlugin({
+@Plugin({
 	providers: [
 		JitsuAnalyticsService,
 		{
 			provide: JITSU_MODULE_PROVIDER_CONFIG,
-			useFactory: () => JitsuAnalyticsPlugin.options?.config,
-		},
+			useFactory: () => JitsuAnalyticsPlugin.options?.config
+		}
 	],
-	subscribers: [
-		JitsuEventsSubscriber
-	]
+	subscribers: [JitsuEventsSubscriber]
 })
 export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	static options: JitsuModuleOptions = {} as any;
@@ -57,10 +55,10 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 				JitsuAnalyticsService,
 				{
 					provide: JITSU_MODULE_PROVIDER_CONFIG,
-					useFactory: () => options.config,
-				},
+					useFactory: () => options.config
+				}
 			],
-			exports: [JitsuAnalyticsService],
+			exports: [JitsuAnalyticsService]
 		};
 	}
 }

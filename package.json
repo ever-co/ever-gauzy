@@ -154,7 +154,7 @@
 		"build:package:plugin:sentry": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/sentry-tracing build",
 		"build:package:plugin:sentry:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/sentry-tracing build",
 		"build:package:plugin:jitsu-analytic": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/jitsu-analytics build",
-		"build:package:plugin:jitsu-analytic:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/jitsu-analytics build",
+		"build:package:plugin:jitsu-analytic:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/jitsu-analytics build:prod",
 		"build:package:plugin:product-reviews": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/product-reviews build",
 		"build:package:plugin:product-reviews:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/product-reviews build",
 		"build:package:plugin:job-search": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search build",
