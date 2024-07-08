@@ -20,7 +20,6 @@ import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
 	IEmployeeJobPost,
-	IGetEmployeeJobPostFilters,
 	IJobMatchings,
 	IOrganization,
 	ISelectedEmployee,
