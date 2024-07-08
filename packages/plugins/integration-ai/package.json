@@ -1,13 +1,32 @@
 {
 	"name": "@gauzy/integration-ai",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform plugin for integration with Gauzy AI",
+	"description": "Enhance Ever Gauzy Platform with advanced AI integration capabilities for streamlined business management and automation.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"Ever Gauzy",
+		"Gauzy AI",
+		"plugin",
+		"integration",
+		"platform",
+		"management",
+		"business",
+		"tool",
+		"automation"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,11 +41,10 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.js",
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.lib.json"
+		"test:e2e": "jest --config ./jest.config.ts",
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
-	"keywords": [],
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
 		"@gauzy/contracts": "^0.1.0",
@@ -43,5 +61,10 @@
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

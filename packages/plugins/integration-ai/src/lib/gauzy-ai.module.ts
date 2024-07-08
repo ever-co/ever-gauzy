@@ -12,55 +12,45 @@ import { GAUZY_AI_CONFIG_OPTIONS } from './constants';
 		HttpModule.registerAsync({
 			imports: [ConfigModule],
 			useFactory: (config: ConfigService) => ({
-				baseURL: config.get<string>('guazyAI.gauzyAIRESTEndpoint'),
-				timeout: config.get<number>('guazyAI.gauzyAIRequestTimeout'),
+				baseURL: config.get<string>('gauzyAI.gauzyAIRESTEndpoint'),
+				timeout: config.get<number>('gauzyAI.gauzyAIRequestTimeout'),
 				maxRedirects: 5,
 				headers: {
 					'Content-Type': 'application/json',
-					apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
-					apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
-				},
+					apiKey: config.get<string>('gauzyAI.gauzyAiApiKey'),
+					apiSecret: config.get<string>('gauzyAI.gauzyAiApiSecret')
+				}
 			}),
-			inject: [ConfigService],
+			inject: [ConfigService]
 		}),
-		ConfigModule.forFeature(gauzyAI), // Make sure to import ConfigModule here
+		ConfigModule.forFeature(gauzyAI) // Make sure to import ConfigModule here
 	],
 	controllers: [],
-	providers: [
-		GauzyAIService,
-		RequestConfigProvider,
-	],
-	exports: [
-		GauzyAIService,
-		RequestConfigProvider,
-	],
+	providers: [GauzyAIService, RequestConfigProvider],
+	exports: [GauzyAIService, RequestConfigProvider]
 })
 export class GauzyAIModule {
 	/**
-	 *
-	 * @param options
-	 * @returns
+	 * Configure the GauzyAI module for integration with Ever Gauzy Platform.
+	 * @param options Optional configuration options for GauzyAI.
+	 * @returns A dynamic module configuration object.
 	 */
 	static forRoot(options?: IConfigurationOptions): DynamicModule {
 		return {
 			module: GauzyAIModule,
-			imports: [
-				ConfigModule, // Make sure to import ConfigModule here
-			],
+			imports: [ConfigModule], // Make sure to import ConfigModule here
 			providers: [
 				{
 					provide: GAUZY_AI_CONFIG_OPTIONS,
 					useFactory: (config: ConfigService): IConfigurationOptions => ({
-						apiKey: config.get<string>('guazyAI.gauzyAiApiKey'),
-						apiSecret: config.get<string>('guazyAI.gauzyAiApiSecret'),
-						...options,
+						apiKey: config.get<string>('gauzyAI.gauzyAiApiKey'),
+						apiSecret: config.get<string>('gauzyAI.gauzyAiApiSecret'),
+						...options
 					}),
-					inject: [ConfigService],
-				},
+					inject: [ConfigService]
+				}
 			],
-			exports: [
-				GAUZY_AI_CONFIG_OPTIONS
-			],
+			exports: [GAUZY_AI_CONFIG_OPTIONS]
 		};
 	}
 }
