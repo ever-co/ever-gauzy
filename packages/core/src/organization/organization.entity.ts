@@ -20,7 +20,8 @@ import {
 	IFeatureOrganization,
 	IAccountingTemplate,
 	IReportOrganization,
-	IImageAsset
+	IImageAsset,
+	ID
 } from '@gauzy/contracts';
 import {
 	AccountingTemplate,
@@ -52,7 +53,6 @@ import { MikroOrmOrganizationRepository } from './repository/mikro-orm-organizat
 
 @MultiORMEntity('organization', { mikroOrmRepository: () => MikroOrmOrganizationRepository })
 export class Organization extends TenantBaseEntity implements IOrganization {
-
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -346,7 +346,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@RelationId((it: Organization) => it.contact)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	contactId?: IContact['id'];
+	contactId?: ID;
 
 	/**
 	 * ImageAsset
@@ -362,7 +362,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		eager: true
 	})
 	@JoinColumn()
-	image?: ImageAsset;
+	image?: IImageAsset;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
@@ -370,7 +370,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@RelationId((it: Organization) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -439,7 +439,7 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 		owner: true,
 		pivotTable: 'tag_organization',
 		joinColumn: 'organizationId',
-		inverseJoinColumn: 'tagId',
+		inverseJoinColumn: 'tagId'
 	})
 	@JoinTable({
 		name: 'tag_organization'

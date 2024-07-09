@@ -5,10 +5,11 @@ import { debounceTime } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IEmployee, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployee, IImageAsset, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
 import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
+import { ErrorHandlingService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -28,7 +29,8 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,
 		private readonly _urlSerializer: UrlSerializer,
-		private readonly _location: Location
+		private readonly _location: Location,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
@@ -92,17 +94,26 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 			.subscribe();
 	}
 
-	updateImage(imageUrl: IUser['imageUrl']) {
+	/**
+	 * Update the image asset for the selected employee
+	 * @param image The image asset to update
+	 */
+	updateImage(image: IImageAsset) {
 		try {
-			if (imageUrl) {
-				this.selectedEmployee.user.imageUrl = imageUrl;
+			if (image) {
+				// Update the image for the selected employee
+				this.selectedEmployee.user.image = image;
+
+				// Alternatively, update the selectedEmployee in the store with the new image URL
 				this.store.selectedEmployee = {
 					...this.store.selectedEmployee,
-					imageUrl: imageUrl
+					imageUrl: image?.fullUrl
 				};
 			}
 		} catch (error) {
-			console.log('Error while uploading profile avatar', error);
+			console.error('Error while updating profile avatar:', error);
+			// Handle and log errors
+			this._errorHandlingService.handleError(error);
 		}
 	}
 

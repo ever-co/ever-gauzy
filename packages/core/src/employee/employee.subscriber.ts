@@ -63,7 +63,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				entity.user.imageUrl = getUserDummyImage(entity.user);
 			}
 
-			//
+			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity);
 		} catch (error) {
 			console.error(
@@ -80,6 +80,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 */
 	async beforeEntityUpdate(entity: Employee): Promise<void> {
 		try {
+			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity);
 		} catch (error) {
 			console.error(

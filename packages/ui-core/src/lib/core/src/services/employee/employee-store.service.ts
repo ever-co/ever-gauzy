@@ -33,22 +33,13 @@ export class EmployeeStore {
 	private _userForm: IUserFindInput;
 	private _employeeForm: IEmployeeUpdateInput;
 
-	constructor(
-		protected employeeAkitaStore: EmployeeAkitaStore,
-		protected employeeAkitaQuery: EmployeeAkitaQuery
-	) { }
+	constructor(protected employeeAkitaStore: EmployeeAkitaStore, protected employeeAkitaQuery: EmployeeAkitaQuery) {}
 
-	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(
-		this.selectedEmployee
-	);
+	selectedEmployee$: BehaviorSubject<IEmployee> = new BehaviorSubject(this.selectedEmployee);
 
-	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(
-		this.userForm
-	);
+	userForm$: BehaviorSubject<IUserFindInput> = new BehaviorSubject(this.userForm);
 
-	employeeForm$: BehaviorSubject<IEmployeeUpdateInput> = new BehaviorSubject(
-		this.employeeForm
-	);
+	employeeForm$: BehaviorSubject<IEmployeeUpdateInput> = new BehaviorSubject(this.employeeForm);
 
 	set selectedEmployee(employee: IEmployee) {
 		this._selectedEmployee = employee;
@@ -86,6 +77,28 @@ export class EmployeeStore {
 
 	get employeeForm(): IEmployeeUpdateInput {
 		return this._employeeForm;
+	}
+
+	/**
+	 * Update the user form with new data
+	 *
+	 * @param formData - The form data to update.
+	 */
+	async updateUserForm(formData: IUserUpdateInput) {
+		// Simulate an async operation, such as an API call
+		// await someApiService.update(formData);
+		this.userForm = { ...this.userForm, ...formData };
+	}
+
+	/**
+	 * Update the employee form with new data
+	 *
+	 * @param formData - The form data to update.
+	 */
+	async updateEmployeeForm(formData: IEmployeeUpdateInput) {
+		// Simulate an async operation, such as an API call
+		// await someApiService.updateEmployee(formData);
+		this.employeeForm = { ...this.employeeForm, ...formData };
 	}
 
 	destroy() {
