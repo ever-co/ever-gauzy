@@ -49,7 +49,6 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	public viewComponentName: ComponentEnum;
 	public pipeline: IPipeline;
 	public organization: IOrganization;
-	public name: string;
 	public disableButton: boolean = true;
 	public loading: boolean = false;
 	public pipelineTabsEnum = PipelineTabsEnum;
@@ -75,11 +74,11 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly fb: UntypedFormBuilder,
 		private readonly pipelinesService: PipelinesService,
 		private readonly toastrService: ToastrService,
 		private readonly dialogService: NbDialogService,
-		readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly httpClient: HttpClient,
 		private readonly errorHandlingService: ErrorHandlingService,
@@ -221,12 +220,13 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 		// Configure Smart Table settings
 		this.smartTableSettings = {
+			actions: false,
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : this.minItemPerPage
 			},
-			actions: false,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PIPELINE'),
 			columns: {
 				name: {
 					type: 'string',
@@ -246,7 +246,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 						type: 'custom',
 						component: InputFilterComponent
 					},
-					filterFunction: (value) => {
+					filterFunction: (value: string) => {
 						this.setFilter({ field: 'description', search: value });
 					}
 				},
@@ -315,9 +315,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			relations: ['stages'],
 			join: {
 				alias: 'pipeline',
-				leftJoin: {
-					stages: 'pipeline.stages'
-				},
+				leftJoin: { stages: 'pipeline.stages' },
 				...(this.filters.join ? this.filters.join : {})
 			},
 			where: {
@@ -429,9 +427,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				await this.pipelinesService.delete(this.pipeline.id);
 
 				// Display a success message
-				this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', {
-					name: this.pipeline.name
-				});
+				this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', { name: this.pipeline.name });
 
 				// Trigger a refresh for the component and pipelines
 				this._refresh$.next(true);
@@ -453,19 +449,22 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		}
 
 		try {
-			// Destructure properties needed for creating a pipeline
-			const { name } = this;
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
+			// Open the PipelineFormComponent with the provided context
+			const dialogRef = this.dialogService.open(PipelineFormComponent);
 
-			// Perform the pipeline creation and navigate to the new pipeline
-			await this.goto({ pipeline: { name, organizationId, tenantId } });
+			// Wait for the dialog to close and get the result
+			const pipeline = await firstValueFrom(dialogRef.onClose);
 
-			// Clear the input field after successful pipeline creation
-			delete this.name;
+			// If data is received, display a success message and trigger refresh
+			if (pipeline) {
+				this.toastrService.success('TOASTR.MESSAGE.PIPELINE_CREATED', { name: pipeline.name });
+			}
 		} catch (error) {
 			// Handle errors using the error handling service
 			this.errorHandlingService.handleError(error);
+		} finally {
+			this._refresh$.next(true);
+			this.pipelines$.next(true);
 		}
 	}
 
@@ -488,51 +487,20 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				return;
 			}
 
-			// Destructure properties needed for editing a pipeline
-			const { name } = this;
-			const { tenantId } = this.store.user;
-			const { id: organizationId } = this.organization;
-
 			// If there is a selected pipeline, update its details
 			if (this.pipeline) {
-				const { id: pipelineId } = this.pipeline;
-
-				// Perform the pipeline update and navigate to the updated pipeline
-				await this.goto({ pipeline: { id: pipelineId, name, organizationId, tenantId } });
-
-				// Clear the input field after successful pipeline update
-				delete this.name;
-			}
-		} catch (error) {
-			// Handle errors using the error handling service
-			this.errorHandlingService.handleError(error);
-		}
-	}
-
-	/**
-	 * Navigates to the PipelineFormComponent to create or update a pipeline based on the provided context.
-	 * @param context - The context containing pipeline details.
-	 */
-	private async goto(context: Record<any, any>): Promise<void> {
-		try {
-			// Open the PipelineFormComponent with the provided context
-			const dialogRef = this.dialogService.open(PipelineFormComponent, { context });
-
-			// Wait for the dialog to close and get the result
-			const data = await firstValueFrom(dialogRef.onClose);
-
-			// Extract pipeline details from the context
-			const {
-				pipeline: { id, name }
-			} = context;
-
-			// If data is received, display a success message and trigger refresh
-			if (data) {
-				const successMessage = id ? `TOASTR.MESSAGE.PIPELINE_UPDATED` : `TOASTR.MESSAGE.PIPELINE_CREATED`;
-
-				this.toastrService.success(successMessage, {
-					name: id ? name : data.name
+				// Open the PipelineFormComponent with the provided context
+				const dialogRef = this.dialogService.open(PipelineFormComponent, {
+					context: { pipeline: this.pipeline }
 				});
+
+				// Wait for the dialog to close and get the result
+				const pipeline = await firstValueFrom(dialogRef.onClose);
+
+				// If data is received, display a success message and trigger refresh
+				if (pipeline) {
+					this.toastrService.success('TOASTR.MESSAGE.PIPELINE_UPDATED', { name: this.pipeline.name });
+				}
 			}
 		} catch (error) {
 			// Handle errors using the error handling service

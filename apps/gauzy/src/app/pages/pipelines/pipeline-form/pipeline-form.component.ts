@@ -1,72 +1,119 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
-import { IOrganization, IPipeline, IPipelineCreateInput } from '@gauzy/contracts';
-import { PipelinesService } from '@gauzy/ui-core/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IOrganization, IPipeline } from '@gauzy/contracts';
+import { ErrorHandlingService, PipelinesService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	templateUrl: './pipeline-form.component.html',
 	styleUrls: ['./pipeline-form.component.scss'],
-	selector: 'ga-pipeline-form'
+	selector: 'ga-pipeline-mutation-form'
 })
 export class PipelineFormComponent implements OnInit {
-	@Input() pipeline: IPipelineCreateInput & { id?: string };
+	public isActive: boolean = true;
+	public organization: IOrganization;
 
-	form: UntypedFormGroup;
-	icon: string;
-	isActive: boolean;
-	organization: IOrganization;
+	/**
+	 * Form property setter and getter.
+	 */
+	public form: UntypedFormGroup = this._fb.group({
+		name: ['', Validators.required],
+		description: [''],
+		stages: this._fb.array([]),
+		isActive: [this.isActive]
+	});
+
+	/**
+	 * Pipeline property setter and getter.
+	 * @param value
+	 */
+	private _pipeline: IPipeline;
+	@Input() set pipeline(value: IPipeline) {
+		this._pipeline = value;
+		this.onPipelineChange(value);
+	}
+	get pipeline(): IPipeline {
+		return this._pipeline;
+	}
 
 	constructor(
-		public readonly dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
-		private readonly pipelinesService: PipelinesService,
-		private readonly fb: UntypedFormBuilder
+		private readonly _dialogRef: NbDialogRef<PipelineFormComponent['pipeline']>,
+		private readonly _pipelinesService: PipelinesService,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
 	ngOnInit(): void {
-		const { id, isActive } = this.pipeline;
-		isActive === undefined ? (this.isActive = true) : (this.isActive = isActive);
+		this._store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
 
-		this.form = this.fb.group({
-			organizationId: [this.pipeline.organizationId || '', Validators.required],
-			tenantId: [this.pipeline.tenantId || ''],
-			name: [this.pipeline.name || '', Validators.required],
-			...(id ? { id: [id, Validators.required] } : {}),
-			description: [this.pipeline.description],
-			stages: this.fb.array([]),
-			isActive: [this.isActive]
+	/**
+	 * Handles changes to the pipeline input.
+	 * @param value The new pipeline value
+	 */
+	private onPipelineChange(pipeline: IPipeline): void {
+		this.isActive = pipeline.isActive ?? true;
+
+		// Patch form values with the new pipeline data
+		this.form.patchValue({
+			name: pipeline.name,
+			description: pipeline.description,
+			isActive: this.isActive,
+			stages: pipeline.stages
 		});
 	}
 
 	/**
-	 *
+	 * Closes the dialog.
+	 */
+	closeDialog() {
+		this._dialogRef.close();
+	}
+
+	/**
+	 * Toggles the isActive property between true and false.
 	 */
 	setIsActive() {
 		this.isActive = !this.isActive;
 	}
 
 	/**
-	 *
+	 * Persists the form data by either creating a new entity or updating an existing one.
+	 * This method handles the dialog closure and error logging as well.
 	 */
 	async persist(): Promise<void> {
-		try {
-			const {
-				value,
-				value: { id }
-			} = this.form;
-			let entity: IPipeline;
+		if (!this.organization) {
+			return;
+		}
 
+		// Destructure the organization details and form value
+		const { id: organizationId, tenantId } = this.organization;
+		const value = { ...this.form.value, organizationId, tenantId, isArchived: !this.isActive };
+
+		try {
 			// Determine whether to create or update based on the presence of an ID
-			if (id) {
-				entity = await this.pipelinesService.update(id, value);
-			} else {
-				entity = await this.pipelinesService.create(value);
-			}
+			const entity = this.pipeline?.id
+				? await this._pipelinesService.update(this.pipeline.id, value)
+				: await this._pipelinesService.create(value);
 
 			// Close the dialog with the returned entity
-			this.dialogRef.close(entity);
+			this._dialogRef.close(entity);
 		} catch (error) {
+			// Handle and log any error that occurs during the persistence process
 			console.error(`Error occurred while persisting data: ${error.message}`);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 }

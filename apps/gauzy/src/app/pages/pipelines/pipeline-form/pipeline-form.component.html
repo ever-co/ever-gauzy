@@ -2,28 +2,19 @@
 	<nb-card style="width: 750px">
 		<nb-card-header>
 			<div class="cancel">
-				<span
-					><i class="fas fa-times" (click)="dialogRef.close()"></i
-				></span>
+				<span><i class="fas fa-times" (click)="closeDialog()"></i></span>
 			</div>
-			<h4
-				class="title"
-				*ngIf="pipeline.id"
-				[innerHTML]="'PIPELINES_PAGE.HEADER_FORM_EDIT' | translate"
-			></h4>
-			<h4
-				class="title"
-				*ngIf="!pipeline.id"
-				[innerHTML]="'PIPELINES_PAGE.HEADER_FORM_CREATE' | translate"
-			></h4>
+			<h4 class="title">
+				{{
+					(pipeline?.id ? 'PIPELINES_PAGE.HEADER_FORM_EDIT' : 'PIPELINES_PAGE.HEADER_FORM_CREATE') | translate
+				}}
+			</h4>
 		</nb-card-header>
 		<nb-card-body>
 			<div class="row">
 				<div class="col">
 					<nb-form-field>
-						<label for="name" class="label">{{
-							'FORM.PLACEHOLDERS.NAME' | translate
-						}}</label>
+						<label for="name" class="label">{{ 'FORM.PLACEHOLDERS.NAME' | translate }}</label>
 						<input
 							type="text"
 							nbInput
@@ -34,66 +25,43 @@
 					</nb-form-field>
 					<br />
 					<nb-form-field>
-						<label for="description" class="label">{{
-							'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-						}}</label>
+						<label for="description" class="label">
+							{{ 'FORM.PLACEHOLDERS.DESCRIPTION' | translate }}
+						</label>
 						<textarea
 							nbInput
 							formControlName="description"
 							fullWidth
 							fullHeight
-							[placeholder]="
-								'FORM.PLACEHOLDERS.DESCRIPTION' | translate
-							"
+							[placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
 						></textarea>
 					</nb-form-field>
 					<br />
-					<nb-checkbox
-						(checkedChange)="setIsActive()"
-						[checked]="isActive"
-						formControlName="isActive"
-					>
+					<nb-checkbox (checkedChange)="setIsActive()" [checked]="isActive" formControlName="isActive">
 						{{ 'PIPELINES_PAGE.ACTIVE' | translate }}
 					</nb-checkbox>
 				</div>
 				<div class="col">
 					<ga-stage-form
 						formArrayName="stages"
-						[pipelineId]="pipeline.id"
-						[values]="pipeline.stages"
+						[pipelineId]="pipeline?.id"
+						[values]="pipeline?.stages"
 					></ga-stage-form>
 				</div>
 			</div>
 		</nb-card-body>
 		<nb-card-footer class="text-left">
-			<button
-				(click)="dialogRef.close()"
-				status="basic"
-				size="small"
-				outline
-				nbButton
-			>
+			<button (click)="closeDialog()" status="basic" size="small" outline nbButton>
 				<span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
 			</button>
 			<button
-				*ngIf="pipeline.id"
 				type="submit"
 				nbButton
-				status="info"
+				[status]="pipeline?.id ? 'info' : 'primary'"
 				[disabled]="!form.valid"
 				class="mr-3 ml-3"
 			>
-				<span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
-			</button>
-			<button
-				*ngIf="!pipeline.id"
-				type="submit"
-				nbButton
-				status="primary"
-				[disabled]="!form.valid"
-				class="mr-3 ml-3"
-			>
-				<span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
+				<span [innerHTML]="(pipeline?.id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate"></span>
 			</button>
 		</nb-card-footer>
 	</nb-card>
