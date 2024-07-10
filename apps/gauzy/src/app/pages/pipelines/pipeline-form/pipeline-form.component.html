@@ -51,18 +51,28 @@
 			</div>
 		</nb-card-body>
 		<nb-card-footer class="text-left">
-			<button (click)="closeDialog()" status="basic" size="small" outline nbButton>
+			<button nbButton type="button" (click)="closeDialog()" status="basic">
 				<span [innerHTML]="'BUTTONS.CANCEL' | translate"></span>
 			</button>
-
-			<ng-template [ngIf]="pipeline?.id" [ngIfElse]="createButtonTemaplte">
-				<button type="submit" nbButton status="info" [disabled]="!form.valid" class="mr-3 ml-3">
+			<ng-template [ngIf]="pipeline?.id" [ngIfElse]="createButtonTemplate">
+				<button
+					type="submit"
+					nbButton
+					status="info"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
 					<span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
 				</button>
 			</ng-template>
-
-			<ng-template #createButtonTemaplte>
-				<button type="submit" nbButton status="primary" [disabled]="!form.valid" class="mr-3 ml-3">
+			<ng-template #createButtonTemplate>
+				<button
+					type="submit"
+					nbButton
+					status="primary"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
 					<span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
 				</button>
 			</ng-template>

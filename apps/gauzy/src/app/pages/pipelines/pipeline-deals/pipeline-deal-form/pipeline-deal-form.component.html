@@ -59,19 +59,32 @@
 				</div>
 			</nb-form-field>
 		</nb-card-body>
-		<nb-card-footer class="text-right">
-			<button
-				nbButton
-				type="submit"
-				[disabled]="form.invalid || form.disabled"
-				[status]="deal?.id ? 'info' : 'primary'"
-			>
-				<nb-icon pack="eva" [icon]="deal?.id ? 'edit-outline' : 'plus-circle-outline'"></nb-icon>
-				{{ (deal?.id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
-			</button>
-			<button nbButton (click)="cancel()" type="reset" status="danger" class="ml-2">
+		<nb-card-footer class="text-left">
+			<button nbButton type="button" (click)="cancel()" status="basic" class="ml-2">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
+			<ng-template [ngIf]="deal?.id" [ngIfElse]="createButtonTemplate">
+				<button
+					type="submit"
+					nbButton
+					status="info"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
+					<span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
+				</button>
+			</ng-template>
+			<ng-template #createButtonTemplate>
+				<button
+					type="submit"
+					nbButton
+					status="primary"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
+					<span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
+				</button>
+			</ng-template>
 		</nb-card-footer>
 	</nb-card>
 </form>
