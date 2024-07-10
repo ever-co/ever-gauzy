@@ -5,7 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { Store } from '@gauzy/ui-core/common';
-import { EmployeeStore, ToastrService } from '@gauzy/ui-core/core';
+import { EmployeeStore, ErrorHandlingService } from '@gauzy/ui-core/core';
 
 /**
  * This component contains the properties stored within the User Entity of an Employee.
@@ -28,7 +28,7 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	/*
 	 * Employee Main Mutation Form
 	 */
-	public form: UntypedFormGroup = EditEmployeeMainComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = EditEmployeeMainComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			username: [],
@@ -43,15 +43,15 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly store: Store,
-		private readonly toastrService: ToastrService,
-		private readonly employeeStore: EmployeeStore
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _store: Store,
+		private readonly _employeeStore: EmployeeStore,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
 	ngOnInit() {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.employeeStore.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._employeeStore.selectedEmployee$;
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
 				filter(([organization, employee]) => !!organization && !!employee),
@@ -65,8 +65,14 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			.subscribe();
 	}
 
+	/**
+	 * Handles errors that occur during image upload.
+	 *
+	 * @param error - The error object to handle.
+	 */
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		// Delegate error handling to the _errorHandlingService
+		this._errorHandlingService.handleError(error);
 	}
 
 	/**
@@ -74,15 +80,20 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	 *
 	 * @param image
 	 */
-	updateImageAsset(image: IImageAsset) {
+	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image) {
-				this.employeeStore.userForm = {
-					imageId: image.id
-				};
+				console.log('image', image);
+
+				// Update user form data in store (assuming updateUserForm is async)
+				await this._employeeStore.updateUserForm({
+					imageId: image.id,
+					image
+				});
 			}
 		} catch (error) {
-			this.handleImageUploadError(error);
+			// Handle and log errors
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -91,12 +102,11 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	 *
 	 * @returns
 	 */
-	submitForm() {
+	async submitForm() {
 		if (this.form.invalid || !this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
+		const { id: organizationId, tenantId } = this.organization;
 
 		const values = {
 			organizationId,
@@ -104,17 +114,24 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 			...(this.form.valid ? this.form.value : {})
 		};
 
-		this.employeeStore.userForm = values;
-		this.employeeStore.employeeForm = values;
+		// Update user form data in store (assuming updateUserForm is async)
+		await this._employeeStore.updateUserForm(values);
+		await this._employeeStore.updateEmployeeForm(values);
 	}
 
+	/**
+	 * Initialize the form values with the given employee's data.
+	 *
+	 * @param employee - The employee whose data will be used to initialize the form.
+	 */
 	private _initializeFormValue(employee: IEmployee) {
+		// Patch the form with the employee's user data
 		this.form.patchValue({
 			username: employee.user.username,
 			email: employee.user.email,
 			firstName: employee.user.firstName,
 			lastName: employee.user.lastName,
-			imageUrl: employee.user.imageUrl,
+			imageUrl: employee.user.image?.fullUrl || employee.user.imageUrl,
 			imageId: employee.user.imageId,
 			preferredLanguage: employee.user.preferredLanguage,
 			profile_link: employee.profile_link

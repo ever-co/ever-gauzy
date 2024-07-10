@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -15,6 +14,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
+import { NgxPermissionsModule } from 'ngx-permissions';
 import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DialogsModule,
@@ -46,6 +46,7 @@ import { SearchComponent } from './search/search.component';
 		Angular2SmartTableModule,
 		SearchRoutingModule,
 		I18nTranslateModule.forChild(),
+		NgxPermissionsModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		EmployeeMultiSelectModule,

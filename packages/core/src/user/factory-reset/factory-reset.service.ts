@@ -2,12 +2,11 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import { ConfigService } from '@gauzy/config';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { RequestContext } from 'core';
 import { Repository, In } from 'typeorm';
 import { filter, map, some } from 'underscore';
+import { ConfigService } from '@gauzy/config';
 import {
 	Activity,
 	AppointmentEmployee,
@@ -95,6 +94,7 @@ import {
 	User,
 	UserOrganization
 } from '../../core/entities/internal';
+import { RequestContext } from '../../core/context';
 import { TypeOrmActivityRepository } from '../../time-tracking/activity/repository/type-orm-activity.repository';
 import { MikroOrmActivityRepository } from '../../time-tracking/activity/repository/mikro-orm-activity.repository';
 import { MikroOrmAppointmentEmployeeRepository } from '../../appointment-employees/repository/mikro-orm-appointment-employee.repository';
@@ -697,7 +697,7 @@ export class FactoryResetService {
 		mikroOrmUserOrganizationRepository: MikroOrmUserOrganizationRepository,
 
 		private configService: ConfigService
-	) { }
+	) {}
 
 	async onModuleInit() {
 		this.registerCoreRepositories();

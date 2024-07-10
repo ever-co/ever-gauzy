@@ -1,9 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { RolesEnum, IUser } from '@gauzy/contracts';
+import { RolesEnum, IUser, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
+import { filter, tap } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-user-mutation',
@@ -11,32 +12,53 @@ import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.comp
 	styleUrls: ['./user-mutation.component.scss']
 })
 export class UserMutationComponent implements OnInit {
-	@ViewChild('userBasicInfo')
-	userBasicInfo: BasicInfoFormComponent;
+	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;
+
+	public organization: IOrganization;
 
 	constructor(
-		protected readonly dialogRef: NbDialogRef<UserMutationComponent>,
-		protected readonly store: Store,
-		private readonly toastrService: ToastrService
+		private readonly _dialogRef: NbDialogRef<UserMutationComponent>,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService
 	) {}
 
-	ngOnInit(): void {}
-
-	closeDialog(user: IUser = null) {
-		this.dialogRef.close({ user });
+	ngOnInit(): void {
+		this._store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization))
+			)
+			.subscribe();
 	}
 
-	async add() {
+	/**
+	 * Closes the dialog and passes the user data if provided.
+	 *
+	 * @param user - The user object to pass when closing the dialog. Defaults to null.
+	 */
+	closeDialog(user: IUser = null): void {
+		this._dialogRef.close({ user });
+	}
+
+	/**
+	 * Registers a user with the default role of VIEWER and associates them with the current organization.
+	 * Closes the dialog with the newly registered user or shows an error if the registration fails.
+	 */
+	async add(): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+
 		try {
-			const organization = this.store.selectedOrganization;
 			const user = await this.userBasicInfo.registerUser(
-				RolesEnum.VIEWER, //TODO: take role from the form.
-				organization.id,
-				this.store.userId
+				RolesEnum.VIEWER,
+				this.organization.id,
+				this._store.userId
 			);
 			this.closeDialog(user);
 		} catch (error) {
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
 		}
 	}
 }

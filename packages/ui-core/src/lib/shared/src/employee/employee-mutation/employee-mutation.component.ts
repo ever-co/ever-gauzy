@@ -15,16 +15,13 @@ import { BasicInfoFormComponent } from '../../user/forms';
 	styleUrls: ['employee-mutation.component.scss']
 })
 export class EmployeeMutationComponent implements OnInit, AfterViewInit {
-	@ViewChild('userBasicInfo')
-	userBasicInfo: BasicInfoFormComponent;
-
-	@ViewChild('stepper')
-	stepper: NbStepperComponent;
+	@ViewChild('userBasicInfo') userBasicInfo: BasicInfoFormComponent;
+	@ViewChild('stepper') stepper: NbStepperComponent;
 
 	loading: boolean = false;
 	linear: boolean = true;
 	form: UntypedFormGroup;
-	employees: IEmployeeCreateInput[] = [];
+	public employees: IEmployeeCreateInput[] = [];
 	public organization: IOrganization;
 
 	constructor(
@@ -51,25 +48,33 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 		this.form = this.userBasicInfo.form;
 	}
 
-	closeDialog(employee: IEmployee[] = null) {
+	/**
+	 * Closes the dialog window.
+	 *
+	 * @param employee An optional array of employees to pass back to the caller.
+	 */
+	closeDialog(employee: IEmployee[] | null = null): void {
 		this.dialogRef.close(employee);
 	}
 
-	addEmployee() {
+	/**
+	 * Adds an employee to the employees array based on form input.
+	 * Resets the form and stepper after adding the employee.
+	 */
+	addEmployee(): void {
+		// Ensure organization is defined
 		if (!this.organization) {
 			return;
 		}
-		const { id: organizationId } = this.organization;
-		const { tenantId } = this.store.user;
 
-		this.form = this.userBasicInfo.form;
+		// Extract necessary data from organization and user store
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Retrieve form values
 		const { firstName, lastName, email, username, password, tags, imageUrl, imageId } = this.form.value;
-		const {
-			offerDate = null,
-			acceptDate = null,
-			rejectDate = null,
-			startedWorkOn = null
-		} = this.form.getRawValue();
+		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.value;
+
+		// Prepare user object
 		const user: IUser = {
 			firstName,
 			lastName,
@@ -80,39 +85,60 @@ export class EmployeeMutationComponent implements OnInit, AfterViewInit {
 			tenantId,
 			tags
 		};
+
+		// Prepare employee input object
 		const employee: IEmployeeCreateInput = {
 			user,
 			startedWorkOn,
 			password,
 			organizationId,
+			organization: { id: organizationId },
 			offerDate,
 			acceptDate,
 			rejectDate,
 			tags
 		};
-		// Check form validity before to add an employee to the array of employees.
-		if (this.form.valid) this.employees.push(employee);
-		// Reset form and stepper.
+
+		// Add employee to the array if form is valid
+		if (this.form.valid) {
+			this.employees.push(employee);
+		}
+
+		// Reset form and stepper after adding employee
 		this.form.reset();
 		this.stepper.reset();
 	}
 
+	/**
+	 * Adds multiple employees and handles the process of creation.
+	 * Closes the dialog upon successful creation or handles errors.
+	 */
 	async add() {
+		// Check if organization is defined
 		if (!this.organization) {
 			return;
 		}
+
+		// Add employee based on form input
 		this.addEmployee();
+
 		try {
+			// Set loading state to true
 			this.loading = true;
-			const employees = await firstValueFrom(this.employeesService.createBulk(this.employees)).finally(() => {
-				this.loading = false;
-			});
+			// Create employees in bulk using service
+			const employees: IEmployee[] = await firstValueFrom(this.employeesService.createBulk(this.employees));
+			this.loading = false; // Set loading state to false regardless of success or failure
+
+			// Update employee action in store
 			this._employeeStore.employeeAction = {
 				action: CrudActionEnum.CREATED,
 				employees
 			};
+
+			// Close dialog with created employees
 			this.closeDialog(employees);
 		} catch (error) {
+			// Handle errors using error handler service
 			this.errorHandler.handleError(error);
 		}
 	}

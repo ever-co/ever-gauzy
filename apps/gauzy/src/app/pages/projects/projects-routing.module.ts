@@ -74,7 +74,7 @@ const routes: Routes = [
 								'members.user',
 								'tags',
 								'teams',
-								'repository'
+								'customFields.repository'
 							]
 						}
 					}

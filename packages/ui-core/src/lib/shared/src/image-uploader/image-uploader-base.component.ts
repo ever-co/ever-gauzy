@@ -1,20 +1,20 @@
 import { Component, Input } from '@angular/core';
-import { IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
+import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { Subject } from 'rxjs/internal/Subject';
 import { filter, tap } from 'rxjs/operators';
+import { IOrganization, IUser } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
-import { API_PREFIX } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange, Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	template: ''
 })
 export class ImageUploaderBaseComponent {
-	user: IUser;
-	uploader: FileUploader;
+	public organization: IOrganization;
+	public user: IUser;
+	public uploader: FileUploader;
 	protected subject$: Subject<boolean> = new Subject();
 
 	/*
@@ -34,6 +34,14 @@ export class ImageUploaderBaseComponent {
 	}
 
 	onInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -60,18 +68,24 @@ export class ImageUploaderBaseComponent {
 
 		const uploaderOptions: FileUploaderOptions = {
 			url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/${this.folder}`,
-			// XHR request method
-			method: 'POST',
-			// Upload files automatically upon addition to upload queue
-			autoUpload: true,
-			// Use xhrTransport in favor of iframeTransport
-			isHTML5: true,
-			// Calculate progress independently for each uploaded file
-			removeAfterUpload: true,
-			// XHR request headers
-			headers: headers
+			method: 'POST', // XHR request method
+			autoUpload: true, // Upload files automatically upon addition to upload queue
+			isHTML5: true, // Use xhrTransport in favor of iframeTransport
+			removeAfterUpload: true, // Calculate progress independently for each uploaded file
+			headers: headers // XHR request headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+
+		// Adding additional form data
+		this.uploader.onBuildItemForm = (fileItem: FileItem, form) => {
+			if (!!this.store.user.tenantId) {
+				form.append('tenantId', tenantId);
+			}
+
+			if (!!this.organization) {
+				form.append('organizationId', this.organization.id);
+			}
+		};
 	}
 
 	/**

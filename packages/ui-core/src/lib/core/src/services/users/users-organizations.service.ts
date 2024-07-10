@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import {
+	ID,
 	IPagination,
 	IUserOrganization,
 	IUserOrganizationCreateInput,
@@ -37,7 +38,13 @@ export class UsersOrganizationsService {
 		);
 	}
 
-	setUserAsInactive(id: string): Promise<IUserOrganization> {
+	/**
+	 * Set user as inactive in the organization.
+	 *
+	 * @param id - The ID of the user organization.
+	 * @returns A promise that resolves to the updated user organization.
+	 */
+	setUserAsInactive(id: ID): Promise<IUserOrganization> {
 		return firstValueFrom(
 			this.http.put<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`, {
 				isActive: false
@@ -45,15 +52,33 @@ export class UsersOrganizationsService {
 		);
 	}
 
-	getUserOrganizationCount(id: string): Promise<number> {
-		return firstValueFrom(this.http.get<number>(`${API_PREFIX}/user-organization/${id}`));
+	/**
+	 * Get the count of organizations a user belongs to.
+	 *
+	 * @param id - The user ID.
+	 * @returns A promise that resolves to the count of organizations.
+	 */
+	getUserOrganizationCount(id: ID): Promise<number> {
+		return firstValueFrom(this.http.get<number>(`${API_PREFIX}/user-organization/${id}/count`));
 	}
 
-	removeUserFromOrg(id: string): Promise<IUserOrganization> {
+	/**
+	 * Remove user from the organization.
+	 *
+	 * @param id - The ID of the user organization.
+	 * @returns A promise that resolves to the removed user organization.
+	 */
+	removeUserFromOrg(id: ID): Promise<IUserOrganization> {
 		return firstValueFrom(this.http.delete<IUserOrganization>(`${API_PREFIX}/user-organization/${id}`));
 	}
 
-	create(createInput: IUserOrganizationCreateInput): Observable<IUserOrganization> {
-		return this.http.post<IUserOrganization>(`${API_PREFIX}/user-organization`, createInput);
+	/**
+	 * Create a new user organization.
+	 *
+	 * @param input - The input data for creating a user organization.
+	 * @returns An observable that resolves to the created user organization.
+	 */
+	create(input: IUserOrganizationCreateInput): Observable<IUserOrganization> {
+		return this.http.post<IUserOrganization>(`${API_PREFIX}/user-organization`, input);
 	}
 }

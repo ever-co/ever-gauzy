@@ -10,7 +10,6 @@ import { IntegrationService } from './integration.service';
 import { IntegrationController } from './integration.controller';
 import { CommandHandlers } from './commands/handlers';
 import { IntegrationTenantModule } from '../integration-tenant/integration-tenant.module';
-import { GithubModule } from './github/github.module';
 import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 
 @Module({
@@ -20,7 +19,6 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 				path: '/integration',
 				module: IntegrationModule,
 				children: [
-					{ path: '/github', module: GithubModule },
 					{ path: '/gauzy-ai', module: IntegrationAIModule },
 					{ path: '/', module: IntegrationModule }
 				]
@@ -28,11 +26,10 @@ import { IntegrationAIModule } from './gauzy-ai/integration-ai.module';
 		]),
 		TypeOrmModule.forFeature([Integration, IntegrationType]),
 		MikroOrmModule.forFeature([Integration, IntegrationType]),
+		CqrsModule,
 		IntegrationTenantModule,
 		RolePermissionModule,
-		forwardRef(() => GithubModule),
-		forwardRef(() => IntegrationAIModule),
-		CqrsModule
+		forwardRef(() => IntegrationAIModule)
 	],
 	controllers: [IntegrationController],
 	providers: [IntegrationService, ...CommandHandlers],

@@ -1,21 +1,20 @@
-import { IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { In } from 'typeorm';
+import { IOrganizationContact, IOrganizationProject } from '@gauzy/contracts';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
-import { OrganizationProjectService } from './../../../organization-project/organization-project.service';
-import { RequestContext } from './../../../core/context';
-import { ContactService } from 'contact/contact.service';
+import { OrganizationProjectService } from '../../../organization-project/organization-project.service';
+import { RequestContext } from '../../../core/context';
+import { ContactService } from '../../../contact/contact.service';
 
 @CommandHandler(OrganizationContactCreateCommand)
 export class OrganizationContactCreateHandler implements ICommandHandler<OrganizationContactCreateCommand> {
-
 	constructor(
 		private readonly _organizationContactService: OrganizationContactService,
 		private readonly _organizationProjectService: OrganizationProjectService,
-		private readonly _contactService: ContactService,
-	) { }
+		private readonly _contactService: ContactService
+	) {}
 
 	/**
 	 * Executes the creation of an organization contact.
@@ -57,7 +56,10 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 					organization: { id: organizationId }
 				});
 			} catch (error) {
-				console.log('Error occurred during creation of contact details or creating the organization contact:', error);
+				console.log(
+					'Error occurred during creation of contact details or creating the organization contact:',
+					error
+				);
 			}
 
 			// Create a new organization contact with the modified input.

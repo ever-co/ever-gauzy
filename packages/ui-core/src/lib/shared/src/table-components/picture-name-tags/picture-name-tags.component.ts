@@ -77,7 +77,8 @@ export class PictureNameTagsComponent extends NotesWithTagsComponent {
 		return {
 			...this.rowData,
 			id: avatarId || null,
-			name: fullName || name || null
+			name: fullName || name || null,
+			imageUrl: this.rowData.user?.image?.fullUrl || this.rowData.imageUrl
 		};
 	}
 

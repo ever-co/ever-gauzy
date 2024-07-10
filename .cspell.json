@@ -463,7 +463,18 @@
 		"zipkin",
 		"honeycombio",
 		"gauzyapiserver",
-		"Embeddable"
+		"Embeddable",
+		"locutus",
+		"woot",
+		"proto",
+		"iubenda",
+		"iconed",
+		"cust",
+		"trasp",
+		"policyicon",
+		"wbars",
+		"allcaps",
+		"iubgreen"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

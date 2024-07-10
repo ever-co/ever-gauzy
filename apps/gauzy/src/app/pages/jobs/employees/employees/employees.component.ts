@@ -9,7 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { EmployeesService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	EmployeeLinksComponent,
@@ -50,6 +50,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _employeesService: EmployeesService,
+		private readonly _jobService: JobService,
 		private readonly _toastrService: ToastrService,
 		private readonly _currencyPipe: CurrencyPipe
 	) {
@@ -129,7 +130,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 		// Create a new ServerDataSource for Smart Table
 		this.smartTableSource = new ServerDataSource(this._http, {
-			endPoint: `${API_PREFIX}/employee/job-statistics`,
+			endPoint: `${API_PREFIX}/employee-job/statistics`,
 			relations: ['user'],
 			// Define query parameters for the API request
 			where: {
@@ -308,8 +309,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			}
 
 			// Destructure properties for clarity.
-			const { tenantId } = this._store.user;
-			const { id: organizationId } = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
 
 			const employeeId = event.data?.id;
 			const { billRateValue, minimumBillingRate } = event.newData ?? {};
@@ -348,7 +348,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			const { id: organizationId, tenantId } = this.organization;
 
 			// Update the job search status using the employeesService.
-			await this._employeesService.updateJobSearchStatus(employee.id, {
+			await this._jobService.updateJobSearchStatus(employee.id, {
 				isJobSearchActive,
 				organizationId,
 				tenantId
@@ -359,9 +359,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				? 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE'
 				: 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE';
 
-			this._toastrService.success(toastrMessageKey, {
-				name: employee.fullName.trim()
-			});
+			const fullName = employee.fullName.trim();
+			this._toastrService.success(toastrMessageKey, { name: fullName });
 		} catch (error) {
 			// Display an error toastr notification in case of any exceptions.
 			this._toastrService.danger(error);
@@ -423,11 +422,12 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	/**
+	 * Navigates to the employee addition page and opens the add dialog.
 	 *
-	 * @param event
-	 * @returns
+	 * @param event - The pointer event that triggered this method.
+	 * @returns A promise that resolves when the navigation is complete or exits early if there is no organization.
 	 */
-	addNew = async (event: PointerEvent) => {
+	addNew = async (event: PointerEvent): Promise<void> => {
 		if (!this.organization) {
 			return;
 		}
@@ -436,7 +436,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				queryParams: { openAddDialog: true }
 			});
 		} catch (error) {
-			this._toastrService.error(error);
+			this._toastrService.error(error.message || error);
 		}
 	};
 
