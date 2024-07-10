@@ -2,18 +2,7 @@
 // MIT License, see https://github.com/xmlking/ngx-starter-kit/blob/develop/LICENSE
 // Copyright (c) 2018 Sumanth Chinthagunta
 
-import {
-	Get,
-	Post,
-	Put,
-	Delete,
-	Body,
-	Param,
-	HttpStatus,
-	HttpCode,
-	Query,
-	UsePipes
-} from '@nestjs/common';
+import { Get, Post, Put, Delete, Body, Param, HttpStatus, HttpCode, Query, UsePipes } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { IPagination } from '@gauzy/contracts';
 import { DeepPartial, FindOptionsWhere } from 'typeorm';
@@ -21,8 +10,8 @@ import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity
 import { BaseEntity } from '../entities/internal';
 import { ICrudService } from './icrud.service';
 import { PaginationParams } from './pagination-params';
-import { AbstractValidationPipe, UUIDValidationPipe } from './../../shared/pipes';
-import { TenantOrganizationBaseDTO } from 'core/dto';
+import { AbstractValidationPipe, UUIDValidationPipe } from '../../shared/pipes';
+import { TenantOrganizationBaseDTO } from '../../core/dto';
 
 @ApiResponse({
 	status: HttpStatus.UNAUTHORIZED,
@@ -34,7 +23,7 @@ import { TenantOrganizationBaseDTO } from 'core/dto';
 })
 @ApiBearerAuth()
 export abstract class CrudController<T extends BaseEntity> {
-	protected constructor(private readonly crudService: ICrudService<T>) { }
+	protected constructor(private readonly crudService: ICrudService<T>) {}
 
 	/**
 	 * Get the total count of all records.
@@ -47,12 +36,10 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Get total record count' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Total record count retrieved successfully',
+		description: 'Total record count retrieved successfully'
 	})
 	@Get('count')
-	async getCount(
-		@Query() options?: FindOptionsWhere<T>,
-	): Promise<number | void> {
+	async getCount(@Query() options?: FindOptionsWhere<T>): Promise<number | void> {
 		return await this.crudService.countBy(options);
 	}
 
@@ -67,13 +54,10 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Get paginated records' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Records retrieved successfully',
+		description: 'Records retrieved successfully'
 	})
 	@Get('pagination')
-	async pagination(
-		@Query() filter?: PaginationParams<T>,
-		...options: any[]
-	): Promise<IPagination<T> | void> {
+	async pagination(@Query() filter?: PaginationParams<T>, ...options: any[]): Promise<IPagination<T> | void> {
 		return this.crudService.paginate(filter);
 	}
 
@@ -88,13 +72,10 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Get all records' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Records retrieved successfully',
+		description: 'Records retrieved successfully'
 	})
 	@Get()
-	async findAll(
-		filter?: PaginationParams<T>,
-		...options: any[]
-	): Promise<IPagination<T>> {
+	async findAll(filter?: PaginationParams<T>, ...options: any[]): Promise<IPagination<T>> {
 		return this.crudService.findAll(filter);
 	}
 
@@ -109,17 +90,14 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Find record by ID' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Record retrieved successfully',
+		description: 'Record retrieved successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Get(':id')
-	async findById(
-		@Param('id', UUIDValidationPipe) id: T['id'],
-		...options: any[]
-	): Promise<T> {
+	async findById(@Param('id', UUIDValidationPipe) id: T['id'], ...options: any[]): Promise<T> {
 		return this.crudService.findOneByIdString(id);
 	}
 
@@ -134,18 +112,15 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Record created successfully',
+		description: 'Record created successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input provided',
+		description: 'Invalid input provided'
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Post()
-	async create(
-		@Body() entity: DeepPartial<T>,
-		...options: any[]
-	): Promise<T> {
+	async create(@Body() entity: DeepPartial<T>, ...options: any[]): Promise<T> {
 		return this.crudService.create(entity);
 	}
 
@@ -161,15 +136,15 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Update existing record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
-		description: 'Record updated successfully',
+		description: 'Record updated successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@ApiResponse({
 		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input provided for update',
+		description: 'Invalid input provided for update'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Put(':id')
@@ -192,18 +167,15 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Delete record' })
 	@ApiResponse({
 		status: HttpStatus.NO_CONTENT,
-		description: 'Record deleted successfully',
+		description: 'Record deleted successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Delete(':id')
-	async delete(
-		@Param('id', UUIDValidationPipe) id: string,
-		...options: any[]
-	): Promise<any> {
+	async delete(@Param('id', UUIDValidationPipe) id: string, ...options: any[]): Promise<any> {
 		return this.crudService.delete(id);
 	}
 
@@ -219,19 +191,16 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Soft delete a record by ID' })
 	@ApiResponse({
 		status: HttpStatus.ACCEPTED,
-		description: 'Record soft deleted successfully',
+		description: 'Record soft deleted successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found',
+		description: 'Record not found'
 	})
 	@Delete(':id/soft')
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-	async softRemove(
-		@Param('id', UUIDValidationPipe) id: T['id'],
-		...options: any[]
-	): Promise<T> {
+	async softRemove(@Param('id', UUIDValidationPipe) id: T['id'], ...options: any[]): Promise<T> {
 		// Soft delete the record
 		return await this.crudService.softRemove(id, options);
 	}
@@ -248,19 +217,16 @@ export abstract class CrudController<T extends BaseEntity> {
 	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
 	@ApiResponse({
 		status: HttpStatus.ACCEPTED,
-		description: 'Record restored successfully',
+		description: 'Record restored successfully'
 	})
 	@ApiResponse({
 		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found or not in a soft-deleted state',
+		description: 'Record not found or not in a soft-deleted state'
 	})
 	@Put(':id/recover')
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-	async softRecover(
-		@Param('id', UUIDValidationPipe) id: T['id'],
-		...options: any[]
-	): Promise<T> {
+	async softRecover(@Param('id', UUIDValidationPipe) id: T['id'], ...options: any[]): Promise<T> {
 		// Restore the soft-deleted record
 		return await this.crudService.softRecover(id, options);
 	}

@@ -3,10 +3,9 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 @Component({
 	selector: 'ngx-resync-button',
 	templateUrl: './resync-button.component.html',
-	styleUrls: [],
+	styleUrls: []
 })
 export class ResyncButtonComponent {
-
 	/**
 	 * Getter and Setter for managing a dynamic value.
 	 */
@@ -50,7 +49,7 @@ export class ResyncButtonComponent {
 	 */
 	onClicked(event: Event) {
 		// Access the repository data from the component's rowData.
-		const repository = this.rowData.repository;
+		const repository = this.rowData.customFields?.repository;
 
 		// Check if the repository data exists and has synchronization enabled.
 		if (!repository || !repository.hasSyncEnabled) {

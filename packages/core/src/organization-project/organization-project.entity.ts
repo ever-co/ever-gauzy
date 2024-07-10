@@ -10,7 +10,6 @@ import {
 	IImageAsset,
 	IInvoiceItem,
 	IOrganizationContact,
-	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationSprint,
 	IOrganizationTeam,
@@ -36,7 +35,6 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
-	OrganizationGithubRepository,
 	OrganizationSprint,
 	OrganizationTeam,
 	Payment,
@@ -65,9 +63,14 @@ import {
 	OrganizationProjectEntityCustomFields,
 	TypeOrmOrganizationProjectEntityCustomFields
 } from '../core/entities/custom-entity-fields/organization-project';
+import { HasCustomFields } from '../core/entities/custom-entity-fields';
+import { Taggable } from '../tags/tag.types';
 
 @MultiORMEntity('organization_project', { mikroOrmRepository: () => MikroOrmOrganizationProjectRepository })
-export class OrganizationProject extends TenantOrganizationBaseEntity implements IOrganizationProject {
+export class OrganizationProject
+	extends TenantOrganizationBaseEntity
+	implements IOrganizationProject, Taggable, HasCustomFields
+{
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -160,30 +163,6 @@ export class OrganizationProject extends TenantOrganizationBaseEntity implements
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
-
-	/**
-	 * OrganizationGithubRepository Relationship
-	 */
-	@MultiORMManyToOne(() => OrganizationGithubRepository, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	repository?: IOrganizationGithubRepository;
-
-	/**
-	 * Repository ID
-	 */
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: OrganizationProject) => it.repository)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	repositoryId?: IOrganizationGithubRepository['id'];
 
 	/**
 	 * Organization Contact Relationship

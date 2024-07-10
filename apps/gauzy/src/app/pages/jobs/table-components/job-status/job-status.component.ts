@@ -15,8 +15,7 @@ export class JobStatusComponent extends TranslationBaseComponent {
 	}
 
 	@Input() rowData: any;
-
-	value: string;
+	@Input() value: string;
 
 	/**
 	 * Get job status text and class

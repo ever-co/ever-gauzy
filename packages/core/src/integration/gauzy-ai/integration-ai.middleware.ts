@@ -1,12 +1,12 @@
 import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { Request, Response, NextFunction } from 'express';
 import { isNotEmpty } from '@gauzy/common';
 import { IIntegrationSetting, IntegrationEnum } from '@gauzy/contracts';
 import { RequestConfigProvider } from '@gauzy/integration-ai';
 import { arrayToObject } from './../../core/utils';
 import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
@@ -16,8 +16,14 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 		@Inject(CACHE_MANAGER) private cacheManager: Cache,
 		private readonly _integrationTenantService: IntegrationTenantService,
 		private readonly _requestConfigProvider: RequestConfigProvider
-	) { }
+	) {}
 
+	/**
+	 *
+	 * @param request
+	 * @param _response
+	 * @param next
+	 */
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
 			// Extract tenant and organization IDs from request headers and body
@@ -41,7 +47,9 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 
 			// Check if tenant and organization IDs are not empty
 			if (isNotEmpty(tenantId) && isNotEmpty(organizationId)) {
-				console.log(`Getting Gauzy AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+				console.log(
+					`Getting Gauzy AI integration settings from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+				);
 
 				const cacheKey = `integrationTenantSettings_${tenantId}_${organizationId}_${IntegrationEnum.GAUZY_AI}`;
 
@@ -49,7 +57,9 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 				let integrationTenantSettings: IIntegrationSetting[] = await this.cacheManager.get(cacheKey);
 
 				if (!integrationTenantSettings) {
-					console.log(`Gauzy AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+					console.log(
+						`Gauzy AI integration settings NOT loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+					);
 
 					const fromDb = await this._integrationTenantService.getIntegrationTenantSettings({
 						tenantId,
@@ -60,13 +70,17 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 					if (fromDb && fromDb.settings) {
 						integrationTenantSettings = fromDb.settings;
 
-						const ttl = 5 * 60 * 1000 // 5 min caching period for Integration Tenant Settings
+						const ttl = 5 * 60 * 1000; // 5 min caching period for Integration Tenant Settings
 						await this.cacheManager.set(cacheKey, integrationTenantSettings, ttl);
 
-						console.log(`Gauzy AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+						console.log(
+							`Gauzy AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+						);
 					}
 				} else {
-					console.log(`Gauzy AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`);
+					console.log(
+						`Gauzy AI integration settings loaded from Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
+					);
 				}
 
 				if (integrationTenantSettings && integrationTenantSettings.length > 0) {

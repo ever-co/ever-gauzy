@@ -35,6 +35,7 @@ import {
 } from '@gauzy/ui-core/shared';
 import {
 	ComponentLayoutStyleEnum,
+	ID,
 	IOrganization,
 	IOrganizationProject,
 	ISelectedEmployee,
@@ -73,7 +74,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 	defaultProject = ALL_PROJECT_SELECTED;
 	taskSubject$: Subject<boolean> = this.subject$;
 	selectedEmployee: ISelectedEmployee;
-	selectedEmployeeId: ISelectedEmployee['id'];
+	selectedEmployeeId: ID;
 	selectedProject: IOrganizationProject;
 	selectedTeamIds: string[] = [];
 

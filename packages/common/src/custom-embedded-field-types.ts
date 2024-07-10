@@ -1,18 +1,22 @@
 import { RelationOptions as TypeOrmRelationOptions } from 'typeorm';
 
 export type TypeORMInverseSide<T> = string | ((object: T) => any);
+
+/**
+ * Extended options for TypeORM relations with additional customization properties.
+ */
 export type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'> & {
-	/** Indicates whether the relation should be eagerly loaded. Default is false. */
+	/** Whether the relation should be eagerly loaded. Default is false. */
 	eager?: boolean;
-	/** Specifies the cascade options for the relation (e.g., ['insert', 'update', 'remove', 'soft-remove', 'recover']). */
+	/** Cascade options for the relation. */
 	cascade?: Array<'insert' | 'update' | 'remove' | 'soft-remove' | 'recover'>;
-	/** Determines whether the relation is nullable. Default is false. */
+	/** Whether the relation is nullable. Default is false. */
 	nullable?: boolean;
-	/** Indicates if the relation should have a unique constraint. Default is false. */
+	/** Whether the relation should have a unique constraint. Default is false. */
 	unique?: boolean;
-	/** Specifies the default value for the relation (for primitive types). */
+	/** Default value for the relation. */
 	default?: any;
-	/** Specifies if the relation should be persisted automatically. Default is true. */
+	/** Whether the relation should be persisted automatically. Default is true. */
 	persist?: boolean;
 	/** Additional arbitrary options for the relation (such as indices, etc.). */
 	[key: string]: any;
@@ -21,25 +25,23 @@ export type TypeORMRelationOptions = Omit<TypeOrmRelationOptions, 'cascade'> & {
 /**
  * Configuration for a custom embedded field within a relation.
  */
-export type RelationCustomEmbeddedFieldConfig<T = any> = {
+export type RelationCustomEmbeddedFieldConfig<T = any> = TypeORMRelationOptions & {
 	/** Name of the custom field. */
-	propertyPath: string;
+	name: string;
 	/** Type of the relation field. */
 	type: string;
 	/** Name of the relation. */
-	relationType: string;
+	relationType?: string;
 	/** Target entity for the relation. */
-	entity: T;
-	/** A pivot table is an intermediate table that connects two entities in a Many-to-Many relationship. */
+	entity?: T;
+	/** Intermediate table for Many-to-Many relationships. */
 	pivotTable?: string;
-	/** The name of the column in the current entity's table  */
+	/** Name of the column in the current entity's table. */
 	joinColumn?: string;
-	/** The name of the column in a Many-to-Many relationship */
+	/** Name of the column in a Many-to-Many relationship. */
 	inverseJoinColumn?: string;
 	/** Specifies the inverse side of the relation. */
 	inverseSide?: TypeORMInverseSide<T>;
-	/** Options for the relation */
-	options?: TypeORMRelationOptions;
 };
 
 /**

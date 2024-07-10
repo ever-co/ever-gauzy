@@ -60,6 +60,9 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 	ngOnInit(): void {}
 
 	ngAfterViewInit(): void {
+		this.uploader.onAfterAddingFile = (file) => {
+			file.withCredentials = false;
+		};
 		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {

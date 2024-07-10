@@ -26,7 +26,6 @@ import {
 	IIntegrationTenant,
 	IGithubRepository,
 	IOrganizationProjectSetting,
-	HttpStatus,
 	IIntegrationMapSyncRepository,
 	IOrganizationGithubRepository,
 	SYNC_TAG_GAUZY
@@ -530,7 +529,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			this.loading = false;
 
 			const { id: organizationId, tenantId } = this.organization;
-			const { id: projectId } = this.project;
+			const { id: projectId, name } = this.project;
 			const integrationId = this.integration['id'];
 
 			/** */
@@ -548,19 +547,14 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 						return this._organizationProjectsService.updateProjectSetting(projectId, {
 							organizationId,
 							tenantId,
-							repositoryId,
+							customFields: { repositoryId },
 							...(!this.projectSettingForm.get('syncTag').value ? { syncTag: SYNC_TAG_GAUZY } : {})
 						});
-					}),
-					tap((response: any) => {
-						if (response['status'] == HttpStatus.BAD_REQUEST) {
-							throw new Error(`${response['message']}`);
-						}
 					}),
 					tap(() => {
 						this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.SYNC_REPOSITORY', {
 							repository: repository.full_name,
-							project: this.project.name
+							project: name
 						});
 					}),
 					catchError((error) => {
@@ -608,7 +602,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			const { id: organizationId, tenantId } = this.organization;
 
 			// Extract the 'projectId' from the 'project' property.
-			const { id: projectId } = this.project;
+			const { id: projectId, name } = this.project;
 
 			// Create a 'request' object of type 'IOrganizationProjectSetting'.
 			// It contains 'organizationId', 'tenantId', and auto-sync settings taken from 'this.projectSettingForm.value'.
@@ -623,18 +617,9 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 			this._organizationProjectsService
 				.updateProjectSetting(projectId, request)
 				.pipe(
-					tap((response: any) => {
-						if (response['status'] == HttpStatus.BAD_REQUEST) {
-							throw new Error(`${response['message']}`);
-						}
-					}),
 					tap(() => {
-						this._toastrService.success(
-							'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING',
-							{
-								project: this.project.name
-							}
-						);
+						const message = 'NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.AUTO_SYNC_SETTING';
+						this._toastrService.success(message, { project: name });
 					}),
 					catchError((error) => {
 						this._errorHandler.handleError(error);

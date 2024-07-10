@@ -10,15 +10,13 @@ import { TypeOrmDealRepository } from './repository/type-orm-deal.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/deals', module: DealModule }
-		]),
+		RouterModule.register([{ path: '/deals', module: DealModule }]),
 		TypeOrmModule.forFeature([Deal]),
 		MikroOrmModule.forFeature([Deal]),
 		RolePermissionModule
 	],
 	controllers: [DealController],
 	providers: [DealService, TypeOrmDealRepository],
-	exports: [DealService, TypeOrmDealRepository]
+	exports: [TypeOrmModule, MikroOrmModule, DealService, TypeOrmDealRepository]
 })
-export class DealModule { }
+export class DealModule {}

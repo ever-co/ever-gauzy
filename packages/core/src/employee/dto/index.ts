@@ -7,5 +7,4 @@ export * from './update-employee.dto';
 export * from './employee-bulk-input.dto';
 export * from './create-employee.dto';
 export * from './user-input-dto';
-export * from "./employee-feature.dto";
-export * from "./employee-job-statistic.dto";
+export * from './employee-feature.dto';

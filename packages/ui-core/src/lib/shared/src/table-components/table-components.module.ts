@@ -45,6 +45,8 @@ import { ToggleSwitchComponent } from './toggle-switch/toggle-switch.component';
 import { TrustHtmlLinkComponent } from './trust-html/trust-html.component';
 import { ValueWithUnitComponent } from './value-with-units/value-with-units.component';
 import { VisibilityComponent } from './visibility/visibility.component';
+import { DirectivesModule } from '../directives/directives.module';
+import { TaskBadgeViewComponentModule } from '../tasks/task-badge-view/task-badge-view.module';
 
 @NgModule({
 	imports: [
@@ -56,8 +58,10 @@ import { VisibilityComponent } from './visibility/visibility.component';
 		NbToggleModule,
 		NbTooltipModule,
 		I18nTranslateModule.forChild(),
+		DirectivesModule,
 		PipesModule,
-		ComponentsModule
+		ComponentsModule,
+		TaskBadgeViewComponentModule
 	],
 	declarations: [
 		AllowScreenshotCaptureComponent,

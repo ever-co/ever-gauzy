@@ -1,25 +1,32 @@
-import { Controller, HttpStatus, Get, Query, Post, Body, Param } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { CommandBus } from '@nestjs/cqrs';
+import { UpdateResult } from 'typeorm';
 import {
+	ID,
+	IEmployee,
 	IEmployeeJobApplication,
 	IEmployeeJobApplicationAppliedResult,
 	IEmployeeJobPost,
 	IGetEmployeeJobPostInput,
 	IPagination,
 	IUpdateEmployeeJobPostAppliedResult,
-	IVisibilityJobPostInput
+	IVisibilityJobPostInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
-import { UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
+import { UUIDValidationPipe, UseValidationPipe, Permissions, PaginationParams, Employee } from '@gauzy/core';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
+import { GetEmployeeJobStatisticsCommand, UpdateEmployeeJobSearchStatusCommand } from './commands';
+import { EmployeeJobStatisticDTO } from './dto';
 
 @ApiTags('EmployeeJobPost')
 @Controller('/employee-job')
 export class EmployeeJobPostController {
-
 	constructor(
-		private readonly _employeeJobPostService: EmployeeJobPostService
-	) { }
+		private readonly _employeeJobPostService: EmployeeJobPostService,
+		private readonly _commandBus: CommandBus
+	) {}
 
 	/**
 	 * Find all employee job posts.
@@ -37,11 +44,61 @@ export class EmployeeJobPostController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
-	async findAll(
-		@Query() input: IGetEmployeeJobPostInput
-	): Promise<IPagination<IEmployeeJobPost>> {
+	@Get('/')
+	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		return await this._employeeJobPostService.findAll(input);
+	}
+
+	/**
+	 * GET employee job statistics.
+	 *
+	 * This endpoint retrieves statistics related to employee jobs,
+	 * providing details about job distribution, assignments, or other related data.
+	 *
+	 * @param options Pagination parameters for retrieving the data.
+	 * @returns A paginated list of employee job statistics.
+	 */
+	@ApiOperation({ summary: 'Retrieve employee job statistics' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Employee job statistics found'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. The response body may contain clues about what went wrong.'
+	})
+	@Permissions(PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW)
+	@Get('/statistics')
+	@UseValidationPipe({ transform: true })
+	async getEmployeeJobsStatistics(@Query() query: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
+		return await this._commandBus.execute(new GetEmployeeJobStatisticsCommand(query));
+	}
+
+	/**
+	 * UPDATE employee's job search status by their IDs
+	 *
+	 * This endpoint allows updating the job search status of an employee, given their ID.
+	 *
+	 * @param employeeId The unique identifier of the employee whose job search status is being updated.
+	 * @param entity The updated job search status information.
+	 * @returns A promise resolving to the updated employee record or an update result.
+	 */
+	@ApiOperation({ summary: 'Update Job Search Status' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Job search status has been successfully updated.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input. The response body may contain clues as to what went wrong.'
+	})
+	@Put('/:id/job-search-status')
+	@UseValidationPipe({ whitelist: true })
+	async updateJobSearchStatus(
+		@Param('id', UUIDValidationPipe) employeeId: ID,
+		@Body() data: EmployeeJobStatisticDTO
+	): Promise<IEmployee | UpdateResult> {
+		return await this._commandBus.execute(new UpdateEmployeeJobSearchStatusCommand(employeeId, data));
 	}
 
 	/**
@@ -61,10 +118,8 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
-	@Post('apply')
-	async apply(
-		@Body() input: IEmployeeJobApplication
-	): Promise<IEmployeeJobApplicationAppliedResult | null> {
+	@Post('/apply')
+	async apply(@Body() input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult | null> {
 		try {
 			// Apply for the job using the service
 			const appliedJobPost = await this._employeeJobPostService.apply(input);
@@ -97,10 +152,8 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
-	@Post('updateApplied')
-	async updateApplied(
-		@Body() input: IEmployeeJobApplication
-	): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
+	@Post('/updateApplied')
+	async updateApplied(@Body() input: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
 		try {
 			// Update the job application status using the service
 			const updatedJobPost = await this._employeeJobPostService.updateApplied(input);
@@ -134,10 +187,8 @@ export class EmployeeJobPostController {
 		description: 'Record not found'
 	})
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
-	@Post('hide')
-	async updateVisibility(
-		@Body() data: IVisibilityJobPostInput
-	): Promise<boolean | null> {
+	@Post('/hide')
+	async updateVisibility(@Body() data: IVisibilityJobPostInput): Promise<boolean | null> {
 		try {
 			// Update the job visibility status using the service
 			const updatedJobPost = await this._employeeJobPostService.updateVisibility(data);
