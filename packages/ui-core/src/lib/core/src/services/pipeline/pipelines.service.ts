@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { IDeal, IPagination, IPipeline, IPipelineCreateInput, IPipelineFindInput } from '@gauzy/contracts';
-import { API_PREFIX, Store } from '@gauzy/ui-core/common';
+import { firstValueFrom, Observable } from 'rxjs';
+import { ID, IDeal, IPagination, IPipeline, IPipelineCreateInput, IPipelineFindInput } from '@gauzy/contracts';
+import { API_PREFIX, Store, toParams } from '@gauzy/ui-core/common';
 import { Service } from '../crud/service';
 
 @Injectable()
@@ -11,17 +11,46 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 		super({ http, basePath: `${API_PREFIX}/pipelines` });
 	}
 
-	getAll(relations?: string[], findInput?: IPipelineFindInput): Promise<IPagination<IPipeline>> {
-		const data = JSON.stringify({ relations, findInput });
+	/**
+	 * Fetches all pipelines with optional relations and filtering conditions.
+	 *
+	 * @param relations - An optional array of relation names to include in the response.
+	 * @param where - Optional filtering conditions.
+	 * @returns A promise that resolves with the paginated pipelines.
+	 */
+	getAll(relations?: string[], where?: IPipelineFindInput): Promise<IPagination<IPipeline>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IPipeline>>(`${this.basePath}`, {
-				params: { data }
+				params: toParams({ where, relations })
 			})
 		);
 	}
 
-	public findDeals(id: string, findInput?: IPipelineFindInput): Promise<IPagination<IDeal>> {
-		const data = JSON.stringify({ findInput });
-		return firstValueFrom(this.http.get<IPagination<IDeal>>(`${this.basePath}/${id}/deals`, { params: { data } }));
+	/**
+	 * Fetches a pipeline by its ID with optional relations.
+	 *
+	 * @param id - The ID of the pipeline to fetch.
+	 * @param relations - An array of relation names to include in the response.
+	 * @returns A promise that resolves with the pipeline.
+	 */
+	getById(id: ID, relations: string[] = []): Observable<IPipeline> {
+		return this.http.get<IPipeline>(`${this.basePath}/${id}`, {
+			params: toParams({ relations })
+		});
+	}
+
+	/**
+	 * Find deals associated with a specific pipeline
+	 *
+	 * @param pipelineId The ID of the pipeline
+	 * @param where Filter conditions for fetching the deals
+	 * @returns A promise of paginated deals
+	 */
+	getPipelineDeals(pipelineId: ID, where?: IPipelineFindInput): Promise<IPagination<IDeal>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IDeal>>(`${this.basePath}/${pipelineId}/deals`, {
+				params: toParams({ where })
+			})
+		);
 	}
 }

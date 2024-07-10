@@ -15,7 +15,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeepPartial, DeleteResult, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import { PipelineService } from './pipeline.service';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -63,20 +63,23 @@ export class PipelineController extends CrudController<Pipeline> {
 	}
 
 	/**
-	 * Find deals for a specific sales pipeline with permissions, API documentation, and parameter validation.
+	 * Get deals associated with a specific pipeline
 	 *
-	 * @param id - The identifier of the sales pipeline.
-	 * @returns A paginated result of deals for the specified sales pipeline.
+	 * @param pipelineId The ID of the pipeline
+	 * @param options Filter conditions for fetching the deals
+	 * @returns A promise of paginated deals
 	 */
-	@ApiOperation({ summary: 'find deals' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found records'
-	})
+	@ApiOperation({ summary: 'Get deals for a specific pipeline' })
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 400, description: 'Bad Request' })
+	@ApiResponse({ status: 404, description: 'Not Found' })
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/:pipelineId/deals')
-	public async findDeals(@Param('pipelineId', UUIDValidationPipe) pipelineId: ID): Promise<IPagination<IDeal>> {
-		return await this.pipelineService.findDeals(pipelineId);
+	async getPipelineDeals(
+		@Param('pipelineId', UUIDValidationPipe) pipelineId: ID,
+		@Query() options: OptionParams<Pipeline>
+	): Promise<IPagination<IDeal>> {
+		return await this.pipelineService.getPipelineDeals(pipelineId, options.where);
 	}
 
 	/**
@@ -90,8 +93,11 @@ export class PipelineController extends CrudController<Pipeline> {
 	@ApiResponse({ status: 404, description: 'Pipeline not found' })
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/:id')
-	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() query: RelationsQueryDTO): Promise<IPipeline> {
-		return await this.pipelineService.findById(id, query.relations);
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: OptionParams<Pipeline>
+	): Promise<IPipeline> {
+		return await this.pipelineService.findById(id, options);
 	}
 
 	/**

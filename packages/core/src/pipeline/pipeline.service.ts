@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FindManyOptions, Raw, UpdateResult } from 'typeorm';
+import { FindManyOptions, FindOneOptions, FindOptionsWhere, Raw, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { ID, IDeal, IPagination, IPipeline, IPipelineStage } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
@@ -32,8 +32,8 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param relations - Optional relations to include in the query
 	 * @returns The found Pipeline
 	 */
-	async findById(id: ID, relations: string[] = []): Promise<IPipeline> {
-		return await super.findOneByIdString(id, { relations });
+	async findById(id: ID, options?: FindOneOptions<Pipeline>): Promise<IPipeline> {
+		return await super.findOneByIdString(id, options);
 	}
 
 	/**
@@ -42,9 +42,10 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 	 * @param pipelineId - The ID of the pipeline to find deals for.
 	 * @returns An object containing an array of deals and the total number of deals.
 	 */
-	public async findDeals(pipelineId: string) {
+	public async getPipelineDeals(pipelineId: ID, where?: FindOptionsWhere<Pipeline>) {
 		// Retrieve the current tenant ID from the request context
 		const tenantId = RequestContext.currentTenantId();
+		const { organizationId } = where || {};
 
 		// Fetch deals related to the pipeline, grouping by stage and deal IDs
 		const items: IDeal[] = await this.typeOrmDealRepository
@@ -52,6 +53,7 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 			.leftJoin('deal.stage', 'pipeline_stage')
 			.where(p('pipeline_stage.pipelineId = :pipelineId'), { pipelineId })
 			.andWhere(p('pipeline_stage.tenantId = :tenantId'), { tenantId })
+			.andWhere(p('pipeline_stage.organizationId = :organizationId'), { organizationId })
 			.groupBy(p('pipeline_stage.id'))
 			// FIX: error: column "deal.id" must appear in the GROUP BY clause or be used in an aggregate function
 			.addGroupBy(p('deal.id'))

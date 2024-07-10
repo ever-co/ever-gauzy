@@ -36,7 +36,6 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	/**
 	 * User
 	 */
-	@ApiProperty({ type: () => User })
 	@MultiORMManyToOne(() => User, {
 		joinColumn: 'createdByUserId'
 	})
@@ -44,8 +43,7 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	createdBy: IUser;
 
 	@ApiProperty({ type: () => String })
-	@IsString()
-	@IsNotEmpty()
+	@IsUUID()
 	@ColumnIndex()
 	@RelationId((it: Deal) => it.createdBy)
 	@MultiORMColumn({ relationId: true })
@@ -54,8 +52,10 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	/**
 	 * PipelineStage
 	 */
-	@ApiProperty({ type: () => PipelineStage })
-	@MultiORMManyToOne(() => PipelineStage, { onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => PipelineStage, {
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	stage: IPipelineStage;
 
@@ -86,12 +86,12 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 		owner: true
 	})
 	@JoinColumn()
-	client: IOrganizationContact;
+	client?: IOrganizationContact;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Deal) => it.client)
 	@MultiORMColumn({ nullable: true, relationId: true })
-	clientId: ID;
+	clientId?: ID;
 }
