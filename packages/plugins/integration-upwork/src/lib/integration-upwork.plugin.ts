@@ -1,10 +1,8 @@
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
-import { ApplicationPluginConfig } from '@gauzy/common';
 import { UpworkModule } from './upwork.module';
 
 @Plugin({
-	imports: [UpworkModule],
-	configuration: (config: ApplicationPluginConfig) => config
+	imports: [UpworkModule]
 })
 export class IntegrationUpworkPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We disable by default additional logging for each event to avoid cluttering the logs

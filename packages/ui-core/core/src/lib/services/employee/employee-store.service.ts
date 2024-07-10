@@ -79,6 +79,28 @@ export class EmployeeStore {
 		return this._employeeForm;
 	}
 
+	/**
+	 * Update the user form with new data
+	 *
+	 * @param formData - The form data to update.
+	 */
+	async updateUserForm(formData: IUserUpdateInput) {
+		// Simulate an async operation, such as an API call
+		// await someApiService.update(formData);
+		this.userForm = { ...this.userForm, ...formData };
+	}
+
+	/**
+	 * Update the employee form with new data
+	 *
+	 * @param formData - The form data to update.
+	 */
+	async updateEmployeeForm(formData: IEmployeeUpdateInput) {
+		// Simulate an async operation, such as an API call
+		// await someApiService.updateEmployee(formData);
+		this.employeeForm = { ...this.employeeForm, ...formData };
+	}
+
 	destroy() {
 		this.employeeAkitaStore.reset();
 	}

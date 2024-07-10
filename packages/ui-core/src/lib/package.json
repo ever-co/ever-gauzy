@@ -1,0 +1,20 @@
+{
+	"name": "@gauzy/ui-core",
+	"version": "0.1.0",
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^14.0.0",
+		"@ngx-translate/http-loader": "^7.0.0",
+		"angular2-smart-table": "^3.2.0",
+		"ckeditor4": "4.22.1",
+		"ckeditor4-angular": "4.0.1",
+		"ngx-permissions": "^13.0.1",
+		"rxjs": "^7.4.0",
+		"tslib": "^2.6.2"
+	},
+	"sideEffects": false
+}

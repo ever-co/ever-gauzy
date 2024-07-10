@@ -6,11 +6,10 @@ import { Component, Input, OnInit } from '@angular/core';
 	styleUrls: ['./repository.component.scss']
 })
 export class GithubRepositoryComponent implements OnInit {
-
 	@Input() value: any;
 	@Input() rowData: any;
 
-	constructor() { }
+	constructor() {}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 }

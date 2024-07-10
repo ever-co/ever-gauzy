@@ -1,15 +1,4 @@
-import {
-	Body,
-	Controller,
-	Get,
-	HttpCode,
-	HttpStatus,
-	Param,
-	Post,
-	Put,
-	Query,
-	UseGuards
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
@@ -21,7 +10,7 @@ import {
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
-import { PaginationParams } from 'core/crud';
+import { PaginationParams } from '../core/crud';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
 import { LanguageDecorator, Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
@@ -36,7 +25,7 @@ export class OrganizationTeamJoinRequestController {
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _organizationTeamJoinRequestService: OrganizationTeamJoinRequestService
-	) { }
+	) {}
 
 	/**
 	 * Validate organization team join request

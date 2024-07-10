@@ -1,5 +1,5 @@
 import { environment } from '@gauzy/config';
-import { SentryPlugin, DefaultSentryIntegrations } from '@gauzy/sentry-plugin';
+import { SentryPlugin, DefaultSentryIntegrations } from '@gauzy/plugin-sentry';
 import { version } from '../version';
 
 /**

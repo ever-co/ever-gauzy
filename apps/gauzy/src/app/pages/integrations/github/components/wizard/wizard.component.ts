@@ -25,7 +25,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		// Handle the custom event data here
 
 		// Set the isLoading property to false, indicating that the loading is complete
-		this.isLoading = false;
+		this.loading = false;
 
 		// Delay the navigation to a specific URL by 100 milliseconds before redirecting
 		// This is often used to provide a smoother user experience
@@ -36,7 +36,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	}
 
 	public organization: IOrganization;
-	public isLoading: boolean = true;
+	public loading: boolean = true;
 	// save a reference to the window so we can close it
 	private window = null;
 	private timer: any;
@@ -109,14 +109,14 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 		// Get the redirect URI, Post Install URL and client ID from the environment
 		const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
 		const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
-		const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
+		const post_install_url = environment.GAUZY_GITHUB_POST_INSTALL_URL;
 
 		// Define the query parameters for the authorization request
 		const queryParams = toParams({
 			redirect_uri: `${redirect_uri}`,
 			client_id: `${client_id}`,
 			scope: 'user',
-			state: `${postInstallURL}`
+			state: `${post_install_url}`
 		});
 
 		// Construct the external URL for GitHub authorization with the query parameters
@@ -187,10 +187,12 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 			// A window with the same name is already open, so focus on it
 			window.frames[windowName].focus();
 		} else {
-			// Get the redirect URI, Post Install URL and client ID from the environment
-			const redirect_uri = environment.GAUZY_GITHUB_REDIRECT_URL;
+			// Destructure environment variables for better readability
+			const { GAUZY_GITHUB_APP_NAME, GAUZY_GITHUB_REDIRECT_URL, GAUZY_GITHUB_POST_INSTALL_URL } = environment;
+			// Get the redirect URI, Post Install URL from the environment
+			const redirect_uri = GAUZY_GITHUB_REDIRECT_URL;
 			// const client_id = environment.GAUZY_GITHUB_CLIENT_ID;
-			const postInstallURL = environment.GAUZY_GITHUB_POST_INSTALL_URL;
+			const postInstallURL = GAUZY_GITHUB_POST_INSTALL_URL;
 
 			// Define the query parameters for the authorization request
 			const queryParams = toParams({
@@ -200,26 +202,14 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 
 			// Construct the external URL for GitHub authorization with the query parameters
 			/** Navigate to the target external URL */
-			const url = `https://github.com/apps/${
-				environment.GAUZY_GITHUB_APP_NAME
-			}/installations/new?${queryParams.toString()}`;
+			const url = `https://github.com/apps/${GAUZY_GITHUB_APP_NAME}/installations/new?${queryParams.toString()}`;
 			console.log('External Github App Installation URL: %s', url);
 
 			/** Navigate to the external URL with query parameters */
 			this.window = window.open(
 				url,
 				windowName,
-				`width=${width},
-				height=${height},
-				top=${top},
-				left=${left},
-				toolbar=no,
-				location=no,
-				status=no,
-				menubar=no,
-				scrollbars=yes,
-				resizable=yes,
-			`
+				`width=${width},height=${height},top=${top},left=${left},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
 			);
 		}
 	}
@@ -247,7 +237,7 @@ export class GithubWizardComponent implements AfterViewInit, OnInit, OnDestroy {
 	 */
 	private handleClosedPopupWindow(ms: number = 200): void {
 		// Set isLoading to false to indicate that loading has completed
-		this.isLoading = false;
+		this.loading = false;
 
 		// Delay navigation by 'ms' milliseconds before redirecting
 		setTimeout(() => {

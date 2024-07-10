@@ -29,6 +29,8 @@ import { PipelineDealProbabilityComponent } from './table-components/pipeline-de
 import { StageComponent } from './stage/stage.component';
 import { PipelinesRouting } from './pipelines.routing';
 import { PipelinesComponent } from './pipelines.component';
+import { PipelineResolver } from './routes/pipeline.resolver';
+import { DealResolver } from './routes/deal.resolver';
 
 @NgModule({
 	declarations: [
@@ -49,7 +51,6 @@ import { PipelinesComponent } from './pipelines.component';
 		PipelinesComponent,
 		StageFormComponent
 	],
-	providers: [PipelinesService, DealsService],
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
@@ -74,6 +75,7 @@ import { PipelinesComponent } from './pipelines.component';
 		PaginationV2Module,
 		GauzyButtonActionModule,
 		NbTabsetModule
-	]
+	],
+	providers: [PipelinesService, DealsService, PipelineResolver, DealResolver]
 })
 export class PipelinesModule {}

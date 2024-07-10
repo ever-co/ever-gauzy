@@ -1,18 +1,25 @@
-import { IBaseEntityModel, IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import {
+	IBaseEntityModel,
+	IBasePerTenantAndOrganizationEntityModel,
+	IBaseRelationsEntityModel,
+	ID
+} from './base-entity.model';
 import { ITag } from './tag.model';
 import { IIntegrationSetting } from './integration-setting.model';
 
 export interface IRelationIntegration {
 	integration?: IIntegration;
-	integrationId?: IIntegration['id'];
+	integrationId?: ID;
 }
 
 export interface IRelationalIntegrationTenant {
 	integration?: IIntegrationTenant;
-	integrationId?: IIntegrationTenant['id'];
+	integrationId?: ID;
 }
 
-export interface IIntegrationEntitySetting extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+export interface IIntegrationEntitySetting
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalIntegrationTenant {
 	entity: IntegrationEntity;
 	sync: boolean;
 	tiedEntities?: IIntegrationEntitySettingTied[];
@@ -22,7 +29,7 @@ export interface IIntegrationEntitySettingTied extends IBasePerTenantAndOrganiza
 	entity: IntegrationEntity;
 	sync: boolean;
 	integrationEntitySetting?: IIntegrationEntitySetting;
-	integrationEntitySettingId?: IIntegrationEntitySetting['id'];
+	integrationEntitySettingId?: ID;
 }
 
 export interface IIntegrationMap extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
@@ -44,7 +51,10 @@ export interface IIntegrationTenant extends IBasePerTenantAndOrganizationEntityM
 	settings?: IIntegrationSetting[];
 }
 
-export interface IIntegrationTenantFindInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, IRelationIntegration {
+export interface IIntegrationTenantFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IBaseRelationsEntityModel,
+		IRelationIntegration {
 	name?: IntegrationEnum;
 }
 
@@ -81,7 +91,9 @@ export interface IIntegrationFilter {
 }
 
 /** */
-export interface IIntegrationMapSyncBase extends IBasePerTenantAndOrganizationEntityModel, IRelationalIntegrationTenant {
+export interface IIntegrationMapSyncBase
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalIntegrationTenant {
 	sourceId?: IIntegrationMap['sourceId'];
 }
 
@@ -90,7 +102,7 @@ export interface IIntegrationMapSyncEntity<T> extends IIntegrationMapSyncBase {
 }
 
 export interface IIntegrationMapSyncEntityInput extends IIntegrationMapSyncBase {
-	gauzyId: IIntegrationMap['gauzyId'];
+	gauzyId: ID;
 	entity: IntegrationEntity;
 }
 
@@ -101,7 +113,7 @@ export interface IIntegrationTenantCreateInput extends IBasePerTenantAndOrganiza
 }
 
 export interface IIntegrationTenantUpdateInput extends Partial<IIntegrationTenantCreateInput> {
-	id?: IIntegrationTenant['id'];
+	id?: ID;
 }
 
 export enum IntegrationEnum {
@@ -159,8 +171,8 @@ export enum IntegrationFilterEnum {
 }
 
 /**
-* Hubstaff Integration
-*/
+ * Hubstaff Integration
+ */
 export interface IEntitySettingToSync {
 	previousValue: IIntegrationEntitySetting[];
 	currentValue: IIntegrationEntitySetting[];

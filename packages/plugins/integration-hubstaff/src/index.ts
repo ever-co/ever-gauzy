@@ -1,2 +1,2 @@
-export * from './hubstaff-entity-settings';
-export * from './hubstaff.config';
+export * from './lib/integration-hubstaff.plugin';
+export * from './lib/hubstaff.config';

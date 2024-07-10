@@ -10,7 +10,7 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IPagination,
-	UpdateEmployeeJobsStatistics
+	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -24,7 +24,7 @@ export class EmployeesService {
 		});
 	}
 
-	getPublicById(slug: string, id: string, relations: string[] = []): Observable<IEmployee> {
+	getPublicById(slug: string, id: ID, relations: string[] = []): Observable<IEmployee> {
 		return this.http.get<IEmployee>(`${API_PREFIX}/public/employee/${slug}/${id}`, {
 			params: toParams({ relations })
 		});
@@ -62,7 +62,7 @@ export class EmployeesService {
 		);
 	}
 
-	getWorkingCount(organizationId: string, tenantId: string, forRange: IDateRangePicker): Promise<{ total: number }> {
+	getWorkingCount(organizationId: ID, tenantId: ID, forRange: IDateRangePicker): Promise<{ total: number }> {
 		const query = {
 			organizationId,
 			tenantId,
@@ -76,17 +76,39 @@ export class EmployeesService {
 		);
 	}
 
-	getEmployeeById(id: string, relations: string[] = []) {
+	/**
+	 * Retrieves employee information by ID.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param relations - Optional array of relations to include in the response.
+	 * @returns An observable of type `IEmployee` containing the employee's information.
+	 */
+	getEmployeeById(id: ID, relations: string[] = []) {
 		return this.http.get<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 			params: toParams({ relations })
 		});
 	}
 
-	setEmployeeProfileStatus(id: string, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
+	/**
+	 * Updates the profile status of an employee.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param status - The new profile status to set for the employee.
+	 * @returns A promise that resolves with the updated employee object.
+	 */
+	setEmployeeProfileStatus(id: ID, status: IEmployeeUpdateProfileStatus): Promise<IEmployee> {
 		return firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, status));
 	}
 
-	setEmployeeEndWork(id: string, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
+	/**
+	 * Sets the end work date for an employee.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param date - The date when the employee's work ended.
+	 * @param request - Additional data related to the employee (e.g., tenant and organization).
+	 * @returns A promise that resolves with the updated employee object.
+	 */
+	setEmployeeEndWork(id: ID, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 				endWork: date,
@@ -95,8 +117,16 @@ export class EmployeesService {
 		);
 	}
 
+	/**
+	 * Updates the time tracking status for an employee.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param action - Boolean indicating whether to enable or disable time tracking.
+	 * @param request - Additional data related to the employee (e.g., tenant and organization).
+	 * @returns A promise that resolves with the updated employee object.
+	 */
 	setEmployeeTimeTrackingStatus(
-		id: string,
+		id: ID,
 		action: boolean,
 		request: IBasePerTenantAndOrganizationEntityModel
 	): Promise<IEmployee> {
@@ -108,7 +138,14 @@ export class EmployeesService {
 		);
 	}
 
-	update(id: string, updateInput: IEmployeeUpdateInput): Promise<any> {
+	/**
+	 * Updates an employee's information.
+	 *
+	 * @param id - The ID of the employee to update.
+	 * @param updateInput - The data to update for the employee.
+	 * @returns A promise that resolves when the update operation is completed.
+	 */
+	update(id: ID, updateInput: IEmployeeUpdateInput): Promise<any> {
 		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}`, updateInput));
 	}
 
@@ -121,7 +158,7 @@ export class EmployeesService {
 	 * @param options - Additional context for the operation, including tenant and organization information.
 	 * @returns A promise resolving to the result of the DELETE operation or an error message.
 	 */
-	delete(id: string, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
+	delete(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/employee/${id}`, {
 				params: toParams({ ...options })
@@ -136,7 +173,7 @@ export class EmployeesService {
 	 * @param options - Additional options for specifying tenant and organization context.
 	 * @returns A promise resolving to the deleted employee or a success indicator.
 	 */
-	softRemove(id: string, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
+	softRemove(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/employee/${id}/soft`, {
 				params: toParams({ ...options })
@@ -151,56 +188,50 @@ export class EmployeesService {
 	 * @param options - Additional context, typically to specify tenant and organization information.
 	 * @returns A promise resolving to the restored employee or a success indicator.
 	 */
-	softRecover(id: string, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
+	softRecover(id: ID, options: IBasePerTenantAndOrganizationEntityModel): Promise<any> {
 		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}/recover`, { ...options }));
 	}
 
 	/**
+	 * Updates the profile of an employee.
 	 *
-	 * @param id
-	 * @param payload
-	 * @returns
+	 * @param id - The ID of the employee.
+	 * @param payload - The data to update in the employee's profile.
+	 * @returns A promise that resolves with the updated employee profile.
 	 */
-	updateProfile(id: string, payload: IEmployeeUpdateInput): Promise<IEmployee> {
+	updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
 		return firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload));
 	}
 
 	/**
+	 * Creates a new employee with the provided input data.
 	 *
-	 * @param request
-	 * @returns
+	 * @param input - The data to create a new employee.
+	 * @returns An observable of the created employee.
 	 */
-	getEmployeeJobsStatistics(request): Promise<any> {
-		return firstValueFrom(
-			this.http.get(`${API_PREFIX}/employee/job-statistics`, {
-				params: toParams(request)
-			})
-		);
+	create(input: IEmployeeCreateInput): Observable<IEmployee> {
+		return this.http.post<IEmployee>(`${API_PREFIX}/employee`, input);
 	}
 
 	/**
+	 * Creates multiple new employees with the provided input data.
 	 *
-	 * @param id
-	 * @param statistics
-	 * @returns
+	 * @param createInput - An array of objects, each containing the data to create a new employee.
+	 * @returns An observable of an array of created employees.
 	 */
-	updateJobSearchStatus(id: IEmployee['id'], statistics: UpdateEmployeeJobsStatistics) {
-		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}/job-search-status`, statistics));
+	createBulk(input: IEmployeeCreateInput[]): Observable<IEmployee[]> {
+		return this.http.post<IEmployee[]>(`${API_PREFIX}/employee/bulk`, input);
 	}
 
-	create(body: IEmployeeCreateInput): Observable<IEmployee> {
-		return this.http.post<IEmployee>(`${API_PREFIX}/employee`, body);
-	}
-
-	createBulk(createInput: IEmployeeCreateInput[]): Observable<IEmployee[]> {
-		return this.http.post<IEmployee[]>(`${API_PREFIX}/employee/bulk`, createInput);
-	}
-
-	setEmployeeStartWork(
-		id: string,
-		date: Date,
-		request: IBasePerTenantAndOrganizationEntityModel
-	): Promise<IEmployee> {
+	/**
+	 * Sets the start work date for an employee.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param date - The date when the employee started work.
+	 * @param request - Additional request data that includes tenant and organization details.
+	 * @returns A promise of the updated employee.
+	 */
+	setEmployeeStartWork(id: ID, date: Date, request: IBasePerTenantAndOrganizationEntityModel): Promise<IEmployee> {
 		return firstValueFrom(
 			this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}`, {
 				startedWorkOn: date,

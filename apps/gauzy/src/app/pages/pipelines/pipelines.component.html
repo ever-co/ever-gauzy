@@ -18,18 +18,11 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset class="mt-4" (changeTab)="onChangeTab($event)">
-			<nb-tab
-				[tabTitle]="'PIPELINES_PAGE.BROWSE' | translate"
-				[tabId]="pipelineTabsEnum.ACTIONS"
-			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === pipelineTabsEnum.ACTIONS"
-				>
+			<nb-tab [tabTitle]="'PIPELINES_PAGE.BROWSE' | translate" [tabId]="pipelineTabsEnum.ACTIONS">
+				<ng-container *ngIf="(nbTab$ | async) === pipelineTabsEnum.ACTIONS">
 					<ng-template
 						[ngTemplateOutlet]="
-							dataLayoutStyle === componentLayoutStyleEnum.TABLE
-								? tableLayout
-								: gridLayout
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout
 						"
 					></ng-template>
 				</ng-container>
@@ -45,24 +38,15 @@
 							{{ 'PIPELINES_PAGE.SEARCH_PIPELINE' | translate }}
 						</nb-accordion-item-header>
 						<nb-accordion-item-body>
-							<form
-								[formGroup]="searchForm"
-								(ngSubmit)="search()"
-							>
+							<form [formGroup]="searchForm" (ngSubmit)="search()">
 								<div class="row">
 									<div class="col-xl-4 col-lg-12">
 										<label for="name">
-											{{
-												'PIPELINES_PAGE.NAME'
-													| translate
-											}}
+											{{ 'PIPELINES_PAGE.NAME' | translate }}
 										</label>
 										<div class="w-100">
 											<input
-												[placeholder]="
-													'PIPELINES_PAGE.NAME'
-														| translate
-												"
+												[placeholder]="'PIPELINES_PAGE.NAME' | translate"
 												formControlName="name"
 												type="text"
 												fullWidth
@@ -73,17 +57,11 @@
 									</div>
 									<div class="col-xl-2 col-lg-4 col-12">
 										<label for="stages">
-											{{
-												'PIPELINES_PAGE.STAGE'
-													| translate
-											}}
+											{{ 'PIPELINES_PAGE.STAGE' | translate }}
 										</label>
 										<div class="w-100">
 											<input
-												[placeholder]="
-													'PIPELINES_PAGE.SEARCH_STAGE'
-														| translate
-												"
+												[placeholder]="'PIPELINES_PAGE.SEARCH_STAGE' | translate"
 												type="text"
 												nbInput
 												fullWidth
@@ -94,10 +72,7 @@
 									</div>
 									<div class="col-xl-2 col-lg-4 col-12">
 										<label for="status">
-											{{
-												'PIPELINES_PAGE.STATUS'
-													| translate
-											}}
+											{{ 'PIPELINES_PAGE.STATUS' | translate }}
 										</label>
 										<div class="w-100">
 											<nb-select
@@ -126,10 +101,7 @@
 											outline
 											[disabled]="searchForm.invalid"
 										>
-											{{
-												'PIPELINES_PAGE.SEARCH'
-													| translate
-											}}
+											{{ 'PIPELINES_PAGE.SEARCH' | translate }}
 										</button>
 										<button
 											type="reset"
@@ -140,10 +112,7 @@
 											[disabled]="searchForm.invalid"
 											(click)="reset()"
 										>
-											{{
-												'PIPELINES_PAGE.RESET'
-													| translate
-											}}
+											{{ 'PIPELINES_PAGE.RESET' | translate }}
 										</button>
 									</div>
 								</div>
@@ -151,14 +120,10 @@
 						</nb-accordion-item-body>
 					</nb-accordion-item>
 				</nb-accordion>
-				<ng-container
-					*ngIf="(nbTab$ | async) === pipelineTabsEnum.SEARCH"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === pipelineTabsEnum.SEARCH">
 					<ng-template
 						[ngTemplateOutlet]="
-							dataLayoutStyle === componentLayoutStyleEnum.TABLE
-								? tableLayout
-								: gridLayout
+							dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout
 						"
 					></ng-template>
 				</ng-container>
@@ -167,11 +132,7 @@
 	</nb-card-body>
 </nb-card>
 
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="VIEW_SALES_PIPELINES">
 			<button
@@ -209,11 +170,7 @@
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 				nbButton
 			>
-				<nb-icon
-					status="danger"
-					icon="trash-2-outline"
-					pack="eva"
-				></nb-icon>
+				<nb-icon status="danger" icon="trash-2-outline" pack="eva"></nb-icon>
 			</button>
 		</ng-template>
 	</div>
@@ -221,12 +178,7 @@
 
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="createPipeline()"
-		>
+		<button nbButton status="success" size="small" (click)="createPipeline()">
 			<nb-icon icon="plus-outline"> </nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
@@ -245,9 +197,7 @@
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination
-				[source]="smartTableSource"
-			></ngx-pagination>
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 		</ng-container>
 	</div>
 </ng-template>

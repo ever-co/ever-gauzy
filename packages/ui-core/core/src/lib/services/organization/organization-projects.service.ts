@@ -9,7 +9,8 @@ import {
 	IPagination,
 	IEmployee,
 	IOrganizationProjectUpdateInput,
-	IOrganizationProjectSetting
+	IOrganizationProjectSetting,
+	ID
 } from '@gauzy/contracts';
 import { toParams } from '@gauzy/ui-core/common';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -49,7 +50,7 @@ export class OrganizationProjectsService {
 		);
 	}
 
-	getById(id: IOrganizationProject['id'], relations: string[] = []): Observable<IOrganizationProject> {
+	getById(id: ID, relations: string[] = []): Observable<IOrganizationProject> {
 		return this._http.get<IOrganizationProject>(`${this.API_URL}/${id}`, {
 			params: toParams({ relations })
 		});
@@ -67,16 +68,13 @@ export class OrganizationProjectsService {
 		return firstValueFrom(this._http.put(`${this.API_URL}/employee`, updateInput));
 	}
 
-	updateTaskViewMode(
-		id: IOrganizationProject['id'],
-		body: IOrganizationProjectUpdateInput
-	): Promise<IOrganizationProject> {
+	updateTaskViewMode(id: ID, body: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
 		return firstValueFrom(
 			this._http.put<IOrganizationProject>(`${this.API_URL}/task-view/${id}`, body).pipe(take(1))
 		);
 	}
 
-	delete(id: IOrganizationProject['id']): Promise<any> {
+	delete(id: ID): Promise<any> {
 		return firstValueFrom(this._http.delete(`${this.API_URL}/${id}`));
 	}
 
@@ -88,11 +86,11 @@ export class OrganizationProjectsService {
 	 *
 	 * @returns An Observable of type `IOrganizationProject` representing the updated organization project.
 	 */
-	updateProjectSetting(
-		id: IOrganizationProject['id'],
-		input: IOrganizationProjectSetting
-	): Observable<IOrganizationProjectSetting> {
+	updateProjectSetting(id: ID, input: IOrganizationProjectSetting): Observable<IOrganizationProjectSetting> {
+		// Construct the URL for the API endpoint
 		const url = `${this.API_URL}/setting/${id}`;
+
+		// Send an HTTP Put request to the specified URL with input parameters
 		return this._http.put<IOrganizationProject>(url, input);
 	}
 

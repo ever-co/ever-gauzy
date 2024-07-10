@@ -1,5 +1,5 @@
 {
-	"name": "integration-upwork",
+	"name": "plugin-integration-upwork",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/integration-upwork/src",
 	"projectType": "library",

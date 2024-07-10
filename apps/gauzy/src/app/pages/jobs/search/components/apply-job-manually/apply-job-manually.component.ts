@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
-import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
+import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
 	IEmployeeJobApplication,
 	IEmployee,
@@ -165,6 +165,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	ngAfterViewInit() {
+		this.uploader.onAfterAddingFile = (file) => {
+			file.withCredentials = false;
+		};
 		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
@@ -196,6 +199,11 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/**
+	 * Load settings for the file uploader, including headers and additional form data.
+	 *
+	 * @returns void
+	 */
 	private _loadUploaderSettings() {
 		if (!this.store.user) {
 			return;
@@ -207,20 +215,30 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		headers.push({ name: 'Authorization', value: `Bearer ${token}` });
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 
+		if (!!this.organization) {
+			headers.push({ name: 'Organization-Id', value: `${this.organization.id}` });
+		}
+
 		const uploaderOptions: FileUploaderOptions = {
 			url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/proposal_attachments`,
-			// XHR request method
-			method: 'POST',
-			// Upload files automatically upon addition to upload queue
-			autoUpload: true,
-			// Use xhrTransport in favor of iframeTransport
-			isHTML5: true,
-			// Calculate progress independently for each uploaded file
-			removeAfterUpload: true,
-			// XHR request headers
-			headers: headers
+			method: 'POST', // XHR request method
+			autoUpload: true, // Upload files automatically upon addition to upload queue
+			isHTML5: true, // Use xhrTransport in favor of iframeTransport
+			removeAfterUpload: true, // Calculate progress independently for each uploaded file
+			headers: headers // XHR request headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+
+		// Adding additional form data
+		this.uploader.onBuildItemForm = (fileItem: FileItem, form) => {
+			if (!!this.store.user.tenantId) {
+				form.append('tenantId', tenantId);
+			}
+
+			if (!!this.organization) {
+				form.append('organizationId', this.organization.id);
+			}
+		};
 	}
 
 	public fileOverBase(e: any): void {

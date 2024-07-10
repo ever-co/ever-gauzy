@@ -1,19 +1,12 @@
-<nb-card class="employee-edit" >
+<nb-card class="employee-edit">
 	<nb-card-header class="header">
-		<div
-			class="header-container"
-			*ngIf="
-				selectedEmployeeFromHeader &&
-				selectedEmployeeFromHeader.id;
-				else noName
-			"
-		>
+		<div class="header-container" *ngIf="selectedEmployeeFromHeader && selectedEmployeeFromHeader.id; else noName">
 			<div class="d-flex align-items-start">
 				<ngx-back-navigation></ngx-back-navigation>
 				<div class="employee-info">
 					<img
 						class="employee-image"
-						[src]="selectedEmployee?.user?.imageUrl"
+						[src]="selectedEmployee?.user?.image?.fullUrl || selectedEmployee?.user?.imageUrl"
 						alt="Employee Avatar"
 					/>
 
@@ -44,10 +37,7 @@
 							</span>
 						</ng-template>
 					</div>
-					<div
-						*ngIf="selectedEmployee?.user?.username"
-						class="transparent"
-					>
+					<div *ngIf="selectedEmployee?.user?.username" class="transparent">
 						{{ 'FORM.USERNAME' | translate }}:
 						<strong>{{ selectedEmployee?.user?.username }}</strong>
 					</div>
@@ -63,8 +53,6 @@
 		</ng-template>
 	</nb-card-header>
 	<nb-card-body class="p-0">
-		<ngx-edit-employee-profile
-			(updatedImage)="updateImage($event)"
-		></ngx-edit-employee-profile>
+		<ngx-edit-employee-profile (updatedImage)="updateImage($event)"></ngx-edit-employee-profile>
 	</nb-card-body>
 </nb-card>

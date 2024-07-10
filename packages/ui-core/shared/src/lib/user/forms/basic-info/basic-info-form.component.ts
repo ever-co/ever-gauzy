@@ -11,7 +11,8 @@ import {
 	ICandidateSource,
 	ICandidateCreateInput,
 	ICandidate,
-	IImageAsset
+	IImageAsset,
+	IEmployee
 } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +22,7 @@ import {
 	AuthService,
 	CandidatesService,
 	EmployeesService,
+	ErrorHandlingService,
 	RoleService,
 	CompareDateValidator,
 	UrlPatternValidator
@@ -35,10 +37,11 @@ import { FormHelpers } from '../../../forms/helpers';
 	styleUrls: ['basic-info-form.component.scss']
 })
 export class BasicInfoFormComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
-	@ViewChild('imagePreview')
-	imagePreviewElement: ElementRef;
+	FormHelpers: typeof FormHelpers = FormHelpers;
+	public excludes: RolesEnum[] = [];
+	public organization: IOrganization;
 
-	@Input() public selectedTags: ITag[];
+	@Input() public selectedTags: ITag[] = [];
 
 	/*
 	 * Getter & Setter for check is for candidate mutation
@@ -74,11 +77,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 		this.setRoleValidations(value);
 	}
 
-	FormHelpers: typeof FormHelpers = FormHelpers;
-	public excludes: RolesEnum[] = [];
-	public organization: IOrganization;
-
-	public form: UntypedFormGroup = BasicInfoFormComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = BasicInfoFormComponent.buildForm(this._fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: BasicInfoFormComponent): UntypedFormGroup {
 		return fb.group(
 			{
@@ -109,125 +108,161 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 		);
 	}
 
+	@ViewChild('imagePreview') imagePreviewElement: ElementRef;
+
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly authService: AuthService,
-		private readonly roleService: RoleService,
-		private readonly employeesService: EmployeesService,
-		private readonly candidatesService: CandidatesService,
 		public readonly translateService: TranslateService,
-		private readonly store: Store,
-		private readonly location: Location
+		private readonly _location: Location,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _authService: AuthService,
+		private readonly _roleService: RoleService,
+		private readonly _employeesService: EmployeesService,
+		private readonly _candidatesService: CandidatesService,
+		private readonly _store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
 		this.excludeRoles();
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				filter(() => !!this.location.getState()),
-				tap(() => this.patchUsingLocationState(this.location.getState())),
+				filter(() => !!this._location.getState()),
+				tap(() => this.patchUsingLocationState(this._location.getState())),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Exclude SUPER_ADMIN role, if don't have permissions
+	 * Excludes the SUPER_ADMIN role if the current user doesn't have the necessary permissions.
 	 */
-	async excludeRoles() {
-		const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
+	async excludeRoles(): Promise<void> {
+		const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		if (!hasSuperAdminRole) {
 			this.excludes.push(RolesEnum.SUPER_ADMIN);
 		}
 	}
 
-	public enableEmployee() {
-		return (
-			this.form.get('role').value &&
-			(this.form.get('role').value.name === RolesEnum.SUPER_ADMIN ||
-				this.form.get('role').value.name === RolesEnum.ADMIN)
-		);
+	/**
+	 * Checks if the current form's role is either SUPER_ADMIN or ADMIN.
+	 *
+	 * @returns A boolean indicating whether the role is SUPER_ADMIN or ADMIN.
+	 */
+	public enableEmployee(): boolean {
+		const role = this.form.get('role').value?.name;
+		return role === RolesEnum.SUPER_ADMIN || role === RolesEnum.ADMIN;
 	}
 
 	get showImageMeta() {
 		return this.form.get('imageUrl') && this.form.get('imageUrl').value;
 	}
 
+	/**
+	 * Registers a user with different roles
+	 *
+	 * @param defaultRoleName - Default role to assign if none is specified
+	 * @param organizationId - ID of the organization
+	 * @param createdById - ID of the user who created this user
+	 * @returns A promise of the created user or employee
+	 */
 	async registerUser(defaultRoleName: RolesEnum, organizationId?: string, createdById?: string) {
 		if (this.form.invalid) {
 			return;
 		}
-		const { firstName, lastName, email, username, password } = this.form.value;
+
 		const {
+			firstName,
+			lastName,
+			email,
+			username,
+			password,
 			tags,
 			imageUrl,
 			imageId,
 			featureAsEmployee,
-			role: { name }
+			role: formRole
 		} = this.form.value;
+		const { tenantId, tenant } = this._store.user;
 
-		const { tenantId, tenant } = this.store.user;
-		/**
-		 * Removed feature organizations from payload,
-		 * which is not necessary to send into the payload
-		 */
-		if (tenant.hasOwnProperty('featureOrganizations')) {
-			delete tenant['featureOrganizations'];
-		}
+		// Remove unnecessary featureOrganizations property
+		delete tenant.featureOrganizations;
 
-		const role: IRole = await firstValueFrom(
-			this.roleService.getRoleByOptions({
-				name: name || defaultRoleName,
-				tenantId
-			})
-		);
+		const roleName = formRole?.name || defaultRoleName;
+		const role: IRole = await this.getRole(roleName, tenantId);
+
 		const user: IUser = {
-			firstName: firstName,
-			lastName: lastName,
-			email: email,
+			firstName,
+			lastName,
+			email,
 			username: username || null,
-			imageUrl: imageUrl,
-			imageId: imageId,
-			role: role,
-			tenant: tenant,
-			tags: tags
+			imageUrl,
+			imageId,
+			role,
+			tenant,
+			tags
 		};
 
 		if (role.name === RolesEnum.EMPLOYEE) {
-			return this.createEmployee(user);
+			return await this.createEmployee(user);
 		} else if (role.name === RolesEnum.CANDIDATE) {
-			return this.createCandidate(user);
+			return await this.createCandidate(user);
 		} else {
-			if (featureAsEmployee === true) {
-				return await firstValueFrom(
-					this.employeesService.create({
-						user: user,
-						organization: this.organization,
-						password: password
-					})
-				);
-			} else {
-				return await firstValueFrom(
-					this.authService.register({
-						user: user,
-						password: password,
-						confirmPassword: password,
-						organizationId,
-						createdById
-					})
-				);
-			}
+			return await this.createUser(user, password, organizationId, createdById, featureAsEmployee);
 		}
 	}
 
 	/**
-	 * Delete existing image
+	 * Creates a user with the specified attributes, either as an employee or a regular user.
 	 *
+	 * @param user - The user details.
+	 * @param password - The password for the user.
+	 * @param organizationId - (Optional) The ID of the organization.
+	 * @param createdById - (Optional) The ID of the user who created this user.
+	 * @param featureAsEmployee - (Optional) Whether to create the user as an employee.
+	 * @returns A promise resolving to the created user or employee.
+	 */
+	private async createUser(
+		user: IUser,
+		password: string,
+		organizationId?: string,
+		createdById?: string,
+		featureAsEmployee?: boolean
+	): Promise<any> {
+		return await firstValueFrom(
+			this._authService.register({
+				user,
+				password,
+				confirmPassword: password,
+				organizationId,
+				createdById,
+				featureAsEmployee
+			})
+		);
+	}
+
+	/**
+	 * Fetches a role based on the provided role name and tenant ID.
+	 *
+	 * @param roleName - The name of the role to fetch.
+	 * @param tenantId - The ID of the tenant to which the role belongs.
+	 * @returns A promise resolving to the role object.
+	 */
+	private async getRole(roleName: RolesEnum, tenantId: string): Promise<IRole> {
+		return await firstValueFrom(
+			this._roleService.getRoleByOptions({
+				name: roleName,
+				tenantId
+			})
+		);
+	}
+
+	/**
+	 * Delete existing image
 	 */
 	deleteImageUrl() {
 		this.form.get('imageId').setValue(null);
@@ -237,6 +272,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 		this.form.get('imageUrl').updateValueAndValidity();
 	}
 
+	/**
+	 * Handle selected tags
+	 *
+	 * @param tags An array of tags to set in the form control.
+	 */
 	selectedTagsHandler(tags: ITag[]) {
 		this.form.get('tags').setValue(tags);
 		this.form.get('tags').updateValueAndValidity();
@@ -269,11 +309,11 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	/**
 	 * Upload third party URL as image/avatar
 	 *
-	 * @param image
+	 * @param imageUrl The URL of the image to update in the form control.
 	 */
 	updateImageUrl(imageUrl: string) {
 		try {
-			const imageUrlControl = <FormControl>this.form.get('imageUrl');
+			const imageUrlControl = this.form.get('imageUrl') as FormControl;
 			if (imageUrl) {
 				imageUrlControl.enable();
 				imageUrlControl.setValue(imageUrl);
@@ -282,15 +322,20 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 				imageUrlControl.disable();
 			}
 		} catch (error) {
-			console.log('Error while updating user profile/avatar by third party URL');
+			console.error('Error while updating user profile/avatar by third party URL:', error);
 		}
 	}
 
+	/**
+	 * Sets up validation for image URL based on image loading status.
+	 */
 	private _setupLogoUrlValidation() {
+		// Clear errors on image load
 		this.imagePreviewElement.nativeElement.onload = () => {
 			this.form.get('imageUrl').setErrors(null);
 		};
 
+		// Set error on image load error, if showImageMeta is true
 		this.imagePreviewElement.nativeElement.onerror = () => {
 			if (this.showImageMeta) {
 				this.form.get('imageUrl').setErrors({ invalidUrl: true });
@@ -299,8 +344,9 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * On Selection Change
-	 * @param role
+	 * Handle selection change for roles.
+	 *
+	 * @param role The selected role object.
 	 */
 	onSelectionChange(role: IRole) {
 		if (this.isShowRole) {
@@ -310,60 +356,65 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * SET role field validations
+	 * SET role field validations based on the given value.
 	 *
-	 * @param value
+	 * @param value Indicates whether role validation is required (true) or not (false).
 	 */
 	setRoleValidations(value: boolean) {
-		if (value === true) {
-			this.form.get('role').setValidators([Validators.required]);
+		const control = this.form.get('role');
+		if (value) {
+			control.setValidators([Validators.required]);
 		} else {
-			this.form.get('role').clearValidators();
+			control.clearValidators();
 		}
-		this.form.get('role').updateValueAndValidity();
+		control.updateValueAndValidity();
 	}
 
 	/**
-	 * Create employee from user page
+	 * Create an employee from the user page.
 	 *
-	 * @param user
-	 * @returns
+	 * @param user The user object containing employee details.
+	 * @returns A promise that resolves to the created employee.
 	 */
-	async createEmployee(user: IUser) {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
+	async createEmployee(user: IUser): Promise<IEmployee> {
+		const { id: organizationId, tenantId } = this.organization;
 		const { password, tags } = this.form.value;
 		const { offerDate = null, acceptDate = null, rejectDate = null, startedWorkOn = null } = this.form.value;
 
 		const employee: IEmployeeCreateInput = {
 			tenantId,
 			user,
-			startedWorkOn: startedWorkOn,
-			password: password,
+			startedWorkOn,
+			password,
 			organizationId,
+			organization: { id: organizationId },
 			offerDate,
 			acceptDate,
 			rejectDate,
-			tags: tags
+			tags
 		};
-		return await firstValueFrom(this.employeesService.create(employee));
+
+		try {
+			// Create the employee using the employeesService
+			return await firstValueFrom(this._employeesService.create(employee));
+		} catch (error) {
+			// Handle any errors here, e.g., log them or rethrow as needed
+			this._errorHandlingService.handleError(`Failed to create employee: ${error.message}`);
+		}
 	}
 
 	/**
-	 * Create candidate from user page
+	 * Create a candidate from user page.
 	 *
-	 * @param user
-	 * @returns
+	 * @param user The IUser object containing candidate's user details.
+	 * @returns A Promise resolving to the created ICandidate object.
 	 */
 	async createCandidate(user: IUser): Promise<ICandidate> {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
+		const { id: organizationId, tenantId } = this.organization;
 		const { password, tags } = this.form.value;
 		const { appliedDate = null, rejectDate = null, source: sourceName = null } = this.form.value;
 
-		let source: ICandidateSource = null;
+		let source: ICandidateSource | null = null;
 		if (sourceName !== null) {
 			source = {
 				name: sourceName,
@@ -371,6 +422,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 				organizationId
 			};
 		}
+
 		const candidate: ICandidateCreateInput = {
 			user,
 			password,
@@ -382,7 +434,14 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 			tenantId,
 			organizationId
 		};
-		return await firstValueFrom(this.candidatesService.create(candidate));
+
+		try {
+			// Create the candidate using the _candidatesService
+			return await firstValueFrom(this._candidatesService.create(candidate));
+		} catch (error) {
+			// Handle any errors here, e.g., log them or rethrow as needed
+			this._errorHandlingService.handleError(`Failed to create candidate: ${error.message}`);
+		}
 	}
 
 	/**

@@ -1,9 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-
-	JoinColumn,
-	RelationId
-} from 'typeorm';
+import { JoinColumn, RelationId } from 'typeorm';
 import { IsBoolean, IsEnum, IsNotEmpty, IsUUID } from 'class-validator';
 import {
 	IIntegrationEntitySetting,
@@ -16,12 +12,17 @@ import {
 	IntegrationTenant,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmIntegrationEntitySettingRepository } from './repository/mikro-orm-integration-entity-setting.repository';
 
 @MultiORMEntity('integration_entity_setting', { mikroOrmRepository: () => MikroOrmIntegrationEntitySettingRepository })
 export class IntegrationEntitySetting extends TenantOrganizationBaseEntity implements IIntegrationEntitySetting {
-
 	@ApiProperty({ type: () => String, enum: IntegrationEntity })
 	@IsNotEmpty()
 	@IsEnum(IntegrationEntity)
@@ -46,7 +47,7 @@ export class IntegrationEntitySetting extends TenantOrganizationBaseEntity imple
 	@ApiPropertyOptional({ type: () => IntegrationTenant })
 	@MultiORMManyToOne(() => IntegrationTenant, (it) => it.entitySettings, {
 		/** Database cascade action on delete. */
-		onDelete: 'CASCADE',
+		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
 	integration?: IIntegrationTenant;
