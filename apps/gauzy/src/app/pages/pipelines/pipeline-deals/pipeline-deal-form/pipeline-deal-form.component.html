@@ -64,12 +64,10 @@
 				nbButton
 				type="submit"
 				[disabled]="form.invalid || form.disabled"
-				[status]="dealId ? 'info' : 'primary'"
+				[status]="deal?.id ? 'info' : 'primary'"
 			>
-				<nb-icon pack="eva" [icon]="dealId ? 'edit-outline' : 'plus-circle-outline'"></nb-icon>
-				<span>
-					{{ (dealId ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
-				</span>
+				<nb-icon pack="eva" [icon]="deal?.id ? 'edit-outline' : 'plus-circle-outline'"></nb-icon>
+				{{ (deal?.id ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE') | translate }}
 			</button>
 			<button nbButton (click)="cancel()" type="reset" status="danger" class="ml-2">
 				{{ 'BUTTONS.CANCEL' | translate }}

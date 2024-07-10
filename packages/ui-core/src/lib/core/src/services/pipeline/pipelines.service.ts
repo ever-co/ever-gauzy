@@ -33,9 +33,9 @@ export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPi
 	 * @param relations - An array of relation names to include in the response.
 	 * @returns A promise that resolves with the pipeline.
 	 */
-	getById(id: ID, relations: string[] = []): Observable<IPipeline> {
+	getById(id: ID, where?: IPipelineFindInput, relations: string[] = []): Observable<IPipeline> {
 		return this.http.get<IPipeline>(`${this.basePath}/${id}`, {
-			params: toParams({ relations })
+			params: toParams({ where, relations })
 		});
 	}
 

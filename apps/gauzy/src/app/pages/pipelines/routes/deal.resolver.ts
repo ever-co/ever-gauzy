@@ -27,9 +27,7 @@ export class DealResolver implements Resolve<Observable<IDeal | Observable<never
 		}
 
 		const { id: organizationId, tenantId } = this._store.selectedOrganization;
-		const api$ = this._dealsService.getById(dealId, { organizationId, tenantId }, ['client']);
-
-		return from(api$).pipe(
+		return from(this._dealsService.getById(dealId, { organizationId, tenantId }, ['client'])).pipe(
 			catchError((error) => {
 				// Handle and log errors
 				this._errorHandlingService.handleError(error);

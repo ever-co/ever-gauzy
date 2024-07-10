@@ -66,10 +66,7 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 			switchMap(() => {
 				// Extract organization properties
 				const { id: organizationId, tenantId } = this.organization;
-				// Ensure there is a valid organization
-				if (!organizationId) {
-					return of([]); // No valid organization, return false
-				}
+				// Fetch contacts
 				return this._clientsService.getAll([], {
 					organizationId,
 					tenantId
@@ -114,7 +111,10 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 			// Map the deal to the deal property
 			map(({ deal }: Data) => deal),
 			// Tap operator for side effects - setting the form property
-			tap((deal: IDeal) => this.patchFormValue(deal)),
+			tap((deal: IDeal) => {
+				this.deal = deal;
+				this.patchFormValue(deal);
+			}),
 			// Handle component lifecycle to avoid memory leaks
 			untilDestroyed(this)
 		);
@@ -188,6 +188,9 @@ export class PipelineDealFormComponent extends TranslationBaseComponent implemen
 		}
 	}
 
+	/**
+	 * Cancels the form submission.
+	 */
 	cancel() {
 		window.history.back();
 	}

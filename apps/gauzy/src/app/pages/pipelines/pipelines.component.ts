@@ -231,6 +231,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				name: {
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.NAME'),
+					width: '30%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -242,6 +243,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				description: {
 					type: 'string',
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
+					width: '30%',
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent
@@ -253,18 +255,18 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 				stages: {
 					title: this.getTranslation('SM_TABLE.STAGE'),
 					type: 'custom',
-					filter: false,
+					width: '30%',
+					isFilterable: false,
 					renderComponent: StageComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
 					}
 				},
 				status: {
-					filter: false,
-					editor: false,
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
-					width: '5%',
+					isFilterable: false,
+					width: '10%',
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -306,8 +308,7 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 		this.loading = true;
 
 		// Extract organization and tenant information
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		// Create a new ServerDataSource for pipelines
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
@@ -411,15 +412,17 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 			});
 		}
 
+		// Open a dialog to handle manual job application
+		const dialog = this.dialogService.open(DeleteConfirmationComponent, {
+			context: {
+				recordType: this.getTranslation('PIPELINES_PAGE.RECORD_TYPE', this.pipeline)
+			},
+			hasScroll: false
+		});
+
 		try {
-			// Open a confirmation dialog and wait for the result
-			const confirmationResult: 'ok' = await firstValueFrom(
-				this.dialogService.open(DeleteConfirmationComponent, {
-					context: {
-						recordType: this.getTranslation('PIPELINES_PAGE.RECORD_TYPE', this.pipeline)
-					}
-				}).onClose
-			);
+			// Wait for dialog result
+			const confirmationResult = await firstValueFrom(dialog.onClose);
 
 			// If the user confirms, proceed with deletion
 			if ('ok' === confirmationResult) {
@@ -428,14 +431,14 @@ export class PipelinesComponent extends PaginationFilterBaseComponent implements
 
 				// Display a success message
 				this.toastrService.success('TOASTR.MESSAGE.PIPELINE_DELETED', { name: this.pipeline.name });
-
-				// Trigger a refresh for the component and pipelines
-				this._refresh$.next(true);
-				this.pipelines$.next(true);
 			}
 		} catch (error) {
 			// Handle errors using the error handling service
 			this.errorHandlingService.handleError(error);
+		} finally {
+			// Trigger a refresh for the component and pipelines
+			this._refresh$.next(true);
+			this.pipelines$.next(true);
 		}
 	}
 
