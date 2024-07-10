@@ -42,7 +42,8 @@ export class Deal extends TenantOrganizationBaseEntity implements IDeal {
 	@JoinColumn({ name: 'createdByUserId' })
 	createdBy: IUser;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@IsUUID()
 	@ColumnIndex()
 	@RelationId((it: Deal) => it.createdBy)

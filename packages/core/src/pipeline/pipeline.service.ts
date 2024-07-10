@@ -166,7 +166,9 @@ export class PipelineService extends TenantAwareCrudService<Pipeline> {
 				filter.where['description'] = Raw((alias) => `${alias} ${likeOperator} '%${description}%'`);
 			}
 			if (stages) {
-				filter.where['stages']['name'] = Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`);
+				filter.where['stages'] = {
+					name: Raw((alias) => `${alias} ${likeOperator} '%${stages}%'`)
+				};
 			}
 		}
 		return await super.paginate(filter);

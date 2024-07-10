@@ -12,8 +12,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DeepPartial, DeleteResult, UpdateResult } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { ID, IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
@@ -21,7 +20,7 @@ import { PipelineService } from './pipeline.service';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
-import { RelationsQueryDTO } from '../shared/dto';
+import { CreatePipelineDTO, UpdatePipelineDTO } from './dto';
 
 @ApiTags('Pipeline')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -118,7 +117,8 @@ export class PipelineController extends CrudController<Pipeline> {
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Post('/')
-	async create(@Body() entity: DeepPartial<Pipeline>): Promise<IPipeline> {
+	@UseValidationPipe()
+	async create(@Body() entity: CreatePipelineDTO): Promise<IPipeline> {
 		return await this.pipelineService.create(entity);
 	}
 
@@ -146,9 +146,10 @@ export class PipelineController extends CrudController<Pipeline> {
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Put('/:id')
+	@UseValidationPipe()
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() entity: QueryDeepPartialEntity<Pipeline>
+		@Body() entity: UpdatePipelineDTO
 	): Promise<UpdateResult | Pipeline> {
 		return await this.pipelineService.update(id, entity);
 	}

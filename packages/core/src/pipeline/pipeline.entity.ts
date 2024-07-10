@@ -24,17 +24,16 @@ export class Pipeline extends TenantOrganizationBaseEntity implements IPipeline 
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => PipelineStage })
 	@MultiORMOneToMany(() => PipelineStage, (it) => it.pipeline, {
 		cascade: ['insert']
 	})
 	public stages: IPipelineStage[];
+
 	/*
 	|--------------------------------------------------------------------------
 	| EventSubscriber
 	|--------------------------------------------------------------------------
 	*/
-
 	/**
 	 * 	@BeforeInsert
 	 */

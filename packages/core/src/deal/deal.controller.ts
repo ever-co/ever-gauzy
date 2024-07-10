@@ -7,22 +7,22 @@ import {
 	ApiResponse,
 	ApiTags
 } from '@nestjs/swagger';
-import { DeepPartial } from 'typeorm';
 import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Deal } from './deal.entity';
 import { DealService } from './deal.service';
 import { CrudController, OptionParams, PaginationParams } from '../core/crud';
 import { Permissions } from '../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { UUIDValidationPipe } from '../shared/pipes';
+import { UseValidationPipe, UUIDValidationPipe } from '../shared/pipes';
+import { CreateDealDTO } from './dto';
 
 @ApiTags('Deal')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 @Controller()
 export class DealController extends CrudController<Deal> {
-	constructor(private readonly dealService: DealService) {
-		super(dealService);
+	constructor(private readonly _dealService: DealService) {
+		super(_dealService);
 	}
 
 	/**
@@ -39,7 +39,7 @@ export class DealController extends CrudController<Deal> {
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
 	@Get('/')
 	async findAll(@Query() filter: PaginationParams<Deal>): Promise<IPagination<Deal>> {
-		return await this.dealService.findAll(filter);
+		return await this._dealService.findAll(filter);
 	}
 
 	/**
@@ -56,7 +56,7 @@ export class DealController extends CrudController<Deal> {
 	@ApiResponse({ status: 200, description: 'The found deal' })
 	@ApiResponse({ status: 404, description: 'Deal not found' })
 	async findById(@Param('id', UUIDValidationPipe) id: ID, @Query() options: OptionParams<Deal>): Promise<Deal> {
-		return await this.dealService.findById(id, options);
+		return await this._dealService.findById(id, options);
 	}
 
 	/**
@@ -74,8 +74,9 @@ export class DealController extends CrudController<Deal> {
 	@ApiInternalServerErrorResponse({ description: 'Internal server error.' })
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	@Post('/')
-	async create(@Body() entity: DeepPartial<Deal>): Promise<Deal> {
+	@UseValidationPipe()
+	async create(@Body() entity: CreateDealDTO): Promise<Deal> {
 		// Call the create method on the dealService with the provided entity data
-		return await this.dealService.create(entity);
+		return await this._dealService.create(entity);
 	}
 }

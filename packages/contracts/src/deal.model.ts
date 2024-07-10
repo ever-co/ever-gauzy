@@ -17,7 +17,6 @@ export interface IDeal extends IBasePerTenantAndOrganizationEntityModel {
 export type IDealFindInput = Partial<IDealCreateInput>;
 
 export interface IDealCreateInput extends IBasePerTenantAndOrganizationEntityModel {
-	createdByUserId: ID;
 	stageId: ID;
 	clientId?: ID;
 	title: string;
