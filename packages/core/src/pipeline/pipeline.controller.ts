@@ -12,15 +12,15 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { DeepPartial } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from './../core/crud';
+import { DeleteResult, UpdateResult } from 'typeorm';
+import { ID, IDeal, IPagination, IPipeline, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { Pipeline } from './pipeline.entity';
 import { PipelineService } from './pipeline.service';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { CreatePipelineDTO, UpdatePipelineDTO } from './dto';
 
 @ApiTags('Pipeline')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -38,7 +38,7 @@ export class PipelineController extends CrudController<Pipeline> {
 	 * @returns The paginated result of sales pipelines.
 	 */
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.pagination(filter);
@@ -56,26 +56,47 @@ export class PipelineController extends CrudController<Pipeline> {
 		description: 'Found records'
 	})
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
-	@Get()
+	@Get('/')
 	public async findAll(@Query() filter: PaginationParams<Pipeline>): Promise<IPagination<IPipeline>> {
 		return await this.pipelineService.findAll(filter);
 	}
 
 	/**
-	 * Find deals for a specific sales pipeline with permissions, API documentation, and parameter validation.
+	 * Get deals associated with a specific pipeline
 	 *
-	 * @param id - The identifier of the sales pipeline.
-	 * @returns A paginated result of deals for the specified sales pipeline.
+	 * @param pipelineId The ID of the pipeline
+	 * @param options Filter conditions for fetching the deals
+	 * @returns A promise of paginated deals
 	 */
-	@ApiOperation({ summary: 'find deals' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Found records'
-	})
+	@ApiOperation({ summary: 'Get deals for a specific pipeline' })
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 400, description: 'Bad Request' })
+	@ApiResponse({ status: 404, description: 'Not Found' })
 	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
-	@Get(':id/deals')
-	public async findDeals(@Param('id', UUIDValidationPipe) id: string): Promise<IPagination<IDeal>> {
-		return await this.pipelineService.findDeals(id);
+	@Get('/:pipelineId/deals')
+	async getPipelineDeals(
+		@Param('pipelineId', UUIDValidationPipe) pipelineId: ID,
+		@Query() options: OptionParams<Pipeline>
+	): Promise<IPagination<IDeal>> {
+		return await this.pipelineService.getPipelineDeals(pipelineId, options.where);
+	}
+
+	/**
+	 * Find a Pipeline by ID
+	 *
+	 * @param id - The ID of the Pipeline to find
+	 * @returns The found Pipeline
+	 */
+	@ApiOperation({ summary: 'Find a Pipeline by ID' })
+	@ApiResponse({ status: 200, description: 'The found Pipeline' })
+	@ApiResponse({ status: 404, description: 'Pipeline not found' })
+	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@Get('/:id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: OptionParams<Pipeline>
+	): Promise<IPipeline> {
+		return await this.pipelineService.findById(id, options);
 	}
 
 	/**
@@ -95,8 +116,9 @@ export class PipelineController extends CrudController<Pipeline> {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
-	@Post()
-	async create(@Body() entity: DeepPartial<Pipeline>): Promise<IPipeline> {
+	@Post('/')
+	@UseValidationPipe()
+	async create(@Body() entity: CreatePipelineDTO): Promise<IPipeline> {
 		return await this.pipelineService.create(entity);
 	}
 
@@ -123,11 +145,12 @@ export class PipelineController extends CrudController<Pipeline> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
-	@Put(':id')
+	@Put('/:id')
+	@UseValidationPipe()
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: QueryDeepPartialEntity<Pipeline>
-	): Promise<any> {
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() entity: UpdatePipelineDTO
+	): Promise<UpdateResult | Pipeline> {
 		return await this.pipelineService.update(id, entity);
 	}
 
@@ -149,8 +172,8 @@ export class PipelineController extends CrudController<Pipeline> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
-	@Delete(':id')
-	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<any> {
+	@Delete('/:id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.pipelineService.delete(id);
 	}
 }

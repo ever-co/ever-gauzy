@@ -1,10 +1,12 @@
 import { environment } from '@gauzy/config';
-import { ChangelogPlugin } from '@gauzy/changelog-plugin';
-import { JitsuAnalyticsPlugin } from '@gauzy/jitsu-analytics-plugin';
-import { KnowledgeBasePlugin } from '@gauzy/knowledge-base-plugin';
-import { JobProposalPlugin } from '@gauzy/job-proposal-plugin';
-import { JobSearchPlugin } from '@gauzy/job-search-plugin';
-import { IntegrationUpworkPlugin } from '@gauzy/integration-upwork';
+import { ChangelogPlugin } from '@gauzy/plugin-changelog';
+import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
+import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
+import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
+import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
+import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
+import { JobSearchPlugin } from '@gauzy/plugin-job-search';
+import { KnowledgeBasePlugin } from '@gauzy/plugin-knowledge-base';
 import { SentryTracing as SentryPlugin } from './sentry';
 
 const { jitsu, sentry } = environment;
@@ -26,12 +28,16 @@ export const plugins = [
 	}),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
-	// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
-	KnowledgeBasePlugin,
+	// Indicates the inclusion or intention to use the IntegrationGithubPlugin in the codebase.
+	IntegrationGithubPlugin,
+	// Indicates the inclusion or intention to use the IntegrationHubstaffPlugin in the codebase.
+	IntegrationHubstaffPlugin,
+	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
+	IntegrationUpworkPlugin,
 	// Indicates the inclusion or intention to use the JobProposalPlugin in the codebase.
 	JobProposalPlugin,
 	// Indicates the inclusion or intention to use the JobSearchPlugin in the codebase.
 	JobSearchPlugin,
-	// Indicates the inclusion or intention to use the IntegrationUpworkPlugin in the codebase.
-	IntegrationUpworkPlugin
+	// Indicates the inclusion or intention to use the KnowledgeBasePlugin in the codebase.
+	KnowledgeBasePlugin
 ];

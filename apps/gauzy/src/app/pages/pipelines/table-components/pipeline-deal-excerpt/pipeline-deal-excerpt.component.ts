@@ -3,7 +3,7 @@ import { IDeal } from '@gauzy/contracts';
 
 @Component({
 	selector: 'ga-pipeline-excerpt',
-	template: `{{ rowData?.stage.name }}`
+	template: `{{ rowData?.stage?.name }}`
 })
 export class PipelineDealExcerptComponent {
 	@Input()

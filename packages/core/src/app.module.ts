@@ -4,7 +4,6 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ThrottlerBehindProxyGuard } from 'throttler/throttler-behind-proxy.guard';
 import { ServeStaticModule, ServeStaticModuleOptions } from '@nestjs/serve-static';
 import { ClsModule, ClsService } from 'nestjs-cls';
 import { HeaderResolver, I18nModule } from 'nestjs-i18n';
@@ -13,8 +12,8 @@ import * as path from 'path';
 import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
-import { ProbotModule } from '@gauzy/integration-github';
 import { JiraModule } from '@gauzy/integration-jira';
+import { ThrottlerBehindProxyGuard } from './throttler/throttler-behind-proxy.guard';
 import { CoreModule } from './core/core.module';
 import { RequestContext } from './core/context/request-context';
 import { SharedModule } from './shared/shared.module';
@@ -144,7 +143,7 @@ import { TaskEstimationModule } from './tasks/estimation/task-estimation.module'
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 import { SocialAccountModule } from './auth/social-account/social-account.module';
 
-const { unleashConfig, github, jira } = environment;
+const { unleashConfig, jira } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
@@ -295,20 +294,6 @@ if (environment.THROTTLE_ENABLED) {
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		}),
-		// Probot Configuration
-		ProbotModule.forRoot({
-			isGlobal: true,
-			// Webhook URL in GitHub will be: https://api.gauzy.co/api/integration/github/webhook
-			path: 'integration/github/webhook',
-			config: {
-				/** Client Configuration */
-				clientId: github.clientId,
-				clientSecret: github.clientSecret,
-				appId: github.appId,
-				privateKey: github.appPrivateKey,
-				webhookSecret: github.webhookSecret
-			}
 		}),
 		JiraModule.forRoot({
 			isGlobal: true,

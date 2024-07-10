@@ -1,9 +1,9 @@
 import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FileUploader, FileUploaderOptions } from 'ng2-file-upload';
+import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
-import { IImageAsset, IUser } from '@gauzy/contracts';
-import { API_PREFIX, Store } from '@gauzy/ui-core/common';
+import { IImageAsset, IOrganization, IUser } from '@gauzy/contracts';
+import { API_PREFIX, distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { environment } from '@gauzy/ui-config';
 
 @UntilDestroy()
@@ -24,12 +24,13 @@ import { environment } from '@gauzy/ui-config';
 	styleUrls: ['./image-uploader.component.scss']
 })
 export class ImageUploaderComponent implements AfterViewInit, OnInit {
-	user: IUser;
-	uploader: FileUploader;
+	public organization: IOrganization;
+	public user: IUser;
+	public uploader: FileUploader;
 	/*
 	 * Getter & Setter for dynamic file uploader style element
 	 */
-	_styles: Object = {
+	private _styles: Object = {
 		width: '100%',
 		opacity: '0',
 		position: 'absolute',
@@ -46,7 +47,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	/*
 	 * Getter & Setter for dynamic image upload folder
 	 */
-	_folder: string = 'profile_pictures';
+	private _folder: string = 'profile_pictures';
 	get folder(): string {
 		return this._folder;
 	}
@@ -61,6 +62,14 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	constructor(private readonly store: Store) {}
 
 	ngOnInit() {
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
@@ -72,6 +81,9 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	}
 
 	ngAfterViewInit() {
+		this.uploader.onAfterAddingFile = (file) => {
+			file.withCredentials = false;
+		};
 		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
@@ -103,30 +115,45 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 		}
 	}
 
+	/**
+	 * Load settings for the file uploader, including headers and additional form data.
+	 *
+	 * @returns void
+	 */
 	private _loadUploaderSettings() {
 		if (!this.user) {
 			return;
 		}
-		const { token } = this.store;
-		const { tenantId } = this.user;
+		const token = this.store.token;
+		const tenantId = this.user.tenantId;
 
 		const headers: Array<{ name: string; value: string }> = [];
 		headers.push({ name: 'Authorization', value: `Bearer ${token}` });
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 
+		if (!!this.organization) {
+			headers.push({ name: 'Organization-Id', value: `${this.organization.id}` });
+		}
+
 		const uploaderOptions: FileUploaderOptions = {
 			url: environment.API_BASE_URL + `${API_PREFIX}/image-assets/upload/${this.folder}`,
-			// XHR request method
-			method: 'POST',
-			// Upload files automatically upon addition to upload queue
-			autoUpload: true,
-			// Use xhrTransport in favor of iframeTransport
-			isHTML5: true,
-			// Calculate progress independently for each uploaded file
-			removeAfterUpload: true,
-			// XHR request headers
-			headers: headers
+			method: 'POST', // XHR request method
+			autoUpload: true, // Upload files automatically upon addition to upload queue
+			isHTML5: true, // Use xhrTransport in favor of iframeTransport
+			removeAfterUpload: true, // Calculate progress independently for each uploaded file
+			headers: headers // XHR request headers
 		};
 		this.uploader = new FileUploader(uploaderOptions);
+
+		// Adding additional form data
+		this.uploader.onBuildItemForm = (fileItem: FileItem, form) => {
+			if (!!this.store.user.tenantId) {
+				form.append('tenantId', tenantId);
+			}
+
+			if (!!this.organization) {
+				form.append('organizationId', this.organization.id);
+			}
+		};
 	}
 }

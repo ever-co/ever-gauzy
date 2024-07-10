@@ -6,9 +6,7 @@
 			</ngx-header-title>
 		</h4>
 		<div>
-			<ng-template
-				[ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW"
-			>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW">
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/employee'"
@@ -20,9 +18,7 @@
 					{{ 'JOBS.EMPLOYEES' | translate }}
 				</button>
 			</ng-template>
-			<ng-template
-				[ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_MATCHING_VIEW"
-			>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_JOB_MATCHING_VIEW">
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/matching'"
@@ -34,11 +30,7 @@
 					{{ 'JOBS.MATCHINGS' | translate }}
 				</button>
 			</ng-template>
-			<ng-template
-				[ngxPermissionsOnly]="
-					PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW
-				"
-			>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW">
 				<button
 					status="primary"
 					[routerLink]="'/pages/jobs/proposal-template'"
@@ -90,20 +82,12 @@
 			</div>
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
-			<nb-tab
-				[tabId]="JobSearchTabsEnum.ACTIONS"
-				[tabTitle]="'JOBS.BROWSE' | translate"
-			>
-				<ng-container
-					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.ACTIONS"
-				>
+			<nb-tab [tabId]="JobSearchTabsEnum.ACTIONS" [tabTitle]="'JOBS.BROWSE' | translate">
+				<ng-container *ngIf="(nbTab$ | async) === JobSearchTabsEnum.ACTIONS">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab
-				[tabId]="JobSearchTabsEnum.SEARCH"
-				[tabTitle]="'JOBS.SEARCH' | translate"
-			>
+			<nb-tab [tabId]="JobSearchTabsEnum.SEARCH" [tabTitle]="'JOBS.SEARCH' | translate">
 				<div class="job-filters">
 					<div class="advanced-filter">
 						<nb-card>
@@ -114,183 +98,93 @@
 									(keydown.enter)="handleSubmitOnEnter()"
 								>
 									<div class="row">
-										<div
-											class="col-xl-6 col-md-8 col-12 form-group m-0"
-										>
+										<div class="col-xl-6 col-md-8 col-12 form-group m-0">
 											<input
 												nbInput
 												type="text"
 												class="w-100"
-												[placeholder]="
-													'JOBS.JOB_SEARCH'
-														| translate
-												"
+												[placeholder]="'JOBS.JOB_SEARCH' | translate"
 												formControlName="title"
 											/>
 										</div>
 									</div>
 									<div class="row selects mt-3">
-										<div
-											class="col-xl-2 col-lg-3 col-md-6 form-group"
-										>
-											<label
-												class="d-block"
-												for="jobSource"
-											>
-												{{
-													'JOBS.FILTER.SOURCE'
-														| translate
-												}}
+										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
+											<label class="d-block" for="jobSource">
+												{{ 'JOBS.FILTER.SOURCE' | translate }}
 											</label>
 											<nb-select
 												id="jobSource"
-												[placeholder]="
-													'JOBS.FILTER.SOURCE'
-														| translate
-												"
+												[placeholder]="'JOBS.FILTER.SOURCE' | translate"
 												fullWidth
 												multiple
 												formControlName="jobSource"
 											>
 												<nb-option
-													*ngFor="
-														let source of JobPostSourceEnum
-															| keyvalue
-													"
-													[value]="
-														source?.value
-															| lowercase
-													"
+													*ngFor="let source of JobPostSourceEnum | keyvalue"
+													[value]="source?.value | lowercase"
 												>
-													{{
-														'JOBS.' + source.key
-															| translate
-													}}
+													{{ 'JOBS.' + source.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
-										<div
-											class="col-xl-2 col-lg-3 col-md-6 form-group"
-										>
-											<label
-												class="d-block"
-												for="jobType"
-											>
-												{{
-													'JOBS.FILTER.JOB_TYPE'
-														| translate
-												}}
+										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
+											<label class="d-block" for="jobType">
+												{{ 'JOBS.FILTER.JOB_TYPE' | translate }}
 											</label>
 											<nb-select
 												id="jobType"
-												[placeholder]="
-													'JOBS.FILTER.JOB_TYPE'
-														| translate
-												"
+												[placeholder]="'JOBS.FILTER.JOB_TYPE' | translate"
 												fullWidth
 												multiple
 												formControlName="jobType"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostTypeEnum
-															| keyvalue
-													"
-													[value]="
-														type.value | lowercase
-													"
+													*ngFor="let type of JobPostTypeEnum | keyvalue"
+													[value]="type.value | lowercase"
 												>
-													{{
-														'JOBS.' + type.key
-															| translate
-													}}
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
-										<div
-											class="col-xl-2 col-lg-3 col-md-6 form-group"
-										>
-											<label
-												class="d-block"
-												for="jobStatus"
-											>
-												{{
-													'JOBS.FILTER.JOB_STATUS'
-														| translate
-												}}
+										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
+											<label class="d-block" for="jobStatus">
+												{{ 'JOBS.FILTER.JOB_STATUS' | translate }}
 											</label>
 											<nb-select
 												id="jobStatus"
-												[placeholder]="
-													'JOBS.FILTER.JOB_STATUS'
-														| translate
-												"
+												[placeholder]="'JOBS.FILTER.JOB_STATUS' | translate"
 												fullWidth
 												formControlName="jobStatus"
 												[multiple]="true"
 											>
 												<nb-option
-													*ngFor="
-														let type of JobPostStatusEnum
-															| keyvalue
-													"
-													[value]="
-														type.value | lowercase
-													"
+													*ngFor="let type of JobPostStatusEnum | keyvalue"
+													[value]="type.value | lowercase"
 												>
-													{{
-														'JOBS.' + type.key
-															| translate
-													}}
+													{{ 'JOBS.' + type.key | translate }}
 												</nb-option>
 											</nb-select>
 										</div>
-										<div
-											class="col-xl-2 col-lg-3 col-md-6 form-group"
-										>
+										<div class="col-xl-2 col-lg-3 col-md-6 form-group">
 											<label class="d-block" for="budget">
-												{{
-													'JOBS.FILTER.BUDGET'
-														| translate
-												}}
+												{{ 'JOBS.FILTER.BUDGET' | translate }}
 											</label>
 											<nb-select
 												id="budget"
-												[placeholder]="
-													'JOBS.FILTER.BUDGET'
-														| translate
-												"
+												[placeholder]="'JOBS.FILTER.BUDGET' | translate"
 												fullWidth
 												multiple
 												formControlName="budget"
 											>
-												<nb-option
-													[value]="[null, 100]"
-												>
-													{{
-														'JOBS.FILTER.LESS_THAN'
-															| translate
-													}}
+												<nb-option [value]="[null, 100]">
+													{{ 'JOBS.FILTER.LESS_THAN' | translate }}
 													$100
 												</nb-option>
-												<nb-option [value]="[100, 500]">
-													$100 - $500
-												</nb-option>
-												<nb-option
-													[value]="[500, 1000]"
-												>
-													$500 - $1K
-												</nb-option>
-												<nb-option
-													[value]="[1000, 5000]"
-												>
-													$1K - $5K
-												</nb-option>
-												<nb-option
-													[value]="[5000, null]"
-												>
-													$5K+
-												</nb-option>
+												<nb-option [value]="[100, 500]"> $100 - $500 </nb-option>
+												<nb-option [value]="[500, 1000]"> $500 - $1K </nb-option>
+												<nb-option [value]="[1000, 5000]"> $1K - $5K </nb-option>
+												<nb-option [value]="[5000, null]"> $5K+ </nb-option>
 											</nb-select>
 										</div>
 									</div>
@@ -322,9 +216,7 @@
 						</nb-card>
 					</div>
 				</div>
-				<ng-container
-					*ngIf="(nbTab$ | async) === JobSearchTabsEnum.SEARCH"
-				>
+				<ng-container *ngIf="(nbTab$ | async) === JobSearchTabsEnum.SEARCH">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
@@ -344,26 +236,14 @@
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination
-				[source]="smartTableSource"
-			></ngx-pagination>
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 		</ng-container>
 	</div>
 </ng-template>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW']">
 		<div class="btn-group actions">
-			<button
-				status="basic"
-				class="action secondary"
-				size="small"
-				(click)="viewJob()"
-				nbButton
-			>
+			<button status="basic" class="action secondary" size="small" (click)="viewJob()" nbButton>
 				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
 				<span> {{ 'JOBS.VIEW' | translate }} </span>
 			</button>
@@ -437,11 +317,6 @@
 
 <ng-template #sync>
 	<div class="sync-container">
-		<nb-icon
-			class="sync"
-			icon="sync-outline"
-			[ngClass]="{ spin: isRefresh }"
-			size="small"
-		></nb-icon>
+		<nb-icon class="sync" icon="sync-outline" [ngClass]="{ spin: isRefresh }" size="small"></nb-icon>
 	</div>
 </ng-template>

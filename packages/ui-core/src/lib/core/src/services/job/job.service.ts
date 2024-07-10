@@ -8,18 +8,25 @@ import {
 	IEmployeeJobApplicationAppliedResult,
 	IUpdateEmployeeJobPostAppliedResult,
 	IEmployeeJobApplication,
-	IVisibilityJobPostInput
+	IVisibilityJobPostInput,
+	ID,
+	UpdateEmployeeJobsStatistics
 } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-core/common';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class JobService {
-	constructor(private http: HttpClient) {}
+	constructor(private readonly http: HttpClient) {}
 
-	getJobs(request?: IGetEmployeeJobPostInput) {
+	/**
+	 * Fetches job posts based on the given request parameters.
+	 *
+	 * @param request - An optional object of type IGetEmployeeJobPostInput containing filter parameters for fetching job posts.
+	 * @returns A promise that resolves to an IPagination<IEmployeeJobPost> object containing the paginated job posts.
+	 */
+	getJobs(request?: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		return firstValueFrom(
 			this.http.get<IPagination<IEmployeeJobPost>>(`${API_PREFIX}/employee-job`, {
 				params: request ? toParams(request) : {}
@@ -27,17 +34,60 @@ export class JobService {
 		);
 	}
 
-	hideJob(request: IVisibilityJobPostInput) {
+	/**
+	 * Retrieves job statistics for employees based on the provided request parameters.
+	 *
+	 * @param request - Parameters for filtering and retrieving job statistics.
+	 * @returns A promise that resolves with the job statistics data.
+	 */
+	getEmployeeJobsStatistics(request: any): Promise<any> {
+		return firstValueFrom(
+			this.http.get(`${API_PREFIX}/employee-job/statistics`, {
+				params: toParams(request)
+			})
+		);
+	}
+
+	/**
+	 * Updates the job search status and statistics for an employee.
+	 *
+	 * @param id - The ID of the employee.
+	 * @param statistics - An object containing job search status and statistics to be updated.
+	 * @returns A promise that resolves with the updated employee's job search status and statistics.
+	 */
+	updateJobSearchStatus(id: ID, statistics: UpdateEmployeeJobsStatistics): Promise<any> {
+		return firstValueFrom(this.http.put(`${API_PREFIX}/employee-job/${id}/job-search-status`, statistics));
+	}
+
+	/**
+	 * Hides a job post based on the given request parameters.
+	 *
+	 * @param request - An object of type IVisibilityJobPostInput containing the necessary parameters to hide a job post.
+	 * @returns A promise that resolves to a boolean indicating whether the job post was successfully hidden.
+	 */
+	hideJob(request: IVisibilityJobPostInput): Promise<boolean> {
 		return firstValueFrom(this.http.post<boolean>(`${API_PREFIX}/employee-job/hide`, request));
 	}
 
-	updateApplied(request: IEmployeeJobApplication) {
+	/**
+	 * Updates the application status of a job post.
+	 *
+	 * @param request - An object of type IEmployeeJobApplication containing the necessary parameters to update the application status of a job post.
+	 * @returns A promise that resolves to an IUpdateEmployeeJobPostAppliedResult object containing the result of the update operation.
+	 */
+	updateApplied(request: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult> {
 		return firstValueFrom(
 			this.http.post<IUpdateEmployeeJobPostAppliedResult>(`${API_PREFIX}/employee-job/updateApplied`, request)
 		);
 	}
 
-	applyJob(request: IEmployeeJobApplication) {
+	/**
+	 * Applies for a job post based on the given request parameters.
+	 *
+	 * @param request - An object of type IEmployeeJobApplication containing the necessary parameters to apply for a job post.
+	 * @returns A promise that resolves to an IEmployeeJobApplicationAppliedResult object containing the result of the application operation.
+	 */
+	applyJob(request: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult> {
 		return firstValueFrom(
 			this.http.post<IEmployeeJobApplicationAppliedResult>(`${API_PREFIX}/employee-job/apply`, request)
 		);

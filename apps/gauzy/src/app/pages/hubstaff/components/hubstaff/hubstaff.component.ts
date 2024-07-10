@@ -3,7 +3,7 @@ import { TitleCasePipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap, tap, catchError, finalize, map } from 'rxjs/operators';
-import { IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
+import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { Observable, of, firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -29,8 +29,8 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	organization: IOrganization;
 	selectedProjects: IHubstaffProject[] = [];
 	loading: boolean;
-	integrationId: string;
-	supportContextActions: NbMenuItem[];
+	integrationId: ID;
+	menus: NbMenuItem[] = [];
 
 	constructor(
 		private readonly _router: Router,
@@ -49,7 +49,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 
 	ngOnInit() {
 		this._loadSettingsSmartTable();
-		this._loadActions();
+		this._loadMenus();
 		this._applyTranslationOnSmartTable();
 		this._setTokenAndLoadOrganizations();
 
@@ -75,6 +75,9 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 
 	ngOnDestroy(): void {}
 
+	/**
+	 *
+	 */
 	private _setTokenAndLoadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
 		this._hubstaffService.getIntegration(this.integrationId).pipe(untilDestroyed(this)).subscribe();
@@ -91,13 +94,9 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		);
 	}
 
-	private _applyTranslationOnSmartTable() {
-		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
-			this._loadSettingsSmartTable();
-			this._loadActions();
-		});
-	}
-
+	/**
+	 *
+	 */
 	private _loadSettingsSmartTable() {
 		this.settingsSmartTable = {
 			selectedRowIndex: -1,
@@ -111,11 +110,13 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			columns: {
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				description: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
-					type: 'string'
+					type: 'string',
+					filter: false
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),
@@ -126,10 +127,19 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		};
 	}
 
+	/**
+	 *
+	 * @param organization
+	 */
 	selectOrganization(organization) {
 		this.projects$ = organization ? this._fetchProjects(organization) : of([]);
 	}
 
+	/**
+	 *
+	 * @param organization
+	 * @returns
+	 */
 	private _fetchProjects(organization) {
 		this.loading = true;
 		return this._hubstaffService.getProjects(organization.id, this.integrationId).pipe(
@@ -142,10 +152,18 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		);
 	}
 
+	/**
+	 *
+	 * @param param0
+	 */
 	selectProject({ selected }) {
 		this.selectedProjects = selected;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	syncProjects() {
 		if (!this.organization) {
 			return;
@@ -169,6 +187,10 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			.subscribe();
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	autoSync() {
 		if (!this.organization) {
 			return;
@@ -198,6 +220,10 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			.subscribe();
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	async setSettings() {
 		const dialog = this._dialogService.open(SettingsDialogComponent, {
 			context: {}
@@ -223,8 +249,11 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 			.subscribe();
 	}
 
-	private _loadActions() {
-		this.supportContextActions = [
+	/**
+	 *
+	 */
+	private _loadMenus() {
+		this.menus = [
 			{
 				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
 				icon: 'text-outline',
@@ -235,6 +264,21 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				icon: 'settings-2-outline'
 			}
 		];
+	}
+
+	/**
+	 *
+	 */
+	private _applyTranslationOnSmartTable() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => {
+					this._loadSettingsSmartTable();
+					this._loadMenus();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

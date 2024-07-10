@@ -1,5 +1,5 @@
 {
-	"name": "@gauzy/changelog-plugin",
+	"name": "@gauzy/plugin-changelog",
 	"version": "0.1.0",
 	"description": "Ever Gauzy Platform Change Log plugin",
 	"author": {

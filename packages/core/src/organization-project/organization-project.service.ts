@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { isNotEmpty } from '@gauzy/common';
 import {
+	ID,
 	IEmployee,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationProjectsFindInput,
 	IPagination
 } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { getConfig } from '@gauzy/config';
+import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
-import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
+import { MikroOrmOrganizationProjectRepository, TypeOrmOrganizationProjectRepository } from './repository';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
@@ -60,15 +61,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
 				if (isNotEmpty(organizationContactId)) {
-					query.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
+					qb.andWhere(`${query.alias}.organizationContactId = :organizationContactId`, {
 						organizationContactId
 					});
 				}
 
 				if (isNotEmpty(organizationTeamId)) {
-					query.andWhere(`project_team.id = :organizationTeamId`, {
-						organizationTeamId
-					});
+					qb.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
 				}
 			})
 		);
@@ -120,12 +119,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 */
 	public async getProjectsByGithubRepository(
 		repositoryId: IOrganizationGithubRepository['repositoryId'],
-		options: {
-			organizationId: IOrganizationGithubRepository['id'];
-			tenantId: IOrganizationGithubRepository['tenantId'];
-			integrationId: IOrganizationGithubRepository['integrationId'];
-			projectId?: IOrganizationProject['id'];
-		}
+		options: { organizationId: ID; tenantId: ID; integrationId: ID; projectId?: ID }
 	): Promise<IOrganizationProject[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
@@ -137,14 +131,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					...(projectId ? { id: projectId } : {}),
 					organizationId,
 					tenantId,
-					repository: {
-						repositoryId,
-						integrationId,
-						organizationId,
-						tenantId,
-						isActive: true,
-						isArchived: false,
-						hasSyncEnabled: true
+					customFields: {
+						repository: {
+							repositoryId,
+							integrationId,
+							organizationId,
+							tenantId,
+							isActive: true,
+							isArchived: false,
+							hasSyncEnabled: true
+						}
 					},
 					isActive: true,
 					isArchived: false
@@ -157,6 +153,72 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	}
 
 	/**
+	 * Adds custom joins and selects based on the presence of custom fields.
+	 *
+	 * @param query - The TypeORM query builder instance.
+	 * @param customFields - The array of custom fields.
+	 * @returns The modified query builder instance.
+	 */
+	addCustomFieldJoins<T>(
+		query: SelectQueryBuilder<T>,
+		customFields: CustomEmbeddedFieldConfig[]
+	): SelectQueryBuilder<T> {
+		const hasRepositoryField = customFields.some((field: CustomEmbeddedFieldConfig) => field.name === 'repository');
+
+		if (hasRepositoryField) {
+			// Join with the `Repository` entity and left join with `Issue` entity
+			query.innerJoinAndSelect(`${query.alias}.customFields.repository`, 'repository');
+			query.leftJoin('repository.issues', 'issue');
+
+			// Select and count issues, and group the result by project and repository
+			query.addSelect('COUNT(issue.id)', 'issueCount');
+			query.groupBy(`${query.alias}.id, repository.id`);
+		}
+
+		return query;
+	}
+
+	/**
+	 * Adds custom where conditions based on provided options and tenant ID.
+	 *
+	 * @param query - The TypeORM query builder instance.
+	 * @param tenantId - The tenant ID to be used in the where conditions.
+	 * @param options - Additional options containing where conditions.
+	 * @returns The modified query builder instance.
+	 */
+	addWhereConditions<T>(
+		query: SelectQueryBuilder<T>,
+		options?: { where?: Record<string, any> }
+	): SelectQueryBuilder<T> {
+		const tenantId = RequestContext.currentTenantId();
+
+		// Define where conditions for the query
+		query.where((qb: SelectQueryBuilder<OrganizationProject>) => {
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+
+			// Conditionally add repository tenantId condition only if repository is joined
+			if (query.expressionMap.joinAttributes.some((ja) => ja.alias.name === 'repository')) {
+				qb.andWhere(p(`"repository"."tenantId" = :tenantId`), { tenantId });
+			}
+
+			if (options?.where) {
+				for (const key of Object.keys(options.where)) {
+					qb.andWhere(p(`"${qb.alias}"."${key}" = :${key}`), { [key]: options.where[key] });
+
+					// Conditionally add where conditions for repository if it's joined
+					if (query.expressionMap.joinAttributes.some((ja) => ja.alias.name === 'repository')) {
+						qb.andWhere(p(`"repository"."${key}" = :${key}`), { [key]: options.where[key] });
+					}
+				}
+			}
+
+			qb.andWhere(p(`"${qb.alias}"."repositoryId" IS NOT NULL`));
+		});
+
+		return query;
+	}
+
+	/**
 	 * Find synchronized organization projects with options and count their associated issues.
 	 *
 	 * @param options - Query and pagination options (optional).
@@ -165,6 +227,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async findSyncedProjects(
 		options?: PaginationParams<OrganizationProject>
 	): Promise<IPagination<OrganizationProject>> {
+		// Get the list of custom fields for the specified entity, defaulting to an empty array if none are found
+		const customFields = getConfig().customFields?.['OrganizationProject'] ?? [];
+
 		// Create a query builder for the `OrganizationProject` entity
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
@@ -172,35 +237,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		query.skip(options && options.skip ? options.take * (options.skip - 1) : 0);
 		query.take(options && options.take ? options.take : 10);
 
-		// Join with the `Repository` entity and left join with `Issue` entity
-		query.innerJoinAndSelect(`${query.alias}.repository`, 'repository');
-		query.leftJoin('repository.issues', 'issue');
+		// Conditionally add joins based on custom fields
+		this.addCustomFieldJoins(query, customFields);
 
-		// Select and count issues, and group the result by project and repository
-		query.addSelect('COUNT(issue.id)', 'issueCount');
-		query.groupBy(`${query.alias}.id, repository.id`);
-
-		// Define where conditions for the query
-		query.where((qb: SelectQueryBuilder<OrganizationProject>) => {
-			const tenantId = RequestContext.currentTenantId();
-			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), {
-				tenantId
-			});
-			qb.andWhere(p(`"repository"."tenantId" = :tenantId`), {
-				tenantId
-			});
-
-			if (options?.where) {
-				for (const key of Object.keys(options.where)) {
-					qb.andWhere(p(`"${query.alias}"."${key}" = :${key}`), { [key]: options.where[key] });
-				}
-				for (const key of Object.keys(options.where)) {
-					qb.andWhere(p(`"repository"."${key}" = :${key}`), { [key]: options.where[key] });
-				}
-			}
-
-			qb.andWhere(p(`"${query.alias}"."repositoryId" IS NOT NULL`));
-		});
+		// Add where conditions
+		this.addWhereConditions(query, options);
 
 		// Log the SQL query (for debugging)
 		// console.log(await query.getRawMany());

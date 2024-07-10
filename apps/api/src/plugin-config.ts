@@ -13,7 +13,7 @@ import {
 	environment,
 	dbKnexConnectionConfig
 } from '@gauzy/config';
-import { SentryService } from '@gauzy/sentry-plugin';
+import { SentryService } from '@gauzy/plugin-sentry';
 import { SentryTracing as SentryPlugin } from './sentry';
 import { version } from './../version';
 import { plugins } from './plugins';

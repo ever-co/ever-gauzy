@@ -1,13 +1,11 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()">
-	<nb-card class="card-scroll">
+	<nb-card class="card-scroll" *ngIf="pipeline$ | async as pipeline">
 		<nb-card-header style="display: flex">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
 				{{
-					(dealId
-						? 'PIPELINE_DEAL_EDIT_PAGE.HEADER'
-						: 'PIPELINE_DEAL_CREATE_PAGE.HEADER'
-					) | translate: pipeline
+					((deal$ | async) ? 'PIPELINE_DEAL_EDIT_PAGE.HEADER' : 'PIPELINE_DEAL_CREATE_PAGE.HEADER')
+						| translate : pipeline
 				}}
 			</h4>
 		</nb-card-header>
@@ -17,101 +15,76 @@
 					<label class="label" for="title">
 						{{ 'SM_TABLE.TITLE' | translate }}
 					</label>
-					<input
-						nbInput
-						type="text"
-						formControlName="title"
-						placeholder="{{ 'SM_TABLE.TITLE' | translate }}"
-					/>
+					<input nbInput type="text" formControlName="title" [placeholder]="'SM_TABLE.TITLE' | translate" />
 				</div>
 			</nb-form-field>
 			<nb-form-field>
 				<div class="form-group">
 					<label class="label" for="stageId">
-						{{
-							'PIPELINE_DEAL_CREATE_PAGE.SELECT_STAGE' | translate
-						}}
+						{{ 'PIPELINE_DEAL_CREATE_PAGE.SELECT_STAGE' | translate }}
 					</label>
 					<nb-select formControlName="stageId">
-						<nb-option
-							*ngFor="let stage of pipeline?.stages"
-							[value]="stage.id"
-						>
+						<nb-option *ngFor="let stage of pipeline?.stages" [value]="stage.id">
 							{{ stage.name }}
 						</nb-option>
 					</nb-select>
 				</div>
 			</nb-form-field>
-
 			<nb-form-field>
 				<div class="form-group">
 					<label class="label" for="client">
-						{{
-							'PIPELINE_DEAL_CREATE_PAGE.SELECT_CLIENT'
-								| translate
-						}}
+						{{ 'PIPELINE_DEAL_CREATE_PAGE.SELECT_CLIENT' | translate }}
 					</label>
-					<nb-select
-						formControlName="clientId"
-						placeholder="Clients"
-						[selected]="selectedClient"
-					>
-						<nb-option *ngFor="let cl of clients" [value]="cl.id">
-							{{ cl.name }}
+					<nb-select formControlName="clientId" placeholder="Clients" [selected]="selectedClient">
+						<nb-option *ngFor="let client of clients$ | async" [value]="client.id">
+							{{ client.name }}
 						</nb-option>
 					</nb-select>
 				</div>
 			</nb-form-field>
-
 			<nb-form-field>
 				<div class="form-group">
 					<label class="label" for="probability">
-						{{
-							'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate
-						}}
+						{{ 'PIPELINE_DEAL_CREATE_PAGE.PROBABILITY' | translate }}
 					</label>
 					<nb-select
 						formControlName="probability"
 						placeholder="(0-low / 5-high)"
 						[selected]="selectedProbability"
 					>
-						<nb-option
-							*ngFor="let pr of probabilities"
-							[value]="pr"
-						>
-							{{ pr }}
+						<nb-option *ngFor="let probability of probabilities" [value]="probability">
+							{{ probability }}
 						</nb-option>
 					</nb-select>
 				</div>
 			</nb-form-field>
 		</nb-card-body>
-		<nb-card-footer class="text-right">
-			<button
-				nbButton
-				type="submit"
-				[disabled]="form.invalid || form.disabled"
-				[status]="dealId ? 'info' : 'primary'"
-			>
-				<nb-icon
-					pack="eva"
-					[icon]="dealId ? 'edit-outline' : 'plus-circle-outline'"
-				></nb-icon>
-				<span>
-					{{
-						(dealId ? 'BUTTONS.UPDATE' : 'BUTTONS.CREATE')
-							| translate
-					}}
-				</span>
-			</button>
-			<button
-				nbButton
-				(click)="cancel()"
-				type="reset"
-				status="danger"
-				class="ml-2"
-			>
+		<nb-card-footer class="text-left">
+			<button nbButton type="button" (click)="cancel()" status="basic" class="ml-2">
 				{{ 'BUTTONS.CANCEL' | translate }}
 			</button>
+			<ng-template [ngIf]="deal?.id" [ngIfElse]="createButtonTemplate">
+				<button
+					type="submit"
+					nbButton
+					status="info"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
+					<span [innerHTML]="'BUTTONS.UPDATE' | translate"></span>
+				</button>
+			</ng-template>
+			<ng-template #createButtonTemplate>
+				<button
+					type="submit"
+					nbButton
+					status="primary"
+					[disabled]="form.invalid || form.disabled"
+					class="mr-3 ml-3"
+				>
+					<span [innerHTML]="'BUTTONS.CREATE' | translate"></span>
+				</button>
+			</ng-template>
 		</nb-card-footer>
 	</nb-card>
 </form>

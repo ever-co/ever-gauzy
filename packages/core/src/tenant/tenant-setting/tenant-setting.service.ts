@@ -4,11 +4,11 @@ import { FindManyOptions, In } from 'typeorm';
 import { indexBy, keys, object, pluck } from 'underscore';
 import { S3Client, CreateBucketCommand, CreateBucketCommandInput, CreateBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ITenantSetting, IWasabiFileStorageProviderConfig } from '@gauzy/contracts';
-import { TenantSetting } from './tenant-setting.entity';
 import { TenantAwareCrudService } from './../../core/crud';
+import { MultiORMEnum, parseTypeORMFindToMikroOrm } from '../../core/utils';
+import { TenantSetting } from './tenant-setting.entity';
 import { TypeOrmTenantSettingRepository } from './repository/type-orm-tenant-setting.repository';
 import { MikroOrmTenantSettingRepository } from './repository/mikro-orm-tenant-setting.repository';
-import { MultiORMEnum, parseTypeORMFindToMikroOrm } from 'core/utils';
 
 @Injectable()
 export class TenantSettingService extends TenantAwareCrudService<TenantSetting> {

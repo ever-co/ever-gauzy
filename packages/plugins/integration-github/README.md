@@ -2,10 +2,10 @@
 
 This library was generated with [Nx](https://nx.dev).
 
+## Building
+
+Run `yarn run build` to build the library.
+
 ## Running unit tests
 
-Run `ng test integration-github` to execute the unit tests via [Jest](https://jestjs.io).
-
-## Credits
-
-In this plugin, we used code from https://github.com/yieldbits/nestjs (MIT license, https://github.com/yieldbits/nestjs/blob/main/LICENSE).
+Run `yarn run test:e2e` to execute the unit tests via [Jest](https://jestjs.io).

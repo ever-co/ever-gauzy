@@ -103,6 +103,7 @@ export * from './role-permission.model';
 export * from './role.model';
 export * from './screenshot.model';
 export * from './seed.model';
+export * from './shared-types';
 export * from './skill-entity.model';
 export * from './sms.model';
 export * from './social-account.model';

@@ -51,11 +51,11 @@ export class IntegrationAIModule implements NestModule {
 				method: RequestMethod.POST
 			},
 			{
-				path: '/employee/job-statistics',
+				path: '/employee-job/statistics',
 				method: RequestMethod.GET
 			},
 			{
-				path: '/employee/:id/job-search-status',
+				path: '/employee-job/:id/job-search-status',
 				method: RequestMethod.PUT
 			},
 			{

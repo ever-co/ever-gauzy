@@ -23,11 +23,3 @@ export interface Type<T = any> extends Function {
 	 */
 	new (...args: any[]): T;
 }
-
-/**
- * Represents an object with custom fields.
- * @template T - Type of the custom fields.
- */
-export interface CustomFieldsObject<T = any> {
-	[key: string]: T;
-}

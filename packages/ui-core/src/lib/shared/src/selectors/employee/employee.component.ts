@@ -290,18 +290,23 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 *
-	 * @param employee
+	 * Selects an employee and performs necessary actions based on selection
+	 * @param employee The employee to select
 	 */
 	async selectEmployee(employee: ISelectedEmployee) {
-		if (!this.skipGlobalChange) {
-			this._store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-			await this.setAttributesToParams({ employeeId: employee?.id });
-		} else {
-			this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
-		}
-		if (isNotEmpty(employee)) {
-			this.selectionChanged.emit(employee);
+		try {
+			if (!this.skipGlobalChange) {
+				this._store.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+				await this.setAttributesToParams({ employeeId: employee?.id });
+			} else {
+				this.selectedEmployee = employee || ALL_EMPLOYEES_SELECTED;
+			}
+
+			if (isNotEmpty(employee)) {
+				this.selectionChanged.emit(employee);
+			}
+		} catch (error) {
+			console.error('Error while selecting employee:', error);
 		}
 	}
 
@@ -314,13 +319,17 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 *
-	 * @param employeeId
+	 * Selects an employee by their ID and performs necessary actions based on the selection
+	 * @param employeeId The ID of the employee to select
 	 */
 	async selectEmployeeById(employeeId: string) {
-		const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
-		if (employee) {
-			await this.selectEmployee(employee);
+		try {
+			const employee = this.people.find((employee: ISelectedEmployee) => employeeId === employee.id);
+			if (employee) {
+				await this.selectEmployee(employee);
+			}
+		} catch (error) {
+			console.error('Error while selecting employee by ID:', error);
 		}
 	}
 
@@ -349,15 +358,20 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	}
 
 	/**
-	 *
+	 * Handles the selection of an employee based on certain conditions
 	 */
 	private onSelectEmployee() {
-		if (!this.selectedEmployee && isNotEmpty(this.people)) {
-			// This is so selected employee doesn't get reset when it's already set from somewhere else
-			this.selectEmployee(this.people[0]);
-		}
-		if (!this.defaultSelected && this.selectedEmployee === ALL_EMPLOYEES_SELECTED) {
-			this.selectedEmployee = null;
+		try {
+			if (!this.selectedEmployee && isNotEmpty(this.people)) {
+				// Ensure selected employee doesn't get reset when already set elsewhere
+				this.selectEmployee(this.people[0]);
+			}
+
+			if (!this.defaultSelected && this.selectedEmployee === ALL_EMPLOYEES_SELECTED) {
+				this.selectedEmployee = null;
+			}
+		} catch (error) {
+			console.error('Error while handling employee selection:', error);
 		}
 	}
 
@@ -400,7 +414,7 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 					firstName: employee.user.firstName,
 					lastName: employee.user.lastName,
 					fullName: employee.user.name,
-					imageUrl: employee.user.imageUrl,
+					imageUrl: employee.user.image?.fullUrl || employee.user.imageUrl,
 					shortDescription: employee.short_description,
 					employeeLevel: employee.employeeLevel,
 					billRateCurrency: employee.billRateCurrency,
@@ -421,12 +435,6 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
 		}
 	};
-
-	ngOnDestroy() {
-		if (this.people.length > 0 && !this._store.selectedEmployee && !this.skipGlobalChange) {
-			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
-		}
-	}
 
 	/**
 	 * Display clearable option in employee selector
@@ -466,4 +474,10 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 			this._toastrService.error(error);
 		}
 	};
+
+	ngOnDestroy() {
+		if (this.people.length > 0 && !this._store.selectedEmployee && !this.skipGlobalChange) {
+			this._store.selectedEmployee = this.people[0] || ALL_EMPLOYEES_SELECTED;
+		}
+	}
 }
