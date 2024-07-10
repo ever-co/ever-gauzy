@@ -1,14 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	UseInterceptors,
-	Delete,
-	Param,
-	Query
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, UseInterceptors, Delete, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
@@ -16,10 +6,10 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import { v4 as uuid } from 'uuid';
 import * as Jimp from 'jimp';
-import { ImageAnalysisResult } from '@gauzy/integration-ai';
 import { IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
-import { Screenshot } from './screenshot.entity';
-import { ScreenshotService } from './screenshot.service';
+import { EventBus } from '../../event-bus/event-bus';
+import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
+import { BaseEntityEventTypeEnum } from '../../event-bus/base-entity-event';
 import { RequestContext } from './../../core/context';
 import { FileStorage, UploadedFileStorage } from '../../core/file-storage';
 import { tempFile } from '../../core/utils';
@@ -28,19 +18,26 @@ import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
+import { Screenshot } from './screenshot.entity';
+import { ScreenshotService } from './screenshot.service';
+import { ScreenshotAnalysisService } from './screenshot-analysis.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(private readonly _screenshotService: ScreenshotService) { }
+	constructor(
+		private readonly _screenshotService: ScreenshotService,
+		private readonly _screenshotAnalysisService: ScreenshotAnalysisService,
+		private readonly _eventBus: EventBus
+	) {}
 
 	/**
-	 *
-	 * @param entity
-	 * @param file
-	 * @returns
+	 * Create start/stop screenshot.
+	 * @param input The screenshot input data.
+	 * @param file The uploaded file data.
+	 * @returns The created screenshot entity.
 	 */
 	@ApiOperation({ summary: 'Create start/stop screenshot.' })
 	@ApiResponse({
@@ -151,33 +148,12 @@ export class ScreenshotController {
 			const screenshot = await this._screenshotService.create(entity);
 			console.log(`Screenshot created for employee (${user.name})`, screenshot);
 
-			// Analyze image using Gauzy AI service
-			this._screenshotService.analyzeScreenshot(
-				screenshot,
-				data,
-				file,
-				async (result: ImageAnalysisResult['data']['analysis']) => {
-					try {
-						if (result) {
-							const [analysis] = result;
-							console.log(`Screenshot analyze response: %s`, analysis);
+			// Publish the screenshot created event
+			const ctx = RequestContext.currentRequestContext(); // Get current request context;
+			const event = new ScreenshotEvent(ctx, screenshot, BaseEntityEventTypeEnum.CREATED, input, data, file);
+			this._eventBus.publish(event); // Publish the event using EventBus
 
-							const isWorkRelated = analysis.work;
-							const description = analysis.description || '';
-							const apps = analysis.apps || [];
-
-							await this._screenshotService.update(screenshot.id, {
-								isWorkRelated,
-								description,
-								apps
-							});
-						}
-					} catch (error) {
-						console.error(`Error while analyzing screenshot for employee (${user.name})`, error);
-					}
-				}
-			);
-
+			// Find screenshot by ID
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
 			console.error(`Error while creating screenshot for employee (${user.name})`, error);

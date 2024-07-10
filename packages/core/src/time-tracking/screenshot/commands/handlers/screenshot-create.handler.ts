@@ -10,40 +10,36 @@ import { TimeSlotService } from './../../../time-slot/time-slot.service';
 import { RequestContext } from './../../../../core/context';
 
 @CommandHandler(ScreenshotCreateCommand)
-export class ScreenshotCreateHandler
-	implements ICommandHandler<ScreenshotCreateCommand> {
-
+export class ScreenshotCreateHandler implements ICommandHandler<ScreenshotCreateCommand> {
 	constructor(
 		private readonly _screenshotService: ScreenshotService,
 		private readonly _timeSlotService: TimeSlotService,
 		private readonly _commandBus: CommandBus
 	) {}
 
+	/**
+	 *
+	 * @param command
+	 * @returns
+	 */
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
 		try {
 			const { input } = command;
-			const {
-				file,
-				thumb,
-				recordedAt,
-				activityTimestamp,
-				employeeId,
-				organizationId
-			} = input;
+			const { file, thumb, recordedAt, activityTimestamp, employeeId, organizationId } = input;
 			const tenantId = RequestContext.currentTenantId();
 
 			const startedAt = moment(moment.utc(activityTimestamp).format('YYYY-MM-DD HH:mm:ss')).toDate();
-			const stoppedAt = moment(moment.utc(activityTimestamp).add(10, 'minutes').format('YYYY-MM-DD HH:mm:ss')).toDate();
+			const stoppedAt = moment(
+				moment.utc(activityTimestamp).add(10, 'minutes').format('YYYY-MM-DD HH:mm:ss')
+			).toDate();
 
 			let timeSlot: ITimeSlot;
 			try {
-				timeSlot = await this._timeSlotService.findOneByOptions({
-					where: {
-						employeeId,
-						organizationId,
-						tenantId,
-						startedAt: Between<Date>(startedAt, stoppedAt),
-					}
+				timeSlot = await this._timeSlotService.findOneByWhereOptions({
+					employeeId,
+					organizationId,
+					tenantId,
+					startedAt: Between<Date>(startedAt, stoppedAt)
 				});
 			} catch (error) {
 				timeSlot = await this._commandBus.execute(
@@ -66,10 +62,14 @@ export class ScreenshotCreateHandler
 				file,
 				thumb,
 				recordedAt,
-				organizationId
+				organizationId,
+				tenantId
 			});
 		} catch (error) {
-			throw new BadRequestException(error, `Can'\t create ${IntegrationEntity.SCREENSHOT} for ${IntegrationEntity.TIME_SLOT}`);
+			throw new BadRequestException(
+				error,
+				`Can'\t create ${IntegrationEntity.SCREENSHOT} for ${IntegrationEntity.TIME_SLOT}`
+			);
 		}
 	}
 }
