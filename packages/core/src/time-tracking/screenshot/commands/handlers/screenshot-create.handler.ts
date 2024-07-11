@@ -2,7 +2,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { Between } from 'typeorm';
 import * as moment from 'moment';
-import { IntegrationEntity, ITimeSlot } from '@gauzy/contracts';
+import { ITimeSlot } from '@gauzy/contracts';
 import { TimeSlotCreateCommand } from './../../../time-slot/commands';
 import { ScreenshotCreateCommand } from './../screenshot-create.command';
 import { ScreenshotService } from './../../../screenshot/screenshot.service';
@@ -18,9 +18,12 @@ export class ScreenshotCreateHandler implements ICommandHandler<ScreenshotCreate
 	) {}
 
 	/**
+	 * Handles the creation of a screenshot and associates it with a time slot.
+	 * If a time slot does not exist for the given timestamp, a new time slot is created.
 	 *
-	 * @param command
-	 * @returns
+	 * @param {ScreenshotCreateCommand} command - The command containing the data required for screenshot creation.
+	 * @returns {Promise<any>} - The created screenshot entity or an error if the process fails.
+	 * @throws {BadRequestException} - Throws an exception if screenshot creation fails.
 	 */
 	public async execute(command: ScreenshotCreateCommand): Promise<any> {
 		try {
@@ -56,7 +59,6 @@ export class ScreenshotCreateHandler implements ICommandHandler<ScreenshotCreate
 					})
 				);
 			}
-
 			return await this._screenshotService.create({
 				timeSlot,
 				file,
@@ -66,10 +68,7 @@ export class ScreenshotCreateHandler implements ICommandHandler<ScreenshotCreate
 				tenantId
 			});
 		} catch (error) {
-			throw new BadRequestException(
-				error,
-				`Can'\t create ${IntegrationEntity.SCREENSHOT} for ${IntegrationEntity.TIME_SLOT}`
-			);
+			throw new BadRequestException(error, `Unable to create screenshot for the specified time slot.`);
 		}
 	}
 }
