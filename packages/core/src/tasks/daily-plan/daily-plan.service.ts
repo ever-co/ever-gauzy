@@ -272,7 +272,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	async removeTaskFromManyPlans(taskId: ITask['id'], input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const { employeeId, organizationId } = input;
+			const { employeeId, plansIds, organizationId } = input;
 			const currentDate = new Date().toISOString().split('T')[0];
 
 			// Initial query
@@ -291,13 +291,21 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Find condition must include only today and future plans. We cannot delete tasks from past plans
 			query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
 
-			query.andWhere((qb: SelectQueryBuilder<any>) => {
-				const subQuery = qb.subQuery();
-				subQuery.select(p('"daily_plan_task"."dailyPlanId"')).from(p('daily_plan_task'), p('daily_plan_task'));
-				subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+			// If the user send specific plan ids, then delete the task from those plans.
+			// Otherwise, delete the task from all future and today plans to those it belongs
+			if (plansIds.length > 0) {
+				query.andWhere(p(`${query.alias}.id IN (:...plansIds)`), { plansIds });
+			} else {
+				query.andWhere((qb: SelectQueryBuilder<any>) => {
+					const subQuery = qb.subQuery();
+					subQuery
+						.select(p('"daily_plan_task"."dailyPlanId"'))
+						.from(p('daily_plan_task'), p('daily_plan_task'));
+					subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
 
-				return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
-			});
+					return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
+				});
+			}
 
 			const dailyPlansToUpdate = await query.getMany();
 
