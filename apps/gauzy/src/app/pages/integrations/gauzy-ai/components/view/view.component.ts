@@ -7,7 +7,6 @@ import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	HttpStatus,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
@@ -42,8 +41,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public isIntegrationAISettingsEdit: boolean = false;
 
 	constructor(
-		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _replacePipe: ReplacePipe,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
