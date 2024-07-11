@@ -25,11 +25,11 @@ const routes: Routes = [
 				path: '', // Child route for the default page
 				component: GauzyAIAuthorizationComponent, // Component for the default page
 				data: {
-					integration: IntegrationEnum.GAUZY_AI, // Custom data associated with this route
+					integration: IntegrationEnum.GAUZY_AI // Custom data associated with this route
 				},
 				resolve: {
-					integration: IntegrationResolver, // Resolver to fetch data before activating the route
-				},
+					integration: IntegrationResolver // Resolver to fetch data before activating the route
+				}
 			},
 			{
 				path: 'reset', // Separate route for the reset page
@@ -58,14 +58,14 @@ const routes: Routes = [
 						employee: false,
 						date: false
 					}
-				},
-			},
+				}
+			}
 		]
-	},
+	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class GauzyAIRoutingModule { }
+export class GauzyAIRoutingModule {}

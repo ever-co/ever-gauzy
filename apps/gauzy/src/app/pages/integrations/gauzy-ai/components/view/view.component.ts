@@ -226,20 +226,14 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		this._gauzyAIService
 			.update(integrationId, {})
 			.pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
 				// Perform actions after the integration creation
 				tap((integration: IIntegrationTenant) => {
 					if (!!integration) {
 						// Transform integration name for display
 						const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+
 						// Display success message
-						this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, {
-							provider
-						});
+						this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, { provider });
 					}
 				}),
 				// Catch and handle errors
