@@ -4,6 +4,7 @@ import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
 	IDailyPlan,
 	IDailyPlanCreateInput,
+	IDailyPlansTasksUpdateInput,
 	IDailyPlanTasksUpdateInput,
 	IDailyPlanUpdateInput,
 	IEmployee,
@@ -255,6 +256,72 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 
 			// Save and return the updated daily plan
 			return await this.save(dailyPlan);
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Delete task from a many daily plans
+	 *
+	 * @param  taskId The unique identifier of the task to removed from daily plans.
+	 * @param input - An object containing details about the plans to update, including employee ID, and organization ID.
+	 * @returns The updated daily plans without the deleted task.
+	 */
+
+	async removeTaskFromManyPlans(taskId: ITask['id'], input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			const { employeeId, organizationId } = input;
+			const currentDate = new Date().toISOString().split('T')[0];
+
+			// Initial query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Joins
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+			query.leftJoinAndSelect('employee.user', 'user');
+
+			// Conditions
+			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere(p(`"${query.alias}"."employeeId" = :employeeId`), { employeeId });
+
+			// Find condition must include only today and future plans. We cannot delete tasks from past plans
+			query.andWhere(p(`DATE("${query.alias}"."date") >= :currentDate`), { currentDate });
+
+			query.andWhere((qb: SelectQueryBuilder<any>) => {
+				const subQuery = qb.subQuery();
+				subQuery.select(p('"daily_plan_task"."dailyPlanId"')).from(p('daily_plan_task'), p('daily_plan_task'));
+				subQuery.andWhere(p('"daily_plan_task"."taskId" = :taskId'), { taskId });
+
+				return p(`${query.alias}.id IN `) + subQuery.distinct(true).getQuery();
+			});
+
+			const dailyPlansToUpdate = await query.getMany();
+
+			if (dailyPlansToUpdate.length < 1) {
+				throw new BadRequestException('Daily plans not found');
+			}
+
+			// Get task to be removed
+			const taskToRemove = await this.taskService.findOneByIdString(taskId, {
+				where: { organizationId, tenantId }
+			});
+
+			if (!taskToRemove) {
+				throw new BadRequestException('The task to remove not found');
+			}
+
+			const updatedPlans = dailyPlansToUpdate.map((plan) => {
+				const { tasks } = plan;
+				plan.tasks = tasks.filter((task) => task.id !== taskId);
+				return plan;
+			});
+
+			// save and return the updatedDailyPlan
+			return await this.typeOrmRepository.save(updatedPlans);
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
