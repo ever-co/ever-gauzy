@@ -1,117 +1,57 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
-import { GauzyAIService, ImageAnalysisResult } from '@gauzy/integration-ai';
-import { IScreenshot, IntegrationEntity, IntegrationEnum, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
+import { ID, IScreenshot, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
-import { IntegrationTenantService } from './../../integration-tenant/integration-tenant.service';
 import { Screenshot } from './screenshot.entity';
-import { prepareSQLQuery as p } from './../../database/database.helper';
 import { MikroOrmScreenshotRepository, TypeOrmScreenshotRepository } from './repository';
 
 @Injectable()
 export class ScreenshotService extends TenantAwareCrudService<Screenshot> {
 	constructor(
 		typeOrmScreenshotRepository: TypeOrmScreenshotRepository,
-		mikroOrmScreenshotRepository: MikroOrmScreenshotRepository,
-		private readonly _integrationTenantService: IntegrationTenantService,
-		private readonly _gauzyAIService: GauzyAIService
+		mikroOrmScreenshotRepository: MikroOrmScreenshotRepository
 	) {
 		super(typeOrmScreenshotRepository, mikroOrmScreenshotRepository);
 	}
 
 	/**
-	 * DELETE screenshot by ID
+	 * Delete screenshot by ID
 	 *
-	 * @param criteria
-	 * @param options
-	 * @returns
+	 * @param id - The ID of the screenshot to delete
+	 * @param options - Optional additional conditions for finding the screenshot
+	 * @returns The deleted screenshot
+	 * @throws ForbiddenException if the screenshot cannot be found or deleted
 	 */
-	async deleteScreenshot(id: IScreenshot['id'], options?: FindOptionsWhere<Screenshot>): Promise<IScreenshot> {
+	async deleteScreenshot(id: ID, options?: FindOptionsWhere<Screenshot>): Promise<IScreenshot> {
 		try {
-			const tenantId = RequestContext.currentTenantId();
+			const tenantId = RequestContext.currentTenantId() || options?.tenantId;
+			const { organizationId } = options || {};
+
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 			query.setFindOptions({
 				where: {
 					...(options ? options : {}),
 					id,
-					tenantId
+					tenantId,
+					organizationId
 				}
 			});
+
 			if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-				query.leftJoin(`${query.alias}.timeSlot`, 'time_slot');
-				query.andWhere(p(`"time_slot"."employeeId" = :employeeId`), {
-					employeeId: RequestContext.currentEmployeeId()
-				});
+				const employeeId = RequestContext.currentEmployeeId();
+				query.leftJoin(
+					`${query.alias}.timeSlot`,
+					'time_slot',
+					'time_slot.employeeId = :employeeId AND time_slot.tenantId = :tenantId',
+					{ employeeId, tenantId }
+				);
 			}
+
 			const screenshot = await query.getOneOrFail();
 			return await this.typeOrmRepository.remove(screenshot);
 		} catch (error) {
-			throw new ForbiddenException();
-		}
-	}
-
-	/**
-	 * Analyze a screenshot using Gauzy AI service.
-	 * @param input - The input options for the screenshot.
-	 * @param data - The screenshot data.
-	 * @param file - The screenshot file.
-	 * @param callback - Optional callback function to handle the analysis result.
-	 * @returns Promise<ImageAnalysisResult>
-	 */
-	async analyzeScreenshot(
-		input: IScreenshot,
-		data: Buffer,
-		file: UploadedFile,
-		callback?: (analysis: ImageAnalysisResult['data']['analysis']) => void
-	): Promise<ImageAnalysisResult> {
-		try {
-			const { organizationId } = input;
-			const tenantId = RequestContext.currentTenantId() || input.tenantId;
-
-			// Retrieve integration
-			const integration = await this._integrationTenantService.getIntegrationByOptions({
-				organizationId,
-				tenantId,
-				name: IntegrationEnum.GAUZY_AI
-			});
-
-			// Check if integration exists
-			if (!!integration) {
-				try {
-					console.log('Screenshot/Image Analyze Starting. AI Integration Tenant: %s', integration);
-					const integrationId = integration['id'];
-
-					// Check if employee performance analysis sync is enabled
-					await this._integrationTenantService.findIntegrationTenantByEntity({
-						integrationId,
-						organizationId,
-						entityType: IntegrationEntity.EMPLOYEE_PERFORMANCE
-					});
-
-					// Analyze image using Gauzy AI service
-					const [analysis] = await this._gauzyAIService.analyzeImage(data, file);
-
-					if (!analysis.success) {
-						console.log('Screenshot/Image Analyze Failed. AI Integration Tenant: %s', integration);
-					}
-
-					if (analysis.success && callback) {
-						// Call the callback function if provided
-						callback(analysis.data.analysis);
-					}
-
-					return analysis;
-				} catch (error) {
-					console.log('Error while getting Integration for Gauzy AI', error.message);
-					return null;
-				}
-			}
-
-			return null;
-		} catch (error) {
-			// If needed, consider throwing or handling the error appropriately.
-			console.error('Failed to get AI Integration for provided options: %s', error?.message);
+			throw new ForbiddenException('You do not have permission to delete this screenshot.');
 		}
 	}
 }

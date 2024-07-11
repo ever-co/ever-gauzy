@@ -1,5 +1,6 @@
 import { environment } from '@gauzy/config';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
+import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationHubstaffPlugin } from '@gauzy/plugin-integration-hubstaff';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
@@ -28,6 +29,8 @@ export const plugins = [
 	}),
 	// Indicates the inclusion or intention to use the ChangelogPlugin in the codebase.
 	ChangelogPlugin,
+	// Indicates the inclusion or intention to use the IntegrationAIPlugin in the codebase.
+	IntegrationAIPlugin,
 	// Indicates the inclusion or intention to use the IntegrationGithubPlugin in the codebase.
 	IntegrationGithubPlugin,
 	// Indicates the inclusion or intention to use the IntegrationHubstaffPlugin in the codebase.

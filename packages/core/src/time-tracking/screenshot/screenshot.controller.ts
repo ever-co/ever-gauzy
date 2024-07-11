@@ -20,18 +20,13 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteQueryDTO } from './../../shared/dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
-import { ScreenshotAnalysisService } from './screenshot-analysis.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.TIME_TRACKER)
 @Controller()
 export class ScreenshotController {
-	constructor(
-		private readonly _screenshotService: ScreenshotService,
-		private readonly _screenshotAnalysisService: ScreenshotAnalysisService,
-		private readonly _eventBus: EventBus
-	) {}
+	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
 
 	/**
 	 * Create start/stop screenshot.

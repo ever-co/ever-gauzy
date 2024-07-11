@@ -1,19 +1,17 @@
+import { BaseEntityEventTypeEnum, EventBus, ScreenshotEvent } from '@gauzy/core';
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger, HttpStatus, HttpException } from '@nestjs/common';
 import { Subject } from 'rxjs';
 import { catchError, filter, takeUntil, tap } from 'rxjs/operators';
-import { EventBus } from '../../event-bus/event-bus';
-import { BaseEntityEventTypeEnum } from '../../event-bus/base-entity-event';
-import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
-import { ScreenshotAnalysisService } from './screenshot-analysis.service';
+import { IntegrationAIAnalysisService } from './integration-ai-analysis.service';
 
 @Injectable()
-export class ScreenshotEventSubscriber implements OnModuleInit, OnModuleDestroy {
-	private readonly logger = new Logger('ScreenshotEventSubscriber');
+export class IntegrationAIEventSubscriber implements OnModuleInit, OnModuleDestroy {
+	private readonly logger = new Logger('IntegrationAIEventSubscriber');
 	private readonly onDestroy$: Subject<void> = new Subject<void>();
 
 	constructor(
 		private readonly _eventBus: EventBus,
-		private readonly _screenshotAnalysisService: ScreenshotAnalysisService
+		private readonly _integrationAIAnalysisService: IntegrationAIAnalysisService
 	) {}
 
 	/**
@@ -31,7 +29,7 @@ export class ScreenshotEventSubscriber implements OnModuleInit, OnModuleDestroy 
 						switch (event.type) {
 							case BaseEntityEventTypeEnum.CREATED:
 								// Analyze image using Gauzy AI
-								await this._screenshotAnalysisService.analyzeAndSaveScreenshot(event);
+								await this._integrationAIAnalysisService.analyzeAndSaveScreenshot(event);
 								break;
 							default:
 								this.logger.warn(`Unhandled event type: ${event.type}`);

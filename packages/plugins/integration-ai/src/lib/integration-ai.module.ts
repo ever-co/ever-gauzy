@@ -1,15 +1,29 @@
 import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { IntegrationModule, IntegrationTenantModule, RolePermissionModule } from '@gauzy/core';
+import { IntegrationModule, IntegrationTenantModule, PluginCommonModule, RolePermissionModule } from '@gauzy/core';
 import { GauzyAIModule } from './gauzy-ai.module';
 import { IntegrationAIController } from './integration-ai.controller';
 import { IntegrationAIService } from './integration-ai.service';
 import { IntegrationAIMiddleware } from './integration-ai.middleware';
+import { IntegrationAIEventSubscriber } from './integration-ai-event.subscriber';
+import { IntegrationAIAnalysisService } from './integration-ai-analysis.service';
 
 @Module({
 	controllers: [IntegrationAIController],
-	imports: [RolePermissionModule, IntegrationTenantModule, GauzyAIModule.forRoot(), IntegrationModule, CqrsModule],
-	providers: [IntegrationAIService, IntegrationAIMiddleware]
+	imports: [
+		RolePermissionModule,
+		IntegrationTenantModule,
+		IntegrationModule,
+		GauzyAIModule.forRoot(),
+		PluginCommonModule,
+		CqrsModule
+	],
+	providers: [
+		IntegrationAIService,
+		IntegrationAIAnalysisService,
+		IntegrationAIMiddleware,
+		IntegrationAIEventSubscriber
+	]
 })
 export class IntegrationAIModule implements NestModule {
 	/**

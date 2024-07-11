@@ -3,9 +3,7 @@ import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from 
 import { IntegrationAIModule } from './integration-ai.module';
 
 @Plugin({
-	imports: [IntegrationAIModule],
-	exports: [],
-	providers: []
+	imports: [IntegrationAIModule]
 })
 export class IntegrationAIPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We disable by default additional logging for each event to avoid cluttering the logs

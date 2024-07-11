@@ -13,7 +13,7 @@ import { IntegrationAIService } from './integration-ai.service';
 @ApiTags('Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_VIEW)
-@Controller()
+@Controller('/integration/ai')
 export class IntegrationAIController {
 	constructor(private readonly _integrationAIService: IntegrationAIService) {}
 
@@ -30,7 +30,7 @@ export class IntegrationAIController {
 	})
 	@ApiResponse({ status: 400, description: 'Bad Request' })
 	@ApiResponse({ status: 500, description: 'Internal Server Error' })
-	@Post()
+	@Post('/')
 	async create(@Body() input: IIntegrationAICreateInput): Promise<IIntegrationTenant> {
 		return await this._integrationAIService.create(input);
 	}
@@ -51,7 +51,7 @@ export class IntegrationAIController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Put(':id')
+	@Put('/:id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: IIntegrationTenantUpdateInput
