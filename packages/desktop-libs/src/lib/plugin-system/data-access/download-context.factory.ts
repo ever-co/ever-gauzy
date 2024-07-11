@@ -10,7 +10,7 @@ export class DownloadContextFactory {
 				break;
 			//TODO: Add more strategies later
 			default:
-				throw new Error('Uknown context');
+				throw new Error('ERROR::Unknown strategy');
 		}
 
 		return new PluginDownloadContext(strategy);
