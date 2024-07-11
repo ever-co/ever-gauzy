@@ -235,7 +235,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					tenantId,
 					organizationId
 				},
-				relations: { tasks: true } // Include the existings tasks for the daily plan
+				relations: { tasks: true } // Include the existing tasks for the daily plan
 			});
 
 			if (!dailyPlan) {
