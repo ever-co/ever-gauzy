@@ -17,7 +17,17 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
+	"keywords": [
+		"changelog",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"release notes",
+		"versioning",
+		"documentation"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",

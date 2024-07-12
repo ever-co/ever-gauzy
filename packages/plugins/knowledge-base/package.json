@@ -27,7 +27,18 @@
 		"build": "rimraf dist && tsc -p tsconfig.lib.json",
 		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
-	"keywords": [],
+	"keywords": [
+		"knowledge-base",
+		"plugin",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"microservices",
+		"documentation",
+		"content-management",
+		"enterprise",
+		"platform"
+	],
 	"dependencies": {
 		"@faker-js/faker": "8.0.0-alpha.0",
 		"@gauzy/common": "^0.1.0",

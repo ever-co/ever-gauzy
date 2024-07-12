@@ -17,7 +17,17 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
+	"keywords": [
+		"jira",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"project management",
+		"APIs",
+		"microservices"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",

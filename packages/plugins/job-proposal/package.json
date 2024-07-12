@@ -17,7 +17,18 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
+	"keywords": [
+		"job-proposal",
+		"plugin",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"microservices",
+		"job",
+		"employment",
+		"recruitment",
+		"platform"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
