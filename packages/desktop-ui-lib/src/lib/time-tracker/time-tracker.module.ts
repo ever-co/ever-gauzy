@@ -1,56 +1,50 @@
-import { NgModule } from '@angular/core';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CommonModule } from '@angular/common';
-import { TimeTrackerComponent } from './time-tracker.component';
-import { TimeTrackerService } from './time-tracker.service';
-import { CustomRenderComponent } from './custom-render-cell.component';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-	NbLayoutModule,
-	NbCardModule,
-	NbToggleModule,
-	NbSelectModule,
-	NbInputModule,
+	NbBadgeModule,
 	NbButtonModule,
-	NbSpinnerModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbDialogModule,
+	NbDialogService,
+	NbFormFieldModule,
 	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbSelectModule,
 	NbSidebarModule,
 	NbSidebarService,
-	NbCheckboxModule,
-	NbDialogService,
-	NbDialogModule,
+	NbSpinnerModule,
 	NbToastrService,
-	NbFormFieldModule,
-	NbTooltipModule,
-	NbBadgeModule
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TasksModule } from '../tasks/tasks.module';
-import { PaginationModule } from './pagination/pagination.module';
-import { NoDataMessageComponent } from './no-data-message/no-data-message.component';
-import { HumanizePipe } from './pipes/humanize.pipe';
-import { UserOrganizationService } from './organization-selector/user-organization.service';
-import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
-import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
-import { ElectronService, LoggerService } from '../electron/services';
-import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
-import { TimeSlotQueueService } from '../offline-sync';
-import { ImageViewerModule } from '../image-viewer/image-viewer.module';
-import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageSelectorService } from '../language/language-selector.service';
+import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AlwaysOnService } from '../always-on/always-on.service';
-import { TaskRenderModule } from './task-render/task-render.module';
+import { ElectronService, LoggerService } from '../electron/services';
+import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { NgxTranslateModule } from '../ngx-translate';
+import { TimeSlotQueueService } from '../offline-sync';
+import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
+import { TasksModule } from '../tasks/tasks.module';
+import { CustomRenderComponent } from './custom-render-cell.component';
+import { NoDataModuleModule } from './no-data-message/no-data-message.module';
+import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
+import { UserOrganizationService } from './organization-selector/user-organization.service';
+import { PaginationModule } from './pagination/pagination.module';
+import { HumanizePipe } from './pipes/humanize.pipe';
+import { TaskRenderModule } from './task-render/task-render.module';
+import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
+import { TimeTrackerComponent } from './time-tracker.component';
+import { TimeTrackerService } from './time-tracker.service';
 
 @NgModule({
-	declarations: [
-		TimeTrackerComponent,
-		CustomRenderComponent,
-		NoDataMessageComponent,
-		HumanizePipe,
-		OrganizationSelectorComponent
-	],
+	declarations: [TimeTrackerComponent, CustomRenderComponent, HumanizePipe, OrganizationSelectorComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -80,7 +74,8 @@ import { ActivityWatchModule } from '../integrations';
 		ImageViewerModule,
 		NgxTranslateModule,
 		TaskRenderModule,
-		ActivityWatchModule
+		ActivityWatchModule,
+		NoDataModuleModule
 	],
 	providers: [
 		NbSidebarService,
@@ -96,8 +91,8 @@ import { ActivityWatchModule } from '../integrations';
 		Store,
 		TimeSlotQueueService,
 		LanguageSelectorService,
-		AlwaysOnService,
+		AlwaysOnService
 	],
-	exports: [TimeTrackerComponent],
+	exports: [TimeTrackerComponent]
 })
-export class TimeTrackerModule { }
+export class TimeTrackerModule {}
