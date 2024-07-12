@@ -1,29 +1,27 @@
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { ChangelogModule } from './changelog.module';
 import { Changelog } from './changelog.entity';
 import { ChangelogSeederService } from './changelog-seeder.service';
 
-@GauzyCorePlugin({
+@Plugin({
 	imports: [ChangelogModule, SeederModule],
 	entities: [Changelog],
 	providers: [ChangelogSeederService]
 })
 export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
-
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
-	constructor(
-		private readonly changelogSeederService: ChangelogSeederService
-	) { }
+	constructor(private readonly changelogSeederService: ChangelogSeederService) {}
 
 	/**
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
+			console.log(chalk.green(`${ChangelogPlugin.name} is being bootstrapped...`));
 			console.log('ChangelogPlugin is being bootstrapped...');
 		}
 	}
@@ -33,7 +31,7 @@ export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('ChangelogPlugin is being destroyed...');
+			console.log(chalk.green(`${ChangelogPlugin.name} is being destroyed...`));
 		}
 	}
 

@@ -13,17 +13,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	IChangelog,
-	IChangelogCreateInput,
-	IChangelogUpdateInput,
-	IPagination
-} from '@gauzy/contracts';
-import {
-	AuthGuard,
-	CrudController,
-	UUIDValidationPipe
-} from '@gauzy/core';
+import { IChangelog, IChangelogCreateInput, IChangelogUpdateInput, ID, IPagination } from '@gauzy/contracts';
+import { AuthGuard, CrudController, UUIDValidationPipe } from '@gauzy/core';
 import { Public } from '@gauzy/common';
 import { Changelog } from './changelog.entity';
 import { ChangelogService } from './changelog.service';
@@ -32,15 +23,17 @@ import { ChangelogQueryDTO } from './dto/changelog-query.dto';
 
 @ApiTags('Changelog')
 @UseGuards(AuthGuard)
-@Controller()
+@Controller('/changelog')
 export class ChangelogController extends CrudController<Changelog> {
-	constructor(
-		private readonly changelogService: ChangelogService,
-		private readonly commandBus: CommandBus
-	) {
+	constructor(private readonly changelogService: ChangelogService, private readonly commandBus: CommandBus) {
 		super(changelogService);
 	}
 
+	/**
+	 *
+	 * @param options
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Find all Changelog.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -52,17 +45,18 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'No records found'
 	})
 	@Public()
-	@Get()
+	@Get('/')
 	async findChangelog(
-		@Query(new ValidationPipe({
-			transform: true
-		})) options: ChangelogQueryDTO
+		@Query(new ValidationPipe({ transform: true })) options: ChangelogQueryDTO
 	): Promise<IPagination<IChangelog>> {
-		return await this.changelogService.findAllChangelogs({
-			where: options
-		});
+		return await this.changelogService.findAllChangelogs({ where: options });
 	}
 
+	/**
+	 *
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Create new record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -73,15 +67,17 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Post()
-	async create(
-		@Body() entity: IChangelogCreateInput
-	): Promise<IChangelog> {
-		return await this.commandBus.execute(
-			new ChangelogCreateCommand(entity)
-		);
+	@Post('/')
+	async create(@Body() entity: IChangelogCreateInput): Promise<IChangelog> {
+		return await this.commandBus.execute(new ChangelogCreateCommand(entity));
 	}
 
+	/**
+	 *
+	 * @param id
+	 * @param entity
+	 * @returns
+	 */
 	@ApiOperation({ summary: 'Update record' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -96,13 +92,8 @@ export class ChangelogController extends CrudController<Changelog> {
 		description: 'Invalid input'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
-	async update(
-		@Param('id', UUIDValidationPipe) id: string,
-		@Body() entity: IChangelogUpdateInput
-	): Promise<IChangelog> {
-		return await this.commandBus.execute(
-			new ChangelogUpdateCommand({ id, ...entity })
-		);
+	@Put('/:id')
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: IChangelogUpdateInput): Promise<IChangelog> {
+		return await this.commandBus.execute(new ChangelogUpdateCommand({ ...entity, id }));
 	}
 }
