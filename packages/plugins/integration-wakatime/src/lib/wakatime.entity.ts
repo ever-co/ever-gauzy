@@ -7,7 +7,6 @@ import { MikroOrmWakatimeRepository } from './repository';
 @MultiORMEntity('heartbeats', { mikroOrmRepository: () => MikroOrmWakatimeRepository })
 @Unique(['time', 'entities']) // named; multiple fields
 export class Wakatime implements IWakatime {
-
 	@PrimaryKey()
 	@PrimaryGeneratedColumn()
 	id: number;

@@ -1,34 +1,32 @@
-import {
-	Controller,
-	Get,
-	Query,
-	Post,
-	Body,
-	Headers,
-	HttpCode,
-	HttpException,
-	HttpStatus
-} from '@nestjs/common';
+import { Controller, Get, Query, Post, Body, Headers, HttpCode, HttpException, HttpStatus } from '@nestjs/common';
 import { WakatimeService } from './wakatime.service';
 
 @Controller('wakatime')
 export class WakatimeController {
 	constructor(private readonly wakatimeService: WakatimeService) {}
 
+	/**
+	 *
+	 * @param query
+	 * @returns
+	 */
 	@Get('summaries')
 	async getData(@Query() query) {
 		const result = await this.wakatimeService.getSummaries(query);
 		return result;
 	}
 
+	/**
+	 *
+	 * @param payload
+	 * @param headers
+	 * @returns
+	 */
 	@Post('heartbeats.bulk')
 	@HttpCode(202)
 	async saveData(@Body() payload, @Headers() headers) {
 		try {
-			const result = await this.wakatimeService.parameterSanitize(
-				payload,
-				headers
-			);
+			const result = await this.wakatimeService.parameterSanitize(payload, headers);
 			if (result.identifiers.length !== payload.length) {
 				throw Error('something error');
 			}
@@ -47,12 +45,15 @@ export class WakatimeController {
 		}
 	}
 
+	/**
+	 *
+	 * @param payload
+	 * @param headers
+	 * @returns
+	 */
 	@Post('heartbeats')
 	async save(@Body() payload, @Headers() headers) {
-		const result = await this.wakatimeService.parameterSanitize(
-			payload,
-			headers
-		);
+		const result = await this.wakatimeService.parameterSanitize(payload, headers);
 		return result;
 	}
 }

@@ -7,11 +7,8 @@ import { DatabaseModule } from './database.module';
 require('app-root-path').setPath(process.env.GAUZY_USER_PATH);
 
 @Module({
-	imports: [
-		DatabaseModule,
-		WakatimeModule
-	],
+	imports: [DatabaseModule, WakatimeModule],
 	controllers: [AppController],
 	providers: [AppService]
 })
-export class AppModule { }
+export class AppModule {}
