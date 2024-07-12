@@ -32,7 +32,7 @@
 		"@gauzy/config": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
-		"@gauzy/integration-ai": "^0.1.0",
+		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/swagger": "^7.3.0",

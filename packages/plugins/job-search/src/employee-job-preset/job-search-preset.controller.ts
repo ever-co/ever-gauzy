@@ -1,7 +1,7 @@
 import { Controller, HttpStatus, Get, Query, Post, Body, Param, Delete } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IGetJobPresetCriterionInput, IJobPreset, IMatchingCriterions } from '@gauzy/contracts';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { ID, IGetJobPresetCriterionInput, IJobPreset, IMatchingCriterions } from '@gauzy/contracts';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { EmployeeService, UUIDValidationPipe, UseValidationPipe } from '@gauzy/core';
 import { JobPresetService } from './job-preset.service';
 import { JobPreset } from './job-preset.entity';
@@ -15,7 +15,7 @@ export class JobSearchPresetController {
 		private readonly jobPresetService: JobPresetService,
 		private readonly employeeService: EmployeeService,
 		private readonly gauzyAIService: GauzyAIService
-	) { }
+	) {}
 
 	/**
 	 * Retrieves all employee job presets.
@@ -64,10 +64,7 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Get(':id')
-	async get(
-		@Param('id', UUIDValidationPipe) presetId: string,
-		@Query() request: IGetJobPresetCriterionInput
-	) {
+	async get(@Param('id', UUIDValidationPipe) presetId: ID, @Query() request: IGetJobPresetCriterionInput) {
 		return await this.jobPresetService.get(presetId, request);
 	}
 
@@ -88,7 +85,7 @@ export class JobSearchPresetController {
 		description: 'Record not found'
 	})
 	@Get(':id/criterion')
-	async getJobPresetCriterion(@Param('id', UUIDValidationPipe) presetId: string) {
+	async getJobPresetCriterion(@Param('id', UUIDValidationPipe) presetId: ID) {
 		return this.jobPresetService.getJobPresetCriterion(presetId);
 	}
 
@@ -131,10 +128,7 @@ export class JobSearchPresetController {
 		description: 'Invalid job preset criteria data'
 	})
 	@Post(':jobPresetId/criterion')
-	async saveUpdate(
-		@Param('jobPresetId', UUIDValidationPipe) jobPresetId: string,
-		@Body() request: IMatchingCriterions
-	) {
+	async saveUpdate(@Param('jobPresetId', UUIDValidationPipe) jobPresetId: ID, @Body() request: IMatchingCriterions) {
 		return this.jobPresetService.saveJobPresetCriterion({
 			...request,
 			jobPresetId
@@ -158,7 +152,7 @@ export class JobSearchPresetController {
 		description: 'Job preset criterion not found'
 	})
 	@Delete('criterion/:criterionId')
-	async deleteJobPresetCriterion(@Param('criterionId', UUIDValidationPipe) criterionId: string) {
+	async deleteJobPresetCriterion(@Param('criterionId', UUIDValidationPipe) criterionId: ID) {
 		return this.jobPresetService.deleteJobPresetCriterion(criterionId);
 	}
 }

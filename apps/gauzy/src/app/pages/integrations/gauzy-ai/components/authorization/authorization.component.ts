@@ -4,7 +4,7 @@ import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective, F
 import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { HttpStatus, IIntegrationTenant, IOrganization } from '@gauzy/contracts';
+import { IIntegrationTenant, IOrganization } from '@gauzy/contracts';
 import { ErrorHandlingService, GauzyAIService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
 import { ReplacePipe } from '@gauzy/ui-core/shared';
@@ -132,11 +132,6 @@ export class GauzyAIAuthorizationComponent implements AfterViewInit, OnInit, OnD
 					tenantId
 				})
 				.pipe(
-					tap((response: any) => {
-						if (response['status'] == HttpStatus.BAD_REQUEST) {
-							throw new Error(`${response['message']}`);
-						}
-					}),
 					// Perform actions after the integration creation
 					tap((integration: IIntegrationTenant) => {
 						if (!!integration) {
