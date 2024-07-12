@@ -1,13 +1,11 @@
-# .gitignore
 
-# Yarn
-yarn-error.log
-
-# Node.js dependencies
+# dependencies
 node_modules/
 
-# TypeScript build
-build/
+# yarn
+yarn-error.log
 
-# Compiled JavaScript and TypeScript
-dist/
+# misc
+npm-debug.log
+dist
+build

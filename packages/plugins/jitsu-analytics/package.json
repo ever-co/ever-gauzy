@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/plugin-jitsu-analytics",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Ever Gauzy Platform Jitsu Analytics Plugin",
 	"author": {
 		"name": "Ever Co. LTD",

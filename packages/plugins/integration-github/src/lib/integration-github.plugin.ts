@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ApplicationPluginConfig } from '@gauzy/common';
 import { GithubModule } from './github/github.module';
@@ -36,7 +37,7 @@ export class IntegrationGithubPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationGithubPlugin.name} is being bootstrapped...`);
+			console.log(chalk.green(`${IntegrationGithubPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -45,7 +46,7 @@ export class IntegrationGithubPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationGithubPlugin.name} is being destroyed...`);
+			console.log(chalk.green(`${IntegrationGithubPlugin.name} is being destroyed...`));
 		}
 	}
 }

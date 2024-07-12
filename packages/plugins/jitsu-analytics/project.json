@@ -1,5 +1,5 @@
 {
-	"name": "jitsu-analytics",
+	"name": "plugin-jitsu-analytics",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/plugins/jitsu-analytics/src",
 	"projectType": "library",
@@ -18,7 +18,7 @@
 		"publish": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "node tools/scripts/publish.mjs plugins-jitsu-analytics {args.ver} {args.tag}"
+				"command": "node tools/scripts/publish.mjs plugin-jitsu-analytics {args.ver} {args.tag}"
 			},
 			"dependsOn": ["build"]
 		},

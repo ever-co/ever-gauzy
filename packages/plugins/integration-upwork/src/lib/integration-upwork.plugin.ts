@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { UpworkModule } from './upwork.module';
 
@@ -15,7 +16,7 @@ export class IntegrationUpworkPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationUpworkPlugin.name} is being bootstrapped...`);
+			console.log(chalk.green(`${IntegrationUpworkPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -24,7 +25,7 @@ export class IntegrationUpworkPlugin implements IOnPluginBootstrap, IOnPluginDes
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationUpworkPlugin.name} is being destroyed...`);
+			console.log(chalk.red(`${IntegrationUpworkPlugin.name} is being destroyed...`));
 		}
 	}
 }
