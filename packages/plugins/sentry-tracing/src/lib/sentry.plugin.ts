@@ -1,7 +1,8 @@
 import { APP_INTERCEPTOR, HttpAdapterHost } from '@nestjs/core';
 import { MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { Integration } from '@sentry/types';
-import { GauzyCorePlugin, IOnPluginBootstrap } from '@gauzy/plugin';
+import * as chalk from 'chalk';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap } from '@gauzy/plugin';
 import { SentryRequestMiddleware } from './sentry-request.middleware';
 import { SentryTraceMiddleware } from './sentry-trace.middleware';
 import { SentryPluginOptions } from './sentry.types';
@@ -12,7 +13,7 @@ import { createDefaultSentryIntegrations, parseOptions, removeDuplicateIntegrati
 // Assuming createDefaultSentryIntegrations returns an array of Integrations
 export const DefaultSentryIntegrations: Integration[] = createDefaultSentryIntegrations();
 
-@GauzyCorePlugin({
+@Plugin({
 	imports: [
 		SentryModule.forRootAsync({
 			useFactory: createSentryOptions,
@@ -56,7 +57,7 @@ export class SentryPlugin implements NestModule, IOnPluginBootstrap {
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('SentryPlugin is being bootstrapped...');
+			console.log(chalk.green(`${SentryPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -65,7 +66,7 @@ export class SentryPlugin implements NestModule, IOnPluginBootstrap {
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('SentryPlugin is being destroyed...');
+			console.log(chalk.green(`${SentryPlugin.name} is being destroyed...`));
 		}
 	}
 

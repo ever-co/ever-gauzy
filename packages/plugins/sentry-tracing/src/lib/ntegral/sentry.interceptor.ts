@@ -13,12 +13,9 @@ import { SentryService } from './sentry.service';
 
 @Injectable()
 export class SentryInterceptor implements NestInterceptor {
-
 	protected readonly client: SentryService = SentryService.SentryServiceInstance();
 
-	constructor(
-		private readonly options?: SentryInterceptorOptions
-	) { }
+	constructor(private readonly options?: SentryInterceptorOptions) {}
 
 	/**
 	 *
