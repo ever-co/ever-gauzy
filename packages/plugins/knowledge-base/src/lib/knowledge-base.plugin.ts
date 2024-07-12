@@ -1,40 +1,28 @@
-
 import * as chalk from 'chalk';
 import { SeederModule } from '@gauzy/core';
-import {
-	GauzyCorePlugin,
-	IOnPluginBootstrap,
-	IOnPluginDestroy,
-	IOnPluginSeedable
-} from '@gauzy/plugin';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable } from '@gauzy/plugin';
 import { HelpCenterAuthor, HelpCenterAuthorModule } from './help-center-author';
 import { HelpCenter, HelpCenterModule } from './help-center';
-import {
-	HelpCenterArticle,
-	HelpCenterArticleModule
-} from './help-center-article';
+import { HelpCenterArticle, HelpCenterArticleModule } from './help-center-article';
 import { HelpCenterSeederService } from './help-center-seeder.service';
 
-@GauzyCorePlugin({
+@Plugin({
 	imports: [HelpCenterModule, HelpCenterArticleModule, HelpCenterAuthorModule, SeederModule],
 	entities: [HelpCenter, HelpCenterArticle, HelpCenterAuthor],
 	providers: [HelpCenterSeederService]
 })
 export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy, IOnPluginSeedable {
-
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
-	constructor(
-		private readonly helpCenterSeederService: HelpCenterSeederService
-	) { }
+	constructor(private readonly helpCenterSeederService: HelpCenterSeederService) {}
 
 	/**
 	 * Called when the plugin is being initialized.
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('KnowledgeBasePlugin is being bootstrapped...');
+			console.log(chalk.green(`${KnowledgeBasePlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -43,7 +31,7 @@ export class KnowledgeBasePlugin implements IOnPluginBootstrap, IOnPluginDestroy
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('KnowledgeBasePlugin is being destroyed...');
+			console.log(chalk.red(`${KnowledgeBasePlugin.name} is being destroyed...`));
 		}
 	}
 
