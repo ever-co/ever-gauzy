@@ -1,24 +1,24 @@
 {
-	"name": "sentry-tracingv2",
+	"name": "plugin-sentry-tracing",
 	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/plugins/sentry-tracingv2/src",
+	"sourceRoot": "packages/plugins/sentry-tracing/src",
 	"projectType": "library",
 	"targets": {
 		"build": {
 			"executor": "@nrwl/js:tsc",
 			"outputs": ["{options.outputPath}"],
 			"options": {
-				"outputPath": "./packages/plugins/sentry-tracingv2/dist",
-				"tsConfig": "packages/plugins/sentry-tracingv2/tsconfig.lib.json",
-				"packageJson": "packages/plugins/sentry-tracingv2/package.json",
-				"main": "packages/plugins/sentry-tracingv2/src/index.ts",
-				"assets": ["packages/plugins/sentry-tracingv2/*.md"]
+				"outputPath": "./packages/plugins/sentry-tracing/dist",
+				"tsConfig": "packages/plugins/sentry-tracing/tsconfig.lib.json",
+				"packageJson": "packages/plugins/sentry-tracing/package.json",
+				"main": "packages/plugins/sentry-tracing/src/index.ts",
+				"assets": ["packages/plugins/sentry-tracing/*.md"]
 			}
 		},
 		"publish": {
 			"executor": "nx:run-commands",
 			"options": {
-				"command": "node tools/scripts/publish.mjs sentry-tracingv2 {args.ver} {args.tag}"
+				"command": "node tools/scripts/publish.mjs plugin-sentry-tracing {args.ver} {args.tag}"
 			},
 			"dependsOn": ["build"]
 		},
@@ -26,14 +26,14 @@
 			"executor": "@nrwl/linter:eslint",
 			"outputs": ["{options.outputFile}"],
 			"options": {
-				"lintFilePatterns": ["packages/plugins/sentry-tracingv2/**/*.ts"]
+				"lintFilePatterns": ["packages/plugins/sentry-tracing/**/*.ts"]
 			}
 		},
 		"test": {
 			"executor": "@nrwl/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/sentry-tracingv2/jest.config.ts",
+				"jestConfig": "packages/plugins/sentry-tracing/jest.config.ts",
 				"passWithNoTests": true
 			},
 			"configurations": {

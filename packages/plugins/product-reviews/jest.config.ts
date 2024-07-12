@@ -1,11 +1,11 @@
 /* eslint-disable */
 export default {
-	displayName: 'sentry-tracing',
+	displayName: 'product-reviews',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
 		'^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }]
 	},
 	moduleFileExtensions: ['ts', 'js', 'html'],
-	coverageDirectory: '../../../coverage/packages/plugins/sentry-tracing'
+	coverageDirectory: '../../../coverage/packages/plugins/product-reviews'
 };

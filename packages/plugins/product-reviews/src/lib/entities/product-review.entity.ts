@@ -3,7 +3,6 @@ import { MikroOrmProductReviewRepository } from './repository/mikro-orm-product-
 
 @MultiORMEntity('product_review', { mikroOrmRepository: () => MikroOrmProductReviewRepository })
 export class ProductReview extends TenantOrganizationBaseEntity {
-
 	@MultiORMColumn('text')
 	body: string;
 

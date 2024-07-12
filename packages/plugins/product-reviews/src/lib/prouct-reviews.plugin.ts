@@ -1,8 +1,9 @@
-import { GauzyCorePlugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
+import * as chalk from 'chalk';
+import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { ProductReview } from './entities/product-review.entity';
 import { schemaExtensions } from './graphql/schema-extensions';
 
-@GauzyCorePlugin({
+@Plugin({
 	imports: [],
 	entities: [ProductReview],
 	extensions: {
@@ -10,8 +11,7 @@ import { schemaExtensions } from './graphql/schema-extensions';
 		resolvers: []
 	}
 })
-export class ReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
-
+export class ProductReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = true;
 
@@ -20,6 +20,7 @@ export class ReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
+			console.log(chalk.green(`${ProductReviewsPlugin.name} is being bootstrapped...`));
 			console.log('ReviewsPlugin is being bootstrapped...');
 		}
 	}
@@ -29,7 +30,7 @@ export class ReviewsPlugin implements IOnPluginBootstrap, IOnPluginDestroy {
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('ReviewsPlugin is being destroyed...');
+			console.log(chalk.red(`${ProductReviewsPlugin.name} is being destroyed...`));
 		}
 	}
 }
