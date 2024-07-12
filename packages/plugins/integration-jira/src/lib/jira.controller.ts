@@ -1,14 +1,14 @@
 import { Public } from '@gauzy/common';
 import { Body, Controller, Get, Post, Type } from '@nestjs/common';
-import { JiraConfig } from './jira.types';
+import { JiraModuleOptions } from './jira.types';
 
 /**
  * Factory function to create a NestJS controller class for handling webhook hooks.
  * @param path The path at which the controller should listen for webhook requests.
  */
-export function getControllerClass(config: JiraConfig): Type<any> {
+export function getControllerClass({ path, config }: JiraModuleOptions): Type<any> {
 	@Public()
-	@Controller('jira')
+	@Controller(path)
 	class HookController {
 		/**
 		 * General schema can be seen here: https://bitbucket.org/atlassian/connect-schemas/raw/master/jira-global-schema.json

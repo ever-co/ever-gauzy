@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'plugins-changelog',
+	displayName: 'plugin-changelog',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {

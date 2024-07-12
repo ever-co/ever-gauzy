@@ -12,7 +12,6 @@ import * as path from 'path';
 import * as moment from 'moment';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { ConfigService, environment } from '@gauzy/config';
-import { JiraModule } from '@gauzy/integration-jira';
 import { ThrottlerBehindProxyGuard } from './throttler/throttler-behind-proxy.guard';
 import { CoreModule } from './core/core.module';
 import { RequestContext } from './core/context/request-context';
@@ -294,17 +293,6 @@ if (environment.THROTTLE_ENABLED) {
 				watch: !environment.production
 			},
 			resolvers: [new HeaderResolver(['language'])]
-		}),
-		JiraModule.forRoot({
-			isGlobal: true,
-			config: {
-				appName: jira.appName,
-				appDescription: jira.appDescription,
-				appKey: jira.appKey,
-				baseUrl: jira.baseUrl,
-				vendorName: jira.vendorName,
-				vendorUrl: jira.vendorUrl
-			}
 		}),
 		...(environment.THROTTLE_ENABLED
 			? [

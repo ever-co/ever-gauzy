@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'sentry-tracing',
+	displayName: 'plugin-sentry-tracing',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
