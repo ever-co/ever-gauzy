@@ -25,7 +25,7 @@
 		"typescript",
 		"reviews",
 		"feedback",
-		"ecommerce"
+		"e-commerce"
 	],
 	"private": true,
 	"main": "dist/index.js",

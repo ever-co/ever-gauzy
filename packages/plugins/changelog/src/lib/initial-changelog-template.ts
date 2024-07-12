@@ -1,4 +1,4 @@
-import { IChangelog } from "@gauzy/contracts";
+import { IChangelog } from '@gauzy/contracts';
 
 export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 	{
@@ -15,7 +15,8 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		title: 'Ready to give Gauzy a try?',
 		date: new Date(),
 		isFeature: false,
-		content: 'Customer relationship management, enterprise resource planning, sales management, supply chain management and production management',
+		content:
+			'Customer relationship management, enterprise resource planning, sales management, supply chain management and production management',
 		learnMoreUrl: '',
 		imageUrl: ''
 	},
@@ -42,7 +43,7 @@ export const INITIAL_CHANGELOG_TEMPLATE: IChangelog[] = [
 		title: 'Most popular in 20 countries',
 		date: new Date(),
 		isFeature: true,
-		content: 'Europe, Americas and Asia get choise',
+		content: 'Europe, Americas and Asia get choice',
 		learnMoreUrl: '',
 		imageUrl: 'assets/images/features/macbook-1.png'
 	},

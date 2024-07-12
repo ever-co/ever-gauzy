@@ -1,19 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Not } from 'typeorm';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
-import {
-	getDefaultOrganizations,
-	getDefaultEmployees,
-	SeedDataService,
-	Tenant,
-	Employee
-} from '@gauzy/core';
+import { getDefaultOrganizations, getDefaultEmployees, SeedDataService, Tenant, Employee } from '@gauzy/core';
 import { createHelpCenter } from './help-center';
 import { createHelpCenterArticle } from './help-center-article/help-center-article.seed';
-import {
-	createDefaultHelpCenterAuthor,
-	createRandomHelpCenterAuthor
-} from './help-center-author';
+import { createDefaultHelpCenterAuthor, createRandomHelpCenterAuthor } from './help-center-author';
 
 /**
  * Service dealing with help center based operations.
@@ -30,9 +21,7 @@ export class HelpCenterSeederService {
 	 * @constructs
 	 *
 	 */
-	constructor(
-		private readonly seeder: SeedDataService
-	) {}
+	constructor(private readonly seeder: SeedDataService) {}
 
 	/**
 	 * Seed all default help center and related methods.
@@ -42,20 +31,13 @@ export class HelpCenterSeederService {
 	async createDefault() {
 		this.tenant = this.seeder.tenant;
 
-		const organizations = await getDefaultOrganizations(
-			this.seeder.dataSource,
-			this.tenant
-		);
+		const organizations = await getDefaultOrganizations(this.seeder.dataSource, this.tenant);
 		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
 		tenantOrganizationsMap.set(this.tenant, organizations);
 
 		await this.seeder.tryExecute(
 			'Default Help Centers',
-			createHelpCenter(
-				this.seeder.dataSource,
-				[this.tenant],
-				tenantOrganizationsMap
-			)
+			createHelpCenter(this.seeder.dataSource, [this.tenant], tenantOrganizationsMap)
 		);
 
 		const noOfHelpCenterArticle = 40;
@@ -69,16 +51,10 @@ export class HelpCenterSeederService {
 			)
 		);
 
-		const defaultEmployees = await getDefaultEmployees(
-			this.seeder.dataSource,
-			this.tenant
-		);
+		const defaultEmployees = await getDefaultEmployees(this.seeder.dataSource, this.tenant);
 		await this.seeder.tryExecute(
 			'Default Help Center Author',
-			createDefaultHelpCenterAuthor(
-				this.seeder.dataSource,
-				defaultEmployees
-			)
+			createDefaultHelpCenterAuthor(this.seeder.dataSource, defaultEmployees)
 		);
 	}
 
@@ -89,7 +65,7 @@ export class HelpCenterSeederService {
 	 */
 	async createRandom() {
 		const { name } = this.tenant;
-		const rendomTenants: ITenant[] = await this.seeder.dataSource.getRepository(Tenant).find({
+		const randomTenants: ITenant[] = await this.seeder.dataSource.getRepository(Tenant).find({
 			where: {
 				name: Not(name)
 			},
@@ -99,7 +75,7 @@ export class HelpCenterSeederService {
 		const tenantOrganizationsMap: Map<ITenant, IOrganization[]> = new Map();
 		const employeeMap: Map<ITenant, IEmployee[]> = new Map();
 
-		for await (const tenant of rendomTenants) {
+		for await (const tenant of randomTenants) {
 			const { organizations } = tenant;
 			tenantOrganizationsMap.set(tenant, organizations);
 			const employees: Employee[] = await this.seeder.dataSource.manager.findBy(Employee, {
@@ -110,11 +86,7 @@ export class HelpCenterSeederService {
 
 		await this.seeder.tryExecute(
 			'Random Help Centers',
-			createHelpCenter(
-				this.seeder.dataSource,
-				rendomTenants,
-				tenantOrganizationsMap
-			)
+			createHelpCenter(this.seeder.dataSource, randomTenants, tenantOrganizationsMap)
 		);
 
 		const noOfHelpCenterArticle = 40;
@@ -122,7 +94,7 @@ export class HelpCenterSeederService {
 			'Random Help Center Articles',
 			createHelpCenterArticle(
 				this.seeder.dataSource,
-				rendomTenants,
+				randomTenants,
 				tenantOrganizationsMap,
 				noOfHelpCenterArticle
 			)
@@ -130,11 +102,7 @@ export class HelpCenterSeederService {
 
 		await this.seeder.tryExecute(
 			'Random Help Center Authors',
-			createRandomHelpCenterAuthor(
-				this.seeder.dataSource,
-				rendomTenants,
-				employeeMap
-			)
+			createRandomHelpCenterAuthor(this.seeder.dataSource, randomTenants, employeeMap)
 		);
 	}
 }

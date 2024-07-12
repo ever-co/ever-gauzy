@@ -1,4 +1,4 @@
-import { makeInjectableDecorator } from './injectDecoratoryFactory';
+import { makeInjectableDecorator } from './injectDecoratorFactory';
 import { SENTRY_MODULE_OPTIONS, SENTRY_TOKEN } from './sentry.constants';
 
 export const InjectSentry = makeInjectableDecorator(SENTRY_TOKEN);
