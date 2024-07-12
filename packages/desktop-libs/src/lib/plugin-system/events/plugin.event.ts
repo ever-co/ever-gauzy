@@ -1,7 +1,7 @@
 import { ipcMain, IpcMainEvent } from 'electron';
 import * as logger from 'electron-log';
 import { PluginManager } from '../data-access/plugin-manager';
-import { IPluginManager, PluginChannel } from '../shared';
+import { IPlugin, IPluginManager, IPluginMetadata, PluginChannel, PluginHandlerChannel } from '../shared';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
@@ -9,6 +9,7 @@ class ElectronPluginListener {
 	constructor(pluginManager: IPluginManager) {
 		this.pluginManager = pluginManager;
 		this.removeAllListeners();
+		this.removeAllHandler();
 	}
 
 	public registerListeners(): void {
@@ -21,10 +22,22 @@ class ElectronPluginListener {
 		ipcMain.on(PluginChannel.UNINSTALL, this.handleEvent(this.uninstallPlugin));
 	}
 
+	public registerHandlers(): void {
+		ipcMain.handle(PluginHandlerChannel.GET_ALL, this.getAll);
+		ipcMain.handle(PluginHandlerChannel.GET_ONE, this.getOne);
+	}
+
 	private removeAllListeners(): void {
 		const channels = Object.values(PluginChannel);
 		channels.forEach((channel) => {
 			ipcMain.removeAllListeners(channel);
+		});
+	}
+
+	private removeAllHandler(): void {
+		const channels = Object.values(PluginHandlerChannel);
+		channels.forEach((channel) => {
+			ipcMain.removeHandler(channel);
 		});
 	}
 
@@ -66,6 +79,14 @@ class ElectronPluginListener {
 
 	private async uninstallPlugin(event: IpcMainEvent, name: string): Promise<void> {
 		await this.pluginManager.uninstallPlugin(name);
+	}
+
+	private getAll(): Promise<IPluginMetadata[]> {
+		return this.pluginManager.getAllPlugins();
+	}
+
+	private getOne(_: Electron.IpcMainInvokeEvent, name: string): IPlugin {
+		return this.pluginManager.getOnePlugin(name);
 	}
 }
 

@@ -8,3 +8,8 @@ export enum PluginChannel {
 	UNINSTALL = 'plugin::uninstall',
 	STATUS = 'plugin::status'
 }
+
+export enum PluginHandlerChannel {
+	GET_ALL = 'plugin::getAll',
+	GET_ONE = 'plugin::getOne'
+}

@@ -125,6 +125,14 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
+	public getAllPlugins(): Promise<IPluginMetadata[]> {
+		return this.pluginMetadataService.findAll();
+	}
+
+	public getOnePlugin(name: string): IPlugin {
+		return this.plugins.get(name);
+	}
+
 	public initializePlugins(): void {
 		this.plugins.forEach((plugin) => plugin.initialize());
 	}
