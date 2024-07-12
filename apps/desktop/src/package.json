@@ -1,198 +1,203 @@
 {
-    "name": "gauzy-desktop",
-    "productName": "Ever Gauzy Desktop",
-    "version": "0.1.0",
-    "description": "Ever Gauzy Desktop",
-    "license": "AGPL-3.0",
-    "homepage": "https://gauzy.co",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ever-co/ever-gauzy.git"
-    },
-    "bugs": {
-        "url": "https://github.com/ever-co/ever-gauzy/issues"
-    },
-    "private": true,
-    "author": {
-        "name": "Ever Co. LTD",
-        "email": "ever@ever.co",
-        "url": "https://ever.co"
-    },
-    "main": "index.js",
-    "workspaces": {
-        "packages": [
-            "../../../packages/core",
-            "../../../packages/auth",
-            "../../../packages/desktop-window",
-            "../../../packages/desktop-libs",
-            "../../../packages/common",
-            "../../../packages/config",
-            "../../../packages/contracts",
-            "../../../packages/ui-config",
-            "../../../packages/plugins/integration-ai",
-            "../../../packages/plugins/integration-hubstaff",
-            "../../../packages/plugins/integration-upwork",
-            "../../../packages/plugins/integration-github",
-            "../../../packages/plugins/integration-jira",
-            "../../../packages/plugin",
-            "../../../packages/plugins/knowledge-base",
-            "../../../packages/plugins/changelog",
-            "../../../packages/plugins/jitsu-analytics",
-            "../../../packages/plugins/sentry-tracing",
-            "../../../packages/plugins/job-search",
-            "../../../packages/plugins/job-proposal"
-        ]
-    },
-    "build": {
-        "appId": "com.ever.gauzydesktop",
-        "artifactName": "${name}-${version}.${ext}",
-        "productName": "Ever Gauzy Desktop",
-        "copyright": "Copyright © 2019-Present. Ever Co. LTD",
-        "dmg": {
-            "sign": false
-        },
-        "asar": true,
-        "npmRebuild": true,
-        "asarUnpack": [
-            "node_modules/screenshot-desktop/lib/win32",
-            "node_modules/@sentry/electron",
-            "node_modules/sqlite3/lib",
-            "node_modules/better-sqlite3",
-            "node_modules/@sentry/profiling-node/lib"
-        ],
-        "directories": {
-            "buildResources": "icons",
-            "output": "../desktop-packages"
-        },
-        "publish": [
-            {
-                "provider": "github",
-                "repo": "ever-gauzy-desktop",
-                "releaseType": "release"
-            },
-            {
-                "provider": "spaces",
-                "name": "ever",
-                "region": "sfo3",
-                "path": "/ever-gauzy-desktop",
-                "acl": "public-read"
-            }
-        ],
-        "mac": {
-            "category": "public.app-category.developer-tools",
-            "icon": "icon.icns",
-            "target": [
-                "zip",
-                "dmg"
-            ],
-            "asarUnpack": "**/*.node",
-            "artifactName": "${name}-${version}.${ext}",
-            "hardenedRuntime": true,
-            "gatekeeperAssess": false,
-            "entitlements": "tools/build/entitlements.mas.plist",
-            "entitlementsInherit": "tools/build/entitlements.mas.plist",
-            "extendInfo": {
-                "NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
-            }
-        },
-        "win": {
-            "publisherName": "Ever",
-            "target": [
-                {
-                    "target": "nsis",
-                    "arch": [
-                        "x64"
-                    ]
-                }
-            ],
-            "icon": "icon.ico",
-            "verifyUpdateCodeSignature": false
-        },
-        "linux": {
-            "icon": "linux",
-            "target": [
-                "AppImage",
-                "deb",
-                "tar.gz"
-            ],
-            "executableName": "gauzy-desktop",
-            "artifactName": "${name}-${version}.${ext}",
-            "synopsis": "Desktop",
-            "category": "Development"
-        },
-        "nsis": {
-            "oneClick": false,
-            "perMachine": true,
-            "createDesktopShortcut": true,
-            "createStartMenuShortcut": true,
-            "allowToChangeInstallationDirectory": true,
-            "allowElevation": true,
-            "installerIcon": "icon.ico",
-            "artifactName": "${name}-${version}.${ext}",
-            "deleteAppDataOnUninstall": true,
-            "menuCategory": true
-        },
-        "extraResources": [
-            "./data/**/*"
-        ]
-    },
-    "dependencies": {
-        "@datorama/akita-ngdevtools": "^7.0.0",
-        "@datorama/akita": "^7.1.1",
-        "@electron/remote": "^2.0.8",
-        "@gauzy/auth": "^0.1.0",
-        "@gauzy/core": "^0.1.0",
-        "@gauzy/desktop-libs": "^0.1.0",
-        "@gauzy/desktop-window": "^0.1.0",
-        "@gauzy/plugin-integration-hubstaff": "^0.1.0",
-        "@gauzy/plugin-changelog": "^0.1.0",
-        "@gauzy/plugin-integration-upwork": "^0.1.0",
-        "@gauzy/plugin-jitsu-analytics": "^0.1.0",
-        "@gauzy/plugin-job-proposal": "^0.1.0",
-        "@gauzy/plugin-job-search": "^0.1.0",
-        "@gauzy/plugin-knowledge-base": "^0.1.0",
-        "@gauzy/plugin-sentry": "^0.1.0",
-        "@nestjs/platform-express": "^10.3.7",
-        "@sentry/electron": "^4.18.0",
-        "@sentry/node": "^7.101.1",
-        "@sentry/profiling-node": "^7.101.1",
-        "@sentry/replay": "^7.101.1",
-        "@sentry/tracing": "^7.101.1",
-        "@sentry/types": "^7.101.1",
-        "auto-launch": "5.0.5",
-        "consolidate": "^0.16.0",
-        "electron-log": "^4.4.8",
-        "electron-store": "^8.1.0",
-        "electron-updater": "^6.1.7",
-        "electron-util": "^0.17.2",
-        "embedded-queue": "^0.0.11",
-        "ffi-napi": "^4.0.3",
-        "form-data": "^3.0.0",
-        "htmlparser2": "^8.0.2",
-        "iconv": "^3.0.1",
-        "knex": "^3.1.0",
-        "libsql": "^0.3.16",
-        "locutus": "^2.0.30",
-        "mac-screen-capture-permissions": "^2.1.0",
-        "moment": "^2.30.1",
-        "node-fetch": "^2.6.7",
-        "node-notifier": "^8.0.0",
-        "node-static": "^0.7.11",
-        "pdfmake": "^0.2.0",
-        "pg-query-stream": "^4.5.4",
-        "pg": "^8.11.4",
-        "screenshot-desktop": "^1.15.0",
-        "sound-play": "1.1.0",
-        "sqlite3": "^5.1.7",
-        "squirrelly": "^8.0.8",
-        "tslib": "^2.6.2",
-        "twing": "^5.0.2",
-        "underscore": "^1.13.3",
-        "undici": "^6.10.2"
-    },
-    "optionalDependencies": {
-        "node-linux": "^0.1.12",
-        "node-mac": "^1.0.1",
-        "node-windows": "^1.0.0-beta.8"
-    }
+	"name": "gauzy-desktop",
+	"productName": "Ever Gauzy Desktop",
+	"version": "0.1.0",
+	"description": "Ever Gauzy Desktop",
+	"license": "AGPL-3.0",
+	"homepage": "https://gauzy.co",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy.git"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"private": true,
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"main": "index.js",
+	"workspaces": {
+		"packages": [
+			"../../../packages/core",
+			"../../../packages/auth",
+			"../../../packages/desktop-window",
+			"../../../packages/desktop-libs",
+			"../../../packages/common",
+			"../../../packages/config",
+			"../../../packages/contracts",
+			"../../../packages/ui-config",
+			"../../../packages/plugin",
+			"../../../packages/plugins/integration-ai",
+			"../../../packages/plugins/integration-hubstaff",
+			"../../../packages/plugins/integration-upwork",
+			"../../../packages/plugins/integration-github",
+			"../../../packages/plugins/integration-jira",
+			"../../../packages/plugins/knowledge-base",
+			"../../../packages/plugins/product-reviews",
+			"../../../packages/plugins/changelog",
+			"../../../packages/plugins/jitsu-analytics",
+			"../../../packages/plugins/sentry-tracing",
+			"../../../packages/plugins/job-search",
+			"../../../packages/plugins/job-proposal"
+		]
+	},
+	"build": {
+		"appId": "com.ever.gauzydesktop",
+		"artifactName": "${name}-${version}.${ext}",
+		"productName": "Ever Gauzy Desktop",
+		"copyright": "Copyright © 2019-Present. Ever Co. LTD",
+		"dmg": {
+			"sign": false
+		},
+		"asar": true,
+		"npmRebuild": true,
+		"asarUnpack": [
+			"node_modules/screenshot-desktop/lib/win32",
+			"node_modules/@sentry/electron",
+			"node_modules/sqlite3/lib",
+			"node_modules/better-sqlite3",
+			"node_modules/@sentry/profiling-node/lib"
+		],
+		"directories": {
+			"buildResources": "icons",
+			"output": "../desktop-packages"
+		},
+		"publish": [
+			{
+				"provider": "github",
+				"repo": "ever-gauzy-desktop",
+				"releaseType": "release"
+			},
+			{
+				"provider": "spaces",
+				"name": "ever",
+				"region": "sfo3",
+				"path": "/ever-gauzy-desktop",
+				"acl": "public-read"
+			}
+		],
+		"mac": {
+			"category": "public.app-category.developer-tools",
+			"icon": "icon.icns",
+			"target": [
+				"zip",
+				"dmg"
+			],
+			"asarUnpack": "**/*.node",
+			"artifactName": "${name}-${version}.${ext}",
+			"hardenedRuntime": true,
+			"gatekeeperAssess": false,
+			"entitlements": "tools/build/entitlements.mas.plist",
+			"entitlementsInherit": "tools/build/entitlements.mas.plist",
+			"extendInfo": {
+				"NSAppleEventsUsageDescription": "Please allow access to script browser applications to detect the current URL when triggering instant lookup."
+			}
+		},
+		"win": {
+			"publisherName": "Ever",
+			"target": [
+				{
+					"target": "nsis",
+					"arch": [
+						"x64"
+					]
+				}
+			],
+			"icon": "icon.ico",
+			"verifyUpdateCodeSignature": false
+		},
+		"linux": {
+			"icon": "linux",
+			"target": [
+				"AppImage",
+				"deb",
+				"tar.gz"
+			],
+			"executableName": "gauzy-desktop",
+			"artifactName": "${name}-${version}.${ext}",
+			"synopsis": "Desktop",
+			"category": "Development"
+		},
+		"nsis": {
+			"oneClick": false,
+			"perMachine": true,
+			"createDesktopShortcut": true,
+			"createStartMenuShortcut": true,
+			"allowToChangeInstallationDirectory": true,
+			"allowElevation": true,
+			"installerIcon": "icon.ico",
+			"artifactName": "${name}-${version}.${ext}",
+			"deleteAppDataOnUninstall": true,
+			"menuCategory": true
+		},
+		"extraResources": [
+			"./data/**/*"
+		]
+	},
+	"dependencies": {
+		"@datorama/akita-ngdevtools": "^7.0.0",
+		"@datorama/akita": "^7.1.1",
+		"@electron/remote": "^2.0.8",
+		"@gauzy/auth": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/desktop-libs": "^0.1.0",
+		"@gauzy/desktop-window": "^0.1.0",
+		"@gauzy/plugin-changelog": "^0.1.0",
+		"@gauzy/plugin-integration-ai": "^0.1.0",
+		"@gauzy/plugin-integration-github": "^0.1.0",
+		"@gauzy/plugin-integration-hubstaff": "^0.1.0",
+		"@gauzy/plugin-integration-jira": "^0.1.0",
+		"@gauzy/plugin-integration-upwork": "^0.1.0",
+		"@gauzy/plugin-jitsu-analytics": "^0.1.0",
+		"@gauzy/plugin-job-proposal": "^0.1.0",
+		"@gauzy/plugin-job-search": "^0.1.0",
+		"@gauzy/plugin-knowledge-base": "^0.1.0",
+		"@gauzy/plugin-product-reviews": "^0.1.0",
+		"@gauzy/plugin-sentry": "^0.1.0",
+		"@nestjs/platform-express": "^10.3.7",
+		"@sentry/electron": "^4.18.0",
+		"@sentry/node": "^7.101.1",
+		"@sentry/profiling-node": "^7.101.1",
+		"@sentry/replay": "^7.101.1",
+		"@sentry/tracing": "^7.101.1",
+		"@sentry/types": "^7.101.1",
+		"auto-launch": "5.0.5",
+		"consolidate": "^0.16.0",
+		"electron-log": "^4.4.8",
+		"electron-store": "^8.1.0",
+		"electron-updater": "^6.1.7",
+		"electron-util": "^0.17.2",
+		"embedded-queue": "^0.0.11",
+		"ffi-napi": "^4.0.3",
+		"form-data": "^3.0.0",
+		"htmlparser2": "^8.0.2",
+		"iconv": "^3.0.1",
+		"knex": "^3.1.0",
+		"libsql": "^0.3.16",
+		"locutus": "^2.0.30",
+		"mac-screen-capture-permissions": "^2.1.0",
+		"moment": "^2.30.1",
+		"node-fetch": "^2.6.7",
+		"node-notifier": "^8.0.0",
+		"node-static": "^0.7.11",
+		"pdfmake": "^0.2.0",
+		"pg-query-stream": "^4.5.4",
+		"pg": "^8.11.4",
+		"screenshot-desktop": "^1.15.0",
+		"sound-play": "1.1.0",
+		"sqlite3": "^5.1.7",
+		"squirrelly": "^8.0.8",
+		"tslib": "^2.6.2",
+		"twing": "^5.0.2",
+		"underscore": "^1.13.3",
+		"undici": "^6.10.2"
+	},
+	"optionalDependencies": {
+		"node-linux": "^0.1.12",
+		"node-mac": "^1.0.1",
+		"node-windows": "^1.0.0-beta.8"
+	}
 }

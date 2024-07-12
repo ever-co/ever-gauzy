@@ -474,7 +474,9 @@
 		"policyicon",
 		"wbars",
 		"allcaps",
-		"iubgreen"
+		"iubgreen",
+		"unixepoch",
+		"macbook"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

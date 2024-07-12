@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-github",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Ever Gauzy Platform plugin for integration with Github APIs",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -16,7 +17,17 @@
 		"url": "https://github.com/ever-co/ever-gauzy/issues"
 	},
 	"homepage": "https://ever.co",
-	"keywords": [],
+	"keywords": [
+		"github",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"API",
+		"automation",
+		"webhooks"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",

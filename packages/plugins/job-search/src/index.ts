@@ -1,1 +1,1 @@
-export * from './job-search.plugin';
+export * from './lib/job-search.plugin';

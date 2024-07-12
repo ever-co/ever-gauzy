@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/plugin-sentry",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Gauzy Sentry Plugin - Seamless integration with Sentry for advanced error tracking and monitoring in Gauzy Platform.",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -8,6 +9,25 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"sentry",
+		"plugin",
+		"error-tracking",
+		"monitoring",
+		"nestjs",
+		"typescript",
+		"logging",
+		"observability"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -21,8 +41,9 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"watch": "tsc -p ./tsconfig.build.json --watch",
-		"build": "rimraf lib && tsc -p ./tsconfig.build.json"
+		"test:e2e": "jest --config ./jest.config.ts",
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
 	"dependencies": {
 		"@gauzy/config": "^0.1.0",
@@ -42,5 +63,10 @@
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

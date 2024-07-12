@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'integration-ai',
+	displayName: 'plugin-integration-ai',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {

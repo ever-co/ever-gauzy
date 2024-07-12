@@ -5,10 +5,13 @@ import { TypeOrmWakatimeRepository } from './repository';
 
 @Injectable()
 export class WakatimeService {
-	constructor(
-		private readonly typeOrmWakatimeRepository: TypeOrmWakatimeRepository
-	) { }
+	constructor(private readonly typeOrmWakatimeRepository: TypeOrmWakatimeRepository) {}
 
+	/**
+	 *
+	 * @param params
+	 * @returns
+	 */
 	async getSummaries(params: any): Promise<any> {
 		const result = await this.typeOrmWakatimeRepository.query(`
 			SELECT SUM(seconds) AS seconds
@@ -43,6 +46,11 @@ export class WakatimeService {
 		};
 	}
 
+	/**
+	 *
+	 * @param wakatime
+	 * @returns
+	 */
 	bulkSave(wakatime: Wakatime[]) {
 		return this.typeOrmWakatimeRepository
 			.createQueryBuilder()
@@ -52,6 +60,11 @@ export class WakatimeService {
 			.execute();
 	}
 
+	/**
+	 *
+	 * @param wakatime
+	 * @returns
+	 */
 	save(wakatime: Wakatime) {
 		return this.typeOrmWakatimeRepository
 			.createQueryBuilder()
@@ -61,6 +74,12 @@ export class WakatimeService {
 			.execute();
 	}
 
+	/**
+	 *
+	 * @param payload
+	 * @param headers
+	 * @returns
+	 */
 	parameterSanitize(payload, headers) {
 		const params = [];
 		if (!Array.isArray(payload)) {
@@ -93,6 +112,12 @@ export class WakatimeService {
 		}
 	}
 
+	/**
+	 *
+	 * @param userAgent
+	 * @param field
+	 * @returns
+	 */
 	_extractAgent(userAgent, field) {
 		let value = null;
 		try {
@@ -110,7 +135,7 @@ export class WakatimeService {
 				default:
 					break;
 			}
-		} catch (error) { }
+		} catch (error) {}
 
 		return value;
 	}

@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'integration-github',
+	displayName: 'plugin-integration-github',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
