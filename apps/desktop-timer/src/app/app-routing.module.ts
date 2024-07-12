@@ -1,25 +1,21 @@
-import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { NgModule } from '@angular/core';
+import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
-	ImageViewerComponent,
-	SettingsComponent,
-	ScreenCaptureComponent,
-	TimeTrackerComponent,
-	SetupComponent,
-	UpdaterComponent,
-	SplashScreenComponent,
-	NgxLoginComponent,
 	AboutComponent,
+	AlwaysOnComponent,
 	AuthGuard,
+	ImageViewerComponent,
+	NgxLoginComponent,
 	NoAuthGuard,
+	ScreenCaptureComponent,
 	ServerDownPage,
-	AlwaysOnComponent
+	SettingsComponent,
+	SetupComponent,
+	SplashScreenComponent,
+	TimeTrackerComponent,
+	UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
-import {
-	NbAuthComponent,
-	NbRequestPasswordComponent,
-	NbResetPasswordComponent
-} from '@nebular/auth';
+import { NbAuthComponent, NbRequestPasswordComponent, NbResetPasswordComponent } from '@nebular/auth';
 import { AppModuleGuard } from './app.module.guards';
 
 const routes: Routes = [
@@ -68,7 +64,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		component: SettingsComponent,
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 	},
 	{
 		path: 'updater',

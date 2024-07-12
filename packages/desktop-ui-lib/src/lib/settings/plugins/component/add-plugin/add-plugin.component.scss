@@ -1,0 +1,51 @@
+.error {
+	color: red;
+	font-weight: 400;
+	font-size: 13px;
+	padding: 8px;
+	background-color: #ff000054;
+	border-radius: 4px;
+}
+
+nb-card {
+	width: 350px;
+	display: flex;
+}
+
+nb-card-body {
+	background-color: var(--gauzy-card-2);
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+h4 {
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 24px;
+	letter-spacing: 0em;
+	color: var(--gauzy-text-color-1);
+}
+
+
+label {
+	font-weight: 600;
+	color: var(--gauzy-text-color-2);
+}
+
+button {
+	width: fit-content;
+	align-self: flex-end;
+}
+
+nb-card-header {
+	position: relative;
+}
+
+.cancel {
+	position: absolute;
+    right: 0.75rem;
+    top: 0.25rem;
+	cursor: pointer;
+}

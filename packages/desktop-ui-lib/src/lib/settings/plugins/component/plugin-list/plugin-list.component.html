@@ -1,0 +1,26 @@
+<div class="button-container">
+	<div class="button-add">
+		<button (click)="addPlugin()" nbButton> <nb-icon icon="plus-outline"></nb-icon> New Plugin</button>
+	</div>
+	<div *ngIf="plugin" class="button-hiddable">
+		<button class="button-install" (click)="changeStatus()" nbButton>Activate</button>
+		<button class="button-remove" (click)="remove()" nbButton><nb-icon
+				icon="trash-outline"></nb-icon>Uninstall</button>
+	</div>
+</div>
+<div *ngIf="(plugins$ | async)?.length > 0; else noPlugin" class="col-12 custom-table">
+	<div class="table-scroll-container">
+		<angular2-smart-table #pluginTable (userRowSelect)="handleRowSelection($event)" [settings]="smartTableSettings"
+			[source]="(plugins$ | async)" style="cursor: pointer">
+		</angular2-smart-table>
+	</div>
+	<div class="pagination-container">
+		<ga-pagination [source]="(plugins$ | async)"></ga-pagination>
+	</div>
+</div>
+<ng-template #noPlugin>
+	<div class="no-data">
+		<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.PLUGIN' | translate">
+		</ngx-no-data-message>
+	</div>
+</ng-template>
