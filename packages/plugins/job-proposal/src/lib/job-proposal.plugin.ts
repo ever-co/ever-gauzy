@@ -35,7 +35,7 @@ export class JobProposalPlugin implements IOnPluginBootstrap, IOnPluginDestroy, 
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobProposalPlugin.name} is being bootstrapped...`);
+			console.log(chalk.green(`${JobProposalPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -44,7 +44,7 @@ export class JobProposalPlugin implements IOnPluginBootstrap, IOnPluginDestroy, 
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobProposalPlugin.name} is being destroyed...`);
+			console.log(chalk.red(`${JobProposalPlugin.name} is being destroyed...`));
 		}
 	}
 

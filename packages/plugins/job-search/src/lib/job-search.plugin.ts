@@ -37,7 +37,7 @@ export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobSearchPlugin.name} is being bootstrapped...`);
+			console.log(chalk.green(`${JobSearchPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -46,7 +46,7 @@ export class JobSearchPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${JobSearchPlugin.name} is being destroyed...`);
+			console.log(chalk.red(`${JobSearchPlugin.name} is being destroyed...`));
 		}
 	}
 
