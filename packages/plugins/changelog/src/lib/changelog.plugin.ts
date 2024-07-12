@@ -22,7 +22,6 @@ export class ChangelogPlugin implements IOnPluginBootstrap, IOnPluginDestroy, IO
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
 			console.log(chalk.green(`${ChangelogPlugin.name} is being bootstrapped...`));
-			console.log('ChangelogPlugin is being bootstrapped...');
 		}
 	}
 

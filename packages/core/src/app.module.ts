@@ -142,7 +142,7 @@ import { TaskEstimationModule } from './tasks/estimation/task-estimation.module'
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 import { SocialAccountModule } from './auth/social-account/social-account.module';
 
-const { unleashConfig, jira } = environment;
+const { unleashConfig } = environment;
 
 if (unleashConfig.url) {
 	const unleashInstanceConfig: UnleashConfig = {
