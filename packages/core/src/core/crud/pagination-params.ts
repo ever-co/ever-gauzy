@@ -14,7 +14,6 @@ import { SimpleObjectLiteral, convertNativeParameters, parseObject } from './pag
  * Specifies what columns should be retrieved.
  */
 export class OptionsSelect<T = any> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseObject(value, parseToBoolean))
@@ -23,9 +22,8 @@ export class OptionsSelect<T = any> {
 
 /**
  * Indicates what relations of entity should be loaded (simplified left join form).
-*/
+ */
 export class OptionsRelations<T = any> extends OptionsSelect<T> {
-
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	readonly relations?: FindOptionsRelations<T>;
@@ -46,15 +44,15 @@ export class OptionParams<T> extends OptionsRelations<T> {
 	@IsNotEmpty()
 	@ValidateNested({ each: true })
 	@Type(() => TenantOrganizationBaseDTO)
-	@Transform(({ value }: TransformFnParams) => value ? escapeQueryWithParameters(value) : {})
+	@Transform(({ value }: TransformFnParams) => (value ? escapeQueryWithParameters(value) : {}))
 	readonly where: FindOptionsWhere<T>;
 
 	/**
-	* Indicates if soft-deleted rows should be included in entity result.
-	*/
+	 * Indicates if soft-deleted rows should be included in entity result.
+	 */
 	@ApiPropertyOptional({ type: 'boolean' })
 	@IsOptional()
-	@Transform(({ value }: TransformFnParams) => value ? parseToBoolean(value) : false)
+	@Transform(({ value }: TransformFnParams) => (value ? parseToBoolean(value) : false))
 	readonly withDeleted: boolean;
 }
 
@@ -88,7 +86,6 @@ export class PaginationParams<T = any> extends OptionParams<T> {
  * @returns {TenantOrganizationBaseDTO} - The escaped and converted query parameters as a DTO instance.
  */
 export function escapeQueryWithParameters(nativeParameters: SimpleObjectLiteral): TenantOrganizationBaseDTO {
-
 	// Convert native parameters based on the database connection type
 	const builtParameters: SimpleObjectLiteral = convertNativeParameters(nativeParameters);
 

@@ -1,8 +1,8 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IOrganization, ITag, ITagCreateInput, ITagUpdateInput } from '@gauzy/contracts';
-import { IntegrationMap } from 'core/entities/internal';
-import { RequestContext } from 'core/context';
+import { IntegrationMap } from '../../../core/entities/internal';
+import { RequestContext } from '../../../core/context';
 import { Tag } from './../../tag.entity';
 import { TagService } from './../../tag.service';
 import { AutomationLabelSyncCommand } from './../automation-label.sync.command';
@@ -11,7 +11,6 @@ import { TypeOrmIntegrationMapRepository } from '../../../integration-map/reposi
 
 @CommandHandler(AutomationLabelSyncCommand)
 export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLabelSyncCommand> {
-
 	constructor(
 		@InjectRepository(Tag)
 		private readonly typeOrmTagRepository: TypeOrmTagRepository,
@@ -20,7 +19,7 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 		private readonly typeOrmIntegrationMapRepository: TypeOrmIntegrationMapRepository,
 
 		private readonly _tagService: TagService
-	) { }
+	) {}
 
 	async execute(command: AutomationLabelSyncCommand): Promise<ITag> {
 		try {
@@ -50,15 +49,17 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 					});
 				} catch (error) {
 					// Create a new tag with the provided entity data
-					return await this.createTag({
-						organizationId,
-						tenantId
-					}, {
-						...entity,
-						id: integrationMap.gauzyId
-					});
+					return await this.createTag(
+						{
+							organizationId,
+							tenantId
+						},
+						{
+							...entity,
+							id: integrationMap.gauzyId
+						}
+					);
 				}
-
 			} catch (error) {
 				// Create a tag tag with the provided entity data
 				const tag = await this.createTag({ organizationId, tenantId }, entity);
@@ -80,17 +81,19 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 		}
 	}
 
-
 	/**
 	 * Creates a new tag within a organization.
 	 *
 	 * @param options - An object containing parameters for tag creation.
 	 * @returns A Promise that resolves to the newly created tag.
 	 */
-	async createTag(options: {
-		organizationId: IOrganization['id'];
-		tenantId: IOrganization['tenantId'];
-	}, entity: ITagCreateInput | ITagUpdateInput): Promise<ITag> {
+	async createTag(
+		options: {
+			organizationId: IOrganization['id'];
+			tenantId: IOrganization['tenantId'];
+		},
+		entity: ITagCreateInput | ITagUpdateInput
+	): Promise<ITag> {
 		try {
 			// Create a new tag with the provided entity data
 			const newTag = this.typeOrmTagRepository.create({
@@ -115,10 +118,7 @@ export class AutomationLabelSyncHandler implements ICommandHandler<AutomationLab
 	 * @param entity - The new data for the tag.
 	 * @returns A Promise that resolves to the updated tag.
 	 */
-	async updateTag(
-		id: ITagUpdateInput['id'],
-		entity: ITagUpdateInput
-	): Promise<ITag> {
+	async updateTag(id: ITagUpdateInput['id'], entity: ITagUpdateInput): Promise<ITag> {
 		try {
 			// Find the existing tag by its ID
 			const existingTag = await this._tagService.findOneByIdString(id);

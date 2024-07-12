@@ -465,7 +465,18 @@
 		"gauzyapiserver",
 		"Embeddable",
 		"locutus",
-		"woot"
+		"woot",
+		"proto",
+		"iubenda",
+		"iconed",
+		"cust",
+		"trasp",
+		"policyicon",
+		"wbars",
+		"allcaps",
+		"iubgreen",
+		"unixepoch",
+		"macbook"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

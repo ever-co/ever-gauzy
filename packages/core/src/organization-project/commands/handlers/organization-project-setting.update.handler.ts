@@ -5,12 +5,12 @@ import { OrganizationProjectService } from '../../organization-project.service';
 import { OrganizationProjectSettingUpdateCommand } from '../organization-project-setting.update.command';
 
 @CommandHandler(OrganizationProjectSettingUpdateCommand)
-export class OrganizationProjectSettingUpdateHandler implements ICommandHandler<OrganizationProjectSettingUpdateCommand> {
+export class OrganizationProjectSettingUpdateHandler
+	implements ICommandHandler<OrganizationProjectSettingUpdateCommand>
+{
 	private readonly logger = new Logger('OrganizationProjectSettingUpdateHandler');
 
-	constructor(
-		private readonly _organizationProjectService: OrganizationProjectService
-	) { }
+	constructor(private readonly _organizationProjectService: OrganizationProjectService) {}
 
 	/**
 	 * Execute an organization project setting update command.
@@ -18,9 +18,7 @@ export class OrganizationProjectSettingUpdateHandler implements ICommandHandler<
 	 * @param command - An `OrganizationProjectSettingUpdateCommand` object containing the update details.
 	 * @returns A promise that resolves to an `IOrganizationProjectSetting` or an `UpdateResult` object representing the result of the update operation.
 	 */
-	public async execute(
-		command: OrganizationProjectSettingUpdateCommand
-	): Promise<IOrganizationProjectSetting> {
+	public async execute(command: OrganizationProjectSettingUpdateCommand): Promise<IOrganizationProjectSetting> {
 		try {
 			// Extract the 'id' and 'input' properties from the command object.
 			const { id, input } = command;
@@ -33,8 +31,10 @@ export class OrganizationProjectSettingUpdateHandler implements ICommandHandler<
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			this.logger.error('Failed to update project integration settings', error.message);
-			throw new HttpException(`Failed to update project integration settings: ${error.message}`, HttpStatus.BAD_REQUEST);
+			throw new HttpException(
+				`Failed to update project integration settings: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
 	}
-
 }

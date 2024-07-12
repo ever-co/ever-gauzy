@@ -9,9 +9,9 @@ import { CrudService } from '../crud/crud.service';
 	providedIn: 'root'
 })
 export class GauzyAIService extends CrudService<IIntegrationTenant> {
-	static readonly API_URL = `${API_PREFIX}/integration/gauzy-ai`;
+	static readonly API_URL = `${API_PREFIX}/integration/ai`;
 
-	constructor(private readonly _http: HttpClient) {
+	constructor(readonly _http: HttpClient) {
 		super(_http, GauzyAIService.API_URL);
 	}
 
@@ -22,6 +22,6 @@ export class GauzyAIService extends CrudService<IIntegrationTenant> {
 	 * @returns An Observable of type IIntegrationTenant representing the created integration AI.
 	 */
 	create(input: IIntegrationAICreateInput): Observable<IIntegrationTenant> {
-		return this._http.post<IIntegrationTenant>(`${API_PREFIX}/integration/gauzy-ai`, input);
+		return this._http.post<IIntegrationTenant>(`${GauzyAIService.API_URL}`, input);
 	}
 }

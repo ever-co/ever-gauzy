@@ -10,7 +10,6 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IPagination,
-	UpdateEmployeeJobsStatistics,
 	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -202,31 +201,6 @@ export class EmployeesService {
 	 */
 	updateProfile(id: ID, payload: IEmployeeUpdateInput): Promise<IEmployee> {
 		return firstValueFrom(this.http.put<IEmployee>(`${API_PREFIX}/employee/${id}/profile`, payload));
-	}
-
-	/**
-	 * Retrieves job statistics for employees based on the provided request parameters.
-	 *
-	 * @param request - Parameters for filtering and retrieving job statistics.
-	 * @returns A promise that resolves with the job statistics data.
-	 */
-	getEmployeeJobsStatistics(request: any): Promise<any> {
-		return firstValueFrom(
-			this.http.get(`${API_PREFIX}/employee/job-statistics`, {
-				params: toParams(request)
-			})
-		);
-	}
-
-	/**
-	 * Updates the job search status and statistics for an employee.
-	 *
-	 * @param id - The ID of the employee.
-	 * @param statistics - An object containing job search status and statistics to be updated.
-	 * @returns A promise that resolves with the updated employee's job search status and statistics.
-	 */
-	updateJobSearchStatus(id: ID, statistics: UpdateEmployeeJobsStatistics): Promise<any> {
-		return firstValueFrom(this.http.put(`${API_PREFIX}/employee/${id}/job-search-status`, statistics));
 	}
 
 	/**

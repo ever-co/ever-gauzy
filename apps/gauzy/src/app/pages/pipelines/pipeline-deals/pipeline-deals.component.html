@@ -1,15 +1,9 @@
 <nb-card [nbSpinner]="loading" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
-	<nb-card-header class="card-header-title">
+	<nb-card-header class="card-header-title" *ngIf="pipeline$ | async as pipeline">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
-				<span>
-					{{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }}
-				</span>
-				|
-				<span>
-					{{ pipeline?.name }}
-				</span>
+				<span> {{ 'PIPELINE_DEALS_PAGE.HEADER' | translate }} </span> | <span> {{ pipeline?.name }} </span>
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
@@ -25,8 +19,8 @@
 		<div class="row btn-container mb-3">
 			<div class="col">
 				<nb-select
-					(selectedChange)="filterDealsByStage()"
-					[(selected)]="stageId"
+					(selectedChange)="filterDealsByStage($event)"
+					[formControl]="stageFormControl"
 					[placeholder]="'PIPELINE_DEALS_PAGE.FILTER_BY_STAGE' | translate"
 				>
 					<nb-option [value]="''" style="white-space: nowrap">
@@ -38,37 +32,38 @@
 				</nb-select>
 			</div>
 		</div>
-		<ng-template
-			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
-		></ng-template>
+		<ng-container *ngIf="deals$ | async as deals">
+			<ng-template
+				[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
+			></ng-template>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
 
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<angular2-smart-table
-			#pipelineTable
+			#pipelineDealsTable
 			(userRowSelect)="selectPipelineDeals($event)"
 			[settings]="smartTableSettings"
-			[source]="deals"
+			[source]="smartTableSource"
 			style="cursor: pointer"
 		></angular2-smart-table>
 	</div>
 	<div class="pagination-container">
 		<ng-container *ngIf="smartTableSource">
-			<ngx-pagination
-				[source]="smartTableSource"
-			></ngx-pagination>
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 		</ng-container>
 	</div>
 </ng-template>
+
 <ng-template #gridLayout>
 	<div class="grid">
 		<ga-card-grid
 			(onSelectedItem)="selectPipelineDeals($event)"
 			(scroll)="onScroll()"
 			[settings]="smartTableSettings"
-			[source]="gridDeals"
+			[source]="deals"
 			[totalItems]="pagination?.totalItems"
 		></ga-card-grid>
 	</div>
@@ -78,8 +73,8 @@
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
 			<button
-				[disabled]="!deal && disableButton"
-				[routerLink]="['./', deal?.id, 'edit']"
+				[routerLink]="['./', selectedDeal?.id, 'edit']"
+				[disabled]="disableButton"
 				class="action primary"
 				nbButton
 				size="small"
@@ -91,7 +86,7 @@
 			</button>
 			<button
 				(click)="deleteDeal()"
-				[disabled]="!deal && disableButton"
+				[disabled]="disableButton"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 				class="action"
 				nbButton

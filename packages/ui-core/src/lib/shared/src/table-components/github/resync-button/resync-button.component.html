@@ -1,13 +1,13 @@
 <button
-    nbButton
-    status="primary"
-    class="mr-2"
-    debounceClick
-    (throttledClick)="onClicked($event)"
-    [disabled]="!rowData?.repository?.hasSyncEnabled"
+	nbButton
+	status="primary"
+	class="mr-2"
+	debounceClick
+	(throttledClick)="onClicked($event)"
+	[disabled]="!rowData?.customFields?.repository?.hasSyncEnabled"
 >
-    <div class="sync-container">
-        <nb-icon class="sync" icon="sync-outline"></nb-icon>
-        {{ 'BUTTONS.RESYNC' | translate }}
-    </div>
+	<div class="sync-container">
+		<nb-icon class="sync" icon="sync-outline"></nb-icon>
+		{{ 'BUTTONS.RESYNC' | translate }}
+	</div>
 </button>

@@ -6,14 +6,9 @@ import { IntegrationTenant } from '../../integration-tenant.entity';
 
 @CommandHandler(IntegrationTenantCreateCommand)
 export class IntegrationTenantCreateHandler implements ICommandHandler<IntegrationTenantCreateCommand> {
+	constructor(private readonly _integrationTenantService: IntegrationTenantService) {}
 
-	constructor(
-		private readonly _integrationTenantService: IntegrationTenantService
-	) { }
-
-	public async execute(
-		command: IntegrationTenantCreateCommand
-	): Promise<IntegrationTenant> {
+	public async execute(command: IntegrationTenantCreateCommand): Promise<IntegrationTenant> {
 		try {
 			const { input } = command;
 			return await this._integrationTenantService.create(input);

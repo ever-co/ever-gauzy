@@ -14,14 +14,14 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import { IOrganizationTaskSetting, PermissionsEnum } from '@gauzy/contracts';
-import { Permissions } from './../shared/decorators';
-import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
+import { TenantOrganizationBaseDTO } from '../core/dto';
+import { Permissions } from '../shared/decorators';
+import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { OrganizationTaskSettingCreateCommand, OrganizationTaskSettingUpdateCommand } from './commands';
 import { CreateOrganizationTaskSettingDTO, UpdateOrganizationTaskSettingDTO } from './dto';
 import { OrganizationTaskSetting } from './organization-task-setting.entity';
 import { OrganizationTaskSettingService } from './organization-task-setting.service';
-import { TenantOrganizationBaseDTO } from 'core/dto';
 
 @ApiTags('OrganizationTaskSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -31,7 +31,7 @@ export class OrganizationTaskSettingController {
 	constructor(
 		private readonly commandBus: CommandBus,
 		private readonly organizationTaskSettingService: OrganizationTaskSettingService
-	) { }
+	) {}
 
 	/**
 	 * GET organization Task Setting by organizationId

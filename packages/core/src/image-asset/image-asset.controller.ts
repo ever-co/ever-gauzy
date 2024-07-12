@@ -4,6 +4,7 @@ import {
 	Param,
 	Post,
 	Body,
+	Headers,
 	UseGuards,
 	Query,
 	HttpCode,
@@ -68,7 +69,11 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 		})
 	)
 	@UseValidationPipe({ whitelist: true })
-	async upload(@UploadedFileStorage() file, @Body() entity: UploadImageAsset) {
+	async upload(
+		@UploadedFileStorage() file,
+		@Headers() headers: Record<string, string>,
+		@Body() entity: UploadImageAsset
+	) {
 		const provider = new FileStorage().getProvider();
 		let thumbnail: UploadedFile;
 
@@ -106,9 +111,15 @@ export class ImageAssetController extends CrudController<ImageAsset> {
 			console.error('Error while uploading media asset into file storage provider:', error);
 		}
 
+		// Extract tenant and organization IDs from request headers and body
+		const tenantId = headers['tenant-id'] || entity?.tenantId;
+		const organizationId = headers['organization-id'] || entity?.organizationId;
+
 		return await this._commandBus.execute(
 			new ImageAssetCreateCommand({
 				...entity,
+				tenantId,
+				organizationId,
 				name: file.filename,
 				url: file.key,
 				thumb: thumbnail ? thumbnail.key : null,

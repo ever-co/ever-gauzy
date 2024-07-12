@@ -1,6 +1,7 @@
 {
-	"name": "@gauzy/integration-github",
+	"name": "@gauzy/plugin-integration-github",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Ever Gauzy Platform plugin for integration with Github APIs",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -8,6 +9,25 @@
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"github",
+		"plugin",
+		"integration",
+		"Ever Gauzy",
+		"NestJS",
+		"typescript",
+		"API",
+		"automation",
+		"webhooks"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,26 +42,52 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.js",
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.lib.json"
+		"test:e2e": "jest --config ./jest.config.ts",
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
-	"keywords": [],
+	"peerDependencies": {
+		"tslib": "^2.6.2"
+	},
 	"dependencies": {
+		"@gauzy/common": "^0.1.0",
+		"@gauzy/config": "^0.1.0",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
+		"@gauzy/plugin": "^0.1.0",
+		"@mikro-orm/nestjs": "^5.2.3",
+		"@nestjs/axios": "^3.0.2",
+		"@nestjs/cache-manager": "^2.2.1",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/core": "^10.3.7",
+		"@nestjs/cqrs": "^10.2.7",
+		"@nestjs/typeorm": "^10.0.2",
 		"@octokit/rest": "^20.0.2",
+		"cache-manager": "^5.3.2",
+		"@nestjs/swagger": "^7.3.0",
 		"chalk": "4.1.2",
+		"class-transformer": "^0.5.1",
+		"class-validator": "^0.14.0",
 		"express": "^4.18.2",
+		"moment": "^2.30.1",
 		"octokit": "^3.1.2",
 		"pino-std-serializers": "^6.2.2",
 		"probot": "^12.3.3",
+		"rxjs": "^7.4.0",
 		"smee-client": "^1.2.3",
-		"underscore": "^1.13.3"
+		"typeorm": "^0.3.20",
+		"underscore": "^1.13.3",
+		"uuid": "^8.3.0"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

@@ -12,12 +12,11 @@ import {
 	HttpException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiTags } from '@nestjs/swagger';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
-import { IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { CrudController, PaginationParams } from 'core/crud';
-import { TenantOrganizationBaseDTO } from 'core/dto';
+import { ID, IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from '../core/crud';
+import { TenantOrganizationBaseDTO } from '../core/dto';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -84,7 +83,7 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 */
 	@Get(':id')
 	async findById(
-		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
+		@Param('id', UUIDValidationPipe) integrationId: ID,
 		@Query() query: RelationsQueryDTO
 	): Promise<IIntegrationTenant> {
 		try {
@@ -97,7 +96,7 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 			console.error(`Error while finding IntegrationTenant: ${error.message}`);
 
 			// Throw an InternalServerErrorException with a generic error message
-			throw new InternalServerErrorException('An error occurred while fetching the IntegrationTenant entity');
+			throw new InternalServerErrorException('An error occurred while fetching the integration entity');
 		}
 	}
 
@@ -111,16 +110,11 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() input: UpdateIntegrationTenantDTO
 	): Promise<IIntegrationTenant> {
-		try {
-			// Update the corresponding integration tenant with the new input data
-			return await this._commandBus.execute(new IntegrationTenantUpdateCommand(id, input));
-		} catch (error) {
-			// Handle errors, e.g., return an error response.
-			throw new Error('Failed to update integration fields');
-		}
+		// Update the corresponding integration tenant with the new input data
+		return await this._commandBus.execute(new IntegrationTenantUpdateCommand(id, input));
 	}
 
 	/**
@@ -132,13 +126,16 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	@Delete(':id')
 	@UseValidationPipe({ whitelist: true })
 	async delete(
-		@Param('id', UUIDValidationPipe) id: IIntegrationTenant['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() query: TenantOrganizationBaseDTO
 	): Promise<DeleteResult> {
 		try {
 			// Validate the input data (You can use class-validator for validation)
 			if (!query || !query.organizationId) {
-				throw new HttpException('Invalid query parameter', HttpStatus.BAD_REQUEST);
+				throw new HttpException(
+					'Missing or invalid organizationId in the query parameters',
+					HttpStatus.BAD_REQUEST
+				);
 			}
 
 			// Execute a command to delete the resource using a command bus

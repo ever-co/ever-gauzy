@@ -1,0 +1,48 @@
+{
+	"name": "plugin-jitsu-analytics",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/jitsu-analytics/src",
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "./packages/plugins/jitsu-analytics/dist",
+				"tsConfig": "packages/plugins/jitsu-analytics/tsconfig.lib.json",
+				"packageJson": "packages/plugins/jitsu-analytics/package.json",
+				"main": "packages/plugins/jitsu-analytics/src/index.ts",
+				"assets": ["packages/plugins/jitsu-analytics/*.md"]
+			}
+		},
+		"publish": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node tools/scripts/publish.mjs plugin-jitsu-analytics {args.ver} {args.tag}"
+			},
+			"dependsOn": ["build"]
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": ["packages/plugins/jitsu-analytics/**/*.ts"]
+			}
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/jitsu-analytics/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		}
+	},
+	"tags": []
+}

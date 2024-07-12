@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'integration-upwork',
+	displayName: 'plugin-integration-upwork',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {

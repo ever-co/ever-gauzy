@@ -1,12 +1,12 @@
 import { ConsoleLogger, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { MikroOrmModule } from '@mikro-orm/nestjs';
+import { User } from '../core/entities/internal';
 import { CacheHealthIndicator } from './indicators/cache-health.indicator';
 import { RedisHealthIndicator } from './indicators/redis-health.indicator';
 import { HealthController } from './health.controller';
-import { DatabaseModule } from 'database/database.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { User } from 'user/user.entity';
+import { DatabaseModule } from '../database/database.module';
 
 @Module({
 	controllers: [HealthController],

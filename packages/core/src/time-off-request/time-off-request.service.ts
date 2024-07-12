@@ -17,8 +17,8 @@ import { RequestApproval } from '../request-approval/request-approval.entity';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from './../core/context';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmRequestApprovalRepository } from 'request-approval/repository/mikro-orm-request-approval.repository';
-import { TypeOrmRequestApprovalRepository } from 'request-approval/repository/type-orm-request-approval.repository';
+import { MikroOrmRequestApprovalRepository } from '../request-approval/repository/mikro-orm-request-approval.repository';
+import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 

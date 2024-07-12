@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Data, Router } from '@angular/router';
@@ -11,6 +11,7 @@ import { Cell } from 'angular2-smart-table';
 import {
 	AtLeastOneFieldValidator,
 	DateRangePickerBuilderService,
+	ErrorHandlingService,
 	ProposalTemplateService,
 	ServerDataSource,
 	ToastrService
@@ -19,7 +20,6 @@ import {
 	IEmployeeJobApplication,
 	IDateRangePicker,
 	IEmployeeJobPost,
-	IGetEmployeeJobPostFilters,
 	IJobMatchings,
 	IOrganization,
 	ISelectedEmployee,
@@ -31,7 +31,8 @@ import {
 	PermissionsEnum,
 	IEmployee,
 	IIntegrationEntitySetting,
-	IntegrationEntity
+	IntegrationEntity,
+	IEmployeeProposalTemplate
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-core/core';
 import {
@@ -40,7 +41,7 @@ import {
 	PaginationFilterBaseComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
-import { API_PREFIX, Store, distinctUntilChange, isEmpty, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { ApplyJobManuallyComponent } from '../components';
 import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 
@@ -50,36 +51,24 @@ import { JobTitleDescriptionDetailsComponent } from '../../table-components';
 	templateUrl: './search.component.html',
 	styleUrls: ['./search.component.scss']
 })
-export class SearchComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy, AfterViewInit {
+export class SearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	loading: boolean = false;
 	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
 	settingsSmartTable: object;
 	isOpenAdvancedFilter: boolean = false;
 	jobs: IEmployeeJobPost[] = [];
-
 	JobPostSourceEnum = JobPostSourceEnum;
 	JobPostTypeEnum = JobPostTypeEnum;
 	JobPostStatusEnum = JobPostStatusEnum;
 	PermissionsEnum = PermissionsEnum;
 	JobSearchTabsEnum = JobSearchTabsEnum;
-
-	jobRequest: IGetEmployeeJobPostFilters = {
-		employeeIds: [],
-		jobSource: [],
-		jobType: [],
-		jobStatus: null,
-		budget: []
-	};
-
 	jobs$: Subject<any> = this.subject$;
 	smartTableSource: ServerDataSource;
 	autoRefreshTimer: Subscription;
 	disableButton: boolean = true;
 	selectedJob: IEmployeeJobPost;
-
 	nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.ACTIONS);
-
 	public organization: IOrganization;
 	public selectedEmployee: ISelectedEmployee;
 	public selectedDateRange: IDateRangePicker;
@@ -87,7 +76,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	/*
 	 * Search Tab Form
 	 */
-	public form: UntypedFormGroup = SearchComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = SearchComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
@@ -104,17 +93,18 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	}
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly http: HttpClient,
+		public readonly translateService: TranslateService,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _http: HttpClient,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _router: Router,
-		private readonly dialogService: NbDialogService,
-		private readonly store: Store,
-		public readonly translateService: TranslateService,
-		public readonly proposalTemplateService: ProposalTemplateService,
-		private readonly toastrService: ToastrService,
-		private readonly jobService: JobService,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
+		private readonly _dialogService: NbDialogService,
+		private readonly _store: Store,
+		private readonly _proposalTemplateService: ProposalTemplateService,
+		private readonly _toastrService: ToastrService,
+		private readonly _jobService: JobService,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 
@@ -152,7 +142,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.pipe(
 				debounceTime(100),
 				tap(() => this.onSelectJob({ isSelected: false, data: null })),
-				tap(async () => await this.getEmployeesJob()),
+				tap(async () => await this.getEmployeeJobs()),
 				tap(() => (this.isRefresh = false)),
 				untilDestroyed(this)
 			)
@@ -176,9 +166,9 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 	}
 
 	ngAfterViewInit(): void {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
-		const selectedDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
+		const selectedDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
 		combineLatest([storeOrganization$, selectedDateRange$, storeEmployee$])
 			.pipe(
 				debounceTime(100),
@@ -188,7 +178,6 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					this.organization = organization;
 					this.selectedDateRange = dateRange;
 					this.selectedEmployee = employee && employee.id ? employee : null;
-					this.jobRequest.employeeIds = this.selectedEmployee ? [this.selectedEmployee.id] : [];
 				}),
 				tap(() => this._loadSmartTableSettings()),
 				tap(() => this.jobs$.next(true)),
@@ -197,17 +186,23 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.subscribe();
 	}
 
-	/** Get employee default proposal template */
-	async getEmployeeDefaultProposalTemplate(job: IJobMatchings) {
+	/**
+	 * Retrieves the default proposal template for the specified employee and organization.
+	 * @param {IJobMatchings} job - The job matching object containing employeeId.
+	 * @returns {Promise<any>} A promise resolving to the default proposal template or null if not found.
+	 */
+	async getEmployeeDefaultProposalTemplate(job: IJobMatchings): Promise<IEmployeeProposalTemplate | null> {
+		// Check if organization context is available
 		if (!this.organization) {
-			return;
+			return null;
 		}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		// Extract necessary IDs
+		const { id: organizationId, tenantId } = this.organization;
 		const { employeeId } = job;
 
-		const { items = [] } = await this.proposalTemplateService.getAll({
+		// Retrieve proposal templates matching criteria
+		const { items = [] } = await this._proposalTemplateService.getAll({
 			where: {
 				tenantId,
 				organizationId,
@@ -215,20 +210,25 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				isDefault: true
 			}
 		});
+
+		// Return the first matching default template or null if not found
 		return items.length > 0 ? items[0] : null;
 	}
 
-	copyTextToClipboard(text) {
+	/**
+	 * Copies the given text to the clipboard.
+	 * @param {string} text - The text to be copied to the clipboard.
+	 * @returns {Promise<void>} A promise that resolves when the text is copied.
+	 */
+	async copyTextToClipboard(text: string): Promise<void | boolean> {
 		if (!navigator.clipboard) {
+			// Fallback method for older browsers that do not support navigator.clipboard API
 			const textArea = document.createElement('textarea');
 			textArea.value = text;
 
 			// Avoid scrolling to bottom
-			textArea.style.width = '0';
-			textArea.style.height = '0';
-			textArea.style.top = '0';
-			textArea.style.left = '0';
 			textArea.style.position = 'fixed';
+			textArea.style.opacity = '0'; // Make textarea invisible
 
 			document.body.appendChild(textArea);
 			textArea.focus();
@@ -236,42 +236,53 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 
 			try {
 				const successful = document.execCommand('copy');
-				const msg = successful ? 'successful' : 'unsuccessful';
-				console.log('Fallback: Copying text command was ' + msg);
-			} catch (err) {
-				console.error('Fallback: Oops, unable to copy', err);
+				if (!successful) {
+					throw new Error('Fallback: Copy command was unsuccessful');
+				}
+				console.log('Fallback: Copying text command was successful');
+			} catch (error) {
+				console.error('Fallback: Oops, unable to copy', error);
+				throw new Error(`Fallback: Copy command was unsuccessful: ${error?.message}`);
+			} finally {
+				document.body.removeChild(textArea); // Clean up
 			}
-			return;
-		}
-		return navigator.clipboard.writeText(text).then(
-			() => {
-				console.log('Async: Copying to clipboard was successful!');
-			},
-			(err) => {
-				console.error('Async: Could not copy text: ', err);
-			}
-		);
-	}
-
-	setAutoRefresh(value: boolean) {
-		if (value) {
-			this.autoRefreshTimer = timer(0, 60000)
-				.pipe(
-					tap(() => this.refresh()),
-					untilDestroyed(this)
-				)
-				.subscribe();
 		} else {
-			if (this.autoRefreshTimer) {
-				this.autoRefreshTimer.unsubscribe();
+			// Modern method using navigator.clipboard API
+			try {
+				await navigator.clipboard.writeText(text);
+				console.log('Async: Copying to clipboard was successful!');
+			} catch (error) {
+				console.error('Async: Could not copy text: ', error);
+				throw new Error(`Async: Could not copy text: ${error?.message}`);
 			}
 		}
 	}
 
 	/**
-	 * Custom events
-	 *
-	 * @param $event
+	 * Sets the auto refresh behavior based on the provided value.
+	 * @param {boolean} value - If true, enables auto refresh; if false, disables it.
+	 */
+	setAutoRefresh(value: boolean): void {
+		if (value) {
+			// Enable auto refresh
+			this.autoRefreshTimer = timer(0, 60000) // Timer starts immediately and fires every 60 seconds
+				.pipe(
+					tap(() => this.refresh()), // Perform the refresh action on each timer tick
+					untilDestroyed(this) // Automatically unsubscribe when component is destroyed
+				)
+				.subscribe();
+		} else {
+			// Disable auto refresh
+			if (this.autoRefreshTimer instanceof Subscription) {
+				this.autoRefreshTimer.unsubscribe(); // Unsubscribe from the timer observable
+				this.autoRefreshTimer = null; // Clear the timer reference
+			}
+		}
+	}
+
+	/**
+	 * Handles custom events related to job actions such as viewing, applying, and hiding jobs.
+	 * @param $event The custom event containing action and data payload.
 	 */
 	async onCustomEvents($event: { action: string; data: any }) {
 		switch ($event.action) {
@@ -281,24 +292,38 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				}
 				break;
 			case 'apply':
+				// Define the applyRequest object
 				const applyRequest: IEmployeeJobApplication = {
 					applied: true,
 					employeeId: $event.data.employeeId,
 					providerCode: $event.data.providerCode,
 					providerJobId: $event.data.providerJobId
 				};
-				this.jobService.applyJob(applyRequest).then(async (resp) => {
-					this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+
+				try {
+					// Await the applyJob function call
+					const resp = await this._jobService.applyJob(applyRequest);
+
+					// Show success message and refresh smart table
+					this._toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
 					this.smartTableSource.refresh();
 
+					// Check if a redirect is required
 					if (resp.isRedirectRequired) {
+						// Fetch the proposal template
 						const proposalTemplate = await this.getEmployeeDefaultProposalTemplate($event.data);
 						if (proposalTemplate) {
+							// Copy proposal content to clipboard
 							await this.copyTextToClipboard(proposalTemplate.content);
 						}
+						// Open a new window with job post URL
 						window.open($event.data.jobPost.url, '_blank');
 					}
-				});
+				} catch (error) {
+					console.error('Error while applying job:', error);
+					// Optionally show an error message or handle the error scenario
+					this._errorHandlingService.handleError(error);
+				}
 				break;
 			case 'hide':
 				try {
@@ -309,10 +334,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						providerJobId: $event.data.providerJobId
 					});
 
-					this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+					this._toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
 					this.smartTableSource.refresh();
 				} catch (error) {
 					console.log('Error while hide job', error);
+					// Optionally show an error message or handle the error scenario
+					this._errorHandlingService.handleError(error);
 				}
 				break;
 			default:
@@ -330,109 +357,141 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		this.selectedJob = isSelected ? data : null;
 	}
 
-	public viewJob() {
+	/**
+	 * Opens the job post URL in a new tab if a job is selected and has a valid URL.
+	 */
+	public viewJob(): void {
 		if (!this.selectedJob) {
 			return;
 		}
-		if (this.selectedJob.jobPost) {
+
+		if (this.selectedJob.jobPost && this.selectedJob.jobPost.url) {
 			window.open(this.selectedJob.jobPost.url, '_blank');
 		}
 	}
 
 	/**
-	 * Updates job visibility
-	 *
-	 * @returns
+	 * Updates job visibility by hiding the selected job post.
+	 * Displays success message on job hidden and refreshes the smart table source.
 	 */
-	public async hideJob() {
+	public async hideJob(): Promise<void> {
+		// Check if a job is selected
 		if (!this.selectedJob) {
 			return;
 		}
 
 		try {
+			// Destructure selected job properties
 			const { employeeId, providerCode, providerJobId } = this.selectedJob;
+
+			// Call service method to hide the job post
 			await this.hideJobPost({ hide: true, employeeId, providerCode, providerJobId });
 
-			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+			// Display success message using toastr service
+			this._toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+
+			// Refresh the smart table source
 			this.smartTableSource.refresh();
 
+			// Clear selection of the job post
 			this.onSelectJob({ isSelected: false, data: null });
 		} catch (error) {
-			console.log('Error while hide job', error);
+			// Log and handle any errors that occur during hiding the job post
+			console.error('Error while hiding job', error);
+			this._toastrService.error('TOASTR.MESSAGE.ERROR_HIDING_JOB');
 		}
 	}
 
 	/**
-	 * Updates job visibility
+	 * Updates job visibility by hiding the job post based on the provided input.
 	 *
-	 * @param input
+	 * @param input The input data containing employee ID, provider code, and provider job ID.
 	 */
-	public async hideJobPost(input: IVisibilityJobPostInput) {
+	public async hideJobPost(input: IVisibilityJobPostInput): Promise<void> {
 		try {
 			const { employeeId, providerCode, providerJobId } = input;
+
+			// Check if provider code and provider job ID are provided
 			if (providerCode && providerJobId) {
+				// Prepare payload for hiding job post
 				const payload: IVisibilityJobPostInput = {
 					hide: true,
-					employeeId: employeeId,
-					providerCode: providerCode,
-					providerJobId: providerJobId
+					employeeId,
+					providerCode,
+					providerJobId
 				};
-				await this.jobService.hideJob(payload);
+
+				// Call job service method to hide the job post
+				await this._jobService.hideJob(payload);
 			}
 		} catch (error) {
-			console.log('Error while hide job', error);
+			// Log and handle any errors that occur during hiding the job post
+			console.error('Error while hiding job', error);
 		}
 	}
 
 	/**
-	 * Already applied job from provider site
-	 *
-	 * @returns
+	 * Marks the selected job as already applied on the provider site.
+	 * Updates job application status and refreshes the smart table source.
 	 */
-	async appliedJob() {
+	async appliedJob(): Promise<void> {
+		// Check if a job is selected
 		if (!this.selectedJob) {
 			return;
 		}
+
 		try {
+			// Destructure selected job properties
 			const { employeeId, providerCode, providerJobId } = this.selectedJob;
-			await this.jobService.updateApplied({
+
+			// Call job service method to update job application status
+			await this._jobService.updateApplied({
 				employeeId,
 				providerCode,
 				providerJobId,
 				applied: true
 			});
 
-			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			// Display success message using toastr service
+			this._toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+
+			// Refresh the smart table source
 			this.smartTableSource.refresh();
 		} catch (error) {
-			console.log('Error while applied job', error);
+			// Log and handle any errors that occur during updating job application status
+			console.error('Error while marking job as applied', error);
+			this._toastrService.error('TOASTR.MESSAGE.ERROR_APPLYING_JOB');
 		}
 	}
 
 	/**
-	 * Apply For Job Post
+	 * Apply for a job post using the provided job application details.
 	 *
-	 * @param applyJobPost
-	 * @returns
+	 * @param applyJobPost The job application details.
 	 */
 	async applyToJob(applyJobPost: IEmployeeJobApplication): Promise<void> {
+		// Check if a job is selected
 		if (!this.selectedJob) {
 			return;
 		}
 
 		try {
-			const appliedJob = await this.jobService.applyJob(applyJobPost);
-			this.toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+			// Apply for the job using job service method
+			const appliedJob = await this._jobService.applyJob(applyJobPost);
 
-			// removed selected row from table after applied
+			// Display success message using toastr service
+			this._toastrService.success('TOASTR.MESSAGE.JOB_APPLIED');
+
+			// Remove the selected row from the table after applying
 			const row = document.querySelector('angular2-smart-table > table > tbody > .angular2-smart-row.selected');
-			if (!!row) {
+			if (row) {
 				row.remove();
 				this.onSelectJob({ isSelected: false, data: null });
 			}
 
+			// Handle redirection and proposal copying if required
 			if (appliedJob.isRedirectRequired) {
-				// If we have generated proposal, let's copy to clipboard
+				// Copy proposal to clipboard if generated, else use default proposal template
 				if (appliedJob.proposal) {
 					await this.copyTextToClipboard(appliedJob.proposal);
 				} else {
@@ -441,46 +500,55 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 						await this.copyTextToClipboard(proposalTemplate.content);
 					}
 				}
+				// Open job post URL in a new tab
 				window.open(this.selectedJob.jobPost.url, '_blank');
 			}
 		} catch (error) {
-			console.log('Error while applying job post', error);
+			// Log and handle any errors that occur during job application
+			console.error('Error while applying job post', error);
+			this._toastrService.error('TOASTR.MESSAGE.ERROR_APPLYING_JOB');
 		}
 	}
 
-	/** Apply For Job Automatically */
+	/**
+	 * Apply for a job automatically using the selected job details.
+	 */
 	async applyToJobAutomatically() {
+		// Check if a job is selected
 		if (!this.selectedJob) {
 			return;
 		}
+
 		try {
+			// Prepare job application details
 			const { providerCode, providerJobId, employeeId } = this.selectedJob;
 			const applyJobPost: IEmployeeJobApplication = {
 				applied: true,
-				...(isNotEmpty(this.selectedEmployee)
-					? {
-							employeeId: this.selectedEmployee.id
-					  }
-					: {
-							employeeId
-					  }),
+				// Choose employeeId based on whether selectedEmployee is defined
+				...(this.selectedEmployee?.id ? { employeeId: this.selectedEmployee.id } : { employeeId }),
 				providerCode,
 				providerJobId
 			};
 
+			// Apply for the job using applyToJob method
 			await this.applyToJob(applyJobPost);
 		} catch (error) {
-			console.log('Error while applying job post automatically', error);
+			// Log and handle any errors that occur during automatic job application
+			console.error('Error while applying job post automatically', error);
 		}
 	}
 
-	/** Apply For Job Manually */
+	/**
+	 * Apply for a job manually using a dialog component.
+	 */
 	async applyToJobManually() {
+		// Check if a job is selected
 		if (!this.selectedJob) {
 			return;
 		}
 
-		const dialog = this.dialogService.open(ApplyJobManuallyComponent, {
+		// Open a dialog to handle manual job application
+		const dialog = this._dialogService.open(ApplyJobManuallyComponent, {
 			context: {
 				employeeJobPost: this.selectedJob,
 				selectedEmployee: this.selectedEmployee
@@ -488,14 +556,16 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			hasScroll: false
 		});
 
-		const result = await firstValueFrom<IEmployeeJobApplication>(dialog.onClose);
+		try {
+			// Wait for dialog result
+			const result = await firstValueFrom<IEmployeeJobApplication>(dialog.onClose);
 
-		if (result) {
-			const { providerCode, providerJobId } = this.selectedJob;
+			// Process job application if result is available
+			if (result) {
+				const { providerCode, providerJobId } = this.selectedJob;
+				const { applied, employeeId, proposal, rate, details, attachments } = result;
 
-			const { applied, employeeId, proposal, rate, details, attachments } = result;
-
-			try {
+				// Prepare job application details
 				const applyJobPost: IEmployeeJobApplication = {
 					applied,
 					employeeId,
@@ -507,13 +577,18 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 					providerJobId
 				};
 
+				// Apply for the job using applyToJob method
 				await this.applyToJob(applyJobPost);
-			} catch (error) {
-				console.log('Error while applying job post manually', error);
 			}
+		} catch (error) {
+			// Log and handle any errors that occur during manual job application
+			console.error('Error while applying job post manually', error);
 		}
 	}
 
+	/**
+	 * Loads smart table settings.
+	 */
 	private _loadSmartTableSettings() {
 		const self: SearchComponent = this;
 
@@ -528,8 +603,9 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 				perPage: pagination ? pagination.itemsPerPage : 10
 			},
 			columns: {
-				...(isEmpty(this.selectedEmployee)
-					? {
+				...(this.selectedEmployee?.id
+					? {}
+					: {
 							employee: {
 								title: this.getTranslation('JOBS.EMPLOYEE'),
 								filter: false,
@@ -540,6 +616,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 								componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 									const employee: IEmployee = cell.getRawValue() as IEmployee;
 									instance.rowData = cell.getRow().getData();
+
 									instance.value = {
 										name: employee?.user?.name ?? null,
 										imageUrl: employee?.user?.imageUrl ?? null,
@@ -547,8 +624,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 									};
 								}
 							}
-					  }
-					: {}),
+					  }),
 				jobDetails: {
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
@@ -579,7 +655,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			/**
 			 * Initiate smart table source configuration
 			 */
-			this.smartTableSource = new ServerDataSource(this.http, {
+			this.smartTableSource = new ServerDataSource(this._http, {
 				endPoint: `${API_PREFIX}/employee-job`,
 				pagerPageKey: 'page',
 				pagerLimitKey: 'limit',
@@ -596,7 +672,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 		}
 	}
 
-	private async getEmployeesJob() {
+	/**
+	 * Retrieves employee jobs based on various filters and sets the smart table data source.
+	 * @returns Promise<void>
+	 */
+	private async getEmployeeJobs() {
 		if (!this.organization) {
 			return;
 		}
@@ -630,15 +710,14 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 								}
 						  ]
 						: []),
-					...(isNotEmpty(this.selectedEmployee)
+					...(isNotEmpty(this.selectedEmployee?.id)
 						? [
 								{
 									field: 'employeeIds',
-									search: [this.selectedEmployee.id]
+									search: [this.selectedEmployee?.id]
 								}
 						  ]
 						: []),
-
 					...(startDate && endDate
 						? [
 								{
@@ -721,7 +800,27 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			 */
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
-			this.toastrService.danger(error);
+			this._toastrService.danger(error);
+		}
+	}
+
+	/*
+	 * Hide all jobs
+	 */
+	async hideAll() {
+		const request: IVisibilityJobPostInput = {
+			hide: true,
+			...(isNotEmpty(this.selectedEmployee) ? { employeeId: this.selectedEmployee.id } : {})
+		};
+
+		try {
+			await this._jobService.hideJob(request);
+			this._toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
+			this.smartTableSource.refresh();
+		} catch (error) {
+			console.log('Error while hiding jobs:', error);
+			// Handle and log errors using an error handling service
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -734,50 +833,51 @@ export class SearchComponent extends PaginationFilterBaseComponent implements On
 			.subscribe();
 	}
 
-	/*
-	 * Hide all jobs
+	/**
+	 * Handles tab change event.
+	 * Resets the form and updates the active tab ID.
+	 * @param tab The tab component that triggered the change.
 	 */
-	hideAll() {
-		const request: IVisibilityJobPostInput = {
-			hide: true,
-			...(isNotEmpty(this.selectedEmployee) ? { employeeId: this.selectedEmployee.id } : {})
-		};
-		this.jobService.hideJob(request).then(() => {
-			this.toastrService.success('TOASTR.MESSAGE.JOB_HIDDEN');
-			this.smartTableSource.refresh();
-		});
-	}
-
-	onTabChange(tab: NbTabComponent) {
+	onTabChange(tab: NbTabComponent): void {
 		this.form.reset();
 		this.nbTab$.next(tab.tabId);
 	}
 
-	searchJobs() {
+	/**
+	 * Initiates a job search based on form validity.
+	 * Emits a signal to start fetching jobs if the form is valid.
+	 */
+	searchJobs(): void {
 		if (this.form.invalid) {
 			return;
 		}
 		this.jobs$.next(true);
 	}
 
-	/** Submit form enter key */
-	handleSubmitOnEnter() {
+	/**
+	 * Handles form submission on Enter key press.
+	 * Initiates a job search.
+	 */
+	handleSubmitOnEnter(): void {
 		this.searchJobs();
 	}
 
-	reset() {
+	/**
+	 * Resets the form, clears filters, and refreshes the job list.
+	 */
+	reset(): void {
 		this.form.reset();
 		this._filters = {};
 		this.refresh();
 	}
 
+	/**
+	 * Initiates a refresh of job list with updated parameters.
+	 * Resets pagination, triggers job fetch, and scrolls to top of page.
+	 */
 	public refresh(): void {
 		this.isRefresh = true;
-		this.pagination = {
-			...this.pagination,
-			activePage: 1,
-			itemsPerPage: this.minItemPerPage
-		};
+		this.refreshPagination();
 		this.scrollTop();
 		this.jobs$.next(true);
 	}

@@ -30,8 +30,8 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
-import { TypeOrmOrganizationTeamEmployeeRepository } from 'organization-team-employee/repository/type-orm-organization-team-employee.repository';
-import { MikroOrmOrganizationTeamEmployeeRepository } from 'organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {

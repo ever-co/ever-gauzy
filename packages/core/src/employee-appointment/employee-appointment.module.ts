@@ -7,7 +7,7 @@ import { EmployeeAppointment } from './employee-appointment.entity';
 import { EmployeeAppointmentController } from './employee-appointment.controller';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { CommandHandlers } from './commands/handlers';
-import { EmailSendModule } from 'email-send/email-send.module';
+import { EmailSendModule } from '../email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
@@ -27,4 +27,4 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 	providers: [EmployeeAppointmentService, ...CommandHandlers],
 	exports: [EmployeeAppointmentService]
 })
-export class EmployeeAppointmentModule { }
+export class EmployeeAppointmentModule {}

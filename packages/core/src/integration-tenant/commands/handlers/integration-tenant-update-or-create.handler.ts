@@ -9,11 +9,10 @@ import { IntegrationTenantUpdateCommand } from '../integration-tenant.update.com
 @Injectable()
 @CommandHandler(IntegrationTenantUpdateOrCreateCommand)
 export class IntegrationTenantUpdateOrCreateHandler implements ICommandHandler<IntegrationTenantUpdateOrCreateCommand> {
-
 	constructor(
 		private readonly _commandBus: CommandBus,
 		private readonly _integrationTenantService: IntegrationTenantService
-	) { }
+	) {}
 
 	/**
 	 * Execute the IntegrationTenantUpdateOrCreateCommand to update or create an integration tenant.
@@ -29,14 +28,10 @@ export class IntegrationTenantUpdateOrCreateHandler implements ICommandHandler<I
 			const integration = await this._integrationTenantService.findOneByWhereOptions(options);
 
 			// Update the corresponding integration tenant with the new input data
-			return await this._commandBus.execute(
-				new IntegrationTenantUpdateCommand(integration.id, input)
-			);
+			return await this._commandBus.execute(new IntegrationTenantUpdateCommand(integration.id, input));
 		} catch (error) {
 			// Create a corresponding integration tenant with the new input data
-			return await this._commandBus.execute(
-				new IntegrationTenantCreateCommand(input)
-			);
+			return await this._commandBus.execute(new IntegrationTenantCreateCommand(input));
 		}
 	}
 }
