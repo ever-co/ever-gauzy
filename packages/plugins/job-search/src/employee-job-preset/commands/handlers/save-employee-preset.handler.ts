@@ -1,6 +1,6 @@
 import { In } from 'typeorm';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
@@ -10,13 +10,12 @@ import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../reposi
 
 @CommandHandler(SaveEmployeePresetCommand)
 export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePresetCommand> {
-
 	constructor(
 		private readonly _typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 		private readonly _typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly _typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 		private readonly _gauzyAIService: GauzyAIService
-	) { }
+	) {}
 
 	/**
 	 * Saves employee presets and syncs job search criteria.
@@ -41,8 +40,8 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		});
 
 		// Map job preset criteria to employee criterions
-		const employeeCriterions = jobPreset.jobPresetCriterions.map(item =>
-			new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
+		const employeeCriterions = jobPreset.jobPresetCriterions.map(
+			(item) => new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
 		);
 
 		// Update employee custom fields with job presets

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { faker } from '@faker-js/faker';
 import { htmlToText } from 'html-to-text';
 import { environment as env } from '@gauzy/config';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import {
 	IEmployeeJobApplication,
 	IEmployee,
@@ -28,8 +28,8 @@ export class EmployeeJobPostService {
 	constructor(
 		private readonly _employeeService: EmployeeService,
 		private readonly _gauzyAIService: GauzyAIService,
-		private readonly _integrationTenantService: IntegrationTenantService,
-	) { }
+		private readonly _integrationTenantService: IntegrationTenantService
+	) {}
 
 	/**
 	 * Updates job visibility
@@ -86,7 +86,7 @@ export class EmployeeJobPostService {
 			if (env.gauzyAIGraphQLEndpoint) {
 				const filters: IGetEmployeeJobPostFilters = data.filters;
 
-				const { organizationId } = data.filters
+				const { organizationId } = data.filters;
 				const tenantId = RequestContext.currentTenantId() || filters.tenantId;
 
 				// Retrieve integration
@@ -154,7 +154,7 @@ export class EmployeeJobPostService {
 			return {
 				items: [],
 				total: 0
-			}
+			};
 		}
 	}
 
@@ -194,7 +194,10 @@ export class EmployeeJobPostService {
 	 * @param limit The maximum number of job posts to generate.
 	 * @returns A promise that resolves to an object containing paginated employee job posts.
 	 */
-	private async getRandomEmployeeJobPosts(employees: IEmployee[] = [], limit = 10): Promise<IPagination<IEmployeeJobPost>> {
+	private async getRandomEmployeeJobPosts(
+		employees: IEmployee[] = [],
+		limit = 10
+	): Promise<IPagination<IEmployeeJobPost>> {
 		const employeesJobs: EmployeeJobPost[] = [];
 
 		for (let i = 0; i < limit; i++) {
