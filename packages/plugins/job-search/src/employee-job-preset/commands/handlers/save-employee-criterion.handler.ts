@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { IMatchingCriterions } from '@gauzy/contracts';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
@@ -8,17 +8,16 @@ import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../../emp
 
 @CommandHandler(SaveEmployeeCriterionCommand)
 export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmployeeCriterionCommand> {
-
 	constructor(
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
-		private readonly gauzyAIService: GauzyAIService
-	) { }
+		private readonly _gauzyAIService: GauzyAIService
+	) {}
 
 	/**
-	 *
-	 * @param command
-	 * @returns
+	 * Executes the logic to save employee criterion.
+	 * @param command The command containing the input data.
+	 * @returns Promise<IMatchingCriterions> A promise resolving to the created matching criterion.
 	 */
 	public async execute(command: SaveEmployeeCriterionCommand): Promise<IMatchingCriterions> {
 		const { input } = command;
@@ -35,26 +34,25 @@ export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmploye
 			}
 		}
 
+		// Create criteria
 		const creation = new EmployeeUpworkJobsSearchCriterion(input);
 		await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.save(creation);
 
+		// Find employee by ID
 		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: {
-				id: input.employeeId
-			},
-			relations: {
-				user: true,
-				organization: true
-			}
+			where: { id: input.employeeId },
+			relations: { user: true, organization: true }
 		});
+
+		// Find criteria for the employee
 		const criteria = await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
 			employeeId: input.employeeId,
 			jobPresetId: input.jobPresetId
-		})
-		this.gauzyAIService.syncGauzyEmployeeJobSearchCriteria(
-			employee,
-			criteria
-		);
+		});
+
+		// Sync Gauzy AI criteria with the employee
+		this._gauzyAIService.syncGauzyEmployeeJobSearchCriteria(employee, criteria);
+
 		return creation;
 	}
 }

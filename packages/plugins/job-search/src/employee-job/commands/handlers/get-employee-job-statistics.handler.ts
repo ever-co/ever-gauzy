@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { IEmployee, IPagination } from '@gauzy/contracts';
 import { EmployeeService } from '@gauzy/core';
 import { GetEmployeeJobStatisticsCommand } from '../get-employee-job-statistics.command';

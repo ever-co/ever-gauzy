@@ -27,3 +27,10 @@ export interface IDailyPlanUpdateInput extends Partial<IDailyPlanBase>, Pick<IDa
 export interface IDailyPlanTasksUpdateInput
 	extends Pick<IDailyPlanCreateInput, 'taskId' | 'employeeId'>,
 		IBasePerTenantAndOrganizationEntityModel {}
+
+// Interface for data type should be sent when need to delete a task from many daily plans
+export interface IDailyPlansTasksUpdateInput
+	extends Pick<IDailyPlanCreateInput, 'employeeId'>,
+		IBasePerTenantAndOrganizationEntityModel {
+	plansIds: IDailyPlan['id'][];
+}

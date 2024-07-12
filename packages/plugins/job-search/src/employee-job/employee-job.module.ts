@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { GauzyAIModule } from '@gauzy/integration-ai';
+import { GauzyAIModule } from '@gauzy/plugin-integration-ai';
 import { EmployeeModule, IntegrationTenantModule } from '@gauzy/core';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPostController } from './employee-job.controller';

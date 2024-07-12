@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import { IEmployee } from '@gauzy/contracts';
-import { GauzyAIService } from '@gauzy/integration-ai';
+import { GauzyAIService } from '@gauzy/plugin-integration-ai';
 import { EmployeeService, RequestContext } from '@gauzy/core';
 import { UpdateEmployeeJobSearchStatusCommand } from '../update-employee-job-search-status.command';
 
