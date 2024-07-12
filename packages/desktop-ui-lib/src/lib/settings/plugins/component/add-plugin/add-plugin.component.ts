@@ -38,7 +38,7 @@ export class AddPluginComponent implements OnInit {
 
 	public installPlugin(value: string) {
 		if (!value) {
-			this.error = "the server url musn't be empty";
+			this.error = "The server URL mustn't be empty.";
 			return;
 		}
 		this.installing = true;
