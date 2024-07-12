@@ -1,13 +1,32 @@
 {
-	"name": "@gauzy/product-reviews",
+	"name": "@gauzy/plugin-product-reviews",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Product Reviews plugin",
+	"description": "Gauzy Product Reviews Plugin - Integration for managing and displaying product reviews in the Gauzy Platform.",
+	"type": "commonjs",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [
+		"gauzy",
+		"product-reviews",
+		"plugin",
+		"nestjs",
+		"typescript",
+		"reviews",
+		"feedback",
+		"e-commerce"
+	],
 	"private": true,
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -22,28 +41,31 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"test:e2e": "jest --config ./jest.config.js",
-		"build": "rimraf dist && yarn run compile",
-		"compile": "tsc -p tsconfig.build.json"
+		"test:e2e": "jest --config ./jest.config.ts",
+		"build": "rimraf dist && tsc -p tsconfig.lib.json",
+		"build:prod": "rimraf dist && tsc -p tsconfig.lib.prod.json"
 	},
-	"keywords": [],
+	"peerDependencies": {
+		"tslib": "^2.6.2"
+	},
 	"dependencies": {
-		"@gauzy/common": "^0.1.0",
-		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/common": "^10.3.7",
-		"@nestjs/cqrs": "^10.2.7",
-		"@nestjs/passport": "^10.0.3",
-		"@nestjs/swagger": "^7.3.0",
 		"@nestjs/typeorm": "^10.0.2",
-		"class-validator": "^0.14.0",
-		"typeorm": "^0.3.20",
-		"apollo-server-core": "^3.10.1"
+		"apollo-server-core": "^3.10.1",
+		"chalk": "4.1.2",
+		"typeorm": "^0.3.20"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"typescript": "5.1.6"
-	}
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
 }

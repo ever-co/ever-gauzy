@@ -25,7 +25,7 @@ import { CrudController, PaginationParams } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
-import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
+import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 
@@ -171,6 +171,34 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	): Promise<IDailyPlan> {
 		// Call the service to remove the task from the daily plan
 		return await this.dailyPlanService.removeTaskFromPlan(planId, input);
+	}
+
+	/**
+	 * Delete task from a many daily plans
+	 *
+	 * @param  taskId The unique identifier of the task to removed from daily plans.
+	 * @param input - An object containing details about the plans to update, including employee ID, and organization ID.
+	 * @returns The updated daily plans without the deleted task.
+	 */
+
+	@ApiOperation({
+		summary: 'Remove a task from daily plans'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task successfully removed from the daily plans.',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No record found with the given ID.'
+	})
+	@Put(':taskId/remove') // Endpoint for removing a task from many daily plans
+	async removeTaskFromManyPlans(
+		@Param('taskId') taskId: ITask['id'],
+		@Body() input: RemoveTaskFromManyPlansDTO
+	): Promise<IDailyPlan[]> {
+		return this.dailyPlanService.removeTaskFromManyPlans(taskId, input);
 	}
 
 	/**

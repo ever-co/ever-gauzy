@@ -1,3 +1,4 @@
+import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { HubstaffModule } from './hubstaff.module';
 
@@ -13,7 +14,7 @@ export class IntegrationHubstaffPlugin implements IOnPluginBootstrap, IOnPluginD
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationHubstaffPlugin.name} is being bootstrapped...`);
+			console.log(chalk.green(`${IntegrationHubstaffPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -22,7 +23,7 @@ export class IntegrationHubstaffPlugin implements IOnPluginBootstrap, IOnPluginD
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log(`${IntegrationHubstaffPlugin.name} is being destroyed...`);
+			console.log(chalk.red(`${IntegrationHubstaffPlugin.name} is being destroyed...`));
 		}
 	}
 }

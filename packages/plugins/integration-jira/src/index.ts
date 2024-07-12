@@ -1,3 +1,1 @@
-export * from './jira.controller';
-export * from './jira.module';
-export * from './jira.types';
+export * from './lib/integration-jira.plugin';
