@@ -162,7 +162,7 @@
 		"build:package:plugin:job-search-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search-ui lib:build",
 		"build:package:plugin:job-search-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search-ui lib:build:prod",
 		"build:package:plugin:job-proposal": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build",
-		"build:package:plugin:job-proposal:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build",
+		"build:package:plugin:job-proposal:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build:prod",
 		"build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/knowledge-base build",
 		"build:package:plugin:knowledge-base:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/knowledge-base build",
 		"build:package:plugin:changelog": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/changelog build",

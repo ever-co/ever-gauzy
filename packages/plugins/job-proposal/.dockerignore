@@ -1,25 +1,23 @@
-# Git
+# Ignore Git related files and directories
 .git
-.gitmodules
 .gitignore
+.gitmodules
 
-# README file containing information about the project
+# Ignore README file
 README.md
 
-# Directory containing Docker-related files and configurations
+# Ignore Docker-related files and directories
 docker
 
-# Directory containing installed Node.js modules, managed by npm or yarn
+# Ignore Node.js modules
 node_modules
 
-# Directory for temporary files
+# Ignore temporary files and directories
 tmp
 
-# Directory for build-related files
+# Ignore build and compilation output
 build
-
-# Directory for distribution files, typically production-ready code
 dist
 
-# Environment variables configuration file (dotenv file)
+# Ignore environment configuration files
 .env
