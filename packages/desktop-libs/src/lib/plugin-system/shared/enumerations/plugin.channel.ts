@@ -10,6 +10,6 @@ export enum PluginChannel {
 }
 
 export enum PluginHandlerChannel {
-	GET_ALL = 'plugin::getAll',
-	GET_ONE = 'plugin::getOne'
+	GET_ALL = 'plugins::getAll',
+	GET_ONE = 'plugins::getOne'
 }
