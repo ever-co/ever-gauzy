@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'integration-hubstaff',
+	displayName: 'plugin-integration-hubstaff',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
