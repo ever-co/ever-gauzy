@@ -476,7 +476,9 @@
 		"allcaps",
 		"iubgreen",
 		"unixepoch",
-		"macbook"
+		"macbook",
+		"upvotes",
+		"downvotes"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
