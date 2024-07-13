@@ -208,12 +208,43 @@ export class CreateProductReviewTable1720852356593 implements MigrationInterface
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`CREATE TABLE \`product_review\` (\`deletedAt\` datetime(6) NULL, \`id\` varchar(36) NOT NULL, \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), \`isActive\` tinyint NULL DEFAULT 1, \`isArchived\` tinyint NULL DEFAULT 0, \`tenantId\` varchar(255) NULL, \`organizationId\` varchar(255) NULL, \`title\` varchar(255) NULL, \`description\` text NULL, \`rating\` int NOT NULL, \`upvotes\` int NOT NULL DEFAULT '0', \`downvotes\` int NOT NULL DEFAULT '0', \`status\` varchar(255) NOT NULL DEFAULT 'pending', \`editedAt\` datetime NULL, \`productId\` varchar(255) NOT NULL, \`userId\` varchar(255) NOT NULL, INDEX \`IDX_6248458c7e237cef4adac4761d\` (\`isActive\`), INDEX \`IDX_9cb4931c7348b6c171f13b6216\` (\`isArchived\`), INDEX \`IDX_586e6b1273ba2732ec0ee41a80\` (\`tenantId\`), INDEX \`IDX_28ce717020729e36aa06cca5c5\` (\`organizationId\`), INDEX \`IDX_28f06c5655d507668b8839b59a\` (\`upvotes\`), INDEX \`IDX_f3591fd59cc32b585c3ba7d3ae\` (\`downvotes\`), INDEX \`IDX_913f7739f1262fc8c70cbbafa3\` (\`editedAt\`), INDEX \`IDX_06e7335708b5e7870f1eaa608d\` (\`productId\`), INDEX \`IDX_db21a1dc776b455ee83eb7ff88\` (\`userId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`product_review\` ADD CONSTRAINT \`FK_586e6b1273ba2732ec0ee41a80b\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`product_review\` ADD CONSTRAINT \`FK_28ce717020729e36aa06cca5c54\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`product_review\` ADD CONSTRAINT \`FK_06e7335708b5e7870f1eaa608d2\` FOREIGN KEY (\`productId\`) REFERENCES \`product\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`product_review\` ADD CONSTRAINT \`FK_db21a1dc776b455ee83eb7ff88e\` FOREIGN KEY (\`userId\`) REFERENCES \`user\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`product_review\` DROP FOREIGN KEY \`FK_db21a1dc776b455ee83eb7ff88e\``);
+		await queryRunner.query(`ALTER TABLE \`product_review\` DROP FOREIGN KEY \`FK_06e7335708b5e7870f1eaa608d2\``);
+		await queryRunner.query(`ALTER TABLE \`product_review\` DROP FOREIGN KEY \`FK_28ce717020729e36aa06cca5c54\``);
+		await queryRunner.query(`ALTER TABLE \`product_review\` DROP FOREIGN KEY \`FK_586e6b1273ba2732ec0ee41a80b\``);
+		await queryRunner.query(`DROP INDEX \`IDX_db21a1dc776b455ee83eb7ff88\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_06e7335708b5e7870f1eaa608d\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_913f7739f1262fc8c70cbbafa3\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f3591fd59cc32b585c3ba7d3ae\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_28f06c5655d507668b8839b59a\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_28ce717020729e36aa06cca5c5\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_586e6b1273ba2732ec0ee41a80\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_9cb4931c7348b6c171f13b6216\` ON \`product_review\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6248458c7e237cef4adac4761d\` ON \`product_review\``);
+		await queryRunner.query(`DROP TABLE \`product_review\``);
+	}
 }
