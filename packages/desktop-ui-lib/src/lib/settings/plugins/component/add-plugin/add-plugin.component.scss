@@ -1,10 +1,13 @@
 .error {
 	color: red;
-	font-weight: 400;
-	font-size: 13px;
-	padding: 8px;
-	background-color: #ff000054;
+    font-weight: 500;
+    font-size: 13px;
+    padding: 8px;
+    background-color: rgb(255 0 0 / 10%);
 	border-radius: 4px;
+    text-wrap: pretty;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 nb-card {
