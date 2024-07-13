@@ -112,14 +112,96 @@ export class CreateProductReviewTable1720852356593 implements MigrationInterface
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`CREATE TABLE "product_review" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "title" varchar, "description" text, "rating" integer NOT NULL, "upvotes" integer NOT NULL DEFAULT (0), "downvotes" integer NOT NULL DEFAULT (0), "status" varchar NOT NULL DEFAULT ('pending'), "editedAt" datetime, "productId" varchar NOT NULL, "userId" varchar NOT NULL)`
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_6248458c7e237cef4adac4761d" ON "product_review" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9cb4931c7348b6c171f13b6216" ON "product_review" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_586e6b1273ba2732ec0ee41a80" ON "product_review" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28ce717020729e36aa06cca5c5" ON "product_review" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_28f06c5655d507668b8839b59a" ON "product_review" ("upvotes") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f3591fd59cc32b585c3ba7d3ae" ON "product_review" ("downvotes") `);
+		await queryRunner.query(`CREATE INDEX "IDX_913f7739f1262fc8c70cbbafa3" ON "product_review" ("editedAt") `);
+		await queryRunner.query(`CREATE INDEX "IDX_06e7335708b5e7870f1eaa608d" ON "product_review" ("productId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_db21a1dc776b455ee83eb7ff88" ON "product_review" ("userId") `);
+		await queryRunner.query(`DROP INDEX "IDX_6248458c7e237cef4adac4761d"`);
+		await queryRunner.query(`DROP INDEX "IDX_9cb4931c7348b6c171f13b6216"`);
+		await queryRunner.query(`DROP INDEX "IDX_586e6b1273ba2732ec0ee41a80"`);
+		await queryRunner.query(`DROP INDEX "IDX_28ce717020729e36aa06cca5c5"`);
+		await queryRunner.query(`DROP INDEX "IDX_28f06c5655d507668b8839b59a"`);
+		await queryRunner.query(`DROP INDEX "IDX_f3591fd59cc32b585c3ba7d3ae"`);
+		await queryRunner.query(`DROP INDEX "IDX_913f7739f1262fc8c70cbbafa3"`);
+		await queryRunner.query(`DROP INDEX "IDX_06e7335708b5e7870f1eaa608d"`);
+		await queryRunner.query(`DROP INDEX "IDX_db21a1dc776b455ee83eb7ff88"`);
+		await queryRunner.query(
+			`CREATE TABLE "temporary_product_review" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "title" varchar, "description" text, "rating" integer NOT NULL, "upvotes" integer NOT NULL DEFAULT (0), "downvotes" integer NOT NULL DEFAULT (0), "status" varchar NOT NULL DEFAULT ('pending'), "editedAt" datetime, "productId" varchar NOT NULL, "userId" varchar NOT NULL, CONSTRAINT "FK_586e6b1273ba2732ec0ee41a80b" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_28ce717020729e36aa06cca5c54" FOREIGN KEY ("organizationId") REFERENCES "organization" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_06e7335708b5e7870f1eaa608d2" FOREIGN KEY ("productId") REFERENCES "product" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_db21a1dc776b455ee83eb7ff88e" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "temporary_product_review"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "title", "description", "rating", "upvotes", "downvotes", "status", "editedAt", "productId", "userId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "title", "description", "rating", "upvotes", "downvotes", "status", "editedAt", "productId", "userId" FROM "product_review"`
+		);
+		await queryRunner.query(`DROP TABLE "product_review"`);
+		await queryRunner.query(`ALTER TABLE "temporary_product_review" RENAME TO "product_review"`);
+		await queryRunner.query(`CREATE INDEX "IDX_6248458c7e237cef4adac4761d" ON "product_review" ("isActive") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9cb4931c7348b6c171f13b6216" ON "product_review" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_586e6b1273ba2732ec0ee41a80" ON "product_review" ("tenantId") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28ce717020729e36aa06cca5c5" ON "product_review" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_28f06c5655d507668b8839b59a" ON "product_review" ("upvotes") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f3591fd59cc32b585c3ba7d3ae" ON "product_review" ("downvotes") `);
+		await queryRunner.query(`CREATE INDEX "IDX_913f7739f1262fc8c70cbbafa3" ON "product_review" ("editedAt") `);
+		await queryRunner.query(`CREATE INDEX "IDX_06e7335708b5e7870f1eaa608d" ON "product_review" ("productId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_db21a1dc776b455ee83eb7ff88" ON "product_review" ("userId") `);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`DROP INDEX "IDX_db21a1dc776b455ee83eb7ff88"`);
+		await queryRunner.query(`DROP INDEX "IDX_06e7335708b5e7870f1eaa608d"`);
+		await queryRunner.query(`DROP INDEX "IDX_913f7739f1262fc8c70cbbafa3"`);
+		await queryRunner.query(`DROP INDEX "IDX_f3591fd59cc32b585c3ba7d3ae"`);
+		await queryRunner.query(`DROP INDEX "IDX_28f06c5655d507668b8839b59a"`);
+		await queryRunner.query(`DROP INDEX "IDX_28ce717020729e36aa06cca5c5"`);
+		await queryRunner.query(`DROP INDEX "IDX_586e6b1273ba2732ec0ee41a80"`);
+		await queryRunner.query(`DROP INDEX "IDX_9cb4931c7348b6c171f13b6216"`);
+		await queryRunner.query(`DROP INDEX "IDX_6248458c7e237cef4adac4761d"`);
+		await queryRunner.query(`ALTER TABLE "product_review" RENAME TO "temporary_product_review"`);
+		await queryRunner.query(
+			`CREATE TABLE "product_review" ("deletedAt" datetime, "id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "isActive" boolean DEFAULT (1), "isArchived" boolean DEFAULT (0), "tenantId" varchar, "organizationId" varchar, "title" varchar, "description" text, "rating" integer NOT NULL, "upvotes" integer NOT NULL DEFAULT (0), "downvotes" integer NOT NULL DEFAULT (0), "status" varchar NOT NULL DEFAULT ('pending'), "editedAt" datetime, "productId" varchar NOT NULL, "userId" varchar NOT NULL)`
+		);
+		await queryRunner.query(
+			`INSERT INTO "product_review"("deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "title", "description", "rating", "upvotes", "downvotes", "status", "editedAt", "productId", "userId") SELECT "deletedAt", "id", "createdAt", "updatedAt", "isActive", "isArchived", "tenantId", "organizationId", "title", "description", "rating", "upvotes", "downvotes", "status", "editedAt", "productId", "userId" FROM "temporary_product_review"`
+		);
+		await queryRunner.query(`DROP TABLE "temporary_product_review"`);
+		await queryRunner.query(`CREATE INDEX "IDX_db21a1dc776b455ee83eb7ff88" ON "product_review" ("userId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_06e7335708b5e7870f1eaa608d" ON "product_review" ("productId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_913f7739f1262fc8c70cbbafa3" ON "product_review" ("editedAt") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f3591fd59cc32b585c3ba7d3ae" ON "product_review" ("downvotes") `);
+		await queryRunner.query(`CREATE INDEX "IDX_28f06c5655d507668b8839b59a" ON "product_review" ("upvotes") `);
+		await queryRunner.query(
+			`CREATE INDEX "IDX_28ce717020729e36aa06cca5c5" ON "product_review" ("organizationId") `
+		);
+		await queryRunner.query(`CREATE INDEX "IDX_586e6b1273ba2732ec0ee41a80" ON "product_review" ("tenantId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_9cb4931c7348b6c171f13b6216" ON "product_review" ("isArchived") `);
+		await queryRunner.query(`CREATE INDEX "IDX_6248458c7e237cef4adac4761d" ON "product_review" ("isActive") `);
+		await queryRunner.query(`DROP INDEX "IDX_db21a1dc776b455ee83eb7ff88"`);
+		await queryRunner.query(`DROP INDEX "IDX_06e7335708b5e7870f1eaa608d"`);
+		await queryRunner.query(`DROP INDEX "IDX_913f7739f1262fc8c70cbbafa3"`);
+		await queryRunner.query(`DROP INDEX "IDX_f3591fd59cc32b585c3ba7d3ae"`);
+		await queryRunner.query(`DROP INDEX "IDX_28f06c5655d507668b8839b59a"`);
+		await queryRunner.query(`DROP INDEX "IDX_28ce717020729e36aa06cca5c5"`);
+		await queryRunner.query(`DROP INDEX "IDX_586e6b1273ba2732ec0ee41a80"`);
+		await queryRunner.query(`DROP INDEX "IDX_9cb4931c7348b6c171f13b6216"`);
+		await queryRunner.query(`DROP INDEX "IDX_6248458c7e237cef4adac4761d"`);
+		await queryRunner.query(`DROP TABLE "product_review"`);
+	}
 
 	/**
 	 * MySQL Up Migration
