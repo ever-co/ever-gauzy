@@ -22,7 +22,11 @@ export class PluginElectronService {
 	}
 
 	public load() {
-		this.electronService.ipcRenderer.send('plugin::load');
+		this.electronService.ipcRenderer.send('plugins::load');
+	}
+
+	public initialize() {
+		this.electronService.ipcRenderer.send('plugins::initialize');
 	}
 
 	public deactivate(plugin: IPlugin) {

@@ -1,4 +1,4 @@
-import { ipcMain, IpcMainEvent } from 'electron';
+import { ipcMain, IpcMainEvent, IpcMainInvokeEvent } from 'electron';
 import * as logger from 'electron-log';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginChannel, PluginHandlerChannel } from '../shared';
@@ -9,17 +9,23 @@ class ElectronPluginListener {
 	constructor(pluginManager: IPluginManager) {
 		this.pluginManager = pluginManager;
 		this.removeAllListeners();
-		this.removeAllHandler();
+		this.removeAllHandlers();
 	}
 
 	public registerListeners(): void {
-		ipcMain.on(PluginChannel.LOAD, this.handleEvent(this.loadPlugins));
-		ipcMain.on(PluginChannel.INITIALIZE, this.handleEvent(this.initializePlugins));
-		ipcMain.on(PluginChannel.DISPOSE, this.handleEvent(this.disposePlugins));
-		ipcMain.on(PluginChannel.DOWNLOAD, this.handleEvent(this.downloadPlugin));
-		ipcMain.on(PluginChannel.ACTIVATE, this.handleEvent(this.activatePlugin));
-		ipcMain.on(PluginChannel.DEACTIVATE, this.handleEvent(this.deactivatePlugin));
-		ipcMain.on(PluginChannel.UNINSTALL, this.handleEvent(this.uninstallPlugin));
+		const eventMap = {
+			[PluginChannel.LOAD]: this.loadPlugins,
+			[PluginChannel.INITIALIZE]: this.initializePlugins,
+			[PluginChannel.DISPOSE]: this.disposePlugins,
+			[PluginChannel.DOWNLOAD]: this.downloadPlugin,
+			[PluginChannel.ACTIVATE]: this.activatePlugin,
+			[PluginChannel.DEACTIVATE]: this.deactivatePlugin,
+			[PluginChannel.UNINSTALL]: this.uninstallPlugin
+		};
+
+		for (const [channel, handler] of Object.entries(eventMap)) {
+			ipcMain.on(channel, this.handleEvent(handler));
+		}
 	}
 
 	public registerHandlers(): void {
@@ -28,17 +34,11 @@ class ElectronPluginListener {
 	}
 
 	private removeAllListeners(): void {
-		const channels = Object.values(PluginChannel);
-		channels.forEach((channel) => {
-			ipcMain.removeAllListeners(channel);
-		});
+		Object.values(PluginChannel).forEach((channel) => ipcMain.removeAllListeners(channel));
 	}
 
-	private removeAllHandler(): void {
-		const channels = Object.values(PluginHandlerChannel);
-		channels.forEach((channel) => {
-			ipcMain.removeHandler(channel);
-		});
+	private removeAllHandlers(): void {
+		Object.values(PluginHandlerChannel).forEach((channel) => ipcMain.removeHandler(channel));
 	}
 
 	private handleEvent(handler: (event: IpcMainEvent, ...args: any[]) => Promise<void> | void) {
@@ -48,7 +48,7 @@ class ElectronPluginListener {
 				event.reply(PluginChannel.STATUS, { status: 'success' });
 			} catch (error: any) {
 				logger.error('Error handling event:', error);
-				event.reply(PluginChannel.STATUS, { status: 'error', message: error?.message ?? error });
+				event.reply(PluginChannel.STATUS, { status: 'error', message: error?.message ?? String(error) });
 			}
 		};
 	}
@@ -81,11 +81,11 @@ class ElectronPluginListener {
 		await this.pluginManager.uninstallPlugin(name);
 	}
 
-	private getAll(): Promise<IPluginMetadata[]> {
+	private async getAll(): Promise<IPluginMetadata[]> {
 		return this.pluginManager.getAllPlugins();
 	}
 
-	private getOne(_: Electron.IpcMainInvokeEvent, name: string): IPlugin {
+	private getOne(_: IpcMainInvokeEvent, name: string): IPlugin {
 		return this.pluginManager.getOnePlugin(name);
 	}
 }
@@ -94,4 +94,5 @@ export function pluginListeners(): void {
 	const pluginManager: IPluginManager = new PluginManager();
 	const listener = new ElectronPluginListener(pluginManager);
 	listener.registerListeners();
+	listener.registerHandlers();
 }

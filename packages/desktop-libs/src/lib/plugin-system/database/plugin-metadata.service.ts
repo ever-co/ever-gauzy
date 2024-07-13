@@ -17,19 +17,13 @@ export class PluginMetadataService {
 	}
 
 	public async update(input: IPluginMetadataUpdate): Promise<void> {
-		await this.db
-			.connection<IPluginMetadataUpdate>(TABLE_PLUGINS)
-			.where('id', input.id)
-			.orWhere('name', input.name)
-			.update({ isActivate: input.isActivate, version: input.version });
+		const query = this.buildQuery(input);
+		await query.update({ isActivate: input.isActivate, version: input.version });
 	}
 
 	public async delete(input: IPluginMetadataDelete): Promise<void> {
-		await this.db
-			.connection<IPluginMetadataUpdate>(TABLE_PLUGINS)
-			.where('id', input.id)
-			.orWhere('name', input.name)
-			.del();
+		const query = this.buildQuery(input);
+		await query.del();
 	}
 
 	public async findAll(): Promise<IPluginMetadataPersistance[]> {
@@ -37,21 +31,30 @@ export class PluginMetadataService {
 	}
 
 	public async findOne(input: IPluginMetadataFindOne): Promise<IPluginMetadataPersistance> {
-		const result = await this.db
-			.connection<IPluginMetadataPersistance>(TABLE_PLUGINS)
-			.select('*')
-			.where('id', input.id)
-			.orWhere('name', input.name)
-			.first();
-
+		const query = this.buildQuery(input);
+		const result = await query.first();
 		if (!result) {
-			throw new Error('Plugin metadata not found');
+			throw new Error(`Plugin metadata not found for input: ${JSON.stringify(input)}`);
 		}
-
 		return result;
 	}
 
 	public async findActivated(): Promise<IPluginMetadataPersistance[]> {
-		return this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*').where('isActivate', '=', true);
+		return this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*').where('isActivate', true);
+	}
+
+	private buildQuery(input: { id?: string; name?: string }) {
+		const query = this.db.connection<IPluginMetadataPersistance>(TABLE_PLUGINS).select('*');
+		if (input.id) {
+			query.where('id', input.id);
+		}
+		if (input.name) {
+			if (input.id) {
+				query.orWhere('name', input.name);
+			} else {
+				query.where('name', input.name);
+			}
+		}
+		return query;
 	}
 }

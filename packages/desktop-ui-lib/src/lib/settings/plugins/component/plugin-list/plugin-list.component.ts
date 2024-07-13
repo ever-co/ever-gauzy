@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, NgZone, OnInit } from '@ang
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { concatMap, Observable, tap } from 'rxjs';
+import { filter, from, Observable, of, switchMap, tap } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
@@ -47,15 +47,18 @@ export class PluginListComponent implements OnInit {
 	};
 
 	ngOnInit(): void {
-		this.plugins$ = this.pluginElectronService.status.pipe(
-			tap((response) =>
+		this.pluginElectronService.status
+			.pipe(
+				tap((response) => console.log(response)),
+				filter((response) => response.status === 'success'),
+				switchMap(() => from(this.pluginElectronService.plugins)),
+				untilDestroyed(this)
+			)
+			.subscribe((plugins) => {
 				this.ngZone.run(() => {
-					console.log(response);
-				})
-			),
-			concatMap(() => this.pluginElectronService.plugins),
-			untilDestroyed(this)
-		);
+					this.plugins$ = of(plugins);
+				});
+			});
 		this.pluginElectronService.load();
 	}
 
