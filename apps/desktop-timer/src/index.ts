@@ -18,7 +18,7 @@ process.env = Object.assign(process.env, environment);
 
 app.setName(process.env.NAME);
 
-console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
+log.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
 const Store = require('electron-store');
 import * as remoteMain from '@electron/remote/main';

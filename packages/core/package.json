@@ -31,6 +31,7 @@
 		"migration:revert": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:revert",
 		"migration:create": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=14000 yarn ts-node -r tsconfig-paths/register ./src/database/migration.ts migration:create",
 		"build": "nest build",
+		"build:prod": "nest build",
 		"postbuild": "yarn run copy-files",
 		"copy-files": "copyfiles -u 1 src/**/**/*.gql src/**/**/*.hbs src/**/**/*.mjml src/**/*.csv src/**/*.json dist/",
 		"prepublishOnly": "yarn run build",
