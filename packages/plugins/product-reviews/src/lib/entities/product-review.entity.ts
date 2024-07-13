@@ -38,14 +38,14 @@ export class ProductReview extends TenantOrganizationBaseEntity implements IProd
 	@MultiORMColumn()
 	rating: number;
 
-	// Upvotes (Positive votes)
+	// Up votes (Positive votes)
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@ColumnIndex()
 	@MultiORMColumn({ type: 'int', default: 0 })
 	upvotes: number;
 
-	// Downvotes (Negative votes)
+	// Down votes (Negative votes)
 	@ApiProperty({ type: () => Number })
 	@IsNumber()
 	@ColumnIndex()
