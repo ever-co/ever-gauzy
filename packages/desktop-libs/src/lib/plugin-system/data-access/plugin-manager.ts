@@ -4,13 +4,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
+import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
 export class PluginManager implements IPluginManager {
 	private plugins: Map<string, IPlugin> = new Map();
 	private activePlugins: Set<string> = new Set();
 	private pluginMetadataService = new PluginMetadataService();
-	private pluginPath = path.join('plugins', app.getPath('userData'));
+	private pluginPath = path.join(app.getPath('userData'), 'plugins');
 	private factory = DownloadContextFactory;
 
 	public async downloadPlugin<U>(config: U, contextType?: PluginDownloadContextType): Promise<void> {
@@ -46,7 +47,7 @@ export class PluginManager implements IPluginManager {
 			fs.mkdirSync(pluginPath, { recursive: true });
 		}
 		logger.info(`Updating plugin ${pluginMetadata.name}`);
-		const plugin = require(path.join(pluginPath, pluginMetadata.main));
+		const plugin = await lazyLoader(path.join(pluginPath, pluginMetadata.main));
 		this.plugins.set(pluginMetadata.name, plugin);
 
 		await this.pluginMetadataService.update({
@@ -68,7 +69,7 @@ export class PluginManager implements IPluginManager {
 			fs.cpSync(source, pluginDir, { recursive: true });
 		}
 		logger.info(`Installing plugin ${pluginMetadata.name}`);
-		const plugin = require(path.join(pluginDir, pluginMetadata.main));
+		const plugin = await lazyLoader(path.join(pluginDir, pluginMetadata.main));
 		this.plugins.set(pluginMetadata.name, plugin);
 
 		await this.pluginMetadataService.create({
@@ -116,7 +117,7 @@ export class PluginManager implements IPluginManager {
 		const pluginMetadatas = await this.pluginMetadataService.findAll();
 
 		for (const metadata of pluginMetadatas) {
-			const plugin = require(path.join(metadata.pathname, metadata.main));
+			const plugin = await lazyLoader(path.join(metadata.pathname, metadata.main));
 			this.plugins.set(metadata.name, plugin);
 
 			if (metadata.isActivate) {

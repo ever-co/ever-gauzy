@@ -26,7 +26,7 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			const ext = path.extname(url);
 			const zipFilePath = path.join(tempDir, fileName);
 
-			if (ext !== 'zip') {
+			if (ext !== '.zip') {
 				throw new Error('The plugin should be inside a .zip file');
 			}
 
@@ -35,21 +35,26 @@ export class CdnDownloadStrategy implements IPluginDownloadStrategy {
 			console.log(`✔ Plugin ${fileName} downloaded successfully`);
 
 			// Unzip the file
-			const tempDirPath = await this.unzip(zipFilePath);
+			const tempDirPath = await this.unzip(zipFilePath, tempDir);
+
+			// Set Path Dirname
+			const pathDirname = join(tempDirPath, fileName.replace(/\.zip$/, ''));
 
 			// Read and parse the metadata
-			const metadata = JSON.parse(fs.readFileSync(join(tempDirPath, 'package.json'), { encoding: 'utf8' }));
-			return { pathDirname: tempDirPath, metadata };
+			const metadata = JSON.parse(
+				fs.readFileSync(join(pathDirname, 'manifest.json'), {
+					encoding: 'utf8'
+				})
+			);
+			return { pathDirname, metadata };
 		} catch (error) {
 			console.error(`✖ Error during download and extraction: ${error.message}`);
 			throw error;
 		}
 	}
 
-	private async unzip(filePath: string): Promise<string> {
-		const extractDir = filePath.replace(/\.zip$/, '');
+	private async unzip(filePath: string, extractDir: string): Promise<string> {
 		try {
-			fs.mkdirSync(extractDir, { recursive: true });
 			await new Promise<void>((resolve, reject) => {
 				fs.createReadStream(filePath)
 					.pipe(unzipper.Extract({ path: extractDir }))
