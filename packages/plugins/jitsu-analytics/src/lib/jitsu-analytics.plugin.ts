@@ -1,4 +1,5 @@
 import { DynamicModule } from '@nestjs/common';
+import * as chalk from 'chalk';
 import { GauzyCorePlugin as Plugin, IOnPluginBootstrap, IOnPluginDestroy } from '@gauzy/plugin';
 import { JITSU_MODULE_PROVIDER_CONFIG, JitsuModuleOptions } from './jitsu.types';
 import { parseOptions } from './jitsu-helper';
@@ -26,7 +27,7 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 	 */
 	onPluginBootstrap(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('JitsuAnalyticsPlugin is being bootstrapped...');
+			console.log(chalk.green(`${JitsuAnalyticsPlugin.name} is being bootstrapped...`));
 		}
 	}
 
@@ -35,7 +36,7 @@ export class JitsuAnalyticsPlugin implements IOnPluginBootstrap, IOnPluginDestro
 	 */
 	onPluginDestroy(): void | Promise<void> {
 		if (this.logEnabled) {
-			console.log('JitsuAnalyticsPlugin is being destroyed...');
+			console.log(chalk.red(`${JitsuAnalyticsPlugin.name} is being destroyed...`));
 		}
 	}
 

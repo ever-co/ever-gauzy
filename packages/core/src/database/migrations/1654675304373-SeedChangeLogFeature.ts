@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as chalk from 'chalk';
 import { v4 as uuidV4 } from 'uuid';
-import { DatabaseTypeEnum } from "@gauzy/config";
+import { DatabaseTypeEnum } from '@gauzy/config';
 
 export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 	name = 'SeedChangeLogFeature1654675304373';
@@ -70,7 +70,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 				title: 'Most popular in 20 countries',
 				date,
 				isFeature: 1,
-				content: 'Europe, Americas and Asia get choise',
+				content: 'Europe, Americas and Asia get choice',
 				learnMoreUrl: '',
 				imageUrl: 'assets/images/features/macbook-1.png'
 			},
@@ -100,7 +100,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 		}
 	}
 
-	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
 
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		console.log(chalk.yellow(this.name + ' start running!'));
@@ -121,7 +121,7 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 				title: 'Most popular in 20 countries',
 				date,
 				isFeature: true,
-				content: 'Europe, Americas and Asia get choise',
+				content: 'Europe, Americas and Asia get choice',
 				learnMoreUrl: '',
 				imageUrl: 'assets/images/features/macbook-1.png'
 			},
@@ -150,19 +150,19 @@ export class SeedChangeLogFeature1654675304373 implements MigrationInterface {
 		}
 	}
 
-	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
 
 	/**
 	 * MySQL Up Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> { }
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
 }

@@ -1,10 +1,23 @@
+# Ignore Git related files and directories
 .git
 .gitignore
 .gitmodules
+
+# Ignore README file
 README.md
+
+# Ignore Docker-related files and directories
 docker
+
+# Ignore Node.js modules
 node_modules
+
+# Ignore temporary files and directories
 tmp
+
+# Ignore build and compilation output
 build
 dist
+
+# Ignore environment configuration files
 .env

@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-ai",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Enhance Ever Gauzy Platform with advanced AI integration capabilities for streamlined business management and automation.",
 	"author": {
 		"name": "Ever Co. LTD",

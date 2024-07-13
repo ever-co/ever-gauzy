@@ -22,4 +22,4 @@ import { Wakatime } from './wakatime.entity';
 	providers: [WakatimeService, TypeOrmWakatimeRepository],
 	exports: [WakatimeService, TypeOrmWakatimeRepository]
 })
-export class WakatimeModule { }
+export class WakatimeModule {}

@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'jitsu-analytics',
+	displayName: 'plugin-jitsu-analytics',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {
