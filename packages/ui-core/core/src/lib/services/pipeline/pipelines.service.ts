@@ -7,7 +7,7 @@ import { Service } from '../crud/service';
 
 @Injectable()
 export class PipelinesService extends Service<IPipeline, IPipelineFindInput, IPipelineCreateInput> {
-	public constructor(readonly http: HttpClient) {
+	public constructor(override readonly http: HttpClient) {
 		super({ http, basePath: `${API_PREFIX}/pipelines` });
 	}
 
