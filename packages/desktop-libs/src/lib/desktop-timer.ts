@@ -4,7 +4,6 @@ import { metaData } from './desktop-wakatime';
 import { LocalStore } from './desktop-store';
 import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
-import log from 'electron-log';
 import { ActivityType, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 import { DesktopEventCounter } from './desktop-event-counter';
 import { DesktopActiveWindow } from './desktop-active-window';
@@ -22,6 +21,7 @@ import {
 	ActivityWatchEdgeService
 } from './integrations';
 
+import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 

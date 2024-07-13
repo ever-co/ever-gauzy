@@ -22,6 +22,7 @@
 	},
 	"scripts": {
 		"build": "rimraf dist && yarn run compile",
+		"build:prod": "rimraf dist && yarn run compile",
 		"compile": "tsc -p tsconfig.build.json",
 		"knex": "./node_modules/.bin/knex --knexfile src/lib/offline/databases/knexfile.ts"
 	},
