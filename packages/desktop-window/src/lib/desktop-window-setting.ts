@@ -1,6 +1,11 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
 
@@ -8,7 +13,7 @@ export async function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
-	remoteMain.enable(settingsWindow.webContents)
+	remoteMain.enable(settingsWindow.webContents);
 	const launchPath = url.format({
 		pathname: filePath,
 		protocol: 'file:',

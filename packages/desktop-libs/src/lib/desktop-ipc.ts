@@ -6,7 +6,6 @@ import { notifyScreenshot, takeshot } from './desktop-screenshot';
 import { resetPermissions } from 'mac-screen-capture-permissions';
 import * as _ from 'underscore';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
-import log from 'electron-log';
 import NotificationDesktop from './desktop-notifier';
 import { DesktopPowerManager } from './desktop-power-manager';
 import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from './decorators';
@@ -30,6 +29,7 @@ import { IActivityWatchEventResult } from '@gauzy/contracts';
 
 const timerHandler = new TimerHandler();
 
+import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
