@@ -6,7 +6,7 @@
 		"declarationMap": true,
 		"sourceMap": true,
 		"inlineSources": true,
-		"types": []
+		"types": ["node"]
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
 	"include": ["src/**/*.ts", "typings.d.ts"]
