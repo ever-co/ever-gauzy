@@ -109,7 +109,6 @@ export enum PermissionsEnum {
 	ORG_PROJECT_VIEW = 'ORG_PROJECT_VIEW',
 	ORG_PROJECT_EDIT = 'ORG_PROJECT_EDIT',
 	ORG_PROJECT_DELETE = 'ORG_PROJECT_DELETE',
-
 	/** Organization Team */
 	ORG_TEAM_ADD = 'ORG_TEAM_ADD',
 	ORG_TEAM_VIEW = 'ORG_TEAM_VIEW',
@@ -163,6 +162,11 @@ export enum PermissionsEnum {
 	ALLOW_MANUAL_TIME = 'ALLOW_MANUAL_TIME',
 	DELETE_SCREENSHOTS = 'DELETE_SCREENSHOTS',
 	ORG_MEMBER_LAST_LOG_VIEW = 'ORG_MEMBER_LAST_LOG_VIEW',
+	/** Daily Plan */
+	DAILY_PLAN_CREATE = 'DAILY_PLAN_CREATE',
+	DAILY_PLAN_READ = 'DAILY_PLAN_READ',
+	DAILY_PLAN_UPDATE = 'DAILY_PLAN_UPDATE',
+	DAILY_PLAN_DELETE = 'DAILY_PLAN_DELETE'
 }
 
 export const PermissionGroups = {
@@ -237,6 +241,11 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROJECT_DELETE,
 		PermissionsEnum.ORG_CONTACT_EDIT,
 		PermissionsEnum.ORG_CONTACT_VIEW,
+		/** Daily Plan */
+		PermissionsEnum.DAILY_PLAN_CREATE,
+		PermissionsEnum.DAILY_PLAN_READ,
+		PermissionsEnum.DAILY_PLAN_UPDATE,
+		PermissionsEnum.DAILY_PLAN_DELETE,
 		/** Organization Team */
 		PermissionsEnum.ORG_TEAM_ADD,
 		PermissionsEnum.ORG_TEAM_VIEW,
@@ -271,7 +280,7 @@ export const PermissionGroups = {
 		PermissionsEnum.ALLOW_MANUAL_TIME,
 		PermissionsEnum.DELETE_SCREENSHOTS,
 		PermissionsEnum.ACCESS_DELETE_ACCOUNT,
-		PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW,
+		PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW
 	],
 
 	//Readonly permissions, are only enabled for Super Admin/Admin role
@@ -293,6 +302,6 @@ export const PermissionGroups = {
 		PermissionsEnum.IMPORT_ADD,
 		PermissionsEnum.EXPORT_ADD,
 		PermissionsEnum.ACCESS_DELETE_ALL_DATA,
-		PermissionsEnum.TENANT_SETTING,
-	],
+		PermissionsEnum.TENANT_SETTING
+	]
 };
