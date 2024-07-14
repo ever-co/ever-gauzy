@@ -1,6 +1,7 @@
-import { Component, inject, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { DynamicDirective } from 'packages/desktop-ui-lib/src/lib/directives/dynamic.directive';
 import { from, tap } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginLoaderService } from '../../services/plugin-loader.service';
@@ -11,34 +12,29 @@ import { PluginLoaderService } from '../../services/plugin-loader.service';
 	templateUrl: './plugin.component.html',
 	styleUrls: ['./plugin.component.scss']
 })
-export class PluginComponent implements OnInit, OnDestroy {
+export class PluginComponent implements AfterViewInit {
 	private readonly loaderService = inject(PluginLoaderService);
 	private readonly electronService = inject(PluginElectronService);
 	private readonly route = inject(ActivatedRoute);
-	private _renderer: ViewContainerRef;
+	private _renderer: DynamicDirective;
 
-	ngOnInit(): void {
-		const pluginName = this.route.snapshot.params.name;
-		from(this.electronService.plugin(pluginName))
-			.pipe(
-				tap((plugin) => this.loaderService.loadComponent(plugin, this.renderer)),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
-	@ViewChild('renderer')
-	public set renderer(value: ViewContainerRef) {
+	@ViewChild(DynamicDirective, { static: true })
+	public set renderer(value: DynamicDirective) {
 		if (value) {
 			this._renderer = value;
 		}
 	}
 
-	public get renderer(): ViewContainerRef {
+	public get renderer(): DynamicDirective {
 		return this._renderer;
 	}
 
-	ngOnDestroy(): void {
-		this.loaderService.unloadComponent();
+	ngAfterViewInit(): void {
+		from(this.electronService.plugin(this.route.snapshot.params.name))
+			.pipe(
+				tap((plugin) => this.loaderService.load(plugin, this.renderer.viewContainerRef)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

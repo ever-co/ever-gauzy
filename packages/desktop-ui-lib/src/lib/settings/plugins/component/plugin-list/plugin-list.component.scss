@@ -17,15 +17,16 @@
 	}
 }
 
-.button-container {
+.button-container,
+.button-hiddable {
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
-	gap: 1rem;
+	gap: 0.5rem;
 }
 
 .no-data {
 	height: 550px;
 	width: 100%;
 	padding: 0 10px;
-  }
+}

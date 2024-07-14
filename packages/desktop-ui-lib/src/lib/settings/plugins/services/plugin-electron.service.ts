@@ -14,11 +14,11 @@ export class PluginElectronService {
 	}
 
 	public plugin(name: string): Promise<IPlugin> {
-		return this.electronService.ipcRenderer.invoke('plugins::getOne', { name });
+		return this.electronService.ipcRenderer.invoke('plugins::getOne', name);
 	}
 
 	public activate(plugin: IPlugin) {
-		this.electronService.ipcRenderer.send('plugin::activate', plugin);
+		this.electronService.ipcRenderer.send('plugin::activate', plugin.name);
 	}
 
 	public load() {
@@ -30,7 +30,7 @@ export class PluginElectronService {
 	}
 
 	public deactivate(plugin: IPlugin) {
-		this.electronService.ipcRenderer.send('plugin::deactivate', plugin);
+		this.electronService.ipcRenderer.send('plugin::deactivate', plugin.name);
 	}
 
 	public downloadAndInstall<T>(config: T) {

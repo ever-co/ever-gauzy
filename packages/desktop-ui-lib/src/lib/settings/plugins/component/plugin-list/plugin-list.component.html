@@ -1,21 +1,28 @@
-<div class="button-container">
+<div class="button-container mb-3">
 	<div class="button-add">
-		<button (click)="addPlugin()" nbButton> <nb-icon icon="plus-outline"></nb-icon> New Plugin</button>
+		<button (click)="addPlugin()" status="primary" nbButton> <nb-icon icon="plus-outline"></nb-icon>New
+			Plugin</button>
 	</div>
 	<div *ngIf="plugin" class="button-hiddable">
-		<button class="button-install" (click)="changeStatus()" nbButton>Activate</button>
-		<button class="button-remove" (click)="remove()" nbButton><nb-icon
+		<button class="button-view" status="basic" (click)="view()" nbButton><nb-icon
+				icon="eye-outline"></nb-icon>View</button>
+		<button [status]="plugin?.isActivate ? 'warning': 'success'" class="button-install" (click)="changeStatus()"
+			nbButton><nb-icon
+				[icon]="plugin?.isActivate ? 'close-circle-outline': 'checkmark-circle-outline'"></nb-icon>{{
+			plugin?.isActivate ? 'Deactivate':
+			'Activate' }}</button>
+		<button class="button-remove" status="danger" (click)="remove()" nbButton><nb-icon
 				icon="trash-outline"></nb-icon>Uninstall</button>
 	</div>
 </div>
 <div *ngIf="(plugins$ | async)?.length > 0; else noPlugin" class="col-12 custom-table">
 	<div class="table-scroll-container">
 		<angular2-smart-table #pluginTable (userRowSelect)="handleRowSelection($event)" [settings]="smartTableSettings"
-			[source]="(plugins$ | async)" style="cursor: pointer">
+			[source]="(sourceData$ | async)" style="cursor: pointer">
 		</angular2-smart-table>
 	</div>
 	<div class="pagination-container">
-		<ga-pagination [source]="(plugins$ | async)"></ga-pagination>
+		<ga-pagination [source]="(sourceData$ | async)"></ga-pagination>
 	</div>
 </div>
 <ng-template #noPlugin>

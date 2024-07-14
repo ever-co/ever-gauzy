@@ -1,14 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectionStrategy,
-	Component,
-	ElementRef,
-	Inject,
-	NgZone,
-	OnInit,
-	Optional,
-	ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
@@ -30,7 +20,6 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
 	styleUrls: ['./settings.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	styles: [
 		`
 			:host nb-tab {

@@ -1,8 +1,11 @@
-import { ApplicationRef, ComponentRef, Injectable, Type, ViewContainerRef } from '@angular/core';
+import { ComponentRef, Injectable, Type, ViewContainerRef } from '@angular/core';
+import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 export interface IPlugin {
+	id?: string;
 	name: string;
 	version: string;
+	isActivate: boolean;
 	initialize(): void;
 	dispose(): void;
 	activate(): void;
@@ -14,45 +17,42 @@ export interface IPlugin {
 	providedIn: 'root'
 })
 export class PluginLoaderService {
-	private componentRef: ComponentRef<any> | null = null;
-
-	constructor(private appRef: ApplicationRef) {}
-
 	/**
 	 * Loads a plugin component into the provided container.
 	 * @param plugin - The plugin to load.
-	 * @param container - The container to load the component into.
+	 * @returns A promise that resolves to the container with the loaded component.
 	 */
-	public async loadComponent(plugin: IPlugin, container: ViewContainerRef): Promise<void> {
-		this.unloadComponent();
+	public load(plugin: IPlugin, viewContainerRef: ViewContainerRef): ComponentRef<any> {
+		viewContainerRef.clear();
 
 		const { component } = plugin;
 
 		if (component) {
 			try {
-				this.componentRef = container.createComponent(component);
-				this.appRef.attachView(this.componentRef.hostView);
+				return viewContainerRef.createComponent(component);
 			} catch (error) {
-				console.error('Error loading component:', error);
-				this.componentRef = null;
+				const message = 'Error loading component:' + error;
+				return this.loadNoDataMessageComponent(message, viewContainerRef);
 			}
 		} else {
-			console.warn('Plugin does not have a component to load.');
+			const message = 'Plugin does not have a component to load.';
+			return this.loadNoDataMessageComponent(message, viewContainerRef);
 		}
 	}
 
 	/**
-	 * Unloads the currently loaded component, if any.
+	 * Loads a NoDataMessageComponent with a specified message.
+	 * @param message - The message to display.
 	 */
-	public unloadComponent(): void {
-		if (this.componentRef) {
-			try {
-				this.appRef.detachView(this.componentRef.hostView);
-				this.componentRef.destroy();
-				this.componentRef = null;
-			} catch (error) {
-				console.error('Error unloading component:', error);
-			}
+	private loadNoDataMessageComponent(message: string, viewContainerRef: ViewContainerRef) {
+		try {
+			const componentRef = viewContainerRef.createComponent(NoDataMessageComponent);
+			const instance: NoDataMessageComponent = componentRef.instance;
+			instance.message = message;
+			console.warn(message);
+			return componentRef;
+		} catch (error) {
+			console.error('Error loading NoDataMessageComponent:', error);
 		}
 	}
 }
