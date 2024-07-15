@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { DatabaseTypeEnum, environment } from '@gauzy/config';
 import { ID, IRole, ITenant, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
+import { prepareSQLQuery as p } from '../database/database.helper';
 import { replacePlaceholders } from '../core/utils';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
 
@@ -87,7 +88,7 @@ export class RolePermissionUtils {
 	 * @returns A promise that resolves to an array of tenants
 	 */
 	private static async getAllTenants(queryRunner: QueryRunner): Promise<ITenant[]> {
-		const query = `SELECT * FROM tenant`;
+		const query = p(`SELECT * FROM "tenant"`);
 		return await queryRunner.connection.manager.query(query);
 	}
 
@@ -98,7 +99,7 @@ export class RolePermissionUtils {
 	 * @returns A promise that resolves to an array of roles
 	 */
 	private static async getRolesByTenantId(queryRunner: QueryRunner, tenantId: ID): Promise<IRole[]> {
-		let query = `SELECT * FROM "role" WHERE "tenantId" = $1`;
+		let query = p(`SELECT * FROM "role" WHERE "tenantId" = $1`);
 		query = replacePlaceholders(query, queryRunner.connection.options.type as DatabaseTypeEnum);
 
 		return await queryRunner.connection.manager.query(query, [tenantId]);
@@ -158,7 +159,7 @@ export class RolePermissionUtils {
 		permission: PermissionsEnum
 	): Promise<boolean> {
 		const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
-		let query = `
+		let query = p(`
 			SELECT DISTINCT
 				"distinctAlias"."role_permission_id"
 			FROM (
@@ -180,7 +181,7 @@ export class RolePermissionUtils {
 				)
 			)
 			"distinctAlias" ORDER BY "role_permission_id" ASC LIMIT 1
-		`;
+		`);
 		query = replacePlaceholders(query, dbType);
 
 		const result = await queryRunner.connection.manager.query(query, [
@@ -213,14 +214,13 @@ export class RolePermissionUtils {
 		const dbType = queryRunner.connection.options.type as DatabaseTypeEnum;
 		const payload = [tenantId, roleId, permission, isEnabled ? 1 : 0];
 
-		switch (dbType) {
-			case DatabaseTypeEnum.sqlite:
-			case DatabaseTypeEnum.betterSqlite3:
-			case DatabaseTypeEnum.mysql:
-				payload.push(uuidV4());
-				break;
-			default:
-				break;
+		// Add UUID for specific database types
+		if (
+			dbType === DatabaseTypeEnum.sqlite ||
+			dbType === DatabaseTypeEnum.betterSqlite3 ||
+			dbType === DatabaseTypeEnum.mysql
+		) {
+			payload.push(uuidV4());
 		}
 
 		return payload;
@@ -239,10 +239,14 @@ export class RolePermissionUtils {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.mysql:
-				query = `INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled", "id") VALUES (?, ?, ?, ?, ?)`;
+				query = p(
+					`INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled", "id") VALUES (?, ?, ?, ?, ?)`
+				);
 				break;
 			case DatabaseTypeEnum.postgres:
-				query = `INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled") VALUES($1, $2, $3, $4)`;
+				query = p(
+					`INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled") VALUES($1, $2, $3, $4)`
+				);
 				break;
 			default:
 				console.log(chalk.red('Unsupported database type'));
