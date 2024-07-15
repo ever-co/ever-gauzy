@@ -3,8 +3,8 @@ import * as chalk from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import { RolePermissionUtils } from '../../role-permission/utils';
 
-export class RolePermissionsReload1644312012849 implements MigrationInterface {
-	name = 'RolePermissionsReload1644312012849';
+export class MigrateRolePermisisons1721026150876 implements MigrationInterface {
+	name = 'MigrateRolePermisisons1721026150876';
 
 	/**
 	 * Up Migration
