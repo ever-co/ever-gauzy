@@ -98,9 +98,10 @@ class ElectronPluginListener {
 	}
 }
 
-export function pluginListeners(): void {
+export async function pluginListeners(): Promise<void> {
 	const pluginManager: IPluginManager = new PluginManager();
 	const listener = new ElectronPluginListener(pluginManager);
 	listener.registerListeners();
 	listener.registerHandlers();
+	await pluginManager.loadPlugins();
 }

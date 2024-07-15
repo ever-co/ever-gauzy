@@ -86,12 +86,14 @@ export class PluginManager implements IPluginManager {
 			plugin.activate();
 			this.activePlugins.add(name);
 			await this.pluginMetadataService.update({ name, isActivate: true });
+			plugin.initialize();
 		}
 	}
 
 	public async deactivatePlugin(name: string): Promise<void> {
 		const plugin = this.plugins.get(name);
 		if (plugin) {
+			plugin.dispose();
 			plugin.deactivate();
 			this.activePlugins.delete(name);
 			await this.pluginMetadataService.update({ name: name, isActivate: false });

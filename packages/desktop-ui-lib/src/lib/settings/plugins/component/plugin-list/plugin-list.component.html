@@ -6,13 +6,13 @@
 	<div *ngIf="plugin" class="button-hiddable">
 		<button class="button-view" status="basic" (click)="view()" nbButton><nb-icon
 				icon="eye-outline"></nb-icon>View</button>
-		<button [status]="plugin?.isActivate ? 'warning': 'success'" class="button-install" (click)="changeStatus()"
-			nbButton><nb-icon
+		<button *gauzySpinnerButton="processing" [status]="plugin?.isActivate ? 'warning': 'success'"
+			class="button-install" (click)="changeStatus()" nbButton><nb-icon
 				[icon]="plugin?.isActivate ? 'close-circle-outline': 'checkmark-circle-outline'"></nb-icon>{{
 			plugin?.isActivate ? 'Deactivate':
 			'Activate' }}</button>
-		<button class="button-remove" status="danger" (click)="remove()" nbButton><nb-icon
-				icon="trash-outline"></nb-icon>Uninstall</button>
+		<button *gauzySpinnerButton="processing" class="button-remove" status="danger" (click)="remove()"
+			nbButton><nb-icon icon="trash-outline"></nb-icon>Uninstall</button>
 	</div>
 </div>
 <div *ngIf="(plugins$ | async)?.length > 0; else noPlugin" class="col-12 custom-table">

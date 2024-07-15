@@ -1305,4 +1305,4 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 	return false;
 }
 
-app.whenReady().then(() => pluginListeners());
+app.whenReady().then(pluginListeners);

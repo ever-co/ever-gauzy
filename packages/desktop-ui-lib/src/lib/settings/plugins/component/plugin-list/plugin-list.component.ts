@@ -33,6 +33,7 @@ export class PluginListComponent implements OnInit {
 		return this._sourceData$.getValue();
 	}
 	private _pluginTable: Angular2SmartTableComponent;
+	public processing = false;
 
 	@ViewChild('pluginTable') set taskTable(content: Angular2SmartTableComponent) {
 		if (content) {
@@ -83,8 +84,9 @@ export class PluginListComponent implements OnInit {
 	ngOnInit(): void {
 		this.pluginElectronService.status
 			.pipe(
-				tap((response) => console.log(response)),
+				tap(() => (this.processing = false)),
 				filter((response) => response.status === 'success'),
+				tap(() => (this.plugin = null)),
 				switchMap(() => from(this.pluginElectronService.plugins)),
 				tap((plugins) => this.ngZone.run(async () => this.plugins$.next(plugins))),
 				untilDestroyed(this)
@@ -96,26 +98,27 @@ export class PluginListComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.pluginElectronService.load();
+		from(this.pluginElectronService.plugins)
+			.pipe(tap((plugins) => this.ngZone.run(async () => this.plugins$.next(plugins))))
+			.subscribe();
 	}
 
 	public handleRowSelection(event) {
 		const [selected] = event.selected;
-		this.plugin = selected;
+		this.plugin = selected?.id === this.plugin?.id ? null : selected;
 	}
 
 	public changeStatus() {
+		this.processing = true;
 		if (this.plugin.isActivate) {
 			this.pluginElectronService.deactivate(this.plugin);
 		} else {
 			this.pluginElectronService.activate(this.plugin);
 		}
-		this.plugin = null;
 	}
 
 	public view() {
 		this.router.navigate(['/settings', 'plugins', this.plugin.name]);
-		this.plugin = null;
 	}
 
 	public addPlugin() {
