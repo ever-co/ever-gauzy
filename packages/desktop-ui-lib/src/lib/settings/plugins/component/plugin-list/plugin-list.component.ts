@@ -110,10 +110,12 @@ export class PluginListComponent implements OnInit {
 		} else {
 			this.pluginElectronService.activate(this.plugin);
 		}
+		this.plugin = null;
 	}
 
 	public view() {
 		this.router.navigate(['/settings', 'plugins', this.plugin.name]);
+		this.plugin = null;
 	}
 
 	public addPlugin() {

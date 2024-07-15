@@ -43,10 +43,16 @@ export class PluginElectronService {
 
 	public get status(): Observable<{ status: string; message?: string }> {
 		return new Observable((observer) => {
-			this.electronService.ipcRenderer.on('plugin::status', (_, arg) => {
+			const channel = 'plugin::status';
+			const listener = (_, arg: { status: string; message?: string }) => {
 				observer.next(arg);
-				observer.complete();
-			});
+			};
+
+			this.electronService.ipcRenderer.on(channel, listener);
+
+			return () => {
+				this.electronService.ipcRenderer.removeListener(channel, listener);
+			};
 		});
 	}
 }
