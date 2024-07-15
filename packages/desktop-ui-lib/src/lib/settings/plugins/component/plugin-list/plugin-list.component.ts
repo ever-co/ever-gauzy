@@ -86,26 +86,29 @@ export class PluginListComponent implements OnInit {
 			.pipe(
 				tap(() => (this.processing = false)),
 				filter((response) => response.status === 'success'),
-				tap(() => (this.plugin = null)),
 				switchMap(() => from(this.pluginElectronService.plugins)),
-				tap((plugins) => this.ngZone.run(async () => this.plugins$.next(plugins))),
+				tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		this.plugins$
 			.pipe(
+				tap(() => this.clearItem()),
+				tap(() => (this.plugin = null)),
 				concatMap((plugins) => this.sourceData.load(plugins)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		from(this.pluginElectronService.plugins)
-			.pipe(tap((plugins) => this.ngZone.run(async () => this.plugins$.next(plugins))))
+			.pipe(tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))))
 			.subscribe();
 	}
 
 	public handleRowSelection(event) {
-		const [selected] = event.selected;
-		this.plugin = selected?.id === this.plugin?.id ? null : selected;
+		const selected = event.selected[0];
+		this.plugin = selected && selected.id === this.plugin?.id ? this.plugin : selected;
 	}
 
 	public changeStatus() {

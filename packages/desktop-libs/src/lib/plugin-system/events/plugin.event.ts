@@ -38,9 +38,9 @@ class ElectronPluginListener {
 				return [];
 			}
 		});
-		ipcMain.handle(PluginHandlerChannel.GET_ONE, (_, name) => {
+		ipcMain.handle(PluginHandlerChannel.GET_ONE, async (_, name) => {
 			try {
-				const plugin = this.pluginManager.getOnePlugin(name);
+				const plugin = await this.pluginManager.getOnePlugin(name);
 				return plugin;
 			} catch (error) {
 				logger.error(error);

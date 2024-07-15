@@ -2,7 +2,7 @@ import { AfterViewInit, Component, inject, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DynamicDirective } from 'packages/desktop-ui-lib/src/lib/directives/dynamic.directive';
-import { from, tap } from 'rxjs';
+import { concatMap, from } from 'rxjs';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { PluginLoaderService } from '../../services/plugin-loader.service';
 
@@ -32,7 +32,7 @@ export class PluginComponent implements AfterViewInit {
 	ngAfterViewInit(): void {
 		from(this.electronService.plugin(this.route.snapshot.params.name))
 			.pipe(
-				tap((plugin) => this.loaderService.load(plugin, this.renderer.viewContainerRef)),
+				concatMap((plugin) => this.loaderService.load(plugin, this.renderer.viewContainerRef)),
 				untilDestroyed(this)
 			)
 			.subscribe();

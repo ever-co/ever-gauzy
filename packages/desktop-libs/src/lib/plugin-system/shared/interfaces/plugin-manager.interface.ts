@@ -1,5 +1,4 @@
 import { IPluginMetadata } from './plugin-metadata.interface';
-import { IPlugin } from './plugin.interface';
 
 export interface IPluginManager {
 	loadPlugins(): Promise<void>;
@@ -10,5 +9,5 @@ export interface IPluginManager {
 	deactivatePlugin(name: string): Promise<void>;
 	uninstallPlugin(name: string): Promise<void>;
 	getAllPlugins(): Promise<IPluginMetadata[]>;
-	getOnePlugin(name: string): IPlugin;
+	getOnePlugin(name: string): Promise<IPluginMetadata>;
 }

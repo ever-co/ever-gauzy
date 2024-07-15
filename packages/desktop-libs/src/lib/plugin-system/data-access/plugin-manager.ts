@@ -76,6 +76,7 @@ export class PluginManager implements IPluginManager {
 			name: pluginMetadata.name,
 			version: pluginMetadata.version,
 			main: pluginMetadata.main,
+			renderer: pluginMetadata.renderer,
 			pathname: pluginDir
 		});
 	}
@@ -132,8 +133,8 @@ export class PluginManager implements IPluginManager {
 		return this.pluginMetadataService.findAll();
 	}
 
-	public getOnePlugin(name: string): IPlugin {
-		return this.plugins.get(name);
+	public getOnePlugin(name: string): Promise<IPluginMetadata> {
+		return this.pluginMetadataService.findOne({ name });
 	}
 
 	public initializePlugins(): void {

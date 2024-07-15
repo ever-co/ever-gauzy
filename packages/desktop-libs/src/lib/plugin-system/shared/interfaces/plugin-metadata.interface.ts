@@ -2,11 +2,12 @@ export interface IPluginMetadata {
 	name: string;
 	version: string;
 	main: string;
+	renderer?: string;
 	description?: string;
 	author?: string;
 }
 
-export type IPluginMetadataCreate = Pick<IPluginMetadata, 'name' | 'version' | 'main'> & {
+export type IPluginMetadataCreate = IPluginMetadata & {
 	isActivate?: boolean;
 	pathname: string;
 };
