@@ -362,9 +362,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			return;
 		}
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
+		const { id: organizationId, tenantId } = this.organization;
 		await this.reportService.getReportMenuItems({ tenantId, organizationId });
 	}
 

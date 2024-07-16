@@ -8,7 +8,7 @@ import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
+import { ID, IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
 import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -37,15 +37,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public loading: boolean = false;
 	public settingsSmartTable: any;
 	public employees$: Subject<any> = new Subject();
-	public smartTableSource: ServerDataSource;
-	public selectedEmployeeId: ISelectedEmployee['id'];
-	public organization: IOrganization;
 	public nbTab$: Subject<string> = new BehaviorSubject(JobSearchTabsEnum.BROWSE);
+	public smartTableSource: ServerDataSource;
+	public organization: IOrganization;
+	public selectedEmployeeId: ID;
 	public selectedEmployee: IEmployee;
 	public disableButton: boolean = true;
 
 	constructor(
-		public readonly translateService: TranslateService,
+		translateService: TranslateService,
 		private readonly _http: HttpClient,
 		private readonly _router: Router,
 		private readonly _store: Store,
@@ -124,33 +124,41 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		// Set loading state to true while fetching data
 		this.loading = true;
 
-		// Destructure properties for clarity
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
+		try {
+			// Destructure properties for clarity
+			const { id: organizationId, tenantId } = this.organization;
 
-		// Create a new ServerDataSource for Smart Table
-		this.smartTableSource = new ServerDataSource(this._http, {
-			endPoint: `${API_PREFIX}/employee-job/statistics`,
-			relations: ['user'],
-			// Define query parameters for the API request
-			where: {
-				tenantId,
-				organizationId,
-				isActive: true,
-				...(this.selectedEmployeeId ? { id: this.selectedEmployeeId } : {}),
-				...(this.filters.where ? this.filters.where : {})
-			},
-			// Finalize callback to handle post-processing
-			finalize: () => {
-				// Update pagination based on the count of items in the source
-				this.setPagination({
-					...this.getPagination(),
-					totalItems: this.smartTableSource.count()
-				});
-				// Set loading state to false once data fetching is complete
-				this.loading = false;
-			}
-		});
+			// Create a new ServerDataSource for Smart Table
+			this.smartTableSource = new ServerDataSource(this._http, {
+				endPoint: `${API_PREFIX}/employee-job/statistics`,
+				relations: ['user'],
+				// Define query parameters for the API request
+				where: {
+					tenantId,
+					organizationId,
+					isActive: true,
+					isArchived: false,
+					...(this.selectedEmployeeId ? { id: this.selectedEmployeeId } : {}),
+					...(this.filters.where ? this.filters.where : {})
+				},
+				// Finalize callback to handle post-processing
+				finalize: () => {
+					// Update pagination based on the count of items in the source
+					this.setPagination({
+						...this.getPagination(),
+						totalItems: this.smartTableSource.count()
+					});
+					// Set loading state to false once data fetching is complete
+					this.loading = false;
+				}
+			});
+		} catch (error) {
+			// Display an error toastr notification in case of any exceptions.
+			this._toastrService.danger(error);
+		} finally {
+			// Set loading state to false once data fetching is complete
+			this.loading = false;
+		}
 	}
 
 	/**
@@ -179,6 +187,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
+	/**
+	 * Loads the Smart Table settings.
+	 */
 	private _loadSmartTableSettings(): void {
 		// Retrieve pagination settings
 		const pagination: IPaginationBase = this.getPagination();
@@ -188,9 +199,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			selectedRowIndex: -1,
 			hideSubHeader: true,
 			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.EMPLOYEE'),
-			editable: true,
+			isEditable: true,
 			actions: {
-				delete: false
+				delete: false,
+				add: true
 			},
 			pager: {
 				display: false,
@@ -207,23 +219,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
 					width: '30%',
 					type: 'custom',
-					sort: false,
-					editable: false,
+					isSortable: false,
+					isEditable: false,
 					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (
-						_: any,
-						cell: Cell
-					): { name: string | null; imageUrl: string | null; id: string | null } => {
-						const employee: IEmployee | undefined = cell.getRow().getData();
-						if (employee) {
-							const { user, id } = employee;
-							const name = user?.name || null;
-							const imageUrl = user?.imageUrl || null;
-
-							return { name, imageUrl, id };
-						}
-						return { name: null, imageUrl: null, id: null };
-					},
+					valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
@@ -233,24 +232,24 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
 					type: 'text',
 					width: '10%',
-					sort: false,
-					editable: false,
+					isSortable: false,
+					isEditable: false,
 					valuePrepareFunction: (value: IEmployeeJobsStatisticsResponse['availableJobs']) => value || 0
 				},
 				appliedJobs: {
 					title: this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'),
 					type: 'text',
 					width: '10%',
-					sort: false,
-					editable: false,
+					isSortable: false,
+					isEditable: false,
 					valuePrepareFunction: (value: IEmployeeJobsStatisticsResponse['appliedJobs']) => value || 0
 				},
 				billRateValue: {
 					title: this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'),
 					type: 'text',
 					width: '10%',
-					sort: false,
-					editable: true,
+					isSortable: false,
+					isEditable: true,
 					editor: {
 						type: 'custom',
 						component: NumberEditorComponent
@@ -264,8 +263,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
 					type: 'text',
 					width: '20%',
-					sort: false,
-					editable: true,
+					isSortable: false,
+					isEditable: true,
 					editor: {
 						type: 'custom',
 						component: NumberEditorComponent
@@ -279,21 +278,51 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'),
 					type: 'custom',
 					width: '20%',
-					editable: false,
+					isSortable: false,
+					isEditable: false,
 					renderComponent: SmartTableToggleComponent,
-					valuePrepareFunction: (_: any, cell: Cell) => {
-						const employee: IEmployee = cell.getRow().getData();
-						return {
-							checked: employee.isJobSearchActive,
-							onChange: (toggle: boolean) => this.updateJobSearchAvailability(employee, toggle)
-						};
-					},
 					componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
-						instance.value = cell.getValue();
+						// Get the employee data from the cell
+						const employee: IEmployee = cell.getRow().getData();
+
+						// Set the initial value of the toggle
+						instance.value = employee.isJobSearchActive;
+
+						// Subscribe to the toggleChange event
+						instance.toggleChange.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
+							this.updateJobSearchAvailability(employee, toggle);
+						});
 					}
 				}
 			}
 		};
+	}
+
+	/**
+	 * Prepares the value for the employee cell.
+	 * @param _ The row data.
+	 * @param cell The cell to prepare the value for.
+	 * @returns The prepared value.
+	 */
+	private prepareEmployeeValue(
+		_: any,
+		cell: Cell
+	): { name: string | null; imageUrl: string | null; id: string | null } {
+		// Get the employee data from the cell
+		const employee: IEmployee | undefined = cell.getRow().getData();
+
+		// Prepare the value for the cell
+		if (employee) {
+			const { user, id } = employee;
+			return {
+				name: user?.name ?? null,
+				imageUrl: user?.imageUrl ?? null,
+				id: id ?? null
+			};
+		}
+
+		// Return default values if the employee is undefined
+		return { name: null, imageUrl: null, id: null };
 	}
 
 	/**
@@ -359,7 +388,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				? 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_ACTIVE'
 				: 'TOASTR.MESSAGE.EMPLOYEE_JOB_STATUS_INACTIVE';
 
-			const fullName = employee.fullName.trim();
+			const fullName = employee.fullName.trim() || 'Unknown Employee';
 			this._toastrService.success(toastrMessageKey, { name: fullName });
 		} catch (error) {
 			// Display an error toastr notification in case of any exceptions.
