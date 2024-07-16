@@ -21,6 +21,10 @@ export class EditEmployeeResolver implements Resolve<Observable<IEmployee>> {
 			const employeeId = route.params.id; // Extract employee ID from route parameters
 			const relations = ['user', 'user.image', 'organizationPosition']; // Define relations to include in the query
 
+			if (!employeeId) {
+				of(null);
+			}
+
 			// Call the employeeService to fetch employee data by ID with specified relations
 			return this.employeeService.getEmployeeById(employeeId, relations).pipe(
 				catchError((error) => {

@@ -614,7 +614,10 @@ export class TimeTrackingComponent
 			return;
 		}
 		try {
-			const people = await firstValueFrom(this._employeesService.getEmployeeById(employee.id, ['user']));
+			const people: IEmployee = await firstValueFrom(
+				this._employeesService.getEmployeeById(employee.id, ['user'])
+			);
+
 			this._store.selectedEmployee = employee.id
 				? ({
 						id: people.id,
