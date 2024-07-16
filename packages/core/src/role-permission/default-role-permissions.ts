@@ -28,8 +28,15 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_DELETE,
 			/** Organization Task Setting */
 			PermissionsEnum.ORG_TASK_SETTING,
+			/** Employee CRUD Permissions Start */
+			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.ORG_EMPLOYEES_DELETE,
+			/** Employee CRUD Permissions End */
+			/** Member View Permissions Start */
+			PermissionsEnum.ORG_MEMBERS_VIEW,
+			/** Member View Permissions End */
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
@@ -170,7 +177,15 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_DELETE,
 			/** Organization Task Setting */
 			PermissionsEnum.ORG_TASK_SETTING,
+			/** Employee CRUD Permissions Start */
+			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
+			PermissionsEnum.ORG_EMPLOYEES_EDIT,
+			PermissionsEnum.ORG_EMPLOYEES_DELETE,
+			/** Employee CRUD Permissions End */
+			/** Member View Permissions Start */
+			PermissionsEnum.ORG_MEMBERS_VIEW,
+			/** Member View Permissions End */
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
@@ -323,7 +338,6 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
-			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
 			PermissionsEnum.ORG_INVITE_VIEW,
 			PermissionsEnum.ORG_INVITE_EDIT,
@@ -335,6 +349,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_ADD,
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
+			/** Member View Permissions Start */
+			PermissionsEnum.ORG_MEMBERS_VIEW,
+			/** Member View Permissions End */
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TIME_TRACKER,
