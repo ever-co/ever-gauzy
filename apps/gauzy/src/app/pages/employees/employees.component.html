@@ -44,18 +44,28 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
-		></ng-template>
+		<ng-template [ngxPermissionsOnly]="['ORG_EMPLOYEES_VIEW']">
+			<ng-template
+				[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
+			></ng-template>
+		</ng-template>
+		<ng-template [ngxPermissionsExcept]="['ORG_EMPLOYEES_VIEW']">
+			<div>
+				<!-- Content to display if the user does not have 'canEditComponent' permission -->
+			</div>
+		</ng-template>
 	</nb-card-body>
 </nb-card>
+
 <ng-template #actionButtons let-selectedItem>
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-			<button status="basic" class="action secondary" size="small" nbButton underConstruction>
-				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-				<span> {{ 'BUTTONS.VIEW' | translate }} </span>
-			</button>
+		<ng-template [ngxPermissionsOnly]="['ORG_EMPLOYEES_EDIT', 'ORG_EMPLOYEES_VIEW']">
+			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
+				<button status="basic" class="action secondary" size="small" nbButton underConstruction>
+					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+					<span> {{ 'BUTTONS.VIEW' | translate }} </span>
+				</button>
+			</ng-template>
 			<ng-container *ngIf="selectedItem && selectedItem?.isDeleted">
 				<button
 					nbButton
@@ -110,7 +120,6 @@
 					}}
 				</button>
 			</ng-container>
-
 			<button
 				nbButton
 				[disabled]="disableButton"
@@ -119,7 +128,8 @@
 				status="basic"
 				class="action primary"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<ng-container *ngIf="selectedItem && !selectedItem?.isDeleted">
 				<button
@@ -136,6 +146,7 @@
 		</ng-template>
 	</div>
 </ng-template>
+
 <ng-template #visibleButtons>
 	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
 		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
@@ -151,6 +162,7 @@
 		</button>
 	</ng-template>
 </ng-template>
+
 <ng-template #tableLayout>
 	<div class="table-scroll-container">
 		<angular2-smart-table
@@ -166,6 +178,7 @@
 		</ng-container>
 	</div>
 </ng-template>
+
 <ng-template #gridLayout>
 	<div class="grid">
 		<ga-card-grid
@@ -178,6 +191,7 @@
 		></ga-card-grid>
 	</div>
 </ng-template>
+
 <ng-template #startWork>
 	<button (click)="startEmployeeWork()" class="action text-info" nbButton size="small" status="basic">
 		<nb-icon icon="person-done-outline"></nb-icon>
