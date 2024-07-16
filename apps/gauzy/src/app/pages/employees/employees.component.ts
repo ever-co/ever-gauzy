@@ -22,7 +22,6 @@ import {
 	CrudActionEnum,
 	IEmployee,
 	ITag,
-	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
@@ -60,7 +59,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	smartTableSource: ServerDataSource;
 	selectedEmployee: EmployeeViewModel;
 	employees: EmployeeViewModel[] = [];
-	viewComponentName: ComponentEnum;
+	viewComponentName: ComponentEnum = ComponentEnum.EMPLOYEES;
 	dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	componentLayoutStyleEnum = ComponentLayoutStyleEnum;
 	bonusForSelectedMonth = 0;
@@ -68,7 +67,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	includeDeleted: boolean = false;
 	loading: boolean = false;
 	organizationInvitesAllowed: boolean = false;
-	private _refresh$: Subject<any> = new Subject();
 
 	private _grid: CardGridComponent;
 	@ViewChild('grid') set grid(content: CardGridComponent) {
@@ -84,22 +82,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	actionButtons: TemplateRef<any>;
 
 	public organization: IOrganization;
-	employees$: Subject<any> = this.subject$;
+	public refresh$: Subject<any> = new Subject();
+	public employees$: Subject<any> = this.subject$;
 
 	constructor(
+		public readonly translateService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly router: Router,
 		private readonly toastrService: ToastrService,
 		private readonly route: ActivatedRoute,
-		public readonly translate: TranslateService,
 		private readonly errorHandler: ErrorHandlingService,
 		private readonly _employeeStore: EmployeeStore,
 		private readonly http: HttpClient,
 		private readonly _dateFormatPipe: DateFormatPipe
 	) {
-		super(translate);
+		super(translateService);
 		this.setView();
 	}
 
@@ -131,7 +130,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				tap((organization: IOrganization) => (this.organization = organization)),
 				tap(({ invitesAllowed }) => (this.organizationInvitesAllowed = invitesAllowed)),
 				tap(() => this._additionalColumns()),
-				tap(() => this._refresh$.next(true)),
+				tap(() => this.refresh$.next(true)),
 				tap(() => this.employees$.next(true)),
 				untilDestroyed(this)
 			)
@@ -145,7 +144,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._refresh$
+		this.refresh$
 			.pipe(
 				filter(() => this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID),
 				tap(() => this.refreshPagination()),
@@ -155,12 +154,18 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 	}
 
-	haveBtnActionPermissions() {
+	/**
+	 * Checks if the current user has the necessary permissions to perform button actions.
+	 * @returns A boolean indicating whether the user has the required permissions.
+	 */
+	haveBtnActionPermissions(): boolean {
 		return !this.store.hasAllPermissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_INVITE_EDIT);
 	}
 
+	/**
+	 *
+	 */
 	setView() {
-		this.viewComponentName = ComponentEnum.EMPLOYEES;
 		this.store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
@@ -175,14 +180,23 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			.subscribe();
 	}
 
-	selectEmployee({ isSelected, data }) {
-		this.disableButton = !isSelected;
+	/**
+	 * Selects an employee based on the given parameters.
+	 * @param param0 Object containing selection information.
+	 */
+	selectEmployee({ isSelected, data }): void {
+		// Update selected employee and button state
 		this.selectedEmployee = isSelected ? data : null;
+		this.disableButton = !isSelected;
+
+		// Check if using cards grid and custom component instance is AllowScreenshotCaptureComponent
 		if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID && this._grid) {
-			if (this._grid?.customComponentInstance()?.constructor === AllowScreenshotCaptureComponent) {
+			const customComponentInstance = this._grid.customComponentInstance();
+
+			// Handle AllowScreenshotCaptureComponent specific logic
+			if (customComponentInstance?.constructor === AllowScreenshotCaptureComponent) {
 				this.disableButton = true;
-				const instance: AllowScreenshotCaptureComponent =
-					this._grid.customComponentInstance<AllowScreenshotCaptureComponent>();
+				const instance: AllowScreenshotCaptureComponent = customComponentInstance;
 				this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
 				this._grid.clearCustomViewComponent();
 				this.clearItem();
@@ -190,21 +204,32 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
-	async add() {
+	/**
+	 * Add multiple employees to the organization.
+	 * Handles dialog response, displays success toast on employee addition,
+	 * and refreshes UI after completion.
+	 */
+	async add(): Promise<void> {
+		// Check if organization is defined
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			const { name } = this.organization;
+
+			// Open employee mutation dialog
 			const dialog = this.dialogService.open(EmployeeMutationComponent);
+
+			// Wait for dialog response
 			const response = await firstValueFrom(dialog.onClose);
+
+			// Process response if available
 			if (response) {
-				response.map((employee: IEmployee) => {
+				response.forEach((employee: IEmployee) => {
 					const { firstName, lastName } = employee.user;
-					let fullName = 'Employee';
-					if (firstName || lastName) {
-						fullName = `${firstName} ${lastName}`;
-					}
+					const fullName = firstName && lastName ? `${firstName} ${lastName}` : 'Employee';
+
 					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
 						name: fullName,
 						organization: name
@@ -212,215 +237,263 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				});
 			}
 		} catch (error) {
+			// Handle errors
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			// Refresh UI
+			this.refresh$.next(true);
+			this.employees$.next(true);
+		}
+	}
+	/**
+	 * Navigates to the edit page for the selected employee if available.
+	 * If no employee is selected, navigates to the default edit page.
+	 * @param selectedItem The employee view model to edit
+	 */
+	edit(selectedItem?: EmployeeViewModel): void {
+		if (selectedItem) {
+			// Select the employee
+			this.selectEmployee({
+				isSelected: true,
+				data: selectedItem
+			});
+			// Navigate to edit page for the selected employee
+			this.router.navigate(['/pages/employees/edit', selectedItem.id]);
+		} else if (this.selectedEmployee) {
+			// Navigate to edit page for the currently selected employee
+			this.router.navigate(['/pages/employees/edit', this.selectedEmployee.id]);
+		}
+	}
+
+	/**
+	 * Opens an invitation dialog for adding new employees.
+	 * Waits for the dialog to close before proceeding.
+	 */
+	async invite(): Promise<void> {
+		try {
+			const dialog = this.dialogService.open(InviteMutationComponent, {
+				context: { invitationType: InvitationTypeEnum.EMPLOYEE }
+			});
+			await firstValueFrom(dialog.onClose);
+			// Optionally handle any post-invitation logic here
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		}
+	}
+
+	/**
+	 * Deletes the selected employee after confirmation.
+	 *
+	 * @param selectedItem The employee view model to delete.
+	 */
+	async delete(selectedItem?: EmployeeViewModel): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+
+		if (selectedItem) {
+			this.selectEmployee({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		try {
+			const confirmationDialog = this.dialogService.open(DeleteConfirmationComponent, {
+				context: {
+					recordType: `${this.selectedEmployee.fullName} ${this.getTranslation(
+						'FORM.DELETE_CONFIRMATION.EMPLOYEE'
+					)}`
+				}
+			});
+
+			confirmationDialog.onClose.pipe(untilDestroyed(this)).subscribe(async (result) => {
+				if (result) {
+					const { id: organizationId, tenantId } = this.organization;
+
+					await this.employeesService.softRemove(this.selectedEmployee.id, { organizationId, tenantId });
+
+					this._employeeStore.employeeAction = {
+						action: CrudActionEnum.DELETED,
+						employees: [this.selectedEmployee as any]
+					};
+
+					const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
+					this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', { name });
+				}
+			});
+		} catch (error) {
+			this.errorHandler.handleError(error);
+		} finally {
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
 
-	edit(selectedItem?: EmployeeViewModel) {
-		if (selectedItem) {
-			this.selectEmployee({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-		this.router.navigate(['/pages/employees/edit/', this.selectedEmployee.id]);
-	}
-
-	async invite() {
-		const dialog = this.dialogService.open(InviteMutationComponent, {
-			context: {
-				invitationType: InvitationTypeEnum.EMPLOYEE
-			}
-		});
-		await firstValueFrom(dialog.onClose);
-	}
-
 	/**
-	 * Delete employee
+	 * Ends work for the selected employee after confirmation.
 	 *
-	 * @param selectedItem
+	 * @param selectedItem The employee view model for which work is ended.
 	 */
-	async delete(selectedItem?: EmployeeViewModel) {
+	async endWork(selectedItem?: EmployeeViewModel): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		this.dialogService
-			.open(DeleteConfirmationComponent, {
-				context: {
-					recordType:
-						this.selectedEmployee.fullName + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.EMPLOYEE')
-				}
-			})
-			.onClose.pipe(untilDestroyed(this))
-			.subscribe(async (result) => {
-				if (result) {
-					try {
-						if (!this.organization) {
-							return;
-						}
-						const { id: organizationId, tenantId } = this.organization;
-						await this.employeesService.softRemove(this.selectedEmployee.id, { organizationId, tenantId });
 
-						this._employeeStore.employeeAction = {
-							action: CrudActionEnum.DELETED,
-							employees: [this.selectedEmployee as any]
-						};
-						this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-							name: this.selectedEmployee.fullName.trim()
-						});
-					} catch (error) {
-						this.errorHandler.handleError(error);
-					} finally {
-						this._refresh$.next(true);
-						this.employees$.next(true);
-					}
-				}
-			});
-	}
-
-	async endWork(selectedItem?: EmployeeViewModel) {
-		if (selectedItem) {
-			this.selectEmployee({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-
+			const { id: organizationId, tenantId } = this.organization;
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					endWorkValue: this.selectedEmployee.endWork,
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
+
 			const data = await firstValueFrom(dialog.onClose);
+
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, data, {
 					organizationId,
 					tenantId
 				});
+
+				const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_INACTIVE', {
-					name: this.selectedEmployee.fullName.trim()
+					name
 				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
 
-	async backToWork(selectedItem?: EmployeeViewModel) {
+	/**
+	 * Brings the selected employee back to work after confirmation.
+	 *
+	 * @param selectedItem The employee view model for which work is resumed.
+	 */
+	async backToWork(selectedItem?: EmployeeViewModel): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
 
+		try {
+			const { id: organizationId, tenantId } = this.organization;
 			const dialog = this.dialogService.open(EmployeeEndWorkComponent, {
 				context: {
 					backToWork: true,
 					employeeFullName: this.selectedEmployee.fullName
 				}
 			});
+
 			const data = await firstValueFrom(dialog.onClose);
+
 			if (data) {
 				await this.employeesService.setEmployeeEndWork(this.selectedEmployee.id, null, {
 					organizationId,
 					tenantId
 				});
+
+				const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
-					name: this.selectedEmployee.fullName.trim()
+					name
 				});
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
 
 	/**
-	 * Restore deleted employee
+	 * Restore deleted employee to active status.
 	 *
-	 * @param selectedItem
+	 * @param selectedItem The employee view model to restore.
 	 */
-	async restoreToWork(selectedItem?: EmployeeViewModel) {
-		if (!this.organization) {
+	async restoreToWork(selectedItem?: EmployeeViewModel): Promise<void> {
+		if (!this.organization || !selectedItem) {
 			return;
 		}
-		if (selectedItem) {
-			this.selectEmployee({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
+
+		this.selectEmployee({
+			isSelected: true,
+			data: selectedItem
+		});
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
+
 			await this.employeesService.softRecover(this.selectedEmployee.id, {
 				organizationId,
 				tenantId
 			});
+
+			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 			this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ACTIVE', {
-				name: this.selectedEmployee.fullName.trim()
+				name
 			});
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
 
 	/**
-	 * Enabled/Disabled Time Tracking Status for each employee
+	 * Enable or disable time tracking status for the selected employee.
 	 *
-	 * @param selectedItem
+	 * @param selectedItem The employee view model to perform time tracking action on.
 	 */
-	async timeTrackingAction(selectedItem?: EmployeeViewModel) {
-		if (selectedItem) {
-			this.selectEmployee({
-				isSelected: true,
-				data: selectedItem
-			});
+	async timeTrackingAction(selectedItem?: EmployeeViewModel): Promise<void> {
+		if (!selectedItem || !this.organization) {
+			return;
 		}
-		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
 
+		this.selectEmployee({
+			isSelected: true,
+			data: selectedItem
+		});
+
+		try {
+			const { id: organizationId, tenantId } = this.organization;
 			const { isTrackingEnabled } = this.selectedEmployee;
+
+			const fullName = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
+
 			await this.employeesService.setEmployeeTimeTrackingStatus(this.selectedEmployee.id, !isTrackingEnabled, {
 				organizationId,
 				tenantId
 			});
 
-			if (isTrackingEnabled) {
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED', {
-					name: this.selectedEmployee.fullName.trim()
-				});
-			} else {
-				this.toastrService.success('TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED', {
-					name: this.selectedEmployee.fullName.trim()
-				});
-			}
+			const toastMessageKey = isTrackingEnabled
+				? 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_DISABLED'
+				: 'TOASTR.MESSAGE.EMPLOYEE_TIME_TRACKING_ENABLED';
+
+			this.toastrService.success(toastMessageKey, { name: fullName });
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
@@ -433,31 +506,33 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			return; // Early exit if organization is undefined
 		}
 
-		this.loading = true; // Indicate loading state
+		try {
+			this.loading = true; // Indicate loading state
+			const { id: organizationId, tenantId } = this.organization;
 
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
-
-		this.smartTableSource = new ServerDataSource(this.http, {
-			endPoint: `${API_PREFIX}/employee/pagination`,
-			relations: ['user', 'tags'],
-			withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
-			where: {
-				organizationId,
-				tenantId,
-				...(this.filters.where || {}) // Include additional filter conditions
-			},
-			resultMap: (employee: IEmployee) => {
-				return {
-					...employee, // Spread employee properties
-					...this.employeeMapper(employee) // Map additional properties
-				};
-			},
-			finalize: () => {
-				this.updatePagination(this.smartTableSource.count());
-				this.loading = false; // Update loading state
-			}
-		});
+			this.smartTableSource = new ServerDataSource(this.http, {
+				endPoint: `${API_PREFIX}/employee/pagination`,
+				relations: ['user', 'tags'],
+				withDeleted: this.includeDeleted, // Include soft-deleted records if flag is true
+				where: {
+					organizationId,
+					tenantId,
+					...(this.filters.where ? this.filters.where : {}) // Include additional filter conditions
+				},
+				resultMap: (employee: IEmployee) => {
+					return {
+						...employee, // Spread employee properties
+						...this.employeeMapper(employee) // Map additional properties
+					};
+				},
+				finalize: () => {
+					this.updatePagination(this.smartTableSource.count());
+					this.loading = false; // Update loading state
+				}
+			});
+		} finally {
+			this.loading = false; // Update loading state
+		}
 	}
 
 	/**
@@ -471,23 +546,36 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		});
 	}
 
-	private async getEmployees() {
-		if (!this.organization) {
-			return;
-		}
+	/**
+	 * Fetch and display employees based on current organization settings and layout style.
+	 */
+	private async getEmployees(): Promise<void> {
 		try {
+			if (!this.organization) {
+				return;
+			}
+
 			this.setSmartTableSource();
+
+			// Configure pagination
 			const { activePage, itemsPerPage } = this.getPagination();
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			// Fetch elements based on layout style
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				await this.smartTableSource.getElements();
 				this.employees.push(...this.smartTableSource.getData());
 			}
 		} catch (error) {
-			this.toastrService.danger(error);
+			this.errorHandler.handleError(error); // Example: Use your error handling service or method here
 		}
 	}
 
+	/**
+	 *
+	 * @param employee
+	 * @returns
+	 */
 	private employeeMapper(employee: IEmployee) {
 		const {
 			id,
@@ -532,6 +620,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		};
 	}
 
+	/**
+	 * Load Smart Table settings
+	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -621,7 +712,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						component: ToggleFilterComponent
 					},
 					filterFunction: (checked: boolean) => {
-						this.setFilter({ field: 'isTrackingEnabled', search: checked });
+						this.setFilter({
+							field: 'isTrackingEnabled',
+							search: checked
+						});
 					}
 				},
 				tags: {
@@ -697,7 +791,10 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				},
 				// Define filter function to update the filter settings
 				filterFunction: (isEnable: boolean) => {
-					this.setFilter({ field: 'allowScreenshotCapture', search: isEnable });
+					this.setFilter({
+						field: 'allowScreenshotCapture',
+						search: isEnable
+					});
 				},
 				// Configure custom component for rendering the column
 				renderComponent: AllowScreenshotCaptureComponent,
@@ -725,30 +822,43 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		this.settingsSmartTable = { ...this.settingsSmartTable };
 	}
 
-	private _updateAllowScreenshotCapture(employee: IEmployee, isAllowed: boolean) {
+	/**
+	 * Update the allowScreenshotCapture setting for an employee.
+	 *
+	 * @param employee The employee to update.
+	 * @param isAllowed Boolean indicating if screenshot capture is allowed.
+	 */
+	private async _updateAllowScreenshotCapture(employee: IEmployee, isAllowed: boolean): Promise<void> {
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
-			const payload: IEmployeeUpdateInput = {
+			const { id: organizationId, tenantId } = this.organization;
+			const name = employee.fullName.trim() || 'Unknown Employee';
+
+			await this.employeesService.update(employee.id, {
 				allowScreenshotCapture: isAllowed,
 				organizationId,
 				tenantId
-			};
-			this.employeesService.update(employee.id, payload);
-			this.toastrService.success('TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED', {
-				name: employee.fullName.trim()
-			});
+			}); // Await the update operation
+
+			this.toastrService.success('TOASTR.MESSAGE.SCREEN_CAPTURE_CHANGED', { name });
 		} catch (error) {
-			this.errorHandler.handleError(error);
+			this.errorHandler.handleError(error); // Handle errors using your error handling service or method
 		}
 	}
 
-	changeIncludeDeleted(checked: boolean) {
+	/**
+	 * Change the includeDeleted flag and trigger refresh signals.
+	 *
+	 * @param checked Boolean indicating if deleted items should be included.
+	 */
+	changeIncludeDeleted(checked: boolean): void {
 		this.includeDeleted = checked;
-		this._refresh$.next(true);
+		this.refresh$.next(true);
 		this.employees$.next(true);
 	}
 
+	/**
+	 *	Apply translation on Smart Table
+	 */
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
@@ -769,15 +879,16 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		});
 	}
 
+	/**
+	 * Start employee's work process.
+	 */
 	async startEmployeeWork() {
 		try {
-			const { id: organizationId } = this.organization;
-			const { tenantId } = this.store.user;
+			const { id: organizationId, tenantId } = this.organization;
+			const name = this.selectedEmployee.fullName.trim() || 'Unknown Employee';
 
 			const dialog = this.dialogService.open(EmployeeStartWorkComponent, {
-				context: {
-					employeeFullName: this.selectedEmployee.fullName
-				}
+				context: { employeeFullName: name }
 			});
 			const data = await firstValueFrom(dialog.onClose);
 			if (data) {
@@ -785,19 +896,13 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					organizationId,
 					tenantId
 				});
-				this.toastrService.success(
-					this.getTranslation('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', {
-						name: this.selectedEmployee.fullName.trim()
-					}),
-					{
-						name: this.selectedEmployee.fullName.trim()
-					}
-				);
+
+				this.toastrService.success('TOASTR.MESSAGE.AUTHORIZED_TO_WORK', { name });
 			}
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this._refresh$.next(true);
+			this.refresh$.next(true);
 			this.employees$.next(true);
 		}
 	}
