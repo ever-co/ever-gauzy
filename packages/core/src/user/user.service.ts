@@ -81,10 +81,10 @@ export class UserService extends TenantAwareCrudService<User> {
 		}
 
 		// Return user data combined with employee data, if it exists.
-		return {
+		return new User({
 			...user,
 			...(employee && { employee }) // Conditionally add employee info to the response
-		};
+		});
 	}
 
 	/**

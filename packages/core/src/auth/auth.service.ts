@@ -123,10 +123,10 @@ export class AuthService extends SocialAuthService {
 
 			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
-				user: {
+				user: new User({
 					...user,
 					...(employee && { employee })
-				},
+				}),
 				token: access_token,
 				refresh_token: refresh_token
 			};
@@ -475,18 +475,14 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Change password
-	 *
+	 *  Reset password
 	 * @param request
+	 * @returns
 	 */
 	async resetPassword(request: IChangePasswordRequest) {
 		try {
 			const { password, token } = request;
-			const record: IPasswordReset = await this.commandBus.execute(
-				new PasswordResetGetCommand({
-					token
-				})
-			);
+			const record: IPasswordReset = await this.commandBus.execute(new PasswordResetGetCommand({ token }));
 			if (record.expired) {
 				throw new BadRequestException('Password Reset Failed.');
 			}
@@ -496,12 +492,8 @@ export class AuthService extends SocialAuthService {
 			};
 			try {
 				const user = await this.userService.findOneByIdString(id, {
-					where: {
-						tenantId
-					},
-					relations: {
-						tenant: true
-					}
+					where: { tenantId },
+					relations: { tenant: true }
 				});
 				if (user) {
 					const hash = await this.getPasswordHash(password);
@@ -630,6 +622,11 @@ export class AuthService extends SocialAuthService {
 		return thirdPartyId ? this.userService.getIfExistsThirdParty(thirdPartyId) : this.userService.getIfExists(id);
 	}
 
+	/**
+	 *
+	 * @param token
+	 * @returns
+	 */
 	async isAuthenticated(token: string): Promise<boolean> {
 		try {
 			const { id, thirdPartyId } = verify(token, environment.JWT_SECRET) as {
@@ -656,47 +653,52 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * Check current user has role
+	 * Check if the current user has any of the specified roles
 	 *
-	 * @param token
-	 * @param roles
-	 * @returns
+	 * @param roles Array of role names to check against
+	 * @returns A promise that resolves to true if the user has one of the specified roles, false otherwise
 	 */
 	async hasRole(roles: string[] = []): Promise<boolean> {
 		try {
-			const { role } = await this.userService.findOneByIdString(RequestContext.currentUserId(), {
-				relations: {
-					role: true
-				}
-			});
+			// Get the current role ID from the request context
+			const currentRoleId = RequestContext.currentRoleId();
+
+			// Retrieve the role associated with the current user
+			const role = await this.roleService.findOneByIdString(currentRoleId);
+
+			// Check if the role has any of the specified roles
 			return role ? roles.includes(role.name) : false;
 		} catch (err) {
 			if (err instanceof JsonWebTokenError) {
 				return false;
-			} else {
-				throw err;
 			}
 		}
 	}
 
 	/**
-	 * Check current user has permission
+	 * Check if the current user has any of the specified permissions
 	 *
-	 * @param token
-	 * @param roles
-	 * @returns
+	 * @param permissions Array of permissions to check against
+	 * @returns A promise that resolves to true if the user has one of the specified permissions, false otherwise
 	 */
 	async hasPermissions(permissions: PermissionsEnum[] = []): Promise<boolean> {
 		try {
+			// Get the current role ID from the request context
 			const roleId = RequestContext.currentRoleId();
-			return !!(await this.roleService.findOneByIdString(roleId, {
-				where: {
-					rolePermissions: {
-						permission: In(permissions),
-						enabled: true
-					}
+
+			//	Check if the role has any of the specified permissions
+			const count = await this.roleService.countBy({
+				id: roleId,
+				isActive: true,
+				isArchived: false,
+				rolePermissions: {
+					permission: In(permissions),
+					enabled: true,
+					isActive: true,
+					isArchived: false
 				}
-			}));
+			});
+			return count > 0;
 		} catch (error) {
 			return false;
 		}
@@ -834,7 +836,6 @@ export class AuthService extends SocialAuthService {
 	 * @returns
 	 */
 	async getAccessTokenFromRefreshToken() {
-		console.log('Get access token from refresh token');
 		try {
 			const user = RequestContext.currentUser();
 			return { token: await this.getJwtAccessToken(user) };
@@ -861,8 +862,6 @@ export class AuthService extends SocialAuthService {
 			console.log('Error while sending workspace magic login code: Email is required');
 			return;
 		}
-
-		console.log('Email: ', email);
 
 		try {
 			// Count the number of users with the given email
@@ -979,9 +978,7 @@ export class AuthService extends SocialAuthService {
 					isActive: true,
 					isArchived: false
 				},
-				relations: {
-					tenant: true
-				}
+				relations: { tenant: true }
 			});
 
 			// Determining the response based on the number of matching users
@@ -1068,14 +1065,15 @@ export class AuthService extends SocialAuthService {
 
 				// Return the user object with user details, tokens, and optionally employee info if it exists.
 				return {
-					user: {
+					user: new User({
 						...user,
 						...(employee && { employee })
-					},
+					}),
 					token: access_token,
 					refresh_token: refresh_token
 				};
 			}
+
 			throw new UnauthorizedException();
 		} catch (error) {
 			if (error?.name === 'TokenExpiredError') {
