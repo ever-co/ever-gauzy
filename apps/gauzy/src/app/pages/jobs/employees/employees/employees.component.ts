@@ -8,7 +8,14 @@ import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { ID, IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
+import {
+	ID,
+	IEmployee,
+	IEmployeeJobsStatisticsResponse,
+	IOrganization,
+	ISelectedEmployee,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -128,19 +135,28 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			// Destructure properties for clarity
 			const { id: organizationId, tenantId } = this.organization;
 
+			const whereClause = {
+				tenantId,
+				organizationId,
+				isActive: true,
+				isArchived: false,
+				...(this.selectedEmployeeId ? { id: this.selectedEmployeeId } : {}),
+				...(this.filters.where ? this.filters.where : {})
+			};
+
+			// Filter by current employee ID if the permission is not present
+			if (!this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+				// Filter by current employee ID if the permission is not present
+				const employeeId = this._store.user?.employee?.id;
+				whereClause.id = employeeId;
+			}
+
 			// Create a new ServerDataSource for Smart Table
 			this.smartTableSource = new ServerDataSource(this._http, {
 				endPoint: `${API_PREFIX}/employee-job/statistics`,
 				relations: ['user'],
 				// Define query parameters for the API request
-				where: {
-					tenantId,
-					organizationId,
-					isActive: true,
-					isArchived: false,
-					...(this.selectedEmployeeId ? { id: this.selectedEmployeeId } : {}),
-					...(this.filters.where ? this.filters.where : {})
-				},
+				where: { ...whereClause },
 				// Finalize callback to handle post-processing
 				finalize: () => {
 					// Update pagination based on the count of items in the source
@@ -148,8 +164,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						...this.getPagination(),
 						totalItems: this.smartTableSource.count()
 					});
-					// Set loading state to false once data fetching is complete
-					this.loading = false;
 				}
 			});
 		} catch (error) {

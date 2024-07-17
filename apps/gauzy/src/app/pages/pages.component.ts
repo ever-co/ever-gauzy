@@ -299,7 +299,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 					link: '/pages/jobs/search', // The link where the menu item directs
 					data: {
 						translationKey: 'MENU.JOBS_SEARCH', // Key for translation (i18n)
-						permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW, PermissionsEnum.ORG_JOB_MATCHING_VIEW] // Array of permission keys required for this item
+						permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH] // Array of permission keys required for this item
 					}
 				},
 				{

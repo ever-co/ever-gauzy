@@ -26,8 +26,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
-			/** Organization Task Setting */
+			/** Organization Task Setting Permissions Start */
 			PermissionsEnum.ORG_TASK_SETTING,
+			/** Organization Task Setting Permissions End */
 			/** Employee CRUD Permissions Start */
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
@@ -116,8 +117,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+			PermissionsEnum.ORG_JOB_SEARCH,
+			PermissionsEnum.ORG_JOB_APPLY,
+			PermissionsEnum.ORG_JOB_EDIT,
+			/** Job Post Permissions End */
 			PermissionsEnum.ORG_EQUIPMENT_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_EDIT,
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
@@ -265,8 +271,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+			PermissionsEnum.ORG_JOB_SEARCH,
+			PermissionsEnum.ORG_JOB_APPLY,
+			PermissionsEnum.ORG_JOB_EDIT,
+			/** Job Post Permissions End */
 			PermissionsEnum.ORG_EQUIPMENT_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_EDIT,
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
