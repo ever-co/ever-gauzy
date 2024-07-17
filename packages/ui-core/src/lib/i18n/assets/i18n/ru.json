@@ -1188,7 +1188,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Добавлена проводка обновления",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Всего транзакций было успешно: {{ totalExpenses }}. Всего операций с доходами было успешно: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff",
+			"TITLE": "Hubstaff",
 			"SELECT_ORGANIZATION": "Выберите организацию",
 			"SYNCED_PROJECTS": "Проекты синхронизированы",
 			"SETTINGS_UPDATED": "Обновлены настройки интеграции",

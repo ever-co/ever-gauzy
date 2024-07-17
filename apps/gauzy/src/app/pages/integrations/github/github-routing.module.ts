@@ -22,31 +22,30 @@ const routes: Routes = [
 			{
 				path: ':integrationId',
 				component: GithubViewComponent,
-				data: {
-					selectors: false
-				}
+				data: { selectors: false }
 			},
 			{
 				path: 'setup/wizard',
-				component: GithubWizardComponent,
+				component: GithubWizardComponent
 			}
 		]
 	},
 	{
 		path: 'setup/wizard/reset',
+		component: GithubWizardComponent,
 		data: {
+			selectors: false,
 			redirectTo: '/pages/integrations/github/setup/wizard'
-		},
-		component: GithubWizardComponent
+		}
 	},
 	{
 		path: 'setup/installation',
 		component: GithubInstallationComponent
-	},
+	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class GithubRoutingModule { }
+export class GithubRoutingModule {}

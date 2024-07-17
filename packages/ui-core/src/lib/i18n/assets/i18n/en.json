@@ -1220,7 +1220,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Added Upwork Transaction",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total expense transactions succeed: {{ totalExpenses }}. Total income transactions succeed: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff",
+			"TITLE": "Hubstaff",
 			"SELECT_ORGANIZATION": "Select Organization",
 			"SYNCED_PROJECTS": "Projects synced",
 			"SETTINGS_UPDATED": "Updated settings for integration",

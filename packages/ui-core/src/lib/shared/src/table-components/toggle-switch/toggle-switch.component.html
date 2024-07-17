@@ -1,9 +1,5 @@
-<nb-toggle
-	status="primary"
-	[checked]="toggle_switch$ | async"
-	(checkedChange)="onCheckedChange($event)"
->
+<nb-toggle status="primary" [checked]="toggle_switch$ | async" (checkedChange)="onCheckedChange($event)">
 	<ng-template [ngIf]="label">
 		{{ ((toggle_switch$ | async) ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
 	</ng-template>
-</nb-toggle >
+</nb-toggle>

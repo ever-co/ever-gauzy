@@ -7,8 +7,7 @@ import { Component, OnInit } from '@angular/core';
 	providers: []
 })
 export class IntegrationLayoutComponent implements OnInit {
+	constructor() {}
 
-	constructor() { }
-
-	ngOnInit(): void { }
+	ngOnInit(): void {}
 }

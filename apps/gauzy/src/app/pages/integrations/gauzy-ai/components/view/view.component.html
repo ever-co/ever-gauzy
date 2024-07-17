@@ -12,35 +12,34 @@
 		</div>
 		<div>
 			<div>
-				<button
-					nbButton
-					status="primary"
-					class="mr-2"
-					size="small"
-					[routerLink]="'/pages/integrations/gauzy-ai/reset'"
-				>
-					<div class="sync-container">
-						<nb-icon class="sync" icon="sync-outline"></nb-icon>
-						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
-					</div>
-				</button>
+				<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+					<button
+						nbButton
+						status="primary"
+						class="mr-2"
+						size="small"
+						[routerLink]="'/pages/integrations/gauzy-ai/reset'"
+					>
+						<div class="sync-container">
+							<nb-icon class="sync" icon="sync-outline"></nb-icon>
+							{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
+						</div>
+					</button>
+				</ng-template>
 			</div>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<nb-tabset class="mt-4">
-			<nb-tab
-				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate"
-				[tabIcon]="'list-outline'"
-			>
-				<ng-container *ngIf="(settings$ | async) as settings">
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.KEYS' | translate" [tabIcon]="'list-outline'">
+				<ng-container *ngIf="settings$ | async as settings">
 					<ngx-integration-setting-card
 						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.CONSUMER_KEYS' | translate"
 						[items]="settings"
 						(saved)="updateIntegrationSettings($event)"
 					></ngx-integration-setting-card>
 				</ng-container>
-				<ng-container *ngIf="(openAISettings$ | async) as openAISettings">
+				<ng-container *ngIf="openAISettings$ | async as openAISettings">
 					<ngx-integration-setting-card
 						[title]="'INTEGRATIONS.GAUZY_AI_PAGE.OPEN_AI_API_KEYS' | translate"
 						[items]="openAISettings"
@@ -48,10 +47,7 @@
 					></ngx-integration-setting-card>
 				</ng-container>
 			</nb-tab>
-			<nb-tab
-				[tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate"
-				[tabIcon]="'settings-outline'"
-			>
+			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate" [tabIcon]="'settings-outline'">
 				<nb-card *ngIf="organization$ | async">
 					<nb-card-body>
 						<form>
@@ -68,11 +64,18 @@
 												status="primary"
 												labelPosition="start"
 												[checked]="jobSearchMatchingSync?.sync"
-												(checkedChange)="toggleIntegrationEntitySync($event, jobSearchMatchingSync)"
+												(checkedChange)="
+													toggleIntegrationEntitySync($event, jobSearchMatchingSync)
+												"
 											>
-												{{ 'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
+												{{
+													'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate
+												}}
 												<button
-													[nbTooltip]="'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
+													[nbTooltip]="
+														'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+															| translate
+													"
 													ghost
 													nbButton
 													size="small"
@@ -96,11 +99,18 @@
 												status="primary"
 												labelPosition="start"
 												[checked]="employeePerformanceAnalysisSync?.sync"
-												(checkedChange)="toggleIntegrationEntitySync($event, employeePerformanceAnalysisSync)"
+												(checkedChange)="
+													toggleIntegrationEntitySync($event, employeePerformanceAnalysisSync)
+												"
 											>
-												{{ 'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
+												{{
+													'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate
+												}}
 												<button
-													[nbTooltip]="'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate"
+													[nbTooltip]="
+														'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+															| translate
+													"
 													ghost
 													nbButton
 													size="small"
