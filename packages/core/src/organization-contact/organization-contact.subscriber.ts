@@ -23,7 +23,7 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 	async afterEntityLoad(entity: OrganizationContact): Promise<void> {
 		try {
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
-			if ('image' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				console.log('OrganizationContact: Setting imageUrl for organization contact ID ' + entity.id);
 				await this.setImageUrl(entity);
 			} else if (!entity.imageUrl && entity.name) {

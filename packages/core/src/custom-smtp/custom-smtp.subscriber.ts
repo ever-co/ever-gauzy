@@ -20,10 +20,10 @@ export class CustomSmtpSubscriber extends BaseEntityEventSubscriber<CustomSmtp> 
 	 */
 	async afterEntityLoad(entity: CustomSmtp): Promise<void> {
 		try {
-			if ('username' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'username')) {
 				entity.secretKey = entity.username;
 			}
-			if ('password' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'password')) {
 				entity.secretPassword = entity.password;
 			}
 			WrapSecrets(entity, entity); // Assuming wrapSecrets is a function to securely handle secrets.

@@ -29,7 +29,7 @@ export class FeatureSubscriber extends BaseEntityEventSubscriber<Feature> {
 			entity.isEnabled = gauzyToggleFeatures[entity.code] ?? true;
 
 			// Set imageUrl based on the entity's image property
-			if ('image' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				console.log('Feature: Setting imageUrl for feature ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}

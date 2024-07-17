@@ -21,7 +21,7 @@ export class ProductCategorySubscriber extends BaseEntityEventSubscriber<Product
 	async afterEntityLoad(entity: ProductCategory): Promise<void> {
 		try {
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
-			if ('image' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				console.log('ProductCategory: Setting imageUrl for product category ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}

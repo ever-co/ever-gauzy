@@ -27,7 +27,7 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			entity.prefix = entity.prefix ? entity.prefix.toUpperCase() : entity.name?.substring(0, 3).toUpperCase();
 
 			// Set logo from the image object's fullUrl, if available. Fall back to existing logo if not.
-			if ('image' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				console.log('OrganizationTeam: Setting imageUrl for organization team ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}

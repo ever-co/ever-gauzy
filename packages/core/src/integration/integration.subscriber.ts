@@ -23,7 +23,7 @@ export class IntegrationSubscriber extends BaseEntityEventSubscriber<Integration
 	async afterEntityLoad(entity: Integration): Promise<void> {
 		try {
 			// Check if imgSrc is present and non-empty
-			if (entity.imgSrc) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'imgSrc')) {
 				// Instantiate FileStorage with the desired provider
 				const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 

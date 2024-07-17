@@ -25,17 +25,17 @@ export class TimeSlotSubscriber extends BaseEntityEventSubscriber<TimeSlot> {
 	async afterEntityLoad(entity: TimeSlot): Promise<void> {
 		try {
 			// Update 'stoppedAt' time based on 'startedAt'
-			if ('startedAt' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'startedAt')) {
 				entity.stoppedAt = moment(entity.startedAt).add(10, 'minutes').toDate();
 			}
 			// Calculate activity percentages
-			if ('overall' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'overall')) {
 				entity.percentage = this.calculateOverallActivity(entity);
 			}
-			if ('keyboard' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'keyboard')) {
 				entity.keyboardPercentage = this.calculateKeyboardActivity(entity);
 			}
-			if ('mouse' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'mouse')) {
 				entity.mousePercentage = this.calculateMouseActivity(entity);
 			}
 		} catch (error) {

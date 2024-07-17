@@ -163,7 +163,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			const { organizationId, tenantId } = entity;
 
 			// Check if organizationId is present in the entity
-			if ('organizationId' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'organizationId')) {
 				// Handle TypeORM specific logic
 				if (em instanceof TypeOrmEntityManager) {
 					const totalEmployees = await em.countBy(Employee, { organizationId, tenantId });

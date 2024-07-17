@@ -18,7 +18,8 @@ export class EmailTemplateSubscriber extends BaseEntityEventSubscriber<EmailTemp
 	 */
 	async afterEntityLoad(entity: EmailTemplate): Promise<void> {
 		try {
-			if ('name' in entity) {
+			// Set title from the name property, if present
+			if (Object.prototype.hasOwnProperty.call(entity, 'name')) {
 				entity.title = entity.name?.split('/')[0].split('-').join(' ');
 			}
 		} catch (error) {

@@ -25,7 +25,7 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 	async afterEntityLoad(entity: TaskPriority): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if ('icon' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
 				console.log('TaskPriority: Setting fullIconUrl for task priority ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
@@ -50,7 +50,7 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 			entity.color = entity.color || faker.internet.color();
 
 			// Set a sluggable value based on the name, if provided
-			if ('name' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'name')) {
 				entity.value = sluggable(entity.name);
 			}
 		} catch (error) {
