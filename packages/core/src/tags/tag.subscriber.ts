@@ -24,7 +24,8 @@ export class TagSubscriber extends BaseEntityEventSubscriber<Tag> {
 	async afterEntityLoad(entity: Tag): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+			if ('icon' in entity) {
+				console.log('Tag: Setting imageUrl for tag ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {

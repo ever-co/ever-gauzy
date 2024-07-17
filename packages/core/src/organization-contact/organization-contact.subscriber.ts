@@ -24,6 +24,7 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 		try {
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
 			if ('image' in entity) {
+				console.log('OrganizationContact: Setting imageUrl for organization contact ID ' + entity.id);
 				await this.setImageUrl(entity);
 			} else if (!entity.imageUrl && entity.name) {
 				// Otherwise, generate a dummy image URL based on the first character of the name

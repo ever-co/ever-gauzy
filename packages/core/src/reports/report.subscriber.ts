@@ -24,7 +24,7 @@ export class ReportSubscriber extends BaseEntityEventSubscriber<Report> {
 		try {
 			// Update the imageUrl if an image property is present
 			if ('image' in entity) {
-				console.log('ReportSubscriber: Setting imageUrl for report ID ' + entity.id);
+				console.log('Report: Setting imageUrl for report ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}
 		} catch (error) {
