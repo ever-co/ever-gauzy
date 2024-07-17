@@ -60,9 +60,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 
 			// Set a default avatar image if none is provided
-			if (!entity.user.imageUrl) {
-				entity.user.imageUrl = getUserDummyImage(entity.user);
-			}
+			entity.user.imageUrl = entity.user.imageUrl ?? getUserDummyImage(entity.user);
 
 			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity);
@@ -128,7 +126,6 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * The slug is generated using the first and last name, username, or email, in that order of preference.
 	 *
 	 * @param {Employee} entity - The Employee entity for which to create the slug.
-	 * @throws {Error} If neither entity nor entity.user is defined, or if slug creation fails.
 	 */
 	async createSlug(entity: Employee) {
 		try {
@@ -165,6 +162,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		try {
 			const { organizationId, tenantId } = entity;
 
+			// Check if organizationId is present in the entity
 			if (Object.prototype.hasOwnProperty.call(entity, 'organizationId')) {
 				// Handle TypeORM specific logic
 				if (em instanceof TypeOrmEntityManager) {
