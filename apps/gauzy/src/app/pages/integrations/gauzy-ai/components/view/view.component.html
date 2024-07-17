@@ -49,82 +49,89 @@
 			</nb-tab>
 			<nb-tab [tabTitle]="'INTEGRATIONS.GAUZY_AI_PAGE.TAB.SETTINGS' | translate" [tabIcon]="'settings-outline'">
 				<nb-card *ngIf="organization$ | async">
-					<nb-card-body>
-						<form>
-							<div class="fields">
-								<div class="row">
-									<div class="col-6">
-										<div class="form-group">
-											<label for="isJobSearchMatchingSync" class="label">
-												{{ 'FORM.LABELS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
-											</label>
-											<nb-toggle
-												id="isJobSearchMatchingSync"
-												class="d-block"
-												status="primary"
-												labelPosition="start"
-												[checked]="jobSearchMatchingSync?.sync"
-												(checkedChange)="
-													toggleIntegrationEntitySync($event, jobSearchMatchingSync)
-												"
-											>
-												{{
-													'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate
-												}}
-												<button
-													[nbTooltip]="
-														'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
-															| translate
+					<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+						<nb-card-body>
+							<form>
+								<div class="fields">
+									<div class="row">
+										<div class="col-6">
+											<div class="form-group">
+												<label for="isJobSearchMatchingSync" class="label">
+													{{ 'FORM.LABELS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS' | translate }}
+												</label>
+												<nb-toggle
+													id="isJobSearchMatchingSync"
+													class="d-block"
+													status="primary"
+													labelPosition="start"
+													[checked]="jobSearchMatchingSync?.sync"
+													(checkedChange)="
+														toggleIntegrationEntitySync($event, jobSearchMatchingSync)
 													"
-													ghost
-													nbButton
-													size="small"
-													status="info"
 												>
-													<nb-icon icon="info"></nb-icon>
-												</button>
-											</nb-toggle>
+													{{
+														'FORM.PLACEHOLDERS.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+															| translate
+													}}
+													<button
+														[nbTooltip]="
+															'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+																| translate
+														"
+														ghost
+														nbButton
+														size="small"
+														status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</nb-toggle>
+											</div>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-6">
+											<div class="form-group">
+												<label for="isEmployeePerformanceAnalysisSync" class="label">
+													{{ 'FORM.LABELS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
+												</label>
+												<nb-toggle
+													id="isEmployeePerformanceAnalysisSync"
+													class="d-block"
+													status="primary"
+													labelPosition="start"
+													[checked]="employeePerformanceAnalysisSync?.sync"
+													(checkedChange)="
+														toggleIntegrationEntitySync(
+															$event,
+															employeePerformanceAnalysisSync
+														)
+													"
+												>
+													{{
+														'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS'
+															| translate
+													}}
+													<button
+														[nbTooltip]="
+															'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
+																| translate
+														"
+														ghost
+														nbButton
+														size="small"
+														status="info"
+													>
+														<nb-icon icon="info"></nb-icon>
+													</button>
+												</nb-toggle>
+											</div>
 										</div>
 									</div>
 								</div>
-								<div class="row">
-									<div class="col-6">
-										<div class="form-group">
-											<label for="isEmployeePerformanceAnalysisSync" class="label">
-												{{ 'FORM.LABELS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate }}
-											</label>
-											<nb-toggle
-												id="isEmployeePerformanceAnalysisSync"
-												class="d-block"
-												status="primary"
-												labelPosition="start"
-												[checked]="employeePerformanceAnalysisSync?.sync"
-												(checkedChange)="
-													toggleIntegrationEntitySync($event, employeePerformanceAnalysisSync)
-												"
-											>
-												{{
-													'FORM.PLACEHOLDERS.ENABLE_EMPLOYEE_PERFORMANCE_ANALYSIS' | translate
-												}}
-												<button
-													[nbTooltip]="
-														'INTEGRATIONS.GAUZY_AI_PAGE.TOOLTIP.ENABLE_JOBS_SEARCH_MATCHING_ANALYSIS'
-															| translate
-													"
-													ghost
-													nbButton
-													size="small"
-													status="info"
-												>
-													<nb-icon icon="info"></nb-icon>
-												</button>
-											</nb-toggle>
-										</div>
-									</div>
-								</div>
-							</div>
-						</form>
-					</nb-card-body>
+							</form>
+						</nb-card-body>
+					</ng-template>
 				</nb-card>
 			</nb-tab>
 		</nb-tabset>
