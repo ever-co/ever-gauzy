@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Aggiunta transazione Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Le transazioni di spese totali sono riuscite: {{ totalExpenses }}. Le transazioni di entrate totali sono riuscite: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff",
+			"TITLE": "Hubstaff",
 			"SELECT_ORGANIZATION": "Seleziona Organizzazione",
 			"SYNCED_PROJECTS": "Progetti sincronizzati",
 			"SETTINGS_UPDATED": "Impostazioni aggiornate per l'integrazione",
