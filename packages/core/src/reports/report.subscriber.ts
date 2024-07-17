@@ -23,7 +23,8 @@ export class ReportSubscriber extends BaseEntityEventSubscriber<Report> {
 	async afterEntityLoad(entity: Report): Promise<void> {
 		try {
 			// Update the imageUrl if an image property is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+			if ('image' in entity) {
+				console.log('ReportSubscriber: Setting imageUrl for report ID ' + entity.id);
 				await this.setImageUrl(entity);
 			}
 		} catch (error) {

@@ -25,7 +25,8 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 	async afterEntityLoad(entity: TaskPriority): Promise<void> {
 		try {
 			// Update the fullIconUrl if an icon is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+			if ('icon' in entity) {
+				console.log('TaskPriority: Setting fullIconUrl for task priority ID ' + entity.id);
 				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {
