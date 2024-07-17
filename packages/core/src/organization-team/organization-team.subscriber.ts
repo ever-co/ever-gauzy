@@ -26,9 +26,9 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			// Set or update the prefix
 			entity.prefix = entity.prefix ? entity.prefix.toUpperCase() : entity.name?.substring(0, 3).toUpperCase();
 
-			// Update the logo URL if an image is available
-			if (entity.image && entity.image.fullUrl) {
-				entity.logo = entity.image.fullUrl;
+			// Set logo from the image object's fullUrl, if available. Fall back to existing logo if not.
+			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
+				await this.setImageUrl(entity);
 			}
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the afterEntityLoad process:', error);
@@ -57,7 +57,10 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 				entity.logo = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
 		} catch (error) {
-			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			console.error(
+				'OrganizationTeamSubscriber: An error occurred during the beforeEntityCreate process:',
+				error
+			);
 		}
 	}
 
@@ -75,7 +78,30 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 				entity.profile_link = sluggable(entity.name);
 			}
 		} catch (error) {
-			console.error('OrganizationTeamSubscriber: An error occurred during the beforeEntityUpdate process:', error);
+			console.error(
+				'OrganizationTeamSubscriber: An error occurred during the beforeEntityUpdate process:',
+				error
+			);
 		}
+	}
+
+	/**
+	 * 	Simulate an asynchronous operation to set the logo.
+	 * @param entity - The OrganizationTeam entity for which the logo is to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the logo update is complete.
+	 */
+	private setImageUrl(entity: OrganizationTeam): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			try {
+				// Simulate async operation, e.g., fetching fullUrl from a service
+				setTimeout(() => {
+					entity.logo = entity.image?.fullUrl ?? entity.logo;
+					resolve();
+				});
+			} catch (error) {
+				console.error('OrganizationTeamSubscriber: Error during the setImageUrl process:', error);
+				reject(null);
+			}
+		});
 	}
 }

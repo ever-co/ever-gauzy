@@ -24,13 +24,15 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 	 */
 	async afterEntityLoad(entity: TaskPriority): Promise<void> {
 		try {
-			// Update the fullIconUrl if an icon property is present
-			if (entity.icon) {
-				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
+			// Update the fullIconUrl if an icon is present
+			if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+				await this.setFullIconUrl(entity);
 			}
 		} catch (error) {
-			console.error(`TaskPrioritySubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`, error);
+			console.error(
+				`TaskPrioritySubscriber: An error occurred during the afterEntityLoad process for entity ID ${entity.id}:`,
+				error
+			);
 		}
 	}
 
@@ -53,5 +55,27 @@ export class TaskPrioritySubscriber extends BaseEntityEventSubscriber<TaskPriori
 		} catch (error) {
 			console.error('TaskPrioritySubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
+	}
+
+	/**
+	 * Simulate an asynchronous operation to set the full icon URL.
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	private async setFullIconUrl(entity: TaskPriority): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			try {
+				// Simulate async operation, e.g., fetching fullUrl from a service
+				setTimeout(async () => {
+					const provider = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+					entity.fullIconUrl = await provider.getProviderInstance().url(entity.icon);
+					resolve();
+				});
+			} catch (error) {
+				console.error('TaskPrioritySubscriber: Error during the setFullIconUrl process:', error);
+				reject(null);
+			}
+		});
 	}
 }

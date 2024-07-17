@@ -22,12 +22,11 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 	 */
 	async afterEntityLoad(entity: OrganizationContact): Promise<void> {
 		try {
-			if (entity.image && entity.image.fullUrl) {
-				// Use the full URL from the image property if available
-				entity.imageUrl = entity.image.fullUrl;
+			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
+			if ('image' in entity) {
+				await this.setImageUrl(entity);
 			} else if (!entity.imageUrl && entity.name) {
 				// Otherwise, generate a dummy image URL based on the first character of the name
-				console.log('OrganizationContactSubscriber: generate dummy image for entity.name', entity.name);
 				entity.imageUrl = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
 		} catch (error) {
@@ -57,5 +56,26 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 				error
 			);
 		}
+	}
+
+	/**
+	 * Simulate an asynchronous operation to set the imageUrl.
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	private setImageUrl(entity: OrganizationContact): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			try {
+				// Simulate async operation, e.g., fetching fullUrl from a service
+				setTimeout(() => {
+					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
+					resolve();
+				});
+			} catch (error) {
+				console.error('OrganizationContactSubscriber: Error during the setImageUrl process:', error);
+				reject(null);
+			}
+		});
 	}
 }

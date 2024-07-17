@@ -23,12 +23,11 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 	 */
 	async afterEntityLoad(entity: Organization): Promise<void> {
 		try {
-			// Check if there's an existing image with a full URL
-			if (entity.image?.fullUrl) {
-				entity.imageUrl = entity.image.fullUrl;
-			}
-			// If not, and if the imageUrl is not already set, generate a dummy image URL
-			else if (!entity.imageUrl && (entity.name || entity.officialName)) {
+			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
+			if ('image' in entity) {
+				await this.setImageUrl(entity);
+			} else if (!entity.imageUrl && (entity.name || entity.officialName)) {
+				// If imageUrl is not set and there's a name or officialName, generate a dummy image URL
 				entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
 			}
 		} catch (error) {
@@ -64,5 +63,26 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 		} catch (error) {
 			console.error('OrganizationSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
+	}
+
+	/**
+	 * Simulate an asynchronous operation to set the imageUrl.
+	 *
+	 * @param entity
+	 * @returns
+	 */
+	private setImageUrl(entity: Organization): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			try {
+				// Simulate async operation, e.g., fetching fullUrl from a service
+				setTimeout(() => {
+					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
+					resolve();
+				});
+			} catch (error) {
+				console.error('OrganizationSubscriber: Error during the setImageUrl process:', error);
+				reject(null);
+			}
+		});
 	}
 }
