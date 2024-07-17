@@ -80,10 +80,12 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 				distinctUntilChange(),
 				pairwise(), // Pair each emitted value with the previous one
 				tap(([organization]: [IOrganization, IOrganization]) => {
+					const { id: organizationId, tenantId } = organization;
+
 					// Remove the specified menu items for previous selected organization
 					this._navMenuBuilderService.removeNavMenuItems(
 						// Define the base item IDs
-						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organization.id}`),
+						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
 						'reports'
 					);
 				}),
@@ -181,13 +183,13 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			console.warn('Organization not defined. Unable to add/remove menu items.');
 			return;
 		}
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		// Remove the specified menu items for current selected organization
 		// Note: We need to remove old menus before constructing new menus for the organization.
 		this._navMenuBuilderService.removeNavMenuItems(
 			// Define the base item IDs
-			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}`),
+			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
 			'reports'
 		);
 

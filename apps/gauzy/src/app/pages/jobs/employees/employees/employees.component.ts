@@ -8,14 +8,7 @@ import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import {
-	ID,
-	IEmployee,
-	IEmployeeJobsStatisticsResponse,
-	IOrganization,
-	ISelectedEmployee,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ID, IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
