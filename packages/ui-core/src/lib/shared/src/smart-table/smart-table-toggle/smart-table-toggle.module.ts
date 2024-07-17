@@ -1,11 +1,11 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SmartTableToggleComponent } from './smart-table-toggle.component';
 import { NbToggleModule } from '@nebular/theme';
+import { SmartTableToggleComponent } from './smart-table-toggle.component';
 
 @NgModule({
-	declarations: [SmartTableToggleComponent],
 	imports: [CommonModule, NbToggleModule],
+	declarations: [SmartTableToggleComponent],
 	exports: [SmartTableToggleComponent]
 })
 export class SmartTableToggleModule {}

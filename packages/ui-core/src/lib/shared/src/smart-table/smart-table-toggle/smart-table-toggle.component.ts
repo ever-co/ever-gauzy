@@ -1,28 +1,36 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Component({
 	selector: 'ngx-smart-table-toggle',
 	templateUrl: './smart-table-toggle.component.html',
 	styleUrls: ['./smart-table-toggle.component.scss']
 })
-export class SmartTableToggleComponent implements OnInit {
-	checked: boolean;
-
-	@Input() set value(object) {
-		for (const key in object) {
-			if (Object.prototype.hasOwnProperty.call(object, key)) {
-				this[key] = object[key];
-			}
-		}
+export class SmartTableToggleComponent {
+	private _checked$: BehaviorSubject<boolean> = new BehaviorSubject(false);
+	public get checked$(): Observable<boolean> {
+		return this._checked$.asObservable();
 	}
 
-	onChange = (_isChecked: boolean) => { };
+	/**
+	 * Set the value of the toggle.
+	 * @param checked The value to set the toggle to.
+	 */
+	@Input() public set value(checked: boolean) {
+		this._checked$.next(checked);
+	}
 
-	constructor() { }
+	/**
+	 * Get the value of the toggle.
+	 */
+	@Output() toggleChange: EventEmitter<boolean> = new EventEmitter();
 
-	ngOnInit() { }
-
+	/**
+	 * Set the value of the toggle.
+	 * @param isChecked
+	 */
 	onCheckedChange(isChecked: boolean) {
-		this.onChange(isChecked);
+		this.toggleChange.emit(isChecked);
+		this._checked$.next(isChecked);
 	}
 }
