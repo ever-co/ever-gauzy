@@ -12,7 +12,6 @@ import {
 	ITasksStatistics
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
-import { SelectorsQueryDTO } from '../../shared/dto';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
 import { UseValidationPipe } from '../../shared/pipes';
 import { TimeTrackingStatisticQueryDTO } from './dto';
