@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IEmployeeProposalTemplate } from '@gauzy/contracts';
-import { PaginationParams, TenantAwareCrudService } from '@gauzy/core';
+import { ID, IEmployeeProposalTemplate, IEmployeeProposalTemplateMakeDefaultInput } from '@gauzy/contracts';
+import { PaginationParams, RequestContext, TenantAwareCrudService } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { MikroOrmEmployeeProposalTemplateRepository, TypeOrmEmployeeProposalTemplateRepository } from './repository';
 
@@ -19,15 +19,18 @@ export class EmployeeProposalTemplateService extends TenantAwareCrudService<Empl
 	 * @param id - The ID of the proposal template.
 	 * @returns The updated proposal template.
 	 */
-	async makeDefault(id: IEmployeeProposalTemplate['id']): Promise<IEmployeeProposalTemplate> {
+	async makeDefault(id: ID, input: IEmployeeProposalTemplateMakeDefaultInput): Promise<IEmployeeProposalTemplate> {
 		const proposalTemplate: IEmployeeProposalTemplate = await this.findOneByIdString(id);
-		proposalTemplate.isDefault = !proposalTemplate.isDefault;
+		proposalTemplate.isDefault = input.isDefault;
 
 		const { organizationId, tenantId, employeeId } = proposalTemplate;
 
-		await super.update({ organizationId, tenantId, employeeId }, {
-			isDefault: false
-		});
+		await super.update(
+			{ organizationId, tenantId, employeeId },
+			{
+				isDefault: false
+			}
+		);
 
 		return await super.save(proposalTemplate);
 	}
