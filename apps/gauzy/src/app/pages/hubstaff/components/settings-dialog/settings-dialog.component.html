@@ -54,9 +54,9 @@
 						>
 							<input
 								nbInput
-								placeholder="{{ 'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER' | translate }}"
+								[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER' | translate"
 								[nbDatepicker]="rangePicker"
-								[value]="dispayDate"
+								[value]="displayDate"
 							/>
 							<nb-rangepicker
 								#rangePicker

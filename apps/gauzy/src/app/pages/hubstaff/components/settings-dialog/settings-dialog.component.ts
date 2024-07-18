@@ -19,7 +19,7 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 	minDate: Date = new Date(moment().subtract(6, 'months').format('YYYY-MM-DD'));
 
 	defaultRange$: Observable<IDateRangeActivityFilter>;
-	dispayDate: any;
+	displayDate: string;
 	IntegrationEntity = IntegrationEntity;
 
 	constructor(
@@ -35,7 +35,7 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 			}),
 			tap((displayDate: IDateRangeActivityFilter) => {
 				const { start, end } = displayDate;
-				this.dispayDate = `${moment(start).format('MMM D, YYYY')} - ${moment(end).format('MMM D, YYYY')}`;
+				this.displayDate = `${moment(start).format('MMM D, YYYY')} - ${moment(end).format('MMM D, YYYY')}`;
 			})
 		);
 	}
