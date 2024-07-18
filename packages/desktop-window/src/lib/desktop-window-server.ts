@@ -1,11 +1,15 @@
 import { BrowserWindow } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
 
 export async function createServerWindow(serverWindow, config, filePath) {
-
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 	mainWindowSettings = windowSetting();
 
@@ -52,7 +56,7 @@ const windowSetting = () => {
 		},
 		width: 380,
 		height: 400,
-		title:  process.env.DESCRIPTION || '',
+		title: process.env.DESCRIPTION || '',
 		show: false,
 		center: true
 	};

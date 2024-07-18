@@ -25,6 +25,7 @@
 		"test": "jest",
 		"test:e2e": "jest --config ./__test__/jest.config.json",
 		"build": "rimraf dist && yarn run compile",
+		"build:prod": "rimraf dist && yarn run compile",
 		"compile": "tsc -p tsconfig.build.json"
 	},
 	"devDependencies": {

@@ -1,8 +1,8 @@
 import * as Sentry from '@sentry/electron';
 import { BaseError } from './base.error';
-import log from 'electron-log';
 import { ErrorEventManager } from './error-event-manager';
 
+import log from 'electron-log';
 console.error = log.error;
 Object.assign(console, log.functions);
 

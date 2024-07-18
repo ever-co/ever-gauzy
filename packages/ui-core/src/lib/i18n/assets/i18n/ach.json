@@ -1097,7 +1097,7 @@
 		"ADDED_UPWORK_TRANSACTION": "crwdns3202:0crwdne3202:0",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "crwdns3204:0{{ totalExpenses }}crwdnd3204:0{{ totalIncomes }}crwdne3204:0",
 		"HUBSTAFF_PAGE": {
-			"NAME": "crwdns3558:0crwdne3558:0",
+			"TITLE": "crwdns3558:0crwdne3558:0",
 			"SELECT_ORGANIZATION": "crwdns3560:0crwdne3560:0",
 			"SYNCED_PROJECTS": "crwdns3562:0crwdne3562:0",
 			"SETTINGS_UPDATED": "crwdns3728:0crwdne3728:0",
