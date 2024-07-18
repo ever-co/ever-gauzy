@@ -418,16 +418,19 @@ export class TimeTrackingComponent
 	async getTasks(): Promise<void> {
 		if (this._isWindowHidden(Windows.TASKS)) return;
 
-		try {
-			this.tasksLoading = true;
+		// Set loading state to true
+		this.tasksLoading = true;
 
+		try {
 			const request: IGetTasksStatistics = this.payloads$.getValue();
 			const take = 5;
 
-			this.tasks = await this._timesheetStatisticsService.getTasks({ ...request, take });
+			// Fetch tasks statistics
+			this.tasks = await this._timesheetStatisticsService.getTasksStatistics({ ...request, take });
 		} catch (error) {
 			this._toastrService.error(error.message || 'An error occurred while fetching tasks.');
 		} finally {
+			// Set loading state to false
 			this.tasksLoading = false;
 		}
 	}

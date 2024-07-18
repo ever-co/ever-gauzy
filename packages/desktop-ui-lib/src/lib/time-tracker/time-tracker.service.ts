@@ -16,6 +16,7 @@ import {
 	ITaskPriority,
 	ITaskSize,
 	ITaskSizeFindInput,
+	ITasksStatistics,
 	ITaskStatus,
 	ITaskStatusFindInput,
 	ITaskUpdateInput,
@@ -121,6 +122,12 @@ export class TimeTrackerService {
 		return firstValueFrom(tasks$);
 	}
 
+	/**
+	 * Fetch tasks statistics via POST request
+	 *
+	 * @param values
+	 * @returns
+	 */
 	public async getTasksStatistics(values: IGetTasksStatistics) {
 		const request: IGetTasksStatistics = {
 			organizationId: values.organizationId,
@@ -130,31 +137,31 @@ export class TimeTrackerService {
 			endDate: TimeTrackerDateManager.endToday,
 			todayStart: TimeTrackerDateManager.startToday,
 			todayEnd: TimeTrackerDateManager.endToday,
-			...(values.projectId
-				? {
-						projectId: values.projectId
-				  }
-				: {})
+			...(values.projectId ? { projectId: values.projectId } : {})
 		};
+
 		const cacheReference = {
 			taskIds: values.taskIds,
 			projectId: values.projectId
 		};
 		let tasksStatistics$ = this._taskCacheService.getValue(cacheReference);
+
 		if (!tasksStatistics$) {
-			tasksStatistics$ = this.http
-				.get(`${API_PREFIX}/timesheet/statistics/tasks`, {
-					params: toParams({
-						...request
-					})
-				})
-				.pipe(
-					map((response: any) => response),
-					shareReplay(1)
-				);
+			// Fetch tasks statistics
+			const tasks$ = this.http.post<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, request);
+
+			// Map the response to the task statistics
+			tasks$.pipe(
+				map((response: any) => response),
+				shareReplay(1)
+			);
+
+			// Set the tasks statistics in the cache
 			this._taskCacheService.setValue(tasksStatistics$, cacheReference);
 		}
-		return firstValueFrom(tasksStatistics$);
+
+		// Return the tasks statistics
+		return await firstValueFrom(tasksStatistics$);
 	}
 
 	async getEmployees(values) {
