@@ -5,6 +5,7 @@ import {
 	IBasePerTenantAndOrganizationEntityModel,
 	IDateRangePicker,
 	IEmployee,
+	IFindMembersInput,
 	IOrganization,
 	IPagination,
 	PermissionsEnum
@@ -24,6 +25,71 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository
 	) {
 		super(typeOrmEmployeeRepository, mikroOrmEmployeeRepository);
+	}
+
+	/**
+	 * Finds members based on provided options.
+	 *
+	 * @param options - The options to filter members.
+	 * @returns A pagination object containing the list of members and total count.
+	 */
+	async findMembers(options: IFindMembersInput): Promise<IPagination<IEmployee>> {
+		const { organizationId, organizationTeamId, organizationProjectId } = options;
+		const tenantId = RequestContext.currentTenantId() || options.tenantId;
+
+		// Create a query builder for the Employee entity
+		const query = this.typeOrmEmployeeRepository.createQueryBuilder('employee');
+		query.leftJoin('employee.user', 'user');
+
+		// Set pagination options and selected table properties/fields
+		query.setFindOptions({
+			select: {
+				id: true,
+				isActive: true,
+				isArchived: true,
+				userId: true,
+				isOnline: true,
+				isAway: true,
+				user: {
+					id: true,
+					firstName: true,
+					lastName: true,
+					email: true,
+					imageUrl: true
+				}
+			},
+			relations: { user: true }
+		});
+
+		// Organization Project ID
+		if (organizationProjectId) {
+			query.leftJoin('employee.projects', 'projects');
+			query.andWhere('projects.organizationProjectId = :organizationProjectId', { organizationProjectId });
+		}
+
+		// Organization Team ID
+		if (organizationTeamId) {
+			query.leftJoin('employee.teams', 'teams');
+			query.andWhere('teams.organizationTeamId = :organizationTeamId', { organizationTeamId });
+		}
+
+		// Apply filter conditions using TypeORM SelectQueryBuilder
+		query.andWhere(
+			new Brackets((web: WhereExpressionBuilder) => {
+				// Filter by tenant ID, organization ID, isActive, and isArchived
+				web.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				web.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				web.andWhere(p(`"${query.alias}"."isActive" = :isActive`), { isActive: true });
+				web.andWhere(p(`"${query.alias}"."isArchived" = :isArchived`), { isArchived: false });
+
+				// Additional conditions for user isActive and isArchived
+				web.andWhere(p(`"user"."isActive" = :isActive`), { isActive: true });
+				web.andWhere(p(`"user"."isArchived" = :isArchived`), { isArchived: false });
+			})
+		);
+
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 
 	/**

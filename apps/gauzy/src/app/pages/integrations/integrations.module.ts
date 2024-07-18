@@ -33,9 +33,9 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		NbTooltipModule,
 		IntegrationsRoutingModule,
 		SharedModule,
-		I18nTranslateModule.forChild(),
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
+		I18nTranslateModule.forChild(),
 		GauzyButtonActionModule,
 		TableComponentsModule,
 		NoDataMessageModule

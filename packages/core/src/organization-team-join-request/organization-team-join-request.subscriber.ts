@@ -25,7 +25,10 @@ export class OrganizationTeamJoinRequestSubscriber extends BaseEntityEventSubscr
 			// Check if the entity has an 'expiredAt' date and set the 'isExpired' flag
 			entity.isExpired = entity.expiredAt ? moment(entity.expiredAt).isBefore(moment()) : false;
 		} catch (error) {
-			console.error('OrganizationTeamJoinRequestSubscriber: An error occurred during the afterEntityLoad process:', error);
+			console.error(
+				'OrganizationTeamJoinRequestSubscriber: An error occurred during the afterEntityLoad process:',
+				error
+			);
 		}
 	}
 
@@ -41,7 +44,10 @@ export class OrganizationTeamJoinRequestSubscriber extends BaseEntityEventSubscr
 			// Set the expiredAt date by adding the predefined expiration time to the current date
 			entity.expiredAt = moment().add(environment.TEAM_JOIN_REQUEST_EXPIRATION_TIME, 'seconds').toDate();
 		} catch (error) {
-			console.error('OrganizationTeamJoinRequestSubscriber: An error occurred during the beforeEntityCreate process:', error);
+			console.error(
+				'OrganizationTeamJoinRequestSubscriber: An error occurred during the beforeEntityCreate process:',
+				error
+			);
 		}
 	}
 }

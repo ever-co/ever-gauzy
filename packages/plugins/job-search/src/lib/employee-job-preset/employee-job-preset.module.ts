@@ -21,7 +21,7 @@ import { JobSearchOccupationService } from './job-search-occupation/job-search-o
 import { TypeOrmJobSearchOccupationRepository } from './job-search-occupation/repository/type-orm-job-search-occupation.repository';
 import { JobSearchPresetController } from './job-search-preset.controller';
 import { TypeOrmJobPresetRepository } from './repository/type-orm-job-preset.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/type-orm-employee-upwork-jobs-search-criterion.repository';
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
 
 export const entities = [
@@ -38,8 +38,8 @@ export const entities = [
 		TypeOrmModule.forFeature([...entities]),
 		MikroOrmModule.forFeature([...entities]),
 		EmployeeModule,
-		CqrsModule,
-		GauzyAIModule.forRoot()
+		GauzyAIModule.forRoot(),
+		CqrsModule
 	],
 	controllers: [
 		JobSearchOccupationController,
@@ -48,7 +48,6 @@ export const entities = [
 		JobSearchPresetController
 	],
 	providers: [
-		...CommandHandlers,
 		JobPresetService,
 		JobSearchCategoryService,
 		JobSearchOccupationService,
@@ -56,7 +55,8 @@ export const entities = [
 		TypeOrmJobSearchCategoryRepository,
 		TypeOrmJobSearchOccupationRepository,
 		TypeOrmJobPresetUpworkJobSearchCriterionRepository,
-		TypeOrmEmployeeUpworkJobsSearchCriterionRepository
+		TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
+		...CommandHandlers
 	],
 	exports: [TypeOrmModule, MikroOrmModule, JobPresetService, JobSearchCategoryService, JobSearchOccupationService]
 })

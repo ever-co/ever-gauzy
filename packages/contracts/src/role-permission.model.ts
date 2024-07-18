@@ -48,13 +48,19 @@ export enum PermissionsEnum {
 	ORG_PROPOSALS_EDIT = 'ORG_PROPOSALS_EDIT',
 	ORG_PROPOSAL_TEMPLATES_VIEW = 'ORG_PROPOSAL_TEMPLATES_VIEW',
 	ORG_PROPOSAL_TEMPLATES_EDIT = 'ORG_PROPOSAL_TEMPLATES_EDIT',
+	// Task CRUD Permission
 	ORG_TASK_ADD = 'ORG_TASK_ADD',
 	ORG_TASK_VIEW = 'ORG_TASK_VIEW',
 	ORG_TASK_EDIT = 'ORG_TASK_EDIT',
 	ORG_TASK_DELETE = 'ORG_TASK_DELETE',
 	ORG_TIME_OFF_VIEW = 'ORG_TIME_OFF_VIEW',
+	// Employee CRUD Permissions
+	ORG_EMPLOYEES_ADD = 'ORG_EMPLOYEES_ADD',
 	ORG_EMPLOYEES_VIEW = 'ORG_EMPLOYEES_VIEW',
 	ORG_EMPLOYEES_EDIT = 'ORG_EMPLOYEES_EDIT',
+	ORG_EMPLOYEES_DELETE = 'ORG_EMPLOYEES_DELETE',
+	// Member View Permissions
+	ORG_MEMBERS_VIEW = 'ORG_MEMBERS_VIEW',
 	ORG_CANDIDATES_VIEW = 'ORG_CANDIDATES_VIEW',
 	ORG_CANDIDATES_EDIT = 'ORG_CANDIDATES_EDIT',
 	ORG_CANDIDATES_INTERVIEW_EDIT = 'ORG_CANDIDATES_INTERVIEW_EDIT',
@@ -125,7 +131,12 @@ export enum PermissionsEnum {
 	EVENT_TYPES_VIEW = 'EVENT_TYPES_VIEW',
 	TIME_TRACKER = 'TIME_TRACKER',
 	TENANT_ADD_EXISTING_USER = 'TENANT_ADD_EXISTING_USER',
+	/** Integration CRUD Permissions Start */
+	INTEGRATION_ADD = 'INTEGRATION_ADD',
 	INTEGRATION_VIEW = 'INTEGRATION_VIEW',
+	INTEGRATION_EDIT = 'INTEGRATION_EDIT',
+	INTEGRATION_DELETE = 'INTEGRATION_DELETE',
+	/** Integration CRUD Permissions End */
 	FILE_STORAGE_VIEW = 'FILE_STORAGE_VIEW',
 	PAYMENT_GATEWAY_VIEW = 'PAYMENT_GATEWAY_VIEW',
 	SMS_GATEWAY_VIEW = 'SMS_GATEWAY_VIEW',
@@ -133,8 +144,13 @@ export enum PermissionsEnum {
 	IMPORT_ADD = 'IMPORT_ADD',
 	EXPORT_ADD = 'EXPORT_ADD',
 	MIGRATE_GAUZY_CLOUD = 'MIGRATE_GAUZY_CLOUD',
+	/** Jobs Permissions Start */
+	ORG_JOB_SEARCH = 'ORG_JOB_SEARCH',
+	ORG_JOB_APPLY = 'ORG_JOB_APPLY',
+	ORG_JOB_EDIT = 'ORG_JOB_EDIT',
 	ORG_JOB_EMPLOYEE_VIEW = 'ORG_JOB_EMPLOYEE_VIEW',
 	ORG_JOB_MATCHING_VIEW = 'ORG_JOB_MATCHING_VIEW',
+	/** Jobs Permissions End */
 	INVENTORY_GALLERY_ADD = 'INVENTORY_GALLERY_ADD',
 	INVENTORY_GALLERY_VIEW = 'INVENTORY_GALLERY_VIEW',
 	INVENTORY_GALLERY_EDIT = 'INVENTORY_GALLERY_EDIT',
@@ -181,8 +197,22 @@ export const PermissionGroups = {
 		PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 		PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 		PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+
+		/** Integration CRUD Permissions Start */
+		PermissionsEnum.INTEGRATION_ADD,
+		PermissionsEnum.INTEGRATION_VIEW,
+		PermissionsEnum.INTEGRATION_EDIT,
+		PermissionsEnum.INTEGRATION_DELETE,
+		/** Integration CRUD Permissions End */
+
+		/** Jobs Permissions Start */
+		PermissionsEnum.ORG_JOB_APPLY,
+		PermissionsEnum.ORG_JOB_SEARCH,
+		PermissionsEnum.ORG_JOB_EDIT,
 		PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 		PermissionsEnum.ORG_JOB_MATCHING_VIEW,
+		/** Jobs Permissions End */
+
 		PermissionsEnum.PUBLIC_PAGE_EDIT,
 		PermissionsEnum.ORG_PAYMENT_VIEW,
 		PermissionsEnum.ORG_PAYMENT_ADD_EDIT,
@@ -196,11 +226,20 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROPOSALS_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 		PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
+
+		/** Employee CRUD Permissions Start */
+		PermissionsEnum.ORG_EMPLOYEES_ADD,
 		PermissionsEnum.ORG_EMPLOYEES_VIEW,
+		PermissionsEnum.ORG_EMPLOYEES_DELETE,
+		/** Employee CRUD Permissions End */
+
+		/** Task CRUD Permissions Start */
 		PermissionsEnum.ORG_TASK_ADD,
 		PermissionsEnum.ORG_TASK_VIEW,
 		PermissionsEnum.ORG_TASK_EDIT,
 		PermissionsEnum.ORG_TASK_DELETE,
+		/** Task CRUD Permissions End */
+
 		PermissionsEnum.ORG_TIME_OFF_VIEW,
 		PermissionsEnum.ORG_INVITE_VIEW,
 		PermissionsEnum.ORG_INVITE_EDIT,
@@ -241,21 +280,26 @@ export const PermissionGroups = {
 		PermissionsEnum.ORG_PROJECT_DELETE,
 		PermissionsEnum.ORG_CONTACT_EDIT,
 		PermissionsEnum.ORG_CONTACT_VIEW,
-		/** Daily Plan */
+
+		/** Daily Plan Permissions Start */
 		PermissionsEnum.DAILY_PLAN_CREATE,
 		PermissionsEnum.DAILY_PLAN_READ,
 		PermissionsEnum.DAILY_PLAN_UPDATE,
 		PermissionsEnum.DAILY_PLAN_DELETE,
-		/** Organization Team */
+		/** Daily Plan Permissions End */
+
+		/** Organization Team Permissions Start */
 		PermissionsEnum.ORG_TEAM_ADD,
 		PermissionsEnum.ORG_TEAM_VIEW,
 		PermissionsEnum.ORG_TEAM_EDIT,
 		PermissionsEnum.ORG_TEAM_DELETE,
 		PermissionsEnum.ORG_TEAM_EDIT_ACTIVE_TASK,
 		PermissionsEnum.ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER,
-		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_VIEW,
 		PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
+		/** Organization Team Permissions End */
+
+		PermissionsEnum.ORG_TASK_SETTING,
 		PermissionsEnum.ORG_CONTRACT_EDIT,
 		PermissionsEnum.EVENT_TYPES_VIEW,
 		PermissionsEnum.TIME_TRACKER,
@@ -294,7 +338,6 @@ export const PermissionGroups = {
 		PermissionsEnum.ALL_ORG_EDIT,
 		PermissionsEnum.CHANGE_ROLES_PERMISSIONS,
 		PermissionsEnum.TENANT_ADD_EXISTING_USER,
-		PermissionsEnum.INTEGRATION_VIEW,
 		PermissionsEnum.FILE_STORAGE_VIEW,
 		PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 		PermissionsEnum.SMS_GATEWAY_VIEW,
