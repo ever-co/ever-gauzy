@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TitleCasePipe } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap, tap, catchError, finalize, map } from 'rxjs/operators';
-import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
+import { switchMap, tap, catchError, finalize } from 'rxjs/operators';
 import { Observable, of, firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, HubstaffService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
@@ -21,16 +21,15 @@ import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.comp
 	providers: [TitleCasePipe]
 })
 export class HubstaffComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	settingsSmartTable: object;
-	organizations$: Observable<IHubstaffOrganization[]>;
-	projects$: Observable<IHubstaffProject[]>;
-	organizations: IHubstaffOrganization[] = [];
-	projects: IHubstaffProject[] = [];
-	organization: IOrganization;
-	selectedProjects: IHubstaffProject[] = [];
-	loading: boolean;
-	integrationId: ID;
-	menus: NbMenuItem[] = [];
+	public settingsSmartTable: object;
+	public organizations$: Observable<IHubstaffOrganization[]>;
+	public organizations: IHubstaffOrganization[] = [];
+	public projects$: Observable<IHubstaffProject[]>;
+	public projects: IHubstaffProject[] = [];
+	public organization: IOrganization;
+	public selectedProjects: IHubstaffProject[] = [];
+	public loading: boolean;
+	public integrationId: ID;
 
 	constructor(
 		private readonly _router: Router,
@@ -41,15 +40,13 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 		private readonly _toastrService: ToastrService,
 		private readonly _dialogService: NbDialogService,
 		private readonly _store: Store,
-		private readonly _titlecasePipe: TitleCasePipe,
-		private readonly _nbMenuService: NbMenuService
+		private readonly _titlecasePipe: TitleCasePipe
 	) {
 		super(_translateService);
 	}
 
 	ngOnInit() {
 		this._loadSettingsSmartTable();
-		this._loadMenus();
 		this._applyTranslationOnSmartTable();
 		this._setTokenAndLoadOrganizations();
 
@@ -60,28 +57,18 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._nbMenuService
-			.onItemClick()
-			.pipe(
-				map(({ item: { icon } }) => icon),
-				untilDestroyed(this)
-			)
-			.subscribe((icon) => {
-				if (icon === 'settings-2-outline') {
-					this.setSettings();
-				}
-			});
 	}
 
 	ngOnDestroy(): void {}
 
 	/**
-	 *
+	 * Fetches and sets the Hubstaff integration data from the ActivatedRoute data.
 	 */
 	private _setTokenAndLoadOrganizations() {
 		this.integrationId = this._activatedRoute.snapshot.params.id;
 		this._hubstaffService.getIntegration(this.integrationId).pipe(untilDestroyed(this)).subscribe();
 
+		// Fetch organizations for the given integration
 		this.organizations$ = this._hubstaffService.getToken(this.integrationId).pipe(
 			tap(() => (this.loading = true)),
 			switchMap(() => this._hubstaffService.getOrganizations(this.integrationId)),
@@ -95,7 +82,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 * Load Smart Table settings to configure the component.
 	 */
 	private _loadSettingsSmartTable() {
 		this.settingsSmartTable = {
@@ -136,14 +123,17 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 * Fetches projects for a given organization.
 	 * @param organization
 	 * @returns
 	 */
 	private _fetchProjects(organization) {
 		this.loading = true;
+		//	Fetch projects for the given organization
 		return this._hubstaffService.getProjects(organization.id, this.integrationId).pipe(
+			// Update component state with fetched projects
 			tap((projects) => (this.projects = projects)),
+			// Handle errors
 			catchError((error) => {
 				this._errorHandlingService.handleError(error);
 				return of([]);
@@ -153,7 +143,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 *  Select a Hubstaff project.
 	 * @param param0
 	 */
 	selectProject({ selected }) {
@@ -161,7 +151,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 * Initiates a manual synchronization process for Hubstaff projects.
 	 * @returns
 	 */
 	syncProjects() {
@@ -188,7 +178,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 * Initiates a manual synchronization process for Hubstaff projects.
 	 * @returns
 	 */
 	autoSync() {
@@ -204,7 +194,7 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				organizationId
 			})
 			.pipe(
-				tap((res) => {
+				tap((es) => {
 					this._toastrService.success(
 						this.getTranslation('INTEGRATIONS.HUBSTAFF_PAGE.SYNCED_ENTITIES'),
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
@@ -221,22 +211,21 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	}
 
 	/**
-	 *
+	 * Opens a modal popover for integration settings if the 'integration' object is defined.
 	 * @returns
 	 */
-	async setSettings() {
-		const dialog = this._dialogService.open(SettingsDialogComponent, {
-			context: {}
-		});
-
+	async openSettingModal() {
+		const dialog = this._dialogService.open(SettingsDialogComponent);
 		const data = await firstValueFrom(dialog.onClose);
+
 		if (!data) {
 			this._hubstaffService.resetSettings();
 			return;
 		}
 
-		this._hubstaffService
-			.updateSettings(this.integrationId)
+		// Update integration settings
+		const settings$ = this._hubstaffService.updateSettings(this.integrationId);
+		settings$
 			.pipe(
 				tap(() => {
 					this._toastrService.success(
@@ -244,37 +233,23 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 						this.getTranslation('TOASTR.TITLE.SUCCESS')
 					);
 				}),
+				catchError((error) => {
+					this._errorHandlingService.handleError(error);
+					return of(null);
+				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 *
-	 */
-	private _loadMenus() {
-		this.menus = [
-			{
-				title: this.getTranslation('INTEGRATIONS.RE_INTEGRATE'),
-				icon: 'text-outline',
-				link: `pages/integrations/hubstaff/regenerate`
-			},
-			{
-				title: this.getTranslation('INTEGRATIONS.SETTINGS'),
-				icon: 'settings-2-outline'
-			}
-		];
-	}
-
-	/**
-	 *
+	 * Apply translations to a Smart Table component when the language changes.
 	 */
 	private _applyTranslationOnSmartTable() {
 		this.translateService.onLangChange
 			.pipe(
 				tap(() => {
 					this._loadSettingsSmartTable();
-					this._loadMenus();
 				}),
 				untilDestroyed(this)
 			)
@@ -286,5 +261,12 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 	 */
 	navigateToIntegrations(): void {
 		this._router.navigate(['/pages/integrations']);
+	}
+
+	/**
+	 * Navigates to the 'Reset Integration' route within the Hubstaff integration setup wizard.
+	 */
+	navigateToResetIntegration(): void {
+		this._router.navigate(['/pages/integrations/hubstaff/regenerate']);
 	}
 }

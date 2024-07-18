@@ -8,7 +8,8 @@ import {
 	IGetJobPresetInput,
 	IGetMatchingCriterions,
 	IJobPreset,
-	IMatchingCriterions
+	IMatchingCriterions,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
@@ -46,7 +47,13 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	public async getAll(request?: IGetJobPresetInput) {
 		// Extract parameters from the request object
-		const { organizationId, search, employeeId } = request || {};
+		const { organizationId, search } = request || {};
+		let employeeId = request?.employeeId;
+
+		// If the user does not have the permission to change selected employee, use the current employee ID
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			employeeId = RequestContext.currentEmployeeId();
+		}
 
 		// Tenant ID is required for the query
 		const tenantId = RequestContext.currentTenantId() || request?.tenantId;
