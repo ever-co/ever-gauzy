@@ -23,20 +23,20 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 	IntegrationEntity = IntegrationEntity;
 
 	constructor(
-		private readonly _hubstaffService: HubstaffService,
 		public readonly dialogRef: NbDialogRef<SettingsDialogComponent>,
-		private readonly cdRef: ChangeDetectorRef
+		private readonly cdRef: ChangeDetectorRef,
+		private readonly _hubstaffService: HubstaffService
 	) {}
 
 	ngOnInit() {
 		this.defaultRange$ = this._hubstaffService.dateRangeActivity$.pipe(
-			tap(() => (this.expandOptions = false)),
-			tap(
-				(displayDate) =>
-					(this.dispayDate = `${moment(displayDate.start).format('MMM D, YYYY')} - ${moment(
-						displayDate.end
-					).format('MMM D, YYYY')}`)
-			)
+			tap(() => {
+				this.expandOptions = false;
+			}),
+			tap((displayDate: IDateRangeActivityFilter) => {
+				const { start, end } = displayDate;
+				this.dispayDate = `${moment(start).format('MMM D, YYYY')} - ${moment(end).format('MMM D, YYYY')}`;
+			})
 		);
 	}
 
@@ -44,9 +44,11 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 		this.cdRef.detectChanges();
 	}
 
-	getDateDisplay() {}
-
-	onDateChange(dateRange) {
+	/**
+	 * Set activity date range
+	 * @param dateRange
+	 */
+	onDateChange(dateRange: IDateRangeActivityFilter) {
 		this._hubstaffService.setActivityDateRange(dateRange);
 	}
 }
