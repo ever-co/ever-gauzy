@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ID, IEmployeeProposalTemplate, IEmployeeProposalTemplateMakeDefaultInput } from '@gauzy/contracts';
-import { PaginationParams, RequestContext, TenantAwareCrudService } from '@gauzy/core';
+import { PaginationParams, TenantAwareCrudService } from '@gauzy/core';
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { MikroOrmEmployeeProposalTemplateRepository, TypeOrmEmployeeProposalTemplateRepository } from './repository';
 
