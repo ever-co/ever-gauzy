@@ -116,10 +116,10 @@ const COMPONENTS = [
 
 const PIPES = [...Pipes];
 
-const EXPORT_IMPORT = [CommonModule, ThemeSidebarModule, MatRippleModule];
+const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 
 @NgModule({
-	imports: [RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
+	imports: [CommonModule, RouterModule, ...EXPORT_IMPORT, ...NB_MODULES, ...MODULES],
 	exports: [...EXPORT_IMPORT, ...PIPES, ...COMPONENTS],
 	declarations: [...COMPONENTS, ...PIPES],
 	providers: [
