@@ -1,6 +1,10 @@
 import { BrowserWindowConstructorOptions } from 'electron';
 import { IWindowConfig } from '../interfaces';
 
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
 
@@ -9,11 +13,7 @@ export class WindowConfig implements IWindowConfig {
 	private _path: string;
 	private _hash: string;
 
-	constructor(
-		hash: string,
-		path: string,
-		options?: BrowserWindowConstructorOptions
-	) {
+	constructor(hash: string, path: string, options?: BrowserWindowConstructorOptions) {
 		this._hash = hash;
 		this.path = path;
 		this.options = {
@@ -21,13 +21,13 @@ export class WindowConfig implements IWindowConfig {
 				nodeIntegration: true,
 				webSecurity: false,
 				contextIsolation: false,
-				sandbox: false,
+				sandbox: false
 			},
 			title: '',
 			show: false,
 			center: true,
 			icon: store.get('filePath').iconPath,
-			...options,
+			...options
 		};
 	}
 

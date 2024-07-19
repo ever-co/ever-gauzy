@@ -1182,7 +1182,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Transaction ajoutée sur Upwork.",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total des transactions de dépenses réussies: {{ totalExpenses }}. Total des transactions de revenus réussies: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff est un logiciel de suivi du temps et de la gestion des employés. Il permet aux entreprises de suivre les heures travaillées par leurs employés et de gérer leurs tâches et leurs projets. Hubstaff offre également des fonctionnalités de capture d'écran, de supervision des activités en ligne et de suivi de la localisation. C'est un outil précieux pour les entreprises qui ont des équipes distantes ou des employés qui travaillent à distance. Hubstaff aide à améliorer la productivité et l'efficacité des équipes en fournissant des informations détaillées sur le temps et les efforts consacrés à chaque tâche.",
+			"TITLE": "Hubstaff est un logiciel de suivi du temps et de la gestion des employés. Il permet aux entreprises de suivre les heures travaillées par leurs employés et de gérer leurs tâches et leurs projets. Hubstaff offre également des fonctionnalités de capture d'écran, de supervision des activités en ligne et de suivi de la localisation. C'est un outil précieux pour les entreprises qui ont des équipes distantes ou des employés qui travaillent à distance. Hubstaff aide à améliorer la productivité et l'efficacité des équipes en fournissant des informations détaillées sur le temps et les efforts consacrés à chaque tâche.",
 			"SELECT_ORGANIZATION": "Sélectionner une organisation",
 			"SYNCED_PROJECTS": "Projets synchronisés.",
 			"SETTINGS_UPDATED": "Paramètres mis à jour pour l'intégration",

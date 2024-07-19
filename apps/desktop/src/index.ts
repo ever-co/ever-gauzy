@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, BrowserWindow, ipcMain, Tray, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 
 import { environment } from './environments/environment';

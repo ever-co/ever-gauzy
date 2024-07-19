@@ -1,90 +1,98 @@
 <ng-container *ngIf="items.length">
-    <nb-card class="mb-3">
-        <nb-card-body>
-            <div class="row">
-                <div class="col-12 mb-3">
-                    <div class="row">
-                        <div class="col-6 text-left">
-                            <header>{{ title }}</header>
-                        </div>
-                        <div class="col-6 text-right">
-                            <ng-template [ngIf]="isIntegrationAISettingsEdit" [ngIfElse]="editButtonTemplate">
-                                <button
-                                    status="basic"
-                                    outline
-                                    nbButton
-                                    size="tiny"
-                                    class="mr-2"
-                                    (click)="toggleIntegrationAISettings()"
-                                >
-                                    {{ 'BUTTONS.CANCEL' | translate }}
-                                </button>
-                                <button
-                                    nbButton
-                                    type="button"
-                                    status="success"
-                                    size="tiny"
-                                    (click)="saveSettings()"
-                                >
-                                    {{ 'BUTTONS.SAVE' | translate }}
-                                </button>
-                            </ng-template>
-                            <ng-template #editButtonTemplate>
-                                <button
-                                    nbButton
-                                    type="button"
-                                    status="success"
-                                    size="tiny"
-                                    (click)="toggleIntegrationAISettings()"
-                                >
-                                    <nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-                                    {{ 'BUTTONS.EDIT' | translate }}
-                                </button>
-                            </ng-template>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="integration-container">
-                        <ng-container
-                            *ngTemplateOutlet="settingTemplate; context: {
-                                $implicit: items,
-                                isEdit: isIntegrationAISettingsEdit
-                            }">
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
-        </nb-card-body>
-    </nb-card>
+	<nb-card class="mb-3">
+		<nb-card-body>
+			<div class="row">
+				<div class="col-12 mb-3">
+					<div class="row">
+						<div class="col-6 text-left">
+							<header>{{ title }}</header>
+						</div>
+						<div class="col-6 text-right">
+							<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+								<ng-template [ngIf]="isIntegrationAISettingsEdit" [ngIfElse]="editButtonTemplate">
+									<button
+										status="basic"
+										outline
+										nbButton
+										size="tiny"
+										class="mr-2"
+										(click)="toggleIntegrationAISettings()"
+									>
+										{{ 'BUTTONS.CANCEL' | translate }}
+									</button>
+									<button
+										nbButton
+										type="button"
+										status="success"
+										size="tiny"
+										(click)="saveSettings()"
+									>
+										{{ 'BUTTONS.SAVE' | translate }}
+									</button>
+								</ng-template>
+								<ng-template #editButtonTemplate>
+									<button
+										nbButton
+										type="button"
+										status="success"
+										size="tiny"
+										(click)="toggleIntegrationAISettings()"
+									>
+										<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+										{{ 'BUTTONS.EDIT' | translate }}
+									</button>
+								</ng-template>
+							</ng-template>
+						</div>
+					</div>
+				</div>
+				<div class="col-12">
+					<div class="integration-container">
+						<ng-container
+							*ngTemplateOutlet="
+								settingTemplate;
+								context: {
+									$implicit: items,
+									isEdit: isIntegrationAISettingsEdit
+								}
+							"
+						>
+						</ng-container>
+					</div>
+				</div>
+			</div>
+		</nb-card-body>
+	</nb-card>
 </ng-container>
 
 <ng-template let-settings let-isEdit="isEdit" #settingTemplate>
-	<div class="integration-row" *ngFor="let setting of settings">
-		<div class="integration-label-container">
-			<div class="integration-label">
-				{{ getTitleForSetting(setting) }}
-				<nb-icon icon="info-outline" size="small" [nbTooltip]="getTooltipForSetting(setting)"></nb-icon>
-			</div>
-			<div class="date">
-				{{ 'INTEGRATIONS.GAUZY_AI_PAGE.GENERATED' | translate }} {{ setting.createdAt | dateFormat }}
-			</div>
-		</div>
-		<div class="integration-value">
-			<ng-template [ngIf]="isEdit" [ngIfElse]="integrationMaskTemplate">
-				<div class="form-group">
-					<input
-						nbInput
-						[(ngModel)]="setting.newSettingsValue"
-						[placeholder]="setting.settingsValue"
-						required
-						fullWidth
-					/>
+	<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
+		<div class="integration-row" *ngFor="let setting of settings">
+			<div class="integration-label-container">
+				<div class="integration-label">
+					{{ getTitleForSetting(setting) }}
+					<nb-icon icon="info-outline" size="small" [nbTooltip]="getTooltipForSetting(setting)"></nb-icon>
 				</div>
-			</ng-template>
-			<ng-template #integrationMaskTemplate>
-				{{ setting.settingsValue }}
-			</ng-template>
+				<div class="date">
+					{{ 'INTEGRATIONS.GAUZY_AI_PAGE.GENERATED' | translate }} {{ setting.createdAt | dateFormat }}
+				</div>
+			</div>
+			<div class="integration-value">
+				<ng-template [ngIf]="isEdit" [ngIfElse]="integrationMaskTemplate">
+					<div class="form-group">
+						<input
+							nbInput
+							[(ngModel)]="setting.newSettingsValue"
+							[placeholder]="setting.settingsValue"
+							required
+							fullWidth
+						/>
+					</div>
+				</ng-template>
+				<ng-template #integrationMaskTemplate>
+					{{ setting.settingsValue }}
+				</ng-template>
+			</div>
 		</div>
-	</div>
+	</ng-template>
 </ng-template>
