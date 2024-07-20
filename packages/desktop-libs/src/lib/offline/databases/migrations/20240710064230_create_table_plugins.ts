@@ -7,7 +7,7 @@ export async function up(knex: Knex): Promise<void> {
 		table.increments('id').primary().notNullable().unique();
 		table.string('name').notNullable();
 		table.string('main').notNullable();
-		table.string('renderer').notNullable();
+		table.string('renderer').nullable();
 		table.string('pathname').notNullable();
 		table.string('version').notNullable();
 		table.boolean('isActivate').defaultTo(false);

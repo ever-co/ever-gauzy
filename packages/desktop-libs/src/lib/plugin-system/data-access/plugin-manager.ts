@@ -16,6 +16,7 @@ export class PluginManager implements IPluginManager {
 
 	public async downloadPlugin<U>(config: U, contextType?: PluginDownloadContextType): Promise<void> {
 		logger.info(`Downloading plugin...`);
+		process.noAsar = true;
 		const context = this.factory.getContext(contextType);
 		const { metadata, pathDirname } = await context.execute(config);
 		const plugin = this.plugins.get(metadata.name);
@@ -25,6 +26,7 @@ export class PluginManager implements IPluginManager {
 			await this.installPlugin(metadata, pathDirname);
 		}
 		fs.rmdirSync(pathDirname, { recursive: true });
+		process.noAsar = false;
 	}
 
 	public async updatePlugin(pluginMetadata: IPluginMetadata): Promise<void> {
@@ -66,7 +68,7 @@ export class PluginManager implements IPluginManager {
 			fs.mkdirSync(pluginDir, { recursive: true });
 		}
 		if (source) {
-			fs.cpSync(source, pluginDir, { recursive: true });
+			fs.cpSync(source, pluginDir, { recursive: true, force: true });
 		}
 		logger.info(`Installing plugin ${pluginMetadata.name}`);
 		const plugin = await lazyLoader(path.join(pluginDir, pluginMetadata.main));
