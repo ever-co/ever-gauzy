@@ -20,9 +20,11 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
+		"jest-preset-angular": "^13.1.4",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9"
 	},
 	"repository": {

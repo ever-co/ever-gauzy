@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"target": "es2022",
+		"module": "commonjs",
 		"useDefineForClassFields": false,
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
