@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationResolver } from './../integration.resolver';
+import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
 import { GithubInstallationComponent } from './components/installation/installation.component';
 import { GithubComponent } from './github.component';
@@ -11,7 +11,12 @@ const routes: Routes = [
 	{
 		path: '',
 		component: GithubComponent,
+		canActivate: [PermissionsGuard],
 		data: {
+			permissions: {
+				only: [PermissionsEnum.INTEGRATION_ADD],
+				redirectTo: '/pages/dashboard'
+			},
 			integration: IntegrationEnum.GITHUB
 		},
 		resolve: {

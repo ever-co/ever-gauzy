@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { SearchComponent } from './search/search.component';
-import { IntegrationResolver } from '../../integrations/integration.resolver';
 
 const routes: Routes = [
 	{

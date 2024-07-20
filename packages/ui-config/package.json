@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/ui-config",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "A configuration library for the Gauzy framework, providing environment settings and configurations to be shared across various Angular applications within the Gauzy ecosystem.",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -25,29 +26,22 @@
 		"library"
 	],
 	"private": true,
-	"main": "dist/fesm2022/gauzy-ui-config.mjs",
-	"module": "dist/fesm2022/gauzy-ui-config.mjs",
-	"es2022": "dist/fesm2022/gauzy-ui-config.mjs",
-	"esm2022": "dist/esm2022/gauzy-ui-config.mjs",
-	"fesm2022": "dist/fesm2022/gauzy-ui-config.mjs",
-	"typings": "dist/index.d.ts",
+	"main": "src/index.ts",
+	"typings": "src/index.ts",
 	"files": [
-		"fesm2022",
-		"esm2022",
-		"lib",
 		"dist"
 	],
 	"directories": {
-		"lib": "dist"
+		"lib": "dist",
+		"test": "__test__"
 	},
 	"publishConfig": {
 		"access": "restricted"
 	},
 	"scripts": {
-		"lib:build": "rimraf dist && ng build ui-config --configuration development",
+		"lib:build": "ng build ui-config --configuration development",
 		"lib:build:prod": "cross-env NODE_ENV=production yarn ts-node scripts/replace-env-files.ts --environment=prod && ng build ui-config --configuration production",
-		"lib:watch": "ng build ui-config --watch --configuration development",
-		"clean": "rimraf dist"
+		"lib:watch": "ng build ui-config --watch --configuration development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
@@ -57,6 +51,7 @@
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
+		"@types/jest": "^29.4.4",
 		"@types/node": "^20.14.9",
 		"rimraf": "^3.0.2",
 		"cross-env": "^7.0.3"
