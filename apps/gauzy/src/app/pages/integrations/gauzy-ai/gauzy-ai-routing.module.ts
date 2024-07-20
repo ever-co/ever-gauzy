@@ -1,8 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-core/core';
-import { IntegrationResolver } from '../integration.resolver';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
