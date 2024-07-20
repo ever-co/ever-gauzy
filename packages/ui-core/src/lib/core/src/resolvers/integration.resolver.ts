@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { catchError, EMPTY, Observable, of } from 'rxjs';
 import { IIntegrationTenant } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/common';
-import { IntegrationsService } from '@gauzy/ui-core/core';
+import { IntegrationsService } from '../services';
 
 @Injectable({
 	providedIn: 'root'
@@ -27,8 +27,11 @@ export class IntegrationResolver implements Resolve<Observable<IIntegrationTenan
 	 */
 	resolve(route: ActivatedRouteSnapshot): Observable<IIntegrationTenant | boolean> {
 		try {
-			const integration = route.data['integration'];
+			// Get Integration By Options
+			const name = route.data['integration'];
 			const relations = route.data['relations'] || [];
+
+			//Get Organization Details
 			const { id: organizationId, tenantId } = this._store.selectedOrganization;
 
 			if (!organizationId) {
@@ -39,7 +42,7 @@ export class IntegrationResolver implements Resolve<Observable<IIntegrationTenan
 			const integration$ = this._integrationsService.getIntegrationByOptions({
 				organizationId,
 				tenantId,
-				name: integration,
+				name,
 				relations
 			});
 
