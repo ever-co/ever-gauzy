@@ -20,23 +20,18 @@ export class ImageAssetSubscriber extends BaseEntityEventSubscriber<ImageAsset> 
 	 * @returns A promise that resolves when the URL updating process is complete.
 	 */
 	async afterEntityLoad(entity: ImageAsset): Promise<void> {
-		return new Promise<void>(async (resolve, reject) => {
-			try {
-				if (entity instanceof ImageAsset) {
-					const { storageProvider, url, thumb } = entity;
-					const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
+		try {
+			if (entity instanceof ImageAsset) {
+				const { storageProvider, url, thumb } = entity;
+				const store = new FileStorage().setProvider(storageProvider).getProviderInstance();
 
-					// Retrieve full and thumbnail URLs concurrently
-					const [fullUrl, thumbUrl] = await Promise.all([store.url(url), store.url(thumb)]);
-					entity.fullUrl = fullUrl;
-					entity.thumbUrl = thumbUrl;
-
-					resolve();
-				}
-			} catch (error) {
-				console.error('ImageAssetSubscriber: Error during the afterEntityLoad process:', error);
-				reject(null);
+				// Retrieve full and thumbnail URLs concurrently
+				const [fullUrl, thumbUrl] = await Promise.all([store.url(url), store.url(thumb)]);
+				entity.fullUrl = fullUrl;
+				entity.thumbUrl = thumbUrl;
 			}
-		});
+		} catch (error) {
+			console.error('ImageAssetSubscriber: Error during the afterEntityLoad process:', error);
+		}
 	}
 }
