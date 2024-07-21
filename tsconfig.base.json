@@ -13,7 +13,14 @@
 		"lib": ["es2020", "dom", "es2018", "esnext.array"],
 		"skipLibCheck": true,
 		"skipDefaultLibCheck": true,
-		"baseUrl": "."
+		"baseUrl": ".",
+		"paths": {
+			"@gauzy/ui-core/common": ["packages/ui-core/common/src/index.ts"],
+			"@gauzy/ui-core/core": ["packages/ui-core/core/src/index.ts"],
+			"@gauzy/ui-core/i18n": ["packages/ui-core/i18n/src/index.ts"],
+			"@gauzy/ui-core/shared": ["packages/ui-core/shared/src/index.ts"],
+			"@gauzy/ui-core/theme": ["packages/ui-core/theme/src/index.ts"]
+		}
 	},
 	"exclude": ["coverage/**/*", "dist/**/*", "node_modules", "tmp"]
 }

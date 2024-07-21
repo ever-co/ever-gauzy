@@ -30,8 +30,7 @@
 	"scripts": {
 		"lib:build": "ng build ui-core --configuration=development",
 		"lib:build:prod": "ng build ui-core --configuration=production",
-		"lib:watch": "ng build ui-core --watch --configuration=development",
-		"clean": "rimraf dist"
+		"lib:watch": "ng build ui-core --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
