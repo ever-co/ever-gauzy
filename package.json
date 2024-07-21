@@ -290,6 +290,7 @@
 		"@angular-devkit/architect": "^0.1602.11",
 		"@angular-devkit/build-angular": "^16.2.11",
 		"@angular-devkit/core": "^16.2.11",
+		"camelcase": "^6.3.0",
 		"rxjs": "^7.4.0",
 		"autoprefixer": "10.4.14",
 		"locutus": "^2.0.30"
@@ -316,6 +317,7 @@
 		"angular2-smart-table": "^3.2.0",
 		"autoprefixer": "10.4.14",
 		"bcrypt": "^5.1.0",
+		"camelcase": "^6.3.0",
 		"dotenv": "^16.0.3",
 		"ffi-napi": "^4.0.3",
 		"iconv": "^3.0.1",
