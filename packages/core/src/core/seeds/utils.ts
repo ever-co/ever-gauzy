@@ -6,24 +6,43 @@ import * as path from 'path';
 import * as rimraf from 'rimraf';
 
 /**
- * Copy ever icons
+ * Copy assets from the source directory to the destination directory.
  *
- * @param fileName
- * @param config
- * @returns
+ * @param filename The name of the file to copy.
+ * @param config The application configuration.
+ * @param destDir The destination directory.
+ * @returns The destination file path.
  */
 export function copyAssets(filename: string, config: Partial<ApplicationPluginConfig>, destDir: string = 'ever-icons') {
 	try {
-		const dir = env.isElectron
-			? path.join(env.gauzySeedPath, destDir)
-			: path.join(config.assetOptions.assetPath, ...['seed', destDir]) ||
-			path.resolve(__dirname, '../../../', ...['apps', 'api', 'src', 'assets', 'seed', destDir]);
+		// Check if electron
+		const isElectron = env.isElectron;
+		// Default public directory for assets
+		const publicDir = path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
 
-		const baseDir = env.isElectron
-			? path.resolve(env.gauzyUserPath, ...['public'])
-			: config.assetOptions.assetPublicPath || path.resolve(__dirname, '../../../', ...['apps', 'api', 'public']);
+		// Default seed directory for assets
+		const defaultSeedDir = path.resolve(
+			__dirname,
+			'../../../',
+			...['apps', 'api', 'src', 'assets', 'seed', destDir]
+		);
+
+		// Custom seed directory for assets
+		const customSeedDir = path.join(config.assetOptions.assetPath, ...['seed', destDir]);
+
+		// Base directory for assets
+		const dir = isElectron ? path.join(env.gauzySeedPath, destDir) : customSeedDir || defaultSeedDir;
+
+		// Custom public directory for assets
+		const assetPublicPath = config.assetOptions.assetPublicPath;
+
+		// Base directory for assets
+		const baseDir = isElectron ? path.resolve(env.gauzyUserPath, ...['public']) : assetPublicPath || publicDir;
+
+		// File path
 		const filepath = filename.replace(/\\/g, '/');
-		// create folders all the way down
+
+		// Create folders all the way down
 		const folders = filepath.split('/').slice(0, -1); // remove last item, filename
 		folders.reduce((acc, folder) => {
 			const folderPath = path.join(acc, folder);
@@ -36,6 +55,8 @@ export function copyAssets(filename: string, config: Partial<ApplicationPluginCo
 		// copy files from source to destination folder
 		const destFilePath = path.join(destDir, filename);
 		fs.copyFileSync(path.join(dir, filename), path.join(baseDir, destFilePath));
+
+		// Return the destination file path
 		return destFilePath;
 	} catch (error) {
 		console.log('Error while copy ever icons for seeder', error);
@@ -60,7 +81,7 @@ export async function cleanAssets(config: Partial<ApplicationPluginConfig>, dest
 		rimraf(
 			`${dir}/!(rimraf|.gitkeep)`,
 			() => {
-				console.log(chalk.green(`CLEANED UP EVER ICONS`));
+				console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`));
 				resolve(null);
 			},
 			() => {
