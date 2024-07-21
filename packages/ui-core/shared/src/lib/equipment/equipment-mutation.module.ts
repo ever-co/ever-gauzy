@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/common';
 import { EquipmentService, ImageAssetService } from '@gauzy/ui-core/core';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';

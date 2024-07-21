@@ -13,7 +13,7 @@ import {
 import { NgxDaterangepickerMd as NgxDateRangePickerMd } from 'ngx-daterangepicker-material';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { WeekDaysEnum } from '@gauzy/contracts';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { EmployeeStore, EmployeesService, OrganizationEditStore, OrganizationsService } from '@gauzy/ui-core/core';
 import { DirectivesModule } from '../directives/directives.module';
 import { DateSelectorComponent } from './date/date.component';

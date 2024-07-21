@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbDatepickerModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { PipesModule } from '../../pipes/pipes.module';
 import { EmployeeStartWorkComponent } from './employee-start-work.component';
 

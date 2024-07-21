@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbTooltipModule, NbBadgeModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { ComponentsModule } from '../components/components.module';
 import { PipesModule } from '../pipes/pipes.module';
 import { AllowScreenshotCaptureComponent } from './allow-screenshot-capture/allow-screenshot-capture.component';

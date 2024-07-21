@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
 import { TableComponentsModule } from '../../../table-components';
 import { GalleryModule } from '../../../gallery/gallery.module';

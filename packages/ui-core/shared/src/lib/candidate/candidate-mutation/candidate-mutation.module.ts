@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbIconModule, NbStepperModule, NbTagModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { FileUploaderModule } from '../../file-uploader-input';

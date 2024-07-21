@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbCardModule, NbListModule, NbDialogModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { GauzyEditableGridComponent } from './gauzy-editable-grid.component';
 import { GauzyButtonActionModule } from '../gauzy-button-action';
 

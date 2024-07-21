@@ -9,7 +9,7 @@ import {
 	NbSpinnerModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { FeatureService, FeatureStoreService } from '@gauzy/ui-core/core';
 import { FeatureToggleComponent } from './feature-toggle.component';
 

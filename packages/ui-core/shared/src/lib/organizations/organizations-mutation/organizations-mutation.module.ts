@@ -14,7 +14,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { OrganizationsMutationComponent } from './organizations-mutation.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';

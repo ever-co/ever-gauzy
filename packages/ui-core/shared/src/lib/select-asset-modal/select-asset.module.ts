@@ -9,7 +9,7 @@ import {
 	NbDialogModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { ImageAssetService } from '@gauzy/ui-core/core';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';

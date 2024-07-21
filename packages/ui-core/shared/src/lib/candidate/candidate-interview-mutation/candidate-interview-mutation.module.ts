@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { CandidateTechnologiesService } from '@gauzy/ui-core/core';
 import { TimerPickerModule } from '../../timer-picker/timer-picker.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';

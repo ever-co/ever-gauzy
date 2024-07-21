@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbSelectModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { ProjectSelectorComponent } from './project/project.component';
 
 @NgModule({

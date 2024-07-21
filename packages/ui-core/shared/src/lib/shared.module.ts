@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NbBadgeModule, NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ComponentsModule } from './components/components.module';
 import { DirectivesModule } from './directives/directives.module';
 import { PipesModule } from './pipes/pipes.module';
@@ -20,7 +19,6 @@ const MODULES = [ComponentsModule, DirectivesModule, PipesModule];
 		NbIconModule,
 		NbTooltipModule,
 		NgxPermissionsModule,
-		I18nTranslateModule.forChild(),
 		...MODULES
 	],
 	exports: [...MODULES]

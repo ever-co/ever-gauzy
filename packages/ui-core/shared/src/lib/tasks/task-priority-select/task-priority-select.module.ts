@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { FormsModule } from '@angular/forms';
 import { TaskPrioritiesService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { TaskPrioritySelectComponent } from './task-priority-select.component';
 import { TaskBadgeViewComponentModule } from '../task-badge-view/task-badge-view.module';
 

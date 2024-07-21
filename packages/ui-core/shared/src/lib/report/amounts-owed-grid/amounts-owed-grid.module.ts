@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
 import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 import { SharedModule } from '../../shared.module';

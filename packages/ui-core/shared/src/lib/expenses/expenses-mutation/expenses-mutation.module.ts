@@ -13,7 +13,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { OrganizationsService } from '@gauzy/ui-core/core';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';

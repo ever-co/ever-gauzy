@@ -12,7 +12,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/common';
 import { EquipmentService, EquipmentSharingPolicyService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';

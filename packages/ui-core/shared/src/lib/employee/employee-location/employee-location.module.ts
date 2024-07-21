@@ -8,7 +8,7 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
 import { LeafletMapModule, LocationFormModule } from '../../forms';
 import { EmployeeLocationComponent } from './employee-location.component';

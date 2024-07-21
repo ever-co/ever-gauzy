@@ -10,7 +10,7 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { TableComponentsModule } from '../table-components/table-components.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 

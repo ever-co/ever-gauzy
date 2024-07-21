@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbButtonModule, NbCardModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { CandidateCalendarInfoComponent } from './candidate-calendar-info.component';
 
 @NgModule({

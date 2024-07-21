@@ -14,7 +14,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { InviteService, RoleService } from '@gauzy/ui-core/core';
 import { SharedModule } from '../../shared.module';
 import { ContactSelectModule } from '../../contact-select/contact-select.module';

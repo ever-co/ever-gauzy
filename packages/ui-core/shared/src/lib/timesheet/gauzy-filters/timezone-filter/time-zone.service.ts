@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import moment from 'moment-timezone';
+import * as moment from 'moment-timezone';
 import { TimeFormatEnum } from '@gauzy/contracts';
 
 @Injectable({

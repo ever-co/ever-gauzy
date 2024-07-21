@@ -19,7 +19,7 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { LanguagesService, SkillsService } from '@gauzy/ui-core/core';
 import { PublicPageMutationComponent } from './public-page-mutation.component';
 import { SkillsInputModule } from '../../skills/skills-input/skills-input.module';

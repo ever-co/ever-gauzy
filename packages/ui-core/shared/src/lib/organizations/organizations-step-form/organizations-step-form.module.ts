@@ -16,7 +16,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';

@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { SelectorsModule } from '../selectors/selectors.module';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-settings-mutation.component';

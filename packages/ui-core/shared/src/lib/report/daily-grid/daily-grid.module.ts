@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { TableComponentsModule } from '../../table-components/table-components.module';
 import { DailyGridComponent } from './daily-grid.component';

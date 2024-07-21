@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TimeTrackerStatusService } from './time-tracker-status.service';
 import { TimeTrackerStatusComponent } from './time-tracker-status.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { NbTooltipModule } from '@nebular/theme';
 
 @NgModule({

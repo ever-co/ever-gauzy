@@ -1,5 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
-import L, { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
+import * as L from 'leaflet';
+import { icon, LatLng, latLng, Layer, marker, tileLayer } from 'leaflet';
 import { environment } from '@gauzy/ui-config';
 import { convertPrecisionFloatDigit } from '@gauzy/ui-core/common';
 

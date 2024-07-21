@@ -13,7 +13,7 @@ import {
 import { NgxDraggableDomModule } from 'ngx-draggable-dom';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { TimeTrackerService } from '@gauzy/ui-core/common';
 import { TimeTrackerComponent } from './time-tracker/time-tracker.component';
 import { TimeTrackerStatusModule } from './components/time-tracker-status/time-tracker-status.module';

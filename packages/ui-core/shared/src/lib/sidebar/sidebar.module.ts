@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { TreeModule } from '@ali-hm/angular-tree-component';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { SidebarComponent } from './sidebar.component';

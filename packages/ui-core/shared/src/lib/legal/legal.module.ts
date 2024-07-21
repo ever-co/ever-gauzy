@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { PrivacyPolicyComponent } from './privacy-policy/privacy-policy.component';
 import { TermsAndConditionsComponent } from './terms-and-conditions/terms-and-conditions.component';
 

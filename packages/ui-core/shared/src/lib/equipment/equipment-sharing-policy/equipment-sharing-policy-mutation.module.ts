@@ -11,7 +11,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { EquipmentSharingPolicyService } from '@gauzy/ui-core/core';
 import { EquipmentSharingPolicyMutationComponent } from './equipment-sharing-policy-mutation.component';
 

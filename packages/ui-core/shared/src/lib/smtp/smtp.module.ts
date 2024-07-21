@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbInputModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CustomSmtpService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { SMTPComponent } from './smtp.component';
 
 @NgModule({

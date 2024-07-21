@@ -9,7 +9,7 @@ import {
 	NbUserModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { SharedModule } from '../../shared.module';
 import { ViewTimeLogComponent } from './view-time-log.component';

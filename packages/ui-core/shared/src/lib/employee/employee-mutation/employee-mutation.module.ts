@@ -9,7 +9,7 @@ import {
 	NbTagModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { EmployeesService, OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeeMutationComponent } from './employee-mutation.component';

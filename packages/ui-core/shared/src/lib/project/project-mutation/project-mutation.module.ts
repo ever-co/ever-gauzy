@@ -14,7 +14,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { CurrencyModule } from '../../modules/currency/currency.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';

@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { ProjectSelectModule } from '../../selectors/project';

@@ -16,7 +16,7 @@ import {
 	NbBadgeModule,
 	NbTagModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { AlertDirective, ConfirmDirective, PromptDirective } from './directive';
 import { AlertComponent } from './alert/alert.component';
 import { ConfirmComponent } from './confirm/confirm.component';

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { NbCardModule } from '@nebular/theme';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { LeafletMapComponent } from './leaflet.component';
 
 @NgModule({

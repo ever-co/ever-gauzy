@@ -10,7 +10,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
 import { LanguageSelectorModule } from '../../language/language-selector';
 

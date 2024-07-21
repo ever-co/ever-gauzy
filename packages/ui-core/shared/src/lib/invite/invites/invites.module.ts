@@ -18,7 +18,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ClipboardModule } from 'ngx-clipboard';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';

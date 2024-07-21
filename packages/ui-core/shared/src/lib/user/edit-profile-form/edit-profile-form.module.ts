@@ -11,7 +11,7 @@ import {
 	NbFormFieldModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, RoleService, UsersService } from '@gauzy/ui-core/core';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
