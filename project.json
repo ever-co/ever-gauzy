@@ -12,7 +12,7 @@
 		"ui-config": {
 			"tags": []
 		},
-		"@gauzy/ui-core": {
+		"ui-core": {
 			"tags": []
 		},
 		"plugin-job-search-ui": {

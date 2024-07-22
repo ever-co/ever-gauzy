@@ -439,7 +439,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 
 	/**
 	 * Archive a candidate with confirmation.
-	 * @param selectedItem - The candidate to be achived.
+	 * @param selectedItem - The candidate to be archive.
 	 */
 	async archive(selectedItem?: ICandidateViewModel) {
 		if (selectedItem) {

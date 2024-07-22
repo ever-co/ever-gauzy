@@ -303,7 +303,7 @@ export class InterviewCalendarComponent extends TranslationBaseComponent impleme
 
 	/**
 	 * Handles the mouse enter event over a calendar event.
-	 * Checks if the event element has overflow and, if so, unsets its position style.
+	 * Checks if the event element has overflow and, if so, un-sets its position style.
 	 *
 	 * @param param0 - The event object containing details about the hovered element.
 	 */

@@ -1522,6 +1522,9 @@
 				</nb-card>
 			</div>
 		</div>
+		<ng-container *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.SETTINGS.PLUGINS'" >
+			<ngx-plugin-layout></ngx-plugin-layout>
+		</ng-container>
 		<ng-container
 			class="row"
 			*ngIf="(selectedMenu$ | async) === 'MENU.ABOUT'"
