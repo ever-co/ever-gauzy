@@ -38,7 +38,7 @@ export class PluginElectronService {
 	}
 
 	public uninstall(plugin: IPlugin) {
-		this.electronService.ipcRenderer.send('plugin::uninstall', plugin);
+		this.electronService.ipcRenderer.send('plugin::uninstall', plugin.name);
 	}
 
 	public get status(): Observable<{ status: string; message?: string }> {

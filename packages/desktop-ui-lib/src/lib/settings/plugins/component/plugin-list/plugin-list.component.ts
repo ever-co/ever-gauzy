@@ -133,6 +133,11 @@ export class PluginListComponent implements OnInit {
 			.subscribe();
 	}
 
+	public uninstall() {
+		this.processing = true;
+		this.pluginElectronService.uninstall(this.plugin);
+	}
+
 	private clearItem(): void {
 		if (this.pluginTable && this.pluginTable.grid) {
 			this.pluginTable.grid.dataSet['willSelect'] = 'indexed';
