@@ -1,4 +1,9 @@
-<nb-card class="card-scroll" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+<nb-card
+	class="card-scroll"
+	[nbSpinner]="loading"
+	nbSpinnerStatus="primary"
+	nbSpinnerSize="large"
+>
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<h4>
@@ -13,128 +18,108 @@
 				[hasLayoutSelector]="false"
 			></ngx-gauzy-button-action>
 		</div>
-		<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-			<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
-				<div class="columns-header row align-items-center">
-					<div class="col-md-5 p-0 float-left text-truncate">
-						{{ 'SM_TABLE.NAME' | translate }}
-					</div>
-					<div class="col-md-2 p-0 float-left text-truncate">
-						{{ 'SM_TABLE.LAST_SYNC_DATE' | translate }}
-					</div>
-					<div class="col-md-2 p-0 float-left text-truncate">
-						{{ 'SM_TABLE.ENABLE_DISABLE_INTEGRATION' | translate }}
-					</div>
-					<div class="col-md-1 p-0 text-right text-truncate">
-						{{ 'SM_TABLE.STATUS' | translate }}
-					</div>
-				</div>
-			</ng-template>
-		</ng-template>
+		<div class="columns-header row align-items-center">
+			<div class="col-md-5 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.NAME' | translate }}
+			</div>
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.LAST_SYNC_DATE' | translate }}
+			</div>
+			<div class="col-md-2 p-0 float-left text-truncate">
+				{{ 'SM_TABLE.ENABLE_DISABLE_INTEGRATION' | translate }}
+			</div>
+			<div class="col-md-1 p-0 text-right text-truncate">
+				{{ 'SM_TABLE.STATUS' | translate }}
+			</div>
+		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<div class="table-scroll-container">
-			<ng-template [ngxPermissionsOnly]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-				<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
-					<ng-container *ngIf="integrations$ | async as integrations">
-						<ng-template [ngIf]="integrations?.length > 0" [ngIfElse]="notFoundTemplate">
-							<ng-container *ngFor="let integration of integrations">
-								<nb-card>
-									<nb-card-body class="card-body-table">
-										<div class="col-1 p-0 float-left text-truncate">
-											<img
-												[alt]="[integration?.integration?.title]"
-												[src]="integration?.integration?.fullImgUrl"
-												[title]="integration?.integration?.name | replace : '_' : ' '"
-												height="100%"
-												width="100%"
-											/>
-										</div>
-										<div class="col-4 pl-3 float-left text-truncate">
-											<div class="title">
-												{{ integration?.name | replace : '_' : ' ' }}
-											</div>
-											<div class="description">
-												{{ getProviderDescription(integration?.integration) }}
-											</div>
-										</div>
-										<div class="col-2 p-0 float-left text-truncate last-sync">
-											{{ integration?.lastSyncedAt || integration?.updatedAt | dateTimeFormat }}
-										</div>
-										<div class="col-2 p-0 float-left text-truncate">
-											<ngx-toggle-switch
-												[value]="integration?.isActive"
-												[label]="false"
-												(switched)="updateIntegrationTenant(integration, $event)"
-											></ngx-toggle-switch>
-										</div>
-										<div class="col-1 p-0 text-right text-truncate">
-											<div
-												class="badge"
-												[ngClass]="integration?.isActive ? 'badge-success' : 'badge-danger'"
-											>
-												{{
-													(integration?.isActive
-														? 'INTEGRATIONS.ENABLED'
-														: 'INTEGRATIONS.DISABLED'
-													) | translate
-												}}
-											</div>
-										</div>
-										<div class="col-2 p-0 text-right">
-											<ng-template [ngxPermissionsOnly]="['INTEGRATION_VIEW']">
-												<button
-													(click)="viewIntegration(integration)"
-													class="action primary"
-													nbButton
-													size="small"
-													status="basic"
-													[disabled]="!integration.isActive"
-												>
-													<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
-													{{ 'BUTTONS.VIEW' | translate }}
-												</button>
-											</ng-template>
-											<ng-template [ngxPermissionsOnly]="['INTEGRATION_DELETE']">
-												<button
-													(click)="deleteIntegration(integration)"
-													[nbTooltip]="'BUTTONS.DELETE' | translate"
-													class="action"
-													nbButton
-													size="small"
-													status="basic"
-												>
-													<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
-												</button>
-											</ng-template>
-										</div>
-									</nb-card-body>
-								</nb-card>
-							</ng-container>
-						</ng-template>
-						<ng-template #notFoundTemplate>
-							<div class="no-data">
-								<ngx-no-data-message
-									[title]="'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate"
-								></ngx-no-data-message>
-							</div>
-						</ng-template>
+			<ng-container *ngIf="(integrations$ | async) as integrations">
+				<ng-template [ngIf]="integrations?.length > 0" [ngIfElse]="notFoundTemplate">
+					<ng-container *ngFor="let integration of integrations">
+						<nb-card>
+							<nb-card-body class="card-body-table">
+								<div class="col-1 p-0 float-left text-truncate">
+									<img
+										[alt]="[integration?.integration?.title]"
+										[src]="integration?.integration?.fullImgUrl"
+										[title]=" integration?.integration?.name | replace : '_' : ' '"
+										height="100%"
+										width="100%"
+									/>
+								</div>
+								<div class="col-4 pl-3 float-left text-truncate">
+									<div class="title">
+										{{ integration?.name | replace : '_' : ' ' }}
+									</div>
+									<div class="description">
+										{{ getProviderDescription(integration?.integration) }}
+									</div>
+								</div>
+								<div class="col-2 p-0 float-left text-truncate last-sync">
+									{{ (integration?.lastSyncedAt || integration?.updatedAt)  | dateTimeFormat }}
+								</div>
+								<div class="col-2 p-0 float-left text-truncate">
+									<ngx-toggle-switch
+										[value]="integration?.isActive"
+										[label]="false"
+										(switched)="updateIntegrationTenant(integration, $event)"
+									></ngx-toggle-switch>
+								</div>
+								<div class="col-1 p-0 text-right text-truncate">
+									<div class="badge" [ngClass]="integration?.isActive ? 'badge-success': 'badge-danger'">
+										{{ (integration?.isActive ? 'INTEGRATIONS.ENABLED' : 'INTEGRATIONS.DISABLED') | translate }}
+									</div>
+								</div>
+								<div class="col-2 p-0 text-right">
+									<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+										<button
+											(click)="viewIntegration(integration)"
+											class="action primary"
+											nbButton
+											size="small"
+											status="basic"
+											[disabled]="!integration.isActive"
+										>
+											<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+											{{ 'BUTTONS.VIEW' | translate }}
+										</button>
+										<button
+											(click)="deleteIntegration(integration)"
+											[nbTooltip]="'BUTTONS.DELETE' | translate"
+											class="action"
+											nbButton
+											size="small"
+											status="basic"
+										>
+											<nb-icon icon="trash-2-outline" status="danger"></nb-icon>
+										</button>
+									</ng-container>
+								</div>
+							</nb-card-body>
+						</nb-card>
 					</ng-container>
 				</ng-template>
-			</ng-template>
-			<ng-template [ngxPermissionsExcept]="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-				<div>
-					<!-- Content to display if the user does not have 'canEditComponent' permission -->
-				</div>
-			</ng-template>
+				<ng-template #notFoundTemplate>
+					<div class="no-data">
+						<ngx-no-data-message
+							[title]="'INTEGRATIONS.MESSAGE.NO_INTEGRATIONS' | translate"
+						></ngx-no-data-message>
+					</div>
+				</ng-template>
+			</ng-container>
 		</div>
 	</nb-card-body>
 </nb-card>
-
-<!--  -->
 <ng-template #visibleButton>
-	<ng-container *ngxPermissionsOnly="['INTEGRATION_ADD', 'INTEGRATION_EDIT']">
-		<button (click)="navigateToNewIntegrations()" nbButton size="small" status="success">
+	<ng-container *ngxPermissionsOnly="['ALL_ORG_EDIT', 'INTEGRATION_VIEW']">
+		<button
+			(click)="navigateToNewIntegrations()"
+			nbButton
+			size="small"
+			status="success"
+		>
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD_INTEGRATION' | translate }}
 		</button>

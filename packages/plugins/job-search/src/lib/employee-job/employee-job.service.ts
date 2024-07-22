@@ -17,8 +17,7 @@ import {
 	JobPostTypeEnum,
 	IGetEmployeeJobPostFilters,
 	IntegrationEnum,
-	IntegrationEntity,
-	PermissionsEnum
+	IntegrationEntity
 } from '@gauzy/contracts';
 import { EmployeeService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import { EmployeeJobPost } from './employee-job.entity';
@@ -89,12 +88,6 @@ export class EmployeeJobPostService {
 
 				const { organizationId } = data.filters;
 				const tenantId = RequestContext.currentTenantId() || filters.tenantId;
-
-				// If the user does not have the permission to change selected employee, use the current employee ID
-				if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-					// Add the current employee ID to the employeeIds array
-					data.filters.employeeIds = [RequestContext.currentEmployeeId()];
-				}
 
 				// Retrieve integration
 				const integration = await this._integrationTenantService.getIntegrationByOptions({

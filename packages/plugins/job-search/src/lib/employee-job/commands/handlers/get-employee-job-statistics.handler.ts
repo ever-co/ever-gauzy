@@ -1,11 +1,11 @@
-import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { GauzyAIService } from '@gauzy/plugin-integration-ai';
-import { IEmployee, IPagination, PermissionsEnum } from '@gauzy/contracts';
-import { EmployeeService, RequestContext } from '@gauzy/core';
-import { GetEmployeeJobStatisticsQuery } from '../get-employee-job-statistics.query';
+import { IEmployee, IPagination } from '@gauzy/contracts';
+import { EmployeeService } from '@gauzy/core';
+import { GetEmployeeJobStatisticsCommand } from '../get-employee-job-statistics.command';
 
-@QueryHandler(GetEmployeeJobStatisticsQuery)
-export class GetEmployeeJobStatisticsHandler implements IQueryHandler<GetEmployeeJobStatisticsQuery> {
+@CommandHandler(GetEmployeeJobStatisticsCommand)
+export class GetEmployeeJobStatisticsHandler implements ICommandHandler<GetEmployeeJobStatisticsCommand> {
 	/**
 	 *
 	 * @param employeeService
@@ -14,20 +14,14 @@ export class GetEmployeeJobStatisticsHandler implements IQueryHandler<GetEmploye
 	constructor(private readonly employeeService: EmployeeService, private readonly gauzyAIService: GauzyAIService) {}
 
 	/**
-	 * Executes the GetEmployeeJobStatisticsQuery to fetch paginated employee data
+	 * Executes the GetEmployeeJobStatisticsCommand to fetch paginated employee data
 	 * and augment it with additional statistics.
 	 *
-	 * @param query - The query containing options for pagination.
+	 * @param command - The command containing options for pagination.
 	 * @returns A Promise resolving to an IPagination<IEmployee> with augmented data.
 	 */
-	public async execute(query: GetEmployeeJobStatisticsQuery): Promise<IPagination<IEmployee>> {
-		const { options } = query;
-
-		// Check for permission CHANGE_SELECTED_EMPLOYEE
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			// Filter by current employee ID if the permission is not present
-			options.where.id = RequestContext.currentEmployeeId();
-		}
+	public async execute(command: GetEmployeeJobStatisticsCommand): Promise<IPagination<IEmployee>> {
+		const { options } = command;
 
 		// Use Promise.all for concurrent requests
 		const [paginationResult, employeesStatistics] = await Promise.all([

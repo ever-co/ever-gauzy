@@ -12,14 +12,12 @@
 		</div>
 		<div>
 			<div>
-				<ng-template [ngxPermissionsOnly]="['INTEGRATION_EDIT']">
-					<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
-						<div class="sync-container">
-							<nb-icon class="sync" icon="sync-outline"></nb-icon>
-							{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
-						</div>
-					</button>
-				</ng-template>
+				<button nbButton status="primary" class="mr-2" size="small" (click)="navigateToResetIntegration()">
+					<div class="sync-container">
+						<nb-icon class="sync" icon="sync-outline"></nb-icon>
+						{{ 'BUTTONS.RESET_INTEGRATION' | translate }}
+					</div>
+				</button>
 				<button
 					nbButton
 					size="small"

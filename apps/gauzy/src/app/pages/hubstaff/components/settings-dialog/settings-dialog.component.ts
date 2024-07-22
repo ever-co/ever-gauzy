@@ -19,24 +19,24 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 	minDate: Date = new Date(moment().subtract(6, 'months').format('YYYY-MM-DD'));
 
 	defaultRange$: Observable<IDateRangeActivityFilter>;
-	displayDate: string;
+	dispayDate: any;
 	IntegrationEntity = IntegrationEntity;
 
 	constructor(
+		private readonly _hubstaffService: HubstaffService,
 		public readonly dialogRef: NbDialogRef<SettingsDialogComponent>,
-		private readonly cdRef: ChangeDetectorRef,
-		private readonly _hubstaffService: HubstaffService
+		private readonly cdRef: ChangeDetectorRef
 	) {}
 
 	ngOnInit() {
 		this.defaultRange$ = this._hubstaffService.dateRangeActivity$.pipe(
-			tap(() => {
-				this.expandOptions = false;
-			}),
-			tap((displayDate: IDateRangeActivityFilter) => {
-				const { start, end } = displayDate;
-				this.displayDate = `${moment(start).format('MMM D, YYYY')} - ${moment(end).format('MMM D, YYYY')}`;
-			})
+			tap(() => (this.expandOptions = false)),
+			tap(
+				(displayDate) =>
+					(this.dispayDate = `${moment(displayDate.start).format('MMM D, YYYY')} - ${moment(
+						displayDate.end
+					).format('MMM D, YYYY')}`)
+			)
 		);
 	}
 
@@ -44,11 +44,9 @@ export class SettingsDialogComponent implements OnInit, AfterViewInit {
 		this.cdRef.detectChanges();
 	}
 
-	/**
-	 * Set activity date range
-	 * @param dateRange
-	 */
-	onDateChange(dateRange: IDateRangeActivityFilter) {
+	getDateDisplay() {}
+
+	onDateChange(dateRange) {
 		this._hubstaffService.setActivityDateRange(dateRange);
 	}
 }

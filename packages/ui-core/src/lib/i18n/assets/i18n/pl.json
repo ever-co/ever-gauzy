@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Dodana transakcja Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Całkowita liczba udanych transakcji wydatków: {{ totalExpenses }}. Całkowita liczba udanych transakcji przychodów: {{ totalIncomes }}",
 		"HUBSTAFF_PAGE": {
-			"TITLE": "Hubstaff",
+			"NAME": "Hubstaff",
 			"SELECT_ORGANIZATION": "Wybierz organizację",
 			"SYNCED_PROJECTS": "Synchronizowane projekty",
 			"SETTINGS_UPDATED": "Zaktualizowane ustawienia dla integracji",

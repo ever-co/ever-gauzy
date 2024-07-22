@@ -31,7 +31,7 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #tableLayout>
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
+	<ng-template ngxPermissionsOnly="ORG_JOB_EMPLOYEE_VIEW">
 		<div class="table-scroll-container">
 			<angular2-smart-table
 				style="cursor: pointer"
@@ -47,13 +47,7 @@
 			</ng-container>
 		</div>
 	</ng-template>
-	<ng-template [ngxPermissionsExcept]="['ORG_JOB_EMPLOYEE_VIEW']">
-		<div>
-			<!-- Content to display if the user does not have 'canEditComponent' permission -->
-		</div>
-	</ng-template>
 </ng-template>
-
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW', 'ORG_EMPLOYEES_EDIT']">
 		<div class="btn-group actions">

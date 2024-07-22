@@ -5,7 +5,6 @@ import { Knex as KnexConnection } from 'knex';
 import { InjectConnection } from 'nest-knexjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
-	ID,
 	IOrganization,
 	IPagination,
 	IReorderDTO,
@@ -24,9 +23,6 @@ import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './rep
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
-	// Logger for tracking operations
-	logger = new Logger('TaskStatusService'); // Update with your service name
-
 	constructor(
 		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
@@ -72,9 +68,11 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 * @param id
 	 * @returns
 	 */
-	async delete(id: ID): Promise<DeleteResult> {
+	async delete(id: ITaskStatus['id']): Promise<DeleteResult> {
 		return await super.delete(id, {
-			where: { isSystem: false }
+			where: {
+				isSystem: false
+			}
 		});
 	}
 
@@ -229,14 +227,17 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	 * @throws BadRequestException if an error occurs during reordering.
 	 */
 	async reorder(list: IReorderDTO[]): Promise<{ success: boolean; list?: IReorderDTO[] }> {
+		// Logger for tracking operations
+		const logger = new Logger('TaskStatusService'); // Update with your service name
+
 		try {
 			// Loop through the list and update each item's order
 			for await (const item of list) {
-				this.logger.log(`Updating item with ID: ${item.id} to order: ${item.order}`); // Logging operation
+				logger.log(`Updating item with ID: ${item.id} to order: ${item.order}`); // Logging operation
 
 				// Update the entity with the new order value
 				if (item.id) {
-					await super.update({ id: item.id, isSystem: false }, { order: item.order });
+					await this.update({ id: item.id, isSystem: false }, { order: item.order });
 				}
 			}
 
@@ -244,7 +245,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 			return { success: true, list };
 		} catch (error) {
 			// Handle errors during reordering
-			this.logger.error('Error during reordering of task statues:', error); // Log the error for debugging
+			logger.error('Error during reordering of task statues:', error); // Log the error for debugging
 			throw new BadRequestException('An error occurred while reordering task statues. Please try again.', error); // Return error
 		}
 	}

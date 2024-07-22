@@ -35,10 +35,6 @@ export class CreateAppointmentComponent extends TranslationBaseComponent impleme
 	ngOnInit(): void {
 		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
 			try {
-				if (!params.id) {
-					return;
-				}
-
 				this.employee = await firstValueFrom(this.employeeService.getEmployeeById(params.id, ['user']));
 				this.eventType = await this.eventTypeService.getEventTypeById(params.eventId);
 				this.loading = false;

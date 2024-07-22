@@ -1,12 +1,10 @@
 {
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"lib": ["dom", "es5"],
 		"outDir": "../../dist/out-tsc",
 		"declaration": true,
 		"declarationMap": true,
 		"inlineSources": true,
-		"sourceMap": true,
 		"types": []
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],

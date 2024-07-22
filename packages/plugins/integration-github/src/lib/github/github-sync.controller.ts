@@ -17,7 +17,7 @@ import { GithubSyncService } from './github-sync.service';
 import { ProcessGithubIssueSyncDTO } from './dto';
 
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller('/integration/github/:integrationId')
 export class GitHubSyncController {
 	private readonly logger = new Logger('GitHubSyncController');

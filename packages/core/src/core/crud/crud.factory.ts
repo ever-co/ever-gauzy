@@ -2,7 +2,7 @@ import { Body, Delete, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UsePi
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeepPartial, DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { ID, IPagination } from '@gauzy/contracts';
+import { IPagination } from '@gauzy/contracts';
 import { Type } from '@gauzy/common';
 import { BaseEntity } from './../../core/entities/base.entity';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
@@ -100,7 +100,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		})
 		@HttpCode(HttpStatus.OK)
 		@Get(':id')
-		async findById(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<BaseType> {
+		async findById(@Param('id', UUIDValidationPipe) id: BaseType['id'], ...options: any[]): Promise<BaseType> {
 			return await this.crudService.findOneByIdString(id);
 		}
 
@@ -148,7 +148,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@Put(':id')
 		@UsePipes(new AbstractValidationPipe({ transform: true, whitelist: true }, { body: updateDTO }))
 		async update(
-			@Param('id', UUIDValidationPipe) id: ID,
+			@Param('id', UUIDValidationPipe) id: BaseType['id'],
 			@Body() entity: QueryDeepPartialEntity<BaseType>
 		): Promise<BaseType | UpdateResult> {
 			return await this.crudService.update(id, entity);
@@ -170,7 +170,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		})
 		@HttpCode(HttpStatus.ACCEPTED)
 		@Delete(':id')
-		async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		async delete(@Param('id', UUIDValidationPipe) id: BaseType['id']): Promise<DeleteResult> {
 			return await this.crudService.delete(id);
 		}
 
@@ -195,7 +195,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@Delete(':id/soft')
 		@HttpCode(HttpStatus.ACCEPTED)
 		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-		async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<BaseType> {
+		async softRemove(@Param('id', UUIDValidationPipe) id: BaseType['id'], ...options: any[]): Promise<BaseType> {
 			// Soft delete the record
 			return await this.crudService.softRemove(id, options);
 		}
@@ -221,7 +221,7 @@ export function CrudFactory<BaseType, QueryType, CreateType, UpdateType, CountQu
 		@Put(':id/recover')
 		@HttpCode(HttpStatus.ACCEPTED)
 		@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
-		async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<BaseType> {
+		async softRecover(@Param('id', UUIDValidationPipe) id: BaseType['id'], ...options: any[]): Promise<BaseType> {
 			// Restore the soft-deleted record
 			return await this.crudService.softRecover(id, options);
 		}

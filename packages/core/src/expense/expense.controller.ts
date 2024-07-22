@@ -18,7 +18,9 @@ import {
 	Post,
 	Query,
 	UseGuards,
-	Delete
+	Delete,
+	ValidationPipe,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';

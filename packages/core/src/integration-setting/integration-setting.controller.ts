@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { ID, IIntegrationSetting, PermissionsEnum } from '@gauzy/contracts';
+import { IIntegrationSetting, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
 import { UUIDValidationPipe, UseValidationPipe } from '../shared/pipes';
@@ -10,7 +10,7 @@ import { UpdateIntegrationSettingDTO } from './dto/update-integration-setting.dt
 
 @ApiTags('IntegrationSetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller('integration-setting')
 export class IntegrationSettingController {
 	constructor(private readonly integrationSettingService: IntegrationSettingService) {}
@@ -32,11 +32,10 @@ export class IntegrationSettingController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
-	@Put('/:id')
+	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('id', UUIDValidationPipe) id: IIntegrationSetting['id'],
 		@Body() input: UpdateIntegrationSettingDTO
 	): Promise<IIntegrationSetting> {
 		try {

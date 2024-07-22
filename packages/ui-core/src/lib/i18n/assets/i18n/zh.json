@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "添加了Upwork交易",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "总花费交易成功：{{ totalExpenses }}。总收入交易成功：{{ totalIncomes }}。",
 		"HUBSTAFF_PAGE": {
-			"TITLE": "Hubstaff是一家提供时间追踪和团队管理工具的公司。其软件允许雇主监控员工的工作时间、项目进展和任务分配。此外，它还提供计时器、截图、活动监视等功能，帮助员工提高工作效率并提供更好的团队协作。Hubstaff已在全球范围内获得了广泛的认可和使用。",
+			"NAME": "Hubstaff是一家提供时间追踪和团队管理工具的公司。其软件允许雇主监控员工的工作时间、项目进展和任务分配。此外，它还提供计时器、截图、活动监视等功能，帮助员工提高工作效率并提供更好的团队协作。Hubstaff已在全球范围内获得了广泛的认可和使用。",
 			"SELECT_ORGANIZATION": "选择组织",
 			"SYNCED_PROJECTS": "项目已同步",
 			"SETTINGS_UPDATED": "更新的集成设置",

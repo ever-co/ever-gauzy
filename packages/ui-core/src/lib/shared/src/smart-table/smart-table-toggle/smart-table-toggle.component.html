@@ -1,1 +1,4 @@
-<nb-toggle [checked]="checked$ | async" (checkedChange)="onCheckedChange($event)"></nb-toggle>
+<nb-toggle
+	(checkedChange)="onCheckedChange($event)"
+	[checked]="checked"
+></nb-toggle>

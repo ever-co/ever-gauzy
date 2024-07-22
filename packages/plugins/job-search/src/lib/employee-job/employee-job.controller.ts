@@ -1,6 +1,6 @@
-import { Controller, HttpStatus, Get, Query, Post, Body, Param, Put, UseGuards } from '@nestjs/common';
+import { Controller, HttpStatus, Get, Query, Post, Body, Param, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { UpdateResult } from 'typeorm';
 import {
 	ID,
@@ -14,29 +14,18 @@ import {
 	IVisibilityJobPostInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import {
-	UUIDValidationPipe,
-	UseValidationPipe,
-	Permissions,
-	PaginationParams,
-	Employee,
-	TenantPermissionGuard,
-	PermissionGuard
-} from '@gauzy/core';
+import { UUIDValidationPipe, UseValidationPipe, Permissions, PaginationParams, Employee } from '@gauzy/core';
 import { EmployeeJobPostService } from './employee-job.service';
 import { EmployeeJobPost } from './employee-job.entity';
-import { UpdateEmployeeJobSearchStatusCommand } from './commands';
-import { GetEmployeeJobStatisticsQuery } from './queries';
+import { GetEmployeeJobStatisticsCommand, UpdateEmployeeJobSearchStatusCommand } from './commands';
 import { EmployeeJobStatisticDTO } from './dto';
 
 @ApiTags('EmployeeJobPost')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/employee-job')
 export class EmployeeJobPostController {
 	constructor(
 		private readonly _employeeJobPostService: EmployeeJobPostService,
-		private readonly _commandBus: CommandBus,
-		private readonly _queryBus: QueryBus
+		private readonly _commandBus: CommandBus
 	) {}
 
 	/**
@@ -55,7 +44,6 @@ export class EmployeeJobPostController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_JOB_SEARCH)
 	@Get('/')
 	async findAll(@Query() input: IGetEmployeeJobPostInput): Promise<IPagination<IEmployeeJobPost>> {
 		return await this._employeeJobPostService.findAll(input);
@@ -83,7 +71,7 @@ export class EmployeeJobPostController {
 	@Get('/statistics')
 	@UseValidationPipe({ transform: true })
 	async getEmployeeJobsStatistics(@Query() query: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
-		return await this._queryBus.execute(new GetEmployeeJobStatisticsQuery(query));
+		return await this._commandBus.execute(new GetEmployeeJobStatisticsCommand(query));
 	}
 
 	/**
@@ -104,14 +92,13 @@ export class EmployeeJobPostController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.PROFILE_EDIT)
 	@Put('/:id/job-search-status')
 	@UseValidationPipe({ whitelist: true })
 	async updateJobSearchStatus(
 		@Param('id', UUIDValidationPipe) employeeId: ID,
-		@Body() input: EmployeeJobStatisticDTO
+		@Body() data: EmployeeJobStatisticDTO
 	): Promise<IEmployee | UpdateResult> {
-		return await this._commandBus.execute(new UpdateEmployeeJobSearchStatusCommand(employeeId, input));
+		return await this._commandBus.execute(new UpdateEmployeeJobSearchStatusCommand(employeeId, data));
 	}
 
 	/**
@@ -130,9 +117,8 @@ export class EmployeeJobPostController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_JOB_APPLY)
-	@Post('/apply')
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
+	@Post('/apply')
 	async apply(@Body() input: IEmployeeJobApplication): Promise<IEmployeeJobApplicationAppliedResult | null> {
 		try {
 			// Apply for the job using the service
@@ -142,7 +128,7 @@ export class EmployeeJobPostController {
 			return appliedJobPost;
 		} catch (error) {
 			// Handle or log the error, depending on your application's needs
-			console.error('Error applying for a job:', error);
+			console.error(error);
 
 			// Return null or a custom error response
 			return null;
@@ -165,9 +151,8 @@ export class EmployeeJobPostController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.ORG_JOB_APPLY)
-	@Post('/updateApplied')
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
+	@Post('/updateApplied')
 	async updateApplied(@Body() input: IEmployeeJobApplication): Promise<IUpdateEmployeeJobPostAppliedResult | null> {
 		try {
 			// Update the job application status using the service
@@ -178,7 +163,7 @@ export class EmployeeJobPostController {
 			return updatedJobPost;
 		} catch (error) {
 			// Handle or log the error, depending on your application's needs
-			console.error('Error updating applied for a job:', error);
+			console.error(error);
 
 			// Return null or a custom error response
 			return null;
@@ -201,9 +186,8 @@ export class EmployeeJobPostController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Post('/hide')
-	@Permissions(PermissionsEnum.ORG_JOB_EDIT)
 	@UseValidationPipe() // Assuming ValidationPipe is configured appropriately
+	@Post('/hide')
 	async updateVisibility(@Body() data: IVisibilityJobPostInput): Promise<boolean | null> {
 		try {
 			// Update the job visibility status using the service
@@ -228,7 +212,6 @@ export class EmployeeJobPostController {
 	 * @returns A promise that resolves to the partial details of the created job application.
 	 */
 	@ApiOperation({ summary: 'Create employee job application record' })
-	@Permissions(PermissionsEnum.ORG_JOB_APPLY)
 	@Post('/pre-process')
 	async preProcessEmployeeJobApplication(
 		@Body() input: IEmployeeJobApplication
@@ -244,7 +227,7 @@ export class EmployeeJobPostController {
 			return createdJobApplication;
 		} catch (error) {
 			// Handle or log the error, depending on your application's needs
-			console.error('Error pre-processing employee job application:', error);
+			console.error(error);
 
 			// Return null or a custom error response
 			return null;
@@ -260,10 +243,9 @@ export class EmployeeJobPostController {
 	@ApiOperation({
 		summary: 'Get AI generated proposal for employee job application.'
 	})
-	@Permissions(PermissionsEnum.ORG_JOB_APPLY)
 	@Get('/application/:employeeJobApplicationId')
 	async getEmployeeJobApplication(
-		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: ID
+		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string
 	): Promise<void | null> {
 		try {
 			// Retrieve AI-generated proposal for the employee job application using the service
@@ -274,7 +256,7 @@ export class EmployeeJobPostController {
 			return proposal;
 		} catch (error) {
 			// Handle or log the error, depending on your application's needs
-			console.log('Error retrieving employee job application:', error);
+			console.error(error);
 
 			// Return null or a custom error response
 			return null;
@@ -290,7 +272,6 @@ export class EmployeeJobPostController {
 	@ApiOperation({
 		summary: 'Generate AI proposal for employee job application'
 	})
-	@Permissions(PermissionsEnum.ORG_JOB_APPLY)
 	@Post('/generate-proposal/:employeeJobApplicationId')
 	async generateAIProposal(
 		@Param('employeeJobApplicationId', UUIDValidationPipe) employeeJobApplicationId: string
@@ -304,7 +285,7 @@ export class EmployeeJobPostController {
 			return aiProposal;
 		} catch (error) {
 			// Handle or log the error, depending on your application's needs
-			console.log('Error generating AI proposal for employee job application:', error);
+			console.error(error);
 
 			// Return null or a custom error response
 			return null;

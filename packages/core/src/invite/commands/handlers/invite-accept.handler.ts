@@ -2,6 +2,7 @@ import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IInvite, IUser, RolesEnum } from '@gauzy/contracts';
+import { isNotEmpty } from '@gauzy/common';
 import { AuthService } from './../../../auth/auth.service';
 import { UserService } from './../../../user/user.service';
 import { EmployeeService } from './../../../employee/employee.service';
@@ -119,10 +120,10 @@ export class InviteAcceptHandler implements ICommandHandler<InviteAcceptCommand>
 
 			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
-				user: new User({
+				user: {
 					...user,
 					...(employee && { employee })
-				}),
+				},
 				token: access_token,
 				refresh_token: refresh_token
 			};

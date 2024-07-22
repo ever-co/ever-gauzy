@@ -418,19 +418,16 @@ export class TimeTrackingComponent
 	async getTasks(): Promise<void> {
 		if (this._isWindowHidden(Windows.TASKS)) return;
 
-		// Set loading state to true
-		this.tasksLoading = true;
-
 		try {
+			this.tasksLoading = true;
+
 			const request: IGetTasksStatistics = this.payloads$.getValue();
 			const take = 5;
 
-			// Fetch tasks statistics
-			this.tasks = await this._timesheetStatisticsService.getTasksStatistics({ ...request, take });
+			this.tasks = await this._timesheetStatisticsService.getTasks({ ...request, take });
 		} catch (error) {
 			this._toastrService.error(error.message || 'An error occurred while fetching tasks.');
 		} finally {
-			// Set loading state to false
 			this.tasksLoading = false;
 		}
 	}
@@ -617,10 +614,7 @@ export class TimeTrackingComponent
 			return;
 		}
 		try {
-			const people: IEmployee = await firstValueFrom(
-				this._employeesService.getEmployeeById(employee.id, ['user'])
-			);
-
+			const people = await firstValueFrom(this._employeesService.getEmployeeById(employee.id, ['user']));
 			this._store.selectedEmployee = employee.id
 				? ({
 						id: people.id,

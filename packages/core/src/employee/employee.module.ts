@@ -1,6 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { TimeLog } from './../core/entities/internal';
 import { Employee } from './employee.entity';
@@ -17,6 +18,7 @@ import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.reposi
 
 @Module({
 	imports: [
+		RouterModule.register([{ path: '/employee', module: EmployeeModule }]),
 		TypeOrmModule.forFeature([Employee, TimeLog]),
 		MikroOrmModule.forFeature([Employee, TimeLog]),
 		forwardRef(() => EmailSendModule),

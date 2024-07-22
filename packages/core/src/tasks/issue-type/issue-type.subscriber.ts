@@ -24,13 +24,13 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 	 */
 	async afterEntityLoad(entity: IssueType): Promise<void> {
 		try {
-			// Update the fullIconUrl if an icon is present
-			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
+			if (entity.image && entity.image.fullUrl) {
 				// Use the fullUrl from the image property if available
-				await this.setImageUrl(entity);
-			} else if (Object.prototype.hasOwnProperty.call(entity, 'icon')) {
+				entity.fullIconUrl = entity.image.fullUrl;
+			} else if (entity.icon) {
 				// Otherwise, generate the full URL for the icon
-				await this.setFullIconUrl(entity);
+				const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
+				entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
 			}
 		} catch (error) {
 			console.error('IssueTypeSubscriber: An error occurred during the afterEntityLoad process:', error);
@@ -58,49 +58,5 @@ export class IssueTypeSubscriber extends BaseEntityEventSubscriber<IssueType> {
 		} catch (error) {
 			console.error('IssueTypeSubscriber: An error occurred during the beforeEntityCreate process:', error);
 		}
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the full icon URL.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private async setFullIconUrl(entity: IssueType): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					// Otherwise, generate the full URL for the icon
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.fullIconUrl = await store.getProviderInstance().url(entity.icon);
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskPrioritySubscriber: Error during the setFullIconUrl process:', error);
-				reject(null);
-			}
-		});
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the image URL.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private setImageUrl(entity: IssueType): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.fullIconUrl = entity.image?.fullUrl ?? entity.fullIconUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('TaskPrioritySubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 }

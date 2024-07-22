@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Hinzugefügte Upwork-Transaktion",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Gesamtbetrag der Ausgaben erfolgreich: {{ totalExpenses }}. Gesamtbetrag der Einnahmen erfolgreich: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"TITLE": "Hubstaff is a tool that helps businesses to manage their remote teams efficiently. With features like time tracking, activity monitoring, and productivity measurement, Hubstaff allows companies to ensure that all team members are working effectively. Additionally, the software provides detailed reports and insights to help improve workflow and optimize resource allocation. By using Hubstaff, businesses can easily streamline their operations and enhance overall productivity.",
+			"NAME": "Hubstaff is a tool that helps businesses to manage their remote teams efficiently. With features like time tracking, activity monitoring, and productivity measurement, Hubstaff allows companies to ensure that all team members are working effectively. Additionally, the software provides detailed reports and insights to help improve workflow and optimize resource allocation. By using Hubstaff, businesses can easily streamline their operations and enhance overall productivity.",
 			"SELECT_ORGANIZATION": "Wählen Sie Organisation aus.",
 			"SYNCED_PROJECTS": "Projekte synchronisiert.",
 			"SETTINGS_UPDATED": "Aktualisierte Einstellungen für Integration.",

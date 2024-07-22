@@ -80,12 +80,10 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 				distinctUntilChange(),
 				pairwise(), // Pair each emitted value with the previous one
 				tap(([organization]: [IOrganization, IOrganization]) => {
-					const { id: organizationId, tenantId } = organization;
-
 					// Remove the specified menu items for previous selected organization
 					this._navMenuBuilderService.removeNavMenuItems(
 						// Define the base item IDs
-						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
+						this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organization.id}`),
 						'reports'
 					);
 				}),
@@ -183,13 +181,13 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			console.warn('Organization not defined. Unable to add/remove menu items.');
 			return;
 		}
-		const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId } = this.organization;
 
 		// Remove the specified menu items for current selected organization
 		// Note: We need to remove old menus before constructing new menus for the organization.
 		this._navMenuBuilderService.removeNavMenuItems(
 			// Define the base item IDs
-			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}-${tenantId}`),
+			this.getReportMenuBaseItemIds().map((itemId) => `${itemId}-${organizationId}`),
 			'reports'
 		);
 
@@ -301,7 +299,7 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 					link: '/pages/jobs/search', // The link where the menu item directs
 					data: {
 						translationKey: 'MENU.JOBS_SEARCH', // Key for translation (i18n)
-						permissionKeys: [PermissionsEnum.ORG_JOB_SEARCH] // Array of permission keys required for this item
+						permissionKeys: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW, PermissionsEnum.ORG_JOB_MATCHING_VIEW] // Array of permission keys required for this item
 					}
 				},
 				{
@@ -364,7 +362,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 			return;
 		}
 
-		const { id: organizationId, tenantId } = this.organization;
+		const { tenantId } = this.store.user;
+		const { id: organizationId } = this.organization;
+
 		await this.reportService.getReportMenuItems({ tenantId, organizationId });
 	}
 

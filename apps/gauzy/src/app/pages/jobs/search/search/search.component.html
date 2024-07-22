@@ -223,98 +223,80 @@
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
-
-<!-- Template for the table layout -->
 <ng-template #tableLayout>
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_SEARCH']">
-		<div class="table-scroll-container">
-			<ng-template [ngIf]="settingsSmartTable">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					(userRowSelect)="onSelectJob($event)"
-					[source]="smartTableSource"
-				></angular2-smart-table>
-			</ng-template>
-		</div>
-		<div class="pagination-container">
-			<ng-container *ngIf="smartTableSource">
-				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
-			</ng-container>
-		</div>
-	</ng-template>
-	<ng-template [ngxPermissionsExcept]="['ORG_JOB_SEARCH']">
-		<div>
-			<!-- Content to display if the user does not have 'canEditComponent' permission -->
-		</div>
-	</ng-template>
+	<div class="table-scroll-container">
+		<ng-template [ngIf]="settingsSmartTable">
+			<angular2-smart-table
+				style="cursor: pointer"
+				[settings]="settingsSmartTable"
+				(userRowSelect)="onSelectJob($event)"
+				[source]="smartTableSource"
+			></angular2-smart-table>
+		</ng-template>
+	</div>
+	<div class="pagination-container">
+		<ng-container *ngIf="smartTableSource">
+			<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+		</ng-container>
+	</div>
 </ng-template>
-
-<!-- Template for the action buttons -->
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW']">
 		<div class="btn-group actions">
-			<ng-template [ngxPermissionsOnly]="['ORG_JOB_SEARCH']">
-				<button status="basic" class="action secondary" size="small" (click)="viewJob()" nbButton>
-					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
-					<span> {{ 'JOBS.VIEW' | translate }} </span>
-				</button>
-			</ng-template>
-			<ng-template [ngxPermissionsOnly]="['ORG_JOB_APPLY']">
-				<button
-					size="small"
-					style="cursor: pointer"
-					status="basic"
-					class="action success"
-					(click)="applyToJobManually()"
-					nbButton
-				>
-					<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
-					<span>{{ 'JOBS.APPLY' | translate }}</span>
-				</button>
-				<button
-					size="small"
-					style="cursor: pointer"
-					status="basic"
-					class="action success"
-					(click)="applyToJobAutomatically()"
-					nbButton
-				>
-					<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
-					<span>{{ 'JOBS.APPLY_AUTO' | translate }}</span>
-				</button>
-				<button
-					size="small"
-					style="cursor: pointer"
-					status="basic"
-					class="action primary"
-					nbButton
-					(click)="appliedJob()"
-				>
-					<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
-					<span>{{ 'JOBS.APPLIED' | translate }}</span>
-				</button>
-			</ng-template>
-			<ng-template [ngxPermissionsOnly]="['ORG_JOB_EDIT']">
-				<button
-					style="cursor: pointer"
-					status="basic"
-					class="action warning"
-					size="small"
-					(click)="hideJob()"
-					[nbTooltip]="'JOBS.HIDE' | translate"
-					nbButton
-				>
-					<nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
-				</button>
-			</ng-template>
+			<button status="basic" class="action secondary" size="small" (click)="viewJob()" nbButton>
+				<nb-icon icon="eye-outline" pack="eva"></nb-icon>
+				<span> {{ 'JOBS.VIEW' | translate }} </span>
+			</button>
+			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action success"
+				(click)="applyToJobManually()"
+				nbButton
+			>
+				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
+				<span>{{ 'JOBS.APPLY' | translate }}</span>
+			</button>
+			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action success"
+				(click)="applyToJobAutomatically()"
+				nbButton
+			>
+				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
+				<span>{{ 'JOBS.APPLY_AUTO' | translate }}</span>
+			</button>
+			<button
+				size="small"
+				style="cursor: pointer"
+				status="basic"
+				class="action primary"
+				nbButton
+				(click)="appliedJob()"
+			>
+				<nb-icon icon="checkmark-outline" pack="eva"></nb-icon>
+				<span>{{ 'JOBS.APPLIED' | translate }}</span>
+			</button>
+			<button
+				style="cursor: pointer"
+				status="basic"
+				class="action warning"
+				size="small"
+				(click)="hideJob()"
+				[nbTooltip]="'JOBS.HIDE' | translate"
+				nbButton
+			>
+				<nb-icon icon="eye-off-outline" pack="eva"></nb-icon>
+			</button>
 		</div>
 	</ng-template>
 </ng-template>
 
-<!-- Template for the visible button -->
 <ng-template #visibleButton>
-	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EDIT']">
+	<ng-template ngxPermissionsOnly="ALL_ORG_VIEW">
 		<button
 			size="small"
 			status="basic"
@@ -333,7 +315,6 @@
 	</ng-template>
 </ng-template>
 
-<!-- Template for the sync button -->
 <ng-template #sync>
 	<div class="sync-container">
 		<nb-icon class="sync" icon="sync-outline" [ngClass]="{ spin: isRefresh }" size="small"></nb-icon>

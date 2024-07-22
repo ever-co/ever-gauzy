@@ -691,16 +691,3 @@ export function wrapSerialize<T extends object>(entity: T): T {
 	// If using MikroORM, use wrap(entity).toJSON() for serialization
 	return wrap(entity).toJSON() as T;
 }
-
-/**
- * Replace $ placeholders with ? for mysql, sqlite, and better-sqlite3
- * @param query - The SQL query with $ placeholders
- * @param dbType - The database type
- * @returns The SQL query with ? placeholders if applicable
- */
-export function replacePlaceholders(query: string, dbType: DatabaseTypeEnum): string {
-	if ([DatabaseTypeEnum.sqlite, DatabaseTypeEnum.betterSqlite3, DatabaseTypeEnum.mysql].includes(dbType)) {
-		return query.replace(/\$\d+/g, '?');
-	}
-	return query;
-}

@@ -61,7 +61,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	showOrganizationsSelector: boolean;
 	showProjectsSelector: boolean;
 	showTeamsSelector: boolean;
-	showDateSelector: boolean = true;
+
+	showDateSelector = true;
 	theme: string;
 	createQuickActionsMenu: NbMenuItem[];
 	supportContextMenu: NbMenuItem[];
@@ -205,90 +206,22 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 				this.selectedDateRange = dateRange;
 				this.subject$.next(true);
 			});
-
+		this.themeService
+			.onThemeChange()
+			.pipe(
+				tap((theme) => theme),
+				untilDestroyed(this)
+			)
+			.subscribe((theme) => {
+				this.theme = theme.name;
+				this.cd.detectChanges();
+			});
 		this._applyTranslationOnContextMenu();
 		this._loadContextMenus();
 		// -- setup shortcuts keyboards
 		this.setupShortcuts();
 	}
 
-	ngAfterViewInit(): void {
-		this.themeService
-			.onThemeChange()
-			.pipe(
-				tap((theme) => {
-					this.theme = theme.name;
-					this.cd.detectChanges();
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		this.organizationEditStore.organizationAction$
-			.pipe(
-				filter(({ action, organization }) => !!action && !!organization),
-				tap(() => this.organizationEditStore.destroy()),
-				untilDestroyed(this)
-			)
-			.subscribe(({ action }) => {
-				switch (action) {
-					case CrudActionEnum.CREATED:
-					case CrudActionEnum.UPDATED:
-					case CrudActionEnum.DELETED:
-						this.checkOrganizationSelectorVisibility();
-						break;
-				}
-			});
-		this.organizationTeamStore.organizationTeamAction$
-			.pipe(
-				filter(({ action, team }) => !!action && !!team),
-				tap(() => this.organizationTeamStore.destroy()),
-				untilDestroyed(this)
-			)
-			.subscribe(({ action }) => {
-				switch (action) {
-					case CrudActionEnum.CREATED:
-					case CrudActionEnum.UPDATED:
-					case CrudActionEnum.DELETED:
-						this.checkTeamSelectorVisibility();
-						break;
-				}
-			});
-		this.organizationProjectStore.organizationProjectAction$
-			.pipe(
-				filter(({ action, project }) => !!action && !!project),
-				tap(() => this.organizationProjectStore.destroy()),
-				untilDestroyed(this)
-			)
-			.subscribe(({ action }) => {
-				switch (action) {
-					case CrudActionEnum.CREATED:
-					case CrudActionEnum.UPDATED:
-					case CrudActionEnum.DELETED:
-						this.checkProjectSelectorVisibility();
-						break;
-				}
-			});
-		this.employeeStore.employeeAction$
-			.pipe(
-				filter(({ action, employees }) => !!action && !!employees),
-				tap(() => this.employeeStore.destroy()),
-				untilDestroyed(this)
-			)
-			.subscribe(({ action }) => {
-				switch (action) {
-					case CrudActionEnum.CREATED:
-					case CrudActionEnum.UPDATED:
-					case CrudActionEnum.DELETED:
-						this.checkEmployeeSelectorVisibility();
-						break;
-				}
-			});
-		this.cd.detectChanges();
-	}
-
-	/**
-	 * Setup shortcuts
-	 */
 	private setupShortcuts() {
 		// -- register the default shortcuts
 		this.registerDefaultShortcuts();
@@ -317,12 +250,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		);
 	}
 
-	/**
-	 * Pressed keys to string
-	 *
-	 * @param handler
-	 * @returns
-	 */
 	private pressedKeysToString(handler: HotkeysEvent): string {
 		return handler.keys
 			.map((keyNum) => {
@@ -333,20 +260,12 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.join('+');
 	}
 
-	/**
-	 * Register shortcut
-	 * @param keys
-	 * @param action
-	 */
 	private registerShortcut(keys: string, action: () => void) {
 		this.shortcutsMap.set(keys.toLowerCase(), action);
 		hotkeys(keys, 'defaultShortcuts', () => {});
 		hotkeys.setScope('defaultShortcuts');
 	}
 
-	/**
-	 * Register default shortcuts
-	 */
 	private registerDefaultShortcuts() {
 		// -- Toggle QuickActions Dialog
 		this.registerShortcut(this.defaultShortcuts.quickActions, () => this.toggleQuickActionsDialog());
@@ -406,11 +325,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
-	/**
-	 *
-	 * @param value
-	 * @returns
-	 */
 	private formatShortcut(value: string): string {
 		return value
 			.split('+')
@@ -418,19 +332,11 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 			.join(' + ');
 	}
 
-	/**
-	 * Navigate to
-	 *
-	 * @param action
-	 */
 	private navigateTo(action: string) {
 		const itemMenu = this.createQuickActionsMenu.find((item: NbMenuItem) => item?.data?.action === action);
 		itemMenu ? this.router.navigate([itemMenu.link], { queryParams: { ...itemMenu.queryParams } }) : null;
 	}
 
-	/**
-	 * Open quick actions
-	 */
 	openQuickActions() {
 		this.quickActionsRef = this.dialogService.open(QuickActionsComponent, {
 			context: {
@@ -449,8 +355,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 *
 	 * @returns
 	 */
-	async checkProjectSelectorVisibility() {
-		// Hidden project selector if not activate for current page
+	checkProjectSelectorVisibility() {
+		// hidden project selector if not activate for current page
 		if (
 			!this.organization ||
 			!this.selectorsVisibility.project ||
@@ -458,18 +364,17 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		) {
 			return;
 		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		// Extract organization and tenant IDs
-		const { id: organizationId, tenantId } = this.organization;
-
-		// Get project count
-		const count = await this.organizationProjectsService.getCount({
-			organizationId,
-			tenantId
-		});
-
-		//	Show project selector if count > 0
-		this.showProjectsSelector = count > 0;
+		this.organizationProjectsService
+			.getCount({
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showProjectsSelector = count > 0;
+			});
 	}
 
 	/**
@@ -477,7 +382,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 *
 	 * @returns
 	 */
-	async checkTeamSelectorVisibility() {
+	checkTeamSelectorVisibility() {
 		// hidden team selector if not activate for current page
 		if (
 			!this.organization ||
@@ -486,18 +391,17 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		) {
 			return;
 		}
+		const { id: organizationId } = this.organization;
+		const { tenantId } = this.store.user;
 
-		// Extract organization and tenant IDs
-		const { id: organizationId, tenantId } = this.organization;
-
-		// Get team count
-		const count = await this.organizationTeamsService.getCount({
-			organizationId,
-			tenantId
-		});
-
-		// Show team selector if count > 0
-		this.showTeamsSelector = count > 0;
+		this.organizationTeamsService
+			.getCount({
+				organizationId,
+				tenantId
+			})
+			.then((count) => {
+				this.showTeamsSelector = count > 0;
+			});
 	}
 
 	/**
@@ -510,45 +414,30 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		if (!this.organization || !this.selectorsVisibility.employee) {
 			return;
 		}
-
 		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			const { id: organizationId, tenantId } = this.organization;
-
-			// Get employee count
+			const { id: organizationId } = this.organization;
+			const { tenantId } = this.store.user;
 			const { total: employeeCount } = await this.employeesService.getWorkingCount(
 				organizationId,
 				tenantId,
 				this.selectedDateRange
 			);
-
-			// If employee count > 0, show employees selector
 			this.showEmployeesSelector = employeeCount > 0;
-
-			// If no employee selected and employee count > 0, set selected employee to ALL_EMPLOYEES_SELECTED
 			if (this.showEmployeesSelector && !this.store.selectedEmployee) {
 				this.store.selectedEmployee = ALL_EMPLOYEES_SELECTED;
 			}
 		} else {
-			// If employee is not selected, get the first employee
 			if (this.isEmployee) {
-				const { id: employeeId } = this.user.employee;
-
-				if (employeeId) {
-					// Get employee by ID
-					const employee: IEmployee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId));
-
-					// If employee found, set selected employee
-					if (isNotEmpty(employee)) {
-						this.store.selectedEmployee = {
-							id: employee.id,
-							firstName: this.user.firstName,
-							lastName: this.user.lastName,
-							fullName: this.user.name,
-							imageUrl: this.user.imageUrl
-						};
-					} else {
-						this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
-					}
+				const { employeeId } = this.user;
+				const employee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId));
+				if (isNotEmpty(employee)) {
+					this.store.selectedEmployee = {
+						id: employee.id,
+						firstName: this.user.firstName,
+						lastName: this.user.lastName,
+						fullName: this.user.name,
+						imageUrl: this.user.imageUrl
+					};
 				} else {
 					this.store.selectedEmployee = NO_EMPLOYEE_SELECTED;
 				}
@@ -556,9 +445,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
-	/**
-	 * Check organization selector visibility
-	 */
 	async checkOrganizationSelectorVisibility() {
 		// hidden organization selector if not activate for current page
 
@@ -585,17 +471,76 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
-	/**
-	 * Toggle timer window
-	 */
+	ngAfterViewInit(): void {
+		this.organizationEditStore.organizationAction$
+			.pipe(
+				filter(({ action, organization }) => !!action && !!organization),
+				tap(() => this.organizationEditStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkOrganizationSelectorVisibility();
+						break;
+				}
+			});
+
+		this.organizationTeamStore.organizationTeamAction$
+			.pipe(
+				filter(({ action, team }) => !!action && !!team),
+				tap(() => this.organizationTeamStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkTeamSelectorVisibility();
+						break;
+				}
+			});
+
+		this.organizationProjectStore.organizationProjectAction$
+			.pipe(
+				filter(({ action, project }) => !!action && !!project),
+				tap(() => this.organizationProjectStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkProjectSelectorVisibility();
+						break;
+				}
+			});
+		this.employeeStore.employeeAction$
+			.pipe(
+				filter(({ action, employees }) => !!action && !!employees),
+				tap(() => this.employeeStore.destroy()),
+				untilDestroyed(this)
+			)
+			.subscribe(({ action }) => {
+				switch (action) {
+					case CrudActionEnum.CREATED:
+					case CrudActionEnum.UPDATED:
+					case CrudActionEnum.DELETED:
+						this.checkEmployeeSelectorVisibility();
+						break;
+				}
+			});
+		this.cd.detectChanges();
+	}
+
 	toggleTimerWindow() {
 		this.timeTrackerService.showTimerWindow = !this.timeTrackerService.showTimerWindow;
 	}
 
-	/**
-	 * Toggle sidebar actions
-	 * @param item
-	 */
 	toggleSidebarActions(item: ISidebarActionConfig) {
 		const sidebar = this.navigationBuilderService.getSidebarById(item.id);
 		if (this.showExtraActions) {
@@ -606,10 +551,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
-	/**
-	 * Toggle sidebar
-	 * @returns
-	 */
 	toggleSidebar(): boolean {
 		if (this.showExtraActions) {
 			this.toggleExtraActions(false);
@@ -621,21 +562,13 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		return false;
 	}
 
-	/**
-	 * Navigate home
-	 * @returns
-	 */
 	navigateHome() {
 		//this.menuService.navigateHome();
 		return false;
 	}
 
-	/**
-	 *
-	 * @param event
-	 */
 	closeExtraActionsIfLarge(event?: any) {
-		let width: number;
+		let width;
 
 		if (event !== undefined) {
 			width = event.target.innerWidth;
@@ -648,17 +581,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		}
 	}
 
-	/**
-	 * Toggle extra actions
-	 * @param bool
-	 */
 	toggleExtraActions(bool?: boolean) {
 		this.showExtraActions = bool !== undefined ? bool : !this.showExtraActions;
 	}
 
-	/**
-	 * Load context menus
-	 */
 	private _loadContextMenus() {
 		this.supportContextMenu = [
 			{
@@ -1203,9 +1129,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		];
 	}
 
-	/**
-	 * Apply translation on context menu
-	 */
 	private _applyTranslationOnContextMenu() {
 		this.translate.onLangChange
 			.pipe(
@@ -1252,10 +1175,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		return isTrackingEnabled && hasPermission && !isElectron;
 	}
 
-	/**
-	 * On collapse
-	 * @param event
-	 */
 	onCollapse(event: boolean) {
 		this.isCollapse = event;
 	}
