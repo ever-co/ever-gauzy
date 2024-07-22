@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId } from 'typeorm';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
+import { ID, IImageAsset, IIssueType, IOrganizationProject, IOrganizationTeam } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	OrganizationProject,
@@ -87,7 +87,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@RelationId((it: IssueType) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/**
 	 * Organization Project
@@ -103,7 +103,7 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@RelationId((it: IssueType) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 
 	/**
 	 * Organization Team
@@ -119,5 +119,5 @@ export class IssueType extends TenantOrganizationBaseEntity implements IIssueTyp
 	@RelationId((it: IssueType) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 }

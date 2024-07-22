@@ -15,7 +15,7 @@ import { HubstaffService } from './hubstaff.service';
 
 @ApiTags('Hubstaff Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/hubstaff')
 export class HubstaffController {
 	constructor(private readonly _hubstaffService: HubstaffService) {}

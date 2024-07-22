@@ -1,7 +1,7 @@
-import { IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
+import { ID, IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
@@ -9,13 +9,22 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-o
 @MultiORMEntity('organization_team_employee', { mikroOrmRepository: () => MikroOrmOrganizationTeamEmployeeRepository })
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
 	/**
-	 * enabled / disabled time tracking feature for team member
+	 * Enabled / Disabled Time Tracking Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: Boolean, nullable: true, default: true })
 	public isTrackingEnabled?: boolean;
+
+	/**
+	 * Organization Team Employee Order
+	 */
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ nullable: true })
+	public order: number;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -39,7 +48,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@RelationId((it: OrganizationTeamEmployee) => it.activeTask)
 	@ColumnIndex()
 	@MultiORMColumn({ type: String, nullable: true, relationId: true })
-	public activeTaskId?: ITask['id'];
+	public activeTaskId?: ID;
 
 	/**
 	 * OrganizationTeam
@@ -57,7 +66,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@RelationId((it: OrganizationTeamEmployee) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	public organizationTeamId: IOrganizationTeam['id'];
+	public organizationTeamId: ID;
 
 	/**
 	 * Employee
@@ -73,7 +82,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@RelationId((it: OrganizationTeamEmployee) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	public employeeId: IEmployee['id'];
+	public employeeId: ID;
 
 	/**
 	 * Role
@@ -94,10 +103,5 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 	@RelationId((it: OrganizationTeamEmployee) => it.role)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	public roleId?: IRole['id'];
-
-	@ApiPropertyOptional({ type: () => Number })
-	@IsOptional()
-	@MultiORMColumn({ nullable: true })
-	public order: number;
+	public roleId?: ID;
 }

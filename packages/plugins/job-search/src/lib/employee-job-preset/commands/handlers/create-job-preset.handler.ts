@@ -8,12 +8,11 @@ import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../reposi
 
 @CommandHandler(CreateJobPresetCommand)
 export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCommand> {
-
 	constructor(
 		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
-	) { }
+	) {}
 
 	/**
 	 * Executes the command to create a job preset.
@@ -25,7 +24,7 @@ export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCo
 		const { input } = command;
 
 		// Set tenantId
-		input.tenantId = RequestContext.currentTenantId();
+		input.tenantId = RequestContext.currentTenantId() || input.tenantId;
 
 		// Set organizationId if not provided in the input
 		if (!input.organizationId) {
@@ -44,11 +43,12 @@ export class CreateJobPresetHandler implements ICommandHandler<CreateJobPresetCo
 		// Prepare job preset criteria
 		let jobPresetCriterion: JobPresetUpworkJobSearchCriterion[] = [];
 		if (input.jobPresetCriterions && input.jobPresetCriterions.length > 0) {
-			jobPresetCriterion = input.jobPresetCriterions.map((criterion) =>
-				new JobPresetUpworkJobSearchCriterion({
-					...criterion,
-					jobPresetId: jobPreset.id
-				})
+			jobPresetCriterion = input.jobPresetCriterions.map(
+				(criterion) =>
+					new JobPresetUpworkJobSearchCriterion({
+						...criterion,
+						jobPresetId: jobPreset.id
+					})
 			);
 
 			// Delete existing job preset criteria

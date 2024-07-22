@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Toegevoegde Upwork-transactie",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Totale uitgavetransacties succesvol: {{ totalExpenses }}. Totale inkomstentransacties succesvol: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff",
+			"TITLE": "Hubstaff",
 			"SELECT_ORGANIZATION": "Selecteer organisatie",
 			"SYNCED_PROJECTS": "Projecten gesynchroniseerd",
 			"SETTINGS_UPDATED": "Bijgewerkte instellingen voor integratie",

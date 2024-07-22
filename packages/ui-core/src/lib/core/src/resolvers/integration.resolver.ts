@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
-import { catchError, EMPTY, Observable } from 'rxjs';
+import { catchError, EMPTY, Observable, of } from 'rxjs';
 import { IIntegrationTenant } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/common';
-import { IntegrationsService } from '@gauzy/ui-core/core';
+import { IntegrationsService } from '../services';
 
 @Injectable({
 	providedIn: 'root'
@@ -27,24 +27,31 @@ export class IntegrationResolver implements Resolve<Observable<IIntegrationTenan
 	 */
 	resolve(route: ActivatedRouteSnapshot): Observable<IIntegrationTenant | boolean> {
 		try {
-			const integration = route.data['integration'];
+			// Get Integration By Options
+			const name = route.data['integration'];
 			const relations = route.data['relations'] || [];
 
+			//Get Organization Details
 			const { id: organizationId, tenantId } = this._store.selectedOrganization;
 
-			return this._integrationsService
-				.getIntegrationByOptions({
-					organizationId,
-					tenantId,
-					name: integration,
-					relations
+			if (!organizationId) {
+				return of(null);
+			}
+
+			// Get Integration By Options
+			const integration$ = this._integrationsService.getIntegrationByOptions({
+				organizationId,
+				tenantId,
+				name,
+				relations
+			});
+
+			return integration$.pipe(
+				catchError(() => {
+					this._router.navigate(['/pages/integrations/new']);
+					return EMPTY;
 				})
-				.pipe(
-					catchError(() => {
-						this._router.navigate(['/pages/integrations/new']);
-						return EMPTY;
-					})
-				);
+			);
 		} catch (error) {
 			this._router.navigate(['/pages/integrations/new']);
 		}

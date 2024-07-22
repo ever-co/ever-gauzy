@@ -32,7 +32,7 @@ import { UpworkService } from './upwork.service';
 
 @ApiTags('Upwork Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integrations/upwork')
 export class UpworkController {
 	constructor(

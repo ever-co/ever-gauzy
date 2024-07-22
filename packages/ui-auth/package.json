@@ -31,6 +31,13 @@
 	"dependencies": {
 		"tslib": "^2.6.2"
 	},
+	"devDependencies": {
+		"@types/jest": "^29.4.4",
+		"@types/node": "^20.14.9",
+		"rimraf": "^3.0.2",
+		"typescript": "5.1.6",
+		"jest-preset-angular": "^13.1.4"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"

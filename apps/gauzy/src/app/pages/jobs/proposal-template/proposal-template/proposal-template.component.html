@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="card-header-title">
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -23,18 +19,12 @@
 			></ngx-gauzy-button-action>
 		</div>
 		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
-			<nb-tab
-				[tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate"
-				[tabId]="proposalTemplateTabsEnum.ACTIONS"
-			>
+			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate" [tabId]="proposalTemplateTabsEnum.ACTIONS">
 				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
 			</nb-tab>
-			<nb-tab
-				[tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate"
-				[tabId]="proposalTemplateTabsEnum.SEARCH"
-			>
+			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate" [tabId]="proposalTemplateTabsEnum.SEARCH">
 				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH">
 					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
 				</ng-container>
@@ -42,11 +32,7 @@
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+<ng-template #actionButtons let-buttonSize="buttonSize">
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 			<button
@@ -89,32 +75,36 @@
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
-			<button
-				nbButton
-				status="basic"
-				(click)="makeDefaultTemplate()"
-				class="mr-2"
-				class="action primary"
-				size="small"
-			>
-				{{
-					(!isDefault
-						? 'BUTTONS.MAKE_DEFAULT'
-						: 'BUTTONS.REMOVE_DEFAULT'
-					) | translate
-				}}
-			</button>
+			<ng-template [ngIf]="selectedItem?.isDefault" [ngIfElse]="makeDefaultTemplateButton">
+				<button
+					nbButton
+					status="basic"
+					(click)="makeDefaultTemplate({ isDefault: false })"
+					class="mr-2"
+					class="action primary"
+					size="small"
+				>
+					{{ 'BUTTONS.REMOVE_DEFAULT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template #makeDefaultTemplateButton>
+				<button
+					nbButton
+					status="basic"
+					(click)="makeDefaultTemplate({ isDefault: true })"
+					class="mr-2"
+					class="action primary"
+					size="small"
+				>
+					{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+				</button>
+			</ng-template>
 		</ng-template>
 	</div>
 </ng-template>
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="createProposalTemplate()"
-		>
+		<button nbButton status="success" size="small" (click)="createProposalTemplate()">
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
@@ -132,9 +122,7 @@
 		</div>
 		<div class="pagination-container">
 			<ng-container *ngIf="smartTableSource">
-				<ngx-pagination
-					[source]="smartTableSource"
-				></ngx-pagination>
+				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 			</ng-container>
 		</div>
 	</ng-template>

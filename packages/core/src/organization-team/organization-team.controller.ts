@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, IPagination, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { PermissionsEnum, IPagination, IOrganizationTeam, IUser, ID } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
@@ -126,12 +126,10 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Get(':id')
 	@UseValidationPipe({ transform: true })
 	async findById(
-		@Param('id', UUIDValidationPipe) id: IOrganizationTeam['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() options: OrganizationTeamStatisticDTO
 	): Promise<IOrganizationTeam> {
-		return await this._queryBus.execute(
-			new GetOrganizationTeamStatisticQuery(id, options)
-		);
+		return await this._queryBus.execute(new GetOrganizationTeamStatisticQuery(id, options));
 	}
 
 	/**
@@ -154,9 +152,7 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 	@Post()
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateOrganizationTeamDTO): Promise<IOrganizationTeam> {
-		return await this._commandBus.execute(
-			new OrganizationTeamCreateCommand(entity)
-		);
+		return await this._commandBus.execute(new OrganizationTeamCreateCommand(entity));
 	}
 
 	/**
