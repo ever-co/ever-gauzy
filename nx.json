@@ -18,7 +18,12 @@
 		"default": {
 			"runner": "nx-cloud",
 			"options": {
-				"cacheableOperations": ["build", "lint", "test", "e2e"],
+				"cacheableOperations": [
+					"build",
+					"lint",
+					"test",
+					"e2e"
+				],
 				"parallel": 1,
 				"accessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU="
 			}
@@ -61,6 +66,7 @@
 		"@nrwl/angular:library": {
 			"linter": "eslint",
 			"unitTestRunner": "jest",
+			"buildable": true,
 			"style": "scss"
 		}
 	},

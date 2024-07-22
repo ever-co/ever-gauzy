@@ -1,36 +1,25 @@
-import {
-	Component,
-	OnInit,
-	ChangeDetectionStrategy,
-	ViewChild,
-	ElementRef,
-	NgZone,
-	AfterViewInit,
-	Optional,
-	Inject
-} from '@angular/core';
-import { TimeTrackerService } from '../time-tracker/time-tracker.service';
-import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { ElectronService } from '../electron/services';
-import { BehaviorSubject, Observable, filter, tap, firstValueFrom, from } from 'rxjs';
-import { AboutComponent } from '../dialogs/about/about.component';
-import { SetupService } from '../setup/setup.service';
-import * as moment from 'moment';
-import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AuthStrategy } from '../auth';
-import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
-import { TranslateService } from '@ngx-translate/core';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { GAUZY_ENV } from '../constants';
+import { AfterViewInit, Component, ElementRef, Inject, NgZone, OnInit, Optional, ViewChild } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS, LanguagesEnum } from '@gauzy/contracts';
+import { NbDialogService, NbToastrService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
+import { BehaviorSubject, Observable, filter, firstValueFrom, from, tap } from 'rxjs';
+import { AuthStrategy } from '../auth';
+import { GAUZY_ENV } from '../constants';
+import { AboutComponent } from '../dialogs/about/about.component';
+import { ElectronService } from '../electron/services';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
+import { SetupService } from '../setup/setup.service';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-settings',
 	templateUrl: './settings.component.html',
 	styleUrls: ['./settings.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
 	styles: [
 		`
 			:host nb-tab {
@@ -571,12 +560,18 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 					await this.getUserDetails();
 				}
 				this.menus = this.isServer
-					? ['TIMER_TRACKER.SETTINGS.UPDATE', 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS', 'MENU.ABOUT']
+					? [
+							'TIMER_TRACKER.SETTINGS.UPDATE',
+							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+							'TIMER_TRACKER.SETTINGS.PLUGINS',
+							'MENU.ABOUT'
+					  ]
 					: [
 							...(auth && auth.allowScreenshotCapture ? ['TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'] : []),
 							'TIMER_TRACKER.TIMER',
 							'TIMER_TRACKER.SETTINGS.UPDATE',
 							'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS',
+							'TIMER_TRACKER.SETTINGS.PLUGINS',
 							'MENU.ABOUT'
 					  ];
 				const lastMenu =

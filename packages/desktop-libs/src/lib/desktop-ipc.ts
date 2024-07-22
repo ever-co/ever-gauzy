@@ -1,23 +1,23 @@
-import { BrowserWindow, ipcMain, screen, desktopCapturer, app, systemPreferences } from 'electron';
-import TimerHandler from './desktop-timer';
-import moment from 'moment';
-import { LocalStore } from './desktop-store';
-import { notifyScreenshot, takeshot } from './desktop-screenshot';
-import { resetPermissions } from 'mac-screen-capture-permissions';
-import * as _ from 'underscore';
+import { IActivityWatchEventResult } from '@gauzy/contracts';
 import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
-import NotificationDesktop from './desktop-notifier';
-import { DesktopPowerManager } from './desktop-power-manager';
-import { PowerManagerPreventDisplaySleep, PowerManagerDetectInactivity } from './decorators';
-import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
-import { DesktopOfflineModeHandler, IntervalTO } from './offline';
-import { Interval, IntervalService, Timer, TimerService, TimerTO, UserService } from './offline';
-import { DialogStopTimerLogoutConfirmation } from './decorators';
-import { DesktopDialog } from './desktop-dialog';
-import { TranslateService } from './translation';
-import { IPowerManager, IDesktopEvent } from './interfaces';
+import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
+import log from 'electron-log';
+import { resetPermissions } from 'mac-screen-capture-permissions';
+import moment from 'moment';
+import * as _ from 'underscore';
 import { SleepInactivityTracking } from './contexts';
-import { RemoteSleepTracking } from './strategies';
+import {
+	DialogStopTimerLogoutConfirmation,
+	PowerManagerDetectInactivity,
+	PowerManagerPreventDisplaySleep
+} from './decorators';
+import { DesktopDialog } from './desktop-dialog';
+import NotificationDesktop from './desktop-notifier';
+import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
+import { DesktopPowerManager } from './desktop-power-manager';
+import { notifyScreenshot, takeshot } from './desktop-screenshot';
+import { LocalStore } from './desktop-store';
+import TimerHandler from './desktop-timer';
 import { UIError } from './error-handler';
 import {
 	ActivityWatchAfkService,
@@ -25,11 +25,23 @@ import {
 	ActivityWatchEventManager,
 	ActivityWatchEventTableList
 } from './integrations';
-import { IActivityWatchEventResult } from '@gauzy/contracts';
+import { IDesktopEvent, IPowerManager } from './interfaces';
+import {
+	DesktopOfflineModeHandler,
+	Interval,
+	IntervalService,
+	IntervalTO,
+	Timer,
+	TimerService,
+	TimerTO,
+	UserService
+} from './offline';
+import { pluginListeners } from './plugin-system';
+import { RemoteSleepTracking } from './strategies';
+import { TranslateService } from './translation';
 
 const timerHandler = new TimerHandler();
 
-import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -343,6 +355,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.error('Error on finish synced timer', error);
 		}
 	});
+
+	pluginListeners();
 }
 
 function isScreenUnauthorized() {
