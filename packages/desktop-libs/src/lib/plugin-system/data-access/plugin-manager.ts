@@ -99,19 +99,17 @@ export class PluginManager implements IPluginManager {
 			plugin.dispose();
 			plugin.deactivate();
 			this.activePlugins.delete(name);
-			await this.pluginMetadataService.update({ name: name, isActivate: false });
+			await this.pluginMetadataService.update({ name, isActivate: false });
 		}
 	}
 
 	public async uninstallPlugin(name: string): Promise<void> {
-		const metadata = await this.pluginMetadataService.findOne({ name: name });
+		const metadata = await this.pluginMetadataService.findOne({ name });
 		const plugin = this.plugins.get(name);
 		if (plugin) {
 			await this.deactivatePlugin(name);
-			plugin.dispose();
 			this.plugins.delete(name);
-			this.activePlugins.delete(name);
-			fs.unlinkSync(metadata.pathname);
+			fs.rmdirSync(metadata.pathname, { recursive: true });
 			logger.info(`Uninstalling plugin ${name}`);
 			await this.pluginMetadataService.delete({ name });
 		}
