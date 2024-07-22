@@ -355,6 +355,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			log.error('Error on finish synced timer', error);
 		}
 	});
+
+	pluginListeners();
 }
 
 function isScreenUnauthorized() {
@@ -1304,5 +1306,3 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 
 	return false;
 }
-
-app.whenReady().then(pluginListeners);
