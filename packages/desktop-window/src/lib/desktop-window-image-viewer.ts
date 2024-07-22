@@ -1,9 +1,13 @@
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
-
 
 export async function createImageViewerWindow(imageViewWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();

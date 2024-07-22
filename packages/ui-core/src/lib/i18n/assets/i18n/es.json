@@ -1183,7 +1183,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Añadida transacción de Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Transacción total de gastos exitosas: {{ totalExpenses }}. Transacción total de ingresos exitosas: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff es un software de seguimiento de tiempo y productividad para equipos remotos. Permite a los gerentes y empleados controlar y registrar con precisión el tiempo de trabajo, llevar registros de actividades y monitorear la productividad en tiempo real. También ofrece funciones de informes detallados, integraciones con otras herramientas y seguimiento de proyectos. Hubstaff ayuda a optimizar la gestión de equipos y mejorar la eficiencia en entornos de trabajo remotos.",
+			"TITLE": "Hubstaff es un software de seguimiento de tiempo y productividad para equipos remotos. Permite a los gerentes y empleados controlar y registrar con precisión el tiempo de trabajo, llevar registros de actividades y monitorear la productividad en tiempo real. También ofrece funciones de informes detallados, integraciones con otras herramientas y seguimiento de proyectos. Hubstaff ayuda a optimizar la gestión de equipos y mejorar la eficiencia en entornos de trabajo remotos.",
 			"SELECT_ORGANIZATION": "Seleccionar Organización",
 			"SYNCED_PROJECTS": "Proyectos sincronizados",
 			"SETTINGS_UPDATED": "Configuraciones actualizadas para la integración",

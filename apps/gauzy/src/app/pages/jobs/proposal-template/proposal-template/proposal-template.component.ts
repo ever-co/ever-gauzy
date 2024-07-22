@@ -10,6 +10,7 @@ import { Cell } from 'angular2-smart-table';
 import {
 	IEmployee,
 	IEmployeeProposalTemplate,
+	IEmployeeProposalTemplateMakeDefaultInput,
 	IOrganization,
 	ISelectedEmployee,
 	PermissionsEnum
@@ -44,7 +45,6 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	public smartTableSource: ServerDataSource;
 	public selectedEmployee: ISelectedEmployee;
 	public selectedItem: any;
-	public isDefault: boolean = false;
 	public proposalTemplateTabsEnum = ProposalTemplateTabsEnum;
 	public templates$: Subject<any> = new Subject();
 	public organization: IOrganization;
@@ -241,9 +241,6 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 		// Update the selectedItem property based on the isSelected value
 		this.selectedItem = isSelected ? data : null;
-
-		// Update the isDefault property based on the isDefault value of the selectedItem
-		this.isDefault = this.selectedItem?.isDefault;
 	}
 
 	/**
@@ -324,9 +321,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	async createProposalTemplate(): Promise<void> {
 		// Open a dialog for adding/editing a proposal template
 		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
-			context: {
-				selectedEmployee: this.selectedEmployee
-			}
+			context: { selectedEmployee: this.selectedEmployee }
 		});
 
 		// Wait for the dialog to close and get the result
@@ -374,9 +369,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 		// Open the dialog for user confirmation
 		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
-			context: {
-				recordType: 'Proposal'
-			}
+			context: { recordType: 'Proposal' }
 		});
 
 		// Wait for the dialog to close and get the result
@@ -411,34 +404,28 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	/**
 	 * Updates the default status of the selected proposal template.
 	 */
-	async makeDefaultTemplate(selectedItem?: IEmployeeProposalTemplate): Promise<void> {
-		// If a proposal template item is selected, mark it as selected
-		if (selectedItem) {
-			this.selectProposalTemplate({
-				isSelected: true,
-				data: selectedItem
-			});
-		}
-
+	async makeDefaultTemplate(input: IEmployeeProposalTemplateMakeDefaultInput): Promise<void> {
 		try {
 			if (!this.selectedItem) {
 				return;
 			}
 
-			const { id: proposalTemplateId } = this.selectedItem;
+			const { id: proposalTemplateId, organizationId, tenantId } = this.selectedItem;
 
 			// Call the makeDefault method of the proposalTemplateService to update the default status
-			const data = await this.proposalTemplateService.makeDefault(proposalTemplateId);
+			const result = await this.proposalTemplateService.makeDefault(proposalTemplateId, {
+				isDefault: input.isDefault,
+				organizationId,
+				tenantId
+			});
 
 			// Determine the success message based on whether the template is set as default or not
-			const successMessage = data.isDefault
+			const successMessage = result.isDefault
 				? 'PROPOSAL_TEMPLATE.PROPOSAL_MAKE_DEFAULT_MESSAGE'
 				: 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
 
 			// Display a success message using the toastrService
-			this.toastrService.success(successMessage, {
-				name: this.selectedItem.name
-			});
+			this.toastrService.success(successMessage, { name: this.selectedItem.name });
 		} catch (error) {
 			// Handle errors during the process
 			this.errorHandler.handleError(error);

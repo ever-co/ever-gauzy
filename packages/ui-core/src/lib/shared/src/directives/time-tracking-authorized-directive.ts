@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Directive, Input, OnInit, TemplateRef, ViewContainerRef } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as camelCase from 'camelcase';
+import camelcase from 'camelcase';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 
@@ -38,10 +38,10 @@ export class TimeTrackingAuthorizedDirective implements OnInit {
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
-				filter((organization: IOrganization) => camelCase(this.permission) in organization),
+				filter((organization: IOrganization) => camelcase(this.permission) in organization),
 				tap(() => this._viewContainer.clear()),
 				tap((organization: IOrganization) => {
-					if (organization[camelCase(this.permission)]) {
+					if (organization[camelcase(this.permission)]) {
 						this._viewContainer.createEmbeddedView(this._templateRef);
 					} else {
 						this.showTemplateBlockInView(this.permissionElse);

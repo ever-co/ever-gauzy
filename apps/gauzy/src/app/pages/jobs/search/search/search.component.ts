@@ -31,7 +31,8 @@ import {
 	PermissionsEnum,
 	IEmployee,
 	IIntegrationEntitySetting,
-	IntegrationEntity
+	IntegrationEntity,
+	IEmployeeProposalTemplate
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-core/core';
 import {
@@ -141,7 +142,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 			.pipe(
 				debounceTime(100),
 				tap(() => this.onSelectJob({ isSelected: false, data: null })),
-				tap(async () => await this.getEmployeesJob()),
+				tap(async () => await this.getEmployeeJobs()),
 				tap(() => (this.isRefresh = false)),
 				untilDestroyed(this)
 			)
@@ -190,7 +191,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	 * @param {IJobMatchings} job - The job matching object containing employeeId.
 	 * @returns {Promise<any>} A promise resolving to the default proposal template or null if not found.
 	 */
-	async getEmployeeDefaultProposalTemplate(job: IJobMatchings): Promise<any> {
+	async getEmployeeDefaultProposalTemplate(job: IJobMatchings): Promise<IEmployeeProposalTemplate | null> {
 		// Check if organization context is available
 		if (!this.organization) {
 			return null;
@@ -585,9 +586,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 		}
 	}
 
+	/**
+	 * Loads smart table settings.
+	 */
 	private _loadSmartTableSettings() {
 		const self: SearchComponent = this;
-		console.log(this.selectedEmployee?.id);
 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
@@ -670,10 +673,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	}
 
 	/**
-	 *
-	 * @returns
+	 * Retrieves employee jobs based on various filters and sets the smart table data source.
+	 * @returns Promise<void>
 	 */
-	private async getEmployeesJob() {
+	private async getEmployeeJobs() {
 		if (!this.organization) {
 			return;
 		}
@@ -874,11 +877,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	 */
 	public refresh(): void {
 		this.isRefresh = true;
-		this.pagination = {
-			...this.pagination,
-			activePage: 1,
-			itemsPerPage: this.minItemPerPage
-		};
+		this.refreshPagination();
 		this.scrollTop();
 		this.jobs$.next(true);
 	}

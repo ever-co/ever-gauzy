@@ -1,6 +1,7 @@
 {
 	"name": "@gauzy/plugin-integration-hubstaff",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Ever Gauzy Platform plugin for integration with HubStaff APIs",
 	"author": {
 		"name": "Ever Co. LTD",

@@ -1,12 +1,16 @@
 import { BrowserWindow, Menu } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
 
 export async function createAboutWindow(filePath) {
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions =
-		windowSetting();
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 
 	const window = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(window.webContents);
@@ -23,8 +27,7 @@ export async function createAboutWindow(filePath) {
 	window.setMenu(null);
 
 	window.on('show', () => {
-		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled =
-			false;
+		Menu.getApplicationMenu().getMenuItemById('gauzy-about').enabled = false;
 	});
 
 	window.on('close', (event) => {

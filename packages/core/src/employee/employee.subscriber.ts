@@ -28,17 +28,17 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	async afterEntityLoad(entity: Employee): Promise<void> {
 		try {
 			// Set fullName from the associated user's name, if available
-			if (entity.user) {
-				entity.fullName = entity.user.name;
+			if (Object.prototype.hasOwnProperty.call(entity, 'user')) {
+				await this.setFullName(entity);
 			}
 
 			// Set isDeleted to true if the deletedAt property is present and not null
-			if ('deletedAt' in entity) {
+			if (Object.prototype.hasOwnProperty.call(entity, 'deletedAt')) {
 				entity.isDeleted = !!entity.deletedAt;
 			}
 
-			// Default billRateValue to 0 if it's not set
-			if ('billRateValue' in entity) {
+			// Default billRateValue to 0 if it's not set or falsy
+			if (Object.prototype.hasOwnProperty.call(entity, 'billRateValue')) {
 				entity.billRateValue = entity.billRateValue || 0;
 			}
 		} catch (error) {
@@ -54,14 +54,13 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 */
 	async beforeEntityCreate(entity: Employee): Promise<void> {
 		try {
-			if (entity.user) {
+			// Set fullName from the associated user's name, if available
+			if (Object.prototype.hasOwnProperty.call(entity, 'user')) {
 				await this.createSlug(entity);
 			}
 
 			// Set a default avatar image if none is provided
-			if (!entity.user.imageUrl) {
-				entity.user.imageUrl = getUserDummyImage(entity.user);
-			}
+			entity.user.imageUrl = entity.user.imageUrl ?? getUserDummyImage(entity.user);
 
 			// Updates the employee's status based on the start and end work dates.
 			this.updateEmployeeStatus(entity);
@@ -127,7 +126,6 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * The slug is generated using the first and last name, username, or email, in that order of preference.
 	 *
 	 * @param {Employee} entity - The Employee entity for which to create the slug.
-	 * @throws {Error} If neither entity nor entity.user is defined, or if slug creation fails.
 	 */
 	async createSlug(entity: Employee) {
 		try {
@@ -164,15 +162,18 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		try {
 			const { organizationId, tenantId } = entity;
 
-			// Handle TypeORM specific logic
-			if (em instanceof TypeOrmEntityManager) {
-				const totalEmployees = await em.countBy(Employee, { organizationId, tenantId });
-				await em.update(Organization, { id: organizationId, tenantId }, { totalEmployees });
-			}
-			// Handle MikroORM specific logic
-			else if (em instanceof MikroOrmEntityManager) {
-				const totalEmployees = await em.count(Employee, { organizationId, tenantId });
-				await em.nativeUpdate(Organization, { id: organizationId, tenantId }, { totalEmployees });
+			// Check if organizationId is present in the entity
+			if (Object.prototype.hasOwnProperty.call(entity, 'organizationId')) {
+				// Handle TypeORM specific logic
+				if (em instanceof TypeOrmEntityManager) {
+					const totalEmployees = await em.countBy(Employee, { organizationId, tenantId });
+					await em.update(Organization, { id: organizationId, tenantId }, { totalEmployees });
+				}
+				// Handle MikroORM specific logic
+				else if (em instanceof MikroOrmEntityManager) {
+					const totalEmployees = await em.count(Employee, { organizationId, tenantId });
+					await em.nativeUpdate(Organization, { id: organizationId, tenantId }, { totalEmployees });
+				}
 			}
 		} catch (error) {
 			console.error('EmployeeSubscriber: Error while updating total employee count of the organization:', error);
@@ -206,5 +207,14 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		entity.allowScreenshotCapture = isActive;
 		entity.isActive = isActive;
 		entity.isArchived = isArchived;
+	}
+
+	/**
+	 * Simulate an asynchronous operation to set the full name.
+	 *
+	 * @param entity - The Employee entity.
+	 */
+	private async setFullName(entity: Employee): Promise<void> {
+		entity.fullName = entity.user.name;
 	}
 }

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationResolver } from '../integration.resolver';
+import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
@@ -24,17 +24,27 @@ const routes: Routes = [
 			{
 				path: '', // Child route for the default page
 				component: GauzyAIAuthorizationComponent, // Component for the default page
+				canActivate: [PermissionsGuard],
 				data: {
-					integration: IntegrationEnum.GAUZY_AI, // Custom data associated with this route
+					permissions: {
+						only: [PermissionsEnum.INTEGRATION_ADD],
+						redirectTo: '/pages/dashboard'
+					},
+					integration: IntegrationEnum.GAUZY_AI // Custom data associated with this route
 				},
 				resolve: {
-					integration: IntegrationResolver, // Resolver to fetch data before activating the route
-				},
+					integration: IntegrationResolver // Resolver to fetch data before activating the route
+				}
 			},
 			{
 				path: 'reset', // Separate route for the reset page
 				component: GauzyAIAuthorizationComponent, // Create a new component for the reset page
+				canActivate: [PermissionsGuard],
 				data: {
+					permissions: {
+						only: [PermissionsEnum.INTEGRATION_EDIT],
+						redirectTo: '/pages/dashboard'
+					},
 					state: false,
 					selectors: {
 						project: false,
@@ -58,14 +68,14 @@ const routes: Routes = [
 						employee: false,
 						date: false
 					}
-				},
-			},
+				}
+			}
 		]
-	},
+	}
 ];
 
 @NgModule({
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class GauzyAIRoutingModule { }
+export class GauzyAIRoutingModule {}

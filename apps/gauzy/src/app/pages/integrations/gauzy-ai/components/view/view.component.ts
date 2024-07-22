@@ -7,7 +7,6 @@ import { Observable } from 'rxjs/internal/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
-	HttpStatus,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
@@ -42,8 +41,8 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 	public isIntegrationAISettingsEdit: boolean = false;
 
 	constructor(
-		private readonly _activatedRoute: ActivatedRoute,
 		public readonly translateService: TranslateService,
+		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _replacePipe: ReplacePipe,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
@@ -226,20 +225,14 @@ export class GauzyAIViewComponent extends TranslationBaseComponent implements On
 		this._gauzyAIService
 			.update(integrationId, {})
 			.pipe(
-				tap((response: any) => {
-					if (response['status'] == HttpStatus.BAD_REQUEST) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
 				// Perform actions after the integration creation
 				tap((integration: IIntegrationTenant) => {
 					if (!!integration) {
 						// Transform integration name for display
 						const provider = this._replacePipe.transform(integration?.name, '_', ' ');
+
 						// Display success message
-						this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, {
-							provider
-						});
+						this._toastrService.success(`INTEGRATIONS.MESSAGE.SETTINGS_UPDATED`, { provider });
 					}
 				}),
 				// Catch and handle errors

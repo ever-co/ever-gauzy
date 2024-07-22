@@ -1,24 +1,29 @@
-import log from 'electron-log';
-import { screen, BrowserWindow, ipcMain,  } from 'electron';
+import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import * as url from 'url';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
+
 export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
-  	mainWindowSettings = windowSetting();
+	mainWindowSettings = windowSetting();
 
-  	gauzyWindow = new BrowserWindow(mainWindowSettings);
+	gauzyWindow = new BrowserWindow(mainWindowSettings);
 
 	remoteMain.enable(gauzyWindow.webContents);
 
 	let launchPath;
 
 	if (!config.gauzyWindow) {
-	 	gauzyWindow.hide();
+		gauzyWindow.hide();
 	}
 
 	if (serve) {
@@ -76,7 +81,7 @@ const windowSetting = () => {
 		height: sizes.height,
 		x: 0,
 		y: 0,
-		title: process.env.DESCRIPTION ||  'Gauzy Desktop',
+		title: process.env.DESCRIPTION || 'Gauzy Desktop',
 		show: false,
 		icon: filesPath.iconPath
 	};
@@ -95,9 +100,7 @@ function initMainListener() {
 export function getApiBaseUrl(configs, envConfig) {
 	if (configs.serverUrl) return configs.serverUrl;
 	else {
-		return configs.port
-			? `http://localhost:${configs.port}`
-			: `http://localhost:${envConfig.API_DEFAULT_PORT}`;
+		return configs.port ? `http://localhost:${configs.port}` : `http://localhost:${envConfig.API_DEFAULT_PORT}`;
 	}
 }
 

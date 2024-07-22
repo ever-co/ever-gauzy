@@ -1,6 +1,11 @@
 import { BrowserWindow, Menu, app } from 'electron';
 import * as url from 'url';
 import * as remoteMain from '@electron/remote/main';
+
+import log from 'electron-log';
+console.log = log.log;
+Object.assign(console, log.functions);
+
 const Store = require('electron-store');
 const store = new Store();
 

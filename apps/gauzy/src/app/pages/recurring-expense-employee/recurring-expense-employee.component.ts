@@ -111,6 +111,10 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 	 *
 	 */
 	async getSelectedEmployee(employeeId: string) {
+		if (!employeeId) {
+			return;
+		}
+
 		this.selectedEmployee = await firstValueFrom(
 			this.employeeService.getEmployeeById(employeeId, ['user', 'organizationPosition', 'tags', 'skills'])
 		);
@@ -122,6 +126,7 @@ export class RecurringExpensesEmployeeComponent extends TranslationBaseComponent
 			tags: this.selectedEmployee.user.tags,
 			skills: this.selectedEmployee.skills
 		};
+
 		const checkUsername = this.selectedEmployee.user.username;
 		this.employeeName = checkUsername ? checkUsername : this.getTranslation('EMPLOYEES_PAGE.EMPLOYEE_NAME');
 	}

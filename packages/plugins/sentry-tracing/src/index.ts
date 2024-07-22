@@ -1,2 +1,2 @@
-export * from './sentry.plugin';
-export * from './ntegral/sentry.service';
+export * from './lib/sentry.plugin';
+export * from './lib/ntegral/sentry.service';

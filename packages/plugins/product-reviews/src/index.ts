@@ -1,3 +1,3 @@
-export * from './prouct-reviews.plugin';
-export * from './entities';
-export * from './graphql/schema-extensions';
+export * from './lib/product-reviews.plugin';
+export * from './lib/entities';
+export * from './lib/graphql/schema-extensions';

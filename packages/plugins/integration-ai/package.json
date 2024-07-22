@@ -1,6 +1,7 @@
 {
-	"name": "@gauzy/integration-ai",
+	"name": "@gauzy/plugin-integration-ai",
 	"version": "0.1.0",
+	"type": "commonjs",
 	"description": "Enhance Ever Gauzy Platform with advanced AI integration capabilities for streamlined business management and automation.",
 	"author": {
 		"name": "Ever Co. LTD",
@@ -47,12 +48,19 @@
 	},
 	"dependencies": {
 		"@apollo/client": "^3.6.2",
+		"@gauzy/common": "^0.1.0",
 		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/core": "^0.1.0",
 		"@nestjs/axios": "^3.0.2",
+		"@nestjs/cache-manager": "^2.2.1",
 		"@nestjs/common": "^10.3.7",
 		"@nestjs/config": "^3.2.0",
+		"@nestjs/cqrs": "^10.2.7",
+		"@nestjs/swagger": "^7.3.0",
 		"axios": "^1.6.8",
+		"cache-manager": "^5.3.2",
 		"chalk": "4.1.2",
+		"express": "^4.18.2",
 		"form-data": "^3.0.0",
 		"rxjs": "^7.4.0"
 	},

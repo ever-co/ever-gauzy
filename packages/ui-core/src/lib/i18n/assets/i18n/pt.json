@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "Adicionada Transação Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total de transações de despesas bem sucedidas: {{ totalExpenses }}. Total de transações de receitas bem sucedidas: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"NAME": "Hubstaff é uma plataforma de gestão de equipe remota que permite às empresas monitorar a produtividade e o progresso do trabalho de seus funcionários. Com recursos como rastreamento de tempo, capturas de tela aleatórias e análise de atividades, o Hubstaff ajuda as empresas a garantir que sua equipe esteja trabalhando de forma eficiente. Além disso, o Hubstaff também permite que os funcionários registrem suas horas de trabalho e solicitem pagamento de forma fácil e conveniente. Com sua interface intuitiva e recursos abrangentes, o Hubstaff é uma solução confiável para empresas que desejam gerenciar suas equipes remotas com eficiência.",
+			"TITLE": "Hubstaff é uma plataforma de gestão de equipe remota que permite às empresas monitorar a produtividade e o progresso do trabalho de seus funcionários. Com recursos como rastreamento de tempo, capturas de tela aleatórias e análise de atividades, o Hubstaff ajuda as empresas a garantir que sua equipe esteja trabalhando de forma eficiente. Além disso, o Hubstaff também permite que os funcionários registrem suas horas de trabalho e solicitem pagamento de forma fácil e conveniente. Com sua interface intuitiva e recursos abrangentes, o Hubstaff é uma solução confiável para empresas que desejam gerenciar suas equipes remotas com eficiência.",
 			"SELECT_ORGANIZATION": "Selecione Organização",
 			"SYNCED_PROJECTS": "Projetos sincronizados",
 			"SETTINGS_UPDATED": "Configurações atualizadas para integração",

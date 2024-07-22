@@ -25,13 +25,13 @@ import { CrudController, PaginationParams } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
 import { DailyPlan } from './daily-plan.entity';
 import { DailyPlanService } from './daily-plan.service';
-import { CreateDailyPlanDTO, UpdateDailyPlanDTO } from './dto';
+import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_UPDATE)
 @Controller()
 export class DailyPlanController extends CrudController<DailyPlan> {
 	constructor(private readonly dailyPlanService: DailyPlanService) {
@@ -56,6 +56,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('me')
 	@UseValidationPipe()
 	async getMyPlans(@Query() params: PaginationParams<DailyPlan>) {
@@ -81,6 +82,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('employee/:id')
 	async getEmployeeDailyPlans(
 		@Param('id') employeeId: IEmployee['id'],
@@ -108,6 +110,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('task/:id')
 	async getDailyPlansForTaskId(
 		@Param('id') taskId: ITask['id'],
@@ -135,6 +138,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No record found with the given ID.'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Post(':id/task') // Route for adding a task to a daily plan
 	async addTaskToDailyPlan(
 		@Param('id') planId: IDailyPlan['id'], // Extract the plan ID from the URL parameter
@@ -164,6 +168,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No record found with the given ID.'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Put(':id/task') // Endpoint for removing a task from a daily plan
 	async removeTaskFromDailyPlan(
 		@Param('id') planId: IDailyPlan['id'], // Extract the daily plan ID from the URL parameter
@@ -171,6 +176,34 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	): Promise<IDailyPlan> {
 		// Call the service to remove the task from the daily plan
 		return await this.dailyPlanService.removeTaskFromPlan(planId, input);
+	}
+
+	/**
+	 * Delete task from a many daily plans
+	 *
+	 * @param  taskId The unique identifier of the task to removed from daily plans.
+	 * @param input - An object containing details about the plans to update, including employee ID, and organization ID.
+	 * @returns The updated daily plans without the deleted task.
+	 */
+
+	@ApiOperation({
+		summary: 'Remove a task from daily plans'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task successfully removed from the daily plans.',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No record found with the given ID.'
+	})
+	@Put(':taskId/remove') // Endpoint for removing a task from many daily plans
+	async removeTaskFromManyPlans(
+		@Param('taskId') taskId: ITask['id'],
+		@Body() input: RemoveTaskFromManyPlansDTO
+	): Promise<IDailyPlan[]> {
+		return this.dailyPlanService.removeTaskFromManyPlans(taskId, input);
 	}
 
 	/**
@@ -192,6 +225,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		description: 'No Record found'
 	})
 	@Get()
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@UseValidationPipe()
 	async get(@Query() params: PaginationParams<DailyPlan>) {
 		return await this.dailyPlanService.getAllPlans(params);
@@ -212,6 +246,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		description: 'Invalid input, The request body must contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE)
 	@Post()
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async create(@Body() entity: CreateDailyPlanDTO): Promise<IDailyPlan> {
@@ -237,6 +272,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
 	async update(
@@ -265,6 +301,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'No Record found'
 	})
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_DELETE)
 	@Delete(':id')
 	async delete(@Param('id') planId: IDailyPlan['id']) {
 		return await this.dailyPlanService.deletePlan(planId);
