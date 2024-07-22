@@ -11,7 +11,7 @@
 				[icon]="plugin?.isActivate ? 'close-circle-outline': 'checkmark-circle-outline'"></nb-icon>{{
 			plugin?.isActivate ? 'Deactivate':
 			'Activate' }}</button>
-		<button *gauzySpinnerButton="processing" class="button-remove" status="danger" (click)="remove()"
+		<button *gauzySpinnerButton="processing" class="button-remove" status="danger" (click)="uninstall()"
 			nbButton><nb-icon icon="trash-outline"></nb-icon>Uninstall</button>
 	</div>
 </div>

@@ -23,15 +23,19 @@ export class PluginListComponent implements OnInit {
 	private readonly dialog = inject(NbDialogService);
 	private readonly router = inject(Router);
 	private readonly ngZone = inject(NgZone);
+
 	public plugins$ = new BehaviorSubject<IPlugin[]>([]);
 	public plugin: IPlugin = null;
 	private _sourceData$ = new BehaviorSubject(new LocalDataSource([]));
+
 	public get sourceData$(): Observable<LocalDataSource> {
 		return this._sourceData$.asObservable();
 	}
+
 	private get sourceData(): LocalDataSource {
 		return this._sourceData$.getValue();
 	}
+
 	private _pluginTable: Angular2SmartTableComponent;
 	public processing = false;
 
@@ -82,16 +86,20 @@ export class PluginListComponent implements OnInit {
 	};
 
 	ngOnInit(): void {
+		this.observePlugins();
+		this.loadPlugins();
+	}
+
+	private observePlugins(): void {
 		this.pluginElectronService.status
 			.pipe(
 				tap(() => (this.processing = false)),
 				filter((response) => response.status === 'success'),
 				switchMap(() => from(this.pluginElectronService.plugins)),
-				tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))),
+				tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))),
 				untilDestroyed(this)
 			)
 			.subscribe();
-
 		this.plugins$
 			.pipe(
 				tap(() => this.clearItem()),
@@ -100,9 +108,11 @@ export class PluginListComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
 
+	private loadPlugins(): void {
 		from(this.pluginElectronService.plugins)
-			.pipe(tap((plugins) => this.ngZone.run(() => this.plugins$.next(plugins))))
+			.pipe(tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))))
 			.subscribe();
 	}
 
@@ -126,9 +136,7 @@ export class PluginListComponent implements OnInit {
 
 	public addPlugin() {
 		this.dialog
-			.open(AddPluginComponent, {
-				backdropClass: 'backdrop-blur'
-			})
+			.open(AddPluginComponent, { backdropClass: 'backdrop-blur' })
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe();
 	}
@@ -151,9 +159,9 @@ export class PluginListComponent implements OnInit {
 				tap(() => this.clearItem()),
 				tap(() => {
 					if (this.plugin) {
-						this.pluginTable.grid.dataSet.getRows().map((row) => {
+						this.pluginTable.grid.dataSet.getRows().forEach((row) => {
 							if (row.getData().id === this.plugin.id) {
-								return this.pluginTable.grid.dataSet.selectRow(row);
+								this.pluginTable.grid.dataSet.selectRow(row);
 							}
 						});
 					}
@@ -161,5 +169,13 @@ export class PluginListComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private get plugins(): IPlugin[] {
+		return this.plugins$.getValue();
+	}
+
+	private set plugins(plugins: IPlugin[]) {
+		this.plugins$.next(plugins);
 	}
 }
