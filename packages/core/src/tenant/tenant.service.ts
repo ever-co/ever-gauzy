@@ -1,12 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	ITenantCreateInput,
-	RolesEnum,
-	ITenant,
-	IUser,
-	FileStorageProviderEnum,
-} from '@gauzy/contracts';
+import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
 import { ConfigService, IEnvironment } from '@gauzy/config';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantFeatureOrganizationCreateCommand } from './commands';
@@ -38,7 +32,7 @@ export class TenantService extends CrudService<Tenant> {
 	}
 
 	/**
-	 * Onboards a tenant and assigns roles to a user. This involves tenant creation,
+	 * Onboard a tenant and assigns roles to a user. This involves tenant creation,
 	 * executing update tasks, assigning the SUPER_ADMIN role, and handling import records.
 	 *
 	 * @param entity Tenant creation details.
@@ -52,9 +46,7 @@ export class TenantService extends CrudService<Tenant> {
 		const tenant = await this.create(entity);
 
 		// Create Role/Permissions to relative tenants.
-		await this.commandBus.execute(
-			new TenantRoleBulkCreateCommand([tenant])
-		);
+		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
 
 		// Executes Runs update tasks for the newly created tenant.
 		this.executeTenantUpdateTasks(tenant);
@@ -65,13 +57,13 @@ export class TenantService extends CrudService<Tenant> {
 		// Find SUPER_ADMIN role to relative tenant.
 		const role = await this.typeOrmRoleRepository.findOneBy({
 			tenantId,
-			name: RolesEnum.SUPER_ADMIN,
+			name: RolesEnum.SUPER_ADMIN
 		});
 
 		// Update the user entity to assign the specified tenant and role.
 		await this.typeOrmUserRepository.update(user.id, {
 			tenant: { id: tenantId },
-			role: { id: role.id },
+			role: { id: role.id }
 		});
 
 		// Create Import Records while migrating for relative tenant.
@@ -90,29 +82,19 @@ export class TenantService extends CrudService<Tenant> {
 	public async executeTenantUpdateTasks(tenant: Tenant): Promise<void> {
 		try {
 			// 2. Create Enabled/Disabled features for relative tenants.
-			await this.commandBus.execute(
-				new TenantFeatureOrganizationCreateCommand([tenant])
-			);
+			await this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant]));
 
 			// 3. Create Default task statuses for relative tenants.
-			await this.commandBus.execute(
-				new TenantStatusBulkCreateCommand([tenant])
-			);
+			await this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant]));
 
 			// 4. Create default task sizes for relative tenants.
-			await this.commandBus.execute(
-				new TenantTaskSizeBulkCreateCommand([tenant])
-			);
+			await this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant]));
 
 			// 5. Create default task priorities for relative tenants.
-			await this.commandBus.execute(
-				new TenantTaskPriorityBulkCreateCommand([tenant])
-			);
+			await this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant]));
 
 			// 6. Create default issue types for relative tenants.
-			await this.commandBus.execute(
-				new TenantIssueTypeBulkCreateCommand([tenant])
-			);
+			await this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]));
 
 			// 7. Initializes and sets up the default settings for the new tenant, including configuring the file storage provider. This operation waits for completion before moving to the next step.
 			await this.initializeTenantSettings(tenant);
@@ -132,9 +114,7 @@ export class TenantService extends CrudService<Tenant> {
 		const filesystem = this.configService.get('fileSystem') as IEnvironment['fileSystem'];
 		const fileStorageProvider = filesystem.name.toUpperCase() as FileStorageProviderEnum;
 
-		await this.commandBus.execute(
-			new TenantSettingSaveCommand({ fileStorageProvider }, tenant.id)
-		);
+		await this.commandBus.execute(new TenantSettingSaveCommand({ fileStorageProvider }, tenant.id));
 	}
 
 	/**
@@ -163,13 +143,16 @@ export class TenantService extends CrudService<Tenant> {
 			// If a user source ID is provided, execute a command to update or create an import record for the user entity.
 			if (userSourceId) {
 				await this.commandBus.execute(
-					new ImportRecordUpdateOrCreateCommand({
-						entityType: this.typeOrmUserRepository.metadata.tableName,
-						sourceId: userSourceId,
-						destinationId: user.id
-					}, {
-						tenantId
-					})
+					new ImportRecordUpdateOrCreateCommand(
+						{
+							entityType: this.typeOrmUserRepository.metadata.tableName,
+							sourceId: userSourceId,
+							destinationId: user.id
+						},
+						{
+							tenantId
+						}
+					)
 				);
 			}
 		}
