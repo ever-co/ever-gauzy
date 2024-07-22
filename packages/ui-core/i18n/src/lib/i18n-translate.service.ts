@@ -27,7 +27,7 @@ export class I18nTranslateService {
 	 * Sets the available languages for the application
 	 * @param languages An array of language codes to set as available languages.
 	 */
-	setAvailableLanguags(languages: LanguagesEnum[]): void {
+	setAvailableLanguages(languages: LanguagesEnum[]): void {
 		this._availableLanguages = languages;
 	}
 

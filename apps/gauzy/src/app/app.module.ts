@@ -199,7 +199,7 @@ export class AppModule {
 	 */
 	constructor(protected readonly _i18nTranslateService: I18nTranslateService) {
 		const availableLanguages = Object.values(LanguagesEnum);
-		_i18nTranslateService.setAvailableLanguags(availableLanguages);
+		_i18nTranslateService.setAvailableLanguages(availableLanguages);
 
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {

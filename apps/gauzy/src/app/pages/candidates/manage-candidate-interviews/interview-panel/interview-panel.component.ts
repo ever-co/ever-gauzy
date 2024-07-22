@@ -275,7 +275,7 @@ export class InterviewPanelComponent extends PaginationFilterBaseComponent imple
 				});
 			}
 		} catch (error) {
-			console.log('Error while getting candidate inteviews', error);
+			console.log('Error while getting candidate interviews', error);
 		} finally {
 			this.loading = false;
 		}

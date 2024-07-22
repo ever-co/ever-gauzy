@@ -67,7 +67,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
 				tap((organization: IOrganization) => (this.organization = organization)),
-				tap(() => this.getCandidateInterviewes()),
+				tap(() => this.getCandidateInterviews()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -78,7 +78,7 @@ export class CandidateCalendarInfoComponent implements OnInit {
 	 *
 	 * @returns
 	 */
-	async getCandidateInterviewes() {
+	async getCandidateInterviews() {
 		if (!this.organization) {
 			return;
 		}
