@@ -9,5 +9,13 @@
 		"types": ["node", "jest"]
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
-	"include": ["src/**/*.ts", "typings.d.ts"]
+	"include": [
+		"src/**/*.ts",
+		"common/**/*.ts",
+		"core/**/*.ts",
+		"i18n/**/*.ts",
+		"shared/**/*.ts",
+		"theme/**/*.ts",
+		"typings.d.ts"
+	]
 }

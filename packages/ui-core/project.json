@@ -1,9 +1,8 @@
 {
 	"name": "ui-core",
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
-	"sourceRoot": "packages/ui-core/src",
+	"sourceRoot": "packages/ui-core",
 	"prefix": "gauzy",
-	"tags": ["scope:ui-core"],
 	"projectType": "library",
 	"targets": {
 		"build": {
@@ -56,5 +55,6 @@
 				]
 			}
 		}
-	}
+	},
+	"tags": ["scope:ui"]
 }
