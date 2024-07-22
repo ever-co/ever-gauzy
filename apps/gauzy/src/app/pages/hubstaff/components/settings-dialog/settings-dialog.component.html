@@ -3,37 +3,21 @@
 		{{ 'INTEGRATIONS.SETTINGS' | translate }}
 	</nb-card-header>
 	<nb-card-body>
-		<div
-			class="switcher-wrapper"
-			*ngIf="entitiesToSync$ | async as entitiesToSync"
-		>
+		<div class="switcher-wrapper" *ngIf="entitiesToSync$ | async as entitiesToSync">
 			<ng-container *ngFor="let entity of entitiesToSync.currentValue">
-				<nb-toggle
-					[(checked)]="entity.sync"
-					labelPosition="start"
-					status="basic"
-				>
+				<nb-toggle [(checked)]="entity.sync" labelPosition="start" status="basic">
 					{{ entity.entity }}
 				</nb-toggle>
 
 				<div class="tied-entities-wrapper">
-					<ng-container
-						*ngFor="let tiedEntity of entity.tiedEntities"
-					>
+					<ng-container *ngFor="let tiedEntity of entity.tiedEntities">
 						<div class="tied-entity">
 							<div
-								*ngIf="
-									tiedEntity.entity === IntegrationEntity.ACTIVITY;
-									else notActivityTemp
-								"
+								*ngIf="tiedEntity.entity === IntegrationEntity.ACTIVITY; else notActivityTemp"
 								class="entity-more-options"
 							>
 								<nb-icon
-									[icon]="
-										expandOptions
-											? 'chevron-down-outline'
-											: 'chevron-right-outline'
-									"
+									[icon]="expandOptions ? 'chevron-down-outline' : 'chevron-right-outline'"
 									(click)="expandOptions = !expandOptions"
 								></nb-icon>
 
@@ -42,10 +26,7 @@
 								</label>
 								<nb-icon
 									icon="info-outline"
-									[nbTooltip]="
-										'INTEGRATIONS.HUBSTAFF_PAGE.TOOLTIP_ACTIVITY_INFO'
-											| translate
-									"
+									[nbTooltip]="'INTEGRATIONS.HUBSTAFF_PAGE.TOOLTIP_ACTIVITY_INFO' | translate"
 									nbTooltipTrigger="hover"
 								>
 								</nb-icon>
@@ -66,20 +47,16 @@
 
 						<div
 							[ngClass]="
-								expandOptions &&
-								tiedEntity.entity === IntegrationEntity.ACTIVITY
+								expandOptions && tiedEntity.entity === IntegrationEntity.ACTIVITY
 									? 'visible'
 									: 'not-visible'
 							"
 						>
 							<input
 								nbInput
-								placeholder="{{
-									'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER'
-										| translate
-								}}"
+								[placeholder]="'INTEGRATIONS.HUBSTAFF_PAGE.DATE_RANGE_PLACEHOLDER' | translate"
 								[nbDatepicker]="rangePicker"
-								[value]="dispayDate"
+								[value]="displayDate"
 							/>
 							<nb-rangepicker
 								#rangePicker
@@ -97,15 +74,9 @@
 	</nb-card-body>
 
 	<nb-card-footer>
-		<div class=" dialog-footer">
-			<button
-				nbButton
-				(click)="dialogRef.close(true)"
-				status="primary"
-				class="mr-2"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.SAVE' | translate }}
+		<div class="dialog-footer">
+			<button nbButton (click)="dialogRef.close(true)" status="primary" class="mr-2">
+				{{ 'BUTTONS.SAVE' | translate }}
 			</button>
 		</div>
 	</nb-card-footer>

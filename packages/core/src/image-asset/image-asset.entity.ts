@@ -3,18 +3,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ColumnNumericTransformerPipe } from './../shared/pipes';
+import { Product, TenantOrganizationBaseEntity, Equipment, Warehouse } from './../core/entities/internal';
 import {
-	Product,
-	TenantOrganizationBaseEntity,
-	Equipment,
-	Warehouse
-} from './../core/entities/internal';
-import { MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany, VirtualMultiOrmColumn } from './../core/decorators/entity';
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMOneToMany,
+	VirtualMultiOrmColumn
+} from './../core/decorators/entity';
 import { MikroOrmImageAssetRepository } from './repository/mikro-orm-image-asset.repository';
 
 @MultiORMEntity('image_asset', { mikroOrmRepository: () => MikroOrmImageAssetRepository })
 export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAsset {
-
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -25,7 +25,7 @@ export class ImageAsset extends TenantOrganizationBaseEntity implements IImageAs
 	@IsNotEmpty()
 	@IsString()
 	@MultiORMColumn()
-	url: string
+	url: string;
 
 	@ApiProperty({ type: () => String })
 	@IsString()

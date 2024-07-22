@@ -1,11 +1,13 @@
 import { Controller, Post, Body, UseGuards, HttpException, HttpStatus, HttpCode } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
 import { GithubService } from './github.service';
 import { GithubAppInstallDTO, GithubOAuthDTO } from './dto';
 
+@ApiTags('GitHub Integrations')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/github')
 export class GitHubController {
 	constructor(private readonly _githubService: GithubService) {}

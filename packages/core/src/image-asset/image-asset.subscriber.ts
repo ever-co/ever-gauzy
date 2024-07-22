@@ -17,7 +17,7 @@ export class ImageAssetSubscriber extends BaseEntityEventSubscriber<ImageAsset> 
 	 * This method updates the entity by setting the full and thumbnail URLs using the provided storage provider.
 	 *
 	 * @param entity The ImageAsset entity that has been loaded.
-	 * @returns {Promise<void>} A promise that resolves when the URL updating process is complete.
+	 * @returns A promise that resolves when the URL updating process is complete.
 	 */
 	async afterEntityLoad(entity: ImageAsset): Promise<void> {
 		try {

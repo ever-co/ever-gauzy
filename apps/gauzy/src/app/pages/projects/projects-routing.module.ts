@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { PermissionsGuard } from '@gauzy/ui-core/core';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { ProjectLayoutComponent } from './layout/layout.component';
 import { ProjectResolver } from './project.resolver';
 import { ProjectCreateMutationComponent } from './components/project-create/create.component';
 import { ProjectEditMutationComponent } from './components/project-edit/edit.component';
 import { ProjectListComponent } from './components/project-list/list.component';
-import { IntegrationResolver } from '../integrations/integration.resolver';
 
 const routes: Routes = [
 	{

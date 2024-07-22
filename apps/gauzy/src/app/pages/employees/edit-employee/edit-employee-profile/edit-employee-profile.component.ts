@@ -222,6 +222,9 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 	private async _getEmployeeProfile() {
 		try {
 			const { id } = this.routeParams;
+			if (!id) {
+				return;
+			}
 
 			// Fetch employee data from the service
 			const employee = await firstValueFrom(
@@ -240,12 +243,11 @@ export class EditEmployeeProfileComponent extends TranslationBaseComponent imple
 			this.employeeStore.selectedEmployee = this.selectedEmployee = employee;
 
 			// Set the employee name for display
-			this.employeeName = employee?.user?.name || employee?.user?.username || 'Employee';
+			this.employeeName = employee?.user?.name || employee?.user?.username || 'Unknown Employee';
 		} catch (error) {
 			// Handle errors gracefully
 			console.error('Error fetching employee profile:', error);
 			// Optionally, navigate to a fallback route or show an error message
-			// this.router.navigate(['/error']);
 		}
 	}
 

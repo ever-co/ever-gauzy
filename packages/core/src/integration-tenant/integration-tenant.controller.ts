@@ -28,7 +28,7 @@ import { IntegrationTenantDeleteCommand, IntegrationTenantUpdateCommand } from '
 
 @ApiTags('IntegrationTenant')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller()
 export class IntegrationTenantController extends CrudController<IntegrationTenant> {
 	constructor(
@@ -55,7 +55,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid request'
 	})
-	@Get('integration')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	@Get('/integration')
 	@UseValidationPipe()
 	async getIntegrationByOptions(@Query() options: IntegrationTenantQueryDTO): Promise<IIntegrationTenant | boolean> {
 		return await this._integrationTenantService.getIntegrationByOptions(options);
@@ -66,7 +67,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @param params - Query parameters for pagination and filtering.
 	 * @returns A paginated list of IntegrationTenant entities.
 	 */
-	@Get()
+	@Get('/')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 	@UseValidationPipe()
 	async findAll(@Query() params: PaginationParams<IntegrationTenant>): Promise<IPagination<IntegrationTenant>> {
 		// Delegate the logic to your service
@@ -81,7 +83,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @returns {Promise<IIntegrationTenant>} The fetched IntegrationTenant entity.
 	 * @throws {InternalServerErrorException} If an error occurs during the fetching process.
 	 */
-	@Get(':id')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	@Get('/:id')
 	async findById(
 		@Param('id', UUIDValidationPipe) integrationId: ID,
 		@Query() query: RelationsQueryDTO
@@ -107,7 +110,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @param input - The data to update the integration tenant with.
 	 * @returns A response, typically the updated integration tenant or an error response.
 	 */
-	@Put(':id')
+	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
+	@Put('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -123,7 +127,8 @@ export class IntegrationTenantController extends CrudController<IntegrationTenan
 	 * @param {string} id - The identifier of the resource to be deleted.
 	 * @returns {Promise<DeleteResult>} A Promise that resolves with the DeleteResult indicating the result of the deletion.
 	 */
-	@Delete(':id')
+	@Permissions(PermissionsEnum.INTEGRATION_DELETE)
+	@Delete('/:id')
 	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ID,

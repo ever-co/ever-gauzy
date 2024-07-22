@@ -231,6 +231,10 @@ export class AccountingComponent extends TranslationBaseComponent implements Aft
 	 * @param employee - The selected employee information.
 	 */
 	async selectEmployee(employee: ISelectedEmployee) {
+		if (!employee.id) {
+			return;
+		}
+
 		// Fetch detailed information about the selected employee from the employeesService
 		const people = await firstValueFrom(this.employeesService.getEmployeeById(employee.id, ['user']));
 

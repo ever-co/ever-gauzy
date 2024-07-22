@@ -1,4 +1,4 @@
-import { Controller, UseGuards, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Get, Query, Body, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ICountsStatistics,
@@ -8,7 +8,8 @@ import {
 	IActivitiesStatistics,
 	ITimeSlotStatistics,
 	IManualTimesStatistics,
-	PermissionsEnum
+	PermissionsEnum,
+	ITasksStatistics
 } from '@gauzy/contracts';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
@@ -26,7 +27,7 @@ import { StatisticService } from './statistic.service';
 )
 @Controller()
 export class StatisticController {
-	constructor(private readonly statisticService: StatisticService) { }
+	constructor(private readonly statisticService: StatisticService) {}
 
 	/**
 	 * Retrieve statistics for counts based on the provided query parameters.
@@ -121,11 +122,9 @@ export class StatisticController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues as to what went wrong.'
 	})
-	@Get('/tasks')
+	@Post('/tasks')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async getTasksStatistics(
-		@Query() request: TimeTrackingStatisticQueryDTO
-	): Promise<ITask[]> {
+	async getTasksStatistics(@Body() request: TimeTrackingStatisticQueryDTO): Promise<ITasksStatistics[]> {
 		return await this.statisticService.getTasks(request);
 	}
 
