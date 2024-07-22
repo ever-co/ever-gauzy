@@ -1,6 +1,7 @@
 import {
 	IBasePerTenantAndOrganizationEntityModel,
-	IBasePerTenantAndOrganizationEntityMutationInput
+	IBasePerTenantAndOrganizationEntityMutationInput,
+	ID
 } from './base-entity.model';
 import { IContact } from './contact.model';
 import { IEmployeeJobsStatistics } from './employee-job.model';
@@ -21,6 +22,11 @@ import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
+
+export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
+	organizationTeamId: ID;
+	organizationProjectId: ID;
+}
 
 export interface IEmployeeEntityMutationInput {
 	employeeId?: IEmployee['id'];

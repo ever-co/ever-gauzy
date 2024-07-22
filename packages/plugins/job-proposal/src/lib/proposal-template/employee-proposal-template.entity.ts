@@ -1,13 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
-import { IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
-import { ColumnIndex, Employee, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, TenantOrganizationBaseEntity } from '@gauzy/core';
+import { ID, IEmployee, IEmployeeProposalTemplate } from '@gauzy/contracts';
+import {
+	ColumnIndex,
+	Employee,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 import { MikroOrmEmployeeProposalTemplateRepository } from './repository/mikro-orm-employee-proposal-template.repository';
 
 @MultiORMEntity('employee_proposal_template', { mikroOrmRepository: () => MikroOrmEmployeeProposalTemplateRepository })
-export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
-	implements IEmployeeProposalTemplate {
-
+export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity implements IEmployeeProposalTemplate {
 	@ApiProperty({ type: () => String })
 	@ColumnIndex()
 	@MultiORMColumn()
@@ -38,5 +43,5 @@ export class EmployeeProposalTemplate extends TenantOrganizationBaseEntity
 	@RelationId((it: EmployeeProposalTemplate) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId?: string;
+	employeeId?: ID;
 }

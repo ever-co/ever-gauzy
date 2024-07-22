@@ -1181,7 +1181,7 @@
 		"ADDED_UPWORK_TRANSACTION": "تم إضافة معاملة على منصة أبو ورك",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "إجمالي المعاملات المصروفة التي تمت بنجاح: {{ totalExpenses }}. إجمالي المعاملات الداخلة التي تمت بنجاح: {{ totalIncomes }}.",
 		"HUBSTAFF_PAGE": {
-			"NAME": "هابستاف",
+			"TITLE": "هابستاف",
 			"SELECT_ORGANIZATION": "اختر المؤسسة",
 			"SYNCED_PROJECTS": "المشاريع المتزامنة",
 			"SETTINGS_UPDATED": "تم تحديث الإعدادات للتكامل",

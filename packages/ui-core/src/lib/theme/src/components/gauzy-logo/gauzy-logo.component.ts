@@ -82,7 +82,7 @@ export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {
 			pathMatch: 'prefix',
 			data: {
 				translationKey: 'MENU.INTEGRATIONS',
-				permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
+				permissionKeys: [PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT],
 				featureKey: FeatureEnum.FEATURE_APP_INTEGRATION
 			}
 		}

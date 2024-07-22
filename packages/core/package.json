@@ -122,7 +122,7 @@
 		"better-sqlite3": "^9.4.3",
 		"cache-manager": "^5.3.2",
 		"cache-manager-redis-yet": "^4.1.2",
-		"camelcase": "^6.2.1",
+		"camelcase": "^6.3.0",
 		"chalk": "4.1.2",
 		"class-transformer": "^0.5.1",
 		"class-validator": "^0.14.0",

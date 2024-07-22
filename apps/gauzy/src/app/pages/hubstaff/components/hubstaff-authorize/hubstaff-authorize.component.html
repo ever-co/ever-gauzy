@@ -1,7 +1,7 @@
 <nb-card class="card-scroll">
 	<nb-card-header class="d-flex">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.NAME' | translate }}</h5>
+		<h5>{{ 'INTEGRATIONS.HUBSTAFF_PAGE.TITLE' | translate }}</h5>
 	</nb-card-header>
 	<nb-card-body>
 		<form
@@ -11,9 +11,9 @@
 			*ngIf="!clientSecretForm.get('authorization_code').value; else clientSecretTemplate"
 		>
 			<div class="form-group">
-				<label for="client_id" class="label">{{
-					'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate
-				}}</label>
+				<label for="client_id" class="label">
+					{{ 'INTEGRATIONS.HUBSTAFF_PAGE.CLIENT_ID' | translate }}
+				</label>
 				<input
 					fullWidth
 					id="client_id"
@@ -27,14 +27,7 @@
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'INTEGRATIONS.HUBSTAFF_PAGE.GRANT_PERMISSION' | translate }}
 			</div>
-			<button
-				nbButton
-				type="submit"
-				status="primary"
-				size="small"
-				outline
-				[disabled]="clientIdForm.invalid"
-			>
+			<button nbButton type="submit" status="primary" size="small" outline [disabled]="clientIdForm.invalid">
 				{{ 'BUTTONS.NEXT' | translate }}
 			</button>
 		</form>
@@ -58,12 +51,7 @@
 					<nb-icon icon="info-outline"></nb-icon>
 					{{ 'INTEGRATIONS.HUBSTAFF_PAGE.ENTER_CLIENT_SECRET' | translate }}
 				</div>
-				<button
-					nbButton
-					type="submit"
-					status="primary"
-					[disabled]="clientSecretForm.invalid"
-				>
+				<button nbButton type="submit" status="primary" [disabled]="clientSecretForm.invalid">
 					{{ 'BUTTONS.NEXT' | translate }}
 				</button>
 			</form>

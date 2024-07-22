@@ -48,12 +48,15 @@ export class TimesheetStatisticsService {
 		);
 	}
 
-	getTasks(request: IGetTasksStatistics) {
-		return firstValueFrom(
-			this.http.get<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, {
-				params: toParams(request)
-			})
-		);
+	/**
+	 * Get tasks statistics via POST request
+	 *
+	 * @param input - The input parameters for fetching tasks statistics
+	 * @returns
+	 */
+	getTasksStatistics(input: IGetTasksStatistics): Promise<ITasksStatistics[]> {
+		// Fetch tasks statistics via POST request
+		return firstValueFrom(this.http.post<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, input));
 	}
 
 	getManualTimes(request: any) {

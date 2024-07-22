@@ -6,7 +6,7 @@ import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-se
 import { JobPreset } from '../../job-preset.entity';
 import { SaveEmployeePresetCommand } from '../save-employee-preset.command';
 import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../repository/type-orm-employee-upwork-jobs-search-criterion.repository';
 
 @CommandHandler(SaveEmployeePresetCommand)
 export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePresetCommand> {
