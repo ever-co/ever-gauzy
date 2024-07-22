@@ -19,7 +19,7 @@ const MODULES = [ComponentsModule, DirectivesModule, PipesModule];
 		NbButtonModule,
 		NbIconModule,
 		NbTooltipModule,
-		NgxPermissionsModule,
+		NgxPermissionsModule.forChild(),
 		I18nTranslateModule.forChild(),
 		...MODULES
 	],

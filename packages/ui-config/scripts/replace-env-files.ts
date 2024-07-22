@@ -1,9 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
 
-/**
- * Replaces the environment.ts file with environment.prod.ts if the environment is set to production.
- */
 function replaceFilesForProduction() {
 	const env = process.env['NODE_ENV'] || 'development';
 
@@ -20,5 +17,4 @@ function replaceFilesForProduction() {
 	}
 }
 
-// Replace environment files for production build
 replaceFilesForProduction();

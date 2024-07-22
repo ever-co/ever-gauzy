@@ -39,38 +39,17 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
 			entity.name = [entity.firstName, entity.lastName].filter(Boolean).join(' ');
 
 			// Set isEmailVerified to true if the emailVerifiedAt property exists and has a truthy value.
-			if (Object.prototype.hasOwnProperty.call(entity, 'emailVerifiedAt')) {
+			if ('emailVerifiedAt' in entity) {
 				entity.isEmailVerified = !!entity.emailVerifiedAt;
 			}
 
 			// Set imageUrl from the image object's fullUrl, if available. Fall back to existing imageUrl if not.
-			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
-				await this.setImageUrl(entity);
+			if (entity['image']) {
+				entity.imageUrl = entity['image'].fullUrl || entity.imageUrl;
 			}
 		} catch (error) {
 			// Log any errors encountered during the execution of the function.
 			console.error('Error in UserSubscriber afterEntityLoad hook:', error);
 		}
-	}
-
-	/**
-	 * Simulate an asynchronous operation to set the imageUrl.
-	 *
-	 * @param entity
-	 * @returns
-	 */
-	private setImageUrl(entity: User): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('UserSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
 	}
 }

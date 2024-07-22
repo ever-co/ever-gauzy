@@ -5,7 +5,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { Brackets, WhereExpressionBuilder } from 'typeorm';
 import { verify } from 'jsonwebtoken';
-import camelcase from 'camelcase';
+import * as camelCase from 'camelcase';
 import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { isEmpty, PERMISSIONS_METADATA, removeDuplicates } from '@gauzy/common';
 import { RequestContext } from './../../core/context';
@@ -130,7 +130,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 						// Directly add the OR conditions to the query if permissions array is not empty
 						if (permissions.length > 0) {
 							const orConditions = permissions.map((permission: string) => {
-								const field = `organization.${camelcase(permission)}`;
+								const field = `organization.${camelCase(permission)}`;
 								return { [field]: true };
 							});
 							// Use OR condition for each permission
@@ -161,7 +161,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 						typeOrmQueryBuilder.andWhere(
 							new Brackets((qb: WhereExpressionBuilder) => {
 								permissions.forEach((permission) => {
-									qb.orWhere(`organization.${camelcase(permission)} = true`);
+									qb.orWhere(`organization.${camelCase(permission)} = true`);
 								});
 							})
 						);

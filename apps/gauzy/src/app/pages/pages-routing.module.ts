@@ -591,10 +591,11 @@ const routes: Routes = [
 			{
 				path: 'integrations',
 				loadChildren: () => import('./integrations/integrations.module').then((m) => m.IntegrationsModule),
+				/** */
 				canActivate: [PermissionsGuard],
 				data: {
 					permissions: {
-						only: [PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT],
+						only: [PermissionsEnum.INTEGRATION_VIEW],
 						redirectTo: '/pages/dashboard'
 					},
 					selectors: {

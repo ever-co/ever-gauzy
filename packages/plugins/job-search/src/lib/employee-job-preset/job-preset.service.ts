@@ -8,8 +8,7 @@ import {
 	IGetJobPresetInput,
 	IGetMatchingCriterions,
 	IJobPreset,
-	IMatchingCriterions,
-	PermissionsEnum
+	IMatchingCriterions
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
 import { RequestContext, TenantAwareCrudService, TypeOrmEmployeeRepository } from '@gauzy/core';
@@ -24,17 +23,17 @@ import {
 import { TypeOrmJobPresetRepository } from './repository/type-orm-job-preset.repository';
 import { MikroOrmJobPresetRepository } from './repository/mikro-orm-job-preset.repository';
 import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from './repository/type-orm-job-preset-upwork-job-search-criterion.repository';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/type-orm-employee-upwork-jobs-search-criterion.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from './repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 
 @Injectable()
 export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	constructor(
-		readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
-		readonly mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
+		private readonly typeOrmJobPresetRepository: TypeOrmJobPresetRepository,
+		private readonly mikroOrmJobPresetRepository: MikroOrmJobPresetRepository,
 		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository,
 		private readonly typeOrmEmployeeUpworkJobsSearchCriterionRepository: TypeOrmEmployeeUpworkJobsSearchCriterionRepository,
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
 	) {
 		super(typeOrmJobPresetRepository, mikroOrmJobPresetRepository);
 	}
@@ -47,17 +46,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	public async getAll(request?: IGetJobPresetInput) {
 		// Extract parameters from the request object
-		const { organizationId, search } = request || {};
-		let employeeId = request?.employeeId;
-
-		// If the user does not have the permission to change selected employee, use the current employee ID
-		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			employeeId = RequestContext.currentEmployeeId();
-		}
-
-		// Tenant ID is required for the query
-		const tenantId = RequestContext.currentTenantId() || request?.tenantId;
-
+		const { tenantId, organizationId, search, employeeId } = request || {};
 		// Determine the appropriate LIKE operator based on the database type
 		const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
@@ -80,7 +69,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		// Add conditions to the query using the query builder
 		query.where((qb: SelectQueryBuilder<JobPreset>) => {
 			// Filter by tenant ID
-			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+			qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId: tenantId || RequestContext.currentTenantId() });
 
 			// Filter by organization ID if provided
 			if (isNotEmpty(organizationId)) {
@@ -143,6 +132,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({ jobPresetId: presetId });
 	}
 
+
 	/**
 	 * Retrieves employee criteria based on the provided input.
 	 * @param input The input data for retrieving employee criteria.
@@ -161,7 +151,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @returns A Promise that resolves to the created job preset.
 	 */
 	public async createJobPreset(request: IJobPreset) {
-		return await this.commandBus.execute(new CreateJobPresetCommand(request));
+		return await this.commandBus.execute(
+			new CreateJobPresetCommand(request)
+		);
 	}
 
 	/**
@@ -171,7 +163,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveJobPresetCriterion(request: IMatchingCriterions) {
 		// Execute the SavePresetCriterionCommand with the provided criteria
-		return this.commandBus.execute(new SavePresetCriterionCommand(request));
+		return this.commandBus.execute(
+			new SavePresetCriterionCommand(request)
+		);
 	}
 
 	/**
@@ -181,7 +175,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveEmployeeCriterion(request: IMatchingCriterions) {
 		// Execute the SaveEmployeeCriterionCommand with the provided criteria
-		return this.commandBus.execute(new SaveEmployeeCriterionCommand(request));
+		return this.commandBus.execute(
+			new SaveEmployeeCriterionCommand(request)
+		);
 	}
 
 	/**
@@ -207,7 +203,9 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	async saveEmployeePreset(request: IEmployeePresetInput): Promise<IJobPreset[]> {
 		// Execute the SaveEmployeePresetCommand with the provided input
-		return await this.commandBus.execute(new SaveEmployeePresetCommand(request));
+		return await this.commandBus.execute(
+			new SaveEmployeePresetCommand(request)
+		);
 	}
 
 	/**

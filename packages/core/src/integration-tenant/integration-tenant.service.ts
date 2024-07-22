@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { FindManyOptions, IsNull, Not } from 'typeorm';
 import {
-	ID,
 	IIntegrationEntitySetting,
 	IIntegrationSetting,
 	IIntegrationTenant,
@@ -103,7 +102,9 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 						isArchived: false
 					}
 				},
-				order: { updatedAt: 'DESC' },
+				order: {
+					updatedAt: 'DESC'
+				},
 				...(input.relations ? { relations: input.relations } : {})
 			});
 
@@ -160,8 +161,8 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 		integrationId,
 		entityType
 	}: {
-		organizationId: ID;
-		integrationId: ID;
+		organizationId: string;
+		integrationId: string;
 		entityType: IntegrationEntity;
 	}): Promise<IIntegrationTenant> {
 		return await this.findOneByIdString(integrationId, {

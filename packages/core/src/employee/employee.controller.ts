@@ -18,13 +18,6 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
 import { I18nLang } from 'nestjs-i18n';
 import { PermissionsEnum, LanguagesEnum, IPagination, IEmployee, ID } from '@gauzy/contracts';
-import { CrudController, OptionParams, PaginationParams } from './../core/crud';
-import { RequestContext } from './../core/context';
-import { TenantOrganizationBaseDTO } from './../core/dto';
-import { LanguageDecorator, Permissions } from './../shared/decorators';
-import { CountQueryDTO } from './../shared/dto';
-import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import {
 	EmployeeCreateCommand,
 	EmployeeBulkCreateCommand,
@@ -32,20 +25,21 @@ import {
 	WorkingEmployeeGetCommand,
 	EmployeeGetCommand
 } from './commands';
+import { CrudController, OptionParams, PaginationParams } from './../core/crud';
+import { LanguageDecorator, Permissions } from './../shared/decorators';
+import { CountQueryDTO } from './../shared/dto';
+import { BulkBodyLoadTransformPipe, ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
+import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Employee } from './employee.entity';
 import { EmployeeService } from './employee.service';
-import {
-	EmployeeBulkInputDTO,
-	CreateEmployeeDTO,
-	UpdateEmployeeDTO,
-	UpdateProfileDTO,
-	FindMembersInputDTO
-} from './dto';
+import { EmployeeBulkInputDTO, CreateEmployeeDTO, UpdateEmployeeDTO, UpdateProfileDTO } from './dto';
+import { RequestContext } from './../core/context';
+import { TenantOrganizationBaseDTO } from './../core/dto';
 
 @ApiTags('Employee')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-@Controller('/employee')
+@Controller()
 export class EmployeeController extends CrudController<Employee> {
 	constructor(private readonly _employeeService: EmployeeService, private readonly _commandBus: CommandBus) {
 		super(_employeeService);
@@ -71,7 +65,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'No working employees found'
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-	@Get('/working')
+	@Get('working')
 	async findAllWorkingEmployees(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployee>> {
 		const { findInput } = data;
 		return await this._commandBus.execute(new WorkingEmployeeGetCommand(findInput));
@@ -97,7 +91,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Working employees count not found'
 	})
 	@Permissions(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-	@Get('/working/count')
+	@Get('working/count')
 	async findAllWorkingEmployeesCount(@Query('data', ParseJsonPipe) data: any): Promise<{ total: number }> {
 		const { findInput } = data;
 		const { organizationId, forRange } = findInput;
@@ -125,7 +119,7 @@ export class EmployeeController extends CrudController<Employee> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input. The response body may contain clues about what went wrong.'
 	})
-	@Post('/bulk')
+	@Post('bulk')
 	async createBulk(
 		@Body(BulkBodyLoadTransformPipe, new ValidationPipe({ transform: true })) entity: EmployeeBulkInputDTO,
 		@LanguageDecorator() themeLanguage: LanguagesEnum,
@@ -161,7 +155,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'An error occurred while retrieving the employee count.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
-	@Get('/count')
+	@Get('count')
 	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
 		return await this._employeeService.countBy(options);
@@ -190,39 +184,10 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'An error occurred while retrieving paginated employees.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
-	@Get('/pagination')
+	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() params: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
 		return await this._employeeService.pagination(params);
-	}
-
-	/**
-	 * GET members of the organization
-	 *
-	 * This endpoint retrieves a list of members of the organization based on the provided query parameters.
-	 * It allows filtering by organization team ID, organization project ID, and other criteria.
-	 *
-	 * @param options - Query parameters for filtering members.
-	 * @returns A promise resolving to a list of members.
-	 */
-	@ApiOperation({ summary: 'Get members of the organization' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Members of the organization'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'No members found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid query parameters. Please check your input.'
-	})
-	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
-	@Get('/members')
-	@UseValidationPipe()
-	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
-		return await this._employeeService.findMembers(options);
 	}
 
 	/**
@@ -248,7 +213,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Invalid query parameters. Please check your input.'
 	})
 	@Permissions(PermissionsEnum.ORG_EMPLOYEES_VIEW)
-	@Get('/')
+	@Get()
 	@UseValidationPipe()
 	async findAll(@Query() options: PaginationParams<Employee>): Promise<IPagination<IEmployee>> {
 		// Enforce that only active, non-archived users are retrieved
@@ -284,7 +249,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Invalid input. Check your query parameters.'
 	})
 	@Permissions()
-	@Get('/:id')
+	@Get(':id')
 	async findById(
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Employee>
@@ -325,7 +290,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Invalid input. Check the request body for potential issues.'
 	})
 	@HttpCode(HttpStatus.CREATED)
-	@Post('/')
+	@Post()
 	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateEmployeeDTO,
@@ -358,7 +323,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Invalid input. Check the request body for errors.'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('/:id')
+	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateEmployeeDTO): Promise<IEmployee> {
 		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
@@ -383,7 +348,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Invalid input. Check the response body for more details.'
 	})
 	@Permissions(PermissionsEnum.PROFILE_EDIT)
-	@Put('/:id/profile')
+	@Put(':id/profile')
 	@UseValidationPipe({ whitelist: true })
 	async updateProfile(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateProfileDTO): Promise<IEmployee> {
 		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
@@ -405,7 +370,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/:id')
+	@Delete(':id')
 	@UseValidationPipe({ whitelist: true })
 	async delete(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -433,7 +398,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Employee record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Delete('/:id/soft')
+	@Delete(':id/soft')
 	@UseValidationPipe({ whitelist: true })
 	async softRemove(
 		@Param('id', UUIDValidationPipe) id: ID,
@@ -462,7 +427,7 @@ export class EmployeeController extends CrudController<Employee> {
 		description: 'Employee record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put('/:id/recover')
+	@Put(':id/recover')
 	@UseValidationPipe({ whitelist: true })
 	async softRecover(
 		@Param('id', UUIDValidationPipe) id: ID,

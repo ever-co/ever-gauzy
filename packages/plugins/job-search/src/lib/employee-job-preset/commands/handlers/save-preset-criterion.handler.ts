@@ -7,10 +7,11 @@ import { TypeOrmJobPresetUpworkJobSearchCriterionRepository } from '../../reposi
 
 @CommandHandler(SavePresetCriterionCommand)
 export class SavePresetCriterionHandler implements ICommandHandler<SavePresetCriterionCommand> {
+
 	constructor(
 		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		private readonly typeOrmJobPresetUpworkJobSearchCriterionRepository: TypeOrmJobPresetUpworkJobSearchCriterionRepository
-	) {}
+	) { }
 
 	/**
 	 * Executes the SavePresetCriterionCommand to save a preset criterion.

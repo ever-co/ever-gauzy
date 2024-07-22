@@ -35,9 +35,6 @@ export class AppointmentFormComponent extends TranslationBaseComponent implement
 
 		this.route.params.pipe(takeUntil(this._ngDestroy$)).subscribe(async (params) => {
 			try {
-				if (!params.employeeId) {
-					return;
-				}
 				this.employee = await firstValueFrom(this.employeeService.getEmployeeById(params.employeeId, ['user']));
 
 				this.selectedEventType = history.state.selectedEventType;

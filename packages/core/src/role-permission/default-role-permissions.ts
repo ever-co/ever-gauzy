@@ -26,22 +26,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
-
-			/** Organization Task Setting Permissions Start */
+			/** Organization Task Setting */
 			PermissionsEnum.ORG_TASK_SETTING,
-			/** Organization Task Setting Permissions End */
-
-			/** Employee CRUD Permissions Start */
-			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
-			PermissionsEnum.ORG_EMPLOYEES_DELETE,
-			/** Employee CRUD Permissions End */
-
-			/** Member View Permissions Start */
-			PermissionsEnum.ORG_MEMBERS_VIEW,
-			/** Member View Permissions End */
-
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
@@ -97,14 +85,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
-
-			/** Daily CRUD Permissions Start */
+			/** Daily Plan */
 			PermissionsEnum.DAILY_PLAN_CREATE,
 			PermissionsEnum.DAILY_PLAN_READ,
 			PermissionsEnum.DAILY_PLAN_UPDATE,
 			PermissionsEnum.DAILY_PLAN_DELETE,
-			/** Daily CRUD Permissions End */
-
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -117,27 +102,15 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
-
-			/** Integration CRUD Permissions Start */
-			PermissionsEnum.INTEGRATION_ADD,
 			PermissionsEnum.INTEGRATION_VIEW,
-			PermissionsEnum.INTEGRATION_EDIT,
-			PermissionsEnum.INTEGRATION_DELETE,
-			/** Integration CRUD Permissions End */
-
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
-			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
-			PermissionsEnum.ORG_JOB_SEARCH,
-			PermissionsEnum.ORG_JOB_APPLY,
-			PermissionsEnum.ORG_JOB_EDIT,
-			/** Job Post Permissions End */
 			PermissionsEnum.ORG_EQUIPMENT_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_EDIT,
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
@@ -197,15 +170,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_DELETE,
 			/** Organization Task Setting */
 			PermissionsEnum.ORG_TASK_SETTING,
-			/** Employee CRUD Permissions Start */
-			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
-			PermissionsEnum.ORG_EMPLOYEES_EDIT,
-			PermissionsEnum.ORG_EMPLOYEES_DELETE,
-			/** Employee CRUD Permissions End */
-			/** Member View Permissions Start */
-			PermissionsEnum.ORG_MEMBERS_VIEW,
-			/** Member View Permissions End */
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
@@ -261,14 +226,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
-
-			/** Daily CRUD Permissions Start */
+			/** Daily Plan */
 			PermissionsEnum.DAILY_PLAN_CREATE,
 			PermissionsEnum.DAILY_PLAN_READ,
 			PermissionsEnum.DAILY_PLAN_UPDATE,
 			PermissionsEnum.DAILY_PLAN_DELETE,
-			/** Daily CRUD Permissions End */
-
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -281,27 +243,15 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
-
-			/** Integration CRUD Permissions Start */
-			PermissionsEnum.INTEGRATION_ADD,
 			PermissionsEnum.INTEGRATION_VIEW,
-			PermissionsEnum.INTEGRATION_EDIT,
-			PermissionsEnum.INTEGRATION_DELETE,
-			/** Integration CRUD Permissions End */
-
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
-			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
-			PermissionsEnum.ORG_JOB_SEARCH,
-			PermissionsEnum.ORG_JOB_APPLY,
-			PermissionsEnum.ORG_JOB_EDIT,
-			/** Job Post Permissions End */
 			PermissionsEnum.ORG_EQUIPMENT_VIEW,
 			PermissionsEnum.ORG_EQUIPMENT_EDIT,
 			PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW,
@@ -373,6 +323,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
+			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_TIME_OFF_VIEW,
 			PermissionsEnum.ORG_INVITE_VIEW,
 			PermissionsEnum.ORG_INVITE_EDIT,
@@ -384,9 +335,6 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_ADD,
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
-			/** Member View Permissions Start */
-			PermissionsEnum.ORG_MEMBERS_VIEW,
-			/** Member View Permissions End */
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TIME_TRACKER,

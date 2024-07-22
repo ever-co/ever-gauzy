@@ -4,7 +4,7 @@ import { IMatchingCriterions } from '@gauzy/contracts';
 import { RequestContext, TypeOrmEmployeeRepository } from '@gauzy/core';
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { SaveEmployeeCriterionCommand } from '../save-employee-criterion.command';
-import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../repository/type-orm-employee-upwork-jobs-search-criterion.repository';
+import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../../employee-job-preset/repository/typeorm-orm-employee-upwork-jobs-search-criterion.entity.repository';
 
 @CommandHandler(SaveEmployeeCriterionCommand)
 export class SaveEmployeeCriterionHandler implements ICommandHandler<SaveEmployeeCriterionCommand> {

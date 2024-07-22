@@ -77,8 +77,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 					throw new BadRequestException('Cannot found the task');
 				}
 				dailyPlan.tasks.push(task);
+				await this.save(dailyPlan); // Save changes
 			}
-			await this.save(dailyPlan); // Save changes
 
 			return dailyPlan; // Return the created/updated DailyPlan
 		} catch (error) {

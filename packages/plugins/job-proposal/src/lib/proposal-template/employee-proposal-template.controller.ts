@@ -1,7 +1,7 @@
-import { Body, Controller, Get, HttpStatus, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UpdateResult } from 'typeorm';
-import { ID, IEmployeeProposalTemplate, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IEmployeeProposalTemplate, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import {
 	CrudController,
 	Permissions,
@@ -14,7 +14,6 @@ import {
 import { EmployeeProposalTemplate } from './employee-proposal-template.entity';
 import { EmployeeProposalTemplateService } from './employee-proposal-template.service';
 import { CreateProposalTemplateDTO, UpdateProposalTemplateDTO } from './dto';
-import { ProposalTemplateDTO } from './dto/proposal-template.dto';
 
 @ApiTags('EmployeeProposalTemplate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -32,7 +31,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 * @returns
 	 */
 	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
-	@Get('/pagination')
+	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() params: PaginationParams<EmployeeProposalTemplate>
@@ -51,12 +50,9 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		status: HttpStatus.OK,
 		description: 'Record Updated'
 	})
-	@Patch('/:id/make-default')
-	async makeDefault(
-		@Param('id', UUIDValidationPipe) id: ID,
-		@Body() input: ProposalTemplateDTO
-	): Promise<IEmployeeProposalTemplate> {
-		return await this.employeeProposalTemplateService.makeDefault(id, input);
+	@Post(':id/make-default')
+	async makeDefault(@Param('id', UUIDValidationPipe) id: string): Promise<IEmployeeProposalTemplate> {
+		return await this.employeeProposalTemplateService.makeDefault(id);
 	}
 
 	/**
@@ -71,7 +67,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 		description: 'Found records'
 	})
 	@Permissions(PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW)
-	@Get('/')
+	@Get()
 	@UseValidationPipe()
 	async findAll(
 		@Query() params?: PaginationParams<EmployeeProposalTemplate>
@@ -85,7 +81,7 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 * @param entity
 	 * @returns
 	 */
-	@Post('/')
+	@Post()
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async create(@Body() entity: CreateProposalTemplateDTO): Promise<IEmployeeProposalTemplate> {
 		return await this.employeeProposalTemplateService.create(entity);
@@ -97,10 +93,10 @@ export class EmployeeProposalTemplateController extends CrudController<EmployeeP
 	 * @param entity
 	 * @returns
 	 */
-	@Put('/:id')
+	@Put(':id')
 	@UseValidationPipe({ whitelist: true, transform: true })
 	async update(
-		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('id', UUIDValidationPipe) id: string,
 		@Body() entity: UpdateProposalTemplateDTO
 	): Promise<IEmployeeProposalTemplate | UpdateResult> {
 		return await this.employeeProposalTemplateService.update(id, entity);

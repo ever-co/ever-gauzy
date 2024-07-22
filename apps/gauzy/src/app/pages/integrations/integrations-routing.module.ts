@@ -40,21 +40,33 @@ const routes: Routes = [
 	/** Integrations List */
 	{
 		path: 'upwork',
-		loadChildren: () => import('../upwork/upwork.module').then((m) => m.UpworkModule)
+		loadChildren: () => import('../upwork/upwork.module').then(
+			(m) => m.UpworkModule
+		)
 	},
 	{
 		path: 'hubstaff',
-		loadChildren: () => import('../hubstaff/hubstaff.module').then((m) => m.HubstaffModule)
+		loadChildren: () => import('../hubstaff/hubstaff.module').then(
+			(m) => m.HubstaffModule
+		)
 	},
 	{
 		path: 'gauzy-ai',
-		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then((m) => m.GauzyAIModule),
-		data: { selectors: false }
+		loadChildren: () => import('./gauzy-ai/gauzy-ai.module').then(
+			(m) => m.GauzyAIModule
+		),
+		data: {
+			selectors: false
+		}
 	},
 	{
 		path: 'github',
-		loadChildren: () => import('./github/github.module').then((m) => m.GithubModule),
-		data: { selectors: false }
+		loadChildren: () => import('./github/github.module').then(
+			(m) => m.GithubModule
+		),
+		data: {
+			selectors: false
+		}
 	}
 ];
 
@@ -62,4 +74,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class IntegrationsRoutingModule {}
+export class IntegrationsRoutingModule { }

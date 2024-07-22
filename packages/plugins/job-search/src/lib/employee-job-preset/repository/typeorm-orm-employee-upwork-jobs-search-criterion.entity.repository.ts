@@ -5,10 +5,7 @@ import { EmployeeUpworkJobsSearchCriterion } from '../employee-upwork-jobs-searc
 
 @Injectable()
 export class TypeOrmEmployeeUpworkJobsSearchCriterionRepository extends Repository<EmployeeUpworkJobsSearchCriterion> {
-	constructor(
-		@InjectRepository(EmployeeUpworkJobsSearchCriterion)
-		readonly repository: Repository<EmployeeUpworkJobsSearchCriterion>
-	) {
-		super(repository.target, repository.manager, repository.queryRunner);
-	}
+    constructor(@InjectRepository(EmployeeUpworkJobsSearchCriterion) readonly repository: Repository<EmployeeUpworkJobsSearchCriterion>) {
+        super(repository.target, repository.manager, repository.queryRunner);
+    }
 }

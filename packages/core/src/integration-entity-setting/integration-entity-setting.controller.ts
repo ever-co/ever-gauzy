@@ -1,7 +1,15 @@
-import { Controller, HttpStatus, Get, Param, Put, Body, UseGuards } from '@nestjs/common';
+import {
+	Controller,
+	HttpStatus,
+	Get,
+	Param,
+	Put,
+	Body,
+	UseGuards
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
-import { ID, IIntegrationEntitySetting, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { IIntegrationEntitySetting, IIntegrationTenant, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { IntegrationEntitySetting } from './integration-entity-setting.entity';
 import { Permissions } from './../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
@@ -10,10 +18,12 @@ import { IntegrationEntitySettingGetCommand, IntegrationEntitySettingUpdateOrCre
 
 @ApiTags('IntegrationsEntitySetting')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
+@Permissions(PermissionsEnum.INTEGRATION_VIEW)
 @Controller()
 export class IntegrationEntitySettingController {
-	constructor(private readonly _commandBus: CommandBus) {}
+	constructor(
+		private readonly _commandBus: CommandBus
+	) { }
 
 	/**
 	 * Get settings by integration.
@@ -33,9 +43,11 @@ export class IntegrationEntitySettingController {
 	})
 	@Get('integration/:id')
 	async getEntitySettingByIntegration(
-		@Param('id', UUIDValidationPipe) integrationId: ID
+		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id']
 	): Promise<IPagination<IntegrationEntitySetting>> {
-		return await this._commandBus.execute(new IntegrationEntitySettingGetCommand(integrationId));
+		return await this._commandBus.execute(
+			new IntegrationEntitySettingGetCommand(integrationId)
+		);
 	}
 
 	/**
@@ -55,12 +67,13 @@ export class IntegrationEntitySettingController {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	@Put('integration/:id')
 	async updateIntegrationEntitySettingByIntegration(
-		@Param('id', UUIDValidationPipe) integrationId: ID,
+		@Param('id', UUIDValidationPipe) integrationId: IIntegrationTenant['id'],
 		@Body() input: IIntegrationEntitySetting | IIntegrationEntitySetting[]
 	): Promise<IIntegrationEntitySetting[]> {
-		return await this._commandBus.execute(new IntegrationEntitySettingUpdateOrCreateCommand(integrationId, input));
+		return await this._commandBus.execute(
+			new IntegrationEntitySettingUpdateOrCreateCommand(integrationId, input)
+		);
 	}
 }
