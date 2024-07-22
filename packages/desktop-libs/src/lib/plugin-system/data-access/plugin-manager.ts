@@ -25,7 +25,7 @@ export class PluginManager implements IPluginManager {
 		} else {
 			await this.installPlugin(metadata, pathDirname);
 		}
-		fs.rmdirSync(pathDirname, { recursive: true });
+		fs.rmSync(pathDirname, { recursive: true, force: true });
 		process.noAsar = false;
 	}
 
@@ -109,9 +109,9 @@ export class PluginManager implements IPluginManager {
 		if (plugin) {
 			await this.deactivatePlugin(name);
 			this.plugins.delete(name);
-			fs.rmdirSync(metadata.pathname, { recursive: true });
-			logger.info(`Uninstalling plugin ${name}`);
 			await this.pluginMetadataService.delete({ name });
+			fs.rmSync(metadata.pathname, { recursive: true, force: true });
+			logger.info(`Uninstalling plugin ${name}`);
 		}
 	}
 

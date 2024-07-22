@@ -39,7 +39,7 @@ export class PluginListComponent implements OnInit {
 	private _pluginTable: Angular2SmartTableComponent;
 	public processing = false;
 
-	@ViewChild('pluginTable') set taskTable(content: Angular2SmartTableComponent) {
+	@ViewChild('pluginTable') set pluginTable(content: Angular2SmartTableComponent) {
 		if (content) {
 			this._pluginTable = content;
 			this.onChangedSource();
@@ -112,7 +112,10 @@ export class PluginListComponent implements OnInit {
 
 	private loadPlugins(): void {
 		from(this.pluginElectronService.plugins)
-			.pipe(tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))))
+			.pipe(
+				tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))),
+				untilDestroyed(this)
+			)
 			.subscribe();
 	}
 
@@ -128,6 +131,7 @@ export class PluginListComponent implements OnInit {
 		} else {
 			this.pluginElectronService.activate(this.plugin);
 		}
+		this.plugin = null;
 	}
 
 	public view() {
@@ -144,6 +148,7 @@ export class PluginListComponent implements OnInit {
 	public uninstall() {
 		this.processing = true;
 		this.pluginElectronService.uninstall(this.plugin);
+		this.plugin = null;
 	}
 
 	private clearItem(): void {
