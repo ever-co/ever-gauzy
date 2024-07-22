@@ -256,7 +256,7 @@
 		"ui-core": {
 			"projectType": "library",
 			"root": "packages/ui-core",
-			"sourceRoot": "packages/ui-core/src",
+			"sourceRoot": "packages/ui-core",
 			"prefix": "lib",
 			"architect": {
 				"build": {

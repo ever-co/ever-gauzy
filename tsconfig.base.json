@@ -15,6 +15,9 @@
 		"skipDefaultLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
+			"@ngx-translate/core": ["apps/gauzy/node_modules/@ngx-translate/core"],
+			"ngx-draggable-dom": ["apps/gauzy/node_modules/ngx-draggable-dom"],
+			"ngx-permissions": ["apps/gauzy/node_modules/ngx-permissions"],
 			"@gauzy/ui-core/common": ["packages/ui-core/common/src/index.ts"],
 			"@gauzy/ui-core/core": ["packages/ui-core/core/src/index.ts"],
 			"@gauzy/ui-core/i18n": ["packages/ui-core/i18n/src/index.ts"],

@@ -5,8 +5,6 @@
 		"declarationMap": true,
 		"sourceMap": true,
 		"inlineSources": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
 		"outDir": "./dist",
 		"types": ["node", "jest"]
 	},

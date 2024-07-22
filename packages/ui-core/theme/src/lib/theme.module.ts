@@ -27,7 +27,7 @@ import {
 import { NbEvaIconsModule } from '@nebular/eva-icons';
 import { NbSecurityModule } from '@nebular/security';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CommonNavModule,
 	LanguagesService,
@@ -91,7 +91,7 @@ const NB_MODULES = [
 
 const MODULES = [
 	SelectorsModule,
-	I18nTranslateModule.forChild(),
+	TranslateModule.forChild(),
 	NgxPermissionsModule.forChild(),
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
