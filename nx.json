@@ -59,6 +59,7 @@
 			"prefix": "ngx"
 		},
 		"@nrwl/angular:library": {
+			"buildable": true,
 			"linter": "eslint",
 			"unitTestRunner": "jest",
 			"style": "scss"

@@ -5,6 +5,13 @@
 		{
 			"files": ["*.ts"],
 			"rules": {
+				"@nrwl/nx/enforce-module-boundaries": [
+					"error",
+					{
+						"enforceBuildableLibDependency": true,
+						"allow": ["@gauzy/ui-core/*"]
+					}
+				],
 				"@angular-eslint/directive-selector": [
 					"error",
 					{

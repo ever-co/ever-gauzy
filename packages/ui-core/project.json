@@ -3,7 +3,7 @@
 	"$schema": "../../node_modules/nx/schemas/project-schema.json",
 	"sourceRoot": "packages/ui-core/src",
 	"prefix": "gauzy",
-	"tags": [],
+	"tags": ["scope:ui-core"],
 	"projectType": "library",
 	"targets": {
 		"build": {
