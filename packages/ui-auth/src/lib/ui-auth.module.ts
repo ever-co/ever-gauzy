@@ -1,9 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 
 @NgModule({
-	imports: [CommonModule, I18nTranslateModule]
+	imports: [CommonModule]
 })
 export class UiAuthModule {
 	constructor() {
