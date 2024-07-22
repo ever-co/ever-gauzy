@@ -48,7 +48,7 @@ export class TenantOnboardingComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Onboards a user by creating a tenant, fetching the user details, and setting up the organization.
+	 * Onboard a user by creating a tenant, fetching the user details, and setting up the organization.
 	 *
 	 * @param {IOrganizationCreateInput} organization - The organization input data required for onboarding.
 	 */

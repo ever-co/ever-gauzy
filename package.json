@@ -405,7 +405,7 @@
 		"lerna-changelog": "^1.0.1",
 		"lighthouse": "^6.3.0",
 		"lint-staged": "^10.4.0",
-		"ng-packagr": "^16.2.3",
+		"ng-packagr": "~16.0.0",
 		"node-gyp": "^9.3.1",
 		"npm-run-all": "^4.1.5",
 		"nx": "15.9.4",

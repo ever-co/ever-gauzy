@@ -29,10 +29,10 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import * as moment from 'moment';
+import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import { UiAuthModule } from '@gauzy/ui-auth';
 import { UiCoreModule } from '@gauzy/ui-core';
 import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
-import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -92,7 +92,6 @@ const isProd = environment.production;
 		UiAuthModule,
 		UiConfigModule.forRoot(),
 		UiCoreModule.forRoot(),
-		I18nTranslateModule.forRoot(),
 		CommonModule.forRoot(),
 		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
@@ -104,6 +103,7 @@ const isProd = environment.production;
 				deps: [HttpClient]
 			}
 		}),
+		I18nTranslateModule.forRoot(),
 		CloudinaryModule,
 		FileUploadModule,
 		TimeTrackerModule.forRoot(),
@@ -199,7 +199,7 @@ export class AppModule {
 	 */
 	constructor(protected readonly _i18nTranslateService: I18nTranslateService) {
 		const availableLanguages = Object.values(LanguagesEnum);
-		_i18nTranslateService.setAvailableLanguags(availableLanguages);
+		_i18nTranslateService.setAvailableLanguages(availableLanguages);
 
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
