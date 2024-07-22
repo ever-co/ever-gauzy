@@ -3,7 +3,7 @@
 		<button (click)="addPlugin()" status="primary" nbButton> <nb-icon icon="plus-outline"></nb-icon>New
 			Plugin</button>
 	</div>
-	<div *ngIf="plugin" class="button-hideable">
+	<div *ngIf="plugin" class="button-hide">
 		<button *ngIf="plugin.renderer" class="button-view" status="basic" (click)="view()" nbButton><nb-icon
 				icon="eye-outline"></nb-icon>View</button>
 		<button *gauzySpinnerButton="processing" [status]="plugin?.isActivate ? 'warning': 'success'"
