@@ -504,7 +504,9 @@
 		"PROGRAMFILES",
 		"ALLUSERSPROFILE",
 		"APPDATA",
-		"COMMONPROGRAMFILES"
+		"COMMONPROGRAMFILES",
+		"serverapi",
+		"serializables"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
