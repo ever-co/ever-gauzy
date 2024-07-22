@@ -13,6 +13,7 @@ export class UiCoreModule {
 	 * @return {ModuleWithProviders<UiCoreModule>} The ModuleWithProviders object containing the UiCoreModule and an empty providers array.
 	 */
 	static forRoot(): ModuleWithProviders<UiCoreModule> {
+		console.log('ui core module secondary entry points enabled');
 		return {
 			ngModule: UiCoreModule,
 			providers: []
