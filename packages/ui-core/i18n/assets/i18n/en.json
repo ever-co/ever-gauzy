@@ -210,7 +210,8 @@
 			"ESTIMATE": "You have not created any estimate.",
 			"EVENT_TYPE": "You have not created any event type.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product type.",
-			"TEAM_DASHBOARD": "You don't have any teams"
+			"TEAM_DASHBOARD": "You don't have any teams",
+			"PLUGIN": "You haven't install any plugin."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",
@@ -4034,7 +4035,11 @@
 				"SSL_CERT_FILE_INFO": "Path to Client Certificate file for SSL.",
 				"SECURE": "Secure",
 				"SECURE_INFO": "True, if you want to verify the SSL Certs."
-			}
+			},
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
+			"VERSION": "Version"
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

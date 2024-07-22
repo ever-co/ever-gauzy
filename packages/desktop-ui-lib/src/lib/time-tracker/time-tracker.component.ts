@@ -9,31 +9,8 @@ import {
 	TemplateRef,
 	ViewChild
 } from '@angular/core';
-import { NbDialogRef, NbDialogService, NbIconLibraries, NbToastrService } from '@nebular/theme';
-import { TimeTrackerService } from './time-tracker.service';
-import * as moment from 'moment';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import * as _ from 'underscore';
-import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
 import { DomSanitizer } from '@angular/platform-browser';
-import {
-	asapScheduler,
-	asyncScheduler,
-	BehaviorSubject,
-	concatMap,
-	debounceTime,
-	filter,
-	firstValueFrom,
-	from,
-	lastValueFrom,
-	Observable,
-	of,
-	Subject,
-	tap
-} from 'rxjs';
-import { ElectronService, LoggerService } from '../electron/services';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import 'moment-duration-format';
 import {
 	ContactType,
 	IOrganization,
@@ -49,6 +26,42 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
+import { NbDialogRef, NbDialogService, NbIconLibraries, NbToastrService } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
+import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
+import * as moment from 'moment';
+import 'moment-duration-format';
+import {
+	asapScheduler,
+	asyncScheduler,
+	BehaviorSubject,
+	concatMap,
+	debounceTime,
+	filter,
+	firstValueFrom,
+	from,
+	lastValueFrom,
+	Observable,
+	of,
+	Subject,
+	tap
+} from 'rxjs';
+import * as _ from 'underscore';
+import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
+import { AuthStrategy } from '../auth';
+import { GAUZY_ENV } from '../constants';
+import { ElectronService, LoggerService } from '../electron/services';
+import { ImageViewerService } from '../image-viewer/image-viewer.service';
+import { ActivityWatchViewService } from '../integrations';
+import { LanguageSelectorService } from '../language/language-selector.service';
+import {
+	InterruptedSequenceQueue,
+	ISequence,
+	SequenceQueue,
+	TimeSlotQueueService,
+	ViewQueueStateUpdater
+} from '../offline-sync';
 import {
 	ErrorHandlerService,
 	NativeNotificationService,
@@ -58,26 +71,13 @@ import {
 	ToastrNotificationService,
 	ZoneEnum
 } from '../services';
-import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
-import { IRemoteTimer } from './time-tracker-status/interfaces';
-import {
-	InterruptedSequenceQueue,
-	ISequence,
-	SequenceQueue,
-	TimeSlotQueueService,
-	ViewQueueStateUpdater
-} from '../offline-sync';
-import { ImageViewerService } from '../image-viewer/image-viewer.service';
-import { AuthStrategy } from '../auth';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { TranslateService } from '@ngx-translate/core';
-import { AlwaysOnService, AlwaysOnStateEnum } from '../always-on/always-on.service';
+import { TasksComponent } from '../tasks/tasks.component';
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
-import { GAUZY_ENV } from '../constants';
-import { TasksComponent } from '../tasks/tasks.component';
-import { ActivityWatchViewService } from '../integrations';
+import { IRemoteTimer } from './time-tracker-status/interfaces';
+import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
+import { TimeTrackerService } from './time-tracker.service';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -1608,6 +1608,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await this.updateOrganizationTeamEmployee();
 
 			this.electronService.ipcRenderer.send('request_permission');
+
+			this.electronService.ipcRenderer.send('start-capture-screen');
 		} catch (error) {
 			this._startMode = TimerStartMode.STOP;
 			this.start$.next(false);
@@ -1622,6 +1624,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.loading = true;
 
 			const config = { quitApp: this.quitApp, isEmergency };
+
+			this.electronService.ipcRenderer.send('stop-capture-screen');
 
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Stopping timer');
