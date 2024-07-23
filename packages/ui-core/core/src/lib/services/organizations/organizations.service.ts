@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, firstValueFrom } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
 	IOrganizationCreateInput,
@@ -8,13 +8,29 @@ import {
 	IOrganizationContactFindInput,
 	IPagination,
 	IOrganizationContact,
-	IOptionsSelect
+	IOptionsSelect,
+	IOrganizationUpdateInput,
+	IUserOrganization,
+	IUserFindInput,
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class OrganizationsService {
-	constructor(private readonly http: HttpClient) {}
+	private _organizationForm: IOrganizationFindInput;
+
+	constructor(private readonly http: HttpClient) { }
+
+	organizationForm$: BehaviorSubject<IOrganizationFindInput> = new BehaviorSubject(this.organizationForm);
+
+	set organizationForm(organization: IOrganizationUpdateInput) {
+		this._organizationForm = organization;
+		this.organizationForm$.next(organization);
+	}
+
+	get organizationForm(): IOrganizationUpdateInput {
+		return this._organizationForm;
+	}
 
 	create(body: IOrganizationCreateInput): Promise<IOrganization> {
 		return firstValueFrom(this.http.post<IOrganization>(`${API_PREFIX}/organization`, body));
@@ -96,5 +112,15 @@ export class OrganizationsService {
 		return this.http.get<number>(`${API_PREFIX}/public/organization/project/count`, {
 			params: toParams(params)
 		});
+	}
+
+	/**
+	 * Update the organization form with new data
+	 *
+	 * @param formData - The form data to update.
+	 */
+
+	async updateOrganizationForm(formData: IOrganizationUpdateInput) {
+		this.organizationForm = { ...this.organizationForm, ...formData };
 	}
 }

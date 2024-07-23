@@ -18,8 +18,7 @@ import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, Toas
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+	implements OnInit, OnDestroy, AfterViewInit {
 	hoverState: boolean;
 	employeesCount: number;
 
@@ -72,9 +71,10 @@ export class EditOrganizationMainComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
+		console.log("organization", this.store)
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
@@ -85,23 +85,28 @@ export class EditOrganizationMainComponent
 	 *
 	 * @param image
 	 */
-	updateImageAsset(image: IImageAsset) {
+	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
-				this.form.get('imageId').setValue(image.id);
-				this.form.get('imageUrl').setValue(image.fullUrl);
+				// this.form.get('imageId').setValue(image.id);
+				// this.form.get('imageUrl').setValue(image.fullUrl);
+				await this.organizationService.updateOrganizationForm({
+					imageId: image.id,
+					image,
+				});
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
 			this.form.updateValueAndValidity();
 		} catch (error) {
 			console.log('Error while updating organization avatars');
-			this.handleImageUploadError(error);
+			this.errorHandler.handleError(error);
 		}
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		// Delegate error handling to the _errorHandlingService
+		this.errorHandler.handleError(error);
 	}
 
 	/**
@@ -142,11 +147,11 @@ export class EditOrganizationMainComponent
 	 *
 	 * @returns
 	 */
-	private _setFormValues() {
+	private async _setFormValues() {
 		if (!this.organization) {
 			return;
 		}
-
+		console.log("org", this.organization)
 		this.form.setValue({
 			imageId: this.organization.imageId || null,
 			imageUrl: this.organization.imageUrl || null,
@@ -159,6 +164,13 @@ export class EditOrganizationMainComponent
 			website: this.organization.website || null,
 			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null
 		});
+		const { id: organizationId, tenantId } = this.organization;
+		const values = {
+			organizationId,
+			tenantId,
+			...(this.form.valid ? this.form.value : {})
+		};
+		await this.organizationService.updateOrganizationForm(values);
 		this.form.updateValueAndValidity();
 	}
 
@@ -175,5 +187,5 @@ export class EditOrganizationMainComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

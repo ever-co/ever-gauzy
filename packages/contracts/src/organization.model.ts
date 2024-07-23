@@ -11,7 +11,7 @@ import { ISkill } from './skill-entity.model';
 import { ITag } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
-import { IRelationalImageAsset } from './image-asset.model';
+import { IImageAsset, IRelationalImageAsset } from './image-asset.model';
 
 export interface IRegisterAsEmployee {
 	registerAsEmployee?: boolean;
@@ -167,12 +167,14 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isImporting?: boolean;
 	sourceId?: string;
 	userOrganizationSourceId?: string;
+	imageId?: string;
+	image?: IImageAsset;
 	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;
 }
 
-export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
+export interface IOrganizationUpdateInput extends Partial<IOrganizationCreateInput> {
 	id?: string;
 }
 
