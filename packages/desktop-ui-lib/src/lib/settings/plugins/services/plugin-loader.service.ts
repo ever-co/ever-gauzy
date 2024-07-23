@@ -1,5 +1,4 @@
 import { ComponentRef, Injectable, Type, ViewContainerRef } from '@angular/core';
-import * as path from 'path';
 import { NoDataMessageComponent } from '../../../time-tracker/no-data-message/no-data-message.component';
 
 export interface IPlugin {
@@ -34,7 +33,7 @@ export class PluginLoaderService {
 		}
 
 		try {
-			const componentModule = await import(/*webpackIgnore:true*/ path.join(plugin.pathname, plugin.renderer));
+			const componentModule = await import(/*webpackIgnore:true*/ `${plugin.pathname}/${plugin.renderer}`);
 			const componentRef = viewContainerRef.createComponent(componentModule.default);
 			return componentRef;
 		} catch (error) {
