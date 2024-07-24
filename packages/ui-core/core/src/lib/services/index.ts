@@ -65,3 +65,4 @@ export * from './translatable';
 export * from './upwork';
 export * from './users';
 export * from './warehouse';
+export * from './page';
