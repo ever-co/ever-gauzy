@@ -49,6 +49,11 @@ import { ContactSelectorModule } from '../contact-selector/contact-selector.modu
 	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {
+	/**
+	 * Returns a ModuleWithProviders object that specifies the TimeTrackerModule and its providers.
+	 *
+	 * @return {ModuleWithProviders<TimeTrackerModule>} A ModuleWithProviders object with the TimeTrackerModule and its providers.
+	 */
 	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,
