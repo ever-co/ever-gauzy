@@ -1,13 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
-import { PageRouteConfig } from './page-route.types';
+import { PageRouteLocationConfig } from './page-route.types';
 import { PageRouteLocationId } from '../../common/component-registry-types';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class PageRouteService {
-	private readonly registry = new Map<PageRouteLocationId, PageRouteConfig[]>();
+	/**
+	 * Registry for storing page route configurations.
+	 *
+	 * This Map stores arrays of PageRouteConfig objects, keyed by PageRouteLocationId.
+	 */
+	private readonly registry = new Map<PageRouteLocationId, PageRouteLocationConfig[]>();
 
 	/**
 	 * Register a single page route configuration.
@@ -21,7 +26,7 @@ export class PageRouteService {
 	 * @throws Will throw an error if the configuration does not have a location property.
 	 * @throws Will throw an error if a route with the same location has already been registered.
 	 */
-	registerPageRoute(config: PageRouteConfig): void {
+	registerPageRoute(config: PageRouteLocationConfig): void {
 		// Check if the configuration has a location property
 		if (!config.location) {
 			throw new Error('Page route configuration must have a location property');
@@ -30,8 +35,13 @@ export class PageRouteService {
 		// Get all registered routes for the specified location
 		const routes = this.registry.get(config.location) || [];
 
+		// Check if a route with the same location and path already exists
+		const isMatchingRoute = routes.some(
+			(route: PageRouteLocationConfig) => route.location === config.location && route.path === config.path
+		);
+
 		// Check if a route with the same location already exists
-		if (routes.some((route: PageRouteConfig) => route.location === config.location && route.path === config.path)) {
+		if (isMatchingRoute) {
 			throw new Error(
 				`A page with the location "${config.location}" and path "${config.path}" has already been registered`
 			);
@@ -55,7 +65,7 @@ export class PageRouteService {
 	 * @param configs The array of configurations for the page routes.
 	 * @throws Will throw an error if a route with the same location and path has already been registered.
 	 */
-	registerPageRoutes(configs: PageRouteConfig[]): void {
+	registerPageRoutes(configs: PageRouteLocationConfig[]): void {
 		configs.forEach((config) => this.registerPageRoute(config));
 	}
 
@@ -68,22 +78,53 @@ export class PageRouteService {
 	 * @param location The page location identifier.
 	 * @returns The array of registered routes for the specified location.
 	 */
-	getPageRoutes(location: PageRouteLocationId): Route[] {
+	getPageLocationRoutes(location: PageRouteLocationId): Route[] {
 		// Get all registered routes for the specified location
-		const configs = this.registry.get(location) || [];
+		let configs = this.registry.get(location) || [];
+
+		// Use a Set to track unique location-path combinations
+		const locationPaths = new Set<string>();
+
+		// Create a unique identifier for the combination of location and path
+		configs = configs.filter((config: PageRouteLocationConfig) => {
+			// Create a unique identifier for the combination of location and path
+			const identifier = `${config.location}-${config.path}`;
+
+			// Check if the unique identifier is already in the Set
+			if (locationPaths.has(identifier)) {
+				return false; // Duplicate found, filter it out
+			}
+
+			// Add the unique identifier to the Set
+			locationPaths.add(identifier);
+			return true; // Not a duplicate, keep it
+		});
 
 		// Map each route configuration to a route object
-		return configs.map((config) => {
+		return configs.map((config: PageRouteLocationConfig) => {
+			// Create a new route object
 			const route: Route = {
-				path: config.path || '',
-				pathMatch: config.path ? 'prefix' : 'full'
+				path: config.path,
+				pathMatch: config.path ? 'prefix' : 'full',
+				data: config.data || {},
+				canActivate: config.canActivate || []
 			};
 
-			// Check if the route configuration has a component property
+			// Check if the route configuration has a component or loadChildren property
+			if (config.component) {
+				// Set the component property to the config object
+				route.component = config.component;
+			} else if (config.loadChildren) {
+				// Set the loadChildren property to the config object
+				route.loadChildren = config.loadChildren;
+			}
+
+			// Check if the route configuration has additional route options
 			if (config.route) {
 				Object.assign(route, config.route);
 			}
 
+			// Return the route object
 			return route;
 		});
 	}
