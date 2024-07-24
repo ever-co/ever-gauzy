@@ -11,6 +11,13 @@ export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 	{
 		path: '',
 		component: JobLayoutComponent,
-		children: _pageRouteService.getPageLocationRoutes('jobs')
+		children: [
+			{
+				path: '',
+				redirectTo: 'employee',
+				pathMatch: 'full'
+			},
+			..._pageRouteService.getPageLocationRoutes('jobs')
+		]
 	}
 ];

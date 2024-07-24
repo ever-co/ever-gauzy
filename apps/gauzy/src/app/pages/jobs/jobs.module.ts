@@ -21,15 +21,6 @@ import { createRoutes } from './job.routes';
 })
 export class JobsModule {
 	constructor(readonly _pageRouteService: PageRouteService) {
-		// Register Job Layout Page Routes
-		_pageRouteService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path ''
-			path: '',
-			// Register the component 'JobLayoutComponent'
-			component: JobLayoutComponent
-		});
 		// Register Job Browser Page Routes
 		_pageRouteService.registerPageRoute({
 			// Register the location 'jobs'
