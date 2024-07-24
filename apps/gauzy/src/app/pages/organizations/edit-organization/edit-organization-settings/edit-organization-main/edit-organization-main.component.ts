@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
+import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset, CurrenciesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
@@ -88,15 +88,16 @@ export class EditOrganizationMainComponent
 	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
-				// this.form.get('imageId').setValue(image.id);
-				// this.form.get('imageUrl').setValue(image.fullUrl);
-				await this.organizationService.updateOrganizationForm({
-					imageId: image.id,
-					image,
-				});
+				this.form.get('imageId').setValue(image.id);
+				this.form.get('imageUrl').setValue(image.fullUrl);
+				// await this.organizationEditStore.updateOrganizationForm({
+				// 	imageId: image.id,
+				// 	imageUrl: image.fullUrl,
+				// });
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
+			await this.updateOrganizationSettings();
 			this.form.updateValueAndValidity();
 		} catch (error) {
 			console.log('Error while updating organization avatars');
@@ -170,7 +171,7 @@ export class EditOrganizationMainComponent
 			tenantId,
 			...(this.form.valid ? this.form.value : {})
 		};
-		await this.organizationService.updateOrganizationForm(values);
+		await this.organizationEditStore.updateOrganizationForm(values);
 		this.form.updateValueAndValidity();
 	}
 

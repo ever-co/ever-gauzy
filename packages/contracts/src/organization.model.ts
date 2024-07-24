@@ -174,7 +174,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	upworkOrganizationName?: string;
 }
 
-export interface IOrganizationUpdateInput extends Partial<IOrganizationCreateInput> {
+export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
 	id?: string;
 }
 
