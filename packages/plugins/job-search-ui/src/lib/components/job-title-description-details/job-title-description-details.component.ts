@@ -11,7 +11,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	providers: [CurrencyPipe]
 })
 export class JobTitleDescriptionDetailsComponent extends TranslationBaseComponent {
-	constructor(public readonly translateService: TranslateService) {
+	constructor(translateService: TranslateService) {
 		super(translateService);
 	}
 

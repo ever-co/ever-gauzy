@@ -1,6 +1,7 @@
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -11,38 +12,41 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import {
-	DirectivesModule,
-	EmployeeMultiSelectModule,
-	ProposalTemplateSelectModule,
-	SelectorsModule
-} from '@gauzy/ui-core/shared';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { HttpLoaderFactory, I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { DirectivesModule, ProposalTemplateSelectModule, SelectorsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
-import { JobTableComponentsModule } from '../../../table-components';
+import { JobTableComponentsModule } from '../job-table-components.module';
 
 @NgModule({
-	providers: [],
 	declarations: [ApplyJobManuallyComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		CKEditorModule,
-		FileUploadModule,
 		NbButtonModule,
 		NbCardModule,
 		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
-		EmployeeMultiSelectModule,
+		TranslateModule.forRoot({
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
+		CKEditorModule,
+		FileUploadModule,
+		I18nTranslateModule.forRoot(),
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,
 		DirectivesModule,
-		SelectorsModule
+		SelectorsModule,
+		SharedModule
 	],
-	exports: []
+	exports: [TranslateModule],
+	providers: []
 })
 export class ApplyJobManuallyModule {}

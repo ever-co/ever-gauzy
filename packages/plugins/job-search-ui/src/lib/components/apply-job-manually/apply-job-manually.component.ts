@@ -5,7 +5,7 @@ import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
@@ -29,7 +29,8 @@ import { JobService, ToastrService } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ga-apply-job-manually',
 	templateUrl: './apply-job-manually.component.html',
-	styleUrls: ['./apply-job-manually.component.scss']
+	styleUrls: ['./apply-job-manually.component.scss'],
+	providers: [TranslateStore]
 })
 export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;

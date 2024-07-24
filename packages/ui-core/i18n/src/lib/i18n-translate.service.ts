@@ -13,7 +13,7 @@ export class I18nTranslateService {
 		return this._availableLanguages;
 	}
 
-	constructor(public readonly _translateService: TranslateService) {}
+	constructor(readonly _translateService: TranslateService) {}
 
 	/**
 	 * Sets the default language to use as a fallback
@@ -21,6 +21,14 @@ export class I18nTranslateService {
 	 */
 	setDefaultLang(lang: string): void {
 		this._translateService.setDefaultLang(lang);
+	}
+
+	/**
+	 * Sets the language to use
+	 * @param lang The language code to set as the default language.
+	 */
+	setLanguage(lang: string): void {
+		this._translateService.use(lang);
 	}
 
 	/**

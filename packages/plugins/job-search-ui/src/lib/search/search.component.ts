@@ -42,8 +42,7 @@ import {
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
-import { ApplyJobManuallyComponent } from '../components';
-import { JobTitleDescriptionDetailsComponent } from '../../table-components';
+import { ApplyJobManuallyComponent, JobTitleDescriptionDetailsComponent } from '../components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,7 +54,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	loading: boolean = false;
 	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
-	settingsSmartTable: object;
+	settingsSmartTable: any = {
+		selectedRowIndex: -1,
+		editable: false,
+		hideSubHeader: true,
+		actions: false
+	};
 	isOpenAdvancedFilter: boolean = false;
 	jobs: IEmployeeJobPost[] = [];
 	JobPostSourceEnum = JobPostSourceEnum;
@@ -594,10 +598,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
-			selectedRowIndex: -1,
-			editable: false,
-			hideSubHeader: true,
-			actions: false,
+			...this.settingsSmartTable,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -614,9 +615,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 								sort: false,
 								renderComponent: EmployeeLinksComponent,
 								componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+									// Get row data
 									const employee: IEmployee = cell.getRawValue() as IEmployee;
 									instance.rowData = cell.getRow().getData();
 
+									// Set value
 									instance.value = {
 										name: employee?.user?.name ?? null,
 										imageUrl: employee?.user?.imageUrl ?? null,
@@ -633,8 +636,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 					sort: false,
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {
+						// Get row data
 						instance.rowData = cell.getRow().getData();
-						//
+
+						// Hide job event
 						instance.hideJobEvent.subscribe((event: IVisibilityJobPostInput) => {
 							self.onCustomEvents({ action: 'hide', data: event });
 						});
@@ -669,6 +674,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 			});
 		} catch (error) {
 			console.log('Error while retrieving employee Job searches', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
