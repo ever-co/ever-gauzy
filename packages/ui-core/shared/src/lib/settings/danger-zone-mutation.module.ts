@@ -11,7 +11,7 @@ import {
 	NbSelectModule,
 	NbToastrModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, IncomeService, RoleService } from '@gauzy/ui-core/core';
 import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-mutation.component';
 
@@ -28,7 +28,7 @@ import { DangerZoneMutationComponent } from './danger-zone-mutation/danger-zone-
 		NbListModule,
 		NbSelectModule,
 		NbToastrModule,
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	exports: [DangerZoneMutationComponent],
 	declarations: [DangerZoneMutationComponent],

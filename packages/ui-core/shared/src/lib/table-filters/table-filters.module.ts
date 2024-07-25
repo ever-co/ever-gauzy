@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbToggleModule } from '@nebular/theme';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategorySelectModule } from '../expenses/expense-category-select/expense-category-select.module';
 import { VendorSelectModule } from '../vendor-select/vendor-select.module';
 import { ExpenseCategoryFilterComponent } from './expense-category-filter.component';
@@ -26,7 +26,7 @@ import { TaskStatusSelectModule } from '../tasks/task-status-select/task-status-
 		FormsModule,
 		ReactiveFormsModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		TagsColorInputModule,
 		VendorSelectModule,
 		ExpenseCategorySelectModule,

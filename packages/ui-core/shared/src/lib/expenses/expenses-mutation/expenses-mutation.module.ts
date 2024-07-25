@@ -13,7 +13,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService } from '@gauzy/ui-core/core';
 import { VendorSelectModule } from '../../vendor-select/vendor-select.module';
 import { ExpenseCategorySelectModule } from '../expense-category-select/expense-category-select.module';
@@ -40,7 +40,7 @@ import { AttachReceiptComponent } from './attach-receipt/attach-receipt.componen
 		NbRadioModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ImageUploaderModule,
 		CurrencyModule,
 		VendorSelectModule,

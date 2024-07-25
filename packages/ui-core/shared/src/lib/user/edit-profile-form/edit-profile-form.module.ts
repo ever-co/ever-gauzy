@@ -11,7 +11,7 @@ import {
 	NbFormFieldModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, RoleService, UsersService } from '@gauzy/ui-core/core';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 import { UserFormsModule } from '../forms/user-forms.module';
@@ -39,7 +39,7 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 		TagsColorInputModule,
 		UserFormsModule,
 		ImageUploaderModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		LanguageSelectorModule,
 		SharedModule,
 		PasswordFormFieldModule,

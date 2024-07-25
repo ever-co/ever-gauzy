@@ -15,7 +15,7 @@ import {
 import { CKEditorModule } from 'ckeditor4-angular';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
 import { EmployeeMultiSelectModule } from '../../employee/employee-multi-select/employee-multi-select.module';
 import { TaskPrioritySelectModule } from '../task-priority-select/task-priority-select.module';
@@ -40,7 +40,7 @@ import { ProjectSelectModule } from '../../selectors';
 		NbSelectModule,
 		NbToastrModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeeMultiSelectModule,
 		TagsColorInputModule,
 		ProjectSelectModule,

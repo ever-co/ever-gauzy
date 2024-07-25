@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { CountdownModule } from 'ngx-countdown';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService, CandidatesService, IncomeService, RoleService, TagsService } from '@gauzy/ui-core/core';
 import { FileUploaderModule } from '../../file-uploader-input/file-uploader-input.module';
 import { TagsColorInputModule } from '../../tags/tags-color-input/tags-color-input.module';
@@ -51,7 +51,7 @@ const COMPONENTS = [
 		NbInputModule,
 		NbSelectModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		FileUploaderModule,
 		TagsColorInputModule,
