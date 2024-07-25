@@ -22,7 +22,7 @@ import {
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeStore,
 	InviteService,
@@ -74,7 +74,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		Angular2SmartTableModule,
 		OrganizationsMutationModule,
 		UserFormsModule,

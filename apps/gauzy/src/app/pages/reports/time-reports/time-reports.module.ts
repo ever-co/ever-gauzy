@@ -9,7 +9,7 @@ import {
 	LineChartModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
 
@@ -22,7 +22,7 @@ import { TimeReportsComponent } from './time-reports/time-reports.component';
 		DailyStatisticsModule,
 		TimeReportsRoutingModule,
 		LineChartModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

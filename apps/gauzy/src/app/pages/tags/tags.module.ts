@@ -20,7 +20,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -53,7 +53,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		NbTooltipModule,
 		NgSelectModule,
 		Angular2SmartTableModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ColorPickerModule,
 		TagsRoutingModule,
