@@ -199,23 +199,24 @@ export class AppModule {
 	 * @param {I18nTranslateService} _i18nTranslateService - The I18nTranslateService instance.
 	 */
 	constructor(readonly _i18nTranslateService: I18nTranslateService) {
-		// Set Monday as start of the week
-		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: {
-				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-			},
-			fallbackLocale: LanguagesEnum.ENGLISH
-		});
-
-		// Initialize UI languages
-		this.initUiLanguagesAndLocale();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
 	}
 
 	/**
-	 * Initializes the UI languages.
+	 * Initialize UI languages and Update Locale
 	 */
-	private initUiLanguagesAndLocale(): void {
-		const availableLanguages = Object.values(LanguagesEnum);
+	private initializeUiLanguagesAndLocale(): void {
+		// Set Monday as start of the week
+		moment.updateLocale(LanguagesEnum.ENGLISH, {
+			week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
+			fallbackLocale: LanguagesEnum.ENGLISH
+		});
+
+		// Get the list of available languages from the LanguagesEnum
+		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
+
+		// Set the available languages in the translation service
 		this._i18nTranslateService.setAvailableLanguages(availableLanguages);
 	}
 }
