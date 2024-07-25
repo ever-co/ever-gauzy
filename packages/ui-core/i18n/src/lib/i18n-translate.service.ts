@@ -24,6 +24,14 @@ export class I18nTranslateService {
 	}
 
 	/**
+	 * Sets the language to use
+	 * @param lang The language code to set as the default language.
+	 */
+	setLanguage(lang: string): void {
+		this._translateService.use(lang);
+	}
+
+	/**
 	 * Sets the available languages for the application
 	 * @param languages An array of language codes to set as available languages.
 	 */
