@@ -71,7 +71,6 @@ export class EditOrganizationMainComponent
 				untilDestroyed(this)
 			)
 			.subscribe();
-		console.log("organization", this.store)
 	}
 
 	ngOnDestroy(): void { }
@@ -90,10 +89,6 @@ export class EditOrganizationMainComponent
 			if (image && image.id) {
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
-				// await this.organizationEditStore.updateOrganizationForm({
-				// 	imageId: image.id,
-				// 	imageUrl: image.fullUrl,
-				// });
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
@@ -152,7 +147,6 @@ export class EditOrganizationMainComponent
 		if (!this.organization) {
 			return;
 		}
-		console.log("org", this.organization)
 		this.form.setValue({
 			imageId: this.organization.imageId || null,
 			imageUrl: this.organization.imageUrl || null,
