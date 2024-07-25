@@ -15,7 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -53,7 +53,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		Angular2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,

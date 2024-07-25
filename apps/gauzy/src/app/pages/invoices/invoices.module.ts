@@ -42,7 +42,7 @@ import {
 	TasksStoreService,
 	TranslatableService
 } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
@@ -125,7 +125,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		PaginationV2Module,
