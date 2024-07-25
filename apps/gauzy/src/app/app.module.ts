@@ -2,11 +2,11 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
-import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { AkitaNgDevtools } from '@datorama/akita-ngdevtools';
 import {
 	NbChatModule,
@@ -30,9 +30,8 @@ import { ColorPickerService } from 'ngx-color-picker';
 import * as Sentry from '@sentry/angular-ivy';
 import * as moment from 'moment';
 import { IFeatureToggle, LanguagesEnum, WeekDaysEnum } from '@gauzy/contracts';
-import { UiAuthModule } from '@gauzy/ui-auth';
 import { UiCoreModule } from '@gauzy/ui-core';
-import { GAUZY_ENV, UiConfigModule, environment } from '@gauzy/ui-config';
+import { GAUZY_ENV, environment } from '@gauzy/ui-config';
 import {
 	APIInterceptor,
 	AppInitService,
@@ -66,36 +65,31 @@ if (environment.SENTRY_DSN) {
 	}
 }
 
+// Is production mode?
 const isProd = environment.production;
+
+// NB Modules
+const NB_MODULES = [
+	NbCalendarModule,
+	NbCalendarKitModule,
+	NbSidebarModule.forRoot(),
+	NbMenuModule.forRoot(),
+	NbDatepickerModule.forRoot(),
+	NbDialogModule.forRoot(),
+	NbWindowModule.forRoot(),
+	NbToastrModule.forRoot(),
+	NbChatModule.forRoot({ messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP }),
+	NbEvaIconsModule
+];
 
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
-		LegalModule,
-		EstimateEmailModule,
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
 		AppRoutingModule,
-		NbCalendarModule,
-		NbCalendarKitModule,
-		NbSidebarModule.forRoot(),
-		NbMenuModule.forRoot(),
-		NbDatepickerModule.forRoot(),
-		NbDialogModule.forRoot(),
-		NbWindowModule.forRoot(),
-		NbToastrModule.forRoot(),
-		NbChatModule.forRoot({
-			messageGoogleMapKey: environment.CHAT_MESSAGE_GOOGLE_MAP
-		}),
-		NbEvaIconsModule,
-		UiAuthModule,
-		UiConfigModule.forRoot(),
-		UiCoreModule.forRoot(),
-		CommonModule.forRoot(),
-		CoreModule.forRoot(),
-		ThemeModule.forRoot(),
-		SharedModule.forRoot(),
+		...NB_MODULES,
 		TranslateModule.forRoot({
 			loader: {
 				provide: TranslateLoader,
@@ -103,13 +97,20 @@ const isProd = environment.production;
 				deps: [HttpClient]
 			}
 		}),
-		I18nTranslateModule.forRoot(),
 		CloudinaryModule,
 		FileUploadModule,
-		TimeTrackerModule.forRoot(),
 		isProd ? [] : AkitaNgDevtools,
 		FeatureToggleModule,
-		NgxPermissionsModule.forRoot()
+		NgxPermissionsModule.forRoot(),
+		I18nTranslateModule.forRoot(),
+		UiCoreModule.forRoot(),
+		CommonModule.forRoot(),
+		CoreModule.forRoot(),
+		ThemeModule.forRoot(),
+		SharedModule.forRoot(),
+		TimeTrackerModule.forRoot(),
+		LegalModule,
+		EstimateEmailModule
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -197,17 +198,26 @@ export class AppModule {
 	 *
 	 * @param {I18nTranslateService} _i18nTranslateService - The I18nTranslateService instance.
 	 */
-	constructor(protected readonly _i18nTranslateService: I18nTranslateService) {
-		const availableLanguages = Object.values(LanguagesEnum);
-		_i18nTranslateService.setAvailableLanguages(availableLanguages);
+	constructor(readonly _i18nTranslateService: I18nTranslateService) {
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
+	}
 
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale(): void {
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: {
-				dow: dayOfWeekAsString(WeekDaysEnum.MONDAY)
-			},
+			week: { dow: dayOfWeekAsString(WeekDaysEnum.MONDAY) },
 			fallbackLocale: LanguagesEnum.ENGLISH
 		});
+
+		// Get the list of available languages from the LanguagesEnum
+		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
+
+		// Set the available languages in the translation service
+		this._i18nTranslateService.setAvailableLanguages(availableLanguages);
 	}
 }
 
