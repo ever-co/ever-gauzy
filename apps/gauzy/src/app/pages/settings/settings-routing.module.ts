@@ -32,6 +32,7 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: true
@@ -61,6 +62,7 @@ const routes: Routes = [
 				data: {
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: false
@@ -78,6 +80,7 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: false
@@ -103,6 +106,7 @@ const routes: Routes = [
 					},
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						organization: false,
 						date: false

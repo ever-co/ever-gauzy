@@ -1,12 +1,13 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { NbAccordionModule, NbButtonModule, NbTooltipModule } from '@nebular/theme';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { BaseNavMenuComponent } from './base-nav-menu/base-nav-menu.component';
 import { MainNavMenuComponent } from './main-nav-menu/main-nav-menu.component';
 import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent, TooltipDirective } from './sidebar-menu';
 
 @NgModule({
+	imports: [NbAccordionModule, NbTooltipModule, NbButtonModule, SharedModule],
+	exports: [BaseNavMenuComponent, MainNavMenuComponent, SidebarMenuComponent],
 	declarations: [
 		BaseNavMenuComponent,
 		MainNavMenuComponent,
@@ -14,8 +15,6 @@ import { MenuItemComponent, SidebarMenuComponent, ChildrenMenuItemComponent, Too
 		MenuItemComponent,
 		ChildrenMenuItemComponent,
 		TooltipDirective
-	],
-	imports: [CommonModule, NbAccordionModule, NbTooltipModule, NbButtonModule, NgxPermissionsModule.forChild()],
-	exports: [BaseNavMenuComponent, MainNavMenuComponent, SidebarMenuComponent]
+	]
 })
 export class CommonNavModule {}

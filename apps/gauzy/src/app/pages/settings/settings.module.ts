@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -15,10 +13,8 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { DangerZoneMutationModule, SharedModule } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
@@ -30,9 +26,6 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -46,10 +39,8 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		NbToggleModule,
 		NbTooltipModule,
 		NgSelectModule,
-		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
-		SettingsRoutingModule,
 		SharedModule,
+		SettingsRoutingModule,
 		EmailTemplatesModule,
 		AccountingTemplatesModule,
 		DangerZoneMutationModule

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbAlertModule,
 	NbButtonModule,
@@ -16,8 +14,6 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	InfoBlockModule,
 	LineChartModule,
@@ -42,11 +38,9 @@ import { TeamModule } from './team/team.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		DashboardRoutingModule,
 		NbCardModule,
 		NgSelectModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		RecordsHistoryModule,
@@ -57,9 +51,7 @@ import { TeamModule } from './team/team.module';
 		NbSpinnerModule,
 		NbSelectModule,
 		NbAlertModule,
-		NgxPermissionsModule.forChild(),
 		ProfitHistoryModule,
-		I18nTranslateModule.forChild(),
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

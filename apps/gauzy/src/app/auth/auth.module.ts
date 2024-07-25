@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -15,7 +13,6 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { ElectronService } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxAuthRoutingModule } from './auth-routing.module';
@@ -37,9 +34,6 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbAuthModule,
 		NbAccordionModule,
 		NbAlertModule,
@@ -52,7 +46,6 @@ import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-
 		NbLayoutModule,
 		NbSelectModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
 		NgxAuthRoutingModule,
 		ThemeSelectorModule,
 		NgxFaqModule,

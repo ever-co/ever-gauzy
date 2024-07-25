@@ -29,6 +29,7 @@ const routes: Routes = [
 					isOrganization: false,
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: false
@@ -42,6 +43,7 @@ const routes: Routes = [
 					isOrganization: true,
 					selectors: {
 						project: false,
+						team: false,
 						employee: false,
 						date: false,
 						organization: true
