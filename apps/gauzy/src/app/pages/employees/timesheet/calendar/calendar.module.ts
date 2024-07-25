@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { CalendarRoutingModule } from './calendar-routing.module';
 import { CalendarComponent } from './calendar/calendar.component';
 import { ShareModule } from './../../../../share/share.module';
@@ -19,7 +19,7 @@ import {
 	declarations: [CalendarComponent],
 	imports: [
 		CommonModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		FullCalendarModule,
 		NbButtonModule,
