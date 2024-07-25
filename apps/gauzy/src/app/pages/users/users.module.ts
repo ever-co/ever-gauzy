@@ -1,4 +1,6 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -17,6 +19,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -56,6 +59,7 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
+		CommonModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
@@ -66,6 +70,8 @@ const COMPONENTS = [
 		OrganizationsModule,
 		NbActionsModule,
 		NbCardModule,
+		FormsModule,
+		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -78,6 +84,7 @@ const COMPONENTS = [
 		ImageUploaderModule,
 		NbBadgeModule,
 		NbRouteTabsetModule,
+		I18nTranslateModule.forChild(),
 		NbSpinnerModule,
 		EditProfileFormModule,
 		InviteMutationModule,
