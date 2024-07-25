@@ -15,7 +15,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
@@ -45,7 +45,7 @@ import { SearchComponent } from './search/search.component';
 		NbToggleModule,
 		Angular2SmartTableModule,
 		SearchRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		DialogsModule,

@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { FileUploadModule } from 'ng2-file-upload';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	DirectivesModule,
 	EmployeeMultiSelectModule,
@@ -36,7 +36,7 @@ import { JobTableComponentsModule } from '../../../table-components';
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,
