@@ -133,6 +133,11 @@ const EXPORT_IMPORT = [ThemeSidebarModule, MatRippleModule];
 	]
 })
 export class ThemeModule {
+	/**
+	 * Returns a ModuleWithProviders object that can be used to configure the ThemeModule.
+	 *
+	 * @return {ModuleWithProviders<ThemeModule>} The ModuleWithProviders object containing the ThemeModule and an empty providers array.
+	 */
 	static forRoot(): ModuleWithProviders<ThemeModule> {
 		return {
 			ngModule: ThemeModule,
