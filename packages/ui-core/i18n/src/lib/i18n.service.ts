@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 
 @Injectable({ providedIn: 'root' })
-export class I18nTranslateService {
+export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
 	/**
 	 * Getter for availableLanguages
@@ -13,7 +13,7 @@ export class I18nTranslateService {
 		return this._availableLanguages;
 	}
 
-	constructor(public readonly _translateService: TranslateService) {}
+	constructor(readonly _translateService: TranslateService) {}
 
 	/**
 	 * Sets the default language to use as a fallback
