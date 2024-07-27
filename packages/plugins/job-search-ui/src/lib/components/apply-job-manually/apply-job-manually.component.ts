@@ -5,7 +5,6 @@ import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
@@ -21,7 +20,6 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
 import { JobService, ToastrService } from '@gauzy/ui-core/core';
 
@@ -30,9 +28,9 @@ import { JobService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ga-apply-job-manually',
 	templateUrl: './apply-job-manually.component.html',
 	styleUrls: ['./apply-job-manually.component.scss'],
-	providers: [TranslateStore]
+	providers: []
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
@@ -118,13 +116,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		private readonly fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
 		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
-		public readonly translateService: TranslateService,
 		private readonly store: Store,
 		private readonly jobService: JobService,
 		private readonly toastrService: ToastrService
-	) {
-		super(translateService);
-	}
+	) {}
 
 	ngOnInit(): void {
 		const storeOrganization$ = this.store.selectedOrganization$;
@@ -242,6 +237,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		};
 	}
 
+	/**
+	 * File over base
+	 * @param e
+	 */
 	public fileOverBase(e: any): void {
 		this.hasDropZoneOver = e;
 	}
@@ -475,7 +474,9 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	/**
 	 * On editor change
 	 */
-	onEditorChange(content: string): void {}
+	onEditorChange(content: string): void {
+		console.log('onEditorChange', content);
+	}
 
 	/**
 	 * Close dialog

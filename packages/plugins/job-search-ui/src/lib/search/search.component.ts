@@ -551,6 +551,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 			return;
 		}
 
+		console.log('Applying job manually', this.selectedJob, this.selectedEmployee);
+
 		// Open a dialog to handle manual job application
 		const dialog = this._dialogService.open(ApplyJobManuallyComponent, {
 			context: {

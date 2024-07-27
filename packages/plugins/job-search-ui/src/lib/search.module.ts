@@ -1,11 +1,12 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
-import { take } from 'rxjs/operators';
+import { filter, merge } from 'rxjs';
 import {
 	NbButtonModule,
 	NbCardModule,
+	NbDialogModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
 	NbPopoverModule,
@@ -16,25 +17,28 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule, NgxPermissionsService } from 'ngx-permissions';
-import { pluck, union } from 'underscore';
-import { ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { I18nTranslateService } from '@gauzy/ui-core/i18n';
+import { CKEditorModule } from 'ckeditor4-angular';
+import { FileUploadModule } from 'ng2-file-upload';
+import { LanguagesEnum } from '@gauzy/contracts';
+import { HttpLoaderFactory, I18nService } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import {
 	DialogsModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
+	ProposalTemplateSelectModule,
+	SelectorsModule,
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { ApplyJobManuallyModule, JobTableComponentsModule } from './components';
 import { createRoutes } from './search.routes';
 import { SearchComponent } from './search/search.component';
+import { COMPONENTS } from './components';
 
 /**
  * NB_MODULES
@@ -42,6 +46,8 @@ import { SearchComponent } from './search/search.component';
 const NB_MODULES = [
 	NbButtonModule,
 	NbCardModule,
+	NbDialogModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
 	NbPopoverModule,
@@ -55,7 +61,20 @@ const NB_MODULES = [
 /**
  * THIRD_PARTY_MODULES
  */
-const THIRD_PARTY_MODULES = [Angular2SmartTableModule, MomentModule, NgxPermissionsModule.forRoot()];
+const THIRD_PARTY_MODULES = [
+	Angular2SmartTableModule,
+	CKEditorModule,
+	FileUploadModule,
+	MomentModule,
+	NgxPermissionsModule.forRoot(),
+	TranslateModule.forRoot({
+		loader: {
+			provide: TranslateLoader,
+			useFactory: HttpLoaderFactory,
+			deps: [HttpClient]
+		}
+	})
+];
 
 /**
  * FEATURE_MODULES
@@ -64,24 +83,17 @@ const FEATURE_MODULES = [
 	DialogsModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
+	ProposalTemplateSelectModule,
+	SelectorsModule,
 	SharedModule,
-	StatusBadgeModule,
-	ApplyJobManuallyModule,
-	JobTableComponentsModule
+	StatusBadgeModule
 ];
 
 @UntilDestroy()
 @NgModule({
-	declarations: [SearchComponent],
-	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
-		...FEATURE_MODULES
-	],
+	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	declarations: [SearchComponent, ...COMPONENTS],
+	exports: [...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,
@@ -89,24 +101,23 @@ const FEATURE_MODULES = [
 			deps: [PageRouteService],
 			multi: true
 		}
-	],
-	exports: []
+	]
 })
 export class SearchModule {
 	constructor(
 		readonly _ngxPermissionsService: NgxPermissionsService,
 		readonly _store: Store,
-		readonly _i18nTranslateService: I18nTranslateService,
+		readonly _i18nService: I18nService,
 		readonly _translateService: TranslateService
 	) {
-		this.setUiPermissions();
-		this.setUiLanguages();
+		this.initializeUiPermissions();
+		this.initializeUiLanguagesAndLocale();
 	}
 
 	/**
-	 * Sets the permissions for the application.
+	 * Initialize UI permissions
 	 */
-	private setUiPermissions() {
+	private initializeUiPermissions() {
 		// Load permissions
 		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
 		this._ngxPermissionsService.flushPermissions(); // Flush permissions
@@ -114,32 +125,19 @@ export class SearchModule {
 	}
 
 	/**
-	 * Sets the UI languages for the application.
+	 * Initialize UI languages and Update Locale
 	 */
-	private setUiLanguages() {
-		// Observable that emits when system languages change.
-		const systemLanguages$ = this._store.systemLanguages$.pipe(
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			untilDestroyed(this),
-			take(1)
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
 		);
 
-		// Observable that emits when system languages change.
-		systemLanguages$.subscribe(() => {
-			// Retrieve the browser's language code, e.g., "en", "bg", "he", "ru"
-			const browserLang = this._i18nTranslateService.getBrowserLang();
-
-			// Get the default available enum languages, e.g., "en", "bg", "he", "ru"
-			const availableLanguages: string[] = this._i18nTranslateService.availableLanguages;
-
-			// Determine the preferred language from the store, if available
-			const preferredLanguage = this._store.user?.preferredLanguage ?? this._store.preferredLanguage ?? null;
-
-			// Determine the system language or default to English
-			const systemLanguage = availableLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH;
-
-			// Set the selected language in the translation service
-			this._translateService.use(preferredLanguage || systemLanguage);
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this._translateService.use(preferredLanguage);
 		});
 	}
 }
