@@ -72,8 +72,8 @@ export class AppComponent implements OnInit, AfterViewInit {
 		// Observable that emits when system languages change.
 		const systemLanguages$ = this._store.systemLanguages$.pipe(
 			distinctUntilChange(),
-			untilDestroyed(this),
-			take(1)
+			take(1),
+			untilDestroyed(this)
 		);
 		// Subscribe to changes in system languages
 		systemLanguages$.subscribe((languages: ILanguage[]) => {
@@ -88,7 +88,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			systemLanguages = union(systemLanguages, availableLanguages);
 
 			// Sets the default language to use as a fallback, e.g., "en"
-			this._i18nService.setDefaultLang(LanguagesEnum.ENGLISH);
+			this._i18nService.setDefaultFallbackLang(LanguagesEnum.ENGLISH);
 
 			// Get preferredLanguage if it exists
 			const preferredLanguage = this._store?.user?.preferredLanguage ?? this._store.preferredLanguage ?? null;

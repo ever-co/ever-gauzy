@@ -1,17 +1,14 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
-	private _preferredLanguage$: BehaviorSubject<string> = new BehaviorSubject<string>(
-		this.getBrowserLang() || LanguagesEnum.ENGLISH
-	);
+	private _preferredLanguage$: Subject<string> = new Subject<string>();
 
 	/**
 	 * Getter for preferredLanguage$
@@ -38,7 +35,7 @@ export class I18nService {
 	 * Sets the default language to use as a fallback
 	 * @param lang The language code to set as the default language.
 	 */
-	setDefaultLang(lang: string): void {
+	setDefaultFallbackLang(lang: string): void {
 		this._translateService.setDefaultLang(lang);
 	}
 
