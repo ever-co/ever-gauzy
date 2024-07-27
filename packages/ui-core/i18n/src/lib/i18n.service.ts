@@ -1,10 +1,29 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { LanguagesEnum } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
+	private _preferredLanguage$: BehaviorSubject<string> = new BehaviorSubject<string>(
+		this.getBrowserLang() || LanguagesEnum.ENGLISH
+	);
+
+	/**
+	 * Getter for preferredLanguage$
+	 * @returns An observable of the preferred language.
+	 */
+	get preferredLanguage$(): Observable<string> {
+		return this._preferredLanguage$.asObservable().pipe(
+			filter((preferredLanguage: string) => !!preferredLanguage),
+			distinctUntilChange()
+		);
+	}
+
 	/**
 	 * Getter for availableLanguages
 	 * @returns An array of available languages.
@@ -24,11 +43,12 @@ export class I18nService {
 	}
 
 	/**
-	 * Sets the language to use
-	 * @param lang The language code to set as the default language.
+	 * Sets the language to use and notify all subscribers
+	 * @param lang The language code to set as the current language.
 	 */
 	setLanguage(lang: string): void {
 		this._translateService.use(lang);
+		this._preferredLanguage$.next(lang);
 	}
 
 	/**

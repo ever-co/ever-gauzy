@@ -14,7 +14,8 @@ import { HttpLoaderFactory } from './translate-http-loader';
 			}
 		})
 	],
-	exports: [TranslateModule]
+	exports: [TranslateModule],
+	providers: [I18nService]
 })
 export class I18nModule {
 	/**

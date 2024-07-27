@@ -27,7 +27,16 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 	isCollapse: boolean = true;
 	trigger: boolean = true;
 
+	/**
+	 * User observable
+	 */
 	private _user$: Observable<IUser> = new Observable();
+	public get user$(): Observable<IUser> {
+		return this._user$;
+	}
+	public set user$(value: Observable<IUser>) {
+		this._user$ = value;
+	}
 
 	@ViewChild(NbLayoutComponent) layout: NbLayoutComponent;
 
@@ -97,16 +106,11 @@ export class OneColumnLayoutComponent implements OnInit, AfterViewInit, OnDestro
 		this.trigger = event === 'compacted' ? true : this.isCollapse;
 	}
 
+	/**
+	 * Clears the sidebars and action bars on component destroy.
+	 */
 	ngOnDestroy() {
 		this.navigationBuilderService.clearSidebars();
 		this.navigationBuilderService.clearActionBars();
-	}
-
-	public get user$(): Observable<IUser> {
-		return this._user$;
-	}
-
-	public set user$(value: Observable<IUser>) {
-		this._user$ = value;
 	}
 }

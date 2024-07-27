@@ -49,6 +49,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		this.getActivateRouterDataEvent();
+		this.getPreferredLanguage();
 	}
 
 	/**
@@ -213,6 +214,18 @@ export class AppComponent implements OnInit, AfterViewInit {
 					}
 				),
 				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Subscribe to the preferred language observable and set the language
+	 */
+	getPreferredLanguage(): void {
+		this._i18nService.preferredLanguage$
+			.pipe(
+				tap((lang: string) => this._translateService.use(lang)),
 				untilDestroyed(this)
 			)
 			.subscribe();
