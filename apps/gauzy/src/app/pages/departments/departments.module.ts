@@ -15,7 +15,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
@@ -56,7 +56,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		PaginationV2Module,
 		GauzyButtonActionModule,

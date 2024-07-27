@@ -36,7 +36,7 @@ import {
 	OrganizationEmploymentTypesService,
 	OrganizationsService
 } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
@@ -172,7 +172,7 @@ const COMPONENTS = [
 		NgChartsModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,

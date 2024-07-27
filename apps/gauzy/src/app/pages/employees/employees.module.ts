@@ -30,7 +30,7 @@ import {
 	OrganizationsService,
 	SkillsService
 } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
@@ -126,7 +126,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeesRoutingModule,
 		SharedModule,
 		TableComponentsModule,

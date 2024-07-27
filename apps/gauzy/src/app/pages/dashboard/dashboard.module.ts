@@ -17,7 +17,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	InfoBlockModule,
 	LineChartModule,
@@ -59,7 +59,7 @@ import { TeamModule } from './team/team.module';
 		NbAlertModule,
 		NgxPermissionsModule.forChild(),
 		ProfitHistoryModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeeChartsModule,
 		NbSpinnerModule,
 		SingleStatisticModule,

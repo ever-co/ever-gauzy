@@ -14,7 +14,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService } from '@gauzy/ui-core/core';
 import { SelectorsModule } from '../../selectors/selectors.module';
 import { CurrencyModule } from '../../modules/currency/currency.module';
@@ -36,7 +36,7 @@ import { RecurringExpenseMutationComponent } from './recurring-expense-mutation.
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SelectorsModule,
 		CurrencyModule
 	],

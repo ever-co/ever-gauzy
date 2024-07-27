@@ -4,7 +4,7 @@ import { ExpensesReportRoutingModule } from './expenses-report-routing.module';
 import { ExpensesReportComponent } from './expenses-report/expenses-report.component';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	ExpenseCategorySelectModule,
 	ExpensesReportGridModule,
@@ -18,7 +18,7 @@ import {
 	imports: [
 		CommonModule,
 		ExpensesReportRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		NbIconModule,
 		NbSpinnerModule,

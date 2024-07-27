@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TaskStatusSelectComponent } from './task-status-select.component';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { TaskStatusesService } from '@gauzy/ui-core/core';
 import { PipesModule } from '../../pipes/pipes.module';
 import { TaskBadgeViewComponentModule } from '../task-badge-view/task-badge-view.module';
@@ -13,7 +13,7 @@ import { TaskBadgeViewComponentModule } from '../task-badge-view/task-badge-view
 		CommonModule,
 		FormsModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		PipesModule,
 		TaskBadgeViewComponentModule
 	],

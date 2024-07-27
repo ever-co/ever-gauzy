@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule } from '@nebular/theme';
 import { TenantService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { FeatureToggleModule } from '@gauzy/ui-core/shared';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { OnboardingCompleteRoutingModule } from './onboarding-complete-routing.module';
@@ -14,7 +14,7 @@ import { OnboardingCompleteComponent } from './onboarding-complete.component';
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ThemeModule,
 		OnboardingCompleteRoutingModule,
 		FeatureToggleModule,

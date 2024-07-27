@@ -46,14 +46,12 @@ import {
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
 import { CommonModule, Store } from '@gauzy/ui-core/common';
-import { HttpLoaderFactory, I18nTranslateModule, I18nTranslateService } from '@gauzy/ui-core/i18n';
+import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppModuleGuard } from './app.module.guards';
-import { EstimateEmailModule } from './auth/estimate-email/estimate-email.module';
-import { LegalModule } from './legal/legal.module';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {
@@ -91,6 +89,7 @@ const NB_MODULES = [
 		AppRoutingModule,
 		...NB_MODULES,
 		TranslateModule.forRoot({
+			defaultLanguage: LanguagesEnum.ENGLISH,
 			loader: {
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
@@ -102,15 +101,13 @@ const NB_MODULES = [
 		isProd ? [] : AkitaNgDevtools,
 		FeatureToggleModule,
 		NgxPermissionsModule.forRoot(),
-		I18nTranslateModule.forRoot(),
+		I18nModule.forRoot(),
 		UiCoreModule.forRoot(),
 		CommonModule.forRoot(),
 		CoreModule.forRoot(),
 		ThemeModule.forRoot(),
 		SharedModule.forRoot(),
-		TimeTrackerModule.forRoot(),
-		LegalModule,
-		EstimateEmailModule
+		TimeTrackerModule.forRoot()
 	],
 	bootstrap: [AppComponent],
 	providers: [
@@ -193,12 +190,12 @@ export class AppModule {
 	/**
 	 * Constructor for the AppModule class.
 	 *
-	 * Initializes the _i18nTranslateService with all available languages.
+	 * Initializes the _i18nService with all available languages.
 	 * Sets Monday as the start of the week for the English locale in Moment.js.
 	 *
-	 * @param {I18nTranslateService} _i18nTranslateService - The I18nTranslateService instance.
+	 * @param {I18nTranslateService} _i18nService - The I18nTranslateService instance.
 	 */
-	constructor(readonly _i18nTranslateService: I18nTranslateService) {
+	constructor(readonly _i18nService: I18nService) {
 		// Initialize UI languages and Update Locale
 		this.initializeUiLanguagesAndLocale();
 	}
@@ -217,7 +214,7 @@ export class AppModule {
 		const availableLanguages: LanguagesEnum[] = Object.values(LanguagesEnum);
 
 		// Set the available languages in the translation service
-		this._i18nTranslateService.setAvailableLanguages(availableLanguages);
+		this._i18nService.setAvailableLanguages(availableLanguages);
 	}
 }
 

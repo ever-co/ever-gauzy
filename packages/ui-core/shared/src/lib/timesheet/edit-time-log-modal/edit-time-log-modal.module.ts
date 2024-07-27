@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { ProjectSelectModule } from '../../selectors/project';
@@ -36,7 +36,7 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		TimerPickerModule,
