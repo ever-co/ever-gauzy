@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -45,7 +45,7 @@ import { WorkInProgressModule } from '../work-in-progress/work-in-progress.modul
 		Angular2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationModule,
 		NbTabsetModule,

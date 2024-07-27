@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	CurrencyModule,
@@ -58,7 +58,7 @@ const NB_MODULES = [
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		CardGridModule,
 		CurrencyModule,
 		GauzyButtonActionModule,

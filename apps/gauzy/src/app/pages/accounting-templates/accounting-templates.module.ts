@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbLayoutModule, NbCardModule, NbSelectModule, NbButtonModule } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { LanguageSelectorModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AccountingTemplatesRoutingModule } from './accounting-templates-routing.module';
 import { AccountingTemplatesComponent } from './accounting-templates.component';
@@ -16,7 +16,7 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 		FormsModule,
 		ReactiveFormsModule,
 		NbSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbButtonModule,
 		AceEditorModule,
 		SharedModule,

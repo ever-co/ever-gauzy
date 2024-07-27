@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
@@ -10,11 +9,14 @@ import {
 	NbInputModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { CKEditorModule } from 'ckeditor4-angular';
-import { FileUploadModule } from 'ng2-file-upload';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { HttpLoaderFactory, I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { DirectivesModule, ProposalTemplateSelectModule, SelectorsModule, SharedModule } from '@gauzy/ui-core/shared';
+import { TranslateModule } from '@ngx-translate/core';
+import {
+	DirectivesModule,
+	EmployeeMultiSelectModule,
+	ProposalTemplateSelectModule,
+	SelectorsModule,
+	SharedModule
+} from '@gauzy/ui-core/shared';
 import { ApplyJobManuallyComponent } from './apply-job-manually.component';
 import { JobTableComponentsModule } from '../job-table-components.module';
 
@@ -30,16 +32,8 @@ import { JobTableComponentsModule } from '../job-table-components.module';
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
-		TranslateModule.forRoot({
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
-		CKEditorModule,
-		FileUploadModule,
-		I18nTranslateModule.forRoot(),
+		TranslateModule.forChild(),
+		EmployeeMultiSelectModule,
 		ProposalTemplateSelectModule,
 		JobTableComponentsModule,
 		DirectivesModule,

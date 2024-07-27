@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -49,7 +49,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		NbRadioModule,
 		ApprovalsRoutingModule,
 		RequestApprovalMutationModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationV2Module

@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbCheckboxModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/common';
 import { EquipmentService, ImageAssetService } from '@gauzy/ui-core/core';
 import { TagsColorInputModule } from '../tags/tags-color-input/tags-color-input.module';
@@ -27,7 +27,7 @@ import { EquipmentMutationComponent } from './equipment-mutation.component';
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		TagsColorInputModule,
 		CurrencyModule
 	],

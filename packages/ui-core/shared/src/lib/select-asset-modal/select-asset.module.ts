@@ -9,7 +9,7 @@ import {
 	NbDialogModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ImageAssetService } from '@gauzy/ui-core/core';
 import { ImageUploaderModule } from '../image-uploader/image-uploader.module';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
@@ -25,7 +25,7 @@ import { SelectAssetComponent } from './select-asset.component';
 		NbIconModule,
 		NbInputModule,
 		NbButtonModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbToastrModule,
 		ImageUploaderModule,
 		FileUploaderModule,

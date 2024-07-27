@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { TreeModule } from '@ali-hm/angular-tree-component';
 import { CKEditorModule } from 'ckeditor4-angular';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { SidebarComponent } from './sidebar.component';
@@ -38,7 +38,7 @@ import { DeleteBaseModule } from './delete-base/delete-base.module';
 		NbSelectModule,
 		NbSidebarModule.forRoot(),
 		TreeModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		AddIconModule,
 		KnowledgeBaseModule,
 		DeleteBaseModule,

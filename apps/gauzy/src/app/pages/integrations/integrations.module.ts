@@ -10,7 +10,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	GauzyButtonActionModule,
 	NoDataMessageModule,
@@ -35,7 +35,7 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		SharedModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GauzyButtonActionModule,
 		TableComponentsModule,
 		NoDataMessageModule

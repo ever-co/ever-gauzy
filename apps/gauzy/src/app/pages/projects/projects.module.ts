@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EntityWithMembersModule,
@@ -40,7 +40,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		Angular2SmartTableModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ProjectsRoutingModule,
 		TableComponentsModule,
 		EntityWithMembersModule,

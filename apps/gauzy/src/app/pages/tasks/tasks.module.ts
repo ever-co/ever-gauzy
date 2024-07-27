@@ -25,7 +25,7 @@ import {
 	NbDatepickerModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	AddTaskDialogModule,
 	CardGridModule,
@@ -90,7 +90,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		DragDropModule,
 		NgxPermissionsModule.forChild(),
 		CKEditorModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		TasksRoutingModule,
 		TableComponentsModule,
 		TagsColorInputModule,

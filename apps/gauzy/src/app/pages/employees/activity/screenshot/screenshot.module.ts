@@ -2,8 +2,8 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import {
 	DailyStatisticsModule,
 	GalleryModule,
@@ -24,7 +24,7 @@ import { ScreenshotComponent } from './screenshot/screenshot.component';
 		SharedModule,
 		NbSpinnerModule,
 		MomentModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		ViewTimeLogModalModule,

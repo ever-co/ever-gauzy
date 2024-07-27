@@ -10,7 +10,7 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { ColorPickerModule, ColorPickerService } from 'ngx-color-picker';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { KnowledgeBaseComponent } from './knowledeg-base.component';
 import { LanguageSelectorModule } from '../../language/language-selector';
 
@@ -26,7 +26,7 @@ import { LanguageSelectorModule } from '../../language/language-selector';
 		NbSelectModule,
 		NbToggleModule,
 		ColorPickerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		LanguageSelectorModule
 	],
 	declarations: [KnowledgeBaseComponent],

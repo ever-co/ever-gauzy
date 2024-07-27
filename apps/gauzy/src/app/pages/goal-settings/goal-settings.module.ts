@@ -21,7 +21,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EmployeeMultiSelectModule,
@@ -60,7 +60,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationV2Module
 	]

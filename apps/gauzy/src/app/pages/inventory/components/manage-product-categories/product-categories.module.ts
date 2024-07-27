@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -37,7 +37,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		NbTooltipModule,
 		Angular2SmartTableModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		ProductCategoriesRoutingModule,
 		ProductMutationModule,

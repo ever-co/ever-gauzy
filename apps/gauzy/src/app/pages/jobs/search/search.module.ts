@@ -2,68 +2,57 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
-	NbCheckboxModule,
-	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
-	NbListModule,
-	NbRadioModule,
-	NbRouteTabsetModule,
+	NbPopoverModule,
 	NbSelectModule,
 	NbSpinnerModule,
-	NbTooltipModule
+	NbTabsetModule,
+	NbToggleModule
 } from '@nebular/theme';
-import { ColorPickerModule } from 'ngx-color-picker';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { NgSelectModule } from '@ng-select/ng-select';
+import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	DialogsModule,
+	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
 	PaginationV2Module,
 	SharedModule,
-	TagsMutationModule,
-	UserFormsModule
+	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { TagsComponent } from './tags.component';
-import { TagsRoutingModule } from './tags-routing.module';
-import { TagsColorComponent } from './tags-color/tags-color.component';
+import { SearchRoutingModule } from './search-routing.module';
+import { SearchComponent } from './search/search.component';
 
 @NgModule({
+	declarations: [SearchComponent],
 	imports: [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbBadgeModule,
+		MomentModule,
 		NbButtonModule,
 		NbCardModule,
-		NbCheckboxModule,
-		NbDialogModule.forChild(),
 		NbIconModule,
 		NbInputModule,
-		NbListModule,
-		NbRadioModule,
-		NbRouteTabsetModule,
+		NbPopoverModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		NbTooltipModule,
-		NgSelectModule,
+		NbTabsetModule,
+		NbToggleModule,
 		Angular2SmartTableModule,
+		SearchRoutingModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		ColorPickerModule,
-		TagsRoutingModule,
 		SharedModule,
-		UserFormsModule,
-		TagsMutationModule,
-		CardGridModule,
+		DialogsModule,
+		EmployeeMultiSelectModule,
+		StatusBadgeModule,
 		GauzyButtonActionModule,
 		PaginationV2Module
-	],
-	declarations: [TagsComponent, TagsColorComponent]
+	]
 })
-export class TagsModule {}
+export class SearchModule {}
