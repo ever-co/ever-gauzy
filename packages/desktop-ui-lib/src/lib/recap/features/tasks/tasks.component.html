@@ -1,0 +1,10 @@
+<nb-card>
+	<nb-card-header>{{ 'TIMESHEET.TASKS' | translate }}</nb-card-header>
+	<nb-card-body *ngIf="(tasks$ | async).length > 0; else noTask" class="custom-card-body-inner-list">
+		<ngx-statistic [items]="(tasks$ | async)"></ngx-statistic>
+	</nb-card-body>
+</nb-card>
+
+<ng-template #noTask>
+	<ngx-no-data-message [message]="'TIMESHEET.NO_TASK_ACTIVITY_DAY' | translate"></ngx-no-data-message>
+</ng-template>
