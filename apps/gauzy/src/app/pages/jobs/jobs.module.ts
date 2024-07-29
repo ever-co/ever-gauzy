@@ -19,7 +19,18 @@ import { createRoutes } from './job.routes';
 	]
 })
 export class JobsModule {
-	constructor(readonly _pageRouteService: PageRouteService) {
+	constructor(private readonly _pageRouteService: PageRouteService) {
+		// Register the routes
+		this.registerRoutes(this._pageRouteService);
+	}
+
+	/**
+	 * Register routes for the Jobs module
+	 *
+	 * @param _pageRouteService
+	 * @returns {void}
+	 */
+	registerRoutes(_pageRouteService: PageRouteService): void {
 		// Register Job Browser Page Routes
 		_pageRouteService.registerPageRoute({
 			// Register the location 'jobs'
