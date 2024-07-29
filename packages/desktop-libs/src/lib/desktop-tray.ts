@@ -387,7 +387,7 @@ export class TrayIcon {
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
 
-			manager.getOne(RegisteredWindow.RECAP).hide();
+			manager.hide(RegisteredWindow.RECAP);
 
 			menuWindowTime.enabled = false;
 
