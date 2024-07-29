@@ -218,7 +218,8 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage)
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
 		);
 
 		// Subscribe to preferred language changes
