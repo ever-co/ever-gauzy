@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterModule, ROUTES } from '@angular/router';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { PageRouteService } from '@gauzy/ui-core/core';
@@ -8,7 +7,8 @@ import { createRoutes } from './job.routes';
 
 @NgModule({
 	declarations: [JobLayoutComponent],
-	imports: [CommonModule, RouterModule.forChild([]), SharedModule],
+	imports: [SharedModule, RouterModule.forChild([])],
+	exports: [RouterModule],
 	providers: [
 		{
 			provide: ROUTES,

@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { RouterModule, ROUTES } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { filter, merge } from 'rxjs';
 import {
 	NbButtonModule,
@@ -16,7 +16,6 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
@@ -26,7 +25,6 @@ import { FileUploadModule } from 'ng2-file-upload';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { HttpLoaderFactory, I18nService } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { PageRouteService } from '@gauzy/ui-core/core';
 import {
 	DialogsModule,
 	GauzyButtonActionModule,
@@ -36,9 +34,11 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createRoutes } from './search.routes';
-import { SearchComponent } from './search/search.component';
-import { COMPONENTS } from './components';
+import { routes } from './search.routes';
+import { SearchComponent } from './components/search/search.component';
+import { ApplyJobManuallyComponent } from './components/apply-job-manually/apply-job-manually.component';
+import { JobTitleDescriptionDetailsComponent } from './components/job-title-description-details/job-title-description-details.component';
+import { JobStatusComponent } from './components/job-status/job-status.component';
 
 /**
  * NB_MODULES
@@ -72,7 +72,9 @@ const THIRD_PARTY_MODULES = [
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
 			deps: [HttpClient]
-		}
+		},
+		isolate: true,
+		extend: true
 	})
 ];
 
@@ -89,19 +91,9 @@ const FEATURE_MODULES = [
 	StatusBadgeModule
 ];
 
-@UntilDestroy()
 @NgModule({
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
-	declarations: [SearchComponent, ...COMPONENTS],
-	exports: [...COMPONENTS],
-	providers: [
-		{
-			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
-			multi: true
-		}
-	]
+	imports: [RouterModule.forChild(routes), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	declarations: [SearchComponent, ApplyJobManuallyComponent, JobTitleDescriptionDetailsComponent, JobStatusComponent]
 })
 export class SearchModule {
 	constructor(
@@ -131,8 +123,7 @@ export class SearchModule {
 		// Observable that emits when preferred language changes.
 		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
 			distinctUntilChange(),
-			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
-			untilDestroyed(this)
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage)
 		);
 
 		// Subscribe to preferred language changes

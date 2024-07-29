@@ -1,14 +1,14 @@
-import { Route } from '@angular/router';
+import { Routes } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { IntegrationResolver, PageRouteService, PermissionsGuard } from '@gauzy/ui-core/core';
-import { SearchComponent } from './search/search.component';
+import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
+import { SearchComponent } from './components/search/search.component';
 
 /**
- * Creates jobs browse routes for the application
- * @param _pageRouteService An instance of PageRouteService
- * @returns An array of Route objects
+ * Creates the routes for the search component.
+ *
+ * @returns {Routes} The routes array.
  */
-export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
+export const routes: Routes = [
 	{
 		path: '',
 		component: SearchComponent,

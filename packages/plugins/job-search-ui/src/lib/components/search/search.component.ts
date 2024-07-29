@@ -42,7 +42,8 @@ import {
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
-import { ApplyJobManuallyComponent, JobTitleDescriptionDetailsComponent } from '../components';
+import { ApplyJobManuallyComponent } from '../apply-job-manually/apply-job-manually.component';
+import { JobTitleDescriptionDetailsComponent } from '../job-title-description-details/job-title-description-details.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
