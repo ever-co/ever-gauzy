@@ -72,49 +72,45 @@
     height: auto !important;
   }
   ::ng-deep .advanced-filter {
-    @include nb-select-overrides(
-      2rem,
-      nb-theme(button-rectangle-border-radius),
-      $default-box-shadow
-    );
+    @include nb-select-overrides(2rem, nb-theme(button-rectangle-border-radius), $default-box-shadow);
   }
   ::ng-deep .table-scroll-container {
     flex-grow: 10;
     max-height: unset;
     angular2-smart-table table tr td {
-      	vertical-align: top !important;
-		//border-bottom: 20px solid var(--gauzy-border-table);
+      vertical-align: top !important;
+      //border-bottom: 20px solid var(--gauzy-border-table);
     }
   }
 }
 
 .sync-container {
-	.sync {
-		color: var(--gauzy-text-color-2);
-		cursor: pointer;
-		margin: 0 !important;
-		&.spin {
-			color: var(--text-primary-color);
-			animation: rotate 1s linear 0s infinite;
-		}
-		@keyframes rotate {
-			0% {
-				transform: rotate(0deg);
-			}
-			100% {
-				transform: rotate(360deg);
-			}
-		}
-	}
-	span {
-		color: var(--text-primary-color);
-	}
+  .sync {
+    color: var(--gauzy-text-color-2);
+    cursor: pointer;
+    margin: 0 !important;
+    &.spin {
+      color: var(--text-primary-color);
+      animation: rotate 1s linear 0s infinite;
+    }
+    @keyframes rotate {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  }
+  span {
+    color: var(--text-primary-color);
+  }
 }
 
 .refresh-button {
-	display: flex;
-	align-items: center;
-	gap: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 :host .gauzy-button-container {

@@ -3,9 +3,8 @@ import { UntypedFormBuilder, FormControl, UntypedFormGroup, FormGroupDirective, 
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
@@ -21,17 +20,17 @@ import {
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ErrorHandlingService, JobService } from '@gauzy/ui-core/core';
 import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
-import { JobService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-apply-job-manually',
 	templateUrl: './apply-job-manually.component.html',
-	styleUrls: ['./apply-job-manually.component.scss']
+	styleUrls: ['./apply-job-manually.component.scss'],
+	providers: []
 })
-export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
@@ -66,7 +65,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	public proposalTemplate: IEmployeeProposalTemplate;
 
 	/** Apply Job Manually Mutation Form */
-	public form: UntypedFormGroup = ApplyJobManuallyComponent.buildForm(this.fb);
+	public form: UntypedFormGroup = ApplyJobManuallyComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group({
 			proposal: [], // Cover Letter
@@ -82,8 +81,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	get selectedEmployee(): ISelectedEmployee {
 		return this._selectedEmployee;
 	}
-	@Input() set selectedEmployee(employee: ISelectedEmployee) {
-		this._selectedEmployee = employee;
+	@Input() set selectedEmployee(selectedEmployee: ISelectedEmployee) {
+		this._selectedEmployee = selectedEmployee;
 	}
 
 	/**  Getter and setter for selected Job Post */
@@ -97,10 +96,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	}
 
 	/** Form group directive */
-	@ViewChild('formDirective') formDirective: FormGroupDirective;
+	@ViewChild('formDirective', { static: false }) formDirective: FormGroupDirective;
 
 	/** Ckeditor component */
-	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
+	@ViewChild('ckeditor') ckeditor: CKEditorComponent;
 
 	/** Employee selector component */
 	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
@@ -114,20 +113,17 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	private retryUntil$: Subscription;
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
+		private readonly _fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
-		private readonly dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
-		public readonly translateService: TranslateService,
-		private readonly store: Store,
-		private readonly jobService: JobService,
-		private readonly toastrService: ToastrService
-	) {
-		super(translateService);
-	}
+		private readonly _dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
+		private readonly _store: Store,
+		private readonly _jobService: JobService,
+		private readonly _errorHandlingService: ErrorHandlingService
+	) {}
 
 	ngOnInit(): void {
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
 
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
@@ -142,7 +138,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.user$
+		this._store.user$
 			.pipe(
 				filter((user: IUser) => !!user),
 				tap(() => this._loadUploaderSettings()),
@@ -185,7 +181,8 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			try {
 				if (response) {
 					const error = JSON.parse(response);
-					this.toastrService.danger(error);
+					console.log('Error while uploaded project files error', error);
+					this._errorHandlingService.handleError(error);
 				}
 			} catch (error) {
 				console.log('Error while uploaded project files error', error);
@@ -205,18 +202,20 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 * @returns void
 	 */
 	private _loadUploaderSettings() {
-		if (!this.store.user) {
+		if (!this._store.user) {
 			return;
 		}
-		const { token } = this.store;
-		const { tenantId } = this.store.user;
+		const token = this._store.token;
+		const tenantId = this._store.user.tenantId;
 
 		const headers: Array<{ name: string; value: string }> = [];
 		headers.push({ name: 'Authorization', value: `Bearer ${token}` });
 		headers.push({ name: 'Tenant-Id', value: tenantId });
 
 		if (!!this.organization) {
-			headers.push({ name: 'Organization-Id', value: `${this.organization.id}` });
+			const { id, tenantId } = this.organization;
+			headers.push({ name: 'Organization-Id', value: `${id}` });
+			headers.push({ name: 'Tenant-Id', value: `${tenantId}` });
 		}
 
 		const uploaderOptions: FileUploaderOptions = {
@@ -231,16 +230,22 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 
 		// Adding additional form data
 		this.uploader.onBuildItemForm = (fileItem: FileItem, form) => {
-			if (!!this.store.user.tenantId) {
+			if (!!this._store.user.tenantId) {
 				form.append('tenantId', tenantId);
 			}
 
 			if (!!this.organization) {
-				form.append('organizationId', this.organization.id);
+				const { id, tenantId } = this.organization;
+				form.append('organizationId', id);
+				form.append('tenantId', tenantId);
 			}
 		};
 	}
 
+	/**
+	 * File over base
+	 * @param e
+	 */
 	public fileOverBase(e: any): void {
 		this.hasDropZoneOver = e;
 	}
@@ -306,9 +311,10 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			providerJobId
 		};
 		try {
-			this.dialogRef.close(applyJobPost);
+			this._dialogRef.close(applyJobPost);
 		} catch (error) {
 			console.log('Error while applying job post', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -368,8 +374,12 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 			};
 
 			this.loading = true;
+
+			// Send the employee job application
+			const application = await this._jobService.preProcessEmployeeJobApplication(generateProposalRequest);
+
 			// send the employee job application
-			this.application$.next(await this.jobService.preProcessEmployeeJobApplication(generateProposalRequest));
+			this.application$.next(application);
 		} catch (error) {
 			console.error('Error while creating employee job application', error);
 		}
@@ -383,7 +393,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	public async generateAIProposal(employeeJobApplication: IEmployeeJobApplication) {
 		try {
 			const employeeJobApplicationId = employeeJobApplication.id;
-			await this.jobService.generateAIProposal(employeeJobApplicationId);
+			await this._jobService.generateAIProposal(employeeJobApplicationId);
 
 			// Sleeps for 10 seconds before get proposal.
 			const sleepDelay = 10000;
@@ -413,7 +423,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		this.retryUntil$ = source$
 			.pipe(
 				filter(() => !!employeeJobApplicationId),
-				switchMap(() => this.jobService.getEmployeeJobApplication(employeeJobApplicationId)),
+				switchMap(() => this._jobService.getEmployeeJobApplication(employeeJobApplicationId)),
 				tap((application) => {
 					const { isProposalGeneratedByAI } = application;
 					// Stop making API calls as the desired parameter is found
@@ -446,7 +456,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 						}
 					}
 				}),
-
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -480,6 +489,6 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	 * Close dialog
 	 */
 	close() {
-		this.dialogRef.close(false);
+		this._dialogRef.close(false);
 	}
 }

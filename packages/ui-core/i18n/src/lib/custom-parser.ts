@@ -1,8 +1,10 @@
+import { Injectable } from '@angular/core';
 import { TranslateParser } from '@ngx-translate/core';
 
 /**
  * Custom implementation of the TranslateParser.
  */
+@Injectable()
 export class CustomParser extends TranslateParser {
 	/**
 	 * Interpolates the given expression with the provided parameters.

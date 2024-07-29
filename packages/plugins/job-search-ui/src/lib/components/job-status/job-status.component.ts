@@ -10,7 +10,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	providers: []
 })
 export class JobStatusComponent extends TranslationBaseComponent {
-	constructor(public readonly translateService: TranslateService) {
+	constructor(translateService: TranslateService) {
 		super(translateService);
 	}
 
