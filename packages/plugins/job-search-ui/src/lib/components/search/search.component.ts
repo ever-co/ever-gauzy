@@ -2,12 +2,13 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, firstValueFrom, map, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, map, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	AtLeastOneFieldValidator,
 	DateRangePickerBuilderService,
@@ -32,9 +33,11 @@ import {
 	IEmployee,
 	IIntegrationEntitySetting,
 	IntegrationEntity,
-	IEmployeeProposalTemplate
+	IEmployeeProposalTemplate,
+	LanguagesEnum
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
@@ -109,7 +112,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 		private readonly _toastrService: ToastrService,
 		private readonly _jobService: JobService,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _i18nService: I18nService,
+		private readonly _translateService: TranslateService
 	) {
 		super(translateService);
 
@@ -143,6 +149,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
+		// Initialize UI permissions
+		this.initializeUiPermissions();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
 		this.jobs$
 			.pipe(
 				debounceTime(100),
@@ -189,6 +199,32 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Initialize UI permissions
+	 */
+	private initializeUiPermissions() {
+		// Load permissions
+		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
+		this._ngxPermissionsService.flushPermissions(); // Flush permissions
+		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this._translateService.use(preferredLanguage);
+		});
 	}
 
 	/**
