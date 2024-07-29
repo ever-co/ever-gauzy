@@ -1,67 +1,65 @@
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
+import { APP_INITIALIZER, ErrorHandler, Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, APP_INITIALIZER, ErrorHandler, Injector } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
+import { Router } from '@angular/router';
 import {
-	NbDialogModule,
-	NbThemeModule,
-	NbToastrModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbDatepickerModule
-} from '@nebular/theme';
-import { AppService } from './app.service';
-import {
-	HttpClientModule,
-	HTTP_INTERCEPTORS,
-	HttpClient
-} from '@angular/common/http';
-import {
-	NgxLoginModule,
-	ImageViewerModule,
-	UpdaterModule,
-	SettingsModule,
-	ScreenCaptureModule,
-	TimeTrackerModule,
-	SetupModule,
-	SplashScreenModule,
-	ElectronService,
+	APIInterceptor,
 	AboutModule,
-	LoggerService,
-	AuthModule,
+	ActivityWatchInterceptor,
+	ActivityWatchModule,
+	AlwaysOnModule,
 	AuthGuard,
+	AuthModule,
 	AuthService,
 	AuthStrategy,
+	DEFAULT_TIMEOUT,
+	ElectronService,
 	ErrorHandlerService,
+	GAUZY_ENV,
+	HttpLoaderFactory,
+	ImageViewerModule,
+	LanguageInterceptor,
+	LoggerService,
+	NgxLoginModule,
 	NoAuthGuard,
+	OrganizationInterceptor,
+	RecapModule,
+	ScreenCaptureModule,
 	ServerConnectionService,
+	ServerDownModule,
 	ServerErrorInterceptor,
+	SettingsModule,
+	SetupModule,
+	SplashScreenModule,
 	Store,
 	TenantInterceptor,
-	TokenInterceptor,
-	serverConnectionFactory,
-	APIInterceptor,
-	ServerDownModule,
+	TimeTrackerModule,
 	TimeoutInterceptor,
-	DEFAULT_TIMEOUT,
-	HttpLoaderFactory,
-	LanguageInterceptor,
-	AlwaysOnModule,
+	TokenInterceptor,
 	UnauthorizedInterceptor,
-	GAUZY_ENV,
-	OrganizationInterceptor,
-	ActivityWatchInterceptor,
-	ActivityWatchModule
+	UpdaterModule,
+	serverConnectionFactory
 } from '@gauzy/desktop-ui-lib';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { NgSelectModule } from '@ng-select/ng-select';
-import { AppModuleGuard } from './app.module.guards';
-import { Router } from '@angular/router';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
-import * as Sentry from '@sentry/angular-ivy';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../environments/environment';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { AppModuleGuard } from './app.module.guards';
+import { AppService } from './app.service';
 import { initializeSentry } from './sentry';
 
 /**
@@ -114,7 +112,8 @@ if (environment.SENTRY_DSN) {
 		}),
 		NbDatepickerModule.forRoot(),
 		AboutModule,
-		ActivityWatchModule
+		ActivityWatchModule,
+		RecapModule
 	],
 	providers: [
 		AppService,
@@ -195,7 +194,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -204,11 +203,11 @@ if (environment.SENTRY_DSN) {
 			provide: GAUZY_ENV,
 			useValue: {
 				...gauzyEnvironment,
-				...environment,
-			},
+				...environment
+			}
 		}
 	],
 	bootstrap: [AppComponent],
-	exports: [],
+	exports: []
 })
-export class AppModule { }
+export class AppModule {}
