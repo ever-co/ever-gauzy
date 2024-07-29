@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EquipmentMutationModule,
@@ -40,7 +40,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		PaginationV2Module,
 		GauzyButtonActionModule

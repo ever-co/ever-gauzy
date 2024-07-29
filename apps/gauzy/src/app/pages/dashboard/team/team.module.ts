@@ -9,7 +9,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgChartsModule } from 'ng2-charts';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { CounterPointModule, NoDataMessageModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TeamComponent } from './team.component';
 import { TeamCardComponent } from './team-card/team-card.component';
@@ -29,7 +29,7 @@ import { AllTeamComponent } from './all-team/all-team.component';
 		NbSpinnerModule,
 		NgChartsModule,
 		SharedModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		CounterPointModule,
 		NoDataMessageModule
 	]

@@ -16,7 +16,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	EquipmentSharingPolicyMutationModule,
@@ -48,7 +48,7 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		CardGridModule,
 		EquipmentSharingPolicyMutationModule,
 		EquipmentSharingPolicyRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationV2Module,

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	GauzyFiltersModule,
 	LineChartModule,
@@ -20,7 +20,7 @@ import { ProjectBudgetsReportComponent } from './project-budgets-report/project-
 		CommonModule,
 		ProjectBudgetsReportRoutingModule,
 		SharedModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

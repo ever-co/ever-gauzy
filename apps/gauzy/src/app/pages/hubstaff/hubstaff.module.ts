@@ -19,7 +19,7 @@ import {
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
@@ -50,7 +50,7 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		SharedModule,
 		NbDatepickerModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	]
 })
 export class HubstaffModule {}

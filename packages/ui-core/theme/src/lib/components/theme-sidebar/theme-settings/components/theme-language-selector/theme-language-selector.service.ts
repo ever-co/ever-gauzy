@@ -3,22 +3,31 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, from, tap } from 'rxjs';
 import { NbLayoutDirection, NbLayoutDirectionService } from '@nebular/theme';
-import { TranslateService } from '@ngx-translate/core';
-import { Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { ElectronService } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
 	providedIn: 'root'
 })
 export class ThemeLanguageSelectorService {
+	/**
+	 * Preferred language
+	 */
 	private _preferredLanguage: LanguagesEnum;
+	public get preferredLanguage(): LanguagesEnum {
+		return this._preferredLanguage;
+	}
+	public set preferredLanguage(value: LanguagesEnum) {
+		this._preferredLanguage = value;
+	}
 
 	constructor(
 		private readonly _store: Store,
 		private readonly _electronService: ElectronService,
 		private readonly _directionService: NbLayoutDirectionService,
-		private readonly _translate: TranslateService
+		private readonly _i18nService: I18nService
 	) {
 		this._preferredLanguage = LanguagesEnum.ENGLISH;
 	}
@@ -26,6 +35,7 @@ export class ThemeLanguageSelectorService {
 	public initialize(): void {
 		this._store.preferredLanguage$
 			.pipe(
+				distinctUntilChange(),
 				filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
 				tap((preferredLanguage: LanguagesEnum) => (this.preferredLanguage = preferredLanguage)),
 				tap(() => this.setLanguage()),
@@ -37,6 +47,7 @@ export class ThemeLanguageSelectorService {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
 		if (this._electronService.isElectron) {
 			from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
 				.pipe(
@@ -49,20 +60,14 @@ export class ThemeLanguageSelectorService {
 		}
 	}
 
+	/**
+	 * Sets the application language and layout direction based on the preferred language.
+	 */
 	public setLanguage(): void {
-		if (this.preferredLanguage === LanguagesEnum.HEBREW || this.preferredLanguage === LanguagesEnum.ARABIC) {
-			this._directionService.setDirection(NbLayoutDirection.RTL);
-		} else {
-			this._directionService.setDirection(NbLayoutDirection.LTR);
-		}
-		this._translate.use(this.preferredLanguage);
-	}
-
-	public get preferredLanguage(): LanguagesEnum {
-		return this._preferredLanguage;
-	}
-
-	public set preferredLanguage(value: LanguagesEnum) {
-		this._preferredLanguage = value;
+		const isRtl = [LanguagesEnum.HEBREW, LanguagesEnum.ARABIC].includes(this.preferredLanguage);
+		// Set the layout direction
+		this._directionService.setDirection(isRtl ? NbLayoutDirection.RTL : NbLayoutDirection.LTR);
+		// Set the language
+		this._i18nService.setLanguage(this.preferredLanguage);
 	}
 }

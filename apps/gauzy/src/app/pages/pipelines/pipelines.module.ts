@@ -15,7 +15,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { CardGridModule, GauzyButtonActionModule, PaginationV2Module, SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
@@ -60,7 +60,7 @@ import { DealResolver } from './routes/deal.resolver';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		PipelinesRouting,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		DragDropModule,
 		NbButtonModule,
 		NbSelectModule,
