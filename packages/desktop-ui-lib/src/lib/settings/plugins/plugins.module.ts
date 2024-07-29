@@ -5,7 +5,7 @@ import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbInputModul
 import { TranslateModule } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { DesktopDirectiveModule } from '../../directives/desktop-directive.module';
-import { NoDataModuleModule } from '../../time-tracker/no-data-message/no-data-message.module';
+import { NoDataMessageModule } from '../../time-tracker/no-data-message/no-data-message.module';
 import { PaginationModule } from '../../time-tracker/pagination/pagination.module';
 import { AddPluginComponent } from './component/add-plugin/add-plugin.component';
 import { PluginLayoutComponent } from './component/plugin-layout/plugin-layout.component';
@@ -33,7 +33,7 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 		NbInputModule,
 		NbCardModule,
 		DesktopDirectiveModule,
-		NoDataModuleModule,
+		NoDataMessageModule,
 		NbIconModule,
 		TranslateModule,
 		RouterModule,
