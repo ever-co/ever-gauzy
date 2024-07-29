@@ -1,9 +1,12 @@
 import { Menu } from 'electron';
 import { DefaultWindow, WindowConfig } from './concretes';
+import { WindowManager } from './concretes/window.manager';
 import { BaseWindow } from './interfaces/base-window';
 import { IBaseWindow } from './interfaces/ibase-window';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 
 export class RecapWindow extends BaseWindow implements IBaseWindow {
+	private readonly manager = WindowManager.getInstance();
 	constructor(public path?: string) {
 		super(
 			new DefaultWindow(
@@ -24,8 +27,9 @@ export class RecapWindow extends BaseWindow implements IBaseWindow {
 		});
 		this.browserWindow.on('close', () => {
 			this.setMenuItemEnabled(true);
-			this.close();
 		});
+
+		this.manager.register(RegisteredWindow.RECAP, this);
 	}
 
 	private setMenuItemEnabled(isEnabled: boolean) {
