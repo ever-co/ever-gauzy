@@ -5,7 +5,6 @@ import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
@@ -100,10 +99,10 @@ export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestr
 	@ViewChild('formDirective', { static: false }) formDirective: FormGroupDirective;
 
 	/** Ckeditor component */
-	@ViewChild('ckeditor', { static: false }) ckeditor: CKEditorComponent;
+	@ViewChild('ckeditor') ckeditor: CKEditorComponent;
 
 	/** Employee selector component */
-	@ViewChild('employeeSelector', { static: false }) employeeSelector: EmployeeSelectorComponent;
+	@ViewChild('employeeSelector') employeeSelector: EmployeeSelectorComponent;
 
 	/**
 	 * Newly generate employee job application
@@ -117,13 +116,10 @@ export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestr
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
 		private readonly _dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
-		private readonly _translateService: TranslateService,
 		private readonly _store: Store,
 		private readonly _jobService: JobService,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {
-		this._translateService.use('en');
-	}
+	) {}
 
 	ngOnInit(): void {
 		const storeOrganization$ = this._store.selectedOrganization$;
@@ -487,9 +483,7 @@ export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestr
 	/**
 	 * On editor change
 	 */
-	onEditorChange(content: string): void {
-		console.log('onEditorChange', content);
-	}
+	onEditorChange(content: string): void {}
 
 	/**
 	 * Close dialog

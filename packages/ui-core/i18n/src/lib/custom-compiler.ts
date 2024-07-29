@@ -1,8 +1,10 @@
+import { Injectable } from '@angular/core';
 import { TranslateCompiler } from '@ngx-translate/core';
 
 /**
  * Custom compiler for translations.
  */
+@Injectable()
 export class CustomCompiler extends TranslateCompiler {
 	/**
 	 * Compiles a single translation value.

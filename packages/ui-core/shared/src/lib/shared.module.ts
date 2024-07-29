@@ -2,7 +2,6 @@ import { NgModule, ModuleWithProviders } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { ComponentsModule } from './components/components.module';
 import { DirectivesModule } from './directives/directives.module';
@@ -13,7 +12,6 @@ const IMPORTS_EXPORTS = [
 	FormsModule,
 	ReactiveFormsModule,
 	RouterModule,
-	TranslateModule,
 	NgxPermissionsModule,
 	ComponentsModule,
 	DirectivesModule,
