@@ -64,6 +64,8 @@
 		"moment-range": "^4.0.2",
 		"moment-timezone": "^0.5.45",
 		"rxjs": "^7.4.0",
-		"underscore": "^1.13.3"
+		"underscore": "^1.13.3",
+		"@swimlane/ngx-charts": "20.5.0",
+		"ngx-daterangepicker-material": "^6.0.4"
 	}
 }
