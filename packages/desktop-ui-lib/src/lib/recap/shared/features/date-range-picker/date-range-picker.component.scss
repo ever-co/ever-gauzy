@@ -72,8 +72,8 @@ $button-radius: var(--button-rectangle-border-radius);
 			display: flex;
 			flex-direction: row;
 			flex-wrap: nowrap;
-			@include nb-ltr(margin-left, -78%);
-			@include nb-rtl(margin-right, -78%);
+			@include nb-ltr(margin-left, -81.5%);
+			@include nb-rtl(margin-right, -81.5%);
 
 			&.double {
 				@include nb-ltr(margin-left, -146%);

@@ -98,6 +98,12 @@ nb-select {
 nb-card {
 	background-color: var(--gauzy-card-1);
 
+	nb-card-header {
+		color: var(--text-primary-color);
+		font-size: 1rem;
+		padding: 0.5rem 1rem;
+	}
+
 	nb-card-body {
 		background: var(--gauzy-card-2);
 		padding: 1rem 1rem 0.5rem;
