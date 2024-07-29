@@ -15,7 +15,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
@@ -98,4 +98,65 @@ const THIRD_PARTY_MODULES = [
 		}
 	]
 })
-export class SearchModule {}
+export class SearchModule {
+	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+
+	constructor(readonly _pageRouteService: PageRouteService, readonly _translateService: TranslateService) {
+		// Register the routes
+		this.registerPageRoutes();
+	}
+
+	/**
+	 * Called when the plugin is Bootstraped .
+	 *
+	 * @returns {void | Promise<void>}
+	 * @memberof SearchModule
+	 */
+	onPluginBootstrap(): void | Promise<void> {
+		console.log(`${SearchModule.name} is being bootstrapped...`);
+	}
+
+	/**
+	 * Called when the plugin is destroyed.
+	 *
+	 * @returns {void | Promise<void>}
+	 * @memberof SearchModule
+	 */
+	onPluginDestroy(): void | Promise<void> {
+		console.log(`${SearchModule.name} is being destroyed...`);
+	}
+
+	/**
+	 * Registers routes for the Jobs browser module.
+	 * Ensures that routes are registered only once.
+	 *
+	 * @returns {void}
+	 */
+	registerPageRoutes(): void {
+		if (SearchModule.hasRegisteredPageRoutes) {
+			return;
+		}
+
+		// Register Job Browser Page Routes
+		this._pageRouteService.registerPageRoute({
+			// Register the location 'jobs'
+			location: 'jobs',
+			// Register the path 'search'
+			path: 'search',
+			// Register the loadChildren function to load the SearchModule lazy module
+			loadChildren: () => import('./search.module').then((m) => m.SearchModule),
+			// Register the data object
+			data: {
+				selectors: {
+					date: true,
+					employee: true,
+					project: false,
+					team: false
+				}
+			}
+		});
+
+		// Set hasRegisteredRoutes to true
+		SearchModule.hasRegisteredPageRoutes = true;
+	}
+}
