@@ -11,7 +11,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
 import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.component';
@@ -29,7 +29,7 @@ import { ApprovalPolicyMutationComponent } from './approval-policy-mutation.comp
 		NbSelectModule,
 		NbRadioModule,
 		NgSelectModule,
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	declarations: [ApprovalPolicyMutationComponent],
 	providers: [ApprovalPolicyService, Store]

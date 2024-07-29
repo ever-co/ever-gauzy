@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InviteService, RoleService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { PasswordFormFieldModule } from '@gauzy/ui-core/shared';
 import { AcceptInviteFormComponent } from './accept-invite-form/accept-invite-form.component';
 import { AcceptInvitePage } from './accept-invite.component';
@@ -32,7 +32,7 @@ import { AcceptInvitePage } from './accept-invite.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NbCheckboxModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		PasswordFormFieldModule
 	],
 	declarations: [AcceptInvitePage, AcceptInviteFormComponent],

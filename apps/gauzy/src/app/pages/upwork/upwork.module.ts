@@ -16,7 +16,7 @@ import {
 	NbActionsModule,
 	NbContextMenuModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { UpworkComponent } from './components/upwork/upwork.component';
 import { UpworkRoutingModule } from './upwork-routing.module';
@@ -55,7 +55,7 @@ import { ReportsComponent } from './components/reports/reports.component';
 		NbContextMenuModule,
 		UpworkRoutingModule,
 		Angular2SmartTableModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
 		SelectorsModule

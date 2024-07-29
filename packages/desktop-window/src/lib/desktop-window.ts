@@ -1,8 +1,10 @@
-import { screen, BrowserWindow, ipcMain } from 'electron';
 import * as remoteMain from '@electron/remote/main';
+import { BrowserWindow, ipcMain, screen } from 'electron';
 import * as url from 'url';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -11,6 +13,8 @@ const store = new Store();
 
 export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	log.info('createGauzyWindow started');
+
+	const manager = WindowManager.getInstance();
 
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 
@@ -58,6 +62,8 @@ export async function createGauzyWindow(gauzyWindow, serve, config, filePath) {
 	initMainListener();
 
 	log.info('createGauzyWindow completed');
+
+	manager.register(RegisteredWindow.MAIN, gauzyWindow);
 
 	return gauzyWindow;
 }

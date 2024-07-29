@@ -13,7 +13,7 @@ import {
 import { NgxDraggableDomModule } from 'ngx-draggable-dom';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { TimeTrackerService } from '@gauzy/ui-core/common';
 import { TimeTrackerComponent } from './time-tracker/time-tracker.component';
 import { TimeTrackerStatusModule } from './components/time-tracker-status/time-tracker-status.module';
@@ -38,7 +38,7 @@ import { ContactSelectorModule } from '../contact-selector/contact-selector.modu
 		NbTooltipModule,
 		NgxDraggableDomModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
@@ -49,6 +49,11 @@ import { ContactSelectorModule } from '../contact-selector/contact-selector.modu
 	exports: [TimeTrackerComponent]
 })
 export class TimeTrackerModule {
+	/**
+	 * Returns a ModuleWithProviders object that specifies the TimeTrackerModule and its providers.
+	 *
+	 * @return {ModuleWithProviders<TimeTrackerModule>} A ModuleWithProviders object with the TimeTrackerModule and its providers.
+	 */
 	static forRoot(): ModuleWithProviders<TimeTrackerModule> {
 		return {
 			ngModule: TimeTrackerModule,

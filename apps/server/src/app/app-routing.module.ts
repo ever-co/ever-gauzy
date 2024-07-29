@@ -20,7 +20,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'settings',
-		component: SettingsComponent
+		component: SettingsComponent,
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.pluginRoutes)
 	},
 	{
 		path: 'updater',

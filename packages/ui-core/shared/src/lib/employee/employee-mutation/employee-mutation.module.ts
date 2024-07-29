@@ -9,7 +9,7 @@ import {
 	NbTagModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { EmployeesService, OrganizationsService, RoleService } from '@gauzy/ui-core/core';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { EmployeeMutationComponent } from './employee-mutation.component';
@@ -25,7 +25,7 @@ import { EmployeeMutationComponent } from './employee-mutation.component';
 		NbTagModule,
 		NbSpinnerModule,
 		UserFormsModule,
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	exports: [EmployeeMutationComponent],
 	declarations: [EmployeeMutationComponent],

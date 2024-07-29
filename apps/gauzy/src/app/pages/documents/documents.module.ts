@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	FileUploaderModule,
@@ -51,7 +51,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		PaginationModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule
