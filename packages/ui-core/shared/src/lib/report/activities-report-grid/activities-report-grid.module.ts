@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ActivitiesReportGridComponent } from './activities-report-grid.component';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
@@ -19,7 +19,7 @@ import { SharedModule } from '../../shared.module';
 		NbIconModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		ProgressStatusModule,
 		ProjectColumnViewModule,

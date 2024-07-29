@@ -12,7 +12,7 @@ import {
 	TableFiltersModule
 } from '@gauzy/ui-core/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	InvoiceEstimateHistoryService,
 	InvoicesService,
@@ -23,7 +23,7 @@ import {
 @NgModule({
 	imports: [
 		CommonModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbCardModule,
 		PaymentsRoutingModule,
 		Angular2SmartTableModule,

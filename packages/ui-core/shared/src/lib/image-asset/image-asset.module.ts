@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbInputModule } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ImageAssetComponent } from './image-asset.component';
 
 @NgModule({
@@ -11,7 +11,7 @@ import { ImageAssetComponent } from './image-asset.component';
 		NbButtonModule,
 		NbCardModule,
 		NbInputModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		FormsModule,
 		ReactiveFormsModule
 	],

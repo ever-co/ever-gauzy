@@ -1,15 +1,15 @@
-import { RouterModule, Routes, ExtraOptions } from '@angular/router';
 import { NgModule } from '@angular/core';
+import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import {
-	ImageViewerComponent,
-	SettingsComponent,
-	ScreenCaptureComponent,
-	TimeTrackerComponent,
-	SetupComponent,
-	UpdaterComponent,
 	AboutComponent,
+	AlwaysOnComponent,
+	ImageViewerComponent,
+	ScreenCaptureComponent,
+	SettingsComponent,
+	SetupComponent,
 	SplashScreenComponent,
-	AlwaysOnComponent
+	TimeTrackerComponent,
+	UpdaterComponent
 } from '@gauzy/desktop-ui-lib';
 
 const routes: Routes = [
@@ -53,6 +53,10 @@ const routes: Routes = [
 	{
 		path: 'always-on',
 		component: AlwaysOnComponent
+	},
+	{
+		path: 'recap',
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	}
 ];
 

@@ -12,9 +12,9 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { RolePermissionsService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { RolesPermissionsRoutingModule } from './roles-permissions-routing.module';
 import { RolesPermissionsComponent } from './roles-permissions.component';
 
@@ -34,7 +34,7 @@ import { RolesPermissionsComponent } from './roles-permissions.component';
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	declarations: [RolesPermissionsComponent],
 	providers: [RolePermissionsService]

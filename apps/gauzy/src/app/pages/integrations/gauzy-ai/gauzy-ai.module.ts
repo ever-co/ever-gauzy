@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
 import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
@@ -40,7 +40,7 @@ import { IntegrationSettingCardComponent } from './components/integration-settin
 		NbToggleModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GauzyAIRoutingModule,
 		WorkInProgressModule,
 		SharedModule

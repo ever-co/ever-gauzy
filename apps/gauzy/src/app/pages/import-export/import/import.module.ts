@@ -16,7 +16,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { ExportAllService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { FileUploaderModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ImportComponent } from './import.component';
 import { ImportRoutingModule } from './import-routing.module';
@@ -38,7 +38,7 @@ import { ImportRoutingModule } from './import-routing.module';
 		NbTooltipModule,
 		ImportRoutingModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		FileUploaderModule,
 		GauzyButtonActionModule

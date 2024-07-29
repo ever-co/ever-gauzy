@@ -1,0 +1,167 @@
+$status: 'primary';
+
+:host {
+	.filters {
+		.form-control {
+			min-height: 40px;
+		}
+	}
+
+	.select-box {
+		display: block;
+		width: 300px;
+	}
+
+	.week-date-input {
+		position: relative;
+		overflow: hidden;
+		height: auto;
+		border-radius: 4px;
+
+		input {
+			opacity: 0;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+		}
+	}
+
+	.date-range-input {
+		min-width: 300px;
+	}
+
+	.filter-item-list {
+		.filter-item {
+			min-width: 220px;
+		}
+
+		.select-box,
+		nb-select {
+			max-width: 100%;
+			width: 100%;
+			display: block;
+		}
+	}
+
+	.activity-level-filter {
+		background-color: var(--select-outline-#{$status}-background-color);
+		border-color: var(--select-outline-#{$status}-border-color);
+		color: var(--select-outline-#{$status}-text-color);
+
+		&.placeholder {
+			color: var(--select-outline-#{$status}-placeholder-text-color);
+		}
+
+		nb-icon {
+			color: var(--select-outline-#{$status}-icon-color);
+		}
+
+		&:focus {
+			background-color: var(--select-outline-#{$status}-focus-background-color);
+			border-color: var(--select-outline-#{$status}-focus-border-color);
+		}
+
+		&:hover {
+			background-color: var(--select-outline-#{$status}-hover-background-color);
+			border-color: var(--select-outline-#{$status}-hover-border-color);
+		}
+
+		&[disabled] {
+			color: var(--select-outline-#{$status}-disabled-text-color);
+			background-color: var(--select-outline-#{$status}-disabled-background-color);
+			border-color: var(--select-outline-#{$status}-disabled-border-color);
+
+			nb-icon {
+				color: var(--select-outline-#{$status}-disabled-icon-color);
+			}
+		}
+
+		&.bottom,
+		&.top {
+			border-color: var(--select-outline-#{$status}-open-border-color);
+		}
+
+		&.top {
+			border-top-color: var(--select-outline-#{$status}-adjacent-border-color);
+		}
+
+		&.bottom {
+			border-bottom-color: var(--select-outline-#{$status}-adjacent-border-color);
+		}
+	}
+}
+
+::ng-deep {
+	.slider-dropdown {
+		width: 300px;
+	}
+}
+
+button.activity-level-filter.text-capitalize.appearance-outline.size-medium.shape-rectangle.icon-end.status-basic.nb-transition {
+	inline-size: -webkit-fill-available;
+	overflow: hidden;
+}
+
+:host(.vertical) {
+	.filter-item-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		max-width: 350px;
+
+		.filter-item {
+			width: 100%;
+		}
+	}
+}
+
+// We need to use ::ng-deep to overcome view encapsulation
+::ng-deep {
+	.custom-slider .ngx-slider .ngx-slider-bar {
+		background: #ffe4d1;
+		height: 2px;
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-selection {
+		background: var(--background-#{$status}-color-1);
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-pointer {
+		width: 8px;
+		height: 16px;
+		top: auto;
+		/* to remove the default positioning */
+		bottom: 0;
+		background-color: #333;
+		border-top-left-radius: 3px;
+		border-top-right-radius: 3px;
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-pointer:after {
+		display: none;
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-bubble {
+		bottom: 14px;
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-limit {
+		font-weight: bold;
+		color: var(--background-#{$status}-color-1);
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-tick {
+		width: 1px;
+		height: 10px;
+		margin-left: 4px;
+		border-radius: 0;
+		background: #ffe4d1;
+		top: -1px;
+	}
+
+	.custom-slider .ngx-slider .ngx-slider-tick.ngx-slider-selected {
+		background: var(--background-#{$status}-color-1);
+	}
+}

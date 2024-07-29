@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { EmailTemplateService } from '@gauzy/ui-core/core';
 import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
@@ -35,7 +35,7 @@ import { EmailTemplatesComponent } from './email-templates.component';
 		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		AceEditorModule,
 		LanguageSelectorModule

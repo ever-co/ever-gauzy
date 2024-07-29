@@ -26,7 +26,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgChartsModule } from 'ng2-charts';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
 	GauzyButtonActionModule,
@@ -93,7 +93,7 @@ import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-typ
 		GoalLevelSelectModule,
 		TaskSelectModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		GauzyButtonActionModule,

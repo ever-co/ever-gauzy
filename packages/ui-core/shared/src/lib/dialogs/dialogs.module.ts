@@ -16,7 +16,7 @@ import {
 	NbBadgeModule,
 	NbTagModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AlertDirective, ConfirmDirective, PromptDirective } from './directive';
 import { AlertComponent } from './alert/alert.component';
 import { ConfirmComponent } from './confirm/confirm.component';
@@ -44,7 +44,7 @@ const Components = [AlertComponent, ConfirmComponent, PromptComponent, QuickActi
 		NbRadioModule,
 		NbSelectModule,
 		NbTagModule,
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	declarations: [...Components, ...Directives],
 	exports: [...Directives],

@@ -16,7 +16,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -66,7 +66,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		PaginationV2Module,
 		SharedModule,
 		TagsColorInputModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild()
 	],
 

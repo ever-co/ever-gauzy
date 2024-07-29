@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbInputModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
 import { EmployeeRatesComponent } from './employee-rates.component';
 import { CurrencyModule } from '../../modules/currency';
@@ -26,7 +26,7 @@ import { PipesModule } from '../../pipes/pipes.module';
 		NbSelectModule,
 		NbIconModule,
 		NbActionsModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		PipesModule,
 		CurrencyModule
 	],

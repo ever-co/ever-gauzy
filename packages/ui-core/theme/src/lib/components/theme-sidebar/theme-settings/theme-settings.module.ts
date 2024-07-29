@@ -8,7 +8,7 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { DirectivesModule } from '@gauzy/ui-core/shared';
 import { ThemeSettingsComponent } from './theme-settings.component';
 import { ThemeLanguageSelectorModule } from './components/theme-language-selector/theme-language-selector.module';
@@ -22,7 +22,7 @@ import { LayoutSelectorModule } from './components/layout-selector/layout-select
 		NbSelectModule,
 		NbIconModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ThemeLanguageSelectorModule,
 		LayoutSelectorModule,
 		ThemeSelectorModule,

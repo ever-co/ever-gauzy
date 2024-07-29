@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { MomentModule } from 'ngx-moment';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
 import { TableComponentsModule } from '../../../table-components';
 import { SharedModule } from '../../../shared.module';
@@ -33,7 +33,7 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		MomentModule,
 		SharedModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		DialogsModule,
 		GalleryModule,
 		TableComponentsModule

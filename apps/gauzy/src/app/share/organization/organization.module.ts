@@ -12,7 +12,7 @@ import {
 	NbUserModule,
 	NbTagModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	ImageUploaderModule,
 	PublicPageMutationModule,
@@ -36,7 +36,7 @@ import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progr
 		NbIconModule,
 		NbInputModule,
 		PublicPageMutationModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,
