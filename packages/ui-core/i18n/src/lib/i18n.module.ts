@@ -1,6 +1,6 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { I18nService } from './i18n.service';
 import { HttpLoaderFactory } from './translate-http-loader';
 
@@ -14,8 +14,7 @@ import { HttpLoaderFactory } from './translate-http-loader';
 			}
 		})
 	],
-	exports: [TranslateModule],
-	providers: [I18nService]
+	exports: [TranslateModule]
 })
 export class I18nModule {
 	/**
