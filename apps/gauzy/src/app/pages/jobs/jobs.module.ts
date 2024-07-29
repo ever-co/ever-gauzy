@@ -1,15 +1,14 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterModule, ROUTES } from '@angular/router';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
-import { JobTableComponentsModule } from './table-components/job-table-components.module';
 import { createRoutes } from './job.routes';
 
 @NgModule({
 	declarations: [JobLayoutComponent],
-	imports: [CommonModule, RouterModule.forChild([]), SharedModule, JobTableComponentsModule],
+	imports: [SharedModule, RouterModule.forChild([])],
+	exports: [RouterModule],
 	providers: [
 		{
 			provide: ROUTES,
@@ -20,7 +19,18 @@ import { createRoutes } from './job.routes';
 	]
 })
 export class JobsModule {
-	constructor(readonly _pageRouteService: PageRouteService) {
+	constructor(private readonly _pageRouteService: PageRouteService) {
+		// Register the routes
+		this.registerRoutes(this._pageRouteService);
+	}
+
+	/**
+	 * Register routes for the Jobs module
+	 *
+	 * @param _pageRouteService
+	 * @returns {void}
+	 */
+	registerRoutes(_pageRouteService: PageRouteService): void {
 		// Register Job Browser Page Routes
 		_pageRouteService.registerPageRoute({
 			// Register the location 'jobs'
@@ -28,7 +38,7 @@ export class JobsModule {
 			// Register the path 'search'
 			path: 'search',
 			// Register the loadChildren function to load the MatchingModule lazy module
-			loadChildren: () => import('./search/search.module').then((m) => m.SearchModule),
+			loadChildren: () => import('@gauzy/plugins/job-search-ui').then((m) => m.SearchModule),
 			// Register the data object
 			data: {
 				selectors: {
