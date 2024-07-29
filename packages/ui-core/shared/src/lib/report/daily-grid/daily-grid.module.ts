@@ -9,7 +9,7 @@ import {
 	NbSelectModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { TableComponentsModule } from '../../table-components/table-components.module';
 import { DailyGridComponent } from './daily-grid.component';
@@ -26,7 +26,7 @@ import { NoDataMessageModule } from '../../no-data-message/no-data-message.modul
 		NbIconModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		ProjectColumnViewModule,
 		TableComponentsModule,

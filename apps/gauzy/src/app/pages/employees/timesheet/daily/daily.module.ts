@@ -15,7 +15,7 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
@@ -51,7 +51,7 @@ import { DailyComponent } from './daily/daily.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,

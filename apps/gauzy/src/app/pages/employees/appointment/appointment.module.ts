@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
@@ -22,7 +22,7 @@ import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.mo
 		NbIconModule,
 		NbSpinnerModule,
 		FullCalendarModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TimezoneSelectorModule,
 		AppointmentRoutingModule

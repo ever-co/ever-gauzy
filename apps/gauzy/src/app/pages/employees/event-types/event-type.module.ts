@@ -13,7 +13,7 @@ import {
 import { EventTypeRoutingModule } from './event-type.routing.module';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EventTypeService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -45,7 +45,7 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		UserFormsModule,
 		CardGridModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GauzyButtonActionModule,
 		PaginationV2Module
 	],

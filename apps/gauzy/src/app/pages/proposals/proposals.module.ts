@@ -17,7 +17,7 @@ import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ProposalsService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -61,7 +61,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 		NgSelectModule,
 		NgChartsModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TagsColorInputModule,
 		TableComponentsModule,

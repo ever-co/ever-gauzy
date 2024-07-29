@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbSelectModule, NbToggleModule, NbButtonModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ThemeSelectorComponent } from './theme-selector.component';
 import { SwitchThemeComponent } from './switch-theme/switch-theme.component';
 import { ThemeSelectorImageComponent } from './theme-selector-image/theme-selector-image.component';
@@ -9,6 +9,6 @@ import { ThemeSelectorImageComponent } from './theme-selector-image/theme-select
 @NgModule({
 	declarations: [ThemeSelectorComponent, SwitchThemeComponent, ThemeSelectorImageComponent],
 	exports: [ThemeSelectorComponent, SwitchThemeComponent, ThemeSelectorImageComponent],
-	imports: [CommonModule, NbSelectModule, NbToggleModule, I18nTranslateModule.forChild(), NbButtonModule]
+	imports: [CommonModule, NbSelectModule, NbToggleModule, TranslateModule.forChild(), NbButtonModule]
 })
 export class ThemeSelectorModule {}

@@ -32,7 +32,7 @@ import {
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
@@ -65,7 +65,7 @@ import {
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,

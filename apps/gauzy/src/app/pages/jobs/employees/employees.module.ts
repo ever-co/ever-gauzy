@@ -10,7 +10,7 @@ import {
 	NbTabsetModule
 } from '@nebular/theme';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { GauzyButtonActionModule, PaginationV2Module, SmartTableToggleModule } from '@gauzy/ui-core/shared';
 import { EmployeesRoutingModule } from './employees-routing.module';
@@ -31,7 +31,7 @@ import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.mo
 		NbToggleModule,
 		NbTabsetModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		Angular2SmartTableModule,
 		SmartTableToggleModule,

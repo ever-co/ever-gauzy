@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { SelectorsModule } from '../selectors/selectors.module';
 import { FileUploaderModule } from '../file-uploader-input/file-uploader-input.module';
 import { TimeOffSettingsMutationComponent } from './settings-mutation/time-off-settings-mutation.component';
@@ -34,7 +34,7 @@ import { TimeOffPolicySelectModule } from './time-off-policy-select/time-off-pol
 		NbInputModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SelectorsModule,
 		FileUploaderModule,
 		TimeOffPolicySelectModule

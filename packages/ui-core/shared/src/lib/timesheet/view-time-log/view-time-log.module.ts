@@ -9,7 +9,7 @@ import {
 	NbUserModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { SharedModule } from '../../shared.module';
 import { ViewTimeLogComponent } from './view-time-log.component';
@@ -28,7 +28,7 @@ import { ViewTimeLogModalModule } from '../view-time-log-modal/view-time-log-mod
 		NbTooltipModule,
 		NbUserModule,
 		NgxPermissionsModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		DialogsModule,
 		EditTimeLogModalModule,

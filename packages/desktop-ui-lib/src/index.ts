@@ -13,6 +13,8 @@ export * from './lib/image-viewer/image-viewer.module';
 export * from './lib/integrations';
 export * from './lib/interceptors';
 export * from './lib/ngx-translate';
+export * from './lib/recap/recap-routing.module';
+export * from './lib/recap/recap.module';
 export * from './lib/screen-capture/screen-capture.component';
 export * from './lib/screen-capture/screen-capture.module';
 export * from './lib/server-dashboard/server-dashboard.component';

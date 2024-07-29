@@ -4,8 +4,4 @@ import { CommonModule } from '@angular/common';
 @NgModule({
 	imports: [CommonModule]
 })
-export class UiAuthModule {
-	constructor() {
-		console.log('Ui Auth Module Loaded Successfully!');
-	}
-}
+export class UiAuthModule {}

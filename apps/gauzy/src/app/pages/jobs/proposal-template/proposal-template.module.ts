@@ -16,7 +16,7 @@ import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EmployeeMultiSelectModule,
@@ -48,7 +48,7 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 		NbToggleModule,
 		NbTabsetModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ProposalTemplateRoutingModule,
 		SharedModule,
 		EmployeeMultiSelectModule,

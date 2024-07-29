@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -46,7 +46,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		TableComponentsModule,
 		NbDatepickerModule,
 		CardGridModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
 		PaginationV2Module,

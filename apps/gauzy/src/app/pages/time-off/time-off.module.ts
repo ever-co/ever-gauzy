@@ -19,7 +19,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
 	CardGridModule,
@@ -57,7 +57,7 @@ import { PaidIcon } from './table-components/paid-icon';
 		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),

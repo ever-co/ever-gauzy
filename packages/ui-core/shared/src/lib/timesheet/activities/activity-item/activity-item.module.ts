@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbIconModule, NbProgressBarModule, NbTooltipModule } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ActivityItemComponent } from './activity-item.component';
 import { SharedModule } from '../../../shared.module';
 
@@ -16,7 +16,7 @@ import { SharedModule } from '../../../shared.module';
 		NbIconModule,
 		NbProgressBarModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule
 	]
 })

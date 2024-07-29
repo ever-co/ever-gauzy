@@ -43,7 +43,7 @@ import {
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
@@ -105,7 +105,7 @@ const NB_MODULES = [
 		SelectAssetModule,
 		InventoryTableComponentsModule,
 		TagsColorInputModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
 		GauzyButtonActionModule,

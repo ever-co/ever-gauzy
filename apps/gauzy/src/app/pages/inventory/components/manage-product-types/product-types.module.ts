@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	CardGridModule,
 	GauzyButtonActionModule,
@@ -29,7 +29,7 @@ import { ProductTypesRoutingModule } from './product-types-routing.module';
 		NbTooltipModule,
 		Angular2SmartTableModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ProductTypesRoutingModule,
 		SharedModule,
 		CardGridModule,

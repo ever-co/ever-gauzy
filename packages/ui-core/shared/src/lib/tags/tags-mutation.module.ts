@@ -11,7 +11,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { TranslateModule as I18nTranslateModule } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { TagsService } from '@gauzy/ui-core/core';
 import { TagsMutationComponent } from './tags-mutation.component';
 
@@ -28,7 +28,7 @@ import { TagsMutationComponent } from './tags-mutation.component';
 		NbSelectModule,
 		NbTooltipModule,
 		ColorPickerModule,
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	declarations: [TagsMutationComponent],
 	providers: [TagsService]
