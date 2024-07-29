@@ -1,0 +1,222 @@
+@import 'themes';
+
+$button-radius: var(--button-rectangle-border-radius);
+
+.filter-input {
+	width: fit-content;
+	display: flex;
+	align-items: center;
+
+	button {
+		margin-right: 5px;
+		border-radius: var(--button-rectangle-border-radius);
+		border: unset;
+		background-color: var(--gauzy-background-transparent-1);
+	}
+}
+
+.custom-input {
+	height: inherit;
+	display: flex;
+	align-items: center;
+	background: var(--gauzy-card-1);
+	box-shadow: var(--gauzy-shadow) inset;
+	border-radius: var(--button-rectangle-border-radius);
+	/* I've used padding so you can see the edges of the elements. */
+	padding: 2px 0px 2px 5px;
+	margin-right: 16px;
+
+	input {
+		height: 1.875rem;
+		background-color: transparent;
+		/* Tell the input to use all the available space */
+		flex-grow: 2;
+		/* And hide the input's outline, so the form looks like the outline */
+		border: none;
+		box-shadow: none;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 11px;
+		letter-spacing: 0em;
+		text-align: left;
+		color: var(--gauzy-text-color-2);
+	}
+
+	input.single-range {
+		width: 103px;
+	}
+
+	input.double-range {
+		width: 190px;
+	}
+
+	input:focus {
+		/* removing the input focus blue box. Put this on the form if you like. */
+		outline: none;
+	}
+
+	&:hover,
+	&:focus {
+		background: var(--background-basic-color-3);
+		transition: ease-in-out 0.3s;
+	}
+}
+
+:host {
+	::ng-deep {
+		&.md-drppicker {
+			background-color: var(--background-basic-color-1);
+			color: var(--text-basic-color);
+			border-radius: var(--border-radius);
+			margin-top: 25px;
+			display: flex;
+			flex-direction: row;
+			flex-wrap: nowrap;
+			@include nb-ltr(margin-left, -78%);
+			@include nb-rtl(margin-right, -78%);
+
+			&.double {
+				@include nb-ltr(margin-left, -146%);
+				@include nb-rtl(margin-right, -146%);
+			}
+
+			.calendar-table {
+				background-color: var(--background-basic-color-1);
+				border-color: var(--border-basic-color-3);
+				box-shadow: var(--border-basic-color-1) 0px 1px 3px, var(--border-basic-color-3) 0px 1px 2px;
+				border-radius: var(--border-radius);
+			}
+
+			.calendar-time select.disabled {
+				color: var(--text-basic-color);
+			}
+
+			.label-input {
+				color: var(--text-basic-color);
+			}
+
+			.show-ranges {
+				.drp-calendar.left {
+					border-left: 1px solid var(--border-basic-color-1);
+				}
+			}
+
+			th {
+				color: var(--text-basic-color);
+			}
+
+			td,
+			th {
+				&.available {
+					&.prev {
+						filter: invert(0.65);
+					}
+
+					&.next {
+						filter: invert(0.65);
+					}
+				}
+			}
+
+			td {
+				&.off {
+
+					&,
+					&.in-range,
+					&.start-date,
+					&.end-date {
+						background-color: var(--background-basic-color-3);
+						border-color: var(--border-basic-color-1);
+						color: var(--text-basic-color);
+					}
+				}
+
+				&.active {
+
+					&,
+					&:hover {
+						background-color: var(--color-primary-default);
+						border-color: var(--border-basic-color-3);
+						color: var(--text-control-color);
+					}
+				}
+			}
+
+			.ranges {
+				ul {
+					min-width: auto;
+
+					li {
+						min-width: 110px;
+
+						button {
+							border-radius: $button-radius;
+							color: var(--text-basic-color);
+
+							&.active {
+								background-color: var(--color-primary-active);
+							}
+
+							&:hover {
+								color: var(--text-control-color);
+							}
+						}
+					}
+
+					li:hover {
+						background-color: var(--color-primary-hover);
+						border-radius: $button-radius;
+					}
+				}
+			}
+
+			.btn {
+				border-radius: $button-radius;
+				box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+				background-color: var(--color-primary-default);
+				color: var(--text-control-color);
+				padding: 0 0.75rem;
+				height: 2rem;
+
+				&:hover,
+				&:focus {
+					background-color: var(--color-primary-focus);
+				}
+
+				&.btn-default {
+					border-radius: var(--button-rectangle-border-radius);
+					color: var(--text-control-color);
+					background-color: var(--color-primary-default);
+				}
+			}
+
+			width: fit-content !important;
+		}
+	}
+}
+
+::ng-deep nb-action nb-icon {
+	color: var(--text-primary-color);
+}
+
+:host i {
+	font-size: 11px;
+	font-weight: 400;
+	line-height: 11px;
+	letter-spacing: 0em;
+	text-align: center;
+	color: var(--gauzy-text-color-1);
+	@include nb-ltr(margin-left, 9px);
+	@include nb-rtl(margin-right, 12px);
+}
+
+:host(.medium) {
+	.custom-input {
+		height: 32px;
+		margin-right: 0px;
+	}
+
+	[nbInput].status-basic:focus:hover {
+		background-color: unset;
+	}
+}
