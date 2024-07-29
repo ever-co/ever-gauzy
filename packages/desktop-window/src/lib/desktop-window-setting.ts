@@ -1,8 +1,10 @@
+import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
-import * as remoteMain from '@electron/remote/main';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -11,6 +13,7 @@ const store = new Store();
 
 export async function createSettingsWindow(settingsWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	const manager = WindowManager.getInstance();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(settingsWindow.webContents);
@@ -31,6 +34,7 @@ export async function createSettingsWindow(settingsWindow, filePath) {
 	});
 
 	// settingsWindow.webContents.toggleDevTools();
+	manager.register(RegisteredWindow.SETTINGS, settingsWindow);
 
 	return settingsWindow;
 }

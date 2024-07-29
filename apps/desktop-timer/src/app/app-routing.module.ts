@@ -84,6 +84,10 @@ const routes: Routes = [
 		component: ServerDownPage
 	},
 	{
+		path: 'recap',
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
+	},
+	{
 		path: '',
 		component: TimeTrackerComponent,
 		canActivate: [AppModuleGuard, AuthGuard]

@@ -1,5 +1,14 @@
-import { createSettingsWindow, getApiBaseUrl, loginPage, timeTrackerPage } from '@gauzy/desktop-window';
-import { Menu, MenuItemConstructorOptions, Tray, app, ipcMain, nativeImage } from 'electron';
+import {
+	createSettingsWindow,
+	getApiBaseUrl,
+	IBaseWindow,
+	loginPage,
+	RecapWindow,
+	RegisteredWindow,
+	timeTrackerPage,
+	WindowManager
+} from '@gauzy/desktop-window';
+import { app, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
@@ -35,10 +44,12 @@ export class TrayIcon {
 		this.tray = new Tray(iconNativePath);
 		this.tray.setTitle('--:--:--', options);
 		const userService = new UserService();
+		const manager = WindowManager.getInstance();
 		this.contextMenu = [
 			{
 				id: '4',
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
+				accelerator: 'CmdOrCtrl+,',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -51,6 +62,7 @@ export class TrayIcon {
 			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
+				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -61,17 +73,22 @@ export class TrayIcon {
 				}
 			},
 			{
+				type: 'separator'
+			},
+			{
 				id: '0',
 				label: TranslateService.instant('BUTTONS.EXIT'),
+				accelerator: 'CmdOrCtrl+Q',
 				click() {
 					app.quit();
 				}
 			}
 		];
-		const unAuthMenu = [
+		const unAuthMenu: MenuItemConstructorOptions[] = [
 			{
 				id: '4',
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
+				accelerator: 'CmdOrCtrl+,',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -84,6 +101,7 @@ export class TrayIcon {
 			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
+				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -94,14 +112,18 @@ export class TrayIcon {
 				}
 			},
 			{
+				type: 'separator'
+			},
+			{
 				id: '0',
 				label: TranslateService.instant('BUTTONS.EXIT'),
+				accelerator: 'CmdOrCtrl+Q',
 				click() {
 					app.quit();
 				}
 			}
 		];
-		const menuAuth = [
+		const menuAuth: MenuItemConstructorOptions[] = [
 			{
 				id: '0',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.NOW_TRACKING', { timer: 'Oh 00m' }),
@@ -116,6 +138,7 @@ export class TrayIcon {
 			{
 				id: '1',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
+				accelerator: 'CmdOrCtrl+Space',
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					const userLogin = store.get('auth');
@@ -131,6 +154,7 @@ export class TrayIcon {
 				id: '2',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.STOP_TRACKING'),
 				enabled: false,
+				accelerator: 'CmdOrCtrl+E',
 				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
 					timeTrackerWindow.webContents.send('stop_from_tray');
@@ -140,6 +164,7 @@ export class TrayIcon {
 				id: '3',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.OPEN_TIMER'),
 				enabled: true,
+				accelerator: 'CmdOrCtrl+O',
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					timeTrackerWindow.show();
@@ -147,8 +172,32 @@ export class TrayIcon {
 				}
 			},
 			{
+				type: 'separator',
+				visible: appConfig.timeTrackerWindow
+			},
+			{
+				id: 'gauzy-recap',
+				label: 'Daily Recap',
+				accelerator: 'CmdOrCtrl+D',
+				enabled: true,
+				visible: appConfig.timeTrackerWindow,
+				async click() {
+					let recapWindow = manager.getOne(RegisteredWindow.RECAP) as IBaseWindow;
+					if (!recapWindow) {
+						recapWindow = new RecapWindow(windowPath.timeTrackerUi);
+						await recapWindow.loadURL();
+					}
+					recapWindow.show();
+				}
+			},
+			{
+				type: 'separator',
+				visible: appConfig.timeTrackerWindow
+			},
+			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
+				accelerator: 'CmdOrCtrl+U',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -161,6 +210,7 @@ export class TrayIcon {
 			{
 				id: '4',
 				label: TranslateService.instant('TIMER_TRACKER.SETUP.SETTING'),
+				accelerator: 'CmdOrCtrl+,',
 				async click() {
 					if (!settingsWindow) {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
@@ -173,7 +223,8 @@ export class TrayIcon {
 			{
 				id: '7',
 				label: TranslateService.instant('BUTTONS.LOGOUT'),
-				visible: process.env.IS_DESKTOP_TIMER,
+				visible: process.env.IS_DESKTOP_TIMER === 'true',
+				accelerator: 'CmdOrCtrl+L',
 				async click() {
 					const appSetting = store.get('appSetting');
 					let isLogout = true;
@@ -187,8 +238,12 @@ export class TrayIcon {
 				}
 			},
 			{
+				type: 'separator'
+			},
+			{
 				id: '5',
 				label: TranslateService.instant('BUTTONS.EXIT'),
+				accelerator: 'CmdOrCtrl+Q',
 				click() {
 					app.quit();
 				}
@@ -331,6 +386,8 @@ export class TrayIcon {
 			this.tray.setTitle('--:--:--', options);
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
+
+			manager.hide(RegisteredWindow.RECAP);
 
 			menuWindowTime.enabled = false;
 
