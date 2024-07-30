@@ -159,6 +159,8 @@
 		"build:package:plugin:product-reviews:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/product-reviews build:prod",
 		"build:package:plugin:job-search": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search build",
 		"build:package:plugin:job-search:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search build:prod",
+		"build:package:plugin:job-matching-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-matching-ui lib:build",
+		"build:package:plugin:job-matching-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-matching-ui lib:build:prod",
 		"build:package:plugin:job-search-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search-ui lib:build",
 		"build:package:plugin:job-search-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-search-ui lib:build:prod",
 		"build:package:plugin:job-proposal": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build",

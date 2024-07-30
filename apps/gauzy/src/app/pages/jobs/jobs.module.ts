@@ -2,11 +2,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { PageRouteService } from '@gauzy/ui-core/core';
-import { SearchModule } from '@gauzy/plugins/job-search-ui';
+import { JobSearchModule } from '@gauzy/plugins/job-search-ui';
+import { JobMatchingModule } from '@gauzy/plugins/job-matching-ui';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 import { createRoutes } from './job.routes';
 
-export const PLUGINS = [SearchModule];
+export const PLUGINS = [JobSearchModule, JobMatchingModule];
 
 @NgModule({
 	declarations: [JobLayoutComponent],
@@ -34,24 +35,6 @@ export class JobsModule {
 	 * @returns {void}
 	 */
 	registerRoutes(_pageRouteService: PageRouteService): void {
-		// Register Job Matching Page Routes
-		_pageRouteService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path 'matching'
-			path: 'matching',
-			// Register the loadChildren function to load the MatchingModule lazy module
-			loadChildren: () => import('./matching/matching.module').then((m) => m.MatchingModule),
-			// Register the data object
-			data: {
-				selectors: {
-					date: true,
-					employee: true,
-					project: false,
-					team: false
-				}
-			}
-		});
 		// Register Job Proposal Template Page Routes
 		_pageRouteService.registerPageRoute({
 			// Register the location 'jobs'
