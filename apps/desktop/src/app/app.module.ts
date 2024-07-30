@@ -1,51 +1,52 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { RouterModule } from '@angular/router';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { Router, RouterModule } from '@angular/router';
 import {
-	NbDialogModule,
-	NbThemeModule,
-	NbToastrModule,
-	NbDialogService,
-	NbLayoutModule,
-	NbDatepickerModule
-} from '@nebular/theme';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import * as Sentry from '@sentry/angular-ivy';
-import { Router } from '@angular/router';
-import {
-	ImageViewerModule,
-	UpdaterModule,
-	SettingsModule,
-	ScreenCaptureModule,
-	TimeTrackerModule,
-	SetupModule,
-	ElectronService,
-	LoggerService,
 	AboutModule,
-	TokenInterceptor,
-	TenantInterceptor,
-	ErrorHandlerService,
-	ServerErrorInterceptor,
-	APIInterceptor,
-	TimeoutInterceptor,
-	DEFAULT_TIMEOUT,
-	AuthGuard,
-	NoAuthGuard,
-	AuthStrategy,
-	AuthService,
-	LanguageInterceptor,
-	Store,
-	AlwaysOnModule,
-	GAUZY_ENV,
 	ActivityWatchInterceptor,
-	OrganizationInterceptor
+	AlwaysOnModule,
+	APIInterceptor,
+	AuthGuard,
+	AuthService,
+	AuthStrategy,
+	DEFAULT_TIMEOUT,
+	ElectronService,
+	ErrorHandlerService,
+	GAUZY_ENV,
+	ImageViewerModule,
+	LanguageInterceptor,
+	LoggerService,
+	NoAuthGuard,
+	OrganizationInterceptor,
+	RecapModule,
+	ScreenCaptureModule,
+	ServerErrorInterceptor,
+	SettingsModule,
+	SetupModule,
+	Store,
+	TenantInterceptor,
+	TimeoutInterceptor,
+	TimeTrackerModule,
+	TokenInterceptor,
+	UpdaterModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDatepickerModule,
+	NbDialogModule,
+	NbDialogService,
+	NbLayoutModule,
+	NbThemeModule,
+	NbToastrModule
+} from '@nebular/theme';
+import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../environments/environment';
-import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
 import { AppService } from './app.service';
 import { initializeSentry } from './sentry';
 
@@ -86,7 +87,8 @@ if (environment.SENTRY_DSN) {
 		ImageViewerModule,
 		NbDatepickerModule.forRoot(),
 		AboutModule,
-		AlwaysOnModule
+		AlwaysOnModule,
+		RecapModule
 	],
 	providers: [
 		AppService,

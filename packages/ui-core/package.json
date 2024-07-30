@@ -81,7 +81,6 @@
 		"bootstrap": "^4.3.1",
 		"camelcase": "^6.3.0",
 		"chart.js": "^4.4.1",
-		"ckeditor4": "4.22.1",
 		"ckeditor4-angular": "4.0.1",
 		"date-fns": "^2.28.0",
 		"date-holidays": "^1.6.1",

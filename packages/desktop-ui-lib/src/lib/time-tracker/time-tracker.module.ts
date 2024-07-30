@@ -33,18 +33,18 @@ import { TimeSlotQueueService } from '../offline-sync';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { TasksModule } from '../tasks/tasks.module';
 import { CustomRenderComponent } from './custom-render-cell.component';
-import { NoDataModuleModule } from './no-data-message/no-data-message.module';
+import { NoDataMessageModule } from './no-data-message/no-data-message.module';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
 import { PaginationModule } from './pagination/pagination.module';
-import { HumanizePipe } from './pipes/humanize.pipe';
+import { PipeModule } from './pipes/pipe.module';
 import { TaskRenderModule } from './task-render/task-render.module';
 import { TimeTrackerStatusModule } from './time-tracker-status/time-tracker-status.module';
 import { TimeTrackerComponent } from './time-tracker.component';
 import { TimeTrackerService } from './time-tracker.service';
 
 @NgModule({
-	declarations: [TimeTrackerComponent, CustomRenderComponent, HumanizePipe, OrganizationSelectorComponent],
+	declarations: [TimeTrackerComponent, CustomRenderComponent, OrganizationSelectorComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -75,7 +75,8 @@ import { TimeTrackerService } from './time-tracker.service';
 		NgxTranslateModule,
 		TaskRenderModule,
 		ActivityWatchModule,
-		NoDataModuleModule
+		NoDataMessageModule,
+		PipeModule
 	],
 	providers: [
 		NbSidebarService,
