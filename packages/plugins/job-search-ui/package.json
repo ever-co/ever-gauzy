@@ -12,7 +12,7 @@
 	"scripts": {
 		"lib:build": "ng build plugin-job-search-ui --configuration=development",
 		"lib:build:prod": "ng build plugin-job-search-ui --configuration=production",
-		"lib:watch": "ng build plugin-job-search-ui--watch --configuration=development"
+		"lib:watch": "ng build plugin-job-search-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
@@ -33,7 +33,8 @@
 		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
-		"tslib": "^2.6.2"
+		"tslib": "^2.6.2",
+		"underscore": "^1.13.3"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
