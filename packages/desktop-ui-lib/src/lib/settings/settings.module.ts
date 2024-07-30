@@ -26,6 +26,7 @@ import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import { LanguageModule } from '../language/language.module';
 import { Store } from '../services';
+import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { PluginsModule } from './plugins/plugins.module';
@@ -58,7 +59,8 @@ import { SslModule } from './ssl';
 		TranslateModule,
 		TaskRenderModule,
 		SslModule,
-		PluginsModule
+		PluginsModule,
+		PipeModule
 	],
 	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store, LanguageSelectorService],
 	exports: [SettingsComponent]
