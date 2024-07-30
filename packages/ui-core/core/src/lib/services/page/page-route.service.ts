@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
-import { PageRouteLocationConfig } from './page-route.types';
+import { PageRouteConfig } from './page-route.types';
 import { PageRouteLocationId } from '../../common/component-registry-types';
 
 @Injectable({
@@ -12,7 +12,7 @@ export class PageRouteService {
 	 *
 	 * This Map stores arrays of PageRouteConfig objects, keyed by PageRouteLocationId.
 	 */
-	private readonly registry = new Map<PageRouteLocationId, PageRouteLocationConfig[]>();
+	private readonly registry = new Map<PageRouteLocationId, PageRouteConfig[]>();
 
 	/**
 	 * Register a single page route configuration.
@@ -26,7 +26,7 @@ export class PageRouteService {
 	 * @throws Will throw an error if the configuration does not have a location property.
 	 * @throws Will throw an error if a route with the same location has already been registered.
 	 */
-	registerPageRoute(config: PageRouteLocationConfig): void {
+	registerPageRoute(config: PageRouteConfig): void {
 		// Check if the configuration has a location property
 		if (!config.location) {
 			throw new Error('Page route configuration must have a location property');
@@ -37,7 +37,7 @@ export class PageRouteService {
 
 		// Check if a route with the same location and path already exists
 		const isMatchingRoute = routes.some(
-			(route: PageRouteLocationConfig) => route.location === config.location && route.path === config.path
+			(route: PageRouteConfig) => route.location === config.location && route.path === config.path
 		);
 
 		// Check if a route with the same location already exists
@@ -65,7 +65,7 @@ export class PageRouteService {
 	 * @param configs The array of configurations for the page routes.
 	 * @throws Will throw an error if a route with the same location and path has already been registered.
 	 */
-	registerPageRoutes(configs: PageRouteLocationConfig[]): void {
+	registerPageRoutes(configs: PageRouteConfig[]): void {
 		configs.forEach((config) => this.registerPageRoute(config));
 	}
 
@@ -86,7 +86,7 @@ export class PageRouteService {
 		const locationPaths = new Set<string>();
 
 		// Create a unique identifier for the combination of location and path
-		configs = configs.filter((config: PageRouteLocationConfig) => {
+		configs = configs.filter((config: PageRouteConfig) => {
 			// Create a unique identifier for the combination of location and path
 			const identifier = `${config.location}-${config.path}`;
 
@@ -101,7 +101,7 @@ export class PageRouteService {
 		});
 
 		// Map each route configuration to a route object
-		return configs.map((config: PageRouteLocationConfig) => {
+		return configs.map((config: PageRouteConfig) => {
 			// Create a new route object
 			const route: Route = {
 				path: config.path,

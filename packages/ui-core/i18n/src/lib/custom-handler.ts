@@ -1,8 +1,10 @@
+import { Injectable } from '@angular/core';
 import { MissingTranslationHandler, MissingTranslationHandlerParams } from '@ngx-translate/core';
 
 /**
  * Custom handler for missing translations.
  */
+@Injectable()
 export class CustomHandler implements MissingTranslationHandler {
 	/**
 	 * Handles missing translations.

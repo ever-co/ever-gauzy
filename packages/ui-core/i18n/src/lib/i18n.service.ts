@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { LanguagesEnum } from '@gauzy/contracts';
+import { LanguagesEnum, NullableString } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private _availableLanguages: LanguagesEnum[] = [];
-	private _preferredLanguage$: Subject<string> = new Subject<string>();
+	private _preferredLanguage$: BehaviorSubject<NullableString> = new BehaviorSubject<NullableString>(null);
 
 	/**
 	 * Getter for preferredLanguage$
@@ -19,6 +19,14 @@ export class I18nService {
 			filter((preferredLanguage: string) => !!preferredLanguage),
 			distinctUntilChange()
 		);
+	}
+
+	/**
+	 * Getter for preferredLanguage
+	 * @returns The preferred language.
+	 */
+	get preferredLanguage(): NullableString {
+		return this._preferredLanguage$.getValue();
 	}
 
 	/**

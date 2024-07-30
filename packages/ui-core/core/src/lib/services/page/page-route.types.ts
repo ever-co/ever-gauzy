@@ -1,10 +1,11 @@
+import { Type } from '@angular/core';
 import { Route } from '@angular/router';
 import { PageRouteLocationId } from '../../common/component-registry-types';
 
 /**
- * Page route configuration.
+ * Page route configuration with additional route options.
  */
-export interface PageRouteLocationConfig {
+export interface PageRouteConfig extends Route {
 	/**
 	 * The location identifier for the page route.
 	 */
@@ -16,24 +17,15 @@ export interface PageRouteLocationConfig {
 	path: string;
 
 	/**
-	 * Optional component to render for the route.
+	 * The component to instantiate when the path matches.
+	 * Can be empty if child routes specify components.
 	 */
-	component?: any;
+	component?: Type<any>;
 
 	/**
 	 * Optional loadChildren function to load a module lazily.
 	 */
-	loadChildren?: () => Promise<any>;
-
-	/**
-	 * Optional data to associate with the route.
-	 */
-	data?: any;
-
-	/**
-	 * Optional guards to apply to the route.
-	 */
-	canActivate?: any[];
+	loadChildren?: () => Promise<Type<any>> | Type<any>;
 
 	/**
 	 * Additional route configuration options.

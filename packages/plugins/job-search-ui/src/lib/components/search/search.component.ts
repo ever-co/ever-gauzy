@@ -2,12 +2,13 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, firstValueFrom, map, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, firstValueFrom, map, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	AtLeastOneFieldValidator,
 	DateRangePickerBuilderService,
@@ -32,9 +33,11 @@ import {
 	IEmployee,
 	IIntegrationEntitySetting,
 	IntegrationEntity,
-	IEmployeeProposalTemplate
+	IEmployeeProposalTemplate,
+	LanguagesEnum
 } from '@gauzy/contracts';
 import { JobService } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
@@ -42,8 +45,8 @@ import {
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
-import { ApplyJobManuallyComponent } from '../components';
-import { JobTitleDescriptionDetailsComponent } from '../../table-components';
+import { ApplyJobManuallyComponent } from '../apply-job-manually/apply-job-manually.component';
+import { JobTitleDescriptionDetailsComponent } from '../job-title-description-details/job-title-description-details.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,7 +58,12 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	loading: boolean = false;
 	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
-	settingsSmartTable: object;
+	settingsSmartTable: any = {
+		selectedRowIndex: -1,
+		editable: false,
+		hideSubHeader: true,
+		actions: false
+	};
 	isOpenAdvancedFilter: boolean = false;
 	jobs: IEmployeeJobPost[] = [];
 	JobPostSourceEnum = JobPostSourceEnum;
@@ -104,7 +112,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 		private readonly _toastrService: ToastrService,
 		private readonly _jobService: JobService,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _i18nService: I18nService,
+		private readonly _translateService: TranslateService
 	) {
 		super(translateService);
 
@@ -138,6 +149,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
+		// Initialize UI permissions
+		this.initializeUiPermissions();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
 		this.jobs$
 			.pipe(
 				debounceTime(100),
@@ -184,6 +199,33 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Initialize UI permissions
+	 */
+	private initializeUiPermissions() {
+		// Load permissions
+		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
+		this._ngxPermissionsService.flushPermissions(); // Flush permissions
+		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this._translateService.use(preferredLanguage);
+		});
 	}
 
 	/**
@@ -594,10 +636,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {
-			selectedRowIndex: -1,
-			editable: false,
-			hideSubHeader: true,
-			actions: false,
+			...this.settingsSmartTable,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -614,9 +653,11 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 								sort: false,
 								renderComponent: EmployeeLinksComponent,
 								componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+									// Get row data
 									const employee: IEmployee = cell.getRawValue() as IEmployee;
 									instance.rowData = cell.getRow().getData();
 
+									// Set value
 									instance.value = {
 										name: employee?.user?.name ?? null,
 										imageUrl: employee?.user?.imageUrl ?? null,
@@ -633,8 +674,10 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 					sort: false,
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {
+						// Get row data
 						instance.rowData = cell.getRow().getData();
-						//
+
+						// Hide job event
 						instance.hideJobEvent.subscribe((event: IVisibilityJobPostInput) => {
 							self.onCustomEvents({ action: 'hide', data: event });
 						});
@@ -669,6 +712,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 			});
 		} catch (error) {
 			console.log('Error while retrieving employee Job searches', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
