@@ -46,6 +46,10 @@ $status: 'primary';
 	}
 
 	.activity-level-filter {
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+
 		background-color: var(--select-outline-#{$status}-background-color);
 		border-color: var(--select-outline-#{$status}-border-color);
 		color: var(--select-outline-#{$status}-text-color);
@@ -94,13 +98,14 @@ $status: 'primary';
 }
 
 ::ng-deep {
-	.slider-dropdown {
-		width: 300px;
+	.custom-slider {
+		max-width: 350px;
+		min-width: 250px;
+		width: 100%;
 	}
 }
 
 button.activity-level-filter.text-capitalize.appearance-outline.size-medium.shape-rectangle.icon-end.status-basic.nb-transition {
-	inline-size: -webkit-fill-available;
 	overflow: hidden;
 }
 
@@ -120,7 +125,7 @@ button.activity-level-filter.text-capitalize.appearance-outline.size-medium.shap
 // We need to use ::ng-deep to overcome view encapsulation
 ::ng-deep {
 	.custom-slider .ngx-slider .ngx-slider-bar {
-		background: #ffe4d1;
+		background: var(--color-#{$status}-transparent-300);
 		height: 2px;
 	}
 
