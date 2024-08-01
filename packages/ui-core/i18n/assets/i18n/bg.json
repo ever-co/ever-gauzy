@@ -4016,7 +4016,8 @@
 			"WINDOW": "Прозорец",
 			"HELP": "Помощ",
 			"LEARN_MORE": "Научете повече",
-			"OPEN_MAIN_WINDOW": "Отвори главния прозорец"
+			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
+			"DAILY_RECAP": "Дневен преглед"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",

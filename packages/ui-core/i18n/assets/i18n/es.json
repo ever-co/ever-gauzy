@@ -3998,7 +3998,8 @@
 			"WINDOW": "Ventana",
 			"HELP": "Ayuda",
 			"LEARN_MORE": "Aprende más.",
-			"OPEN_MAIN_WINDOW": "Abrir ventana principal"
+			"OPEN_MAIN_WINDOW": "Abrir ventana principal",
+			"DAILY_RECAP": "Resumen Diario"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",

@@ -3997,7 +3997,8 @@
 			"WINDOW": "Fenêtre",
 			"HELP": "Aidez-moi",
 			"LEARN_MORE": "En savoir plus",
-			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale"
+			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale",
+			"DAILY_RECAP": "Récapitulatif"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",

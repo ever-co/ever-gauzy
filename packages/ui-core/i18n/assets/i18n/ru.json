@@ -4014,7 +4014,8 @@
 			"WINDOW": "Окно",
 			"HELP": "Помощь",
 			"LEARN_MORE": "Узнать больше",
-			"OPEN_MAIN_WINDOW": "Открыть главное окно"
+			"OPEN_MAIN_WINDOW": "Открыть главное окно",
+			"DAILY_RECAP": "Ежедневный обзор"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",

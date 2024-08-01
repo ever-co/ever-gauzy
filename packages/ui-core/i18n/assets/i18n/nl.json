@@ -3996,7 +3996,8 @@
 			"WINDOW": "Raam",
 			"HELP": "Help",
 			"LEARN_MORE": "Meer informatie leren",
-			"OPEN_MAIN_WINDOW": "Open hoofdvenster"
+			"OPEN_MAIN_WINDOW": "Open hoofdvenster",
+			"DAILY_RECAP": "Dagelijkse Samenvatting"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",

@@ -3996,7 +3996,8 @@
 			"WINDOW": "Janela",
 			"HELP": "Ajuda",
 			"LEARN_MORE": "Saiba mais",
-			"OPEN_MAIN_WINDOW": "Abrir janela principal"
+			"OPEN_MAIN_WINDOW": "Abrir janela principal",
+			"DAILY_RECAP": "Resumo Diário"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",

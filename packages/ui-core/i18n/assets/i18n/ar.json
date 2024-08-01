@@ -3995,7 +3995,8 @@
 			"WINDOW": "نافذة",
 			"HELP": "مساعدة",
 			"LEARN_MORE": "تعلم المزيد",
-			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية"
+			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية",
+			"DAILY_RECAP": "ملخص يومي"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",

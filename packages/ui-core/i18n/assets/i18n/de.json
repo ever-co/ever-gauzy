@@ -3992,7 +3992,8 @@
 			"WINDOW": "Fenster.",
 			"HELP": "Hilfe",
 			"LEARN_MORE": "Erfahren Sie mehr",
-			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster"
+			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster",
+			"DAILY_RECAP": "Tägliche Zusammenfassung"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",

@@ -4122,7 +4122,8 @@
 			"WINDOW": "Window",
 			"HELP": "Help",
 			"LEARN_MORE": "Learn More",
-			"OPEN_MAIN_WINDOW": "Open Main Window"
+			"OPEN_MAIN_WINDOW": "Open Main Window",
+			"DAILY_RECAP": "Daily Recap"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",

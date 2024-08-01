@@ -177,7 +177,7 @@ export class TrayIcon {
 			},
 			{
 				id: 'gauzy-recap',
-				label: 'Daily Recap',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
 				accelerator: 'CmdOrCtrl+D',
 				enabled: true,
 				visible: appConfig.timeTrackerWindow,
