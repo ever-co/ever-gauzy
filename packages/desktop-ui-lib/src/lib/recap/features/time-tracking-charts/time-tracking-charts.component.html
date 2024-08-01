@@ -8,8 +8,8 @@
 		<ngx-charts-bar-vertical [animations]="animations" [results]="(chartData$ | async)" [gradient]="gradient"
 			[xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend" [showXAxisLabel]="showXAxisLabel"
 			[showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabel"
-			[barPadding]="barPadding" [rotateXAxisTicks]="rotateXAxisTicks" [scheme]="colorScheme"
-			[maxXAxisTickLength]="maxXAxisTickLength" [wrapTicks]="wrapTicks">
+			[barPadding]="barPadding" [roundEdges]="roundEdges" [rotateXAxisTicks]="rotateXAxisTicks"
+			[scheme]="colorScheme" [maxXAxisTickLength]="maxXAxisTickLength" [wrapTicks]="wrapTicks">
 			<ng-template #tooltipTemplate let-model="model">
 				<div class="model-container">
 					<h1>{{ model.name }}</h1>

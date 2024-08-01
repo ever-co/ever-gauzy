@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import {
 	NbBadgeModule,
@@ -11,7 +10,8 @@ import {
 	NbPopoverModule,
 	NbProgressBarModule,
 	NbRouteTabsetModule,
-	NbTableModule
+	NbTableModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
@@ -20,9 +20,14 @@ import { LanguageModule } from '../language/language.module';
 import { ToastrNotificationService } from '../services';
 import { NoDataMessageModule } from '../time-tracker/no-data-message/no-data-message.module';
 import { PipeModule } from '../time-tracker/pipes/pipe.module';
+import { AutoRefreshQuery } from './+state/auto-refresh/auto-refresh.query';
+import { AutoRefreshService } from './+state/auto-refresh/auto-refresh.service';
+import { AutoRefreshStore } from './+state/auto-refresh/auto-refresh.store';
 import { RecapQuery } from './+state/recap.query';
 import { RecapService } from './+state/recap.service';
 import { RecapStore } from './+state/recap.store';
+import { RequestQuery } from './+state/request/request.query';
+import { RequestStore } from './+state/request/request.store';
 import { ActivitiesComponent } from './features/activities/activities.component';
 import { FilterComponent } from './features/filter/filter.component';
 import { ProjectsComponent } from './features/projects/projects.component';
@@ -32,6 +37,7 @@ import { TimeTrackingChartsComponent } from './features/time-tracking-charts/tim
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
+import { AutoRefeshComponent } from './shared/ui/auto-refesh/auto-refesh.component';
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 
 @NgModule({
@@ -42,12 +48,12 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		ActivitiesComponent,
 		TimeTrackingChartsComponent,
 		FilterComponent,
-		StatisticComponent
+		StatisticComponent,
+		AutoRefeshComponent
 	],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
-		HttpClientModule,
 		NbCardModule,
 		NbListModule,
 		NbProgressBarModule,
@@ -63,7 +69,8 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		DateRangePickerModule,
 		GauzyFiltersModule,
 		LanguageModule,
-		NbBadgeModule
+		NbBadgeModule,
+		NbToggleModule
 	],
 	providers: [
 		RecapQuery,
@@ -73,7 +80,12 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		ToastrNotificationService,
 		TimesheetService,
 		TimesheetStatisticsService,
-		ActivityService
+		ActivityService,
+		AutoRefreshService,
+		AutoRefreshQuery,
+		AutoRefreshStore,
+		RequestQuery,
+		RequestStore
 	]
 })
 export class RecapModule {}

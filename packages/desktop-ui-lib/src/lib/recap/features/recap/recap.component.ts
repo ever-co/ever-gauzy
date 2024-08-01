@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, NgZone, OnInit } from '@angular/core';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -7,6 +7,7 @@ import { from, Observable, tap } from 'rxjs';
 import { RecapQuery } from '../../+state/recap.query';
 import { ElectronService } from '../../../electron/services';
 import { LanguageSelectorService } from '../../../language/language-selector.service';
+import { TimeTrackerDateManager } from '../../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -16,15 +17,19 @@ import { LanguageSelectorService } from '../../../language/language-selector.ser
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RecapComponent implements OnInit {
-	private readonly electronService = inject(ElectronService);
-	private readonly languageSelectorService = inject(LanguageSelectorService);
-	private readonly translateService = inject(TranslateService);
-	private readonly ngZone = inject(NgZone);
-	private readonly query = inject(RecapQuery);
+	constructor(
+		private readonly electronService: ElectronService,
+		private readonly languageSelectorService: LanguageSelectorService,
+		private readonly translateService: TranslateService,
+		private readonly ngZone: NgZone,
+		private readonly recapQuery: RecapQuery
+	) {}
+
 	ngOnInit(): void {
 		this.electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
 			this.ngZone.run(() => {
 				this.languageSelectorService.setLanguage(language, this.translateService);
+				TimeTrackerDateManager.locale(language);
 			});
 		});
 
@@ -39,7 +44,7 @@ export class RecapComponent implements OnInit {
 	}
 
 	public get isLoading$(): Observable<boolean> {
-		return this.query.isLoading$;
+		return this.recapQuery.isLoading$;
 	}
 
 	public tabs(): NbRouteTab[] {

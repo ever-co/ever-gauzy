@@ -1,9 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ITimeSlot } from '@gauzy/contracts';
-import { distinctUntilChange, progressStatus } from '@gauzy/ui-core/common';
+import { progressStatus } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, combineLatest, concatMap, map, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, concatMap, from, map } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
+import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
@@ -17,10 +18,14 @@ import { IChartData } from '../../shared/utils/adapters/chart.adapter';
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimeTrackingChartsComponent implements OnInit {
-	private readonly recapQuery = inject(RecapQuery);
-	private readonly requestQuery = inject(RequestQuery);
-	private readonly service = inject(RecapService);
 	private readonly _chartData$: BehaviorSubject<IChartData[]> = new BehaviorSubject([]);
+
+	constructor(
+		private readonly recapQuery: RecapQuery,
+		private readonly requestQuery: RequestQuery,
+		private readonly service: RecapService,
+		private readonly autoRefreshService: AutoRefreshService
+	) {}
 
 	// options
 	animations = true;
@@ -36,19 +41,25 @@ export class TimeTrackingChartsComponent implements OnInit {
 	barPadding = 0;
 	rotateXAxisTicks = true;
 	wrapTicks = true;
+	roundEdges = false;
 	colorScheme = {
 		domain: ['#6e49e8']
 	};
 
 	ngOnInit(): void {
-		combineLatest([this.recapQuery.range$, this.requestQuery.request$])
+		combineLatest([this.recapQuery.range$, this.requestQuery.request$, this.autoRefreshService.refresh$])
 			.pipe(
-				distinctUntilChange(),
-				concatMap(() => Promise.allSettled([this.service.getTimeSlots(), this.service.getCounts()])),
-				tap(() => this._chartData$.next(this.trim(this.groupAndSumTimeslotsByHour(this.timeSlots)))),
+				concatMap(() => this.load()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.load().pipe(untilDestroyed(this)).subscribe();
+	}
+
+	public load(): Observable<void> {
+		return from(Promise.allSettled([this.service.getTimeSlots(), this.service.getCounts()])).pipe(
+			map(() => this._chartData$.next(this.trim(this.groupAndSumTimeslotsByHour(this.timeSlots))))
+		);
 	}
 
 	private get timeSlots() {
@@ -60,7 +71,7 @@ export class TimeTrackingChartsComponent implements OnInit {
 	}
 
 	public get dailyActivities$(): Observable<string> {
-		return this.recapQuery.state$.pipe(map((state) => state.count.weekActivities.toFixed(2)));
+		return this.recapQuery.state$.pipe(map((state) => (state.count.weekActivities || 0).toFixed(2)));
 	}
 
 	public get chartData$(): Observable<IChartData[]> {
