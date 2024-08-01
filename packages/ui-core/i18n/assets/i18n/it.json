@@ -201,7 +201,8 @@
 			"ESTIMATE": "Non hai creato nessuna stima",
 			"EVENT_TYPE": "Non hai creato alcun tipo di evento",
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
-			"TEAM_DASHBOARD": "Non hai nessuna squadra"
+			"TEAM_DASHBOARD": "Non hai nessuna squadra",
+			"PLUGIN": "Non hai installato alcun plugin."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Locale",
 			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugin",
+			"PLUGIN_DESCRIPTION": "Plugin",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante.",
 			"SSL": {
 				"SSL_CONFIG": "Configurazione SSL",
@@ -3993,6 +3997,10 @@
 			"HELP": "Aiuto",
 			"LEARN_MORE": "Scopri di più",
 			"OPEN_MAIN_WINDOW": "Apri la finestra principale"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
+			"HOURLY_TIME_TRACKING_DATA": "Dati di tracciamento del tempo orario"
 		}
 	},
 	"SERVER": "Server",

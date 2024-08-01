@@ -200,7 +200,8 @@
 			"ESTIMATE": "You have not created any estimate.",
 			"EVENT_TYPE": "You have not created any event type.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product type.",
-			"TEAM_DASHBOARD": "You don't have any teams"
+			"TEAM_DASHBOARD": "You don't have any teams",
+			"PLUGIN": "לא התקנת שום תוסף."
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",
@@ -3909,6 +3910,9 @@
 			"TIMEZONE_LOCAL": "מקומי",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "ווידג'ט",
+			"PLUGINS": "תוספים",
+			"PLUGIN_DESCRIPTION": "תוספים",
+			"PLUGIN": "תוסף",
 			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור.",
 			"SSL": {
 				"SSL_CONFIG": "תצורת SSL",
@@ -4003,7 +4007,11 @@
 			"WINDOW": "חלון",
 			"HELP": "עזרה",
 			"LEARN_MORE": "למד עוד",
-			"OPEN_MAIN_WINDOW": "פתח חלון ראשי"
+			"OPEN_MAIN_WINDOW": "פתח חלון ראשי",
+			"RECAP": {
+				"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",
+				"HOURLY_TIME_TRACKING_DATA": "נתוני מעקב זמן לפי שעות"
+			}
 		}
 	},
 	"SERVER": "שרת",

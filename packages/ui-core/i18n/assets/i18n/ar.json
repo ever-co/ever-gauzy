@@ -201,7 +201,8 @@
 			"ESTIMATE": "لم تقم بإنشاء أي تقدير",
 			"EVENT_TYPE": "لم تقم بإنشاء أي نوع فعالية.",
 			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي نوع منتج.",
-			"TEAM_DASHBOARD": "ليس لديك أي فرق"
+			"TEAM_DASHBOARD": "ليس لديك أي فرق",
+			"PLUGIN": "لم تقم بتثبيت أي ملحق."
 		},
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",
@@ -3898,6 +3899,9 @@
 			"TIMEZONE_LOCAL": "محلي",
 			"TIMEZONE_UTC": "توقيت عالمي متناسق (UTC)",
 			"WIDGET": "القطعة",
+			"PLUGINS": "الملحقات",
+			"PLUGIN_DESCRIPTION": "الملحقات",
+			"PLUGIN": "ملحق",
 			"WIDGET_LABEL": "تعكس هذه النافذة حالة المؤقت وتشير إلى ما إذا كان قيد التشغيل أم تم إيقافه وتعمل كزر",
 			"SSL": {
 				"SSL_CONFIG": "تكوين SSL",
@@ -3992,6 +3996,10 @@
 			"HELP": "مساعدة",
 			"LEARN_MORE": "تعلم المزيد",
 			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",
+			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة"
 		}
 	},
 	"SERVER": "خادم",

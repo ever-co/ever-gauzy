@@ -201,7 +201,8 @@
 			"ESTIMATE": "No has creado ningún presupuesto.",
 			"EVENT_TYPE": "No has creado ningún tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "No has creado ningún tipo de producto.",
-			"TEAM_DASHBOARD": "No tienes ningún equipo."
+			"TEAM_DASHBOARD": "No tienes ningún equipo.",
+			"PLUGIN": "No has instalado ningún complemento."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",
@@ -3901,6 +3902,9 @@
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Complementos",
+			"PLUGIN_DESCRIPTION": "Complementos",
+			"PLUGIN": "Complemento",
 			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón.",
 			"SSL": {
 				"SSL_CONFIG": "Configuración SSL",
@@ -3995,6 +3999,10 @@
 			"HELP": "Ayuda",
 			"LEARN_MORE": "Aprende más.",
 			"OPEN_MAIN_WINDOW": "Abrir ventana principal"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",
+			"HOURLY_TIME_TRACKING_DATA": "Datos del seguimiento del tiempo por hora"
 		}
 	},
 	"SERVER": "Servidor",

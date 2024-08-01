@@ -201,7 +201,8 @@
 			"ESTIMATE": "你还没有创建任何估算。",
 			"EVENT_TYPE": "你还没有创建任何事件类型。",
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
-			"TEAM_DASHBOARD": "你没有任何团队"
+			"TEAM_DASHBOARD": "你没有任何团队",
+			"PLUGIN": "您尚未安装任何插件。"
 		},
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "本地",
 			"TIMEZONE_UTC": "世界协调时间 (UTC)",
 			"WIDGET": "小部件",
+			"PLUGINS": "插件",
+			"PLUGIN_DESCRIPTION": "插件",
+			"PLUGIN": "插件",
 			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。",
 			"SSL": {
 				"SSL_CONFIG": "SSL 配置",
@@ -3993,6 +3997,10 @@
 			"HELP": "帮助",
 			"LEARN_MORE": "了解更多",
 			"OPEN_MAIN_WINDOW": "打开主窗口"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
+			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据"
 		}
 	},
 	"SERVER": "服务器",

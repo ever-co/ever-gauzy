@@ -4123,6 +4123,10 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Learn More",
 			"OPEN_MAIN_WINDOW": "Open Main Window"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
+			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data"
 		}
 	},
 	"SERVER": "Server",

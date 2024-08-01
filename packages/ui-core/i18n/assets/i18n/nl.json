@@ -201,7 +201,8 @@
 			"ESTIMATE": "U heeft nog geen schatting gemaakt.",
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
-			"TEAM_DASHBOARD": "Je hebt geen teams."
+			"TEAM_DASHBOARD": "Je hebt geen teams.",
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Lokaal",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop.",
 			"SSL": {
 				"SSL_CONFIG": "SSL-configuratie",
@@ -3993,6 +3997,10 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Meer informatie leren",
 			"OPEN_MAIN_WINDOW": "Open hoofdvenster"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
+			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens"
 		}
 	},
 	"SERVER": "Server",

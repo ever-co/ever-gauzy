@@ -201,7 +201,8 @@
 			"ESTIMATE": "Du hast keine Schätzung erstellt.",
 			"EVENT_TYPE": "Sie haben keine Veranstaltungsart erstellt.",
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
-			"TEAM_DASHBOARD": "Du hast keine Teams."
+			"TEAM_DASHBOARD": "Du hast keine Teams.",
+			"PLUGIN": "Sie haben kein Plugin installiert."
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",
@@ -3895,6 +3896,9 @@
 			"TIMEZONE_LOCAL": "Lokal",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dieses Fenster spiegelt den Status des Timers wider, indem es anzeigt, ob er läuft oder angehalten ist, und dient als Schaltfläche.",
 			"SSL": {
 				"SSL_CONFIG": "SSL-Konfiguration",
@@ -3989,6 +3993,10 @@
 			"HELP": "Hilfe",
 			"LEARN_MORE": "Erfahren Sie mehr",
 			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
+			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung"
 		}
 	},
 	"SERVER": "Server",
