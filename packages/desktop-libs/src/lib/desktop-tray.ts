@@ -138,7 +138,7 @@ export class TrayIcon {
 			{
 				id: '1',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
-				accelerator: 'CmdOrCtrl+Space',
+				accelerator: 'CmdOrCtrl+Shift+Space',
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					const userLogin = store.get('auth');
