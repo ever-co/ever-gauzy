@@ -3515,7 +3515,6 @@
 			"JOB_MATCHING_SAVED": "Критерият беше променен",
 			"JOB_MATCHING_ERROR": "Грешка при запазване на критерия, моля, опитайте отново",
 			"JOB_MATCHING_DELETED": "Критерият беше премахнат",
-
 			"APPROVAL_POLICY_CREATED": "Политиката за одобрение '{{ name }}' беше добавена",
 			"APPROVAL_POLICY_UPDATED": "Политиката за одобрение '{{ name }}' беше променена",
 			"APPROVAL_POLICY_DELETED": "Политиката за одобрение '{{ name }}' беше премахната",
@@ -4110,6 +4109,7 @@
 		"MEMBER": "Член",
 		"MEMBER_INFO": "Информация за члена",
 		"THIS_WEEK": "Тази седмица",
+		"WEEK": "Седмица",
 		"OVER_PERIOD": "През периода",
 		"NO_MEMBER_ACTIVITY_DAY": "Няма активност на члена за деня",
 		"NO_MEMBER_ACTIVITY_WEEK": "Няма активност на члена за седмицата",
