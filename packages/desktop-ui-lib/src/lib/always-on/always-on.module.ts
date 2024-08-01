@@ -1,28 +1,22 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AlwaysOnComponent } from './always-on.component';
-import {
-	NbButtonModule,
-	NbIconModule,
-	NbLayoutModule,
-	NbTooltipModule,
-} from '@nebular/theme';
-import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { AlwaysOnService } from './always-on.service';
+import { NgModule } from '@angular/core';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { NbButtonModule, NbIconModule, NbLayoutModule, NbTooltipModule } from '@nebular/theme';
+import { LanguageModule } from '../language/language.module';
+import { AlwaysOnComponent } from './always-on.component';
+import { AlwaysOnService } from './always-on.service';
 
 @NgModule({
 	declarations: [AlwaysOnComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
-		NgxTranslateModule,
+		LanguageModule.forChild(),
 		NbIconModule,
 		NbTooltipModule,
 		NbButtonModule,
 		NbEvaIconsModule
 	],
-	providers: [LanguageSelectorService, AlwaysOnService],
+	providers: [AlwaysOnService]
 })
-export class AlwaysOnModule { }
+export class AlwaysOnModule {}

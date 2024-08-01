@@ -13,9 +13,7 @@ import {
 	NbTableModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
-import { LanguageSelectorService } from '../language/language-selector.service';
 import { LanguageModule } from '../language/language.module';
 import { ToastrNotificationService } from '../services';
 import { NoDataMessageModule } from '../time-tracker/no-data-message/no-data-message.module';
@@ -58,7 +56,6 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		NbListModule,
 		NbProgressBarModule,
 		NbIconModule,
-		TranslateModule,
 		NbButtonModule,
 		NoDataMessageModule,
 		NbPopoverModule,
@@ -68,15 +65,14 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		PipeModule,
 		DateRangePickerModule,
 		GauzyFiltersModule,
-		LanguageModule,
 		NbBadgeModule,
-		NbToggleModule
+		NbToggleModule,
+		LanguageModule.forChild()
 	],
 	providers: [
 		RecapQuery,
 		RecapStore,
 		RecapService,
-		LanguageSelectorService,
 		ToastrNotificationService,
 		TimesheetService,
 		TimesheetStatisticsService,

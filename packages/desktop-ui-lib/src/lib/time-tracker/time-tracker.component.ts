@@ -20,7 +20,6 @@ import {
 	ITasksStatistics,
 	ITaskStatus,
 	ITaskUpdateInput,
-	LanguagesEnum,
 	PermissionsEnum,
 	ProjectOwnerEnum,
 	TaskStatusEnum
@@ -54,6 +53,7 @@ import { GAUZY_ENV } from '../constants';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
+import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorService } from '../language/language-selector.service';
 import {
 	InterruptedSequenceQueue,
@@ -187,7 +187,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _alwaysOnService: AlwaysOnService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
-		private readonly _activityWatchViewService: ActivityWatchViewService
+		private readonly _activityWatchViewService: ActivityWatchViewService,
+		private readonly _languageElectronService: LanguageElectronService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -1438,24 +1439,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			})
 		);
 
-		this.electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
-			this._ngZone.run(() => {
-				this._languageSelectorService.setLanguage(language, this._translateService);
-				TimeTrackerDateManager.locale(language);
-				asyncScheduler.schedule(() => this._loadSmartTableSettings(), 150);
-			});
-		});
-
-		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(language, this._translateService);
-					TimeTrackerDateManager.locale(language);
-					asyncScheduler.schedule(() => this._loadSmartTableSettings(), 150);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this._languageElectronService.initialize(asyncScheduler.schedule(() => this._loadSmartTableSettings(), 150));
 
 		this.electronService.ipcRenderer.on('sleep_remote_lock', (event, state: boolean) => {
 			this._ngZone.run(async () => {

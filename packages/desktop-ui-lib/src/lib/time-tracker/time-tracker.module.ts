@@ -27,8 +27,7 @@ import { AlwaysOnService } from '../always-on/always-on.service';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { NgxTranslateModule } from '../ngx-translate';
+import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { TasksModule } from '../tasks/tasks.module';
@@ -72,7 +71,7 @@ import { TimeTrackerService } from './time-tracker.service';
 		NbTooltipModule,
 		TimeTrackerStatusModule,
 		ImageViewerModule,
-		NgxTranslateModule,
+		LanguageModule.forChild(),
 		TaskRenderModule,
 		ActivityWatchModule,
 		NoDataMessageModule,
@@ -91,7 +90,6 @@ import { TimeTrackerService } from './time-tracker.service';
 		LoggerService,
 		Store,
 		TimeSlotQueueService,
-		LanguageSelectorService,
 		AlwaysOnService
 	],
 	exports: [TimeTrackerComponent]
