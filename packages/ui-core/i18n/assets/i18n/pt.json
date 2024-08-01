@@ -3923,6 +3923,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, pare o cronômetro antes de alterar a descrição.",
 		"STOP_TIMER_CHANGE_TEAM": "Por favor, pare o cronômetro antes de mudar de equipe",
 		"ACTIVITY_WATCH_INTEGRATION": "Integração do ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integração com Wakatime",
 		"LAST_CAPTURE_TAKEN": "Última captura de tela tirada.",
 		"REQUEST_TASK_PERMISSION": "Solicitar permissão ao administrador da organização",
 		"RETURN_ONLINE": "Retorno Online",

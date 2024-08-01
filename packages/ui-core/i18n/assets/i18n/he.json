@@ -3933,6 +3933,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "אנא עצור את הטיימר לפני שתשנה את התיאור",
 		"STOP_TIMER_CHANGE_TEAM": "אנא עצור את הטיימר לפני שאתה משנה את הצוות",
 		"ACTIVITY_WATCH_INTEGRATION": "שליחת פעילות ל־ActivityWatch",
+		"WAKATIME_INTEGRATION": "אינטגרציה עם Wakatime",
 		"LAST_CAPTURE_TAKEN": "נתפסה לכם צילום מסך אחרון",
 		"REQUEST_TASK_PERMISSION": "בקש הרשאה ממנהל הארגון",
 		"RETURN_ONLINE": "חזור למצב מקוון",

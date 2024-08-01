@@ -3943,6 +3943,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Моля, спрете таймера преди да промените описанието",
 		"STOP_TIMER_CHANGE_TEAM": "Моля, спрете таймера, преди да промените отбора",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"WAKATIME_INTEGRATION": "Wakatime Интеграция",
 		"LAST_CAPTURE_TAKEN": "Последната заснета екранна снимка",
 		"REQUEST_TASK_PERMISSION": "Изисква се разрешение от администратора на организацията",
 		"RETURN_ONLINE": "Върни се онлайн",

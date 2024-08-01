@@ -3923,6 +3923,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Si prega di fermare il timer prima di modificare la descrizione",
 		"STOP_TIMER_CHANGE_TEAM": "Si prega di fermare il timer prima di cambiare squadra",
 		"ACTIVITY_WATCH_INTEGRATION": "Integrazione di ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integrazione Wakatime",
 		"LAST_CAPTURE_TAKEN": "Ultima schermata catturata",
 		"REQUEST_TASK_PERMISSION": "Richiedi il permesso all'amministratore dell'organizzazione",
 		"RETURN_ONLINE": "Ritorno online",

@@ -3922,6 +3922,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "يرجى إيقاف المؤقت قبل تغيير الوصف.",
 		"STOP_TIMER_CHANGE_TEAM": "يرجى إيقاف المؤقت قبل تغيير الفريق",
 		"ACTIVITY_WATCH_INTEGRATION": "تكامل ActivityWatch",
+		"WAKATIME_INTEGRATION": "تكامل Wakatime",
 		"LAST_CAPTURE_TAKEN": "آخر لقطة شاشة تم التقاطها",
 		"REQUEST_TASK_PERMISSION": "اطلب إذنًا من مسؤول المنظمة",
 		"RETURN_ONLINE": "العودة عبر الإنترنت",

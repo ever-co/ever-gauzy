@@ -3925,6 +3925,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, detenga el cronómetro antes de cambiar la descripción.",
 		"STOP_TIMER_CHANGE_TEAM": "Por favor, detenga el temporizador antes de cambiar el equipo",
 		"ACTIVITY_WATCH_INTEGRATION": "Integración con ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integración de Wakatime",
 		"LAST_CAPTURE_TAKEN": "Última captura de pantalla tomada",
 		"REQUEST_TASK_PERMISSION": "Solicitar permiso al administrador de la organización.",
 		"RETURN_ONLINE": "Volver en línea",

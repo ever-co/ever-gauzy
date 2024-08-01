@@ -3924,6 +3924,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "S'il vous plaît arrêtez le minuteur avant de modifier la description.",
 		"STOP_TIMER_CHANGE_TEAM": "Veuillez arrêter le minuteur avant de changer d'équipe",
 		"ACTIVITY_WATCH_INTEGRATION": "Intégration d'ActivityWatch",
+		"WAKATIME_INTEGRATION": "Intégration Wakatime",
 		"LAST_CAPTURE_TAKEN": "Dernière capture d'écran prise",
 		"REQUEST_TASK_PERMISSION": "Demander la permission à l'administrateur de l'organisation.",
 		"RETURN_ONLINE": "Retour en ligne",

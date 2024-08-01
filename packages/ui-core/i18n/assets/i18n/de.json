@@ -3919,6 +3919,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Bitte stoppen Sie den Timer, bevor Sie die Beschreibung ändern.",
 		"STOP_TIMER_CHANGE_TEAM": "Bitte stoppen Sie den Timer, bevor Sie das Team wechseln",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
+		"WAKATIME_INTEGRATION": "Wakatime-Integration",
 		"LAST_CAPTURE_TAKEN": "Letzter Bildschirmfoto aufgenommen",
 		"REQUEST_TASK_PERMISSION": "Bitte um Erlaubnis vom Administrator der Organisation.",
 		"RETURN_ONLINE": "Online zurückgeben",

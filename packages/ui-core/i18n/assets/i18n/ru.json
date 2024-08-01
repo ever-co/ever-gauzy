@@ -3941,6 +3941,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Пожалуйста, остановите таймер перед изменением описания",
 		"STOP_TIMER_CHANGE_TEAM": "Пожалуйста, остановите таймер перед изменением команды",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"WAKATIME_INTEGRATION": "Интеграция Wakatime",
 		"LAST_CAPTURE_TAKEN": "Последний снимок экрана был сделан",
 		"REQUEST_TASK_PERMISSION": "Запросить разрешение у администратора организации",
 		"RETURN_ONLINE": "Вернуться в онлайн",

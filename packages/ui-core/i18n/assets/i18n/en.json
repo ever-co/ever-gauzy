@@ -4052,6 +4052,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Please stop the timer before changing the description",
 		"STOP_TIMER_CHANGE_TEAM": "Please stop the timer before changing the team",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
+		"WAKATIME_INTEGRATION": "Wakatime Integration",
 		"LAST_CAPTURE_TAKEN": "Last screen capture taken",
 		"REQUEST_TASK_PERMISSION": "Request permission from the organization administrator",
 		"RETURN_ONLINE": "Return Online",
