@@ -29,7 +29,8 @@ import {
 	ISocialAccountBase,
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
-	ISocialAccount
+	ISocialAccount,
+	IDefaultTeam
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -1005,9 +1006,11 @@ export class AuthService extends SocialAuthService {
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
 	 */
-	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput): Promise<IAuthResponse | null> {
+	async workspaceSigninVerifyToken(
+		input: IUserEmailInput & IUserTokenInput & IDefaultTeam
+	): Promise<IAuthResponse | null> {
 		try {
-			const { email, token } = input;
+			const { email, token, defaultTeamId } = input;
 
 			// Check for missing email or token
 			if (!email || !token) {
@@ -1042,8 +1045,18 @@ export class AuthService extends SocialAuthService {
 					},
 					{
 						code: null,
-						codeExpireAt: null
+						codeExpireAt: null,
+						defaultTeamId
 					}
+				);
+
+				await this.typeOrmUserRepository.update(
+					{
+						email,
+						isActive: true,
+						isArchived: false
+					},
+					{ defaultTeamId }
 				);
 
 				// Retrieve the employee details associated with the user.
@@ -1213,7 +1226,8 @@ export class AuthService extends SocialAuthService {
 			workspaces,
 			confirmed_email: email,
 			show_popup: workspaces.length > 1,
-			total_workspaces: workspaces.length
+			total_workspaces: workspaces.length,
+			defaultTeamId: users[0].defaultTeamId
 		};
 	}
 
