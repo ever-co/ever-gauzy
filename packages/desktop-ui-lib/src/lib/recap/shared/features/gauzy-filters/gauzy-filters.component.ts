@@ -137,7 +137,7 @@ export class GauzyFiltersComponent implements OnInit, OnDestroy {
 	/**
 	 * Handles the event when the time format is changed.
 	 *
-	 * @param timeformat The new time format.
+	 * @param timeFormat The new time format.
 	 */
 	public timeFormatChanged(timeFormat: TimeFormatEnum): void {
 		this.filters.timeFormat = timeFormat;

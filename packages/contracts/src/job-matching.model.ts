@@ -1,23 +1,21 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { JobPostSourceEnum, JobPostTypeEnum } from './employee-job.model';
 import { IEmployee } from './employee.model';
 import { IJobSearchCategory } from './job-search-category.model';
 import { IJobSearchOccupation } from './job-search-occupation.model';
 
 export interface IJobMatchings {
-	employeeId?: string;
+	employeeId?: ID;
 	jobSource?: string;
 	preset?: string;
 	criterions?: IMatchingCriterions[];
 }
 
-export interface IMatchingCriterions
-	extends IEmployeeUpworkJobsSearchCriterion,
-		IJobPresetUpworkJobSearchCriterion {}
+export interface IMatchingCriterions extends IEmployeeUpworkJobsSearchCriterion, IJobPresetUpworkJobSearchCriterion {}
 
 export interface IGetMatchingCriterions {
-	jobPresetId?: string;
-	employeeId?: string;
+	jobPresetId?: ID;
+	employeeId?: ID;
 }
 
 export interface IJobPreset extends IBasePerTenantAndOrganizationEntityModel {
@@ -27,52 +25,48 @@ export interface IJobPreset extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetCriterions?: IJobPresetUpworkJobSearchCriterion[];
 }
 
-export interface IEmployeePresetInput {
+export interface IEmployeePresetInput extends IBasePerTenantAndOrganizationEntityModel {
 	jobPresetIds?: string[];
 	source?: JobPostSourceEnum;
-	employeeId?: string;
+	employeeId?: ID;
 }
 
-export interface IGetJobPresetInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IGetJobPresetInput extends IBasePerTenantAndOrganizationEntityModel {
 	search?: string;
-	employeeId?: string;
+	employeeId?: ID;
 }
 
-export interface IEmployeeJobPreset
-	extends IBasePerTenantAndOrganizationEntityModel {
-	jobPresetId?: string;
+export interface IEmployeeJobPreset extends IBasePerTenantAndOrganizationEntityModel {
+	jobPresetId?: ID;
 	jobPreset?: IJobPreset;
-	employeeId?: string;
+	employeeId?: ID;
 	employee?: IEmployee;
 }
 
 export interface IGetJobPresetCriterionInput {
 	presetId?: string;
-	employeeId?: string;
+	employeeId?: ID;
 }
 
-export interface IJobPresetUpworkJobSearchCriterion
-	extends IBasePerTenantAndOrganizationEntityModel {
-	jobPresetId?: string;
+export interface IJobPresetUpworkJobSearchCriterion extends IBasePerTenantAndOrganizationEntityModel {
+	jobPresetId?: ID;
 	jobPreset?: IJobPreset;
-	occupationId?: string;
+	occupationId?: ID;
 	occupation?: IJobSearchOccupation;
-	categoryId?: string;
+	categoryId?: ID;
 	category?: IJobSearchCategory;
 	keyword?: string;
 	jobType?: JobPostTypeEnum;
 }
 
-export interface IEmployeeUpworkJobsSearchCriterion
-	extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
+export interface IEmployeeUpworkJobsSearchCriterion extends IBasePerTenantAndOrganizationEntityModel {
+	employeeId?: ID;
 	employee?: IEmployee;
-	jobPresetId?: string;
+	jobPresetId?: ID;
 	jobPreset?: IJobPreset;
-	occupationId?: string;
+	occupationId?: ID;
 	occupation?: IJobSearchOccupation;
-	categoryId?: string;
+	categoryId?: ID;
 	category?: IJobSearchCategory;
 	keyword?: string;
 	jobType?: JobPostTypeEnum;

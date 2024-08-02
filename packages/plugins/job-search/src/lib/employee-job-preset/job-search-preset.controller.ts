@@ -86,7 +86,7 @@ export class JobSearchPresetController {
 	})
 	@Get(':id/criterion')
 	async getJobPresetCriterion(@Param('id', UUIDValidationPipe) presetId: ID) {
-		return this.jobPresetService.getJobPresetCriterion(presetId);
+		return await this.jobPresetService.getJobPresetCriterion(presetId);
 	}
 
 	/**
@@ -107,7 +107,7 @@ export class JobSearchPresetController {
 	})
 	@Post()
 	async createJobPreset(@Body() request: IJobPreset) {
-		return this.jobPresetService.createJobPreset(request);
+		return await this.jobPresetService.createJobPreset(request);
 	}
 
 	/**
@@ -129,7 +129,7 @@ export class JobSearchPresetController {
 	})
 	@Post(':jobPresetId/criterion')
 	async saveUpdate(@Param('jobPresetId', UUIDValidationPipe) jobPresetId: ID, @Body() request: IMatchingCriterions) {
-		return this.jobPresetService.saveJobPresetCriterion({
+		return await this.jobPresetService.saveJobPresetCriterion({
 			...request,
 			jobPresetId
 		});
@@ -153,6 +153,6 @@ export class JobSearchPresetController {
 	})
 	@Delete('criterion/:criterionId')
 	async deleteJobPresetCriterion(@Param('criterionId', UUIDValidationPipe) criterionId: ID) {
-		return this.jobPresetService.deleteJobPresetCriterion(criterionId);
+		return await this.jobPresetService.deleteJobPresetCriterion(criterionId);
 	}
 }
