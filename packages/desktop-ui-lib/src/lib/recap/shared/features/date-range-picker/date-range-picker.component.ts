@@ -1,13 +1,4 @@
-import {
-	AfterViewInit,
-	ChangeDetectionStrategy,
-	Component,
-	inject,
-	Input,
-	OnDestroy,
-	OnInit,
-	ViewChild
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -34,7 +25,7 @@ import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
 	styleUrls: ['./date-range-picker.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DateRangePickerComponent implements OnInit, AfterViewInit, OnDestroy {
+export class DateRangePickerComponent implements OnInit, OnDestroy {
 	public picker: NgxDateRangePickerComponent;
 	public maxDate: string;
 	public minDate: string;
@@ -191,7 +182,7 @@ export class DateRangePickerComponent implements OnInit, AfterViewInit, OnDestro
 
 	constructor(public readonly translateService: TranslateService, readonly recapStore: RecapStore) {}
 
-	ngAfterViewInit(): void {
+	ngOnInit(): void {
 		this.range$
 			.pipe(
 				distinctUntilChange(),
@@ -207,9 +198,6 @@ export class DateRangePickerComponent implements OnInit, AfterViewInit, OnDestro
 				untilDestroyed(this)
 			)
 			.subscribe();
-	}
-
-	ngOnInit(): void {
 		this.selectedDateRange = this.getSelectorDates();
 		this.createDateRangeMenus();
 		this.setPastStrategy();

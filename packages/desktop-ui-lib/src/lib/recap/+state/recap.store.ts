@@ -3,6 +3,7 @@ import { Store, StoreConfig } from '@datorama/akita';
 import {
 	IActivitiesStatistics,
 	ICountsStatistics,
+	IDailyActivity,
 	IProjectsStatistics,
 	ITasksStatistics,
 	ITimeSlot
@@ -17,6 +18,7 @@ export interface IRecapState {
 	activities: IActivitiesStatistics[];
 	timeSlots: ITimeSlot[];
 	count: ICountsStatistics;
+	dailyActivities: IDailyActivity[];
 }
 
 export function createInitialState(): IRecapState {
@@ -25,6 +27,7 @@ export function createInitialState(): IRecapState {
 		tasks: [],
 		activities: [],
 		timeSlots: [],
+		dailyActivities: [],
 		range: {
 			startDate: TimeTrackerDateManager.startToday,
 			endDate: TimeTrackerDateManager.endToday

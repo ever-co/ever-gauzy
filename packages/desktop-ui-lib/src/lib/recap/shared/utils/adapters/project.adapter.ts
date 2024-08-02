@@ -10,7 +10,7 @@ export class ProjectStatisticsAdapter implements IStatisticItem {
 		return this.projectStatistics.name;
 	}
 	public get durationPercentage(): string {
-		return this.projectStatistics.durationPercentage.toFixed(2);
+		return (this.projectStatistics.durationPercentage || 0).toFixed(2);
 	}
 	public get duration(): number {
 		return this.projectStatistics.duration;
