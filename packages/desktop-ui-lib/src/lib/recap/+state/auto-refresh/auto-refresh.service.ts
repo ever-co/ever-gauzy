@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, switchMap, tap, timer } from 'rxjs';
+import { Observable, startWith, Subject, switchMap, tap, timer } from 'rxjs';
 import { AUTO_REFRESH_DELAY } from '../../../constants';
 import { AutoRefreshQuery } from './auto-refresh.query';
 import { AutoRefreshStore } from './auto-refresh.store';
@@ -48,7 +48,7 @@ export class AutoRefreshService implements OnDestroy {
 	}
 
 	public get refresh$(): Observable<void> {
-		return this._refresh$.asObservable();
+		return this._refresh$.pipe(startWith(null));
 	}
 
 	ngOnDestroy(): void {

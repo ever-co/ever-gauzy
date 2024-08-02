@@ -53,7 +53,6 @@ export class TimeTrackingChartsComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.load().pipe(untilDestroyed(this)).subscribe();
 	}
 
 	public load(): Observable<void> {

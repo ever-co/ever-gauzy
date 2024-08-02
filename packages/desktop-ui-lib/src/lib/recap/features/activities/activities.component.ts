@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, concatMap, from, map, Observable, Subject } from 'rxjs';
+import { combineLatest, concatMap, map, Observable } from 'rxjs';
 import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
@@ -16,7 +16,6 @@ import { ActivityStatisticsAdapter } from '../../shared/utils/adapters/activity.
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivitiesComponent implements OnInit {
-	private readonly _subject$: Subject<void> = new Subject();
 	constructor(
 		private readonly recapQuery: RecapQuery,
 		private readonly requestQuery: RequestQuery,
@@ -31,7 +30,6 @@ export class ActivitiesComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		from(this.load()).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	public async load(): Promise<void> {

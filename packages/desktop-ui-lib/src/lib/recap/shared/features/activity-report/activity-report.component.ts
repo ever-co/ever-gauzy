@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { IDailyActivity } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { BehaviorSubject, combineLatest, concatMap, from, map, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, concatMap, map, Observable } from 'rxjs';
 import { AutoRefreshService } from '../../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../../+state/recap.query';
 import { RecapService } from '../../../+state/recap.service';
@@ -30,7 +30,6 @@ export class ActivityReportComponent {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		from(this.load()).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	public async load(): Promise<void> {
