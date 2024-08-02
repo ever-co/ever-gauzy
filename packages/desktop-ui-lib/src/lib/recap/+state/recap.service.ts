@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import {
+	IGetActivitiesInput,
 	IGetActivitiesStatistics,
 	IGetCountsStatistics,
 	IGetProjectsStatistics,
@@ -8,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { reduce } from 'underscore';
 import { Store, ToastrNotificationService } from '../../services';
-import { TimesheetService, TimesheetStatisticsService } from '../services/timesheet';
+import { ActivityService, TimesheetService, TimesheetStatisticsService } from '../services/timesheet';
 import { RecapQuery } from './recap.query';
 import { RecapStore } from './recap.store';
 import { RequestQuery } from './request/request.query';
@@ -20,6 +21,7 @@ export class RecapService {
 		private readonly recapQuery: RecapQuery,
 		private readonly requestQuery: RequestQuery,
 		private readonly timesheetStatisticsService: TimesheetStatisticsService,
+		private readonly activityService: ActivityService,
 		private readonly timesheetService: TimesheetService,
 		private readonly notificationService: ToastrNotificationService,
 		private readonly store: Store
@@ -128,6 +130,29 @@ export class RecapService {
 			};
 			const count = await this.timesheetStatisticsService.getCounts(request);
 			this.recapStore.update({ count });
+		} catch (error) {
+			this.notificationService.error(error.message || 'An error occurred while fetching tasks.');
+			this.recapStore.setError(error);
+		} finally {
+			this.recapStore.setLoading(false);
+		}
+	}
+
+	public async getDailyReport(): Promise<void> {
+		try {
+			this.recapStore.setLoading(true);
+			const { organizationId, tenantId, user } = this.store;
+			const { employeeId } = user.employee;
+			const request: IGetActivitiesInput = {
+				...this.requestQuery.request,
+				...this.recapQuery.range,
+				employeeIds: [employeeId],
+				groupBy: 'date',
+				organizationId,
+				tenantId
+			};
+			const dailyActivities = await this.activityService.getDailyActivitiesReport(request);
+			this.recapStore.update({ dailyActivities });
 		} catch (error) {
 			this.notificationService.error(error.message || 'An error occurred while fetching tasks.');
 			this.recapStore.setError(error);

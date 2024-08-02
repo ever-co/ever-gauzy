@@ -10,6 +10,7 @@ import {
 	NbPopoverModule,
 	NbProgressBarModule,
 	NbRouteTabsetModule,
+	NbSpinnerModule,
 	NbTableModule,
 	NbToggleModule
 } from '@nebular/theme';
@@ -33,9 +34,12 @@ import { RecapComponent } from './features/recap/recap.component';
 import { TasksComponent } from './features/tasks/tasks.component';
 import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
+import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
 import { AutoRefeshComponent } from './shared/ui/auto-refesh/auto-refesh.component';
+import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
+import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 
 @NgModule({
@@ -47,7 +51,8 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		TimeTrackingChartsComponent,
 		FilterComponent,
 		StatisticComponent,
-		AutoRefeshComponent
+		AutoRefeshComponent,
+		ActivityReportComponent
 	],
 	imports: [
 		CommonModule,
@@ -67,6 +72,9 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		GauzyFiltersModule,
 		NbBadgeModule,
 		NbToggleModule,
+		ProjectColumnViewModule,
+		ProgressStatusModule,
+		NbSpinnerModule,
 		LanguageModule.forChild()
 	],
 	providers: [
@@ -82,6 +90,7 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		AutoRefreshStore,
 		RequestQuery,
 		RequestStore
-	]
+	],
+	exports: [ActivityReportComponent]
 })
 export class RecapModule {}
