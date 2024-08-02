@@ -37,7 +37,7 @@ import { ActivityService, TimesheetService, TimesheetStatisticsService } from '.
 import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
 import { GauzyFiltersModule } from './shared/features/gauzy-filters';
-import { AutoRefeshComponent } from './shared/ui/auto-refesh/auto-refesh.component';
+import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.component';
 import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
 import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
@@ -51,7 +51,7 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		TimeTrackingChartsComponent,
 		FilterComponent,
 		StatisticComponent,
-		AutoRefeshComponent,
+		AutoRefreshComponent,
 		ActivityReportComponent
 	],
 	imports: [

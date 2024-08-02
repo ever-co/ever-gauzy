@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AutoRefeshComponent } from './auto-refesh.component';
+import { AutoRefreshComponent } from './auto-refresh.component';
 
-describe('AutoRefeshComponent', () => {
-	let component: AutoRefeshComponent;
-	let fixture: ComponentFixture<AutoRefeshComponent>;
+describe('AutoRefreshComponent', () => {
+	let component: AutoRefreshComponent;
+	let fixture: ComponentFixture<AutoRefreshComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [AutoRefeshComponent]
+			declarations: [AutoRefreshComponent]
 		}).compileComponents();
 
-		fixture = TestBed.createComponent(AutoRefeshComponent);
+		fixture = TestBed.createComponent(AutoRefreshComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

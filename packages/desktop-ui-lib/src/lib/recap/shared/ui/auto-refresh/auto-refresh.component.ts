@@ -5,12 +5,12 @@ import { AutoRefreshService } from '../../../+state/auto-refresh/auto-refresh.se
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ngx-auto-refesh',
-	templateUrl: './auto-refesh.component.html',
-	styleUrls: ['./auto-refesh.component.scss'],
+	selector: 'ngx-auto-refresh',
+	templateUrl: './auto-refresh.component.html',
+	styleUrls: ['./auto-refresh.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AutoRefeshComponent {
+export class AutoRefreshComponent {
 	private service = inject(AutoRefreshService);
 
 	public get autoRefresh$(): Observable<boolean> {

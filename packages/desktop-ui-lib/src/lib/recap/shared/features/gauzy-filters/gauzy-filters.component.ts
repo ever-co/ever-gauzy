@@ -61,7 +61,7 @@ export class GauzyFiltersComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	@Input() isTimeformat: boolean = false;
+	@Input() isTimeFormat: boolean = false;
 
 	@Output() filtersChange: EventEmitter<ITimeLogFilters> = new EventEmitter();
 
