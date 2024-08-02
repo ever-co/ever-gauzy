@@ -2,8 +2,8 @@ import { NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { PageRouteService } from '@gauzy/ui-core/core';
-import { JobSearchModule } from '@gauzy/plugins/job-search-ui';
 import { JobMatchingModule } from '@gauzy/plugins/job-matching-ui';
+import { JobSearchModule } from '@gauzy/plugins/job-search-ui';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 import { createRoutes } from './job.routes';
 
