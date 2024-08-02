@@ -1,8 +1,8 @@
 {
-	"name": "@gauzy/plugin-job-search-ui",
+	"name": "@gauzy/plugin-job-matching-ui",
 	"version": "0.1.0",
 	"type": "commonjs",
-	"description": "A UI plugin for job search functionality in the Gauzy platform.",
+	"description": "A UI plugin for job matching functionality in the Gauzy platform.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -18,20 +18,19 @@
 	},
 	"homepage": "https://ever.co",
 	"keywords": [
-		"job search",
-		"UI plugin",
-		"Gauzy",
-		"Angular",
-		"job board",
-		"employment",
-		"recruitment",
-		"job listings"
+		"gauzy",
+		"job-matching",
+		"plugin",
+		"angular",
+		"ngx",
+		"UI",
+		"typescript"
 	],
 	"private": true,
 	"scripts": {
-		"lib:build": "ng build plugin-job-search-ui --configuration=development",
-		"lib:build:prod": "ng build plugin-job-search-ui --configuration=production",
-		"lib:watch": "ng build plugin-job-search-ui --watch --configuration=development"
+		"lib:build": "ng build plugin-job-matching-ui --configuration=development",
+		"lib:build:prod": "ng build plugin-job-matching-ui --configuration=production",
+		"lib:watch": "ng build plugin-job-matching-ui --watch --configuration=development"
 	},
 	"peerDependencies": {
 		"@angular/common": "^16.2.12",
@@ -43,13 +42,10 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/theme": "^12.0.0",
+		"@ng-select/ng-select": "^11.2.0",
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^15.0.0",
 		"@ngx-translate/http-loader": "^8.0.0",
-		"angular2-smart-table": "^3.2.0",
-		"ckeditor4-angular": "4.0.1",
-		"ng2-file-upload": "^5.0.0",
-		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2",

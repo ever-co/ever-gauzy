@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MatchingComponent } from './matching.component';
+import { JobMatchingComponent } from './job-matching.component';
 
-describe('MatchingComponent', () => {
-	let component: MatchingComponent;
-	let fixture: ComponentFixture<MatchingComponent>;
+describe('JobMatchingComponent', () => {
+	let component: JobMatchingComponent;
+	let fixture: ComponentFixture<JobMatchingComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [MatchingComponent],
+			declarations: [JobMatchingComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(MatchingComponent);
+		fixture = TestBed.createComponent(JobMatchingComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});
