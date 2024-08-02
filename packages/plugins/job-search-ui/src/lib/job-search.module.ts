@@ -105,7 +105,7 @@ export class JobSearchModule {
 	}
 
 	/**
-	 * Called when the plugin is Bootstraped .
+	 * Called when the plugin is bootstrapped.
 	 *
 	 * @returns {void | Promise<void>}
 	 * @memberof JobSearchModule

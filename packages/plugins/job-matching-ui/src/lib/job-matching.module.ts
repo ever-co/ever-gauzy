@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { Inject, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
@@ -71,13 +71,13 @@ const THIRD_PARTY_MODULES = [
 export class JobMatchingModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(readonly _pageRouteService: PageRouteService) {
+	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
 
 	/**
-	 * Called when the plugin is Bootstraped .
+	 * Called when the plugin is bootstrapped.
 	 *
 	 * @returns {void | Promise<void>}
 	 * @memberof JobMatchingModule
