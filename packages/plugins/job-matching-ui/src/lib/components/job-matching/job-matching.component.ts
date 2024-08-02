@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Observable, combineLatest, map, switchMap, of, BehaviorSubject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import * as _ from 'underscore';
+import { omit } from 'underscore';
 import {
 	IOrganization,
 	JobPostSourceEnum,
@@ -51,11 +51,11 @@ export class JobMatchingComponent implements OnInit {
 	private payloads$: BehaviorSubject<object | null> = new BehaviorSubject(null);
 
 	constructor(
+		private readonly _store: Store,
 		private readonly _jobPresetService: JobPresetService,
 		private readonly _jobSearchOccupationService: JobSearchOccupationService,
 		private readonly _jobSearchCategoryService: JobSearchCategoryService,
 		private readonly _toastrService: ToastrService,
-		private readonly _store: Store,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
@@ -236,11 +236,16 @@ export class JobMatchingComponent implements OnInit {
 			return;
 		}
 
+		// Get Organization
+		const { id: organizationId, tenantId } = this.organization;
+
 		// Update Employee Preset
 		this.criterions = await this._jobPresetService.saveEmployeePreset({
 			source: this.criterionForm.jobSource,
 			jobPresetIds: [this.criterionForm.jobPresetId],
-			employeeId: this.selectedEmployeeId
+			employeeId: this.selectedEmployeeId,
+			tenantId,
+			organizationId
 		});
 	}
 
@@ -249,49 +254,78 @@ export class JobMatchingComponent implements OnInit {
 	 *
 	 * @returns
 	 */
-	saveJobPreset() {
-		if (this.criterionForm.jobPresetId) {
-			const request: IJobPreset = {
-				id: this.criterionForm.jobPresetId
-			};
-			if (this.criterions && this.criterions.length > 0) {
-				request.jobPresetCriterions = this.criterions.map(
-					(employeeCriterion): IJobPresetUpworkJobSearchCriterion => {
-						return _.omit(employeeCriterion, 'employeeId', 'id', 'jobPresetId');
-					}
-				);
-				request.jobPresetCriterions = request.jobPresetCriterions.filter((employeeCriterion) => {
-					const values = Object.values(employeeCriterion);
-					return values.length > 0;
-				});
-			}
-			this._jobPresetService.createJobPreset(request).then(() => {
-				this.hasAnyChanges = false;
-				this._toastrService.success('TOASTR.MESSAGE.PRESET_SAVED');
-			});
+	async saveJobPreset() {
+		if (!this.organization || !this.criterionForm.jobPresetId) {
+			return;
+		}
+
+		// Get Organization
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Create job preset
+		const request: IJobPreset = {
+			id: this.criterionForm.jobPresetId,
+			tenantId,
+			organizationId
+		};
+
+		// Update criterions
+		if (this.criterions && this.criterions.length > 0) {
+			request.jobPresetCriterions = this.criterions
+				.map((item): IJobPresetUpworkJobSearchCriterion => omit(item, 'employeeId', 'id', 'jobPresetId'))
+				.filter((criterion) => Object.values(criterion).length > 0);
+		}
+
+		// Create job preset
+		const jobPreset = await this._jobPresetService.createJobPreset(request);
+
+		// Update criterions
+		if (jobPreset) {
+			this.hasAnyChanges = false;
+			this._toastrService.success('TOASTR.MESSAGE.PRESET_SAVED');
 		}
 	}
 
 	/**
+	 * Save Criterion
 	 *
 	 * @param criterion
 	 */
-	saveCriterion(criterion?: IMatchingCriterions) {
-		let req: any;
-		this.hasAnyChanges = true;
-		if (this.selectedEmployeeId) {
-			req = this._jobPresetService.createEmployeeCriterion(this.selectedEmployeeId, criterion);
-		} else {
-			req = this._jobPresetService.createJobPresetCriterion(this.criterionForm.jobPresetId, criterion);
+	async saveCriterion(criterion?: IMatchingCriterions) {
+		if (!this.organization) {
+			return;
 		}
 
-		req.then((newCreation) => {
+		// Get Organization
+		const { id: organizationId, tenantId } = this.organization;
+
+		let createdCriterion: IMatchingCriterions;
+		this.hasAnyChanges = true;
+
+		try {
+			if (this.selectedEmployeeId) {
+				createdCriterion = await this._jobPresetService.createEmployeeCriterion(this.selectedEmployeeId, {
+					...criterion,
+					tenantId,
+					organizationId
+				});
+			} else {
+				createdCriterion = await this._jobPresetService.createJobPresetCriterion(
+					this.criterionForm.jobPresetId,
+					{
+						...criterion,
+						tenantId,
+						organizationId
+					}
+				);
+			}
+
 			const index = this.criterions.indexOf(criterion);
-			this.criterions[index] = newCreation;
+			this.criterions[index] = createdCriterion;
 			this._toastrService.success('TOASTR.MESSAGE.JOB_MATCHING_SAVED');
-		}).catch(() => {
+		} catch (error) {
 			this._toastrService.error('TOASTR.MESSAGE.JOB_MATCHING_ERROR');
-		});
+		}
 	}
 
 	/**
@@ -300,7 +334,7 @@ export class JobMatchingComponent implements OnInit {
 	 * @param criterion
 	 * @returns
 	 */
-	async deleteCriterions(index, criterion: IMatchingCriterions) {
+	async deleteCriterions(index: number, criterion: IMatchingCriterions) {
 		if (criterion.id) {
 			this.hasAnyChanges = true;
 			if (this.selectedEmployeeId) {
@@ -323,6 +357,7 @@ export class JobMatchingComponent implements OnInit {
 		}
 
 		this.criterions.splice(index, 1);
+
 		if (this.criterions.length === 0) {
 			this.addNewCriterion();
 		}
