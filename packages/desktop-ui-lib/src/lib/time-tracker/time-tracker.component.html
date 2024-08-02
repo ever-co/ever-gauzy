@@ -376,7 +376,7 @@
 			</div>
 			<div *ngIf="isExpand$ | async">
 				<nb-tabset>
-					<nb-tab tabTitle="Tasks">
+					<nb-tab [tabTitle]="'MENU.TASKS' | translate">
 						<div class="task-table">
 							<nb-card class="max-width-search">
 								<nb-card-body>
@@ -447,7 +447,7 @@
 							</nb-card>
 						</div>
 					</nb-tab>
-					<nb-tab tabTitle="Daily Recap">
+					<nb-tab [tabTitle]="'TIMER_TRACKER.MENU.DAILY_RECAP' | translate">
 					  <ngx-activity-report></ngx-activity-report>
 					</nb-tab>
 				</nb-tabset>
