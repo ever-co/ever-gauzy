@@ -69,31 +69,32 @@ export class JobMatchingComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this._store.selectedOrganization$;
-		const storeEmployee$ = this._store.selectedEmployee$;
+
+		// Get Organization
+		const storeOrganization$ = this._store.selectedOrganization$.pipe(
+			distinctUntilChange(),
+			filter((organization: IOrganization) => !!organization),
+			tap((organization: IOrganization) => (this.organization = organization)),
+			tap(() => {
+				this.getCategories();
+				this.getOccupations();
+			}),
+			untilDestroyed(this)
+		);
+
+		// Get Employee
+		const storeEmployee$ = this._store.selectedEmployee$.pipe(
+			distinctUntilChange(),
+			filter((employee: ISelectedEmployee) => !!employee),
+			tap((employee: ISelectedEmployee) => (this.selectedEmployeeId = employee.id)),
+			tap(() => this.getEmployeeCriterions()),
+			untilDestroyed(this)
+		);
+
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
-				debounceTime(100),
 				distinctUntilChange(),
-				filter(([organization]) => !!organization),
-				switchMap(([organization, employee]) => {
-					this.organization = organization;
-					this.selectedEmployeeId = employee ? employee.id : null;
-					return of(employee);
-				}),
 				tap(() => this.preparePayloads()),
-				filter((employee: ISelectedEmployee) => !!employee),
-				tap(() => this.getEmployeeCriterions()),
-				untilDestroyed(this)
-			)
-			.subscribe();
-		storeOrganization$
-			.pipe(
-				debounceTime(100),
-				distinctUntilChange(),
-				filter((organization: IOrganization) => !!organization),
-				tap(() => this.getCategories()),
-				tap(() => this.getOccupations()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -109,12 +110,16 @@ export class JobMatchingComponent implements OnInit {
 			return;
 		}
 
+		// Get Organization
 		const { id: organizationId, tenantId } = this.organization;
+
+		// Prepare Payloads
 		const request: IGetJobPresetInput = {
 			tenantId,
 			organizationId,
 			...(this.selectedEmployeeId ? { employeeId: this.selectedEmployeeId } : {})
 		};
+
 		this.payloads$.next(request);
 	}
 
@@ -127,6 +132,7 @@ export class JobMatchingComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			const payloads: IGetJobPresetInput = this.payloads$.getValue();
 			const jobPresets = await this._jobPresetService.getJobPresets(payloads);
@@ -150,6 +156,7 @@ export class JobMatchingComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			this.criterions = [];
 			if (this.selectedEmployeeId) {
@@ -170,7 +177,7 @@ export class JobMatchingComponent implements OnInit {
 	 *
 	 * @param name
 	 */
-	addPreset = async (name: IJobPreset['name']) => {
+	addPreset = async (name: string) => {
 		if (!this.organization) {
 			return;
 		}
@@ -236,17 +243,23 @@ export class JobMatchingComponent implements OnInit {
 			return;
 		}
 
-		// Get Organization
-		const { id: organizationId, tenantId } = this.organization;
+		try {
+			// Get Organization
+			const { id: organizationId, tenantId } = this.organization;
+			const { jobSource, jobPresetId } = this.criterionForm;
 
-		// Update Employee Preset
-		this.criterions = await this._jobPresetService.saveEmployeePreset({
-			source: this.criterionForm.jobSource,
-			jobPresetIds: [this.criterionForm.jobPresetId],
-			employeeId: this.selectedEmployeeId,
-			tenantId,
-			organizationId
-		});
+			// Update Employee Preset
+			this.criterions = await this._jobPresetService.saveEmployeePreset({
+				source: jobSource,
+				jobPresetIds: [jobPresetId],
+				employeeId: this.selectedEmployeeId,
+				tenantId,
+				organizationId
+			});
+		} catch (error) {
+			console.error('Error while updating employee preset', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 
 	/**
@@ -261,10 +274,11 @@ export class JobMatchingComponent implements OnInit {
 
 		// Get Organization
 		const { id: organizationId, tenantId } = this.organization;
+		const { jobPresetId } = this.criterionForm;
 
 		// Create job preset
 		const request: IJobPreset = {
-			id: this.criterionForm.jobPresetId,
+			id: jobPresetId,
 			tenantId,
 			organizationId
 		};
@@ -329,6 +343,7 @@ export class JobMatchingComponent implements OnInit {
 	}
 
 	/**
+	 * Delete criterion
 	 *
 	 * @param index
 	 * @param criterion
@@ -383,6 +398,7 @@ export class JobMatchingComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 			const { jobSource } = this.criterionForm;
@@ -408,6 +424,7 @@ export class JobMatchingComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 			const { jobSource } = this.criterionForm;
