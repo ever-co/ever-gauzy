@@ -183,7 +183,7 @@
 		"prepare:desktop-timer": "yarn run postinstall.electron && tsc -p apps/desktop-timer/tsconfig.json",
 		"build:desktop-timer:linux": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 build --linux --project dist/apps/desktop-timer",
 		"build:desktop-timer:windows": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 -c.extraMetadata.author.name=Ever build --windows --project dist/apps/desktop-timer",
-		"build:desktop-timer:mac": "yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 build --mac --project dist/apps/desktop-timer",
+		"build:desktop-timer:mac": "yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 build --mac --config -c.mac.identity=null --project dist/apps/desktop-timer",
 		"build:desktop-timer:linux:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 build --linux --publish=always --project dist/apps/desktop-timer",
 		"build:desktop-timer:linux:release:gh": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=30000 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 build --linux --publish=always --project dist/apps/desktop-timer",
 		"build:desktop-timer:windows:release": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn run config:prod && yarn run build:desktop-timer && npm config set cache .cache && yarn electron-builder -c.electronVersion=28.1.0 -c.extraMetadata.author.name=Ever build --windows --publish=always --project dist/apps/desktop-timer",
@@ -329,7 +329,15 @@
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2",
 		"yargs": "^17.5.0",
-		"zone.js": "^0.14.2"
+		"zone.js": "^0.14.2",
+		"ngx-permissions": "^17.1.0",
+		"@ngx-translate/core": "^15.0.0",
+		"@ngx-translate/http-loader": "^8.0.0",
+		"@ngneat/until-destroy": "^10.0.0",
+		"@angular-slider/ngx-slider": "^18.0.0",
+		"ngx-cookie-service": "^18.0.0",
+		"@sentry/angular-ivy": "^7.114.0",
+		"ckeditor4-angular": "4.0.1"
 	},
 	"devDependencies": {
 		"@angular-devkit/architect": "^0.1602.11",
