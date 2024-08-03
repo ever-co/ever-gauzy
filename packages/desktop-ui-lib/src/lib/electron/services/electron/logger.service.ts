@@ -24,14 +24,14 @@ export class LoggerService {
 	}
 
 	public debug<T>(...message: T[]): void {
-		if (this._log) this._log.debug(message);
+		if (this._log) this._log.debug(...message);
 	}
 
 	public info<T>(...message: T[]): void {
-		if (this._log) this._log.info(message);
+		if (this._log) this._log.info(...message);
 	}
 
 	public error<T>(...message: T[]): void {
-		if (this._log) this._log.error(message);
+		if (this._log) this._log.error(...message);
 	}
 }

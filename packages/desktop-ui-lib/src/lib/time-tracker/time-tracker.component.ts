@@ -974,7 +974,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
-					this._loggerService.info(`Take Screenshot::` + arg);
+					this._loggerService.info(`Take Screenshot::`, arg);
 					const screens = [];
 					const thumbSize = this.determineScreenshot(arg.screenSize);
 					const sources = await this.electronService.desktopCapturer.getSources({
@@ -982,13 +982,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						thumbnailSize: thumbSize
 					});
 					sources.forEach((source) => {
-						this._loggerService.info('screenshot_res::' + source);
+						this._loggerService.info(`screenshot_res:`, JSON.stringify(source));
 						screens.push({
 							img: source.thumbnail.toPNG(),
 							name: source.name,
 							id: source.display_id
 						});
-						this._loggerService.info('screenshot data::' + screens);
+						this._loggerService.info('screenshot data::', JSON.stringify(screens));
 					});
 					if (!arg.isTemp) {
 						event.sender.send('save_screen_shoot', {
@@ -2098,7 +2098,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const screens = [];
 
 			sources.forEach((source) => {
-				this._loggerService.info('screenshot_res::' + source);
+				this._loggerService.info('screenshot_res::', JSON.stringify(source));
 				if (
 					this.appSetting &&
 					this.appSetting.monitor &&
@@ -2123,7 +2123,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 
-			this._loggerService.info('screenshot data::' + screens);
+			this._loggerService.info('screenshot data::', JSON.stringify(screens));
 
 			return screens;
 		} catch (error) {
