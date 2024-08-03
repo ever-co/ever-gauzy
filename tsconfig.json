@@ -1,6 +1,8 @@
 {
-	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
+		"outDir": "./dist/out-tsc",
+		"resolveJsonModule": true,
+		"typeRoots": ["node_modules/@types"],
 		"paths": {
 			"@angular/*": ["./node_modules/@angular/*"],
 			"@env-desktop/environment": ["apps/desktop/src/environments/environment.ts"],
@@ -23,14 +25,12 @@
 			"swiper_angular": ["./node_modules/swiper/angular"],
 			"@angular-slider/ngx-slider": ["node_modules/@angular-slider/ngx-slider"]
 		},
-		"outDir": "./dist/out-tsc",
-		"resolveJsonModule": true,
-		"typeRoots": ["node_modules/@types"],
 		"preserveConstEnums": true,
 		"allowSyntheticDefaultImports": true,
 		"noUnusedLocals": false,
 		"noImplicitAny": false,
 		"esModuleInterop": false,
 		"useDefineForClassFields": false
-	}
+	},
+	"extends": "./tsconfig.base.json"
 }
