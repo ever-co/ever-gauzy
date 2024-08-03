@@ -86,7 +86,7 @@ const THIRD_PARTY_MODULES = [
 		SharedModule,
 		StatusBadgeModule
 	],
-	exports: [...COMPONENTS],
+	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,

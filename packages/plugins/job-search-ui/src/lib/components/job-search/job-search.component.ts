@@ -101,7 +101,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 	}
 
 	constructor(
-		public readonly translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _http: HttpClient,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -114,8 +114,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _i18nService: I18nService,
-		private readonly _translateService: TranslateService
+		private readonly _i18nService: I18nService
 	) {
 		super(translateService);
 
@@ -224,7 +223,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 
 		// Subscribe to preferred language changes
 		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
-			this._translateService.use(preferredLanguage);
+			this.translateService.use(preferredLanguage);
 		});
 	}
 

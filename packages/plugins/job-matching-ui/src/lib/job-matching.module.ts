@@ -1,4 +1,4 @@
-import { Inject, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
@@ -16,12 +16,12 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
+import { COMPONENTS } from './components';
 
 /**
  * Nebular modules
@@ -46,7 +46,6 @@ const THIRD_PARTY_MODULES = [
 	NgxPermissionsModule.forRoot(),
 	NgSelectModule,
 	TranslateModule.forRoot({
-		defaultLanguage: LanguagesEnum.ENGLISH,
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
@@ -56,9 +55,9 @@ const THIRD_PARTY_MODULES = [
 ];
 
 @NgModule({
-	declarations: [JobMatchingComponent],
+	declarations: [JobMatchingComponent, ...COMPONENTS],
 	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, SharedModule, DialogsModule],
-	exports: [],
+	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,
@@ -71,7 +70,7 @@ const THIRD_PARTY_MODULES = [
 export class JobMatchingModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
+	constructor(private readonly _pageRouteService: PageRouteService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
