@@ -1,6 +1,6 @@
-import { INetworkState } from '../../interfaces';
+import { Agent, fetch } from 'undici';
 import { LocalStore } from '../../desktop-store';
-import { fetch, Agent } from 'undici';
+import { INetworkState } from '../../interfaces';
 
 import dns from 'node:dns';
 dns.setDefaultResultOrder('ipv4first');
@@ -12,14 +12,14 @@ export class ApiServerConnectivity implements INetworkState {
 
 			console.log('[ApiServerConnectivity]: Checking server connectivity to url: ', url);
 
-			// if more than 30 sec to get response, then we think no connectivity for now to API servers
+			// if more than 3 sec to get response, then we think no connectivity for now to API servers
 			const res = await fetch(url, {
 				headers: {
 					'Cache-Control': 'no-cache'
 				},
 				dispatcher: new Agent({
 					connect: {
-						timeout: 30 * 1000
+						timeout: 3 * 1000
 					}
 				})
 			});
