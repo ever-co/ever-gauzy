@@ -7,6 +7,7 @@ import { JobSearchModule } from '@gauzy/plugins/job-search-ui';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 import { createRoutes } from './job.routes';
 
+// Plugins
 export const PLUGINS = [JobSearchModule, JobMatchingModule];
 
 @NgModule({
