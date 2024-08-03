@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
+import * as log from 'electron-log';
 import { ElectronService } from './electron.service';
-import log from 'electron-log';
 
 @Injectable({
 	providedIn: 'root'
@@ -21,5 +21,17 @@ export class LoggerService {
 
 	public get log(): log.ElectronLog {
 		return this._log;
+	}
+
+	public debug<T>(...message: T[]): void {
+		if (this._log) this._log.debug(message);
+	}
+
+	public info<T>(...message: T[]): void {
+		if (this._log) this._log.info(message);
+	}
+
+	public error<T>(...message: T[]): void {
+		if (this._log) this._log.error(message);
 	}
 }
