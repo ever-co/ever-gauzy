@@ -1625,6 +1625,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 
+				this.start$.next(false);
+
+				this.loading = false;
+
 				console.log('Toggling timer');
 				await this._toggle(timer, onClick);
 			}
