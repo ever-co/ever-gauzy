@@ -709,21 +709,19 @@ export function ipcTimer(
 			if (!arg.isEmergency) {
 				// We check connectivity before stop timer, but we don't block the process for now...
 				// Instead, we should notify the user that timer might not stop correctly and retry stop the timer after connection to API is restored
-				setTimeout(async () => {
-					log.info('Check API Connection During Stop Timer...');
+				log.info('Check API Connection During Stop Timer...');
 
-					await offlineMode.connectivity();
+				await offlineMode.connectivity();
 
-					if (offlineMode.enabled) {
-						console.log('Offline Mode: Timer might not stop correctly');
-						timeTrackerWindow.webContents.send('emergency_stop');
+				if (offlineMode.enabled) {
+					console.log('Offline Mode: Timer might not stop correctly');
+					timeTrackerWindow.webContents.send('emergency_stop');
 
-						// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
-						// throw new Error('Cannot establish connection to API during Timer Stop');
-					} else {
-						console.log('API working well During Stop Timer');
-					}
-				}, 10);
+					// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
+					// throw new Error('Cannot establish connection to API during Timer Stop');
+				} else {
+					console.log('API working well During Stop Timer');
+				}
 			}
 
 			console.log('Continue stopping timer ...');
