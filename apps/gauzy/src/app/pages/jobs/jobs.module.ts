@@ -48,7 +48,8 @@ export class JobsModule {
 			// Register the data object
 			data: {
 				selectors: {
-					project: false
+					project: false,
+					team: false
 				}
 			}
 		});
