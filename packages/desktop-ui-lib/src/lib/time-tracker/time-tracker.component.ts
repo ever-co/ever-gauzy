@@ -54,7 +54,6 @@ import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
 import { LanguageElectronService } from '../language/language-electron.service';
-import { LanguageSelectorService } from '../language/language-selector.service';
 import {
 	InterruptedSequenceQueue,
 	ISequence,
@@ -182,7 +181,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _timeSlotQueueService: TimeSlotQueueService,
 		private _imageViewerService: ImageViewerService,
 		private _authStrategy: AuthStrategy,
-		private _languageSelectorService: LanguageSelectorService,
 		private _translateService: TranslateService,
 		private _alwaysOnService: AlwaysOnService,
 		@Inject(GAUZY_ENV)
