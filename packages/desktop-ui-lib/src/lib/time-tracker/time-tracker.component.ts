@@ -583,8 +583,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._loggerService.error(error);
 					}
 				}
-
-				// this.loading = false;
 			} else {
 				if (!this._isOffline) {
 					try {
@@ -602,10 +600,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._loggerService.error(error);
 					}
 				}
-
-				// this.start$.next(false);
-
-				// this.loading = false;
 			}
 
 			asapScheduler.schedule(async () => {
