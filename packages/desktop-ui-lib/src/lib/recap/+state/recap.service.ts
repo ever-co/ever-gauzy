@@ -29,11 +29,13 @@ export class RecapService {
 	public async getActivities(): Promise<void> {
 		try {
 			this.recapStore.setLoading(true);
-			const { organizationId, tenantId } = this.store;
+			const { organizationId, tenantId, user } = this.store;
+			const employeeIds = [user.employee.id];
 			const request: IGetActivitiesStatistics = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
 				organizationId,
+				employeeIds,
 				onlyMe: true,
 				tenantId
 			};
@@ -55,11 +57,13 @@ export class RecapService {
 	public async getProjects(): Promise<void> {
 		try {
 			this.recapStore.setLoading(true);
-			const { organizationId, tenantId } = this.store;
+			const { organizationId, tenantId, user } = this.store;
+			const employeeIds = [user.employee.id];
 			const request: IGetProjectsStatistics = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
 				organizationId,
+				employeeIds,
 				onlyMe: true,
 				tenantId
 			};
@@ -77,13 +81,13 @@ export class RecapService {
 		try {
 			this.recapStore.setLoading(true);
 			const { organizationId, tenantId, user } = this.store;
-			const { employeeId } = user.employee;
+			const employeeIds = [user.employee.id];
 			const request: IGetTasksStatistics = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
 				organizationId,
 				onlyMe: true,
-				employeeId,
+				employeeIds,
 				tenantId
 			};
 			const tasks = await this.timesheetStatisticsService.getTasksStatistics(request);
@@ -99,11 +103,13 @@ export class RecapService {
 	public async getTimeSlots(): Promise<void> {
 		try {
 			this.recapStore.setLoading(true);
-			const { organizationId, tenantId } = this.store;
+			const { organizationId, tenantId, user } = this.store;
+			const employeeIds = [user.employee.id];
 			const request: IGetTimeSlotInput = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
 				organizationId,
+				employeeIds,
 				onlyMe: true,
 				tenantId
 			};
@@ -120,11 +126,13 @@ export class RecapService {
 	public async getCounts(): Promise<void> {
 		try {
 			this.recapStore.setLoading(true);
-			const { organizationId, tenantId } = this.store;
+			const { organizationId, tenantId, user } = this.store;
+			const employeeIds = [user.employee.id];
 			const request: IGetCountsStatistics = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
 				organizationId,
+				employeeIds,
 				onlyMe: true,
 				tenantId
 			};
@@ -142,11 +150,11 @@ export class RecapService {
 		try {
 			this.recapStore.setLoading(true);
 			const { organizationId, tenantId, user } = this.store;
-			const { employeeId } = user.employee;
+			const employeeIds = [user.employee.id];
 			const request: IGetActivitiesInput = {
 				...this.requestQuery.request,
 				...this.recapQuery.range,
-				employeeIds: [employeeId],
+				employeeIds,
 				groupBy: 'date',
 				organizationId,
 				tenantId
