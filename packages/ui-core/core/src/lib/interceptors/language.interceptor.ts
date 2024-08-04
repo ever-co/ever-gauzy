@@ -9,7 +9,11 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 export class LanguageInterceptor implements HttpInterceptor {
 	public logging: boolean = true;
 
-	constructor(readonly store: Store, readonly _i18nService: I18nService) {}
+	constructor(readonly store: Store, readonly _i18nService: I18nService) {
+		if (this.logging) {
+			console.log('language interceptor constructor: %s', store.preferredLanguage);
+		}
+	}
 
 	/**
 	 * Intercepts HTTP requests to add a language header.
@@ -19,11 +23,11 @@ export class LanguageInterceptor implements HttpInterceptor {
 	 */
 	intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 		// Get the preferred language from the store or the browser language
-		const language = this.store?.preferredLanguage ?? this._i18nService.getBrowserLang() ?? LanguagesEnum.ENGLISH;
+		const language = this.store?.preferredLanguage ?? this._i18nService?.getBrowserLang() ?? LanguagesEnum.ENGLISH;
 
 		// Log the browser language
 		if (this.logging) {
-			console.log('language interceptor browser lang', this._i18nService.getBrowserLang());
+			console.log('language interceptor browser lang', this._i18nService?.getBrowserLang());
 		}
 
 		// Clone the request and add the language header
