@@ -104,11 +104,6 @@ export class TimeTrackerStatusService {
 	public status(): Promise<ITimerStatus> {
 		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
 
-		// If the tenant or organization is not defined, return
-		if (!tenantId || !organizationId) {
-			return;
-		}
-
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
 			organizationId,
