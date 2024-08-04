@@ -80,6 +80,7 @@ nb-card-footer {
 	#fixed-area,
 	#scrollable-area {
 		flex-direction: column;
+		width: 100%;
 		display: flex;
 		@include nb-ltr(padding-right, 0.5rem);
 		@include nb-rtl(padding-left, 0.5rem);

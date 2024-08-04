@@ -1,12 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { from, tap } from 'rxjs';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { ElectronService } from '../../electron/services';
-import { LanguageSelectorService } from '../../language/language-selector.service';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../../constants';
 import { DomSanitizer } from '@angular/platform-browser';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { GAUZY_ENV } from '../../constants';
+import { ElectronService } from '../../electron/services';
+import { LanguageElectronService } from '../../language/language-electron.service';
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-about',
@@ -22,25 +19,14 @@ export class AboutComponent implements OnInit {
 	};
 	constructor(
 		private readonly _electronService: ElectronService,
-		private readonly _languageSelectorService: LanguageSelectorService,
-		private readonly _translateService: TranslateService,
+		private readonly _languageElectronService: LanguageElectronService,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _domSanitizer: DomSanitizer
 	) {}
 
 	ngOnInit(): void {
-		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this._languageElectronService.initialize<void>();
 	}
 
 	public async openLink(link: string) {
@@ -49,14 +35,10 @@ export class AboutComponent implements OnInit {
 				await this._electronService.shell.openExternal(this._environment.COMPANY_LINK);
 				break;
 			case 'TOS':
-				await this._electronService.shell.openExternal(
-					this._environment.PLATFORM_TOS_URL
-				);
+				await this._electronService.shell.openExternal(this._environment.PLATFORM_TOS_URL);
 				break;
 			case 'PRIVACY':
-				await this._electronService.shell.openExternal(
-					this._environment.PLATFORM_PRIVACY_URL
-				);
+				await this._electronService.shell.openExternal(this._environment.PLATFORM_PRIVACY_URL);
 				break;
 			default:
 				break;
@@ -69,13 +51,9 @@ export class AboutComponent implements OnInit {
 				.getName()
 				.split('-')
 				.join(' ')
-				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) =>
-					letter.toUpperCase()
-				),
+				.replace(/(^\w{1})|(\s+\w{1})/g, (letter) => letter.toUpperCase()),
 			version: this._electronService.remote.app.getVersion(),
-			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(
-				this._environment.GAUZY_DESKTOP_LOGO_512X512
-			),
+			iconPath: this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.GAUZY_DESKTOP_LOGO_512X512),
 			companyName: this._environment.COMPANY_NAME
 		};
 		return this._application;

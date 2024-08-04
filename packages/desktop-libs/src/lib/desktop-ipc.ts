@@ -1,5 +1,5 @@
 import { IActivityWatchEventResult } from '@gauzy/contracts';
-import { ScreenCaptureNotification, loginPage } from '@gauzy/desktop-window';
+import { ScreenCaptureNotification, WindowManager, loginPage } from '@gauzy/desktop-window';
 import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences } from 'electron';
 import log from 'electron-log';
 import { resetPermissions } from 'mac-screen-capture-permissions';
@@ -49,6 +49,7 @@ const offlineMode = DesktopOfflineModeHandler.instance;
 const userService = new UserService();
 const intervalService = new IntervalService();
 const timerService = new TimerService();
+const windowManager = WindowManager.getInstance();
 
 export function ipcMainHandler(store, startServer, knex, config, timeTrackerWindow) {
 	log.info('IPC Main Handler');
@@ -1064,9 +1065,16 @@ export function ipcTimer(
 	});
 
 	TranslateService.onLanguageChange((language: string) => {
-		const windows = [timeTrackerWindow, settingWindow];
-		for (const window of windows) {
-			window?.webContents?.send('preferred_language_change', language);
+		try {
+			const windows = windowManager.getActives();
+			for (const window of windows) {
+				const webContents = windowManager.webContents(window);
+				if (webContents) {
+					webContents.send('preferred_language_change', language);
+				}
+			}
+		} catch (error) {
+			console.error('An error occurred:', error.message);
 		}
 	});
 

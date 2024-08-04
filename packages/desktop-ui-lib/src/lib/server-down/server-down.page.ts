@@ -1,13 +1,9 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ServerConnectionService, Store } from '../services';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../constants';
-import { from, tap } from 'rxjs';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ElectronService } from '../electron/services';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { TranslateService } from '@ngx-translate/core';
+import { LanguageElectronService } from '../language/language-electron.service';
+import { ServerConnectionService, Store } from '../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -24,9 +20,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		private readonly router: Router,
 		@Inject(GAUZY_ENV)
 		private readonly environment: any,
-		private readonly _electronService: ElectronService,
-		private readonly _languageSelectorService: LanguageSelectorService,
-		private readonly _translateService: TranslateService
+		private readonly languageElectronService: LanguageElectronService
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}
@@ -53,14 +47,7 @@ export class ServerDownPage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(language, this._translateService);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.languageElectronService.initialize<void>();
 		this.checkConnection();
 	}
 

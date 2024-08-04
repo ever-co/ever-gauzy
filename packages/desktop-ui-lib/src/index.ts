@@ -12,6 +12,8 @@ export * from './lib/image-viewer/image-viewer.component';
 export * from './lib/image-viewer/image-viewer.module';
 export * from './lib/integrations';
 export * from './lib/interceptors';
+export * from './lib/language/language.module';
+export * from './lib/language/language-electron.service';
 export * from './lib/ngx-translate';
 export * from './lib/recap/recap-routing.module';
 export * from './lib/recap/recap.module';

@@ -200,7 +200,8 @@
 			"ESTIMATE": "Вы не создали ни одной оценки.",
 			"EVENT_TYPE": "Вы не создали ни одного типа события.",
 			"PRODUCT_TYPE_NO_DATA": "Вы не создали ни одного типа товара.",
-			"TEAM_DASHBOARD": "У вас нет ни одной команды"
+			"TEAM_DASHBOARD": "У вас нет ни одной команды",
+			"PLUGIN": "Вы не установили ни одного плагина."
 		},
 		"TRANSACTION_TYPE": "Тип",
 		"AMOUNT": "Количество",
@@ -3917,6 +3918,9 @@
 			"TIMEZONE_LOCAL": "Местное",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Виджет",
+			"PLUGINS": "Плагины",
+			"PLUGIN_DESCRIPTION": "Плагины",
+			"PLUGIN": "Плагин",
 			"WIDGET_LABEL": "Это окно отражает состояние таймера, указывает, работает он или остановлен, и функционирует как кнопка.",
 			"SSL": {
 				"SSL_CONFIG": "Настройка SSL",
@@ -3941,6 +3945,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Пожалуйста, остановите таймер перед изменением описания",
 		"STOP_TIMER_CHANGE_TEAM": "Пожалуйста, остановите таймер перед изменением команды",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"WAKATIME_INTEGRATION": "Интеграция Wakatime",
 		"LAST_CAPTURE_TAKEN": "Последний снимок экрана был сделан",
 		"REQUEST_TASK_PERMISSION": "Запросить разрешение у администратора организации",
 		"RETURN_ONLINE": "Вернуться в онлайн",
@@ -4009,7 +4014,12 @@
 			"WINDOW": "Окно",
 			"HELP": "Помощь",
 			"LEARN_MORE": "Узнать больше",
-			"OPEN_MAIN_WINDOW": "Открыть главное окно"
+			"OPEN_MAIN_WINDOW": "Открыть главное окно",
+			"DAILY_RECAP": "Ежедневный обзор"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Часовой учет времени",
+			"HOURLY_TIME_TRACKING_DATA": "Данные часового учета времени"
 		}
 	},
 	"SERVER": "Сервер",
@@ -4107,6 +4117,7 @@
 		"MEMBER": "Участник",
 		"MEMBER_INFO": "Информация о участнике",
 		"THIS_WEEK": "Эта неделя",
+		"WEEK": "Неделя",
 		"OVER_PERIOD": "За период",
 		"NO_MEMBER_ACTIVITY_DAY": "Нет активности участников на день",
 		"NO_MEMBER_ACTIVITY_WEEK": "Нет активности членов за неделю",

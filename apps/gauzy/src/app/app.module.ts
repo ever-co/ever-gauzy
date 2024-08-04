@@ -88,6 +88,14 @@ const NB_MODULES = [
 		HttpClientModule,
 		AppRoutingModule,
 		...NB_MODULES,
+		TranslateModule.forRoot({
+			defaultLanguage: LanguagesEnum.ENGLISH,
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
 		CloudinaryModule,
 		FileUploadModule,
 		isProd ? [] : AkitaNgDevtools,

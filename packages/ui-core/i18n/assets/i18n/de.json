@@ -201,7 +201,8 @@
 			"ESTIMATE": "Du hast keine Schätzung erstellt.",
 			"EVENT_TYPE": "Sie haben keine Veranstaltungsart erstellt.",
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
-			"TEAM_DASHBOARD": "Du hast keine Teams."
+			"TEAM_DASHBOARD": "Du hast keine Teams.",
+			"PLUGIN": "Sie haben kein Plugin installiert."
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",
@@ -3895,6 +3896,9 @@
 			"TIMEZONE_LOCAL": "Lokal",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dieses Fenster spiegelt den Status des Timers wider, indem es anzeigt, ob er läuft oder angehalten ist, und dient als Schaltfläche.",
 			"SSL": {
 				"SSL_CONFIG": "SSL-Konfiguration",
@@ -3919,6 +3923,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Bitte stoppen Sie den Timer, bevor Sie die Beschreibung ändern.",
 		"STOP_TIMER_CHANGE_TEAM": "Bitte stoppen Sie den Timer, bevor Sie das Team wechseln",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
+		"WAKATIME_INTEGRATION": "Wakatime-Integration",
 		"LAST_CAPTURE_TAKEN": "Letzter Bildschirmfoto aufgenommen",
 		"REQUEST_TASK_PERMISSION": "Bitte um Erlaubnis vom Administrator der Organisation.",
 		"RETURN_ONLINE": "Online zurückgeben",
@@ -3987,7 +3992,12 @@
 			"WINDOW": "Fenster.",
 			"HELP": "Hilfe",
 			"LEARN_MORE": "Erfahren Sie mehr",
-			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster"
+			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster",
+			"DAILY_RECAP": "Tägliche Zusammenfassung"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
+			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung"
 		}
 	},
 	"SERVER": "Server",
@@ -4084,6 +4094,7 @@
 		"MEMBER": "Mitglied",
 		"MEMBER_INFO": "Mitgliederinformationen",
 		"THIS_WEEK": "Diese Woche",
+		"WEEK": "Woche",
 		"OVER_PERIOD": "Im Laufe der Zeit",
 		"NO_MEMBER_ACTIVITY_DAY": "Keine Mitgliederaktivität für den Tag.",
 		"NO_MEMBER_ACTIVITY_WEEK": "Keine Aktivität der Mitglieder für die Woche",

@@ -13,9 +13,6 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW],
 				redirectTo: '/pages/jobs/search'
-			},
-			selectors: {
-				project: false
 			}
 		}
 	}

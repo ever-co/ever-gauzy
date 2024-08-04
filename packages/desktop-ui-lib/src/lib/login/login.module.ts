@@ -8,14 +8,13 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbFormFieldModule,
 	NbIconModule,
-	NbInputModule,
-  	NbFormFieldModule
+	NbInputModule
 } from '@nebular/theme';
-import { NgxLoginComponent } from './login.component';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
-import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageSelectorService } from '../language/language-selector.service';
+import { LanguageModule } from '../language/language.module';
+import { NgxLoginComponent } from './login.component';
 
 @NgModule({
 	imports: [
@@ -29,12 +28,11 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbCheckboxModule,
 		NbIconModule,
 		NbInputModule,
-    	NbFormFieldModule,
+		NbFormFieldModule,
 		DesktopDirectiveModule,
-		NgxTranslateModule
+		LanguageModule.forChild()
 	],
 	declarations: [NgxLoginComponent],
-	exports: [NgxLoginComponent],
-	providers: [LanguageSelectorService]
+	exports: [NgxLoginComponent]
 })
 export class NgxLoginModule {}

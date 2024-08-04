@@ -138,7 +138,7 @@ export class TrayIcon {
 			{
 				id: '1',
 				label: TranslateService.instant('TIMER_TRACKER.MENU.START_TRACKING'),
-				accelerator: 'CmdOrCtrl+Space',
+				accelerator: 'CmdOrCtrl+Shift+Space',
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					const userLogin = store.get('auth');
@@ -177,7 +177,7 @@ export class TrayIcon {
 			},
 			{
 				id: 'gauzy-recap',
-				label: 'Daily Recap',
+				label: TranslateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
 				accelerator: 'CmdOrCtrl+D',
 				enabled: true,
 				visible: appConfig.timeTrackerWindow,

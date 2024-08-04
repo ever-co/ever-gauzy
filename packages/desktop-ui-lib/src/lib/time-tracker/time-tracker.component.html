@@ -1,4 +1,4 @@
-<nb-layout>
+<nb-layout [nbSpinner]="processingStatus.state" [nbSpinnerMessage]="processingStatus.message" nbSpinnerSize="small">
 	<nb-layout-column class="top-space">
 		<button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
 			<nb-icon [icon]="expandIcon"></nb-icon>
@@ -61,7 +61,7 @@
 											}}</small>
 										</div>
 										<div class="work-weekly">
-											{{ 'TIMESHEET.THIS_WEEK' | translate }}
+											{{ 'TIMESHEET.WEEK' | translate }}
 										</div>
 									</div>
 								</div>
@@ -311,7 +311,7 @@
 							>
 								<div class="row">
 									<div class="col-8">
-										<nb-toggle [disabled]="true">Wakatime </nb-toggle>
+										<nb-toggle [disabled]="true">{{ 'TIMER_TRACKER.WAKATIME_INTEGRATION' | translate }}</nb-toggle>
 									</div>
 								</div>
 							</div>
@@ -374,74 +374,83 @@
 					</nb-card-body>
 				</nb-card>
 			</div>
-			<div *ngIf="isExpand$ | async" class="task-table">
-				<nb-card class="max-width-search">
-					<nb-card-body>
-						<div class="row">
-							<div class="col-12 search">
-								<button
-									(click)="addTask()"
-									[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
-									[nbTooltip]="
-										(!(hasTaskPermission$ | async)
-											? 'TIMER_TRACKER.REQUEST_TASK_PERMISSION'
-											: (isOffline$ | async)
-											? 'TIMER_TRACKER.RETURN_ONLINE'
-											: null
-										) | translate
-									"
-									class="mb-2"
-									nbButton
-									nbTooltipStatus="warning"
-									size="small"
-									status="success"
-								>
-									<nb-icon class="icon-task" icon="plus" pack="font-awesome"></nb-icon>
-									{{ 'BUTTONS.ADD' | translate }}
-								</button>
-							</div>
+			<div *ngIf="isExpand$ | async">
+				<nb-tabset>
+					<nb-tab [tabTitle]="'MENU.TASKS' | translate">
+						<div class="task-table">
+							<nb-card class="max-width-search">
+								<nb-card-body>
+									<div class="row">
+										<div class="col-12 search pt-0">
+											<button
+												(click)="addTask()"
+												[nbTooltipDisabled]="(hasTaskPermission$ | async) && !(isOffline$ | async)"
+												[nbTooltip]="
+													(!(hasTaskPermission$ | async)
+														? 'TIMER_TRACKER.REQUEST_TASK_PERMISSION'
+														: (isOffline$ | async)
+														? 'TIMER_TRACKER.RETURN_ONLINE'
+														: null
+													) | translate
+												"
+												class="mb-2"
+												nbButton
+												nbTooltipStatus="warning"
+												size="small"
+												status="success"
+											>
+												<nb-icon class="icon-task" icon="plus" pack="font-awesome"></nb-icon>
+												{{ 'BUTTONS.ADD' | translate }}
+											</button>
+										</div>
+									</div>
+									<div class="row">
+										<div class="col-12 search">
+											<nb-form-field>
+												<nb-icon icon="search-outline" nbPrefix></nb-icon>
+												<input
+													#search
+													(keydown.enter)="onSearch(search?.value)"
+													[disabled]="start$ | async"
+													[placeholder]="'TIMER_TRACKER.SEARCH' | translate"
+													fullWidth
+													nbInput
+													type="text"
+												/>
+											</nb-form-field>
+										</div>
+									</div>
+									<div [ngClass]="{ 'disabled-table': (start$ | async) }" class="row">
+										<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
+											<div class="table-scroll-container">
+												<angular2-smart-table
+													#taskTable
+													(userRowSelect)="handleRowSelection($event)"
+													[settings]="smartTableSettings"
+													[source]="sourceData$ | async"
+													style="cursor: pointer"
+												>
+												</angular2-smart-table>
+											</div>
+											<div class="pagination-container">
+												<ga-pagination [source]="sourceData$ | async"></ga-pagination>
+											</div>
+										</div>
+										<ng-template #noTask>
+											<div class="no-data">
+												<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate">
+												</ngx-no-data-message>
+											</div>
+										</ng-template>
+									</div>
+								</nb-card-body>
+							</nb-card>
 						</div>
-						<div class="row">
-							<div class="col-12 search">
-								<nb-form-field>
-									<nb-icon icon="search-outline" nbPrefix></nb-icon>
-									<input
-										#search
-										(keydown.enter)="onSearch(search?.value)"
-										[disabled]="start$ | async"
-										[placeholder]="'TIMER_TRACKER.SEARCH' | translate"
-										fullWidth
-										nbInput
-										type="text"
-									/>
-								</nb-form-field>
-							</div>
-						</div>
-						<div [ngClass]="{ 'disabled-table': (start$ | async) }" class="row">
-							<div *ngIf="tableData?.length > 0; else noTask" class="col-12 custom-table">
-								<div class="table-scroll-container">
-									<angular2-smart-table
-										#taskTable
-										(userRowSelect)="handleRowSelection($event)"
-										[settings]="smartTableSettings"
-										[source]="sourceData$ | async"
-										style="cursor: pointer"
-									>
-									</angular2-smart-table>
-								</div>
-								<div class="pagination-container">
-									<ga-pagination [source]="sourceData$ | async"></ga-pagination>
-								</div>
-							</div>
-							<ng-template #noTask>
-								<div class="no-data">
-									<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TASK' | translate">
-									</ngx-no-data-message>
-								</div>
-							</ng-template>
-						</div>
-					</nb-card-body>
-				</nb-card>
+					</nb-tab>
+					<nb-tab [tabTitle]="'TIMER_TRACKER.MENU.DAILY_RECAP' | translate">
+					  <ngx-activity-report></ngx-activity-report>
+					</nb-tab>
+				</nb-tabset>
 			</div>
 		</div>
 	</nb-layout-column>

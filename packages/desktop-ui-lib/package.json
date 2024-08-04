@@ -26,12 +26,8 @@
 		"compile": "tsc -p tsconfig.lib.json"
 	},
 	"keywords": [],
-	"devDependencies": {
-		"@types/moment-duration-format": "^2.2.3",
-		"@types/node": "^20.14.9",
-		"electron": "28.1.0"
-	},
 	"dependencies": {
+		"@angular-slider/ngx-slider": "^17.0.1",
 		"@angular/animations": "^16.2.12",
 		"@angular/common": "^16.2.12",
 		"@angular/core": "^16.2.12",
@@ -42,6 +38,8 @@
 		"@datorama/akita": "^7.1.1",
 		"@datorama/akita-ngdevtools": "^7.0.0",
 		"@electron/remote": "^2.0.8",
+		"@fortawesome/angular-fontawesome": "^0.10.1",
+		"@fortawesome/free-solid-svg-icons": "^6.0.0",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/desktop-window": "^0.1.0",
 		"@kurkle/color": "^0.2.0",
@@ -54,6 +52,7 @@
 		"@ngneat/until-destroy": "^9.2.0",
 		"@ngx-translate/core": "^15.0.0",
 		"@ngx-translate/http-loader": "^8.0.0",
+		"@swimlane/ngx-charts": "20.5.0",
 		"angular2-smart-table": "^3.2.0",
 		"ckeditor4-angular": "4.0.1",
 		"electron-log": "^4.4.8",
@@ -61,11 +60,16 @@
 		"hash-it": "^6.0.0",
 		"moment": "^2.30.1",
 		"moment-duration-format": "^2.3.2",
-		"moment-range": "^4.0.2",
-		"moment-timezone": "^0.5.45",
+		"ngx-daterangepicker-material": "^6.0.4",
 		"rxjs": "^7.4.0",
-		"underscore": "^1.13.3",
-		"@swimlane/ngx-charts": "20.5.0",
-		"ngx-daterangepicker-material": "^6.0.4"
+		"underscore": "^1.13.3"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.4.4",
+		"@types/moment-duration-format": "^2.2.3",
+		"@types/node": "^20.14.9",
+		"electron": "28.1.0",
+		"jest-preset-angular": "^13.1.4",
+		"tslint": "^6.1.3"
 	}
 }

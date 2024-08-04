@@ -13,6 +13,7 @@ export class RecapWindow extends BaseWindow implements IBaseWindow {
 				new WindowConfig('/recap', path, {
 					frame: false,
 					titleBarStyle: 'hidden',
+					...(process.platform === 'win32' && { frame: true, titleBarStyle: 'default' }),
 					resizable: false,
 					width: 400,
 					height: 750,
