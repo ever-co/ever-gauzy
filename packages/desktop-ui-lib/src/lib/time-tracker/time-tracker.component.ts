@@ -136,6 +136,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	lastTimeSlot = null;
 	invalidTimeLog = null;
 	loading = false;
+	isProcessingEnabled = false;
 	appSetting$: BehaviorSubject<any> = new BehaviorSubject(null);
 	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	isCollapse$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -600,6 +601,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			}
 
+			this.isProcessingEnabled = false;
+
 			asapScheduler.schedule(async () => {
 				try {
 					await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
@@ -623,6 +626,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			});
 			this._loggerService.info(`Timer Toggle Catch: ${moment().format()}`, error);
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -822,7 +826,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.note = remoteTimer.lastLog.description;
 					this.teamSelect = remoteTimer.lastLog.organizationTeamId;
 					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
-					await this.toggleStart(remoteTimer.running, false);
+					if (!this.isProcessingEnabled) {
+						await this.toggleStart(remoteTimer.running, false);
+					}
 				}),
 				untilDestroyed(this)
 			)
@@ -1465,6 +1471,15 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
+		if (this.isProcessingEnabled) {
+			const message = val ? 'Wait until the timer stop effectively' : 'Wait until the timer start effectively';
+			this._toastrNotifier.warn(message);
+			this._loggerService.debug(message);
+			return;
+		} else {
+			this.isProcessingEnabled = true;
+		}
+
 		this.loading = true;
 
 		if (!val) {
@@ -1490,12 +1505,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				} else {
 					console.log('Timer is already running');
 					this.loading = false;
+					this.isProcessingEnabled = false;
 				}
 
 				this.refreshTimer();
 			} else {
 				this.loading = false;
-				console.log('Error', 'validation failed');
+				this.isProcessingEnabled = false;
+				this._loggerService.error('Error', 'validation failed');
 			}
 		}
 	}
@@ -1594,6 +1611,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._errorHandlerService.handleError(error);
 		} finally {
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -1640,7 +1658,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._startMode = TimerStartMode.STOP;
 
 			if (this._isSpecialLogout) {
-				this._isSpecialLogout = false;
 				// wait 3 sec and logout
 				await this.logout();
 			}
@@ -1655,6 +1672,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('[ERROR_STOP_TIMER]', error);
 		} finally {
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -2503,6 +2521,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// we wait 3 sec and then logout
 		asyncScheduler.schedule(async () => {
 			await firstValueFrom(this._authStrategy.logout());
+			this._isSpecialLogout = false;
 			this.electronService.ipcRenderer.send(
 				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
 			);
@@ -2628,5 +2647,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			this._loggerService.error(error);
 		}
+	}
+
+	public get processingStatus() {
+		if (this._isSpecialLogout) {
+			return { state: this._isSpecialLogout, message: 'Logout in progress' };
+		}
+
+		if (this.quitApp) {
+			return { state: this.quitApp, message: 'Application is shutting down' };
+		}
+
+		return { state: false, message: '' };
 	}
 }
