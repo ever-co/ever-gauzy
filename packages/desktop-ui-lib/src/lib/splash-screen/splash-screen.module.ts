@@ -1,10 +1,9 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SplashScreenComponent } from './splash-screen.component';
-import { NbLayoutModule, NbCardModule, NbSpinnerModule, NbIconModule, NbButtonModule } from '@nebular/theme';
+import { NgModule } from '@angular/core';
+import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
-import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageSelectorService } from '../language/language-selector.service';
+import { LanguageModule } from '../language/language.module';
+import { SplashScreenComponent } from './splash-screen.component';
 
 @NgModule({
 	declarations: [SplashScreenComponent],
@@ -16,9 +15,9 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbButtonModule,
 		DesktopDirectiveModule,
 		NbIconModule,
-		NgxTranslateModule
+		LanguageModule.forChild()
 	],
 	exports: [SplashScreenComponent],
-	providers: [LanguageSelectorService]
+	providers: []
 })
 export class SplashScreenModule {}

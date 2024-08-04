@@ -1,14 +1,10 @@
-import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-	TranslateLoader,
-	TranslateModule,
-	TranslateService,
-} from '@ngx-translate/core';
-import { HttpLoaderFactory } from '../ngx-translate';
 import { HttpClient } from '@angular/common/http';
-import { LanguageInitializerFactory } from './language-initializer.factory';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ElectronService } from '../electron/services';
+import { HttpLoaderFactory } from '../ngx-translate';
+import { LanguageInitializerFactory } from './language-initializer.factory';
 
 @NgModule({
 	declarations: [],
@@ -19,8 +15,8 @@ import { ElectronService } from '../electron/services';
 				provide: TranslateLoader,
 				useFactory: HttpLoaderFactory,
 				deps: [HttpClient]
-			},
-		}),
+			}
+		})
 	],
 	providers: [
 		{
@@ -30,6 +26,6 @@ import { ElectronService } from '../electron/services';
 			multi: true
 		}
 	],
-	exports: [TranslateModule],
+	exports: [TranslateModule]
 })
-export class NgxTranslateModule { }
+export class NgxTranslateModule {}

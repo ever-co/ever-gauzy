@@ -2,26 +2,10 @@
 	"name": ".",
 	"$schema": "node_modules/nx/schemas/project-schema.json",
 	"projects": {
-		"gauzy-e2e": {
-			"tags": [],
-			"implicitDependencies": ["gauzy"]
-		},
-		"ui-auth": {
-			"tags": []
-		},
-		"ui-config": {
-			"tags": []
-		},
-		"ui-core": {
-			"tags": []
-		},
-		"plugin-job-search-ui": {
-			"tags": []
-		},
-		"gauzy": {
-			"tags": []
-		},
 		"api": {
+			"tags": []
+		},
+		"api-desktop": {
 			"tags": []
 		},
 		"desktop": {
@@ -30,28 +14,47 @@
 		"desktop-api": {
 			"tags": []
 		},
-		"desktop-ui": {
+		"desktop-timer": {
 			"tags": []
 		},
-		"api-desktop": {
+		"desktop-ui": {
 			"tags": []
 		},
 		"desktop-ui-lib": {
 			"tags": []
 		},
-		"desktop-timer": {
+		"gauzy": {
 			"tags": []
+		},
+		"gauzy-api-server": {
+			"tags": []
+		},
+		"gauzy-e2e": {
+			"tags": [],
+			"implicitDependencies": ["gauzy"]
 		},
 		"gauzy-server": {
-			"tags": []
-		},
-		"gauzy-server-ui": {
 			"tags": []
 		},
 		"gauzy-server-api": {
 			"tags": []
 		},
-		"gauzy-api-server": {
+		"gauzy-server-ui": {
+			"tags": []
+		},
+		"plugin-job-matching-ui": {
+			"tags": []
+		},
+		"plugin-job-search-ui": {
+			"tags": []
+		},
+		"ui-auth": {
+			"tags": []
+		},
+		"ui-config": {
+			"tags": []
+		},
+		"ui-core": {
 			"tags": []
 		}
 	}

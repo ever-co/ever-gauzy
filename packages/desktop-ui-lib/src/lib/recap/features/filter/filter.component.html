@@ -3,6 +3,7 @@
 </button>
 
 <ng-template #gauzyFilter>
-	<ngx-gauzy-filters class="vertical" [filters]="filters" [hasFilterApplies]="false" [hasTimeZoneFilter]="false"
-		[saveFilters]="false" (filtersChange)="filtersChange($event)"></ngx-gauzy-filters>
+	<ngx-gauzy-filters class="vertical" [filters]="filters$ | async" [hasTimeZoneFilter]="false" [saveFilters]="false"
+		(filtersChange)="filtersChange($event)"></ngx-gauzy-filters>
+	<ngx-auto-refresh></ngx-auto-refresh>
 </ng-template>

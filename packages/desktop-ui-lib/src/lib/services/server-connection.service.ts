@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Store } from './store.service';
 
 @Injectable()
@@ -59,6 +59,7 @@ export class ServerConnectionService {
 				}
 			} else {
 				console.log(`Skip checking server connection for URL: ${url}`);
+				this.store.serverConnection = 200;
 				resolve(true);
 			}
 		});

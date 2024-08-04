@@ -201,7 +201,8 @@
 			"ESTIMATE": "你还没有创建任何估算。",
 			"EVENT_TYPE": "你还没有创建任何事件类型。",
 			"PRODUCT_TYPE_NO_DATA": "你还没有创建任何产品类型。",
-			"TEAM_DASHBOARD": "你没有任何团队"
+			"TEAM_DASHBOARD": "你没有任何团队",
+			"PLUGIN": "您尚未安装任何插件。"
 		},
 		"TRANSACTION_TYPE": "类型 (Lèixíng)",
 		"AMOUNT": "金额",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "本地",
 			"TIMEZONE_UTC": "世界协调时间 (UTC)",
 			"WIDGET": "小部件",
+			"PLUGINS": "插件",
+			"PLUGIN_DESCRIPTION": "插件",
+			"PLUGIN": "插件",
 			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。",
 			"SSL": {
 				"SSL_CONFIG": "SSL 配置",
@@ -3923,6 +3927,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "请在更改描述之前停止计时器",
 		"STOP_TIMER_CHANGE_TEAM": "请在更改团队之前停止计时器",
 		"ACTIVITY_WATCH_INTEGRATION": "活动观察集成",
+		"WAKATIME_INTEGRATION": "Wakatime 集成",
 		"LAST_CAPTURE_TAKEN": "上一次截图",
 		"REQUEST_TASK_PERMISSION": "请向组织管理员申请权限。",
 		"RETURN_ONLINE": "返程在线",
@@ -3991,7 +3996,12 @@
 			"WINDOW": "窗户",
 			"HELP": "帮助",
 			"LEARN_MORE": "了解更多",
-			"OPEN_MAIN_WINDOW": "打开主窗口"
+			"OPEN_MAIN_WINDOW": "打开主窗口",
+			"DAILY_RECAP": "每日总结"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
+			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据"
 		}
 	},
 	"SERVER": "服务器",
@@ -4088,6 +4098,7 @@
 		"MEMBER": "成员",
 		"MEMBER_INFO": "会员信息",
 		"THIS_WEEK": "本周",
+		"WEEK": "周",
 		"OVER_PERIOD": "在这段时间内",
 		"NO_MEMBER_ACTIVITY_DAY": "今天没有会员活动。",
 		"NO_MEMBER_ACTIVITY_WEEK": "本周没有会员活动",

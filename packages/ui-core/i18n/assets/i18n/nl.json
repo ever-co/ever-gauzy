@@ -201,7 +201,8 @@
 			"ESTIMATE": "U heeft nog geen schatting gemaakt.",
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
-			"TEAM_DASHBOARD": "Je hebt geen teams."
+			"TEAM_DASHBOARD": "Je hebt geen teams.",
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Lokaal",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop.",
 			"SSL": {
 				"SSL_CONFIG": "SSL-configuratie",
@@ -3923,6 +3927,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Stop alsjeblieft de timer voordat je de beschrijving wijzigt.",
 		"STOP_TIMER_CHANGE_TEAM": "Stop de timer voordat je het team verandert",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integratie",
+		"WAKATIME_INTEGRATION": "Wakatime-integratie",
 		"LAST_CAPTURE_TAKEN": "Laatste schermopname gemaakt",
 		"REQUEST_TASK_PERMISSION": "Vraag toestemming aan de organisatiebeheerder",
 		"RETURN_ONLINE": "Terugkeren online",
@@ -3991,7 +3996,12 @@
 			"WINDOW": "Raam",
 			"HELP": "Help",
 			"LEARN_MORE": "Meer informatie leren",
-			"OPEN_MAIN_WINDOW": "Open hoofdvenster"
+			"OPEN_MAIN_WINDOW": "Open hoofdvenster",
+			"DAILY_RECAP": "Dagelijkse Samenvatting"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
+			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens"
 		}
 	},
 	"SERVER": "Server",
@@ -4088,6 +4098,7 @@
 		"MEMBER": "Lid",
 		"MEMBER_INFO": "Leden informatie",
 		"THIS_WEEK": "Deze week",
+		"WEEK": "Week",
 		"OVER_PERIOD": "Gedurende de periode",
 		"NO_MEMBER_ACTIVITY_DAY": "Geen activiteit van leden voor vandaag",
 		"NO_MEMBER_ACTIVITY_WEEK": "Geen activiteit van leden gedurende de week",

@@ -17,6 +17,7 @@ import {
 	GAUZY_ENV,
 	ImageViewerModule,
 	LanguageInterceptor,
+	LanguageModule,
 	LoggerService,
 	NoAuthGuard,
 	OrganizationInterceptor,
@@ -86,6 +87,7 @@ if (environment.SENTRY_DSN) {
 		UpdaterModule,
 		ImageViewerModule,
 		NbDatepickerModule.forRoot(),
+		LanguageModule.forRoot(),
 		AboutModule,
 		AlwaysOnModule,
 		RecapModule

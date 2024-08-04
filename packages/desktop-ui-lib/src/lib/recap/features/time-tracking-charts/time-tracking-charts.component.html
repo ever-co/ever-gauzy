@@ -1,5 +1,5 @@
 <nb-card>
-	<nb-card-header>Hourly Time Tracking &#183; <span class="today">{{dailyDuration$ | async | durationFormat : 'h[h]
+	<nb-card-header>{{'TIMER_TRACKER.RECAP.HOURLY_TIME_TRACKING' | translate}} &#183; <span class="today">{{dailyDuration$ | async | durationFormat : 'h[h]
 			m[m]':
 			{trim: 'both'}
 			}}</span> &#183;
@@ -8,8 +8,8 @@
 		<ngx-charts-bar-vertical [animations]="animations" [results]="(chartData$ | async)" [gradient]="gradient"
 			[xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend" [showXAxisLabel]="showXAxisLabel"
 			[showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabel"
-			[barPadding]="barPadding" [rotateXAxisTicks]="rotateXAxisTicks" [scheme]="colorScheme"
-			[maxXAxisTickLength]="maxXAxisTickLength" [wrapTicks]="wrapTicks">
+			[barPadding]="barPadding" [roundEdges]="roundEdges" [rotateXAxisTicks]="rotateXAxisTicks"
+			[scheme]="colorScheme" [maxXAxisTickLength]="maxXAxisTickLength" [wrapTicks]="wrapTicks">
 			<ng-template #tooltipTemplate let-model="model">
 				<div class="model-container">
 					<h1>{{ model.name }}</h1>
@@ -21,5 +21,5 @@
 	</nb-card-body>
 </nb-card>
 <ng-template #noDataChart>
-	<ngx-no-data-message message="No Hourly Time Tracking Data"></ngx-no-data-message>
+	<ngx-no-data-message [message]="'TIMER_TRACKER.RECAP.HOURLY_TIME_TRACKING_DATA' | translate"></ngx-no-data-message>
 </ng-template>

@@ -200,7 +200,8 @@
 			"ESTIMATE": "Не сте създали никаква оценка.",
 			"EVENT_TYPE": "Не сте създали никакъв тип събитие.",
 			"PRODUCT_TYPE_NO_DATA": "Не сте създали никакъв тип продукт.",
-			"TEAM_DASHBOARD": "Нямате никакви екипи."
+			"TEAM_DASHBOARD": "Нямате никакви екипи.",
+			"PLUGIN": "Не сте инсталирали никакви плъгини."
 		},
 		"TRANSACTION_TYPE": "Тип",
 		"AMOUNT": "Сума",
@@ -3515,7 +3516,6 @@
 			"JOB_MATCHING_SAVED": "Критерият беше променен",
 			"JOB_MATCHING_ERROR": "Грешка при запазване на критерия, моля, опитайте отново",
 			"JOB_MATCHING_DELETED": "Критерият беше премахнат",
-
 			"APPROVAL_POLICY_CREATED": "Политиката за одобрение '{{ name }}' беше добавена",
 			"APPROVAL_POLICY_UPDATED": "Политиката за одобрение '{{ name }}' беше променена",
 			"APPROVAL_POLICY_DELETED": "Политиката за одобрение '{{ name }}' беше премахната",
@@ -3920,6 +3920,9 @@
 			"TIMEZONE_LOCAL": "Местно време",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Подредба",
+			"PLUGINS": "Плъгини",
+			"PLUGIN_DESCRIPTION": "Плъгини",
+			"PLUGIN": "Плъгин",
 			"WIDGET_LABEL": "Този прозорец отразява състоянието на таймера, показвайки дали той работи или е спрян, и функционира като бутон",
 			"SSL": {
 				"SSL_CONFIG": "Конфигурация на SSL",
@@ -3944,6 +3947,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Моля, спрете таймера преди да промените описанието",
 		"STOP_TIMER_CHANGE_TEAM": "Моля, спрете таймера, преди да промените отбора",
 		"ACTIVITY_WATCH_INTEGRATION": "Интеграция с ActivityWatch",
+		"WAKATIME_INTEGRATION": "Wakatime Интеграция",
 		"LAST_CAPTURE_TAKEN": "Последната заснета екранна снимка",
 		"REQUEST_TASK_PERMISSION": "Изисква се разрешение от администратора на организацията",
 		"RETURN_ONLINE": "Върни се онлайн",
@@ -4012,7 +4016,12 @@
 			"WINDOW": "Прозорец",
 			"HELP": "Помощ",
 			"LEARN_MORE": "Научете повече",
-			"OPEN_MAIN_WINDOW": "Отвори главния прозорец"
+			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
+			"DAILY_RECAP": "Дневен преглед"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",
+			"HOURLY_TIME_TRACKING_DATA": "Данни за проследяване на времето по часове"
 		}
 	},
 	"SERVER": "Сървър",
@@ -4110,6 +4119,7 @@
 		"MEMBER": "Член",
 		"MEMBER_INFO": "Информация за члена",
 		"THIS_WEEK": "Тази седмица",
+		"WEEK": "Седмица",
 		"OVER_PERIOD": "През периода",
 		"NO_MEMBER_ACTIVITY_DAY": "Няма активност на члена за деня",
 		"NO_MEMBER_ACTIVITY_WEEK": "Няма активност на члена за седмицата",
