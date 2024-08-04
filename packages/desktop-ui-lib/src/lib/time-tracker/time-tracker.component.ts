@@ -1472,10 +1472,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
 		if (this.isProcessingEnabled) {
-			const message = val ? 'Wait until the timer stop effectively' : 'Wait until the timer start effectively';
+			const message = val
+				? 'Please wait some time for timer to stop and make final screenshot'
+				: 'Please wait for timer to start and make initial screenshot';
 			this._toastrNotifier.warn(message);
 			this._loggerService.debug(message);
-			return;
 		} else {
 			this.isProcessingEnabled = true;
 		}
