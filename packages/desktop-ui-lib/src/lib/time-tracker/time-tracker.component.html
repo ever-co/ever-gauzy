@@ -1,4 +1,4 @@
-<nb-layout>
+<nb-layout [nbSpinner]="processingStatus.state" [nbSpinnerMessage]="processingStatus.message" nbSpinnerSize="small">
 	<nb-layout-column class="top-space">
 		<button (click)="expand()" class="expand-icon" ghost nbButton status="primary">
 			<nb-icon [icon]="expandIcon"></nb-icon>

@@ -54,7 +54,6 @@ import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerService } from '../image-viewer/image-viewer.service';
 import { ActivityWatchViewService } from '../integrations';
 import { LanguageElectronService } from '../language/language-electron.service';
-import { LanguageSelectorService } from '../language/language-selector.service';
 import {
 	InterruptedSequenceQueue,
 	ISequence,
@@ -137,6 +136,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	lastTimeSlot = null;
 	invalidTimeLog = null;
 	loading = false;
+	isProcessingEnabled = false;
 	appSetting$: BehaviorSubject<any> = new BehaviorSubject(null);
 	isExpand$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	isCollapse$: BehaviorSubject<boolean> = new BehaviorSubject(true);
@@ -182,7 +182,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private _timeSlotQueueService: TimeSlotQueueService,
 		private _imageViewerService: ImageViewerService,
 		private _authStrategy: AuthStrategy,
-		private _languageSelectorService: LanguageSelectorService,
 		private _translateService: TranslateService,
 		private _alwaysOnService: AlwaysOnService,
 		@Inject(GAUZY_ENV)
@@ -580,11 +579,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							  });
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
-						this._loggerService.log.error(error);
+						this._loggerService.error(error);
 					}
 				}
-
-				this.loading = false;
 			} else {
 				if (!this._isOffline) {
 					try {
@@ -599,14 +596,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								  });
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
-						this._loggerService.log.error(error);
+						this._loggerService.error(error);
 					}
 				}
-
-				this.start$.next(false);
-
-				this.loading = false;
 			}
+
+			this.isProcessingEnabled = false;
 
 			asapScheduler.schedule(async () => {
 				try {
@@ -629,8 +624,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.toastrService.show(messageError, `Warning`, {
 				status: 'danger'
 			});
-			this._loggerService.log.info(`Timer Toggle Catch: ${moment().format()}`, error);
+			this._loggerService.info(`Timer Toggle Catch: ${moment().format()}`, error);
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -830,7 +826,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.note = remoteTimer.lastLog.description;
 					this.teamSelect = remoteTimer.lastLog.organizationTeamId;
 					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
-					await this.toggleStart(remoteTimer.running, false);
+					if (!this.isProcessingEnabled) {
+						await this.toggleStart(remoteTimer.running, false);
+					}
 				}),
 				untilDestroyed(this)
 			)
@@ -974,7 +972,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('take_screenshot', (event, arg) =>
 			this._ngZone.run(async () => {
 				try {
-					this._loggerService.log.info(`Take Screenshot:`, arg);
+					this._loggerService.info(`Take Screenshot::`, arg);
 					const screens = [];
 					const thumbSize = this.determineScreenshot(arg.screenSize);
 					const sources = await this.electronService.desktopCapturer.getSources({
@@ -982,13 +980,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						thumbnailSize: thumbSize
 					});
 					sources.forEach((source) => {
-						this._loggerService.log.info('screenshot_res', source);
+						this._loggerService.info(`screenshot_res:`, JSON.stringify(source));
 						screens.push({
 							img: source.thumbnail.toPNG(),
 							name: source.name,
 							id: source.display_id
 						});
-						this._loggerService.log.info('screenshot data', screens);
+						this._loggerService.info('screenshot data::', JSON.stringify(screens));
 					});
 					if (!arg.isTemp) {
 						event.sender.send('save_screen_shoot', {
@@ -1168,7 +1166,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('offline-handler', (event, isOffline) => {
 			this._ngZone.run(() => {
 				this._isOffline$.next(isOffline);
-				this._loggerService.log.info('You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now');
+				this._loggerService.info('You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now');
 				if (!isOffline) {
 					this.refreshTimer();
 				}
@@ -1473,6 +1471,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
+		if (this.isProcessingEnabled) {
+			const message = val
+				? 'Please wait some time for timer to stop and make final screenshot'
+				: 'Please wait for timer to start and make initial screenshot';
+			this._toastrNotifier.warn(message);
+			this._loggerService.debug(message);
+		} else {
+			this.isProcessingEnabled = true;
+		}
+
 		this.loading = true;
 
 		if (!val) {
@@ -1498,12 +1506,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				} else {
 					console.log('Timer is already running');
 					this.loading = false;
+					this.isProcessingEnabled = false;
 				}
 
 				this.refreshTimer();
 			} else {
 				this.loading = false;
-				console.log('Error', 'validation failed');
+				this.isProcessingEnabled = false;
+				this._loggerService.error('Error', 'validation failed');
 			}
 		}
 	}
@@ -1538,8 +1548,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._startMode = TimerStartMode.REMOTE;
 			}
 
-			this.start$.next(true);
-
 			try {
 				this.electronService.ipcRenderer.send('update_tray_start');
 			} catch (error) {
@@ -1559,6 +1567,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				isRemoteTimer: this.isRemoteTimer,
 				organizationTeamId: this.teamSelect
 			});
+
+			this.start$.next(true);
+
+			this.loading = false;
 
 			// update counter
 			if (this.isRemoteTimer) {
@@ -1600,6 +1612,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._errorHandlerService.handleError(error);
 		} finally {
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -1615,11 +1628,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 
+				this.start$.next(false);
+
+				this.loading = false;
+
 				console.log('Toggling timer');
 				await this._toggle(timer, onClick);
 
-				// when we stop timer, let's try to make final screenshot in background after tiny delay of 1 sec
-				setTimeout(async () => {
+				asyncScheduler.schedule(async () => {
 					console.log('Taking screen capture');
 					const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
 
@@ -1629,6 +1645,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			} else {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
+
+				this.start$.next(false);
+
+				this.loading = false;
 
 				console.log('Toggling timer');
 				await this._toggle(timer, onClick);
@@ -1641,14 +1661,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._startMode = TimerStartMode.STOP;
 
 			if (this._isSpecialLogout) {
-				this._isSpecialLogout = false;
 				// wait 3 sec and logout
 				await this.logout();
 			}
 
 			if (this.quitApp) {
 				console.log('Quitting app from stopTimer after 3 seconds delay');
-				setTimeout(() => {
+				asyncScheduler.schedule(() => {
 					this.electronService.remote.app.quit();
 				}, 3000);
 			}
@@ -1656,6 +1675,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			console.log('[ERROR_STOP_TIMER]', error);
 		} finally {
 			this.loading = false;
+			this.isProcessingEnabled = false;
 		}
 	}
 
@@ -1694,7 +1714,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._projects$.next(projects || []);
 		} catch (error) {
 			// Handle errors by logging them and updating the projects observable with an empty array
-			console.error('ERROR', error);
+			this._loggerService.error('ERROR', error);
 			this._projects$.next([]);
 		}
 	}
@@ -2095,7 +2115,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const screens = [];
 
 			sources.forEach((source) => {
-				this._loggerService.log.info('screenshot_res', source);
+				this._loggerService.info('screenshot_res::', JSON.stringify(source));
 				if (
 					this.appSetting &&
 					this.appSetting.monitor &&
@@ -2120,7 +2140,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 			});
 
-			this._loggerService.log.info('screenshot data', screens);
+			this._loggerService.info('screenshot data::', JSON.stringify(screens));
 
 			return screens;
 		} catch (error) {
@@ -2153,7 +2173,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			// notify
 			this.screenshotNotify(arg, thumbScreenshotImg);
 		} catch (error) {
-			console.error('Error on screenshot', error);
+			this._loggerService.error('Error on screenshot', error);
 		}
 
 		const paramActivity = {
@@ -2184,7 +2204,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			if (!timeLogs?.length) {
 				// Stop process if there is no time logs associate to activity result.
-				console.error('[@SendActivities]', 'No time logs');
+				this._loggerService.error('[@SendActivities]', 'No time logs');
 				return;
 			}
 
@@ -2246,9 +2266,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				b64Imgs: []
 			});
 		} catch (error) {
-			console.error('Error send to api timeslot', error);
-			this._loggerService.log.error('Error send to api timeslot', error);
-
+			this._loggerService.error('Error send to api timeslot::', error);
 			try {
 				console.log('Sending failed_synced_timeslot event...');
 				this.electronService.ipcRenderer.send('failed_synced_timeslot', {
@@ -2263,7 +2281,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				});
 			} catch (e) {
-				console.error('Failed to send failed_synced_timeslot event', e);
+				this._loggerService.error('Failed to send failed_synced_timeslot event', e);
 			}
 		}
 	}
@@ -2289,7 +2307,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			);
 			return resImg;
 		} catch (error) {
-			this._loggerService.log.error(error);
+			this._loggerService.error(error);
 		}
 	}
 
@@ -2504,8 +2522,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async logout() {
 		// we wait 3 sec and then logout
-		setTimeout(async () => {
+		asyncScheduler.schedule(async () => {
 			await firstValueFrom(this._authStrategy.logout());
+			this._isSpecialLogout = false;
 			this.electronService.ipcRenderer.send(
 				this._isRestartAndUpdate ? 'restart_and_update' : 'navigate_to_login'
 			);
@@ -2520,7 +2539,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 
 		// wait 3 sec and then restart
-		setTimeout(async () => {
+		asyncScheduler.schedule(async () => {
 			try {
 				// lock restart process
 				this._isLockSyncProcess = true;
@@ -2537,7 +2556,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				try {
 					await this.stopTimer(false, true);
 				} catch (e) {
-					console.error('Error in force stop timer', e);
+					this._loggerService.error('Error in force stop timer', e);
 				}
 			} finally {
 				// unlock restart process
@@ -2563,7 +2582,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			};
 			await this.timeTrackerService.updateOrganizationTeamEmployee(employeeId, payload);
 		} catch (error) {
-			console.error(error);
+			this._loggerService.error(error);
 		}
 	}
 
@@ -2606,7 +2625,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 			await Promise.allSettled(parallelizedTasks);
 		} catch (error) {
-			console.log('ERROR', error);
+			this._loggerService.error('ERROR', error);
 		}
 	}
 
@@ -2629,7 +2648,19 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			};
 			await this.timeTrackerService.updateTask(id, taskUpdateInput);
 		} catch (error) {
-			this._loggerService.log.error(error);
+			this._loggerService.error(error);
 		}
+	}
+
+	public get processingStatus() {
+		if (this._isSpecialLogout) {
+			return { state: this._isSpecialLogout, message: 'Logout in progress' };
+		}
+
+		if (this.quitApp) {
+			return { state: this.quitApp, message: 'Application is shutting down' };
+		}
+
+		return { state: false, message: '' };
 	}
 }
