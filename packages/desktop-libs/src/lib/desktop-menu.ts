@@ -21,7 +21,6 @@ export class AppMenu {
 							window.show();
 						}
 					},
-					{ type: 'separator' },
 					{
 						label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 						async click() {
@@ -33,7 +32,6 @@ export class AppMenu {
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 						}
 					},
-					{ type: 'separator' },
 					{
 						role: 'quit',
 						label: TranslateService.instant('BUTTONS.EXIT')
@@ -65,15 +63,13 @@ export class AppMenu {
 						enabled: true,
 						async click() {
 							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
 							}
 							settingsWindow.show();
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 							settingsWindow.webContents.send(timeTrackerWindow ? 'goto_top_menu' : 'goto_update');
+							settingsWindow.webContents.send('refresh_menu');
 						}
-					},
-					{
-						type: 'separator'
 					},
 					{
 						label: TranslateService.instant('TIMER_TRACKER.MENU.ZOOM_IN'),
@@ -154,6 +150,15 @@ export class AppMenu {
 			}
 		];
 		this.build();
+		if (timeTrackerWindow) {
+			timeTrackerWindow.webContents.send('refresh_menu');
+		}
+		if (settingsWindow) {
+			settingsWindow.webContents.send('refresh_menu');
+		}
+		if (updaterWindow) {
+			updaterWindow.webContents.send('refresh_menu');
+		}
 	}
 
 	public build(): void {

@@ -57,6 +57,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
@@ -70,6 +71,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
@@ -96,6 +98,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
@@ -109,6 +112,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
@@ -205,6 +209,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('goto_update');
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
@@ -218,6 +223,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('goto_top_menu');
+					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
 			{
