@@ -1625,9 +1625,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.electronService.ipcRenderer.send('stop-capture-screen');
 
 			if (this._startMode === TimerStartMode.MANUAL) {
-				console.log('Taking screen capture');
-				const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
-
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
 
@@ -1635,11 +1632,16 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 				this.loading = false;
 
-				console.log('Sending activities');
-				await this.sendActivities(activities);
-
 				console.log('Toggling timer');
 				await this._toggle(timer, onClick);
+
+				asyncScheduler.schedule(async () => {
+					console.log('Taking screen capture');
+					const activities = await this.electronService.ipcRenderer.invoke('TAKE_SCREEN_CAPTURE', config);
+
+					console.log('Sending activities');
+					await this.sendActivities(activities);
+				}, 1000);
 			} else {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
