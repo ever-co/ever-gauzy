@@ -1,9 +1,9 @@
-import { ChangeContext, Options } from '@angular-slider/ngx-slider';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
-import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
+import { ChangeContext, Options } from '@angular-slider/ngx-slider';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs';
+import { ITimeLogFilters, PermissionsEnum, TimeFormatEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

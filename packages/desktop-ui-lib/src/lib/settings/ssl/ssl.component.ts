@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
-import { ElectronService } from '@gauzy/desktop-ui-lib';
-import { IProxyConfig } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { IProxyConfig } from '@gauzy/contracts';
+import { ElectronService } from '../../electron/services';
 
 interface ICheckSslResponse {
 	status: boolean;
@@ -19,8 +19,7 @@ export class SslComponent implements OnInit {
 	public isHidden$: BehaviorSubject<boolean>;
 	private _config: BehaviorSubject<IProxyConfig>;
 
-	@Output()
-	public update: EventEmitter<IProxyConfig>;
+	@Output() public update: EventEmitter<IProxyConfig>;
 
 	constructor(private readonly electronService: ElectronService, private readonly ngZone: NgZone) {
 		this.update = new EventEmitter<IProxyConfig>();

@@ -24,8 +24,22 @@ import { TimerSynced } from './concretes';
 	providedIn: 'root'
 })
 export class TimeTrackerStatusService {
+	/**
+	 * Icon observable
+	 */
 	private _icon$: BehaviorSubject<ITimerIcon> = new BehaviorSubject<ITimerIcon>(null);
+	public get icon$(): Observable<any> {
+		return this._icon$.asObservable();
+	}
+
+	/**
+	 * External timer observable
+	 */
 	private _external$: Subject<ITimerSynced> = new Subject<ITimerSynced>();
+	public get external$(): Observable<any> {
+		return this._external$.asObservable();
+	}
+
 	private _userUpdate$: Subject<IUser> = new Subject();
 
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
@@ -83,16 +97,18 @@ export class TimeTrackerStatusService {
 			.subscribe();
 	}
 
-	public get icon$(): Observable<any> {
-		return this._icon$.asObservable();
-	}
-
-	public get external$(): Observable<any> {
-		return this._external$.asObservable();
-	}
-
+	/**
+	 * Get the timer status
+	 * @returns The timer status
+	 */
 	public status(): Promise<ITimerStatus> {
 		const { tenantId, organizationId } = this._timeTrackerService.timerConfig;
+
+		// If the tenant or organization is not defined, return
+		if (!tenantId || !organizationId) {
+			return;
+		}
+
 		return this._timeTrackerService.getTimerStatus({
 			tenantId,
 			organizationId,
