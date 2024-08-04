@@ -115,7 +115,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 	private retryUntil$: Subscription;
 
 	constructor(
-		readonly _translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
 		private readonly _dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
@@ -123,7 +123,7 @@ export class ApplyJobManuallyComponent extends TranslationBaseComponent implemen
 		private readonly _jobService: JobService,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {
-		super(_translateService);
+		super(translateService);
 	}
 
 	ngOnInit(): void {
