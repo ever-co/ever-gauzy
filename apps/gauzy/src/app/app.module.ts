@@ -2,7 +2,7 @@
 // that licensed under the MIT License and Copyright (c) 2017 akveo.com.
 
 import { APP_BASE_HREF } from '@angular/common';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -20,6 +20,7 @@ import {
 	NbCalendarKitModule
 } from '@nebular/theme';
 import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { CloudinaryModule } from '@cloudinary/ng';
 import { FileUploadModule } from 'ng2-file-upload';
 import { CookieService } from 'ngx-cookie-service';
@@ -45,7 +46,7 @@ import {
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
 import { CommonModule, Store } from '@gauzy/ui-core/common';
-import { I18nModule, I18nService } from '@gauzy/ui-core/i18n';
+import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
@@ -87,6 +88,14 @@ const NB_MODULES = [
 		HttpClientModule,
 		AppRoutingModule,
 		...NB_MODULES,
+		TranslateModule.forRoot({
+			defaultLanguage: LanguagesEnum.ENGLISH,
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
 		CloudinaryModule,
 		FileUploadModule,
 		isProd ? [] : AkitaNgDevtools,

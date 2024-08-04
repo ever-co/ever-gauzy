@@ -22,6 +22,7 @@ import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
+import { COMPONENTS } from './components';
 
 /**
  * Nebular modules
@@ -56,9 +57,9 @@ const THIRD_PARTY_MODULES = [
 ];
 
 @NgModule({
-	declarations: [JobMatchingComponent],
+	declarations: [JobMatchingComponent, ...COMPONENTS],
 	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, SharedModule, DialogsModule],
-	exports: [],
+	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,

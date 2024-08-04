@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, combineLatest, map, BehaviorSubject } from 'rxjs';
+import { Observable, combineLatest, map, BehaviorSubject, merge } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { NgxPermissionsService } from 'ngx-permissions';
 import { omit } from 'underscore';
 import {
 	IOrganization,
@@ -14,7 +16,8 @@ import {
 	JobPostTypeEnum,
 	ISelectedEmployee,
 	IGetJobPresetInput,
-	ID
+	ID,
+	LanguagesEnum
 } from '@gauzy/contracts';
 import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import {
@@ -24,6 +27,7 @@ import {
 	JobSearchOccupationService,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,7 +35,7 @@ import {
 	templateUrl: './job-matching.component.html',
 	styleUrls: ['./job-matching.component.scss']
 })
-export class JobMatchingComponent implements OnInit {
+export class JobMatchingComponent extends TranslationBaseComponent implements OnInit {
 	public criterionForm = {
 		jobSource: JobPostSourceEnum.UPWORK,
 		jobPresetId: null
@@ -51,15 +55,25 @@ export class JobMatchingComponent implements OnInit {
 	private payloads$: BehaviorSubject<object | null> = new BehaviorSubject(null);
 
 	constructor(
+		readonly translateService: TranslateService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _store: Store,
+		private readonly _i18nService: I18nService,
 		private readonly _jobPresetService: JobPresetService,
 		private readonly _jobSearchOccupationService: JobSearchOccupationService,
 		private readonly _jobSearchCategoryService: JobSearchCategoryService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
+		// Initialize UI permissions
+		this.initializeUiPermissions();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
+
 		this.payloads$
 			.pipe(
 				debounceTime(100),
@@ -98,6 +112,33 @@ export class JobMatchingComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Initialize UI permissions
+	 */
+	private initializeUiPermissions() {
+		// Load permissions
+		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
+		this._ngxPermissionsService.flushPermissions(); // Flush permissions
+		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this.translateService.use(preferredLanguage);
+		});
 	}
 
 	/**

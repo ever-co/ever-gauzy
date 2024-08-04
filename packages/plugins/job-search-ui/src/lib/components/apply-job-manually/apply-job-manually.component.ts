@@ -5,6 +5,7 @@ import { Subject, Subscription, combineLatest, switchMap, timer } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4, CKEditorComponent } from 'ckeditor4-angular';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import {
@@ -21,6 +22,7 @@ import {
 import { environment } from '@gauzy/ui-config';
 import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, JobService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -30,7 +32,7 @@ import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/u
 	styleUrls: ['./apply-job-manually.component.scss'],
 	providers: []
 })
-export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ApplyJobManuallyComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public JobPostSourceEnum: typeof JobPostSourceEnum = JobPostSourceEnum;
 	public FormHelpers: typeof FormHelpers = FormHelpers;
 	public ckConfig: CKEditor4.Config = {
@@ -113,13 +115,16 @@ export class ApplyJobManuallyComponent implements AfterViewInit, OnInit, OnDestr
 	private retryUntil$: Subscription;
 
 	constructor(
+		readonly translateService: TranslateService,
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _sanitizer: DomSanitizer,
 		private readonly _dialogRef: NbDialogRef<ApplyJobManuallyComponent>,
 		private readonly _store: Store,
 		private readonly _jobService: JobService,
 		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+	) {
+		super(translateService);
+	}
 
 	ngOnInit(): void {
 		const storeOrganization$ = this._store.selectedOrganization$;

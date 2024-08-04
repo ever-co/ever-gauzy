@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { Inject, NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterModule, ROUTES } from '@angular/router';
 import {
@@ -21,6 +21,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
@@ -64,6 +65,7 @@ const THIRD_PARTY_MODULES = [
 	MomentModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
+		defaultLanguage: LanguagesEnum.ENGLISH,
 		loader: {
 			provide: TranslateLoader,
 			useFactory: HttpLoaderFactory,
@@ -86,7 +88,7 @@ const THIRD_PARTY_MODULES = [
 		SharedModule,
 		StatusBadgeModule
 	],
-	exports: [...COMPONENTS],
+	exports: [RouterModule, ...COMPONENTS],
 	providers: [
 		{
 			provide: ROUTES,
@@ -99,7 +101,7 @@ const THIRD_PARTY_MODULES = [
 export class JobSearchModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(readonly _pageRouteService: PageRouteService) {
+	constructor(@Inject(PageRouteService) readonly _pageRouteService: PageRouteService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
