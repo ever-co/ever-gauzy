@@ -1471,15 +1471,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		// check that user is authorized to track time. If not, we return.
 		if (val && !this.start && !this._passedAllAuthorizations()) return;
 
-		if (this.isProcessingEnabled) {
-			const message = val ? 'Wait until the timer stop effectively' : 'Wait until the timer start effectively';
-			this._toastrNotifier.warn(message);
-			this._loggerService.debug(message);
-			return;
-		} else {
-			this.isProcessingEnabled = true;
-		}
-
 		this.loading = true;
 
 		if (!val) {
