@@ -4601,5 +4601,6 @@
 		"AVAILABLE": "Zdjęcie niedostępne"
 	},
 	"SERVER_API": "Serwer API",
-	"SERVER_API_LOG": "Dziennik serwera API"
+	"SERVER_API_LOG": "Dziennik serwera API",
+	"COMING_SOON": "This page is coming soon!"
 }
