@@ -12,8 +12,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
-import { WorkInProgressModule } from '../../work-in-progress/work-in-progress.module';
+import { SharedModule, WorkInProgressModule } from '@gauzy/ui-core/shared';
 import { GauzyAIRoutingModule } from './gauzy-ai-routing.module';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
