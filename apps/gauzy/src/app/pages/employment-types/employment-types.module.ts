@@ -20,12 +20,12 @@ import {
 	PaginationModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import { EmploymentTypesRoutingModule } from './employment-types-routing.module';
 import { EmploymentTypesComponent } from './employment-types.component';
-import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [

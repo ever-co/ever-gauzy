@@ -17,11 +17,11 @@ import {
 	ImageUploaderModule,
 	PublicPageMutationModule,
 	SharedModule,
-	TableComponentsModule
+	TableComponentsModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
-import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [

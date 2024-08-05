@@ -26,7 +26,8 @@ import {
 	RecordsHistoryModule,
 	SharedModule,
 	SingleStatisticModule,
-	TableComponentsModule
+	TableComponentsModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { DashboardComponent } from './dashboard.component';
@@ -37,7 +38,6 @@ import { ProjectManagementComponent } from './project-management/project-managem
 import { EmployeeChartsModule } from './human-resources/employee-charts/employee-charts.module';
 import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
-import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 import { TeamModule } from './team/team.module';
 
 @NgModule({

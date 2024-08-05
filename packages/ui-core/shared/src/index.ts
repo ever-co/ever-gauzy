@@ -70,4 +70,5 @@ export * from './lib/timer-picker';
 export * from './lib/timesheet';
 export * from './lib/user';
 export * from './lib/workspaces';
+export * from './lib/work-in-progress';
 export * from './lib/goal';
