@@ -11,7 +11,7 @@ import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
-import { TimeFormatEnum } from './organization.model';
+import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
 import { IOrganizationTeam } from 'organization-team.model';
 
@@ -46,6 +46,8 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	candidateId?: ICandidate['id'];
 	defaultTeam?: IOrganizationTeam;
 	defaultTeamId?: IOrganizationTeam['id'];
+	defaultOrganizationId?: IOrganization['id'];
+	defaultOrganization?: IOrganization;
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
@@ -118,6 +120,10 @@ export interface IDefaultTeam {
 	defaultTeamId?: IOrganizationTeam['id'];
 }
 
+export interface IDefaultUserOrganization {
+	defaultOrganizationId?: IOrganization['id'];
+}
+
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
 }
@@ -128,6 +134,7 @@ export interface IUserSigninWorkspaceResponse {
 	show_popup: boolean;
 	total_workspaces: number;
 	defaultTeamId?: IOrganizationTeam['id'];
+	defaultOrganizationId?: IOrganization['id'];
 }
 
 export interface IAuthResponse {

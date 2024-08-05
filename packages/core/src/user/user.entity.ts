@@ -18,11 +18,13 @@ import {
 	IImageAsset,
 	TimeFormatEnum,
 	ISocialAccount,
-	IOrganizationTeam
+	IOrganizationTeam,
+	IOrganization
 } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	Invite,
+	Organization,
 	OrganizationTeam,
 	Role,
 	SocialAccount,
@@ -243,6 +245,27 @@ export class User extends TenantBaseEntity implements IUser {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	defaultTeamId?: IOrganizationTeam['id'];
+
+	/**
+	 * Default organization
+	 */
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	defaultOrganization?: IOrganization;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.defaultOrganization)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultOrganizationId?: IOrganization['id'];
 
 	/*
 	|--------------------------------------------------------------------------

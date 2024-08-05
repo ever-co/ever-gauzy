@@ -3,7 +3,7 @@ import { IsNotEmpty, IsString } from 'class-validator';
 import { IDefaultTeam } from '@gauzy/contracts';
 
 /**
- * User email input DTO validation
+ * User default team input DTO validation
  */
 export class UserDefaultTeamDTO implements IDefaultTeam {
 	@ApiProperty({ type: () => String })
