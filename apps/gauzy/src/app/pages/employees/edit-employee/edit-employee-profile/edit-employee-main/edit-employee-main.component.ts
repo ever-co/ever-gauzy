@@ -83,8 +83,6 @@ export class EditEmployeeMainComponent implements OnInit, OnDestroy {
 	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image) {
-				console.log('image', image);
-
 				// Update user form data in store (assuming updateUserForm is async)
 				await this._employeeStore.updateUserForm({
 					imageId: image.id,

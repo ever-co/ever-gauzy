@@ -1,4 +1,5 @@
-@import '../payments/payments.component.scss';
+@import 'gauzy/_gauzy-table';
+@import 'gauzy/_gauzy-cards';
 
 :host {
   height: 100%;
@@ -47,4 +48,32 @@ nb-accordion-item-header ::ng-deep nb-icon {
 .grid {
   overflow: auto;
   height: 100%;
+}
+
+:host nb-card-body {
+  height: calc(100vh - 13.5rem) !important;
+  ::ng-deep angular2-smart-table {
+    .angular2-smart-actions {
+      width: 5%;
+      a {
+        transform: scale(0.6);
+        border-radius: 0.5rem;
+      }
+      a:nth-child(1) {
+        background-color: #00d68f !important;
+        color: white;
+      }
+      a:nth-child(2) {
+        background-color: white !important;
+        color: #ff3d71;
+        box-shadow: var(--gauzy-shadow);
+      }
+    }
+    .angular2-smart-actions-title {
+      a {
+        background-color: #00d68f !important;
+        transform: scale(0.9);
+      }
+    }
+  }
 }
