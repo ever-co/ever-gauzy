@@ -61,7 +61,8 @@ import {
 	StarRatingInputModule,
 	StarRatingOutputModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { EditCandidateTasksComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-tasks/edit-candidate-tasks.component';
 import { EditCandidateProfileComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-profile.component';
@@ -101,7 +102,6 @@ import { InterviewDateTableComponent } from './manage-candidate-interviews/inter
 import { InterviewersTableComponent } from './manage-candidate-interviews/interview-panel/table-components/interviewers/interviewers.component';
 import { InterviewActionsTableComponent } from './manage-candidate-interviews/interview-panel/table-components/actions/actions.component';
 import { FeedbackStatusTableComponent } from './edit-candidate/edit-candidate-profile/edit-candidate-feedbacks/table-components/status/status.component';
-import { WorkInProgressModule } from '../work-in-progress/work-in-progress.module';
 
 const COMPONENTS = [
 	CandidatesComponent,
