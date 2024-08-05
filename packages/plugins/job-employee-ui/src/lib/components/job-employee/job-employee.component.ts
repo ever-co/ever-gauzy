@@ -392,14 +392,15 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 			// Destructure properties for clarity.
 			const { id: organizationId, tenantId } = this.organization;
-
+			// Get the employee ID from the event data
 			const employeeId = event.data?.id;
+			// Get the new data from the event
 			const { billRateValue, minimumBillingRate } = event.newData ?? {};
 
 			// Update employee bill rates.
 			await this._employeesService.updateProfile(employeeId, {
-				minimumBillingRate,
-				billRateValue,
+				minimumBillingRate: +minimumBillingRate,
+				billRateValue: +billRateValue,
 				tenantId,
 				organizationId
 			});
