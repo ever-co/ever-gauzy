@@ -19,6 +19,7 @@ import { LanguageInitializerFactory } from './language-initializer.factory';
 		})
 	],
 	providers: [
+		TranslateService,
 		{
 			provide: APP_INITIALIZER,
 			useFactory: LanguageInitializerFactory,
