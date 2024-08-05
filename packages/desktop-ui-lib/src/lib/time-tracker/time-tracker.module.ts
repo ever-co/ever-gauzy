@@ -17,6 +17,7 @@ import {
 	NbSidebarModule,
 	NbSidebarService,
 	NbSpinnerModule,
+	NbTabsetModule,
 	NbToastrService,
 	NbToggleModule,
 	NbTooltipModule
@@ -27,9 +28,9 @@ import { AlwaysOnService } from '../always-on/always-on.service';
 import { ElectronService, LoggerService } from '../electron/services';
 import { ImageViewerModule } from '../image-viewer/image-viewer.module';
 import { ActivityWatchModule } from '../integrations';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { NgxTranslateModule } from '../ngx-translate';
+import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
+import { RecapModule } from '../recap/recap.module';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
 import { TasksModule } from '../tasks/tasks.module';
 import { CustomRenderComponent } from './custom-render-cell.component';
@@ -72,11 +73,13 @@ import { TimeTrackerService } from './time-tracker.service';
 		NbTooltipModule,
 		TimeTrackerStatusModule,
 		ImageViewerModule,
-		NgxTranslateModule,
+		LanguageModule.forChild(),
 		TaskRenderModule,
 		ActivityWatchModule,
 		NoDataMessageModule,
-		PipeModule
+		PipeModule,
+		NbTabsetModule,
+		RecapModule
 	],
 	providers: [
 		NbSidebarService,
@@ -91,7 +94,6 @@ import { TimeTrackerService } from './time-tracker.service';
 		LoggerService,
 		Store,
 		TimeSlotQueueService,
-		LanguageSelectorService,
 		AlwaysOnService
 	],
 	exports: [TimeTrackerComponent]

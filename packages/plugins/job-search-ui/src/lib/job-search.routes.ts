@@ -1,7 +1,7 @@
 import { Route } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
 import { IntegrationResolver, PageRouteService, PermissionsGuard } from '@gauzy/ui-core/core';
-import { SearchComponent } from './components/search/search.component';
+import { JobSearchComponent } from './components/job-search/job-search.component';
 
 /**
  * Creates jobs browse routes for the application
@@ -11,7 +11,7 @@ import { SearchComponent } from './components/search/search.component';
 export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 	{
 		path: '',
-		component: SearchComponent,
+		component: JobSearchComponent,
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {

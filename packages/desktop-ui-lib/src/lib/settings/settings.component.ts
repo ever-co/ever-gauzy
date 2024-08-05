@@ -5,13 +5,13 @@ import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { BehaviorSubject, Observable, filter, firstValueFrom, from, tap } from 'rxjs';
+import { BehaviorSubject, Observable, filter, firstValueFrom, tap } from 'rxjs';
 import { AuthStrategy } from '../auth';
 import { GAUZY_ENV } from '../constants';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { ElectronService } from '../electron/services';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { TimeTrackerDateManager, TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
+import { LanguageElectronService } from '../language/language-electron.service';
+import { TimeZoneManager, ToastrNotificationService, ZoneEnum } from '../services';
 import { SetupService } from '../setup/setup.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 
@@ -447,12 +447,12 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 		private _setupService: SetupService,
 		private _notifier: ToastrNotificationService,
 		private _translateService: TranslateService,
-		private _languageSelectorService: LanguageSelectorService,
 		@Optional()
 		private _authStrategy: AuthStrategy,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
-		private readonly _domSanitizer: DomSanitizer
+		private readonly _domSanitizer: DomSanitizer,
+		private readonly _languageElectronService: LanguageElectronService
 	) {
 		this._loading$ = new BehaviorSubject(false);
 		this._automaticUpdate$ = new BehaviorSubject(false);
@@ -726,22 +726,7 @@ export class SettingsComponent implements OnInit, AfterViewInit {
 			});
 		});
 
-		this.electronService.ipcRenderer.on('preferred_language_change', (event, language: LanguagesEnum) => {
-			this._ngZone.run(() => {
-				this._languageSelectorService.setLanguage(language, this._translateService);
-				TimeTrackerDateManager.locale(language);
-			});
-		});
-
-		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(language, this._translateService);
-					TimeTrackerDateManager.locale(language);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this._languageElectronService.initialize<void>();
 	}
 
 	mappingAdditionalSetting(values) {

@@ -1,19 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SearchComponent } from './search.component';
 
-describe('SearchComponent', () => {
-	let component: SearchComponent;
-	let fixture: ComponentFixture<SearchComponent>;
+import { ProgressStatusComponent } from './progress-status.component';
+
+describe('ProgressStatusComponent', () => {
+	let component: ProgressStatusComponent;
+	let fixture: ComponentFixture<ProgressStatusComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [SearchComponent],
+			declarations: [ProgressStatusComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(SearchComponent);
+		fixture = TestBed.createComponent(ProgressStatusComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

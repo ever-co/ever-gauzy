@@ -201,7 +201,8 @@
 			"ESTIMATE": "Non hai creato nessuna stima",
 			"EVENT_TYPE": "Non hai creato alcun tipo di evento",
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
-			"TEAM_DASHBOARD": "Non hai nessuna squadra"
+			"TEAM_DASHBOARD": "Non hai nessuna squadra",
+			"PLUGIN": "Non hai installato alcun plugin."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Locale",
 			"TIMEZONE_UTC": "UTC (Coordinated Universal Time)",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugin",
+			"PLUGIN_DESCRIPTION": "Plugin",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Questa finestra riflette lo stato del timer, indicando se è in esecuzione o fermo e funziona come un pulsante.",
 			"SSL": {
 				"SSL_CONFIG": "Configurazione SSL",
@@ -3923,6 +3927,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Si prega di fermare il timer prima di modificare la descrizione",
 		"STOP_TIMER_CHANGE_TEAM": "Si prega di fermare il timer prima di cambiare squadra",
 		"ACTIVITY_WATCH_INTEGRATION": "Integrazione di ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integrazione Wakatime",
 		"LAST_CAPTURE_TAKEN": "Ultima schermata catturata",
 		"REQUEST_TASK_PERMISSION": "Richiedi il permesso all'amministratore dell'organizzazione",
 		"RETURN_ONLINE": "Ritorno online",
@@ -3991,7 +3996,12 @@
 			"WINDOW": "Finestra",
 			"HELP": "Aiuto",
 			"LEARN_MORE": "Scopri di più",
-			"OPEN_MAIN_WINDOW": "Apri la finestra principale"
+			"OPEN_MAIN_WINDOW": "Apri la finestra principale",
+			"DAILY_RECAP": "Riepilogo Giornaliero"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
+			"HOURLY_TIME_TRACKING_DATA": "Dati di tracciamento del tempo orario"
 		}
 	},
 	"SERVER": "Server",
@@ -4088,6 +4098,7 @@
 		"MEMBER": "Membro",
 		"MEMBER_INFO": "Informazioni sul membro",
 		"THIS_WEEK": "Questa settimana",
+		"WEEK": "Settimana",
 		"OVER_PERIOD": "Nel corso del periodo",
 		"NO_MEMBER_ACTIVITY_DAY": "Nessuna attività dei membri per la giornata",
 		"NO_MEMBER_ACTIVITY_WEEK": "Nessuna attività dei membri per la settimana",

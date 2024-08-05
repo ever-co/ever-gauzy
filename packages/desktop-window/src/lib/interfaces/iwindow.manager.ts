@@ -1,4 +1,4 @@
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, WebContents } from 'electron';
 import { IBaseWindow } from './ibase-window';
 export enum RegisteredWindow {
 	ABOUT = 'about',
@@ -27,6 +27,12 @@ export interface IWindowManager {
 	hide(name: RegisteredWindow): void;
 
 	getOne(name: RegisteredWindow): IWindow;
+
+	getAll(): IWindow[];
+
+	getActives(): IWindow[];
+
+	webContents(window: IWindow): WebContents;
 
 	close(name: RegisteredWindow): void;
 

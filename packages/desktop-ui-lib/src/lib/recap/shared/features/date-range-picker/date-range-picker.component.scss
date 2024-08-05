@@ -214,6 +214,11 @@ $button-radius: var(--button-rectangle-border-radius);
 	.custom-input {
 		height: 32px;
 		margin-right: 0px;
+
+		input {
+			height: 1.875rem !important;
+			background-color: transparent !important;
+		}
 	}
 
 	[nbInput].status-basic:focus:hover {

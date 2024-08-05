@@ -1,23 +1,19 @@
-import { AfterViewInit, Component, NgZone, OnInit } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { BehaviorSubject, from, Observable, tap } from 'rxjs';
-import { ElectronService } from '../electron/services';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { TimeTrackerDateManager } from '../services';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter } from './always-on.service';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { NbIconLibraries } from '@nebular/theme';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { LanguageElectronService } from '../language/language-electron.service';
+import { AlwaysOnService, AlwaysOnStateEnum, ITimeCounter } from './always-on.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-always-on',
 	templateUrl: './always-on.component.html',
-	styleUrls: ['./always-on.component.scss'],
+	styleUrls: ['./always-on.component.scss']
 })
-export class AlwaysOnComponent implements OnInit, AfterViewInit {
+export class AlwaysOnComponent implements OnInit {
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	public isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false)
+	public isOffline$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	public loading: boolean = false;
 	public isTrackingEnabled: boolean = true;
 
@@ -27,35 +23,19 @@ export class AlwaysOnComponent implements OnInit, AfterViewInit {
 	});
 
 	constructor(
-		private _languageSelectorService: LanguageSelectorService,
-		private _electronService: ElectronService,
-		private _translateService: TranslateService,
 		private _alwaysOnService: AlwaysOnService,
 		private _iconLibraries: NbIconLibraries,
+		private _languageElectronService: LanguageElectronService,
 		private _ngZone: NgZone
 	) {
 		this._iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
-			iconClassPrefix: 'fa',
+			iconClassPrefix: 'fa'
 		});
 	}
 
-	ngAfterViewInit(): void {
-		from(this._electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language: LanguagesEnum) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-					TimeTrackerDateManager.locale(language);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
-	}
-
 	ngOnInit(): void {
+		this._languageElectronService.initialize<void>();
 		this._alwaysOnService.state$
 			.pipe(
 				tap((state: AlwaysOnStateEnum) => {
@@ -91,23 +71,6 @@ export class AlwaysOnComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this._electronService.ipcRenderer.on(
-			'preferred_language_change',
-			(event, language: LanguagesEnum) => {
-				this._ngZone.run(() => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-					TimeTrackerDateManager.locale(language);
-				});
-			}
-		);
-		this._electronService.ipcRenderer.on('offline-handler', (event, isOffline) => {
-			this._ngZone.run(() => {
-				this.isOffline$.next(isOffline);
-			});
-		});
 	}
 
 	public run(): void {

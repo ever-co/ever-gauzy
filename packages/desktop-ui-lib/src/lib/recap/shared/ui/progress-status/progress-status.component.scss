@@ -1,0 +1,62 @@
+@import "var";
+
+.wrapper {
+    display: flex;
+    align-items: center;
+}
+
+:host {
+    display: block;
+    .percentage-col {
+        width: 90px;
+    }
+    // .child-items {
+    //   padding-left: 70px;
+    //   padding-right: 70px;
+    // }
+    ::ng-deep {
+        nb-progress-bar {
+            .progress-container {
+                height: 5px !important;
+            }
+            .progress-value {
+                span {
+                    display: none;
+                }
+            }
+        }
+    }
+}
+
+:host-context(.report-progress) {
+    width: 100%;
+
+    .percentage-col {
+        margin-right: 10px;
+        width: 60px;
+    }
+    .progress-col {
+        width: 75%;
+        display: flex;
+        align-items: flex-end;
+    }
+    ::ng-deep {
+        .progress-container {
+            height: 10px !important;
+        }
+        nb-progress-bar {
+            width: 100%;
+        }
+    }
+    .wrapper {
+        width: 100%;
+        display: flex;
+
+    }
+}
+
+@include respond(sm) {
+    .wrapper {
+        flex-wrap: wrap;
+    }
+}

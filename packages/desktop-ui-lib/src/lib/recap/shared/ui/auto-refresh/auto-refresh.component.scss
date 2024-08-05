@@ -1,0 +1,19 @@
+:host {
+	.wrapper {
+		padding: 0.5rem 1rem;
+		width: 100%;
+		gap: 1rem;
+	};
+	::ng-deep {
+		nb-toggle {
+
+			div.checked+span.text {
+				color: var(--text-primary-color) !important;
+			}
+
+			.toggle-label {
+				margin-bottom: 0;
+			}
+		}
+	}
+}

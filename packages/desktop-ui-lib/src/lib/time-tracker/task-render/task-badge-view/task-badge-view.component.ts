@@ -10,7 +10,7 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 @Component({
 	selector: 'gauzy-task-badge-view',
 	templateUrl: './task-badge-view.component.html',
-	styleUrls: ['./task-badge-view.component.scss'],
+	styleUrls: ['./task-badge-view.component.scss']
 })
 export class TaskBadgeViewComponent {
 	constructor(private _statusIconService: StatusIconService) {

@@ -1,3 +1,4 @@
+import { BrowserWindow, WebContents } from 'electron';
 import log from 'electron-log';
 import { IWindow, IWindowManager, RegisteredWindow } from '../interfaces/iwindow.manager';
 
@@ -51,6 +52,28 @@ export class WindowManager implements IWindowManager {
 			return null;
 		}
 		return window;
+	}
+
+	public getAll(): IWindow[] {
+		return Array.from(this.windows.values());
+	}
+
+	public getActives(): IWindow[] {
+		return this.getAll().filter((window) => {
+			if (window instanceof BrowserWindow) {
+				return !!window;
+			} else {
+				return !!window?.browserWindow;
+			}
+		});
+	}
+
+	public webContents(window: IWindow): WebContents {
+		if (window instanceof BrowserWindow) {
+			return window?.webContents;
+		} else {
+			return window.browserWindow?.webContents;
+		}
 	}
 
 	public close(name: RegisteredWindow): void {

@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest, concatMap, map } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { combineLatest, concatMap, map, Observable } from 'rxjs';
+import { AutoRefreshService } from '../../+state/auto-refresh/auto-refresh.service';
 import { RecapQuery } from '../../+state/recap.query';
 import { RecapService } from '../../+state/recap.service';
 import { RequestQuery } from '../../+state/request/request.query';
@@ -17,18 +16,24 @@ import { ActivityStatisticsAdapter } from '../../shared/utils/adapters/activity.
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ActivitiesComponent implements OnInit {
-	private readonly recapQuery = inject(RecapQuery);
-	private readonly requestQuery = inject(RequestQuery);
-	private readonly service = inject(RecapService);
+	constructor(
+		private readonly recapQuery: RecapQuery,
+		private readonly requestQuery: RequestQuery,
+		private readonly service: RecapService,
+		private readonly autoRefreshService: AutoRefreshService
+	) {}
 
 	ngOnInit(): void {
-		combineLatest([this.recapQuery.range$, this.requestQuery.request$])
+		combineLatest([this.recapQuery.range$, this.requestQuery.request$, this.autoRefreshService.refresh$])
 			.pipe(
-				distinctUntilChange(),
-				concatMap(() => this.service.getActivities()),
+				concatMap(() => this.load()),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	public async load(): Promise<void> {
+		await this.service.getActivities();
 	}
 
 	public get activities$(): Observable<IStatisticItem[]> {

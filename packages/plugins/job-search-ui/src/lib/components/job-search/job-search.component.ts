@@ -51,10 +51,10 @@ import { JobTitleDescriptionDetailsComponent } from '../job-title-description-de
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-job-search',
-	templateUrl: './search.component.html',
-	styleUrls: ['./search.component.scss']
+	templateUrl: './job-search.component.html',
+	styleUrls: ['./job-search.component.scss']
 })
-export class SearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class JobSearchComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	loading: boolean = false;
 	isRefresh: boolean = false;
 	autoRefresh: boolean = false;
@@ -84,7 +84,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	/*
 	 * Search Tab Form
 	 */
-	public form: UntypedFormGroup = SearchComponent.buildForm(this._fb);
+	public form: UntypedFormGroup = JobSearchComponent.buildForm(this._fb);
 	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
 		return fb.group(
 			{
@@ -101,7 +101,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	}
 
 	constructor(
-		public readonly translateService: TranslateService,
+		readonly translateService: TranslateService,
 		private readonly _fb: UntypedFormBuilder,
 		private readonly _http: HttpClient,
 		private readonly _activatedRoute: ActivatedRoute,
@@ -114,8 +114,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _i18nService: I18nService,
-		private readonly _translateService: TranslateService
+		private readonly _i18nService: I18nService
 	) {
 		super(translateService);
 
@@ -224,7 +223,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 
 		// Subscribe to preferred language changes
 		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
-			this._translateService.use(preferredLanguage);
+			this.translateService.use(preferredLanguage);
 		});
 	}
 
@@ -632,7 +631,7 @@ export class SearchComponent extends PaginationFilterBaseComponent implements Af
 	 * Loads smart table settings.
 	 */
 	private _loadSmartTableSettings() {
-		const self: SearchComponent = this;
+		const self: JobSearchComponent = this;
 
 		const pagination: IPaginationBase = this.getPagination();
 		this.settingsSmartTable = {

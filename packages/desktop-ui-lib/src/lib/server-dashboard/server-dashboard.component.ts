@@ -7,15 +7,13 @@ import {
 	Inject,
 	NgZone,
 	OnInit,
-	ViewChild,
+	ViewChild
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
-import { from, tap } from 'rxjs';
+import { UntilDestroy } from '@ngneat/until-destroy';
 import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
+import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorService } from '../language/language-selector.service';
 
 export enum ServerStatus {
@@ -28,7 +26,7 @@ export enum ServerStatus {
 	selector: 'ngx-server-dashboard',
 	templateUrl: './server-dashboard.component.html',
 	styleUrls: ['./server-dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush,
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	@ViewChild('logBox') logBox: ElementRef;
@@ -40,21 +38,21 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	restart = false;
 	btn: any = {
 		name: ServerStatus.START,
-		icon: 'arrow-right-outline',
+		icon: 'arrow-right-outline'
 	};
 	logContents: any = [];
 	isExpandWindow = false;
 	logIsOpen = false;
 	styles = {
 		btnStart: 'button-small',
-		icon: 'margin-icon-small',
+		icon: 'margin-icon-small'
 	};
 
 	constructor(
 		private electronService: ElectronService,
 		private _cdr: ChangeDetectorRef,
 		private _languageSelectorService: LanguageSelectorService,
-		private _translateService: TranslateService,
+		private languageElectronService: LanguageElectronService,
 		private _ngZone: NgZone,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
@@ -64,11 +62,11 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			this.loading = false;
 			this.btn = {
 				name: arg ? ServerStatus.STOP : ServerStatus.START,
-				icon: arg ? 'stop-circle-outline' : 'arrow-right-outline',
+				icon: arg ? 'stop-circle-outline' : 'arrow-right-outline'
 			};
 			this.running = arg;
 			event.sender.send('running_state', arg);
-			if(this.running) {
+			if (this.running) {
 				this.restart = false;
 			}
 			this._cdr.detectChanges();
@@ -103,45 +101,17 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 			this._cdr.detectChanges();
 		});
 
-		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO
-		);
+		this.gauzyIcon = this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 	ngAfterViewInit(): void {
-		this.electronService.ipcRenderer.on(
-			'dashboard_ready',
-			(event, arg) => {
-				this._ngZone.run(() => {
-					if (!!arg.setting?.autoStart ?? true) {
-						this.runServer();
-					}
-				});
-			}
-		);
-		this.electronService.ipcRenderer.on(
-			'preferred_language_change',
-			(event, language: LanguagesEnum) => {
-				this._ngZone.run(() => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-					this._cdr.detectChanges();
-				});
-			}
-		);
-		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this._translateService
-					);
-					this._cdr.detectChanges();
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.electronService.ipcRenderer.on('dashboard_ready', (event, arg) => {
+			this._ngZone.run(() => {
+				if (!!arg.setting?.autoStart ?? true) {
+					this.runServer();
+				}
+			});
+		});
+		this.languageElectronService.initialize(this._cdr.checkNoChanges());
 	}
 
 	ngOnInit(): void {
@@ -149,8 +119,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 	}
 
 	private scrollToBottom() {
-		this.logBox.nativeElement.scrollTop =
-			this.logBox.nativeElement.scrollHeight;
+		this.logBox.nativeElement.scrollTop = this.logBox.nativeElement.scrollHeight;
 	}
 
 	runServer() {
@@ -158,7 +127,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		this.loading = true;
 		this.btn = {
 			name: ServerStatus.START,
-			icon: '',
+			icon: ''
 		};
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('run_gauzy_server');
@@ -173,7 +142,7 @@ export class ServerDashboardComponent implements OnInit, AfterViewInit {
 		this.loading = true;
 		this.btn = {
 			name: ServerStatus.STOP,
-			icon: '',
+			icon: ''
 		};
 		this.logIsOpen = true;
 		this.electronService.ipcRenderer.send('stop_gauzy_server');

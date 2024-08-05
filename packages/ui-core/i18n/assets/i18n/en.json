@@ -4052,6 +4052,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Please stop the timer before changing the description",
 		"STOP_TIMER_CHANGE_TEAM": "Please stop the timer before changing the team",
 		"ACTIVITY_WATCH_INTEGRATION": "ActivityWatch Integration",
+		"WAKATIME_INTEGRATION": "Wakatime Integration",
 		"LAST_CAPTURE_TAKEN": "Last screen capture taken",
 		"REQUEST_TASK_PERMISSION": "Request permission from the organization administrator",
 		"RETURN_ONLINE": "Return Online",
@@ -4121,7 +4122,12 @@
 			"WINDOW": "Window",
 			"HELP": "Help",
 			"LEARN_MORE": "Learn More",
-			"OPEN_MAIN_WINDOW": "Open Main Window"
+			"OPEN_MAIN_WINDOW": "Open Main Window",
+			"DAILY_RECAP": "Daily Recap"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
+			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data"
 		}
 	},
 	"SERVER": "Server",
@@ -4130,6 +4136,7 @@
 		"TODAY": "Today",
 		"DAILY": "Daily",
 		"WEEKLY": "Weekly",
+		"WEEK": "Week",
 		"MONTHLY": "Monthly",
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
