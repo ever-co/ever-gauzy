@@ -51,9 +51,9 @@ const THIRD_PARTY_MODULES = [
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
 		Angular2SmartTableModule,
+		SharedModule,
 		GauzyButtonActionModule,
 		PaginationV2Module,
-		SharedModule,
 		SmartTableToggleModule
 	],
 	providers: [

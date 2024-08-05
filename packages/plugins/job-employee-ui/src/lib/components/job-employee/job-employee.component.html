@@ -22,10 +22,10 @@
 				</ng-container>
 			</nb-tab>
 			<nb-tab [tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate" [tabId]="jobSearchTabsEnum.SEARCH">
-				<!-- <ga-wip></ga-wip> -->
+				<ng-template [ngTemplateOutlet]="wip"></ng-template>
 			</nb-tab>
 			<nb-tab [tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate" [tabId]="jobSearchTabsEnum.HISTORY">
-				<!-- <ga-wip></ga-wip> -->
+				<ng-template [ngTemplateOutlet]="wip"></ng-template>
 			</nb-tab>
 		</nb-tabset>
 	</nb-card-body>
@@ -106,4 +106,13 @@
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
+</ng-template>
+
+<ng-template #wip>
+	<div>
+		<div [style]="{ display: 'flex', 'flex-direction': 'column', 'align-items': 'center', margin: '100px 0px' }">
+			<nb-icon icon="flash-outline" [style]="{ 'font-size': '50px', color: '#cacaca' }"></nb-icon>
+			<div>{{ 'COMING_SOON' | translate }}</div>
+		</div>
+	</div>
 </ng-template>
