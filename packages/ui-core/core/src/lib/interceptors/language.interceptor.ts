@@ -7,7 +7,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 
 @Injectable()
 export class LanguageInterceptor implements HttpInterceptor {
-	public logging: boolean = true;
+	public logging: boolean = false;
 
 	constructor(readonly store: Store, readonly _i18nService: I18nService) {
 		if (this.logging) {
