@@ -21,11 +21,10 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
-import { LanguageSelectorService } from '../language/language-selector.service';
 import { LanguageModule } from '../language/language.module';
 import { Store } from '../services';
+import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { PluginsModule } from './plugins/plugins.module';
@@ -54,13 +53,13 @@ import { SslModule } from './ssl';
 		NbTooltipModule,
 		NbSpinnerModule,
 		DesktopDirectiveModule,
-		LanguageModule,
-		TranslateModule,
+		LanguageModule.forChild(),
 		TaskRenderModule,
 		SslModule,
-		PluginsModule
+		PluginsModule,
+		PipeModule
 	],
-	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store, LanguageSelectorService],
+	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
 	exports: [SettingsComponent]
 })
 export class SettingsModule {}

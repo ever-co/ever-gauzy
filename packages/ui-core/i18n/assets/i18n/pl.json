@@ -201,7 +201,8 @@
 			"ESTIMATE": "Nie utworzyłeś żadnej wyceny",
 			"EVENT_TYPE": "Nie utworzyłeś żadnego typu wydarzenia",
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
-			"TEAM_DASHBOARD": "Nie masz żadnych zespołów"
+			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
+			"PLUGIN": "Nie zainstalowano żadnych wtyczek."
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Lokalny",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Wtyczki",
+			"PLUGIN_DESCRIPTION": "Wtyczki",
+			"PLUGIN": "Wtyczka",
 			"WIDGET_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk.",
 			"SSL": {
 				"SSL_CONFIG": "Konfiguracja SSL",
@@ -3923,6 +3927,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Proszę zatrzymać licznik czasu przed zmianą opisu",
 		"STOP_TIMER_CHANGE_TEAM": "Przed zmianą drużyny proszę zatrzymać timer",
 		"ACTIVITY_WATCH_INTEGRATION": "Integracja z ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integracja Wakatime",
 		"LAST_CAPTURE_TAKEN": "Ostatni zrzut ekranu wykonany",
 		"REQUEST_TASK_PERMISSION": "Poproś o zgodę administratora organizacji",
 		"RETURN_ONLINE": "Powrót online",
@@ -3991,7 +3996,12 @@
 			"WINDOW": "Okno",
 			"HELP": "Pomoc",
 			"LEARN_MORE": "Dowiedz się więcej",
-			"OPEN_MAIN_WINDOW": "Otwórz główne okno"
+			"OPEN_MAIN_WINDOW": "Otwórz główne okno",
+			"DAILY_RECAP": "Podsumowanie Dziennie"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",
+			"HOURLY_TIME_TRACKING_DATA": "Dane dotyczące śledzenia czasu według godzin"
 		}
 	},
 	"SERVER": "Serwer",
@@ -4088,6 +4098,7 @@
 		"MEMBER": "Członek",
 		"MEMBER_INFO": "Informacje o członku",
 		"THIS_WEEK": "W tym tygodniu",
+		"WEEK": "Tydzień",
 		"OVER_PERIOD": "Przez okres/na przestrzeni czasu",
 		"NO_MEMBER_ACTIVITY_DAY": "Brak aktywności członka w ciągu dnia",
 		"NO_MEMBER_ACTIVITY_WEEK": "Brak aktywności członków w tym tygodniu",

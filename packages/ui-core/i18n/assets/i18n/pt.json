@@ -201,7 +201,8 @@
 			"ESTIMATE": "Você não criou nenhum orçamento.",
 			"EVENT_TYPE": "Você não criou nenhum tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "Você não criou nenhum tipo de produto.",
-			"TEAM_DASHBOARD": "Você não tem nenhum time."
+			"TEAM_DASHBOARD": "Você não tem nenhum time.",
+			"PLUGIN": "Você não instalou nenhum plugin."
 		},
 		"TRANSACTION_TYPE": "Digite",
 		"AMOUNT": "Quantia.",
@@ -3899,6 +3900,9 @@
 			"TIMEZONE_LOCAL": "Local",
 			"TIMEZONE_UTC": "UTC",
 			"WIDGET": "Widget",
+			"PLUGINS": "Plugins",
+			"PLUGIN_DESCRIPTION": "Plugins",
+			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Esta janela reflete o estado do temporizador, indicando se está em execução ou parado, e funciona como um botão.",
 			"SSL": {
 				"SSL_CONFIG": "Configuração SSL",
@@ -3923,6 +3927,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "Por favor, pare o cronômetro antes de alterar a descrição.",
 		"STOP_TIMER_CHANGE_TEAM": "Por favor, pare o cronômetro antes de mudar de equipe",
 		"ACTIVITY_WATCH_INTEGRATION": "Integração do ActivityWatch",
+		"WAKATIME_INTEGRATION": "Integração com Wakatime",
 		"LAST_CAPTURE_TAKEN": "Última captura de tela tirada.",
 		"REQUEST_TASK_PERMISSION": "Solicitar permissão ao administrador da organização",
 		"RETURN_ONLINE": "Retorno Online",
@@ -3991,7 +3996,12 @@
 			"WINDOW": "Janela",
 			"HELP": "Ajuda",
 			"LEARN_MORE": "Saiba mais",
-			"OPEN_MAIN_WINDOW": "Abrir janela principal"
+			"OPEN_MAIN_WINDOW": "Abrir janela principal",
+			"DAILY_RECAP": "Resumo Diário"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",
+			"HOURLY_TIME_TRACKING_DATA": "Dados de Rastreamento de Tempo Horário"
 		}
 	},
 	"SERVER": "Servidor",
@@ -4088,6 +4098,7 @@
 		"MEMBER": "Membro",
 		"MEMBER_INFO": "Informação do membro",
 		"THIS_WEEK": "Esta semana",
+		"WEEK": "Semana",
 		"OVER_PERIOD": "Ao longo do período",
 		"NO_MEMBER_ACTIVITY_DAY": "Nenhuma atividade de membro para o dia.",
 		"NO_MEMBER_ACTIVITY_WEEK": "Nenhuma atividade de membro durante a semana.",

@@ -10,7 +10,7 @@ export class ActivityStatisticsAdapter implements IStatisticItem {
 		return this.activitiesStatistics.title;
 	}
 	public get durationPercentage(): string {
-		return this.activitiesStatistics.durationPercentage.toFixed(2);
+		return (this.activitiesStatistics.durationPercentage || 0).toFixed(2);
 	}
 	public get duration(): number {
 		return this.activitiesStatistics.duration;

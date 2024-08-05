@@ -506,7 +506,8 @@
 		"APPDATA",
 		"COMMONPROGRAMFILES",
 		"serverapi",
-		"serializables"
+		"serializables",
+		"drppicker"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

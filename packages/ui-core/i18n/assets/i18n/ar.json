@@ -201,7 +201,8 @@
 			"ESTIMATE": "لم تقم بإنشاء أي تقدير",
 			"EVENT_TYPE": "لم تقم بإنشاء أي نوع فعالية.",
 			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي نوع منتج.",
-			"TEAM_DASHBOARD": "ليس لديك أي فرق"
+			"TEAM_DASHBOARD": "ليس لديك أي فرق",
+			"PLUGIN": "لم تقم بتثبيت أي ملحق."
 		},
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",
@@ -3898,6 +3899,9 @@
 			"TIMEZONE_LOCAL": "محلي",
 			"TIMEZONE_UTC": "توقيت عالمي متناسق (UTC)",
 			"WIDGET": "القطعة",
+			"PLUGINS": "الملحقات",
+			"PLUGIN_DESCRIPTION": "الملحقات",
+			"PLUGIN": "ملحق",
 			"WIDGET_LABEL": "تعكس هذه النافذة حالة المؤقت وتشير إلى ما إذا كان قيد التشغيل أم تم إيقافه وتعمل كزر",
 			"SSL": {
 				"SSL_CONFIG": "تكوين SSL",
@@ -3922,6 +3926,7 @@
 		"STOP_TIMER_CHANGE_DESCRIPTION": "يرجى إيقاف المؤقت قبل تغيير الوصف.",
 		"STOP_TIMER_CHANGE_TEAM": "يرجى إيقاف المؤقت قبل تغيير الفريق",
 		"ACTIVITY_WATCH_INTEGRATION": "تكامل ActivityWatch",
+		"WAKATIME_INTEGRATION": "تكامل Wakatime",
 		"LAST_CAPTURE_TAKEN": "آخر لقطة شاشة تم التقاطها",
 		"REQUEST_TASK_PERMISSION": "اطلب إذنًا من مسؤول المنظمة",
 		"RETURN_ONLINE": "العودة عبر الإنترنت",
@@ -3990,7 +3995,12 @@
 			"WINDOW": "نافذة",
 			"HELP": "مساعدة",
 			"LEARN_MORE": "تعلم المزيد",
-			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية"
+			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية",
+			"DAILY_RECAP": "ملخص يومي"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",
+			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة"
 		}
 	},
 	"SERVER": "خادم",
@@ -4087,6 +4097,7 @@
 		"MEMBER": "عضو",
 		"MEMBER_INFO": "معلومات العضو",
 		"THIS_WEEK": "هذا الأسبوع",
+		"WEEK": "أسبوع",
 		"OVER_PERIOD": "على مدار الفترة",
 		"NO_MEMBER_ACTIVITY_DAY": "لا نشاط للأعضاء في هذا اليوم",
 		"NO_MEMBER_ACTIVITY_WEEK": "لا نشاط للأعضاء خلال هذا الأسبوع",

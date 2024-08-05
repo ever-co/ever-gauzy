@@ -1,7 +1,7 @@
-import { IBaseWindow } from '../interfaces';
-import { BrowserWindow } from 'electron';
 import * as remoteMain from '@electron/remote/main';
+import { BrowserWindow } from 'electron';
 import * as url from 'url';
+import { IBaseWindow } from '../interfaces';
 import { IWindowConfig } from '../interfaces/iwindow-config';
 
 export class DefaultWindow implements IBaseWindow {
@@ -24,7 +24,7 @@ export class DefaultWindow implements IBaseWindow {
 				pathname: this.config.path,
 				protocol: 'file:',
 				slashes: true,
-				hash: this.config.hash,
+				hash: this.config.hash
 			});
 			await this._browserWindow.loadURL(launchPath);
 			console.log('launched electron with:', launchPath);
@@ -50,7 +50,10 @@ export class DefaultWindow implements IBaseWindow {
 		this._browserWindow = null;
 	}
 
-	public get browserWindow(): BrowserWindow {
+	public get browserWindow(): BrowserWindow | null {
+		if (!this._browserWindow || this._browserWindow.isDestroyed()) {
+			return null;
+		}
 		return this._browserWindow;
 	}
 }
