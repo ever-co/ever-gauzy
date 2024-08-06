@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
@@ -7,7 +8,7 @@ import { WorkInProgressComponent } from './work-in-progress.component';
 import { createRoutes } from './work-in-progress.routes';
 
 @NgModule({
-	imports: [RouterModule.forChild([]), NbCardModule, NbIconModule, TranslateModule.forChild()],
+	imports: [CommonModule, RouterModule.forChild([]), NbCardModule, NbIconModule, TranslateModule.forChild()],
 	declarations: [WorkInProgressComponent],
 	exports: [WorkInProgressComponent],
 	providers: [
