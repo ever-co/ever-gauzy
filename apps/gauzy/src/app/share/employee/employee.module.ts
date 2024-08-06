@@ -15,11 +15,11 @@ import {
 	ImageUploaderModule,
 	PublicPageEmployeeMutationModule,
 	SharedModule,
-	TableComponentsModule
+	TableComponentsModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { EmployeeRoutingModule } from './employee-routing.module';
 import { EmployeeComponent } from './employee.component';
-import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [

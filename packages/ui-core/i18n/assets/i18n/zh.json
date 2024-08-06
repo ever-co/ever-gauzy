@@ -4601,5 +4601,6 @@
 		"AVAILABLE": "图像不可用"
 	},
 	"SERVER_API": "API服务器",
-	"SERVER_API_LOG": "API服务器日志"
+	"SERVER_API_LOG": "API服务器日志",
+	"COMING_SOON": "This page is coming soon!"
 }
