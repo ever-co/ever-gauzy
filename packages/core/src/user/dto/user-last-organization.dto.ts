@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ILastOrganization } from '@gauzy/contracts';
 
 /**
@@ -7,7 +7,7 @@ import { ILastOrganization } from '@gauzy/contracts';
  */
 export class UserLastOrganizationDTO implements ILastOrganization {
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@IsOptional()
 	@IsString()
-	readonly lastOrganizationId: string;
+	readonly lastOrganizationId?: string;
 }

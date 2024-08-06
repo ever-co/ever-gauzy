@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { IDefaultTeam } from '@gauzy/contracts';
 
 /**
@@ -7,7 +7,7 @@ import { IDefaultTeam } from '@gauzy/contracts';
  */
 export class UserDefaultTeamDTO implements IDefaultTeam {
 	@ApiProperty({ type: () => String })
-	@IsNotEmpty()
+	@IsOptional()
 	@IsString()
-	readonly defaultTeamId: string;
+	readonly defaultTeamId?: string;
 }
