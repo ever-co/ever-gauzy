@@ -30,7 +30,7 @@ import {
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
 	ISocialAccount,
-	IDefaultTeam
+	ILastTeam
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -1007,10 +1007,10 @@ export class AuthService extends SocialAuthService {
 	 * @returns An object containing user information and tokens.
 	 */
 	async workspaceSigninVerifyToken(
-		input: IUserEmailInput & IUserTokenInput & IDefaultTeam
+		input: IUserEmailInput & IUserTokenInput & ILastTeam
 	): Promise<IAuthResponse | null> {
 		try {
-			const { email, token, defaultTeamId } = input;
+			const { email, token, lastTeamId } = input;
 
 			// Check for missing email or token
 			if (!email || !token) {
@@ -1046,17 +1046,8 @@ export class AuthService extends SocialAuthService {
 					{
 						code: null,
 						codeExpireAt: null,
-						defaultTeamId
+						lastTeamId
 					}
-				);
-
-				await this.typeOrmUserRepository.update(
-					{
-						email,
-						isActive: true,
-						isArchived: false
-					},
-					{ defaultTeamId }
 				);
 
 				// Retrieve the employee details associated with the user.
@@ -1226,8 +1217,7 @@ export class AuthService extends SocialAuthService {
 			workspaces,
 			confirmed_email: email,
 			show_popup: workspaces.length > 1,
-			total_workspaces: workspaces.length,
-			defaultTeamId: users[0].defaultTeamId
+			total_workspaces: workspaces.length
 		};
 	}
 
@@ -1277,6 +1267,7 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
+			lastTeamId: user.lastTeamId || null, // Sets lastTeam id to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
 						id: user.tenant.id, // Assuming tenantId is a direct property of tenant

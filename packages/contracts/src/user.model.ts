@@ -46,8 +46,12 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	candidateId?: ICandidate['id'];
 	defaultTeam?: IOrganizationTeam;
 	defaultTeamId?: IOrganizationTeam['id'];
-	defaultOrganizationId?: IOrganization['id'];
+	lastTeam?: IOrganizationTeam;
+	lastTeamId?: IOrganizationTeam['id'];
 	defaultOrganization?: IOrganization;
+	defaultOrganizationId?: IOrganization['id'];
+	lastOrganization?: IOrganization;
+	lastOrganizationId?: IOrganization['id'];
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
@@ -124,6 +128,14 @@ export interface IDefaultUserOrganization {
 	defaultOrganizationId?: IOrganization['id'];
 }
 
+export interface ILastTeam {
+	lastTeamId?: IOrganizationTeam['id'];
+}
+
+export interface ILastOrganization {
+	lastOrganizationId?: IOrganization['id'];
+}
+
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
 }
@@ -135,6 +147,8 @@ export interface IUserSigninWorkspaceResponse {
 	total_workspaces: number;
 	defaultTeamId?: IOrganizationTeam['id'];
 	defaultOrganizationId?: IOrganization['id'];
+	lastTeamId?: IOrganizationTeam['id'];
+	lastOrganizationId?: IOrganization['id'];
 }
 
 export interface IAuthResponse {

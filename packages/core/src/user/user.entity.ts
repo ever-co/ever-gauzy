@@ -247,6 +247,27 @@ export class User extends TenantBaseEntity implements IUser {
 	defaultTeamId?: IOrganizationTeam['id'];
 
 	/**
+	 * Last Team : This field is used to know what was the last team the user logged in
+	 */
+	@MultiORMManyToOne(() => OrganizationTeam, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	lastTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.lastTeam)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	lastTeamId?: IOrganizationTeam['id'];
+
+	/**
 	 * Default organization
 	 */
 	@MultiORMManyToOne(() => Organization, {
@@ -266,6 +287,27 @@ export class User extends TenantBaseEntity implements IUser {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	defaultOrganizationId?: IOrganization['id'];
+
+	/**
+	 * Last organization : This field is used to know what was the last organization the user was connected on or just set
+	 */
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	lastOrganization?: IOrganization;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.lastOrganization)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	lastOrganizationId?: IOrganization['id'];
 
 	/*
 	|--------------------------------------------------------------------------
