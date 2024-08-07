@@ -4,7 +4,7 @@ import { Type } from 'class-transformer';
 import { ILastLogoutAtInput } from '@gauzy/contracts';
 
 /**
- * User last logout tiimestamp input DTO validation
+ * User last logout timestamp input DTO validation
  */
 export class UserLogoutAtDTO implements ILastLogoutAtInput {
 	@ApiProperty({ type: () => Date })

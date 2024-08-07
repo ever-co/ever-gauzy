@@ -310,7 +310,7 @@ export class AuthController {
 	}
 
 	/**
-	 * User logout request for updating some informations
+	 * User logout request for updating some user information
 \	 * @param body an object that contains fields and values to be updated and the user ID on which apply updates
 	 * @returns  void value
 	 */

@@ -140,7 +140,7 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
-	 * User logout request for updating some informations
+	 * User logout request for updating some user information
 \	 * @param {IUserLogoutInput} input an object that contains fields and values to be updated and the user ID on which apply updates
 	 * @returns  void value
 	 */
