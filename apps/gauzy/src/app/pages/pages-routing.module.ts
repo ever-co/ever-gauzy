@@ -86,8 +86,7 @@ const routes: Routes = [
 			},
 			{
 				path: 'projects',
-				loadChildren: () =>
-					import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
+				loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
 				data: {
 					selectors: {
 						project: false,
@@ -115,8 +114,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'estimates',
-						loadChildren: () =>
-							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
+						loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
@@ -440,8 +438,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'reports',
-						loadChildren: () =>
-							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
+						loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
@@ -515,8 +512,7 @@ const routes: Routes = [
 					},
 					{
 						path: 'accounting',
-						loadChildren: () =>
-							import('./work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
+						loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
 						data: {
 							selectors: {
 								project: false,
