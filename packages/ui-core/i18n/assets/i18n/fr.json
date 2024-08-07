@@ -4602,5 +4602,6 @@
 		"AVAILABLE": "Image non disponible"
 	},
 	"SERVER_API": "Serveur API",
-	"SERVER_API_LOG": "Journal du serveur API"
+	"SERVER_API_LOG": "Journal du serveur API",
+	"COMING_SOON": "This page is coming soon!"
 }

@@ -9,6 +9,7 @@
 			"@gauzy/desktop-timer": ["packages/desktop-timer/src/index.ts"],
 			"@gauzy/desktop-ui-lib": ["packages/desktop-ui-lib/src/index.ts"],
 			"@gauzy/desktop-window": ["packages/desktop-window/src/index.ts"],
+			"@gauzy/plugins/job-employee-ui": ["packages/plugins/job-employee-ui/src/index.ts"],
 			"@gauzy/plugins/job-matching-ui": ["packages/plugins/job-matching-ui/src/index.ts"],
 			"@gauzy/plugins/job-search-ui": ["packages/plugins/job-search-ui/src/index.ts"],
 			"@gauzy/ui-auth": ["packages/ui-auth/src/index.ts"],

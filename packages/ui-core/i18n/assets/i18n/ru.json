@@ -4598,5 +4598,6 @@
 		"AVAILABLE": "Изображение недоступно"
 	},
 	"SERVER_API": "API-сервер",
-	"SERVER_API_LOG": "Журнал API-сервера"
+	"SERVER_API_LOG": "Журнал API-сервера",
+	"COMING_SOON": "Эта страница скоро появится!"
 }

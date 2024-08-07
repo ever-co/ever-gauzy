@@ -2,13 +2,21 @@ import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, Subject } from 'rxjs';
+import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
-import { ID, IEmployee, IEmployeeJobsStatisticsResponse, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { NgxPermissionsService } from 'ngx-permissions';
+import {
+	ID,
+	IEmployee,
+	IEmployeeJobsStatisticsResponse,
+	IOrganization,
+	LanguagesEnum,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -18,7 +26,11 @@ import {
 	PaginationFilterBaseComponent,
 	SmartTableToggleComponent
 } from '@gauzy/ui-core/shared';
+import { I18nService } from '@gauzy/ui-core/i18n';
 
+/**
+ * Job Employee Component
+ */
 export enum JobSearchTabsEnum {
 	BROWSE = 'BROWSE',
 	SEARCH = 'SEARCH',
@@ -28,11 +40,11 @@ export enum JobSearchTabsEnum {
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-job-employees',
-	templateUrl: './employees.component.html',
-	styleUrls: ['./employees.component.scss'],
+	templateUrl: './job-employee.component.html',
+	styleUrls: ['./job-employee.component.scss'],
 	providers: [CurrencyPipe]
 })
-export class EmployeesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public jobSearchTabsEnum = JobSearchTabsEnum;
 	public loading: boolean = false;
 	public settingsSmartTable: any;
@@ -52,7 +64,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		private readonly _employeesService: EmployeesService,
 		private readonly _jobService: JobService,
 		private readonly _toastrService: ToastrService,
-		private readonly _currencyPipe: CurrencyPipe
+		private readonly _currencyPipe: CurrencyPipe,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _i18nService: I18nService
 	) {
 		super(translateService);
 	}
@@ -60,6 +74,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	ngOnInit(): void {
 		this._applyTranslationOnSmartTable();
 		this._loadSmartTableSettings();
+
+		// Initialize UI permissions
+		this.initializeUiPermissions();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
 	}
 
 	ngAfterViewInit(): void {
@@ -110,6 +129,33 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Initialize UI permissions
+	 */
+	private initializeUiPermissions() {
+		// Load permissions
+		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
+		this._ngxPermissionsService.flushPermissions(); // Flush permissions
+		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this.translateService.use(preferredLanguage);
+		});
 	}
 
 	/**
@@ -346,14 +392,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 			// Destructure properties for clarity.
 			const { id: organizationId, tenantId } = this.organization;
-
+			// Get the employee ID from the event data
 			const employeeId = event.data?.id;
+			// Get the new data from the event
 			const { billRateValue, minimumBillingRate } = event.newData ?? {};
 
 			// Update employee bill rates.
 			await this._employeesService.updateProfile(employeeId, {
-				minimumBillingRate,
-				billRateValue,
+				minimumBillingRate: +minimumBillingRate,
+				billRateValue: +billRateValue,
 				tenantId,
 				organizationId
 			});
@@ -463,7 +510,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param event - The pointer event that triggered this method.
 	 * @returns A promise that resolves when the navigation is complete or exits early if there is no organization.
 	 */
-	addNew = async (event: PointerEvent): Promise<void> => {
+	addNew = async (event: MouseEvent): Promise<void> => {
 		if (!this.organization) {
 			return;
 		}

@@ -19,7 +19,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'visitors',
-		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule),
+		loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule),
 		data: {
 			selectors: {
 				project: false,
