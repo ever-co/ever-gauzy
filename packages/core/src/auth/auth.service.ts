@@ -30,7 +30,8 @@ import {
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
 	ISocialAccount,
-	ILastTeam
+	ILastTeam,
+	IUserLogoutInput
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -135,6 +136,38 @@ export class AuthService extends SocialAuthService {
 			// Log the error with a timestamp and the error message for debugging.
 			console.error(`Login failed at ${new Date().toISOString()}: ${error.message}.`);
 			throw new UnauthorizedException(); // Throw a generic error to avoid exposing specific failure reasons.
+		}
+	}
+
+	/**
+	 * User logout request for updating some informations
+\	 * @param {IUserLogoutInput} input an object that contains fields and values to be updated and the user ID on which apply updates
+	 * @returns  void value
+	 */
+	async logout(input: IUserLogoutInput): Promise<void> {
+		try {
+			const { lastTeamId, lastOrganizationId, userId: id } = input;
+
+			// Find the user to update values
+			const user = await this.userService.findOneByOptions({
+				where: { id, isActive: true, isArchived: false }
+			});
+
+			// If no user found for given ID, throw a bad request exception.
+			// Note : user we be logout on UI even if there is no user found
+			if (!user) {
+				throw new BadRequestException();
+			}
+
+			// Update user infos
+			user.lastLogoutAt = new Date();
+			user.lastTeamId = lastTeamId;
+			user.lastOrganizationId = lastOrganizationId ?? user.lastOrganizationId;
+
+			// Save the user entity with new values
+			await this.typeOrmUserRepository.save(user);
+		} catch (error) {
+			throw new BadRequestException();
 		}
 	}
 
@@ -1010,7 +1043,7 @@ export class AuthService extends SocialAuthService {
 		input: IUserEmailInput & IUserTokenInput & ILastTeam
 	): Promise<IAuthResponse | null> {
 		try {
-			const { email, token, lastTeamId } = input;
+			const { email, token } = input;
 
 			// Check for missing email or token
 			if (!email || !token) {
@@ -1045,8 +1078,7 @@ export class AuthService extends SocialAuthService {
 					},
 					{
 						code: null,
-						codeExpireAt: null,
-						lastTeamId
+						codeExpireAt: null
 					}
 				);
 
@@ -1268,6 +1300,7 @@ export class AuthService extends SocialAuthService {
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
 			lastTeamId: user.lastTeamId || null, // Sets lastTeam id to null if it's undefined
+			lastLogoutAt: user.lastLogoutAt || null, // Sets last logout timestamp to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
 						id: user.tenant.id, // Assuming tenantId is a direct property of tenant

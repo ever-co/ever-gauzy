@@ -161,6 +161,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailVerifiedAt?: Date;
 
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ insert: false, nullable: true })
+	lastLogoutAt?: Date;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })

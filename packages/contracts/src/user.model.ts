@@ -63,6 +63,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	lastLogoutAt?: Date;
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
@@ -120,6 +121,12 @@ export interface IUserCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
+export interface IUserLogoutInput {
+	userId: string;
+	lastTeamId: IOrganizationTeam['id'];
+	lastOrganizationId?: IOrganization['id'];
+}
+
 export interface IDefaultTeam {
 	defaultTeamId?: IOrganizationTeam['id'];
 }
@@ -134,6 +141,10 @@ export interface ILastTeam {
 
 export interface ILastOrganization {
 	lastOrganizationId?: IOrganization['id'];
+}
+
+export interface ILastLogoutAtInput {
+	lastLogoutAt?: Date;
 }
 
 export interface IWorkspaceResponse extends IUserTokenInput {
