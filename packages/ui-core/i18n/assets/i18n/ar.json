@@ -4600,5 +4600,6 @@
 		"AVAILABLE": "الصورة غير متاحة"
 	},
 	"SERVER_API": "خادم واجهة برمجة التطبيقات",
-	"SERVER_API_LOG": "سجل خادم API"
+	"SERVER_API_LOG": "سجل خادم API",
+	"COMING_SOON": "This page is coming soon!"
 }
