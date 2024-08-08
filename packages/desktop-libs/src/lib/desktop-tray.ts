@@ -372,9 +372,15 @@ export class TrayIcon {
 			this.build();
 
 			if (timeTrackerWindow && arg.employeeId) {
-				await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				const isGauzyWindow = appConfig.gauzyWindow;
+
+				if (!isGauzyWindow) {
+					await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				}
+
 				timeTrackerWindow.webContents.send('auth_success_tray_init', arg);
-				if (!appConfig.gauzyWindow) {
+
+				if (!isGauzyWindow) {
 					timeTrackerWindow.show();
 				}
 			}
