@@ -17,11 +17,15 @@ import {
 	IInvite,
 	IImageAsset,
 	TimeFormatEnum,
-	ISocialAccount
+	ISocialAccount,
+	IOrganizationTeam,
+	IOrganization
 } from '@gauzy/contracts';
 import {
 	ImageAsset,
 	Invite,
+	Organization,
+	OrganizationTeam,
 	Role,
 	SocialAccount,
 	Tag,
@@ -157,6 +161,11 @@ export class User extends TenantBaseEntity implements IUser {
 	@MultiORMColumn({ insert: false, nullable: true })
 	emailVerifiedAt?: Date;
 
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@MultiORMColumn({ insert: false, nullable: true })
+	lastLogoutAt?: Date;
+
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@Exclude({ toPlainOnly: true })
@@ -220,6 +229,90 @@ export class User extends TenantBaseEntity implements IUser {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: IImageAsset['id'];
+
+	/**
+	 * Default Team
+	 */
+	@MultiORMManyToOne(() => OrganizationTeam, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	defaultTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.defaultTeam)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultTeamId?: IOrganizationTeam['id'];
+
+	/**
+	 * Last Team : This field is used to know what was the last team the user logged in
+	 */
+	@MultiORMManyToOne(() => OrganizationTeam, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	lastTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.lastTeam)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	lastTeamId?: IOrganizationTeam['id'];
+
+	/**
+	 * Default organization
+	 */
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	defaultOrganization?: IOrganization;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.defaultOrganization)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultOrganizationId?: IOrganization['id'];
+
+	/**
+	 * Last organization : This field is used to know what was the last organization the user was connected on or just set
+	 */
+	@MultiORMManyToOne(() => Organization, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	lastOrganization?: IOrganization;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: User) => it.lastOrganization)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	lastOrganizationId?: IOrganization['id'];
 
 	/*
 	|--------------------------------------------------------------------------

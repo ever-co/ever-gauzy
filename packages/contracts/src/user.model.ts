@@ -11,8 +11,9 @@ import { IUserOrganization } from './user-organization.model';
 import { IInvite } from './invite.model';
 import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
-import { TimeFormatEnum } from './organization.model';
+import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
+import { IOrganizationTeam } from 'organization-team.model';
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
@@ -43,6 +44,14 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	employeeId?: IEmployee['id'];
 	candidate?: ICandidate;
 	candidateId?: ICandidate['id'];
+	defaultTeam?: IOrganizationTeam;
+	defaultTeamId?: IOrganizationTeam['id'];
+	lastTeam?: IOrganizationTeam;
+	lastTeamId?: IOrganizationTeam['id'];
+	defaultOrganization?: IOrganization;
+	defaultOrganizationId?: IOrganization['id'];
+	lastOrganization?: IOrganization;
+	lastOrganizationId?: IOrganization['id'];
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
@@ -54,6 +63,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
+	lastLogoutAt?: Date;
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
@@ -111,6 +121,32 @@ export interface IUserCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
+export interface IUserLogoutInput {
+	userId: string;
+	lastTeamId: IOrganizationTeam['id'];
+	lastOrganizationId?: IOrganization['id'];
+}
+
+export interface IDefaultTeam {
+	defaultTeamId?: IOrganizationTeam['id'];
+}
+
+export interface IDefaultUserOrganization {
+	defaultOrganizationId?: IOrganization['id'];
+}
+
+export interface ILastTeam {
+	lastTeamId?: IOrganizationTeam['id'];
+}
+
+export interface ILastOrganization {
+	lastOrganizationId?: IOrganization['id'];
+}
+
+export interface ILastLogoutAtInput {
+	lastLogoutAt?: Date;
+}
+
 export interface IWorkspaceResponse extends IUserTokenInput {
 	user: IUser;
 }
@@ -120,6 +156,10 @@ export interface IUserSigninWorkspaceResponse {
 	confirmed_email: string;
 	show_popup: boolean;
 	total_workspaces: number;
+	defaultTeamId?: IOrganizationTeam['id'];
+	defaultOrganizationId?: IOrganization['id'];
+	lastTeamId?: IOrganizationTeam['id'];
+	lastOrganizationId?: IOrganization['id'];
 }
 
 export interface IAuthResponse {
