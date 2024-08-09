@@ -1,6 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, screen } from 'electron';
 import * as url from 'url';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
@@ -11,8 +12,8 @@ Object.assign(console, log.functions);
 const Store = require('electron-store');
 const store = new Store();
 
-export async function createTimeTrackerWindow(timeTrackerWindow, filePath) {
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+export async function createTimeTrackerWindow(timeTrackerWindow, filePath, preloadPath?) {
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	const manager = WindowManager.getInstance();
 
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
@@ -35,11 +36,13 @@ export async function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 	});
 
 	manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
-
+	if (preloadPath) {
+		attachTitlebarToWindow(timeTrackerWindow);
+	}
 	return timeTrackerWindow;
 }
 
-const windowSetting = () => {
+const windowSetting = (preloadPath?) => {
 	const sizes = screen.getPrimaryDisplay().workAreaSize;
 	const height = sizes.height < 768 ? sizes.height - 20 : 768;
 	const zoomF = sizes.height < 768 ? 0.8 : 1.0;
@@ -63,9 +66,14 @@ const windowSetting = () => {
 		title: process.env.DESCRIPTION || 'Time Tracker',
 		maximizable: false,
 		show: false,
-		icon: filesPath.iconPath
-	};
+		icon: filesPath.iconPath,
 
+	};
+	if (preloadPath) {
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
+		mainWindowSettings.webPreferences.preload = preloadPath;
+	}
 	return mainWindowSettings;
 };
 
