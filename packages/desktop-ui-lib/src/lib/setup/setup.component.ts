@@ -259,7 +259,7 @@ export class SetupComponent implements OnInit {
 		}
 
 		if (this.connectivity.custom) {
-			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'http://';
+			const protocol = this.serverConfig.custom.apiHost.indexOf('http') === 0 ? '' : 'https://';
 			const port = this.serverConfig.custom.port ? ':' + this.serverConfig.custom.port : '';
 			return {
 				serverUrl: protocol + this.serverConfig.custom.apiHost + port,

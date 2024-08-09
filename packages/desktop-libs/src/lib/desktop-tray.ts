@@ -51,7 +51,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -65,7 +65,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -92,7 +92,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -106,7 +106,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -205,7 +205,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -219,7 +219,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
-					settingsWindow.webContents.send('refresh_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
