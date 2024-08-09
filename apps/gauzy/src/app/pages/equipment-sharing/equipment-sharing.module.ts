@@ -12,14 +12,11 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EquipmentSharingMutationModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
@@ -40,17 +37,14 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
 		NbDatepickerModule,
-		CardGridModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
-		PaginationV2Module,
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		NbTooltipModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService, EmployeesService],

@@ -210,6 +210,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 	}
 
 	ngOnInit(): void {
+		const isEmployee = this._store.user && this._store.user.employee;
+		if (!this._isInitialized && isEmployee) {
+			this._electronService.ipcRenderer.send('app_is_init');
+			this._isInitialized = true;
+		}
 		console.log('on init');
 	}
 }

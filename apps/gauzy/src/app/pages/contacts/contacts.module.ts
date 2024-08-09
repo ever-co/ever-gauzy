@@ -14,19 +14,16 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module,
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
@@ -53,17 +50,14 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		NbStepperModule,
 		NbToggleModule,
 		NbTooltipModule,
-		Angular2SmartTableModule,
 		NgSelectModule,
-		CardGridModule,
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,
-		GauzyButtonActionModule,
 		ImageUploaderModule,
 		LeafletMapModule,
 		LocationFormModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		SharedModule,
 		TagsColorInputModule,
 		TranslateModule.forChild(),

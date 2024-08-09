@@ -17,18 +17,10 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
-	SharedModule,
-	TagsMutationModule,
-	UserFormsModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, TagsMutationModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { TagsComponent } from './tags.component';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsColorComponent } from './tags-color/tags-color.component';
@@ -52,7 +44,6 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgSelectModule,
-		Angular2SmartTableModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ColorPickerModule,
@@ -60,9 +51,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		SharedModule,
 		UserFormsModule,
 		TagsMutationModule,
-		CardGridModule,
-		GauzyButtonActionModule,
-		PaginationV2Module
+		SmartDataViewLayoutModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })

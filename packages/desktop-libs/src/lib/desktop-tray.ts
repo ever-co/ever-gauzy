@@ -8,7 +8,7 @@ import {
 	timeTrackerPage,
 	WindowManager
 } from '@gauzy/desktop-window';
-import { app, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, MenuItemConstructorOptions, nativeImage, Tray } from 'electron';
 import { handleLogoutDialog } from './desktop-ipc';
 import { LocalStore } from './desktop-store';
 import { User, UserService } from './offline';
@@ -20,18 +20,7 @@ const Store = require('electron-store');
 export class TrayIcon {
 	tray: Tray;
 	contextMenu: MenuItemConstructorOptions[] = [];
-	constructor(
-		setupWindow,
-		knex,
-		timeTrackerWindow,
-		auth,
-		settingsWindow,
-		config,
-		windowPath,
-		iconPath,
-		mainWindow,
-		alwaysOn
-	) {
+	constructor(setupWindow, knex, timeTrackerWin, auth, settingsWin, config, windowPath, iconPath, mainWin, alwaysOn) {
 		this.removeTrayListener();
 		this.removeTimerHandlers();
 		let loginPageAlreadyShow = false;
@@ -45,6 +34,11 @@ export class TrayIcon {
 		this.tray.setTitle('--:--:--', options);
 		const userService = new UserService();
 		const manager = WindowManager.getInstance();
+
+		let timeTrackerWindow = manager.getOne(RegisteredWindow.TIMER) as BrowserWindow;
+		let settingsWindow = manager.getOne(RegisteredWindow.SETTINGS) as BrowserWindow;
+		let mainWindow = manager.getOne(RegisteredWindow.MAIN) as BrowserWindow;
+
 		this.contextMenu = [
 			{
 				id: '4',
@@ -55,8 +49,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('goto_top_menu');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_top_menu');
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -69,8 +63,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -96,8 +90,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('goto_top_menu');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_top_menu');
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -110,8 +104,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -147,10 +141,12 @@ export class TrayIcon {
 				async click(menuItem) {
 					const userLogin = store.get('auth');
 					if (userLogin && userLogin.employeeId) {
-						timeTrackerWindow.webContents.send('start_from_tray', LocalStore.beforeRequestParams());
+						manager
+							.webContents(timeTrackerWindow)
+							.send('start_from_tray', LocalStore.beforeRequestParams());
 					} else {
 						timeTrackerWindow.show();
-						timeTrackerWindow.webContents.send('auth_success_tray_init');
+						manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 					}
 				}
 			},
@@ -161,7 +157,7 @@ export class TrayIcon {
 				accelerator: 'CmdOrCtrl+E',
 				visible: appConfig.timeTrackerWindow,
 				click(menuItem) {
-					timeTrackerWindow.webContents.send('stop_from_tray');
+					manager.webContents(timeTrackerWindow).send('stop_from_tray');
 				}
 			},
 			{
@@ -172,7 +168,7 @@ export class TrayIcon {
 				visible: appConfig.timeTrackerWindow,
 				async click(menuItem) {
 					timeTrackerWindow.show();
-					timeTrackerWindow.webContents.send('auth_success_tray_init');
+					manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 				}
 			},
 			{
@@ -207,8 +203,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('goto_update');
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_update');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -221,8 +217,8 @@ export class TrayIcon {
 						settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
 					}
 					settingsWindow.show();
-					settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
-					settingsWindow.webContents.send('goto_top_menu');
+					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('goto_top_menu');
 					settingsWindow.webContents.send('refresh_menu');
 				}
 			},
@@ -239,7 +235,7 @@ export class TrayIcon {
 						isLogout = await handleLogoutDialog(timeTrackerWindow);
 					}
 					if (isLogout) {
-						timeTrackerWindow.webContents.send('logout');
+						manager.webContents(timeTrackerWindow).send('logout');
 					}
 				}
 			},
@@ -278,7 +274,7 @@ export class TrayIcon {
 		const openWindow = async () => {
 			if (process.env.IS_DESKTOP_TIMER) {
 				timeTrackerWindow.show();
-				timeTrackerWindow.webContents.send('auth_success_tray_init');
+				manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
 			}
 		};
 
@@ -288,7 +284,7 @@ export class TrayIcon {
 		if (auth && auth.employeeId && !auth.isLogout) {
 			this.contextMenu = menuAuth;
 			menuWindowTime.enabled = true;
-			timeTrackerWindow.webContents.send('get_user_detail', LocalStore.beforeRequestParams());
+			manager.webContents(timeTrackerWindow).send('get_user_detail', LocalStore.beforeRequestParams());
 		} else {
 			this.tray.setTitle('--:--:--', options);
 			this.contextMenu = unAuthMenu;
@@ -378,9 +374,17 @@ export class TrayIcon {
 			this.build();
 
 			if (timeTrackerWindow && arg.employeeId) {
-				await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
-				timeTrackerWindow.webContents.send('auth_success_tray_init', arg);
-				if (!appConfig.gauzyWindow) {
+				const isGauzyWindow = appConfig.gauzyWindow;
+
+				try {
+					await timeTrackerWindow.loadURL(timeTrackerPage(windowPath.timeTrackerUi));
+				} catch (error) {
+					console.error('An error occurred while loading Time Tracker Page', error);
+				}
+
+				manager.webContents(timeTrackerWindow).send('auth_success_tray_init', arg);
+
+				if (!isGauzyWindow) {
 					timeTrackerWindow.show();
 				}
 			}
@@ -400,14 +404,14 @@ export class TrayIcon {
 			const appSetting = store.get('appSetting');
 
 			if (appSetting && appSetting.timerStarted) {
-				timeTrackerWindow.webContents.send('stop_from_tray');
+				manager.webContents(timeTrackerWindow).send('stop_from_tray');
 			}
 
-			if (settingsWindow) settingsWindow.hide();
+			manager.hide(RegisteredWindow.SETTINGS);
 
 			if (LocalStore.getStore('configs').gauzyWindow) {
-				timeTrackerWindow.webContents.send('clear_store');
-				timeTrackerWindow.hide();
+				manager.webContents(timeTrackerWindow).send('clear_store');
+				manager.hide(RegisteredWindow.TIMER);
 			} else {
 				if (!loginPageAlreadyShow && !process.env.IS_DESKTOP_TIMER) {
 					const serverConfig = LocalStore.getStore('configs');
@@ -415,16 +419,20 @@ export class TrayIcon {
 						API_BASE_URL: getApiBaseUrl(serverConfig, config),
 						IS_INTEGRATED_DESKTOP: serverConfig.isLocalServer
 					};
-					await timeTrackerWindow.loadURL(loginPage(windowPath.gauzyWindow));
-					timeTrackerWindow.webContents.once('did-finish-load', () => {
-						timeTrackerWindow.webContents.send('hide_register');
+					try {
+						await timeTrackerWindow.loadURL(loginPage(windowPath.gauzyWindow));
+					} catch (error) {
+						console.error('An error occurred while loading login Page', error);
+					}
+					manager.webContents(timeTrackerWindow).once('did-finish-load', () => {
+						manager.webContents(timeTrackerWindow).send('hide_register');
 					});
 					timeTrackerWindow.show();
 					loginPageAlreadyShow = true;
 				}
 			}
 
-			alwaysOn.hide();
+			manager.hide(RegisteredWindow.WIDGET);
 
 			await userService.remove();
 
@@ -433,7 +441,7 @@ export class TrayIcon {
 
 		ipcMain.on('logout', async (evt, arg) => {
 			if (timeTrackerWindow) {
-				timeTrackerWindow.webContents.send('logout');
+				manager.webContents(timeTrackerWindow).send('logout');
 			}
 		});
 

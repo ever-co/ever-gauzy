@@ -11,7 +11,7 @@ import { Store } from '@gauzy/ui-core/common';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
 import { DateViewComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from '../../smart-table/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '../../smart-data-layout/components/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
