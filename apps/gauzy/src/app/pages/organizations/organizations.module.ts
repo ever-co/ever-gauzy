@@ -15,15 +15,13 @@ import {
 	NbActionsModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	DirectivesModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
-	PaginationV2Module,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseHistoryModule,
@@ -52,7 +50,6 @@ import {
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
-		Angular2SmartTableModule,
 		NbIconModule,
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
@@ -71,9 +68,8 @@ import {
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		AngularSmartTableModule,
 		CardGridModule,
-		PaginationV2Module,
 		DirectivesModule
 	],
 	declarations: [

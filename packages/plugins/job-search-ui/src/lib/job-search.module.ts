@@ -16,7 +16,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -25,9 +24,8 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
+	AngularSmartTableModule,
 	DialogsModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
@@ -59,7 +57,6 @@ const NB_MODULES = [
  * Third party modules
  */
 const THIRD_PARTY_MODULES = [
-	Angular2SmartTableModule,
 	CKEditorModule,
 	FileUploadModule,
 	MomentModule,
@@ -80,9 +77,8 @@ const THIRD_PARTY_MODULES = [
 		RouterModule.forChild([]),
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
+		AngularSmartTableModule,
 		DialogsModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
 		ProposalTemplateSelectModule,
 		SelectorsModule,
 		SharedModule,
@@ -104,16 +100,6 @@ export class JobSearchModule {
 	constructor(@Inject(PageRouteService) readonly _pageRouteService: PageRouteService) {
 		// Register the routes
 		this.registerPageRoutes();
-	}
-
-	/**
-	 * Called when the plugin is bootstrapped.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobSearchModule
-	 */
-	onPluginBootstrap(): void | Promise<void> {
-		console.log(`${JobSearchModule.name} is being bootstrapped...`);
 	}
 
 	/**
@@ -148,15 +134,5 @@ export class JobSearchModule {
 
 		// Set hasRegisteredRoutes to true
 		JobSearchModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Called when the plugin is destroyed.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobSearchModule
-	 */
-	onPluginDestroy(): void | Promise<void> {
-		console.log(`${JobSearchModule.name} is being destroyed...`);
 	}
 }

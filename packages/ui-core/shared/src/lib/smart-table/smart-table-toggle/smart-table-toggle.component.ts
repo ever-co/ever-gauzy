@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 @Component({
-	selector: 'ngx-smart-table-toggle',
+	selector: 'ngx-smart-table-toggle-switcher',
 	templateUrl: './smart-table-toggle.component.html',
 	styleUrls: ['./smart-table-toggle.component.scss']
 })

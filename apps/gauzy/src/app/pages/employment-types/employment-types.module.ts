@@ -11,13 +11,11 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
-	GauzyButtonActionModule,
 	NoDataMessageModule,
-	PaginationModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -42,12 +40,10 @@ import { EmploymentTypesComponent } from './employment-types.component';
 		TableComponentsModule,
 		CardGridModule,
 		NbDialogModule,
-		Angular2SmartTableModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationModule,
+		AngularSmartTableModule,
 		NbTabsetModule,
 		NoDataMessageModule,
 		NbTooltipModule,

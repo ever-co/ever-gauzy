@@ -10,15 +10,9 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
-import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
-	ProductMutationModule
-} from '@gauzy/ui-core/shared';
+import { AngularSmartTableModule, CardGridModule, ProductMutationModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
@@ -35,15 +29,13 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		NbSpinnerModule,
 		NbInputModule,
 		NbTooltipModule,
-		Angular2SmartTableModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		SharedModule,
 		ProductCategoriesRoutingModule,
 		ProductMutationModule,
 		CardGridModule,
-		PaginationV2Module,
-		GauzyButtonActionModule
+		AngularSmartTableModule
 	],
 	providers: [ProductCategoryService]
 })

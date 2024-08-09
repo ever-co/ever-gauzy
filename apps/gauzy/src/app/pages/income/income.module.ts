@@ -13,13 +13,11 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
-	GauzyButtonActionModule,
 	IncomeMutationModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TableFiltersModule,
@@ -40,7 +38,6 @@ import { IncomeRoutingModule } from './income-routing.module';
 		NbInputModule,
 		NbDatepickerModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NgSelectModule,
 		NbDialogModule.forChild(),
 		UserFormsModule,
@@ -50,9 +47,8 @@ import { IncomeRoutingModule } from './income-routing.module';
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		PaginationV2Module,
+		AngularSmartTableModule,
 		TableFiltersModule,
-		GauzyButtonActionModule,
 		SharedModule
 	],
 	declarations: [IncomeComponent]

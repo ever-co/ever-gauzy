@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -27,12 +26,11 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	AddTaskDialogModule,
 	CardGridModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
 	GauzyEditableGridModule,
-	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
 	TableFiltersModule,
@@ -42,11 +40,11 @@ import {
 	TaskSizeSelectModule,
 	TaskStatusSelectModule,
 	TasksSprintSettingsViewModule,
-	UserFormsModule
+	UserFormsModule,
+	TableComponentsModule
 } from '@gauzy/ui-core/shared';
 import { TaskComponent } from './components/task/task.component';
 import { TasksRoutingModule } from './tasks-routing.module';
-import { TableComponentsModule } from '@gauzy/ui-core/shared';
 import { MyTaskDialogComponent } from './components/my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from './components/team-task-dialog/team-task-dialog.component';
 import { TaskSettingsComponent } from './components/task/task-settings/task-settings.component';
@@ -86,7 +84,6 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		NbDatepickerModule,
 		NbPopoverModule,
 		NgSelectModule,
-		Angular2SmartTableModule,
 		DragDropModule,
 		NgxPermissionsModule.forChild(),
 		CKEditorModule,
@@ -102,12 +99,11 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		GauzyEditableGridModule,
 		TasksSprintSettingsViewModule,
 		TableFiltersModule,
-		PaginationV2Module,
+		AngularSmartTableModule,
 		ProjectSelectModule,
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,
 		TaskStatusSelectModule,
-		GauzyButtonActionModule,
 		TaskNumberFieldModule
 	]
 })

@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -18,11 +17,10 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
-	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
@@ -50,15 +48,13 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		SharedModule,
 		CardGridModule,
 		NbTooltipModule,
-		Angular2SmartTableModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
-		PaginationV2Module,
-		GauzyButtonActionModule,
+		AngularSmartTableModule,
 		ImageUploaderModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],

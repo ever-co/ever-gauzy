@@ -10,14 +10,12 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	EntityWithMembersModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProjectMutationModule
 } from '@gauzy/ui-core/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
@@ -39,14 +37,12 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		NbInputModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		Angular2SmartTableModule,
 		TranslateModule.forChild(),
 		ProjectsRoutingModule,
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		AngularSmartTableModule,
 		CardGridModule,
 		ProjectMutationModule,
 		NgxPermissionsModule.forChild()

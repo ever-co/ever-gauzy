@@ -78,16 +78,6 @@ export class JobMatchingModule {
 	}
 
 	/**
-	 * Called when the plugin is bootstrapped.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobMatchingModule
-	 */
-	onPluginBootstrap(): void | Promise<void> {
-		console.log(`${JobMatchingModule.name} is being bootstrapped...`);
-	}
-
-	/**
 	 * Registers routes for the Jobs browser module.
 	 * Ensures that routes are registered only once.
 	 *
@@ -119,15 +109,5 @@ export class JobMatchingModule {
 
 		// Set hasRegisteredRoutes to true
 		JobMatchingModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Called when the plugin is destroyed.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobMatchingModule
-	 */
-	onPluginDestroy(): void | Promise<void> {
-		console.log(`${JobMatchingModule.name} is being destroyed...`);
 	}
 }

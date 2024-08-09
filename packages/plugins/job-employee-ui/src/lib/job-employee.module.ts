@@ -10,22 +10,16 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import {
-	GauzyButtonActionModule,
-	PaginationV2Module,
-	SharedModule,
-	SmartTableToggleModule
-} from '@gauzy/ui-core/shared';
+import { AngularSmartTableModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createRoutes } from './job-employee.routes';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
 /**
- * Nebular modules
+ * Nebular Modules
  */
 const NB_MODULES = [NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTabsetModule, NbToggleModule];
 
@@ -46,16 +40,7 @@ const THIRD_PARTY_MODULES = [
 
 @NgModule({
 	declarations: [JobEmployeeComponent],
-	imports: [
-		RouterModule.forChild([]),
-		...NB_MODULES,
-		...THIRD_PARTY_MODULES,
-		Angular2SmartTableModule,
-		SharedModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
-		SmartTableToggleModule
-	],
+	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, SharedModule, AngularSmartTableModule],
 	providers: [
 		{
 			provide: ROUTES,
@@ -71,16 +56,6 @@ export class JobEmployeeModule {
 	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
 		// Register the routes
 		this.registerRoutes(this._pageRouteService);
-	}
-
-	/**
-	 * Called when the plugin is bootstrapped.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobEmployeeModule
-	 */
-	onPluginBootstrap(): void | Promise<void> {
-		console.log(`${JobEmployeeModule.name} is being bootstrapped...`);
 	}
 
 	/**
@@ -115,15 +90,5 @@ export class JobEmployeeModule {
 
 		// Set hasRegisteredRoutes to true
 		JobEmployeeModule.hasRegisteredPageRoutes = true;
-	}
-
-	/**
-	 * Called when the plugin is destroyed.
-	 *
-	 * @returns {void | Promise<void>}
-	 * @memberof JobEmployeeModule
-	 */
-	onPluginDestroy(): void | Promise<void> {
-		console.log(`${JobEmployeeModule.name} is being destroyed...`);
 	}
 }

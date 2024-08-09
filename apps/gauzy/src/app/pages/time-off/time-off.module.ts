@@ -17,14 +17,12 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TimeOffMutationModule,
 	UserFormsModule
@@ -47,7 +45,6 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,
@@ -61,8 +58,7 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		AngularSmartTableModule,
 		NbToggleModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],

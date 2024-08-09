@@ -24,7 +24,6 @@ import {
 	NbListModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -50,13 +49,12 @@ import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
@@ -102,7 +100,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
-		Angular2SmartTableModule,
 		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
@@ -128,12 +125,11 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		PaginationV2Module,
+		AngularSmartTableModule,
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,
-		NbAccordionModule,
-		GauzyButtonActionModule
+		NbAccordionModule
 	],
 	providers: [
 		InvoicesService,

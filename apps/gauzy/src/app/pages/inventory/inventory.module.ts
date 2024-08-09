@@ -15,7 +15,6 @@ import {
 	NbTooltipModule,
 	NbStepperModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
@@ -31,12 +30,11 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	CurrencyModule,
-	GauzyButtonActionModule,
 	ImageAssetModule,
 	LanguageSelectorModule,
-	PaginationV2Module,
 	ProductCategorySelectorModule,
 	ProductTypeSelectorModule,
 	SelectAssetModule,
@@ -96,8 +94,6 @@ const NB_MODULES = [
 		MerchantModule,
 		...NB_MODULES,
 		NgSelectModule,
-		Angular2SmartTableModule,
-		PaginationV2Module,
 		ProductTypesModule,
 		ProductCategoriesModule,
 		ReactiveFormsModule,
@@ -108,7 +104,7 @@ const NB_MODULES = [
 		TranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
+		AngularSmartTableModule,
 		ProductTypeSelectorModule,
 		ProductCategorySelectorModule,
 		NgxPermissionsModule.forChild()

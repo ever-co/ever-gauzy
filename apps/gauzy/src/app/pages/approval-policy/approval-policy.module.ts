@@ -14,15 +14,13 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService } from '@gauzy/ui-core/core';
 import {
+	AngularSmartTableModule,
 	ApprovalPolicyMutationModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule
 } from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from './approval-policy.component';
@@ -42,7 +40,6 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
 		CardGridModule,
@@ -50,8 +47,7 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		ApprovalPolicyRoutingModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module
+		AngularSmartTableModule
 	],
 	declarations: [ApprovalPolicyComponent],
 	providers: [ApprovalPolicyService]

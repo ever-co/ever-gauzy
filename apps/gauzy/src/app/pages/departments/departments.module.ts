@@ -13,16 +13,14 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	CardGridModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -51,15 +49,13 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		CardGridModule,
-		Angular2SmartTableModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		PaginationV2Module,
-		GauzyButtonActionModule,
+		AngularSmartTableModule,
 		TableComponentsModule
 	],
 	declarations: [...COMPONENTS],

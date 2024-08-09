@@ -12,16 +12,14 @@ import {
 	NbToggleModule,
 	NbTabsetModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { MomentModule } from 'ngx-moment';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AngularSmartTableModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
@@ -35,7 +33,6 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		CKEditorModule,
 		MomentModule,
 		NbIconModule,
@@ -54,8 +51,7 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
 		DialogsModule,
-		GauzyButtonActionModule,
-		PaginationV2Module
+		AngularSmartTableModule
 	]
 })
 export class ProposalTemplateModule {}
