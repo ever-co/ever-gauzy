@@ -17,7 +17,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
 	DialogsModule,
 	EmployeeMultiSelectModule,
 	SharedModule,
@@ -51,7 +51,7 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 		EmployeeMultiSelectModule,
 		StatusBadgeModule,
 		DialogsModule,
-		SmartDataViewLayoutModule
+		AngularSmartTableModule
 	]
 })
 export class ProposalTemplateModule {}

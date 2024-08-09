@@ -14,7 +14,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
 	ProjectSelectModule,
 	RepositorySelectorModule,
 	SharedModule
@@ -49,7 +49,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		SharedModule,
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]

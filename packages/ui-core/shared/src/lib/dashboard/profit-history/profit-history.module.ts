@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbIconModule, NbCardModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
+import { AngularSmartTableModule } from '../../smart-table/smart-table.module';
 import { ProfitHistoryComponent } from './profit-history.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
@@ -14,7 +14,7 @@ import { IncomeTableComponent } from './table-components/income-table.component'
 		NbCardModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
-		SmartDataViewLayoutModule
+		AngularSmartTableModule
 	],
 	exports: [ProfitHistoryComponent],
 	declarations: [ProfitHistoryComponent, ExpenseTableComponent, IncomeTableComponent]

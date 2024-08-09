@@ -12,7 +12,12 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule, EntityWithMembersModule, ProjectMutationModule } from '@gauzy/ui-core/shared';
+import {
+	AngularSmartTableModule,
+	CardGridModule,
+	EntityWithMembersModule,
+	ProjectMutationModule
+} from '@gauzy/ui-core/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -37,7 +42,8 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
+		CardGridModule,
 		ProjectMutationModule,
 		NgxPermissionsModule.forChild()
 	],

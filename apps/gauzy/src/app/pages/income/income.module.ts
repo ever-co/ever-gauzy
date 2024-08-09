@@ -15,7 +15,8 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
+	CardGridModule,
 	IncomeMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -42,10 +43,11 @@ import { IncomeRoutingModule } from './income-routing.module';
 		UserFormsModule,
 		IncomeMutationModule,
 		TableComponentsModule,
+		CardGridModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
 		TableFiltersModule,
 		SharedModule
 	],

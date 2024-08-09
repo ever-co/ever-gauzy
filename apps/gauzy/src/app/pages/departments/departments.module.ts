@@ -16,7 +16,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
@@ -47,13 +48,14 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
+		CardGridModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
 		TableComponentsModule
 	],
 	declarations: [...COMPONENTS],

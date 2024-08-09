@@ -16,7 +16,9 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
+	CardGridModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -45,7 +47,9 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TagsColorInputModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
-		SmartDataViewLayoutModule
+		AngularSmartTableModule,
+		CardGridModule,
+		NoDataMessageModule
 	],
 	declarations: [VendorsComponent]
 })

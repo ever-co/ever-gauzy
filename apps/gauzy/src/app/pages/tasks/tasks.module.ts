@@ -26,8 +26,9 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
 	AddTaskDialogModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GauzyEditableGridModule,
 	ProjectSelectModule,
@@ -92,12 +93,13 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TagsColorInputModule,
 		SharedModule,
 		UserFormsModule,
+		CardGridModule,
 		AddTaskDialogModule,
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,
 		TasksSprintSettingsViewModule,
 		TableFiltersModule,
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
 		ProjectSelectModule,
 		TaskPrioritySelectModule,
 		TaskSizeSelectModule,

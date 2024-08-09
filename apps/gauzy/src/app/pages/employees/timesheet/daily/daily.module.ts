@@ -17,10 +17,11 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
 	DialogsModule,
 	EditTimeLogModalModule,
+	GauzyButtonActionModule,
 	GauzyFiltersModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,
@@ -60,7 +61,8 @@ import { DailyComponent } from './daily/daily.component';
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		SmartDataViewLayoutModule
+		GauzyButtonActionModule,
+		NoDataMessageModule
 	]
 })
 export class DailyModule {}

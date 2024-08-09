@@ -22,7 +22,8 @@ import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.compon
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GoalCustomUnitModule,
 	GoalTemplatesModule,
@@ -48,6 +49,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		EmployeeMultiSelectModule,
 		SharedModule,
 		NbTabsetModule,
+		CardGridModule,
 		NbCheckboxModule,
 		NbToggleModule,
 		GoalCustomUnitModule,
@@ -56,7 +58,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
-		SmartDataViewLayoutModule
+		AngularSmartTableModule
 	]
 })
 export class GoalSettingsModule {}

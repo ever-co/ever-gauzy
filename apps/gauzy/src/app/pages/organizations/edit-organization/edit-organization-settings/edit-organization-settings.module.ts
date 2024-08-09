@@ -33,7 +33,7 @@ import {
 	OrganizationVendorsService
 } from '@gauzy/ui-core/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
 	CurrencyModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
@@ -96,7 +96,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		LeafletMapModule,
 		NbAccordionModule,
 		TimeZoneSelectorModule,
-		SmartDataViewLayoutModule
+		AngularSmartTableModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

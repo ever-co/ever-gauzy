@@ -1,4 +1,6 @@
+import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -15,7 +17,8 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
+	AngularSmartTableModule,
+	CardGridModule,
 	LeafletMapModule,
 	LocationFormModule,
 	SharedModule,
@@ -58,6 +61,9 @@ const NB_MODULES = [
 		ManageVariantsQuantityFormComponent
 	],
 	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
 		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
@@ -66,7 +72,8 @@ const NB_MODULES = [
 		LocationFormModule,
 		LeafletMapModule,
 		TagsColorInputModule,
-		SmartDataViewLayoutModule,
+		AngularSmartTableModule,
+		CardGridModule,
 		InventoryTableComponentsModule
 	],
 	providers: []
