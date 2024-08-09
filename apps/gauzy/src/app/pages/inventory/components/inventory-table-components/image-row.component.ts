@@ -40,8 +40,14 @@ export class ImageRowComponent {
 	fallbackSvg = DEFAULT_SVG;
 
 	get imageUrl() {
+		if (!this.rowData && !this.value) {
+			return null;
+		}
 		if (this.rowData.image?.fullUrl) {
 			return this.rowData.image?.fullUrl;
+		}
+		if (this.rowData.featuredImage && this.rowData.featuredImage?.fullUrl) {
+			return this.rowData.featuredImage?.fullUrl;
 		}
 		if (this.rowData.featuredImage && this.rowData.featuredImage.url) {
 			return this.rowData.featuredImage.url;
