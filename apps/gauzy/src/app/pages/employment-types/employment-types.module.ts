@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -26,10 +24,7 @@ import { EmploymentTypesComponent } from './employment-types.component';
 @NgModule({
 	imports: [
 		SharedModule,
-		CommonModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		EmploymentTypesRoutingModule,
 		NbInputModule,

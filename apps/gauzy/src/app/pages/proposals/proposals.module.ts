@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -40,9 +38,6 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		ProposalsRoutingModule,
 		CKEditorModule,
 		NbBadgeModule,

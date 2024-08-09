@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -23,11 +21,9 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		ExpenseRecurringRoutingModule,
 		SharedModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

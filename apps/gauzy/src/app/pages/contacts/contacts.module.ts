@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -37,9 +35,6 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule.forChild(),

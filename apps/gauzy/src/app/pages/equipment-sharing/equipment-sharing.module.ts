@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -28,12 +26,10 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		EquipmentSharingRoutingModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

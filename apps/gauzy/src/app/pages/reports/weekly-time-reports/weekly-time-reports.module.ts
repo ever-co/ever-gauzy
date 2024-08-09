@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import {
@@ -15,7 +14,6 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 @NgModule({
 	declarations: [WeeklyTimeReportsComponent],
 	imports: [
-		CommonModule,
 		SharedModule,
 		WeeklyTimeReportsRoutingModule,
 		LineChartModule,
