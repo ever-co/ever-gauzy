@@ -24,7 +24,7 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	DialogsModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
@@ -77,7 +77,7 @@ const THIRD_PARTY_MODULES = [
 		RouterModule.forChild([]),
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		DialogsModule,
 		ProposalTemplateSelectModule,
 		SelectorsModule,

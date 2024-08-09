@@ -49,8 +49,7 @@ import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
@@ -100,7 +99,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
-		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
 		ReactiveFormsModule,
@@ -125,7 +123,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,

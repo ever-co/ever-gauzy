@@ -17,12 +17,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService } from '@gauzy/ui-core/core';
-import {
-	AngularSmartTableModule,
-	ApprovalPolicyMutationModule,
-	CardGridModule,
-	SharedModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, ApprovalPolicyMutationModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from './approval-policy.component';
 import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 
@@ -42,12 +37,11 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbRadioModule,
-		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ApprovalPolicyComponent],
 	providers: [ApprovalPolicyService]

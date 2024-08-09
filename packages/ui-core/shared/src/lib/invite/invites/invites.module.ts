@@ -16,9 +16,8 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { TranslateModule } from '@ngx-translate/core';
-import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
-import { AngularSmartTableModule } from '../../smart-table/smart-table.module';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -57,10 +56,9 @@ const COMPONENTS = [
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		InviteMutationModule,
-		UserFormsModule,
-		CardGridModule
+		UserFormsModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS]

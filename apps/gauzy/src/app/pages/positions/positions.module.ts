@@ -12,9 +12,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -37,11 +35,9 @@ import { PositionsComponent } from './positions.component';
 		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
-		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
-		AngularSmartTableModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]

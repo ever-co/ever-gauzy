@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
 import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 import { SharedModule } from '../../shared.module';
 
@@ -19,7 +19,7 @@ import { SharedModule } from '../../shared.module';
 		NbSpinnerModule,
 		TranslateModule.forChild(),
 		SharedModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class AmountsOwedGridModule {}

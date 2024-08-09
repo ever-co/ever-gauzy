@@ -15,8 +15,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EquipmentSharingMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -42,11 +41,10 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
 		NbDatepickerModule,
-		CardGridModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbTooltipModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService, EmployeesService],

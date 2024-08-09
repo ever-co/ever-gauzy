@@ -21,8 +21,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
 	ImageUploaderModule,
@@ -88,8 +87,7 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
-		CardGridModule,
+		SmartDataViewLayoutModule,
 		SharedModule
 	],
 	declarations: [...COMPONENTS],

@@ -17,8 +17,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EmployeeMultiSelectModule,
 	ImageUploaderModule,
 	ProjectSelectModule,
@@ -46,7 +45,6 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		NbSelectModule,
 		NbBadgeModule,
 		SharedModule,
-		CardGridModule,
 		NbTooltipModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
@@ -54,7 +52,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
 		ProjectSelectModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		ImageUploaderModule
 	],
 	declarations: [TeamsComponent, TeamsMutationComponent],

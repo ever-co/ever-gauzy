@@ -20,13 +20,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
-import {
-	AngularSmartTableModule,
-	CardGridModule,
-	SharedModule,
-	TimeOffMutationModule,
-	UserFormsModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, TimeOffMutationModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
@@ -51,14 +45,13 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbRadioModule,
 		NbSelectModule,
 		NbBadgeModule,
-		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbToggleModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],

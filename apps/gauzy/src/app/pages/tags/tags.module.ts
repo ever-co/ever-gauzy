@@ -20,13 +20,7 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import {
-	AngularSmartTableModule,
-	CardGridModule,
-	SharedModule,
-	TagsMutationModule,
-	UserFormsModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, TagsMutationModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { TagsComponent } from './tags.component';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsColorComponent } from './tags-color/tags-color.component';
@@ -57,8 +51,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		SharedModule,
 		UserFormsModule,
 		TagsMutationModule,
-		CardGridModule,
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })

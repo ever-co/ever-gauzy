@@ -18,8 +18,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
 	ImageUploaderModule,
@@ -52,14 +51,13 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		NbToggleModule,
 		NbTooltipModule,
 		NgSelectModule,
-		CardGridModule,
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,
 		ImageUploaderModule,
 		LeafletMapModule,
 		LocationFormModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		SharedModule,
 		TagsColorInputModule,
 		TranslateModule.forChild(),

@@ -15,10 +15,8 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	FileUploaderModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -41,7 +39,6 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbIconModule,
 		NbActionsModule,
 		SharedModule,
-		CardGridModule,
 		TableComponentsModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
@@ -49,8 +46,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NgSelectModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
-		AngularSmartTableModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []

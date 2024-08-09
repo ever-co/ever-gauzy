@@ -13,9 +13,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
-	CardGridModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -38,14 +36,12 @@ import { EmploymentTypesComponent } from './employment-types.component';
 		NbIconModule,
 		TagsColorInputModule,
 		TableComponentsModule,
-		CardGridModule,
 		NbDialogModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbTabsetModule,
-		NoDataMessageModule,
 		NbTooltipModule,
 		WorkInProgressModule
 	],
