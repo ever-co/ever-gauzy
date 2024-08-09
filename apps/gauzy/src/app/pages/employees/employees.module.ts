@@ -21,7 +21,6 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	CandidatesService,
@@ -32,19 +31,17 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
 	EmployeeLocationModule,
 	EmployeeMutationModule,
 	EmployeeRatesModule,
 	EmployeeStartWorkModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
 	LanguageSelectorModule,
-	PaginationV2Module,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
@@ -106,7 +103,6 @@ const COMPONENTS = [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		CKEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
@@ -145,9 +141,7 @@ const COMPONENTS = [
 		EmployeeRatesModule,
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
-		CardGridModule,
+		SmartDataViewLayoutModule,
 		TimeZoneSelectorModule
 	],
 	declarations: [...COMPONENTS],

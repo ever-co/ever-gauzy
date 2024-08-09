@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
-import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 import { SharedModule } from '../../shared.module';
+import { NoDataMessageModule } from '../../smart-data-layout/components/no-data-message/no-data-message.module';
+import { AmountsOwedGridComponent } from './amounts-owed-grid.component';
 
 @NgModule({
 	declarations: [AmountsOwedGridComponent],

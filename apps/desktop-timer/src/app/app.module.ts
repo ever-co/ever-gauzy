@@ -1,4 +1,4 @@
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { APP_INITIALIZER, ErrorHandler, Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -17,6 +17,7 @@ import {
 	ElectronService,
 	ErrorHandlerService,
 	GAUZY_ENV,
+	HttpLoaderFactory,
 	ImageViewerModule,
 	LanguageInterceptor,
 	LanguageModule,
@@ -53,6 +54,7 @@ import {
 	NbToastrModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular-ivy';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
@@ -101,6 +103,14 @@ if (environment.SENTRY_DSN) {
 		SplashScreenModule,
 		ServerDownModule,
 		AlwaysOnModule,
+		TranslateModule.forRoot({
+			extend: true,
+			loader: {
+				provide: TranslateLoader,
+				useFactory: HttpLoaderFactory,
+				deps: [HttpClient]
+			}
+		}),
 		LanguageModule.forRoot(),
 		NbDatepickerModule.forRoot(),
 		AboutModule,

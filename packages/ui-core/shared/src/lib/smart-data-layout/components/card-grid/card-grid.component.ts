@@ -1,6 +1,4 @@
-import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef } from '@angular/core';
-
-import { Output, EventEmitter } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ViewChild, ElementRef, EventEmitter, Output } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, debounceTime, filter, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
