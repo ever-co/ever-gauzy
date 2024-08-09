@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,8 +9,6 @@ import { ManualTimeComponent } from './manual-time/manual-time.component';
 @NgModule({
 	declarations: [ManualTimeComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		ManualTimeRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -20,7 +16,6 @@ import { ManualTimeComponent } from './manual-time/manual-time.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NgSelectModule,
-		ReactiveFormsModule,
 		NbBadgeModule,
 		GauzyFiltersModule,
 		ProjectColumnViewModule,

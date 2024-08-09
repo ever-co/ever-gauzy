@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -23,8 +21,6 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 @NgModule({
 	declarations: [ApprovalsComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,

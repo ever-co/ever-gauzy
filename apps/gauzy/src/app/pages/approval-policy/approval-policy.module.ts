@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -23,8 +22,6 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 
 @NgModule({
 	imports: [
-		SharedModule,
-		CommonModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -37,6 +34,7 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NbRadioModule,
+		SharedModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
 		TranslateModule.forChild(),

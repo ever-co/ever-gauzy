@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -53,9 +51,6 @@ const NB_MODULES = [
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		...NB_MODULES,
 		NgxAuthRoutingModule,
 		TranslateModule.forChild(),

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbSpinnerModule,
@@ -17,7 +15,6 @@ import { AllReportComponent } from './all-report/all-report.component';
 @NgModule({
 	declarations: [AllReportComponent],
 	imports: [
-		CommonModule,
 		AllReportRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -25,7 +22,6 @@ import { AllReportComponent } from './all-report/all-report.component';
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		NbToggleModule,
 		NbButtonModule
 	]

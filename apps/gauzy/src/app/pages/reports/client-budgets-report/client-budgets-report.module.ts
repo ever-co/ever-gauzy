@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -17,7 +15,6 @@ import { ClientBudgetsReportComponent } from './client-budgets-report/client-bud
 @NgModule({
 	declarations: [ClientBudgetsReportComponent],
 	imports: [
-		CommonModule,
 		ClientBudgetsReportRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -25,7 +22,6 @@ import { ClientBudgetsReportComponent } from './client-budgets-report/client-bud
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
 		GauzyFiltersModule,

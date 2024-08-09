@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -20,7 +19,6 @@ import { AllTeamComponent } from './all-team/all-team.component';
 @NgModule({
 	declarations: [TeamComponent, TeamCardComponent, TeamMemberComponent, ChartComponent, AllTeamComponent],
 	imports: [
-		CommonModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,

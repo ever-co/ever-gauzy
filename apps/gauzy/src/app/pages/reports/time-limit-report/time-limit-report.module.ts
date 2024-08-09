@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -16,7 +14,6 @@ import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.
 @NgModule({
 	declarations: [TimeLimitReportComponent],
 	imports: [
-		CommonModule,
 		TimeLimitReportRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -24,7 +21,6 @@ import { TimeLimitReportComponent } from './time-limit-report/time-limit-report.
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		LineChartModule,
 		ProgressStatusModule,
 		GauzyFiltersModule,

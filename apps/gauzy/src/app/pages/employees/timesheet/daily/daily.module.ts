@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbCheckboxModule,
@@ -35,8 +33,6 @@ import { DailyComponent } from './daily/daily.component';
 @NgModule({
 	declarations: [DailyComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		DailyRoutingModule,
 		NbButtonModule,
 		NbCardModule,

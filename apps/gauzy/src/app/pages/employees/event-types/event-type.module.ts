@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -31,7 +30,6 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		SharedModule,
 		NbToastrModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

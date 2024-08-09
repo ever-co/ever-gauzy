@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -20,11 +19,9 @@ import { ManageAppointmentRoutingModule } from './manage-appointment-routing.mod
 	imports: [
 		ManageAppointmentRoutingModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		EmployeeSchedulesModule,
-		ReactiveFormsModule,
 		NbIconModule,
 		NbSpinnerModule,
 		TimerPickerModule,

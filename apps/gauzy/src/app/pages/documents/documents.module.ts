@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -28,11 +26,8 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
 @NgModule({
 	imports: [
-		CommonModule,
 		DocumentsRoutingModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
