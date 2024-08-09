@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
+import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset, CurrenciesEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
@@ -18,8 +18,7 @@ import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, Toas
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit
-{
+	implements OnInit, OnDestroy, AfterViewInit {
 	hoverState: boolean;
 	employeesCount: number;
 
@@ -74,7 +73,7 @@ export class EditOrganizationMainComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
@@ -85,7 +84,7 @@ export class EditOrganizationMainComponent
 	 *
 	 * @param image
 	 */
-	updateImageAsset(image: IImageAsset) {
+	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
 				this.form.get('imageId').setValue(image.id);
@@ -93,15 +92,17 @@ export class EditOrganizationMainComponent
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
+			await this.updateOrganizationSettings();
 			this.form.updateValueAndValidity();
 		} catch (error) {
 			console.log('Error while updating organization avatars');
-			this.handleImageUploadError(error);
+			this.errorHandler.handleError(error);
 		}
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		// Delegate error handling to the _errorHandlingService
+		this.errorHandler.handleError(error);
 	}
 
 	/**
@@ -142,11 +143,10 @@ export class EditOrganizationMainComponent
 	 *
 	 * @returns
 	 */
-	private _setFormValues() {
+	private async _setFormValues() {
 		if (!this.organization) {
 			return;
 		}
-
 		this.form.setValue({
 			imageId: this.organization.imageId || null,
 			imageUrl: this.organization.imageUrl || null,
@@ -159,6 +159,13 @@ export class EditOrganizationMainComponent
 			website: this.organization.website || null,
 			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null
 		});
+		const { id: organizationId, tenantId } = this.organization;
+		const values = {
+			organizationId,
+			tenantId,
+			...(this.form.valid ? this.form.value : {})
+		};
+		await this.organizationEditStore.updateOrganizationForm(values);
 		this.form.updateValueAndValidity();
 	}
 
@@ -175,5 +182,5 @@ export class EditOrganizationMainComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) {}
+	currencyChanged($event: ICurrency) { }
 }

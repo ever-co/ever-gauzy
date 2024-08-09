@@ -100,10 +100,10 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 		if (!selectedImages) return;
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {
-					return !this.inventoryStore.gallery.find((galleryImg) => {
-						return galleryImg.id == image.id || galleryImg.name == image.name;
-					});
-			  })
+				return !this.inventoryStore.gallery.find((galleryImg) => {
+					return galleryImg.id == image.id || galleryImg.name == image.name;
+				});
+			})
 			: [];
 
 		try {
@@ -179,6 +179,7 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 	onViewGalleryClick() {
 		const mappedImages = this.gallery.map((image) => {
 			return {
+				id: image.id,
 				thumbUrl: image.fullUrl,
 				fullUrl: image.fullUrl
 			};
@@ -230,5 +231,5 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 			});
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

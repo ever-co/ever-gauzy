@@ -18,16 +18,16 @@
 						<img
 							*ngIf="
 								inventoryItem.featuredImage &&
-								inventoryItem.featuredImage.url
+								inventoryItem.featuredImage.fullUrl
 							"
 							class="featured-image"
-							[src]="inventoryItem.featuredImage.url"
+							[src]="inventoryItem.featuredImage.fullUrl"
 							alt="Feature image"
 						/>
 						<ga-no-image
 							*ngIf="
 								!inventoryItem?.featuredImage &&
-								!inventoryItem?.featuredImage?.url
+								!inventoryItem?.featuredImage?.fullUrl
 							"
 							class="no-image"
 							[fontSize]="16"
@@ -47,7 +47,7 @@
 							>
 								<img
 									class="gallery-sm-preview-item"
-									[src]="galleryItem.url"
+									[src]="galleryItem.fullUrl"
 								/>
 							</div>
 						</div>

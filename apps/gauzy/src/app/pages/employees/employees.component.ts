@@ -597,7 +597,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
 		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
 		const workStatus = [start, end].filter(Boolean).join(' - ');
-
 		return {
 			fullName: `${user.name}`,
 			email: user.email,
@@ -907,5 +906,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

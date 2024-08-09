@@ -96,7 +96,7 @@
 		>
 			<img
 				class="gallery-sm-preview-item"
-				[src]="galleryItem?.url"
+				[src]="galleryItem?.fullUrl"
 				[ngClass]="{ selected: isSelected(galleryItem) }"
 			/>
 			<div class="featured-icon" *ngIf="isFeaturedImage(galleryItem)">

@@ -39,6 +39,14 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.store.selectedOrganization$
+			.pipe(
+				distinctUntilChange(),
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => (this.organization = organization)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	ngAfterViewInit(): void {
@@ -78,5 +86,5 @@ export class EditOrganizationComponent extends TranslationBaseComponent implemen
 		window.open(externalUrl, '_blank');
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

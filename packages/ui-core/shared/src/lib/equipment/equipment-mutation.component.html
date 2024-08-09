@@ -59,9 +59,9 @@
 						></div>
 
 						<img
-							*ngIf="image && image?.url"
+							*ngIf="image && image?.fullUrl"
 							class="featured-image"
-							[src]="image?.url"
+							[src]="image?.fullUrl"
 							alt="Feature image"
 							style="width: 150px"
 						/>

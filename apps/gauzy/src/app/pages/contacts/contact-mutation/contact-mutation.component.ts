@@ -7,7 +7,8 @@ import {
 	ContactType,
 	IOrganization,
 	OrganizationContactBudgetTypeEnum,
-	IOrganizationContact
+	IOrganizationContact,
+	IImageAsset
 } from '@gauzy/contracts';
 import { NbStepperComponent } from '@nebular/theme';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -101,6 +102,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	public contMainForm: UntypedFormGroup = ContactMutationComponent.buildMainForm(this.fb);
 	static buildMainForm(formBuilder: UntypedFormBuilder): UntypedFormGroup {
 		const form = formBuilder.group({
+			imageId: [null],
 			imageUrl: [null],
 			tags: [],
 			name: ['', [Validators.required]],
@@ -217,6 +219,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 		const orgContact = this.organizationContact;
 		//
 		this.contMainForm.patchValue({
+			imageId: orgContact?.imageId ?? null,
 			imageUrl: orgContact?.imageUrl ?? null,
 			tags: orgContact?.tags ?? [],
 			name: orgContact?.name ?? null,
@@ -268,7 +271,19 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	handleImageUploadError(error) {
-		this.toastrService.danger(error);
+		this.errorHandler.handleError(error);
+	}
+	/**
+	 * Upload employee image/avatar
+	 *
+	 * @param image
+	 */
+	async updateImageAsset(image: IImageAsset) {
+		if (image) {
+			this.contMainForm.get('imageId').setValue(image.id);
+			this.contMainForm.get('imageUrl').setValue(image.fullUrl);
+		}
+		this.contMainForm.updateValueAndValidity();
 	}
 
 	/**
@@ -444,5 +459,5 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) {}
+	onGeometrySend(geometry: any) { }
 }

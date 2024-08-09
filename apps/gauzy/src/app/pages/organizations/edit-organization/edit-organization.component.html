@@ -9,7 +9,7 @@
 <ng-template #organizationTemplate>
 	<div class="header-container">
 		<div class="org-info">
-			<img class="org-image" [src]="organization?.imageUrl" alt="Organization Avatar" />
+			<img class="org-image" [src]="organization?.image?.fullUrl || organization?.imageUrl" alt="Organization Avatar" />
 			<div class="org-details">
 				<span class="org-name">
 					{{ organization?.name }}
