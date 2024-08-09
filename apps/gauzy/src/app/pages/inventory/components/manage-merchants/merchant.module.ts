@@ -14,16 +14,13 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	CurrencyModule,
-	GauzyButtonActionModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module,
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
@@ -54,18 +51,15 @@ const NB_MODULES = [
 		FormsModule,
 		ReactiveFormsModule,
 		...NB_MODULES,
-		Angular2SmartTableModule,
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
-		CardGridModule,
+		SmartDataViewLayoutModule,
 		CurrencyModule,
-		GauzyButtonActionModule,
 		InventoryTableComponentsModule,
 		LeafletMapModule,
 		LocationFormModule,
-		PaginationV2Module,
 		TagsColorInputModule
 	],
 	providers: []

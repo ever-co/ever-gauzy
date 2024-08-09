@@ -16,11 +16,10 @@ import {
 	NbActionsModule,
 	NbContextMenuModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { HubstaffRoutingModule } from './hubstaff-routing.module';
 import { HubstaffComponent } from './components/hubstaff/hubstaff.component';
 import { HubstaffAuthorizeComponent } from './components/hubstaff-authorize/hubstaff-authorize.component';
@@ -39,7 +38,6 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		NbInputModule,
 		NbIconModule,
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		NgSelectModule,
 		NbSelectModule,
 		NbCheckboxModule,
@@ -50,7 +48,8 @@ import { SettingsDialogComponent } from './components/settings-dialog/settings-d
 		SharedModule,
 		NbDatepickerModule,
 		NbDialogModule.forChild(),
-		TranslateModule.forChild()
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule
 	]
 })
 export class HubstaffModule {}

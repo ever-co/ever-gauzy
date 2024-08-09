@@ -11,7 +11,6 @@ import {
 	NbLayoutModule,
 	NbSelectModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { TranslateModule } from '@ngx-translate/core';
 import { EmailTemplateService } from '@gauzy/ui-core/core';
@@ -32,7 +31,6 @@ import { EmailTemplatesComponent } from './email-templates.component';
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
 		TranslateModule.forChild(),

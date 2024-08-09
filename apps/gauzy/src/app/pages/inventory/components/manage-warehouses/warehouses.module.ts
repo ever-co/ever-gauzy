@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -14,15 +12,12 @@ import {
 	NbTabsetModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
-	GauzyButtonActionModule,
+	SmartDataViewLayoutModule,
 	LeafletMapModule,
 	LocationFormModule,
-	PaginationV2Module,
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
@@ -63,11 +58,7 @@ const NB_MODULES = [
 		ManageVariantsQuantityFormComponent
 	],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		...NB_MODULES,
-		Angular2SmartTableModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		WarehousesRoutingModule,
@@ -75,9 +66,7 @@ const NB_MODULES = [
 		LocationFormModule,
 		LeafletMapModule,
 		TagsColorInputModule,
-		PaginationV2Module,
-		CardGridModule,
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		InventoryTableComponentsModule
 	],
 	providers: []

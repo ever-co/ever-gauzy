@@ -12,12 +12,9 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -28,17 +25,15 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 @NgModule({
 	imports: [
 		CommonModule,
+		FormsModule,
 		SharedModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		EmployeeLevelRoutingModule,
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
 		NbActionsModule,
-		CardGridModule,
-		Angular2SmartTableModule,
 		NbDialogModule,
 		TableComponentsModule,
 		TagsColorInputModule,
@@ -47,8 +42,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule,
+		SmartDataViewLayoutModule,
 		NbSpinnerModule
 	],
 	declarations: [EmployeeLevelComponent],

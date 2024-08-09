@@ -11,7 +11,7 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { PaginationFilterBaseComponent } from '../../smart-table/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '../../smart-data-layout/components/pagination/pagination-filter-base.component';
 import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
