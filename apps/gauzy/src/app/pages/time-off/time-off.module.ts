@@ -17,18 +17,10 @@ import {
 	NbToggleModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
-import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
-	SharedModule,
-	TimeOffMutationModule,
-	UserFormsModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, TimeOffMutationModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffRoutingModule } from './time-off-routing.module';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
@@ -47,22 +39,19 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		NgSelectModule,
 		NbRadioModule,
 		NbSelectModule,
 		NbBadgeModule,
-		CardGridModule,
 		NbRouteTabsetModule,
 		NbCheckboxModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		NbToggleModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],

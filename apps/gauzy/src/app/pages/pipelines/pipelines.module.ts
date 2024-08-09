@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -16,9 +15,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TranslateModule } from '@ngx-translate/core';
-import { CardGridModule, GauzyButtonActionModule, PaginationV2Module, SharedModule } from '@gauzy/ui-core/shared';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
+import { SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
 import { DealsService, PipelinesService } from '@gauzy/ui-core/core';
@@ -52,10 +49,7 @@ import { DealResolver } from './routes/deal.resolver';
 		StageFormComponent
 	],
 	imports: [
-		CommonModule,
-		ReactiveFormsModule,
 		NbDialogModule.forChild(),
-		Angular2SmartTableModule,
 		NbAccordionModule,
 		NbFormFieldModule,
 		NbSpinnerModule,
@@ -68,13 +62,10 @@ import { DealResolver } from './routes/deal.resolver';
 		NbCheckboxModule,
 		NbCardModule,
 		NbIconModule,
-		FormsModule,
-		CardGridModule,
-		SharedModule,
+		NbTabsetModule,
 		NgxPermissionsModule.forChild(),
-		PaginationV2Module,
-		GauzyButtonActionModule,
-		NbTabsetModule
+		SharedModule,
+		SmartDataViewLayoutModule
 	],
 	providers: [PipelinesService, DealsService, PipelineResolver, DealResolver]
 })

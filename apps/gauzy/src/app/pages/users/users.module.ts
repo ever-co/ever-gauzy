@@ -18,18 +18,15 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -75,7 +72,6 @@ const COMPONENTS = [
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		UserMutationModule,
 		NbTooltipModule,
@@ -91,9 +87,7 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module,
-		CardGridModule,
+		SmartDataViewLayoutModule,
 		SharedModule
 	],
 	declarations: [...COMPONENTS],

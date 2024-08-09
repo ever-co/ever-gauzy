@@ -9,13 +9,10 @@ import {
 	NbDialogModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EquipmentMutationModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
@@ -35,15 +32,12 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
-		CardGridModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
-		PaginationV2Module,
-		GauzyButtonActionModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })

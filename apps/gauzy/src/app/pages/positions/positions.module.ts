@@ -10,12 +10,9 @@ import {
 	NbInputModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -28,7 +25,6 @@ import { PositionsComponent } from './positions.component';
 	imports: [
 		CommonModule,
 		FormsModule,
-		Angular2SmartTableModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -39,11 +35,9 @@ import { PositionsComponent } from './positions.component';
 		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
-		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]

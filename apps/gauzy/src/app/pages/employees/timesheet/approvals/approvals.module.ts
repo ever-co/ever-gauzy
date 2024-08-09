@@ -15,7 +15,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { GauzyButtonActionModule, NoDataMessageModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
@@ -40,8 +40,7 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 		SharedModule,
 		ApprovalsRoutingModule,
 		StatusBadgeModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class ApprovalsModule {}
