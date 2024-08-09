@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '../../shared.module';
+import { NoDataMessageModule } from '../../smart-data-layout/components/no-data-message/no-data-message.module';
 import { ActivitiesReportGridComponent } from './activities-report-grid.component';
 import { ProgressStatusModule } from '../../progress-status/progress-status.module';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
-import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
-import { SharedModule } from '../../shared.module';
 
 @NgModule({
 	declarations: [ActivitiesReportGridComponent],
@@ -23,7 +23,7 @@ import { SharedModule } from '../../shared.module';
 		SharedModule,
 		ProgressStatusModule,
 		ProjectColumnViewModule,
-		SmartDataViewLayoutModule
+		NoDataMessageModule
 	]
 })
 export class ActivitiesReportGridModule {}

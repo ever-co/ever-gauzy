@@ -14,7 +14,7 @@ import { SharedModule } from '../../shared.module';
 import { TableComponentsModule } from '../../table-components/table-components.module';
 import { DailyGridComponent } from './daily-grid.component';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
-import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
+import { NoDataMessageModule } from '../../smart-data-layout/components/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
@@ -30,7 +30,7 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-vi
 		SharedModule,
 		ProjectColumnViewModule,
 		TableComponentsModule,
-		SmartDataViewLayoutModule
+		NoDataMessageModule
 	],
 	declarations: [DailyGridComponent],
 	exports: [DailyGridComponent]

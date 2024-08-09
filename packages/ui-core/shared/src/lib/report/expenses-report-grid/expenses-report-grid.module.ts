@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { ExpensesReportGridComponent } from './expenses-report-grid.component';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
-import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
+import { NoDataMessageModule } from '../../smart-data-layout/components/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [
@@ -19,7 +19,7 @@ import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-vi
 		TranslateModule.forChild(),
 		SharedModule,
 		ProjectColumnViewModule,
-		SmartDataViewLayoutModule
+		NoDataMessageModule
 	],
 	declarations: [ExpensesReportGridComponent],
 	exports: [ExpensesReportGridComponent]
