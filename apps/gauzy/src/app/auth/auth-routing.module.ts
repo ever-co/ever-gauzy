@@ -84,9 +84,7 @@ export const routes: Routes = [
 				path: 'estimate',
 				component: EstimateEmailComponent,
 				canActivate: [NoAuthGuard],
-				resolve: {
-					estimate: EstimateEmailResolver
-				}
+				resolve: { estimate: EstimateEmailResolver }
 			},
 			{
 				path: 'logout',

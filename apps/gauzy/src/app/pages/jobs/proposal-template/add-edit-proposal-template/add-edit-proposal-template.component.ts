@@ -42,7 +42,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent i
 		/**
 		 * Set default select employee
 		 */
-		if (isNotEmpty(value) && this.form.get('employeeId')) {
+		if (value?.id && this.form.get('employeeId')) {
 			this.form.get('employeeId').setValue(value.id);
 			this.form.get('employeeId').updateValueAndValidity();
 		}

@@ -1,0 +1,8 @@
+<div class="wrapper">
+	<div class="percentage-col">{{ percentage }}%</div>
+	<div class="progress-col">
+		<nb-progress-bar [value]="percentage" [status]="progressStatus(percentage)"
+			[displayValue]="true" size="tiny">
+		</nb-progress-bar>
+	</div>
+</div>

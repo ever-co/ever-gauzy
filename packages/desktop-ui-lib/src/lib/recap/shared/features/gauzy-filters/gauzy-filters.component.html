@@ -1,0 +1,59 @@
+<nb-card>
+	<nb-card-header class="d-flex justify-content-between align-items-center">
+		<h6>{{'FORM.FILTER' | translate}}</h6>
+		<ng-container *ngIf="hasFilterApplies">
+			<div class="single-filter-wrapper clear-fitlers align-self-end">
+				<button nbButton outline status="primary" size="small" (click)="clearFilters()">
+					<nb-icon icon="refresh-outline"></nb-icon>
+					{{ 'BUTTONS.RESET' | translate }}
+				</button>
+			</div>
+		</ng-container>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="filter-item-list">
+			<ng-container *ngIf="hasSourceFilter">
+				<div class="filter-item single-filter-wrapper">
+					<nb-select multiple [placeholder]="'TIMESHEET.SELECT_SOURCE' | translate"
+						[selected]="filters.source" (selectedChange)="setSource($event)">
+						<nb-option *ngFor="let source of timeLogSourceSelectors" [value]="source.value">
+							{{ source.label | replace : '_' : ' ' | titlecase }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</ng-container>
+			<ng-container *ngIf="hasActivityLevelFilter">
+				<div class="filter-item single-filter-wrapper">
+					<button class="activity-level-filter text-capitalize" nbButton status="basic" outline
+						nbPopoverPlacement="bottom" [nbPopover]="activityLevelSliderTemplate" nbPopoverTrigger="click">
+						<span
+							*ngIf="activityLevel?.start > 0 || activityLevel?.end < 100; else selectActivityLevelLabel">
+							{{ 'TIMESHEET.ACTIVITY_LEVEL' | translate }} : {{ activityLevel?.start }}% -
+							{{ activityLevel?.end }}%
+						</span>
+						<nb-icon icon="chevron-down-outline"></nb-icon>
+					</button>
+				</div>
+				<ng-template #selectActivityLevelLabel>
+					{{ 'TIMESHEET.SELECT_ACTIVITY_LEVEL' | translate }}
+				</ng-template>
+			</ng-container>
+			<ng-container *ngIf="hasLogTypeFilter">
+				<div class="filter-item single-filter-wrapper">
+					<nb-select multiple [placeholder]="'TIMESHEET.SELECT_LOG_TYPE' | translate"
+						[selected]="filters.logType" (selectedChange)="setLogType($event)">
+						<nb-option *ngFor="let logType of TimeLogType | keyvalue" [value]="logType.key">
+							{{ logType.value | titlecase }}
+						</nb-option>
+					</nb-select>
+				</div>
+			</ng-container>
+		</div>
+	</nb-card-body>
+</nb-card>
+<ng-template #activityLevelSliderTemplate>
+	<div class="p-3 custom-slider">
+		<ngx-slider [value]="activityLevel?.start" [highValue]="activityLevel?.end"
+			(userChangeEnd)="setActivityLevel($event)" [options]="sliderOptions"></ngx-slider>
+	</div>
+</ng-template>

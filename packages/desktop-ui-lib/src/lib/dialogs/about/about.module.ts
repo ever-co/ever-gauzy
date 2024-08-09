@@ -1,19 +1,11 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AboutComponent } from './about.component';
+import { NgModule } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbLayoutModule } from '@nebular/theme';
-import { NgxTranslateModule } from '../../ngx-translate';
-import { LanguageSelectorService } from '../../language/language-selector.service';
+import { LanguageModule } from '../../language/language.module';
+import { AboutComponent } from './about.component';
 
 @NgModule({
 	declarations: [AboutComponent],
-	imports: [
-		CommonModule,
-		NbCardModule,
-		NbButtonModule,
-		NbLayoutModule,
-		NgxTranslateModule
-	],
-	providers: [LanguageSelectorService]
+	imports: [CommonModule, NbCardModule, NbButtonModule, NbLayoutModule, LanguageModule.forChild()]
 })
-export class AboutModule { }
+export class AboutModule {}

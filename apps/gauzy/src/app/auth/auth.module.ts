@@ -15,9 +15,10 @@ import {
 	NbSelectModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ElectronService } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
+import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { NgxAuthRoutingModule } from './auth-routing.module';
 import { NgxRegisterComponent } from './register/register.component';
 import { NgxLoginComponent } from './login/login.component';
@@ -28,34 +29,39 @@ import { NgxRegisterSideSingleFeatureComponent } from './register/register-side-
 import { NgxAuthComponent } from './auth/auth.component';
 import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
 import { ConfirmEmailModule } from './confirm-email';
-import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
 import { SocialLinksComponent } from './@shared/social-links/social-links.component';
 import { WorkspaceSelectionModule } from './@shared/workspace-selection/workspace-selection.module';
 import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
 import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
+import { EstimateEmailModule } from './estimate-email/estimate-email.module';
+
+const NB_MODULES = [
+	NbAccordionModule,
+	NbAlertModule,
+	NbAuthModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbFormFieldModule,
+	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbSelectModule,
+	NbTooltipModule
+];
 
 @NgModule({
 	imports: [
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		NbAuthModule,
-		NbAccordionModule,
-		NbAlertModule,
-		NbButtonModule,
-		NbCardModule,
-		NbCheckboxModule,
-		NbFormFieldModule,
-		NbIconModule,
-		NbInputModule,
-		NbLayoutModule,
-		NbSelectModule,
-		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		...NB_MODULES,
 		NgxAuthRoutingModule,
+		TranslateModule.forChild(),
 		ThemeSelectorModule,
 		NgxFaqModule,
+		EstimateEmailModule,
 		ConfirmEmailModule,
 		ThemeModule,
 		SharedModule,

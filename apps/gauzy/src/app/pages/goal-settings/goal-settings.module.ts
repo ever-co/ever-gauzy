@@ -18,17 +18,14 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
 	GoalCustomUnitModule,
 	GoalTemplatesModule,
-	PaginationV2Module,
 	SharedModule
 } from '@gauzy/ui-core/shared';
 import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
@@ -40,7 +37,6 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbCardModule,
 		NbIconModule,
 		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		NbButtonModule,
 		NbSelectModule,
 		NbDatepickerModule,
@@ -52,7 +48,6 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		EmployeeMultiSelectModule,
 		SharedModule,
 		NbTabsetModule,
-		CardGridModule,
 		NbCheckboxModule,
 		NbToggleModule,
 		GoalCustomUnitModule,
@@ -60,9 +55,8 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule
 	]
 })
 export class GoalSettingsModule {}

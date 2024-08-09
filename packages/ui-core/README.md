@@ -1,6 +1,6 @@
-# UI Core
+# @gauzy/ui-core
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.11.
+This library was generated with [Nx](https://nx.dev).
 
 ## Code scaffolding
 
@@ -19,6 +19,15 @@ After building your library with `ng build ui-core`, go to the dist folder `cd d
 ## Running unit tests
 
 Run `ng test ui-core` to execute the unit tests via [Karma](https://karma-runner.github.io).
+
+## Installation
+
+To install the `@gauzy/ui-core` library, run the following command in your Angular project:
+
+```sh
+yarn add @gauzy/ui-core
+
+```
 
 ## Further help
 

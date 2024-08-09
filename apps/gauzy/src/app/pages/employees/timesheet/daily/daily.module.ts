@@ -15,13 +15,12 @@ import {
 	NbPopoverModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	DialogsModule,
 	EditTimeLogModalModule,
-	GauzyButtonActionModule,
 	GauzyFiltersModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,
@@ -51,7 +50,7 @@ import { DailyComponent } from './daily/daily.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TimerPickerModule,
 		TaskSelectModule,
@@ -61,8 +60,7 @@ import { DailyComponent } from './daily/daily.component';
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class DailyModule {}

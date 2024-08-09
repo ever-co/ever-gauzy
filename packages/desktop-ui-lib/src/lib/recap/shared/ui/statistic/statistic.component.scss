@@ -1,0 +1,66 @@
+:host {
+	.percentage-col {
+		width: 90px;
+		font-size: 12px;
+		font-weight: 500;
+		text-align: left;
+		color: var(--gauzy-text-color-2);
+	}
+
+	::ng-deep {
+		nb-progress-bar {
+			.progress-container {
+				height: 5px !important;
+			}
+
+			.progress-value {
+				span {
+					display: none;
+				}
+			}
+		}
+	}
+}
+
+nb-list {
+	align-items: flex-end !important;
+}
+
+nb-list-item {
+	border-top: 0.5px solid var(--select-filled-control-disabled-text-color) !important;
+	width: 95% !important;
+	padding-left: 0 !important;
+
+	&.borderless {
+		border-top: unset;
+	}
+}
+
+.render {
+	width: 100%;
+	display: flex;
+	justify-content: flex-start;
+	gap: 10px;
+
+	img {
+		width: 28px;
+		height: 28px;
+		border-radius: var(--border-radius);
+		box-shadow: var(--gauzy-shadow);
+		object-fit: cover;
+	}
+
+	.title {
+		color: var(--gauzy-text-color-1);
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 17px;
+		letter-spacing: 0em;
+	}
+}
+
+.duration {
+	font-weight: 500;
+	color: var(--gauzy-text-color-1);
+	font-size: 14px;
+}

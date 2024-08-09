@@ -1,13 +1,13 @@
-<nb-card style="height: 450px;" class="main">
+<nb-card style="height: 450px" class="main">
 	<nb-card-header class="d-flex">
-		<h4 style="width: 400px;">
+		<h4 style="width: 400px">
 			{{ 'POP_UPS.SELECT_TIMEZONE' | translate }}
 		</h4>
 	</nb-card-header>
 	<nb-card-body class="body">
 		<ng-select
 			[(items)]="listOfZones"
-			placeholder="{{ 'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate }}"
+			[placeholder]="'FORM.PLACEHOLDERS.CHOOSE_TIME_ZONE' | translate"
 			[(ngModel)]="selectedTimezone"
 			[searchable]="true"
 			appendTo="body"
@@ -21,12 +21,7 @@
 		</ng-select>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button
-			(click)="dialogRef.close()"
-			status="danger"
-			class="mr-3"
-			nbButton
-		>
+		<button (click)="dialogRef.close()" status="danger" class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button (click)="select()" status="success" nbButton>

@@ -1,2 +1,4 @@
-export * from './lib/job-search-ui.module';
-export * from './lib/job-search/job-search-ui.component';
+/**
+ * Public API Surface of job-search-ui
+ */
+export * from './lib/public-api';

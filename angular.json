@@ -38,7 +38,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["packages/ui-core/src/lib/static/styles"]
+							"includePaths": ["packages/ui-core/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -47,7 +47,7 @@
 							"apps/gauzy/src/silent-refresh.html",
 							{
 								"glob": "**/*",
-								"input": "packages/ui-core/src/lib/i18n/assets/i18n",
+								"input": "packages/ui-core/i18n/assets/i18n",
 								"output": "assets/i18n/"
 							}
 						],
@@ -62,7 +62,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"packages/ui-core/src/lib/static/styles/styles.scss",
+							"packages/ui-core/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -253,7 +253,7 @@
 				}
 			}
 		},
-		"@gauzy/ui-core": {
+		"ui-core": {
 			"projectType": "library",
 			"root": "packages/ui-core",
 			"sourceRoot": "packages/ui-core",
@@ -262,7 +262,7 @@
 				"build": {
 					"builder": "@angular-devkit/build-angular:ng-packagr",
 					"options": {
-						"project": "packages/ui-core/src/lib/ng-package.json"
+						"project": "packages/ui-core/ng-package.json"
 					},
 					"configurations": {
 						"production": {
@@ -278,6 +278,78 @@
 					"builder": "@angular-devkit/build-angular:karma",
 					"options": {
 						"tsConfig": "packages/ui-core/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-job-employee-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/job-employee-ui",
+			"sourceRoot": "packages/plugins/job-employee-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/job-employee-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/job-employee-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
+		"plugin-job-matching-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/job-matching-ui",
+			"sourceRoot": "packages/plugins/job-matching-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/job-matching-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/job-matching-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/job-matching-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/job-matching-ui/tsconfig.spec.json",
 						"polyfills": ["zone.js", "zone.js/testing"]
 					}
 				}
@@ -507,7 +579,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["packages/ui-core/src/lib/static/styles"]
+							"includePaths": ["packages/ui-core/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -522,7 +594,7 @@
 							},
 							{
 								"glob": "**/*",
-								"input": "packages/ui-core/src/lib/i18n/assets/i18n",
+								"input": "packages/ui-core/i18n/assets/i18n",
 								"output": "assets/i18n/"
 							}
 						],
@@ -536,7 +608,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"packages/ui-core/src/lib/static/styles/styles.scss",
+							"packages/ui-core/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -667,7 +739,7 @@
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
 							"apps/desktop/src/assets/styles/styles.scss",
-							"packages/ui-core/src/lib/static/styles/styles.scss",
+							"packages/ui-core/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": []
@@ -699,8 +771,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "15kb",
-									"maximumError": "40kb"
+									"maximumWarning": "60kb",
+									"maximumError": "120kb"
 								}
 							]
 						}
@@ -896,8 +968,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "15kb",
-									"maximumError": "40kb"
+									"maximumWarning": "60kb",
+									"maximumError": "120kb"
 								}
 							]
 						}
@@ -1015,8 +1087,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "15kb",
-									"maximumError": "40kb"
+									"maximumWarning": "60kb",
+									"maximumError": "120kb"
 								}
 							]
 						}
@@ -1078,7 +1150,7 @@
 						"polyfills": "apps/gauzy/src/polyfills.ts",
 						"tsConfig": "apps/gauzy/tsconfig.app.json",
 						"stylePreprocessorOptions": {
-							"includePaths": ["packages/ui-core/src/lib/static/styles"]
+							"includePaths": ["packages/ui-core/static/styles"]
 						},
 						"assets": [
 							"apps/gauzy/src/favicon.ico",
@@ -1087,7 +1159,7 @@
 							"apps/gauzy/src/silent-refresh.html",
 							{
 								"glob": "**/*",
-								"input": "packages/ui-core/src/lib/i18n/assets/i18n",
+								"input": "packages/ui-core/i18n/assets/i18n",
 								"output": "assets/i18n/"
 							}
 						],
@@ -1101,7 +1173,7 @@
 							"node_modules/nebular-icons/scss/nebular-icons.scss",
 							"node_modules/@ali-hm/angular-tree-component/css/angular-tree-component.css",
 							"node_modules/leaflet/dist/leaflet.css",
-							"packages/ui-core/src/lib/static/styles/styles.scss",
+							"packages/ui-core/static/styles/styles.scss",
 							"node_modules/@ng-select/ng-select/themes/default.theme.css"
 						],
 						"scripts": [
@@ -1268,8 +1340,8 @@
 								},
 								{
 									"type": "anyComponentStyle",
-									"maximumWarning": "15kb",
-									"maximumError": "40kb"
+									"maximumWarning": "60kb",
+									"maximumError": "120kb"
 								}
 							]
 						}

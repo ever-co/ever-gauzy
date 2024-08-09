@@ -1,8 +1,10 @@
+import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
-import * as remoteMain from '@electron/remote/main';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -10,6 +12,7 @@ const Store = require('electron-store');
 const store = new Store();
 
 export async function createImageViewerWindow(imageViewWindow, filePath) {
+	const manager = WindowManager.getInstance();
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
 	imageViewWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(imageViewWindow.webContents);
@@ -29,7 +32,7 @@ export async function createImageViewerWindow(imageViewWindow, filePath) {
 		imageViewWindow.hide();
 		event.preventDefault();
 	});
-
+	manager.register(RegisteredWindow.IMAGE_VIEWER, imageViewWindow);
 	return imageViewWindow;
 }
 

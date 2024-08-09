@@ -27,7 +27,7 @@
 
     nb-card-body {
       overflow: unset;
-      padding: 1rem 2rem 1rem 1rem;
+      padding: 1rem 1rem 0 1rem;
     }
   }
 }
@@ -48,7 +48,7 @@
 }
 
 .search {
-  padding: 0 8px 8px 8px;
+	padding: 0.5rem 0;
 }
 
 .timer-box {
@@ -281,6 +281,7 @@ nb-card-body {
 
 .max-width-search {
   width: 100%;
+  margin-bottom: 0 !important;
 }
 
 :host .expand-icon {
@@ -625,9 +626,9 @@ img {
   margin: 0;
   display: flex;
   flex-direction: column;
-  padding: 8px 4px 0px;
+  padding: 8px 4px;
   border-radius: var(--border-radius);
-  height: calc(100vh - 11.4rem);
+  height: calc(100vh - 15.75rem);
   width: auto;
 
   .table-scroll-container {
@@ -662,9 +663,8 @@ img {
 }
 
 .no-data {
-  height: 550px;
-  width: 100%;
-  padding: 0 10px;
+	height: 490px;
+	width: 100%;
 }
 
 .disabled-table {
@@ -690,4 +690,29 @@ img {
 .black-bold-text {
   color: var(--gauzy-text-color-1);
   font-weight: 600;
+}
+
+::ng-deep nb-tabset {
+	nb-tab.content-active {
+		background-color: var(--gauzy-card-2);
+		border-radius: 0 var(--border-radius) var(--border-radius);
+		max-height: calc(100vh - 6rem);
+		padding: 1rem;
+		width: 900px;
+
+		nb-card {
+			margin-bottom: 1rem;
+		}
+	}
+
+	nb-tabset nb-tab.content-active nb-card {
+		margin-bottom: 0;
+	}
+
+	.nb-tab-card,
+	.nb-tab-body {
+		background-color: unset;
+		padding: 0;
+		margin: 0;
+	}
 }

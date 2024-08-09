@@ -12,17 +12,13 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	ExpensesMutationModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -38,7 +34,6 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		CommonModule,
 		FormsModule,
 		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		InfiniteScrollModule,
 		NbActionsModule,
 		NbBadgeModule,
@@ -50,17 +45,14 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ExpensesRoutingModule,
 		SharedModule,
 		ExpensesMutationModule,
 		UserFormsModule,
 		TableComponentsModule,
-		CardGridModule,
 		TagsColorInputModule,
-		PaginationV2Module,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
 	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]

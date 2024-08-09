@@ -1,8 +1,10 @@
+import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow, screen } from 'electron';
 import * as url from 'url';
-import * as remoteMain from '@electron/remote/main';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -11,6 +13,7 @@ const store = new Store();
 
 export async function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	const manager = WindowManager.getInstance();
 
 	timeTrackerWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(timeTrackerWindow.webContents);
@@ -30,6 +33,9 @@ export async function createTimeTrackerWindow(timeTrackerWindow, filePath) {
 		event.preventDefault();
 		timeTrackerWindow.hide();
 	});
+
+	manager.register(RegisteredWindow.TIMER, timeTrackerWindow);
+
 	return timeTrackerWindow;
 }
 

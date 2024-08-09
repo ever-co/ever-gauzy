@@ -12,15 +12,11 @@ import {
 	NbActionsModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	PaginationModule,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -43,18 +39,14 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbIconModule,
 		NbActionsModule,
 		SharedModule,
-		CardGridModule,
 		TableComponentsModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
-		PaginationModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []

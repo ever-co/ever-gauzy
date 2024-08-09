@@ -1,0 +1,136 @@
+@import 'report';
+@import "var";
+
+.project-row {
+	margin-bottom: 10px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	background-color: var(--gauzy-card-1);
+	border-radius: var(--border-radius);
+	height: calc(100vh - 23.75rem);
+    overflow-y: auto;
+
+	.table-row-custom {
+		background-color: var(--gauzy-card-1);
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+
+	.activity-row,
+	.table-inner-wrapper {
+		min-height: 37px;
+	}
+}
+
+.weekly-logs {
+	height: 100%;
+}
+
+// column proportions
+.employee-column {
+	width: 20%;
+	min-width: 155px;
+	max-width: 200px;
+}
+
+.project-column,
+.title-column {
+	width: 20%;
+	min-width: 20%;
+	max-width: 20%;
+}
+
+.duration-column {
+	width: 10%;
+}
+
+.progress-bar-column {
+	width: 35%;
+}
+
+:host {
+	height: 100%;
+
+	::ng-deep {
+		.progress-percentage {
+			@include nb-rtl(padding-left, 0);
+			@include nb-ltr(padding-right, 0);
+			width: auto;
+		}
+
+		.group-by-wrapper {
+			display: flex;
+			gap: 1rem;
+		}
+	}
+}
+
+.no-height {
+	height: 0;
+	padding: 0;
+}
+
+@include respond(lg) {
+	.project-row {
+		margin-bottom: 20px;
+	}
+
+	.main-column-responsive {
+		background-color:var(--background-basic-color-3);
+	}
+
+	.progress-bar-column {
+		justify-content: flex-end;
+	}
+
+	.progress-bar-column,
+	.no-height {
+		border-left: none;
+	}
+}
+
+.activities-container {
+	padding: 1rem;
+	padding-bottom: 6px !important;
+}
+
+.main-report-wrapper {
+	height: calc(100vh - 8.5rem);
+	margin-bottom: 0 !important;
+
+	.main-report-body {
+		border-radius: var(--border-radius);
+		padding: 1rem;
+	}
+}
+
+.title {
+	color: var(--gauzy-text-color-1);
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 17px;
+	letter-spacing: 0em;
+}
+
+.duration {
+	font-weight: 500;
+	color: var(--gauzy-text-color-1);
+	font-size: 14px;
+}
+
+h6 {
+	font-weight: 600 !important;
+}
+
+.main-report-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.card {
+	margin: 0 !important;
+}

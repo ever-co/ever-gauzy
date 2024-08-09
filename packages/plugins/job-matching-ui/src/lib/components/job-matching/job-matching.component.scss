@@ -1,0 +1,41 @@
+@import 'gauzy/_gauzy-overrides';
+
+:host {
+  height: 100%;
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+  }
+  nb-card {
+    height: 100%;
+    nb-card-body {
+      border-radius: 0 0 var(--border-radius) var(--border-radius);
+    }
+  }
+  .form-group.row {
+    display: flex;
+    flex-direction: column;
+    background: var(--gauzy-card-3);
+    padding: 10px 20px 18px 12px;
+    border-radius: nb-theme(border-radius);
+    width: 100%;
+  }
+  .footer-buttons {
+    display: flex;
+    gap: 4px;
+  }
+  @include input-appearance(42px, var(--gauzy-card-1));
+  .criterions-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 8px;
+    overflow-y: auto;
+    .criterions-list {
+      border: none;
+      border-radius: var(--border-radius);
+      background-color: var(--gauzy-card-2);
+      padding: 1.5rem 0.5rem 1rem 1rem;
+    }
+  }
+}

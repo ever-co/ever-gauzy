@@ -1,0 +1,29 @@
+<nb-list>
+	<nb-list-item *ngFor="let item of items">
+		<div class="w-100">
+			<div class="row align-items-center">
+				<div class="col-sm-5 render text-left">
+					<img *ngIf="item.imageUrl" [src]="item.imageUrl" alt="">
+					<div class="title">
+						{{ item.title }}
+					</div>
+				</div>
+				<div class="col-sm-5">
+					<div class="row align-items-center">
+						<div class="col-auto percentage-col">
+							{{ item.durationPercentage || 0 }}%
+						</div>
+						<div class="col">
+							<nb-progress-bar class="mb-1" [value]="item.durationPercentage || 0"
+								[status]="progressStatus(item.durationPercentage || 0)" size="tiny">
+							</nb-progress-bar>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-2 duration text-right">
+					{{ item.duration | durationFormat : 'd[d] h[h] m[m] s[s]': { trim: "both" } }}
+				</div>
+			</div>
+		</div>
+	</nb-list-item>
+</nb-list>

@@ -15,3 +15,5 @@ export const injector = Injector.create({
 });
 
 export const API_ACTIVITY_WATCH_PREFIX = '/buckets';
+
+export const AUTO_REFRESH_DELAY = 60 * 10 * 1000; // milliseconds

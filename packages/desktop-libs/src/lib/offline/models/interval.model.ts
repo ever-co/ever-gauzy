@@ -2,10 +2,7 @@ import { Serializable } from '../../interfaces';
 import { IntervalTO } from '../dto';
 import { Base } from './base.model';
 
-export class Interval
-	extends Base
-	implements IntervalTO, Serializable<IntervalTO>
-{
+export class Interval extends Base implements IntervalTO, Serializable<IntervalTO> {
 	private _activities: any;
 	private _duration: number;
 	private _employeeId: string;
@@ -22,12 +19,7 @@ export class Interval
 	private _isDeleted: boolean;
 
 	constructor(interval: IntervalTO) {
-		super(
-			interval.id,
-			interval.organizationId,
-			interval.remoteId,
-			interval.tenantId
-		);
+		super(interval.id, interval.organizationId, interval.remoteId, interval.tenantId);
 		this._activities = interval.activities;
 		this._duration = interval.duration;
 		this._employeeId = interval.employeeId;
@@ -40,6 +32,7 @@ export class Interval
 		this._startedAt = interval.startedAt;
 		this._stoppedAt = interval.stoppedAt;
 		this._synced = interval.synced;
+		this._isDeleted = false;
 	}
 
 	public get isDeleted(): boolean {

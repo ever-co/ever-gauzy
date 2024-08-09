@@ -1,0 +1,10 @@
+<nb-card>
+	<nb-card-header>{{ 'TIMESHEET.PROJECTS' | translate }}</nb-card-header>
+	<nb-card-body *ngIf="(projects$ | async).length > 0; else noProject">
+		<ngx-statistic [items]="(projects$ | async)"></ngx-statistic>
+	</nb-card-body>
+</nb-card>
+
+<ng-template #noProject>
+	<ngx-no-data-message [message]="'TIMESHEET.NO_PROJECT_ACTIVITY_DAY' | translate"></ngx-no-data-message>
+</ng-template>

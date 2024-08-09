@@ -1,5 +1,8 @@
+require('webpack');
 //Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
 const TerserPlugin = require('terser-webpack-plugin');
+//Polyfill Node.js core modules in Webpack. This module is only needed for webpack 5+.
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 console.log('Using custom Webpack config...');
 
@@ -14,6 +17,7 @@ if (isCircleEnv) {
 }
 
 module.exports = {
+	target: 'electron-renderer',
 	resolve: {
 		mainFields: ['es2016', 'browser', 'module', 'main']
 	},
@@ -35,21 +39,13 @@ module.exports = {
 	},
 	externals: {
 		'electron-log': 'electron-log'
+	},
+	plugins: [
+		new NodePolyfillPlugin({
+			excludeAliases: ['console']
+		})
+	],
+	output: {
+		globalObject: 'globalThis'
 	}
 };
-
-/* NOTE: below code can be used to fix some more things, see https://github.com/maximegris/angular-electron/blob/master/angular.webpack.js#L10
-    if (options.fileReplacements) {
-        for(let fileReplacement of options.fileReplacements) {
-            if (fileReplacement.replace !== 'apps/server/src/environments/environment.ts' && fileReplacement.replace !== 'apps/gauzy/src/environments/environment.ts') {
-                continue;
-            }
-
-            let fileReplacementParts = fileReplacement['with'].split('.');
-            if (fileReplacementParts.length > 1 && ['web'].indexOf(fileReplacementParts[1]) >= 0) {
-                config.target = 'web';
-            }
-            break;
-        }
-    }
-*/

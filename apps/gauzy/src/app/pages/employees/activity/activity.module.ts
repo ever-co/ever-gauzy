@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
+import { TranslateModule } from '@ngx-translate/core';
+import { SharedModule } from '@gauzy/ui-core/shared';
 import { ActivityRoutingModule } from './activity-routing.module';
 import { ActivityLayoutComponent } from './layout/layout.component';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { NbCardModule, NbRouteTabsetModule } from '@nebular/theme';
-import { SharedModule } from '@gauzy/ui-core/shared';
 
 @NgModule({
 	declarations: [ActivityLayoutComponent],
@@ -12,7 +12,7 @@ import { SharedModule } from '@gauzy/ui-core/shared';
 		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		ActivityRoutingModule,
 		SharedModule
 	]

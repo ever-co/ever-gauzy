@@ -13,7 +13,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
@@ -30,7 +30,7 @@ import { WeeklyComponent } from './weekly/weekly.component';
 	imports: [
 		CommonModule,
 		WeeklyRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbDatepickerModule,
 		NbIconModule,

@@ -13,13 +13,10 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -41,17 +38,14 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		NbBadgeModule,
 		NbDialogModule.forChild(),
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		InfiniteScrollModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
-		CardGridModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [VendorsComponent]
 })

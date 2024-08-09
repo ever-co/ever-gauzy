@@ -1,8 +1,10 @@
-import { BrowserWindow } from 'electron';
 import * as remoteMain from '@electron/remote/main';
+import { BrowserWindow } from 'electron';
 import * as url from 'url';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -12,6 +14,7 @@ const store = new Store();
 export async function createServerWindow(serverWindow, config, filePath) {
 	let mainWindowSettings: Electron.BrowserWindowConstructorOptions = null;
 	mainWindowSettings = windowSetting();
+	const manager = WindowManager.getInstance();
 
 	serverWindow = new BrowserWindow(mainWindowSettings);
 
@@ -38,6 +41,8 @@ export async function createServerWindow(serverWindow, config, filePath) {
 		e.preventDefault();
 		serverWindow.hide(); // gauzyWindow = null;
 	});
+
+	manager.register(RegisteredWindow.SERVER, serverWindow);
 
 	return serverWindow;
 }

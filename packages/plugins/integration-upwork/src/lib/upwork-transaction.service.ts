@@ -153,11 +153,11 @@ export class UpworkTransactionService {
 
 				const processedTransactions = await Promise.all(transactions.map(reflect));
 				const { rejectedTransactions, totalExpenses, totalIncomes } =
-					this._proccessTransactions(processedTransactions);
+					this._processTransactions(processedTransactions);
 
 				if (rejectedTransactions.length) {
 					const errors = rejectedTransactions.map(({ error }) => error.response.message);
-					const message = this._formatErrorMesage([...new Set(errors)], totalExpenses, totalIncomes);
+					const message = this._formatErrorMessage([...new Set(errors)], totalExpenses, totalIncomes);
 					return reject(new BadRequestException(message));
 				}
 				resolve({ totalExpenses, totalIncomes });
@@ -172,7 +172,7 @@ export class UpworkTransactionService {
 	 * @param totalIncomes
 	 * @returns
 	 */
-	private _formatErrorMesage(errors, totalExpenses, totalIncomes): string {
+	private _formatErrorMessage(errors, totalExpenses, totalIncomes): string {
 		return `Total succeed expenses transactions: ${totalExpenses}.
 			Total succeed incomes transactions: ${totalIncomes}.
 			Failed transactions: ${errors.join(', ')}
@@ -184,7 +184,7 @@ export class UpworkTransactionService {
 	 * @param processedTransactions
 	 * @returns
 	 */
-	private _proccessTransactions(processedTransactions) {
+	private _processTransactions(processedTransactions) {
 		const { rejectedTransactions, totalExpenses, totalIncomes } = processedTransactions.reduce(
 			(prev, current) => {
 				return {

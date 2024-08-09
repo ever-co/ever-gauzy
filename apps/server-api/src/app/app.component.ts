@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
+import { LanguageElectronService } from '@gauzy/desktop-ui-lib';
 
 @Component({
 	selector: 'gauzy-root',
-	template: '<router-outlet></router-outlet>',
+	template: '<router-outlet></router-outlet>'
 })
 export class AppComponent implements OnInit {
-	constructor() {}
+	constructor(private readonly languageElectronService: LanguageElectronService) {}
 
 	ngOnInit(): void {
+		this.languageElectronService.initialize<void>();
 		console.log('on init');
 	}
 }

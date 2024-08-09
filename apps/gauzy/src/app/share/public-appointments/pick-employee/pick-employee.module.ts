@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbToastrModule, NbSpinnerModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { EventTypeService } from '@gauzy/ui-core/core';
 import { SelectorsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { PickEmployeeComponent } from './pick-employee.component';
@@ -12,7 +12,7 @@ import { PickEmployeeRoutingModule } from './pick-employee.routing.module';
 		NbSpinnerModule,
 		NbButtonModule,
 		NbCardModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		PickEmployeeRoutingModule,
 		SharedModule,
 		SelectorsModule

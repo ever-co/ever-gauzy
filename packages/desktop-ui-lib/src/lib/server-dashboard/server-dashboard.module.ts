@@ -1,19 +1,18 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ServerDashboardComponent } from './server-dashboard.component';
+import { NgModule } from '@angular/core';
 import {
-	NbLayoutModule,
+	NbAccordionModule,
+	NbButtonModule,
 	NbCardModule,
-	NbIconModule,
 	NbDialogModule,
 	NbDialogService,
-	NbButtonModule,
-	NbSpinnerModule,
-	NbAccordionModule
+	NbIconModule,
+	NbLayoutModule,
+	NbSpinnerModule
 } from '@nebular/theme';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
-import { NgxTranslateModule } from '../ngx-translate';
-import { LanguageSelectorService } from '../language/language-selector.service';
+import { LanguageModule } from '../language/language.module';
+import { ServerDashboardComponent } from './server-dashboard.component';
 
 @NgModule({
 	declarations: [ServerDashboardComponent],
@@ -27,9 +26,9 @@ import { LanguageSelectorService } from '../language/language-selector.service';
 		NbSpinnerModule,
 		NbAccordionModule,
 		DesktopDirectiveModule,
-		NgxTranslateModule
+		LanguageModule.forChild()
 	],
 	exports: [ServerDashboardComponent],
-	providers: [NbDialogService, LanguageSelectorService]
+	providers: [NbDialogService]
 })
 export class ServerDashboardModule {}

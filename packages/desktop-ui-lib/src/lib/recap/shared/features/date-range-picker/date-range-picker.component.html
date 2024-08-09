@@ -1,0 +1,23 @@
+<div class="row col-auto">
+	<div class="filter-input">
+		<div class="custom-input">
+			<ng-container *ngIf="arrows">
+				<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
+					<nb-icon icon="arrow-ios-back-outline"></nb-icon>
+				</button>
+				<button size="tiny" nbButton [disabled]="isNextDisabled()" status="primary" outline
+					(click)="nextRange()">
+					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
+				</button>
+			</ng-container>
+			<i class="far fa-calendar" (click)="openDatepicker($event)"></i>
+			<input nbInput name="date-range" size="small" type="text" ngxDaterangepickerMd
+				[singleDatePicker]="isSingleDatePicker" unitOfTime="day" [autoApply]="true"
+				[showCustomRangeLabel]="!isLockDatePicker" [alwaysShowCalendars]="true" [customRangeDirection]="false"
+				[linkedCalendars]="true" [maxDate]="maxDate" [minDate]="minDate" [ranges]="ranges" [locale]="locale"
+				[(ngModel)]="selectedDateRange" (datesUpdated)="onDatesUpdated($event)"
+				(rangeClicked)="rangeClicked($event)"
+				[ngClass]="isSingleDatePicker ? 'single-range' : 'double-range'" />
+		</div>
+	</div>
+</div>

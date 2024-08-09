@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { HelpCenterArticleService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeMultiSelectModule } from '@gauzy/ui-core/shared';
 import { AddArticleComponent } from './add-article.component';
 
@@ -27,7 +27,7 @@ import { AddArticleComponent } from './add-article.component';
 		NbSelectModule,
 		NbToggleModule,
 		CKEditorModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeeMultiSelectModule
 	],
 	providers: [HelpCenterArticleService],

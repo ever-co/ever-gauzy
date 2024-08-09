@@ -1,0 +1,112 @@
+@import 'gauzy/_gauzy-overrides';
+@import 'filters.component.scss';
+
+$button-radius : var(--button-rectangle-border-radius);
+
+.filter-input {
+	width: fit-content;
+	display: flex;
+	align-items: center;
+	margin-bottom: 5px;
+
+	button {
+		margin-right: 5px;
+		border-radius: var(--button-rectangle-border-radius);
+	}
+}
+
+.filter-item-list {
+	display: flex;
+	align-items: center;
+	gap: 0;
+}
+
+nb-select {
+	min-width: 150px;
+}
+
+.custom-input {
+	height: inherit;
+	display: flex;
+	align-items: center;
+	background: var(--background-basic-color-2);
+	box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.15) inset;
+	border-radius: var(--button-rectangle-border-radius);
+	/* I've used padding so you can see the edges of the elements. */
+	padding: 2px 0px 2px 5px;
+	margin-right: 16px;
+
+	input {
+		height: 1.875rem;
+		margin-right: 5px;
+		width: 240px;
+		background-color: transparent;
+		/* Tell the input to use all the available space */
+		flex-grow: 2;
+		/* And hide the input's outline, so the form looks like the outline */
+		border: none;
+		box-shadow: none;
+	}
+
+	input:focus {
+		/* removing the input focus blue box. Put this on the form if you like. */
+		outline: none;
+	}
+
+	&:hover,
+	&:focus {
+		background: var(--background-basic-color-3);
+		transition: ease-in-out .3s;
+	}
+}
+
+:host {
+	::ng-deep {
+
+		.select-button {
+			padding-top: 3px !important;
+			padding-bottom: 3px !important;
+		}
+
+		.activity-level-filter {
+			padding: 7px 7px 7px 16px !important;
+			border: 1px solid var(--select-outline-basic-border-color) !important;
+		}
+
+		.activity-level-filter,
+		.select-button {
+			box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.15);
+			background-color: var(--gauzy-card-1) !important;
+			color: var(--select-outline-basic-text-color) !important;
+		}
+	}
+}
+
+.main-wrapper {
+	justify-content: space-between;
+}
+
+.single-filter-wrapper {
+	margin-bottom: 5px;
+	padding-right: 0 !important;
+}
+
+:host ::ng-deep {
+	@include nb-select-overrides(2rem !important, $default-button-radius, $default-box-shadow);
+}
+
+nb-card {
+	background-color: var(--gauzy-card-1);
+
+	nb-card-header {
+		color: var(--text-primary-color);
+		font-size: 1rem;
+		padding: 0.5rem 1rem;
+	}
+
+	nb-card-body {
+		background: var(--gauzy-card-2);
+		padding: 1rem 1rem 0.5rem;
+		max-width: 300px;
+	}
+}

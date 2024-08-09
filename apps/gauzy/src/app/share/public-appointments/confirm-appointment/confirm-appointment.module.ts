@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbSpinnerModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { EmployeeAppointmentService, EmployeesService } from '@gauzy/ui-core/core';
 import { ConfirmAppointmentRoutingModule } from './confirm-appointment.routing.module';
 import { ConfirmAppointmentComponent } from './confirm-appointment.component';
@@ -13,7 +13,7 @@ import { SharedModule } from '@gauzy/ui-core/shared';
 		NbCardModule,
 		NbIconModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		ConfirmAppointmentRoutingModule,
 		ManageAppointmentModule

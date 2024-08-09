@@ -1,14 +1,14 @@
 import { ITimeSlot } from '@gauzy/contracts';
 import { asapScheduler, concatMap, defer, of, repeat, timer as synchronizer } from 'rxjs';
-import { TimeSlotQueueService } from '../time-slot-queue.service';
+import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
 import { ElectronService } from '../../electron/services';
 import { ErrorHandlerService, Store } from '../../services';
 import { TimeTrackerStatusService } from '../../time-tracker/time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from '../../time-tracker/time-tracker.service';
-import { TimeSlotQueue } from './time-slot-queue';
 import { OfflineQueue } from '../interfaces/offline-queue';
+import { TimeSlotQueueService } from '../time-slot-queue.service';
 import { BlockedSequenceState, CompletedSequenceState, InProgressSequenceState } from './states';
-import { BACKGROUND_SYNC_OFFLINE_INTERVAL } from '../../constants/app.constants';
+import { TimeSlotQueue } from './time-slot-queue';
 
 export interface ISequence {
 	timer: any;
@@ -37,6 +37,7 @@ export class SequenceQueue extends OfflineQueue<ISequence> {
 			const params = {
 				note: timer.note,
 				organizationContactId: timer.organizationContactId,
+				organizationTeamId: timer.organizationTeamId,
 				taskId: timer.taskId,
 				projectId: timer.projectId,
 				organizationId: this._store.organizationId,

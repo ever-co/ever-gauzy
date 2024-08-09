@@ -10,11 +10,15 @@ import {
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import { PaginationV2Module, ProjectSelectModule, RepositorySelectorModule, SharedModule } from '@gauzy/ui-core/shared';
+import { TranslateModule } from '@ngx-translate/core';
+import {
+	SmartDataViewLayoutModule,
+	ProjectSelectModule,
+	RepositorySelectorModule,
+	SharedModule
+} from '@gauzy/ui-core/shared';
 import { GithubRoutingModule } from './github-routing.module';
 import { GithubComponent } from './github.component';
 import { GithubWizardComponent } from './components/wizard/wizard.component';
@@ -41,12 +45,11 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
-		Angular2SmartTableModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		RepositorySelectorModule,
 		ProjectSelectModule
 	]

@@ -64,7 +64,7 @@ export class TranslationUtil {
 	 * Copy all files from the source directory to the destination directory.
 	 */
 	private copyAll(): void {
-		const source = path.join('packages', 'ui-core', 'src', 'lib', 'i18n', 'assets', 'i18n');
+		const source = path.join('packages', 'ui-core', 'i18n', 'assets', 'i18n');
 		fs.cpSync(source, this.destination, { recursive: true });
 		console.log(`✔ All translations copied from ${source}.`);
 	}
@@ -76,7 +76,7 @@ export class TranslationUtil {
 	private copyOne(language: string): void {
 		try {
 			const fileName = `${language}.json`;
-			const sourceFilePath = path.join('packages', 'ui-core', 'src', 'lib', 'i18n', 'assets', 'i18n');
+			const sourceFilePath = path.join('packages', 'ui-core', 'i18n', 'assets', 'i18n');
 			const destinationFilePath = path.join(this.destination, fileName);
 
 			fs.copyFileSync(sourceFilePath, destinationFilePath);

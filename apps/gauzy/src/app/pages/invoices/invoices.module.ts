@@ -24,7 +24,6 @@ import {
 	NbListModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -42,7 +41,7 @@ import {
 	TasksStoreService,
 	TranslatableService
 } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
@@ -50,13 +49,11 @@ import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
-	CardGridModule,
+	SmartDataViewLayoutModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
@@ -102,8 +99,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
-		Angular2SmartTableModule,
-		CardGridModule,
 		FormsModule,
 		NbBadgeModule,
 		ReactiveFormsModule,
@@ -125,15 +120,14 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,
-		NbAccordionModule,
-		GauzyButtonActionModule
+		NbAccordionModule
 	],
 	providers: [
 		InvoicesService,

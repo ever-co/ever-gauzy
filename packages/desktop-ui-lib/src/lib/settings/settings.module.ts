@@ -1,34 +1,34 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SettingsComponent } from './settings.component';
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
-	NbLayoutModule,
-	NbSidebarModule,
-	NbMenuModule,
-	NbCardModule,
-	NbIconModule,
-	NbListModule,
-	NbSelectModule,
-	NbToggleModule,
-	NbInputModule,
-	NbButtonModule,
+	NbAccordionModule,
 	NbAlertModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogService,
+	NbIconModule,
+	NbInputModule,
+	NbLayoutModule,
+	NbListModule,
+	NbMenuModule,
 	NbProgressBarModule,
+	NbSelectModule,
+	NbSidebarModule,
+	NbSpinnerModule,
 	NbTabsetModule,
 	NbToastrService,
-	NbAccordionModule,
-	NbTooltipModule,
-	NbSpinnerModule,
-	NbDialogService
+	NbToggleModule,
+	NbTooltipModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
-import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { DesktopDirectiveModule } from '../directives/desktop-directive.module';
 import { LanguageModule } from '../language/language.module';
-import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '../services';
-import { LanguageSelectorService } from '../language/language-selector.service';
+import { PipeModule } from '../time-tracker/pipes/pipe.module';
 import { TaskRenderModule } from '../time-tracker/task-render';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { PluginsModule } from './plugins/plugins.module';
+import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
 
 @NgModule({
@@ -53,12 +53,13 @@ import { SslModule } from './ssl';
 		NbTooltipModule,
 		NbSpinnerModule,
 		DesktopDirectiveModule,
-		LanguageModule,
-		TranslateModule,
+		LanguageModule.forChild(),
 		TaskRenderModule,
-		SslModule
+		SslModule,
+		PluginsModule,
+		PipeModule
 	],
-	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store, LanguageSelectorService],
+	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
 	exports: [SettingsComponent]
 })
 export class SettingsModule {}

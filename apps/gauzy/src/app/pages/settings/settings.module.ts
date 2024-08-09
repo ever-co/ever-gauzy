@@ -17,8 +17,8 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { TranslateModule } from '@ngx-translate/core';
 import { DangerZoneMutationModule, SharedModule } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
@@ -47,7 +47,7 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SettingsRoutingModule,
 		SharedModule,
 		EmailTemplatesModule,

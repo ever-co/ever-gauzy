@@ -1,0 +1,60 @@
+{
+	"name": "ui-core",
+	"$schema": "../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/ui-core",
+	"prefix": "gauzy",
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/angular:ng-packagr-lite",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/ui-core/ng-package.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/ui-core/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/ui-core/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/ui-core/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"packages/ui-core/**/*.ts",
+					"packages/ui-core/**/*.html",
+					"packages/ui-core/i18n/**/*.ts",
+					"packages/ui-core/i18n/**/*.html",
+					"packages/ui-core/common/**/*.ts",
+					"packages/ui-core/common/**/*.html",
+					"packages/ui-core/core/**/*.ts",
+					"packages/ui-core/core/**/*.html",
+					"packages/ui-core/shared/**/*.ts",
+					"packages/ui-core/shared/**/*.html",
+					"packages/ui-core/theme/**/*.ts",
+					"packages/ui-core/theme/**/*.html"
+				]
+			}
+		}
+	},
+	"tags": ["scope:ui"]
+}

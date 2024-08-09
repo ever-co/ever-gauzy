@@ -1,11 +1,14 @@
 import { screen } from 'electron';
 import { DefaultWindow, WindowConfig } from './concretes';
+import { WindowManager } from './concretes/window.manager';
 import { IBaseWindow } from './interfaces';
 import { BaseWindow } from './interfaces/base-window';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 60;
 	private static readonly HEIGHT: number = 110;
+	private manager = WindowManager.getInstance();
 
 	constructor(private readonly path?: string) {
 		super(
@@ -20,15 +23,12 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					alwaysOnTop: true,
 					center: false,
 					x: 16,
-					y: Math.floor(
-						(screen.getPrimaryDisplay().workAreaSize.height -
-							AlwaysOn.HEIGHT) /
-						2
-					),
+					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2)
 				})
 			)
 		);
 		this.browserWindow.setMenuBarVisibility(false);
+		this.manager.register(RegisteredWindow.WIDGET, this);
 	}
 
 	public show(): void {
@@ -42,7 +42,7 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	}
 
 	private onTop(): void {
-		this.browserWindow.setSkipTaskbar(true)
+		this.browserWindow.setSkipTaskbar(true);
 		this.browserWindow.setVisibleOnAllWorkspaces(true, {
 			visibleOnFullScreen: true,
 			skipTransformProcessType: false

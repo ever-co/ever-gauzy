@@ -1,30 +1,17 @@
-import {
-	ChangeDetectorRef,
-	Component,
-	Inject,
-	NgZone,
-	OnInit,
-} from '@angular/core';
-import { Router } from '@angular/router';
-import {
-	NbAuthService,
-	NbLoginComponent,
-	NB_AUTH_OPTIONS,
-} from '@nebular/auth';
-import { TranslateService } from '@ngx-translate/core';
-import { LanguagesEnum } from '@gauzy/contracts';
-import { ElectronService } from '../electron/services';
-import { LanguageSelectorService } from '../language/language-selector.service';
-import { from, tap } from 'rxjs';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GAUZY_ENV } from '../constants/app.constants';
+import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { NB_AUTH_OPTIONS, NbAuthService, NbLoginComponent } from '@nebular/auth';
+import { UntilDestroy } from '@ngneat/until-destroy';
+import { GAUZY_ENV } from '../constants/app.constants';
+import { ElectronService } from '../electron/services';
+import { LanguageElectronService } from '../language/language-electron.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-desktop-timer-login',
 	templateUrl: './login.component.html',
-	styleUrls: ['./login.component.scss'],
+	styleUrls: ['./login.component.scss']
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	showPassword = false;
@@ -32,11 +19,9 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	constructor(
 		public readonly electronService: ElectronService,
 		public readonly nbAuthService: NbAuthService,
-		public translate: TranslateService,
+		public readonly languageElectronService: LanguageElectronService,
 		public readonly cdr: ChangeDetectorRef,
 		public readonly router: Router,
-		private _languageSelectorService: LanguageSelectorService,
-		private _ngZone: NgZone,
 		@Inject(NB_AUTH_OPTIONS)
 		options: any,
 		private readonly _domSanitizer: DomSanitizer,
@@ -47,45 +32,18 @@ export class NgxLoginComponent extends NbLoginComponent implements OnInit {
 	}
 
 	ngOnInit() {
-		this.electronService.ipcRenderer.on(
-			'preferred_language_change',
-			(event, language: LanguagesEnum) => {
-				this._ngZone.run(() => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this.translate
-					);
-				});
-			}
-		);
-		from(this.electronService.ipcRenderer.invoke('PREFERRED_LANGUAGE'))
-			.pipe(
-				tap((language) => {
-					this._languageSelectorService.setLanguage(
-						language,
-						this.translate
-					);
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		this.languageElectronService.initialize<void>();
 	}
 
 	public forgot(): void {
-		this.electronService.shell.openExternal(
-			'https://app.gauzy.co/#/auth/request-password'
-		);
+		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/request-password');
 	}
 
 	public register(): void {
-		this.electronService.shell.openExternal(
-			'https://app.gauzy.co/#/auth/register'
-		);
+		this.electronService.shell.openExternal('https://app.gauzy.co/#/auth/register');
 	}
 
 	public get logoUrl(): SafeResourceUrl {
-		return this._domSanitizer.bypassSecurityTrustResourceUrl(
-			this._environment.PLATFORM_LOGO
-		);
+		return this._domSanitizer.bypassSecurityTrustResourceUrl(this._environment.PLATFORM_LOGO);
 	}
 }

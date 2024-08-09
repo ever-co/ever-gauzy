@@ -1,8 +1,10 @@
+import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
-import * as remoteMain from '@electron/remote/main';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -11,6 +13,8 @@ const store = new Store();
 
 export async function createUpdaterWindow(updaterWindow, filePath) {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	const manager = WindowManager.getInstance();
+
 	updaterWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(updaterWindow.webContents);
 	const launchPath = url.format({
@@ -30,6 +34,8 @@ export async function createUpdaterWindow(updaterWindow, filePath) {
 		updaterWindow.hide();
 		event.preventDefault();
 	});
+
+	manager.register(RegisteredWindow.UPDATER, updaterWindow);
 
 	return updaterWindow;
 }

@@ -4,7 +4,7 @@ import { UiConfigService } from './ui-config.service';
 
 @NgModule({
 	imports: [CommonModule],
-	providers: [UiConfigService]
+	providers: []
 })
 export class UiConfigModule {
 	/**
@@ -15,7 +15,7 @@ export class UiConfigModule {
 	static forRoot(): ModuleWithProviders<UiConfigModule> {
 		return {
 			ngModule: UiConfigModule,
-			providers: []
+			providers: [UiConfigService]
 		};
 	}
 }

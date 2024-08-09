@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbBadgeModule } from '@nebular/theme';
 import {
 	DailyStatisticsModule,
@@ -20,7 +20,7 @@ import { WeeklyTimeReportsComponent } from './weekly-time-reports/weekly-time-re
 		WeeklyTimeReportsRoutingModule,
 		LineChartModule,
 		DailyStatisticsModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,

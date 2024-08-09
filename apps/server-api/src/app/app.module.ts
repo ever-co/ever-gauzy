@@ -1,34 +1,36 @@
-import { BrowserModule } from '@angular/platform-browser';
-import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
+import { APP_INITIALIZER, ErrorHandler, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule } from '@angular/router';
 import {
+	AboutModule,
+	ElectronService,
+	GAUZY_ENV,
+	LanguageModule,
+	LoggerService,
+	ServerDashboardModule,
+	SettingsModule,
+	SetupModule,
+	UpdaterModule
+} from '@gauzy/desktop-ui-lib';
+import { environment as gauzyEnvironment } from '@gauzy/ui-config';
+import {
+	NbButtonModule,
+	NbCardModule,
 	NbDialogModule,
-	NbThemeModule,
-	NbToastrModule,
 	NbDialogService,
 	NbLayoutModule,
 	NbMenuModule,
-	NbSidebarModule
+	NbSidebarModule,
+	NbThemeModule,
+	NbToastrModule
 } from '@nebular/theme';
 import * as Sentry from '@sentry/angular-ivy';
-import {
-	UpdaterModule,
-	SettingsModule,
-	SetupModule,
-	ServerDashboardModule,
-	ElectronService,
-	LoggerService,
-	AboutModule,
-	GAUZY_ENV
-} from '@gauzy/desktop-ui-lib';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
-import { environment as gauzyEnvironment } from '@gauzy/ui-config';
-import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
-import { AppService } from './app.service';
 import { environment } from '../environments/environment';
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { AppService } from './app.service';
 import { initializeSentry } from './sentry';
 
 if (environment.SENTRY_DSN) {
@@ -60,7 +62,8 @@ if (environment.SENTRY_DSN) {
 		SettingsModule,
 		UpdaterModule,
 		ServerDashboardModule,
-		AboutModule
+		AboutModule,
+		LanguageModule.forRoot()
 	],
 	providers: [
 		AppService,
@@ -80,7 +83,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => { },
+			useFactory: () => () => {},
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -95,5 +98,5 @@ if (environment.SENTRY_DSN) {
 	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() { }
+	constructor() {}
 }

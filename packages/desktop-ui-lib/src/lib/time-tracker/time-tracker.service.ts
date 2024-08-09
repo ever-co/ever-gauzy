@@ -148,13 +148,12 @@ export class TimeTrackerService {
 
 		if (!tasksStatistics$) {
 			// Fetch tasks statistics
-			const tasks$ = this.http.post<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, request);
-
-			// Map the response to the task statistics
-			tasks$.pipe(
-				map((response: any) => response),
-				shareReplay(1)
-			);
+			tasksStatistics$ = this.http
+				.post<ITasksStatistics[]>(`${API_PREFIX}/timesheet/statistics/tasks`, request)
+				.pipe(
+					map((response: any) => response),
+					shareReplay(1)
+				);
 
 			// Set the tasks statistics in the cache
 			this._taskCacheService.setValue(tasksStatistics$, cacheReference);

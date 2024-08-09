@@ -168,7 +168,7 @@ const routes: Routes = [
 	},
 	{
 		path: 'recurring',
-		loadChildren: () => import('./../work-in-progress/work-in-progress.module').then((m) => m.WorkInProgressModule)
+		loadChildren: () => import('@gauzy/ui-core/shared').then((m) => m.WorkInProgressModule)
 	}
 ];
 

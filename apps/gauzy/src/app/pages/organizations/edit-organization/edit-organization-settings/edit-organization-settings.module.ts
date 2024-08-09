@@ -21,8 +21,7 @@ import {
 } from '@nebular/theme';
 import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeStore,
 	InviteService,
@@ -34,6 +33,7 @@ import {
 	OrganizationVendorsService
 } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CurrencyModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
@@ -74,8 +74,7 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		ColorPickerModule,
 		NbTooltipModule,
 		NbDialogModule.forChild(),
-		I18nTranslateModule.forChild(),
-		Angular2SmartTableModule,
+		TranslateModule.forChild(),
 		OrganizationsMutationModule,
 		UserFormsModule,
 		ImageUploaderModule,
@@ -96,7 +95,8 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 		LocationFormModule,
 		LeafletMapModule,
 		NbAccordionModule,
-		TimeZoneSelectorModule
+		TimeZoneSelectorModule,
+		SmartDataViewLayoutModule
 	],
 	providers: [
 		OrganizationDepartmentsService,

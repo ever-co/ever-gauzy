@@ -14,7 +14,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { SwiperModule } from 'swiper/angular';
 import { TimeTrackingComponent } from './time-tracking.component';
 import {
@@ -45,7 +45,7 @@ import {
 		ScreenshotsItemModule,
 		ActivityItemModule,
 		NgChartsModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		GalleryModule,
 		CounterPointModule,
 		WidgetLayoutModule,

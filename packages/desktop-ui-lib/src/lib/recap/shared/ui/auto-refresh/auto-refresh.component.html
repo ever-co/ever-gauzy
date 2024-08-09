@@ -1,0 +1,12 @@
+<div class="d-flex align-items-center wrapper justify-content-between">
+	<nb-toggle (checkedChange)="setAutoRefresh($event)" [checked]="autoRefresh$ | async">
+		{{ 'BUTTONS.AUTO_REFRESH' | translate }}
+	</nb-toggle>
+	<div class="align-self-end">
+		<button [disabled]="autoRefresh$ | async" nbButton outline status="primary" size="small" (click)="refresh()">
+			<nb-icon icon="refresh-outline"></nb-icon>
+			{{ 'BUTTONS.REFRESH' | translate }}
+		</button>
+	</div>
+
+</div>

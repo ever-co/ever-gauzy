@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { ITimerStatus } from '@gauzy/contracts';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	BehaviorSubject,
 	catchError,
@@ -16,12 +16,12 @@ import {
 	tap,
 	timer
 } from 'rxjs';
-import { TimerIconFactory } from './factory';
-import { ITimerIcon, IRemoteTimer } from './interfaces';
-import { RemoteTimer } from './concretes';
-import { TimeTrackerService } from '../time-tracker.service';
-import { Store } from '../../services';
 import { BACKGROUND_SYNC_INTERVAL } from '../../constants/app.constants';
+import { Store } from '../../services';
+import { TimeTrackerService } from '../time-tracker.service';
+import { RemoteTimer } from './concretes';
+import { TimerIconFactory } from './factory';
+import { IRemoteTimer, ITimerIcon } from './interfaces';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
@@ -35,7 +35,10 @@ export class TimeTrackerStatusService {
 	constructor(private readonly _timeTrackerService: TimeTrackerService, private readonly _store: Store) {
 		defer(() =>
 			of<boolean>(
-				!!this._store.token && !this._store.isOffline && !!this._store.user.employeeId && !!this._store.tenantId
+				!!this._store.token &&
+					!this._store.isOffline &&
+					!!this._store.user.employee.id &&
+					!!this._store.tenantId
 			).pipe(
 				switchMap((isEmployeeLoggedIn: boolean) =>
 					isEmployeeLoggedIn

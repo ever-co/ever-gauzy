@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	GauzyButtonActionModule,
@@ -35,7 +35,7 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		RecurringExpenseBlockModule,
 		GauzyButtonActionModule,
 		NoDataMessageModule

@@ -1,9 +1,11 @@
 import { screen } from 'electron';
+import { DefaultWindow, WindowConfig } from './concretes';
 import { IBaseWindow } from './interfaces';
 import { BaseWindow } from './interfaces/base-window';
-import { DefaultWindow, WindowConfig } from './concretes';
 
 import log from 'electron-log';
+import { WindowManager } from './concretes/window.manager';
+import { RegisteredWindow } from './interfaces/iwindow.manager';
 console.log = log.log;
 Object.assign(console, log.functions);
 
@@ -13,6 +15,7 @@ const store = new Store();
 export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 310;
 	private static readonly HEIGHT: number = 170;
+	private readonly manager = WindowManager.getInstance();
 
 	constructor(path?: string) {
 		super(
@@ -39,6 +42,7 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 		});
 		this.browserWindow.setAlwaysOnTop(true);
 		this.browserWindow.setFullScreenable(false);
+		this.manager.register(RegisteredWindow.CAPTURE, this);
 	}
 
 	public show(thumbUrl?: string): void {

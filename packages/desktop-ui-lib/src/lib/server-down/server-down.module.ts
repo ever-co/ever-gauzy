@@ -1,11 +1,11 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Routes, RouterModule } from '@angular/router';
-import { ServerDownPage } from './server-down.page';
-import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
+import { RouterModule, Routes } from '@angular/router';
+import { NbLayoutModule, NbSidebarModule } from '@nebular/theme';
+import { LanguageModule } from '../language/language.module';
 import { ServerConnectionService, Store } from '../services';
-import {TranslateModule} from "@ngx-translate/core";
+import { ServerDownPage } from './server-down.page';
 
 export * from './server-down.page';
 
@@ -23,9 +23,9 @@ const routes: Routes = [
 		NbSidebarModule,
 		NbLayoutModule,
 		RouterModule.forChild(routes),
-		TranslateModule,
+		LanguageModule.forChild()
 	],
 	declarations: [ServerDownPage],
-	providers: [Store, ServerConnectionService],
+	providers: [Store, ServerConnectionService]
 })
 export class ServerDownModule {}

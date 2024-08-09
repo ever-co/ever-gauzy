@@ -12,16 +12,16 @@ import {
 	NbUserModule,
 	NbTagModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	ImageUploaderModule,
 	PublicPageMutationModule,
 	SharedModule,
-	TableComponentsModule
+	TableComponentsModule,
+	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { OrganizationComponent } from './organization.component';
 import { OrganizationRoutingModule } from './organization-routing.module';
-import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progress.module';
 
 @NgModule({
 	imports: [
@@ -36,7 +36,7 @@ import { WorkInProgressModule } from '../../pages/work-in-progress/work-in-progr
 		NbIconModule,
 		NbInputModule,
 		PublicPageMutationModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbListModule,
 		NbUserModule,
 		NbTabsetModule,

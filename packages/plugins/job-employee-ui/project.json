@@ -1,0 +1,50 @@
+{
+	"name": "plugin-job-employee-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/job-employee-ui/src",
+	"prefix": "gauzy",
+	"tags": [],
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/job-employee-ui/ng-package.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/job-employee-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/job-employee-ui/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"packages/plugins/job-employee-ui/**/*.ts",
+					"packages/plugins/job-employee-ui/**/*.html"
+				]
+			}
+		}
+	}
+}
