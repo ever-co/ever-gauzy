@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { IDefaultUserOrganization } from '@gauzy/contracts';
 
 /**
@@ -8,6 +8,6 @@ import { IDefaultUserOrganization } from '@gauzy/contracts';
 export class UserDefaultOrganizationDTO implements IDefaultUserOrganization {
 	@ApiProperty({ type: () => String })
 	@IsOptional()
-	@IsString()
+	@IsUUID()
 	readonly defaultOrganizationId?: string;
 }

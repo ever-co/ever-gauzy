@@ -61,7 +61,7 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 		await queryRunner.query(`ALTER TABLE "user" ADD "defaultOrganizationId" uuid`);
 		await queryRunner.query(`ALTER TABLE "user" ADD "lastTeamId" uuid`);
 		await queryRunner.query(`ALTER TABLE "user" ADD "lastOrganizationId" uuid`);
-		await queryRunner.query(`ALTER TABLE "user" ADD "lastLogoutAt" TIMESTAMP`);
+		await queryRunner.query(`ALTER TABLE "user" ADD "lastLoginAt" TIMESTAMP`);
 		await queryRunner.query(`CREATE INDEX "IDX_1a8ae1126aae1823d62ccf3f82" ON "user" ("defaultTeamId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_0e9f745ad08103a1c21523326c" ON "user" ("defaultOrganizationId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_5864814596f85fe59bd1a0dc76" ON "user" ("lastTeamId") `);
@@ -98,7 +98,7 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "defaultOrganizationId"`);
 		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastOrganizationId"`);
 		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastTeamId"`);
-		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastLogoutAt"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastLoginAt"`);
 	}
 
 	/**
@@ -123,7 +123,7 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 		await queryRunner.query(`DROP INDEX "IDX_fde2ce12ab12b02ae583dd76c7"`);
 		await queryRunner.query(`DROP INDEX "IDX_557cb712d32a9ad9ffbb4cd50d"`);
 		await queryRunner.query(
-			`CREATE TABLE "temporary_user" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "thirdPartyId" varchar, "firstName" varchar, "lastName" varchar, "email" varchar, "username" varchar, "hash" varchar, "imageUrl" varchar(500), "preferredLanguage" varchar DEFAULT ('en'), "preferredComponentLayout" varchar CHECK( "preferredComponentLayout" IN ('CARDS_GRID','TABLE') ) DEFAULT ('TABLE'), "roleId" varchar, "refreshToken" varchar, "isActive" boolean DEFAULT (1), "code" varchar, "codeExpireAt" datetime, "emailVerifiedAt" datetime, "emailToken" varchar, "phoneNumber" varchar, "timeZone" varchar, "imageId" varchar, "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "timeFormat" varchar CHECK( "timeFormat" IN ('12','24') ) NOT NULL DEFAULT (12), "defaultTeamId" varchar, "lastTeamId" varchar, "defaultOrganizationId" varchar, "lastOrganizationId" varchar, "lastLogoutAt" datetime, CONSTRAINT "FK_f725c3df76a1a94e3e9f0313a5f" FOREIGN KEY ("lastOrganizationId") REFERENCES "organization" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_0e9f745ad08103a1c21523326c6" FOREIGN KEY ("defaultOrganizationId") REFERENCES "organization" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_5864814596f85fe59bd1a0dc766" FOREIGN KEY ("lastTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_1a8ae1126aae1823d62ccf3f821" FOREIGN KEY ("defaultTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_c28e52f758e7bbc53828db92194" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_685bf353c85f23b6f848e4dcded" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5e028298e103e1694147ada69e5" FOREIGN KEY ("imageId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
+			`CREATE TABLE "temporary_user" ("id" varchar PRIMARY KEY NOT NULL, "createdAt" datetime NOT NULL DEFAULT (datetime('now')), "updatedAt" datetime NOT NULL DEFAULT (datetime('now')), "tenantId" varchar, "thirdPartyId" varchar, "firstName" varchar, "lastName" varchar, "email" varchar, "username" varchar, "hash" varchar, "imageUrl" varchar(500), "preferredLanguage" varchar DEFAULT ('en'), "preferredComponentLayout" varchar CHECK( "preferredComponentLayout" IN ('CARDS_GRID','TABLE') ) DEFAULT ('TABLE'), "roleId" varchar, "refreshToken" varchar, "isActive" boolean DEFAULT (1), "code" varchar, "codeExpireAt" datetime, "emailVerifiedAt" datetime, "emailToken" varchar, "phoneNumber" varchar, "timeZone" varchar, "imageId" varchar, "isArchived" boolean DEFAULT (0), "deletedAt" datetime, "timeFormat" varchar CHECK( "timeFormat" IN ('12','24') ) NOT NULL DEFAULT (12), "defaultTeamId" varchar, "lastTeamId" varchar, "defaultOrganizationId" varchar, "lastOrganizationId" varchar, "lastLoginAt" datetime, CONSTRAINT "FK_f725c3df76a1a94e3e9f0313a5f" FOREIGN KEY ("lastOrganizationId") REFERENCES "organization" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_0e9f745ad08103a1c21523326c6" FOREIGN KEY ("defaultOrganizationId") REFERENCES "organization" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_5864814596f85fe59bd1a0dc766" FOREIGN KEY ("lastTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_1a8ae1126aae1823d62ccf3f821" FOREIGN KEY ("defaultTeamId") REFERENCES "organization_team" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_c28e52f758e7bbc53828db92194" FOREIGN KEY ("roleId") REFERENCES "role" ("id") ON DELETE SET NULL ON UPDATE NO ACTION, CONSTRAINT "FK_685bf353c85f23b6f848e4dcded" FOREIGN KEY ("tenantId") REFERENCES "tenant" ("id") ON DELETE CASCADE ON UPDATE NO ACTION, CONSTRAINT "FK_5e028298e103e1694147ada69e5" FOREIGN KEY ("imageId") REFERENCES "image_asset" ("id") ON DELETE SET NULL ON UPDATE NO ACTION)`
 		);
 		await queryRunner.query(
 			`INSERT INTO "temporary_user"("id", "createdAt", "updatedAt", "tenantId", "thirdPartyId", "firstName", "lastName", "email", "username", "hash", "imageUrl", "preferredLanguage", "preferredComponentLayout", "roleId", "refreshToken", "isActive", "code", "codeExpireAt", "emailVerifiedAt", "emailToken", "phoneNumber", "timeZone", "imageId", "isArchived", "deletedAt", "timeFormat", "defaultTeamId", "lastTeamId", "defaultOrganizationId", "lastOrganizationId") SELECT "id", "createdAt", "updatedAt", "tenantId", "thirdPartyId", "firstName", "lastName", "email", "username", "hash", "imageUrl", "preferredLanguage", "preferredComponentLayout", "roleId", "refreshToken", "isActive", "code", "codeExpireAt", "emailVerifiedAt", "emailToken", "phoneNumber", "timeZone", "imageId", "isArchived", "deletedAt", "timeFormat", "defaultTeamId", "lastTeamId", "defaultOrganizationId", "lastOrganizationId" FROM "user"`
@@ -203,7 +203,7 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 		await queryRunner.query(`ALTER TABLE \`user\` ADD \`defaultOrganizationId\` CHAR(36)`);
 		await queryRunner.query(`ALTER TABLE \`user\` ADD COLUMN \`lastTeamId\` CHAR(36)`);
 		await queryRunner.query(`ALTER TABLE \`user\` ADD COLUMN \`lastOrganizationId\` CHAR(36)`);
-		await queryRunner.query(`ALTER TABLE \`user\` ADD \`lastLogoutAt\` TIMESTAMP`);
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`lastLoginAt\` TIMESTAMP`);
 		await queryRunner.query(`CREATE INDEX \`IDX_1a8ae1126aae1823d62ccf3f82\` ON \`user\` (\`defaultTeamId\`)`);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_0e9f745ad08103a1c21523326c\` ON \`user\` (\`defaultOrganizationId\`)`
@@ -242,6 +242,6 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`defaultOrganizationId\``);
 		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastOrganizationId\``);
 		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastTeamId\``);
-		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastLogoutAt\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastLoginAt\``);
 	}
 }

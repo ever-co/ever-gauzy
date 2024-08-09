@@ -164,7 +164,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
 	@MultiORMColumn({ insert: false, nullable: true })
-	lastLogoutAt?: Date;
+	lastLoginAt?: Date;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

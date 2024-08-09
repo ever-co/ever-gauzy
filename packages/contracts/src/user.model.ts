@@ -3,7 +3,7 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { IRole } from './role.model';
-import { IBasePerTenantEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IEmployee } from './employee.model';
 import { IPayment } from './payment.model';
@@ -63,7 +63,7 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	code?: string;
 	codeExpireAt?: Date;
 	emailVerifiedAt?: Date;
-	lastLogoutAt?: Date;
+	lastLoginAt?: Date;
 	isEmailVerified?: boolean;
 	emailToken?: string;
 	invites?: IInvite[];
@@ -121,30 +121,24 @@ export interface IUserCodeInput {
 
 export interface IUserLoginInput extends IUserEmailInput, IUserPasswordInput {}
 
-export interface IUserLogoutInput {
-	userId: string;
-	lastTeamId: IOrganizationTeam['id'];
-	lastOrganizationId?: IOrganization['id'];
-}
-
 export interface IDefaultTeam {
-	defaultTeamId?: IOrganizationTeam['id'];
+	defaultTeamId?: ID;
 }
 
 export interface IDefaultUserOrganization {
-	defaultOrganizationId?: IOrganization['id'];
+	defaultOrganizationId?: ID;
 }
 
 export interface ILastTeam {
-	lastTeamId?: IOrganizationTeam['id'];
+	lastTeamId?: ID;
 }
 
 export interface ILastOrganization {
-	lastOrganizationId?: IOrganization['id'];
+	lastOrganizationId?: ID;
 }
 
-export interface ILastLogoutAtInput {
-	lastLogoutAt?: Date;
+export interface ILastLoginAtInput {
+	lastLoginAt?: Date;
 }
 
 export interface IWorkspaceResponse extends IUserTokenInput {
@@ -156,10 +150,10 @@ export interface IUserSigninWorkspaceResponse {
 	confirmed_email: string;
 	show_popup: boolean;
 	total_workspaces: number;
-	defaultTeamId?: IOrganizationTeam['id'];
-	defaultOrganizationId?: IOrganization['id'];
-	lastTeamId?: IOrganizationTeam['id'];
-	lastOrganizationId?: IOrganization['id'];
+	defaultTeamId?: ID;
+	defaultOrganizationId?: ID;
+	lastTeamId?: ID;
+	lastOrganizationId?: ID;
 }
 
 export interface IAuthResponse {

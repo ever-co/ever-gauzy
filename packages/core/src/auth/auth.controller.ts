@@ -41,8 +41,7 @@ import {
 	HasRoleQueryDTO,
 	RefreshTokenDto,
 	WorkspaceSigninEmailVerifyDTO,
-	WorkspaceSigninDTO,
-	UserLogoutDTO
+	WorkspaceSigninDTO
 } from './dto';
 import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-account/dto';
 
@@ -307,19 +306,5 @@ export class AuthController {
 	@UseValidationPipe()
 	async refreshToken(@Body() input: RefreshTokenDto) {
 		return await this.authService.getAccessTokenFromRefreshToken();
-	}
-
-	/**
-	 * User logout request for updating some user information
-\	 * @param body an object that contains fields and values to be updated and the user ID on which apply updates
-	 * @returns  void value
-	 */
-	@HttpCode(HttpStatus.OK)
-	@ApiOperation({ summary: 'Sign out update infos' })
-	@Post('/logout')
-	@Public()
-	@UseValidationPipe({ transform: true })
-	async logout(@Body() body: UserLogoutDTO): Promise<void> {
-		return await this.authService.logout(body);
 	}
 }

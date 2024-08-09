@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDate, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ILastLogoutAtInput } from '@gauzy/contracts';
+import { ILastLoginAtInput } from '@gauzy/contracts';
 
 /**
- * User last logout timestamp input DTO validation
+ * User last login timestamp input DTO validation
  */
-export class UserLogoutAtDTO implements ILastLogoutAtInput {
+export class UserLastLoginAtDTO implements ILastLoginAtInput {
 	@ApiProperty({ type: () => Date })
 	@Type(() => Date)
 	@IsOptional()
 	@IsDate()
-	readonly lastLogoutAt?: Date;
+	readonly lastLoginAt?: Date;
 }

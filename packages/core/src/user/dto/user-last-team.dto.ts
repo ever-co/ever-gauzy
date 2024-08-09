@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
 import { ILastTeam } from '@gauzy/contracts';
 
 /**
@@ -8,6 +8,6 @@ import { ILastTeam } from '@gauzy/contracts';
 export class UserLastTeamDTO implements ILastTeam {
 	@ApiProperty({ type: () => String })
 	@IsOptional()
-	@IsString()
+	@IsUUID()
 	readonly lastTeamId?: string;
 }
