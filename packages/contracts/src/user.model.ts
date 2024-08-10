@@ -176,6 +176,14 @@ export interface IUserCreateInput extends IRelationalImageAsset {
 	preferredComponentLayout?: ComponentLayoutStyleEnum;
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
+	defaultTeam?: IOrganizationTeam;
+	defaultTeamId?: ID;
+	lastTeam?: IOrganizationTeam;
+	lastTeamId?: ID;
+	defaultOrganization?: IOrganization;
+	defaultOrganizationId?: ID;
+	lasOrganization?: IOrganization;
+	lastOrganizationId?: ID;
 }
 
 export interface IUserUpdateInput extends IUserCreateInput {
