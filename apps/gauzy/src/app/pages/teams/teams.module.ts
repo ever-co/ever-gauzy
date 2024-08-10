@@ -1,5 +1,3 @@
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
 	NbCardModule,
@@ -32,9 +30,6 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
@@ -19,7 +17,6 @@ import { ScreenshotComponent } from './screenshot/screenshot.component';
 @NgModule({
 	declarations: [ScreenshotComponent],
 	imports: [
-		CommonModule,
 		ScreenshotRoutingModule,
 		SharedModule,
 		NbSpinnerModule,
@@ -30,8 +27,6 @@ import { ScreenshotComponent } from './screenshot/screenshot.component';
 		ViewTimeLogModalModule,
 		NbIconModule,
 		NbCheckboxModule,
-		FormsModule,
-		ReactiveFormsModule,
 		ScreenshotsItemModule,
 		GalleryModule,
 		GauzyFiltersModule,

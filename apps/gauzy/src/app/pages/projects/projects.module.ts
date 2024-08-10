@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -28,7 +27,6 @@ import { ProjectListComponent } from './components/project-list/list.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,

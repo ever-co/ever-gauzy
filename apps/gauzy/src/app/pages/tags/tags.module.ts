@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -33,9 +31,6 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,

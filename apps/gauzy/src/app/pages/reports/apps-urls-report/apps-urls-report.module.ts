@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivitiesReportGridModule, GauzyFiltersModule, SharedModule } from '@gauzy/ui-core/shared';
@@ -10,7 +8,6 @@ import { AppsUrlsReportComponent } from './apps-urls-report/apps-urls-report.com
 @NgModule({
 	declarations: [AppsUrlsReportComponent],
 	imports: [
-		CommonModule,
 		AppsUrlsReportRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -18,7 +15,6 @@ import { AppsUrlsReportComponent } from './apps-urls-report/apps-urls-report.com
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		ActivitiesReportGridModule,
 		GauzyFiltersModule
 	]

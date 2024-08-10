@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -35,13 +33,10 @@ import { PaidIcon } from './table-components/paid-icon';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		TimeOffRoutingModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

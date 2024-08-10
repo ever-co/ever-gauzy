@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,7 +14,6 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TranslateModule.forChild(),
 		NbCardModule,
 		PaymentsRoutingModule,
