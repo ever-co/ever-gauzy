@@ -18,7 +18,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { TranslateModule } from '@ngx-translate/core';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
-import { AngularSmartTableModule } from '../../smart-table/smart-table.module';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
 import { InviteMutationModule } from '../invite-mutation/invite-mutation.module';
 import { InvitesComponent } from './invites.component';
@@ -27,6 +27,7 @@ import { ResendConfirmationComponent } from './resend-confirmation/resend-confir
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 
+// Nebular Modules
 const NB_MODULES = [
 	NbBadgeModule,
 	NbButtonModule,
@@ -41,6 +42,7 @@ const NB_MODULES = [
 	NbTooltipModule
 ];
 
+// Components
 const COMPONENTS = [
 	InvitesComponent,
 	ProjectNamesComponent,
@@ -57,7 +59,7 @@ const COMPONENTS = [
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		SharedModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		InviteMutationModule,
 		UserFormsModule,
 		CardGridModule

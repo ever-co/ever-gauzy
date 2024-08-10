@@ -25,7 +25,7 @@ import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui
 import {
 	IPaginationBase,
 	PaginationFilterBaseComponent
-} from '../../smart-table/pagination/pagination-filter-base.component';
+} from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { DateViewComponent } from '../../table-components';
 import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
