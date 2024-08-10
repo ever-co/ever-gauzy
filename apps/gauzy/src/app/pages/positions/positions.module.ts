@@ -13,6 +13,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -35,6 +36,7 @@ import { PositionsComponent } from './positions.component';
 		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
+		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
 		SmartDataViewLayoutModule

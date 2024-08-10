@@ -16,6 +16,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { TranslateModule } from '@ngx-translate/core';
+import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
 import { UserFormsModule } from '../../user/forms/user-forms.module';
@@ -26,6 +27,7 @@ import { ResendConfirmationComponent } from './resend-confirmation/resend-confir
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
 
+// Nebular Modules
 const NB_MODULES = [
 	NbBadgeModule,
 	NbButtonModule,
@@ -40,6 +42,7 @@ const NB_MODULES = [
 	NbTooltipModule
 ];
 
+// Components
 const COMPONENTS = [
 	InvitesComponent,
 	ProjectNamesComponent,
@@ -58,7 +61,8 @@ const COMPONENTS = [
 		SharedModule,
 		SmartDataViewLayoutModule,
 		InviteMutationModule,
-		UserFormsModule
+		UserFormsModule,
+		CardGridModule
 	],
 	declarations: [...COMPONENTS],
 	exports: [...COMPONENTS]

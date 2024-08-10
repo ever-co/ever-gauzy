@@ -12,8 +12,8 @@ import { RecurringExpenseHistoryComponent } from './recurring-expense-history.co
 		CommonModule,
 		NbIconModule,
 		TranslateModule.forChild(),
-		SmartDataViewLayoutModule,
 		SharedModule,
+		SmartDataViewLayoutModule,
 		TableComponentsModule
 	],
 	exports: [RecurringExpenseHistoryComponent],

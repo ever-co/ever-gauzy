@@ -8,10 +8,10 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { IEmployeeStatisticsHistory, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/common';
+import { PaginationFilterBaseComponent } from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { ExpenseTableComponent } from './table-components/expense-table.component';
 import { IncomeTableComponent } from './table-components/income-table.component';
 import { DateViewComponent } from '../../table-components';
-import { PaginationFilterBaseComponent } from '../../smart-data-layout/components/pagination/pagination-filter-base.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

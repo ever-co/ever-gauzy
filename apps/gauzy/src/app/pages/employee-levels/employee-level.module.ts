@@ -15,6 +15,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -25,15 +26,17 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 @NgModule({
 	imports: [
 		CommonModule,
-		FormsModule,
 		SharedModule,
 		NbCardModule,
+		FormsModule,
 		NbButtonModule,
 		EmployeeLevelRoutingModule,
 		NbInputModule,
 		NbIconModule,
 		TagsColorInputModule,
 		NbActionsModule,
+		NbSpinnerModule,
+		CardGridModule,
 		NbDialogModule,
 		TableComponentsModule,
 		TagsColorInputModule,
@@ -42,8 +45,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
-		SmartDataViewLayoutModule,
-		NbSpinnerModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EmployeeLevelComponent],
 	providers: []
