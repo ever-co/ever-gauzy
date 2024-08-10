@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -22,6 +20,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
 	ImageUploaderModule,
@@ -56,7 +55,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
@@ -67,8 +65,6 @@ const COMPONENTS = [
 		OrganizationsModule,
 		NbActionsModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -88,6 +84,7 @@ const COMPONENTS = [
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		SharedModule
 	],
 	declarations: [...COMPONENTS],

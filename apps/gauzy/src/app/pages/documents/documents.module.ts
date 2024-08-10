@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -16,6 +14,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	FileUploaderModule,
 	SharedModule,
 	TableComponentsModule
@@ -28,17 +27,15 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
 @NgModule({
 	imports: [
-		CommonModule,
 		DocumentsRoutingModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
 		NbIconModule,
 		NbActionsModule,
 		SharedModule,
+		CardGridModule,
 		TableComponentsModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,

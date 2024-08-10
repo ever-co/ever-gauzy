@@ -1,5 +1,3 @@
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import {
 	NbCardModule,
@@ -18,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	ImageUploaderModule,
 	ProjectSelectModule,
@@ -31,9 +30,6 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
@@ -45,6 +41,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		NbSelectModule,
 		NbBadgeModule,
 		SharedModule,
+		CardGridModule,
 		NbTooltipModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),

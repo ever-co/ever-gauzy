@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -17,6 +15,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -26,9 +25,6 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
@@ -45,7 +41,8 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TagsColorInputModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		CardGridModule
 	],
 	declarations: [VendorsComponent]
 })

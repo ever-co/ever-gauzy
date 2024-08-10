@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -12,6 +10,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EquipmentMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -23,18 +22,17 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		EquipmentRoutingModule,
 		SharedModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
+		CardGridModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		SmartDataViewLayoutModule

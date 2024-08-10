@@ -26,6 +26,10 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 		this._perPageSelect = [5, 10, 25, 50, 100];
 	}
 
+	/**
+	 *
+	 * @param changes
+	 */
 	private _processPageChange(changes: any) {
 		if (changes['action'] === 'prepend') {
 			this._source.setPage(1);
@@ -35,6 +39,9 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 		}
 	}
 
+	/**
+	 * Init pages
+	 */
 	private _initPages() {
 		const pagesCount = this.last;
 		let showPagesCount = 4;
@@ -56,6 +63,11 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 		}
 	}
 
+	/**
+	 * On changes
+	 *
+	 * @param changes
+	 */
 	public ngOnChanges(changes: SimpleChanges) {
 		if (changes.source) {
 			if (!changes.source.firstChange) {
@@ -183,9 +195,11 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	protected set perPage(value: number) {
 		this._perPage = value;
 	}
+
 	@Output()
 	public get changePage(): EventEmitter<{ page: number }> {
 		return this._changePage;
 	}
+
 	ngOnDestroy(): void {}
 }

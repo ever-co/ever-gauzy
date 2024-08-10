@@ -1,4 +1,6 @@
 import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,7 +12,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
-import { SmartDataViewLayoutModule, ProductMutationModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, CardGridModule, ProductMutationModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
@@ -18,6 +20,9 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 @NgModule({
 	declarations: [ProductCategoriesComponent],
 	imports: [
+		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
@@ -29,6 +34,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		SharedModule,
 		ProductCategoriesRoutingModule,
 		ProductMutationModule,
+		CardGridModule,
 		SmartDataViewLayoutModule
 	],
 	providers: [ProductCategoryService]

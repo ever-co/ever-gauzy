@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { InventoryRoutingModule } from './inventory-routing.module';
 import {
 	NbCardModule,
@@ -16,7 +15,6 @@ import {
 	NbStepperModule
 } from '@nebular/theme';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -31,6 +29,7 @@ import {
 } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	CurrencyModule,
 	ImageAssetModule,
 	LanguageSelectorModule,
@@ -84,9 +83,8 @@ const NB_MODULES = [
 		VariantTableComponent
 	],
 	imports: [
-		CommonModule,
+		CardGridModule,
 		CurrencyModule,
-		FormsModule,
 		ImageAssetModule,
 		InventoryRoutingModule,
 		MerchantModule,
@@ -94,7 +92,6 @@ const NB_MODULES = [
 		NgSelectModule,
 		ProductTypesModule,
 		ProductCategoriesModule,
-		ReactiveFormsModule,
 		SharedModule,
 		SelectAssetModule,
 		InventoryTableComponentsModule,

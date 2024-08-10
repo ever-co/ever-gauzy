@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -20,6 +18,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ProposalsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	ContactSelectModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
@@ -40,9 +39,6 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		ProposalsRoutingModule,
 		CKEditorModule,
 		NbBadgeModule,
@@ -62,6 +58,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 		TagsColorInputModule,
 		TableComponentsModule,
 		UserFormsModule,
+		CardGridModule,
 		ProposalTemplateSelectModule,
 		SmartDataViewLayoutModule,
 		ContactSelectModule,

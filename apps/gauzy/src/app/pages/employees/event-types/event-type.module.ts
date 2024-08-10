@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -14,6 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EventTypeService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -31,7 +31,6 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		SharedModule,
 		NbToastrModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -39,6 +38,7 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		NbSpinnerModule,
 		EventTypeMutationModule,
 		UserFormsModule,
+		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
 		SmartDataViewLayoutModule

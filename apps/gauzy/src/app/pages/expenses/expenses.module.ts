@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
 	NbBadgeModule,
@@ -18,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	ExpensesMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -31,9 +30,6 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		InfiniteScrollModule,
 		NbActionsModule,
 		NbBadgeModule,
@@ -51,6 +47,7 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		ExpensesMutationModule,
 		UserFormsModule,
 		TableComponentsModule,
+		CardGridModule,
 		TagsColorInputModule,
 		SmartDataViewLayoutModule
 	],

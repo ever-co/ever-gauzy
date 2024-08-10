@@ -23,6 +23,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GoalCustomUnitModule,
 	GoalTemplatesModule,
@@ -48,6 +49,7 @@ import { EditKpiComponent } from './edit-kpi/edit-kpi.component';
 		EmployeeMultiSelectModule,
 		SharedModule,
 		NbTabsetModule,
+		CardGridModule,
 		NbCheckboxModule,
 		NbToggleModule,
 		GoalCustomUnitModule,

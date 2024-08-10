@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -20,16 +18,19 @@ import { ColorPickerModule } from 'ngx-color-picker';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule, SharedModule, TagsMutationModule, UserFormsModule } from '@gauzy/ui-core/shared';
+import {
+	SmartDataViewLayoutModule,
+	CardGridModule,
+	SharedModule,
+	TagsMutationModule,
+	UserFormsModule
+} from '@gauzy/ui-core/shared';
 import { TagsComponent } from './tags.component';
 import { TagsRoutingModule } from './tags-routing.module';
 import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -51,6 +52,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		SharedModule,
 		UserFormsModule,
 		TagsMutationModule,
+		CardGridModule,
 		SmartDataViewLayoutModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]

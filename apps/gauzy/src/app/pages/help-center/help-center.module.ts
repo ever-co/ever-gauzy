@@ -12,8 +12,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	SidebarModule,
 	UserFormsModule
@@ -41,9 +40,8 @@ import { AddArticleModule } from './add-article/add-article.module';
 		EmployeeMultiSelectModule,
 		SidebarModule,
 		TranslateModule.forChild(),
-		GauzyButtonActionModule,
-		SharedModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule,
+		SharedModule
 	],
 	declarations: [HelpCenterComponent]
 })

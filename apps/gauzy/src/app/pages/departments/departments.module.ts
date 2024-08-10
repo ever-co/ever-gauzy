@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -17,6 +15,7 @@ import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
@@ -32,13 +31,10 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		DepartmentsRoutingModule,
 		NbCardModule,
-		FormsModule,
 		NbDialogModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
@@ -47,6 +43,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
+		CardGridModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,

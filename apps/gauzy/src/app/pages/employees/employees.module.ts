@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
 	NbActionsModule,
@@ -32,6 +30,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
 	EmployeeLocationModule,
@@ -100,9 +99,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		CKEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
@@ -142,6 +138,7 @@ const COMPONENTS = [
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		TimeZoneSelectorModule
 	],
 	declarations: [...COMPONENTS],

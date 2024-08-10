@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -28,6 +26,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	AddTaskDialogModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GauzyEditableGridModule,
 	ProjectSelectModule,
@@ -62,9 +61,6 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		SprintTaskComponent
 	],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
 		NbCardModule,
@@ -92,6 +88,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TagsColorInputModule,
 		SharedModule,
 		UserFormsModule,
+		CardGridModule,
 		AddTaskDialogModule,
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,

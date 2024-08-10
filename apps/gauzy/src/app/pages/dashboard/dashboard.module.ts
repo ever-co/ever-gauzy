@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbAlertModule,
 	NbButtonModule,
@@ -42,11 +40,9 @@ import { TeamModule } from './team/team.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		DashboardRoutingModule,
 		NbCardModule,
 		NgSelectModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		RecordsHistoryModule,

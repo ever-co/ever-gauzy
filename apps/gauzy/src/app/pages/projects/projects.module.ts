@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -12,7 +11,12 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { SmartDataViewLayoutModule, EntityWithMembersModule, ProjectMutationModule } from '@gauzy/ui-core/shared';
+import {
+	SmartDataViewLayoutModule,
+	CardGridModule,
+	EntityWithMembersModule,
+	ProjectMutationModule
+} from '@gauzy/ui-core/shared';
 import { ProjectsRoutingModule } from './projects-routing.module';
 import { TableComponentsModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
@@ -23,7 +27,6 @@ import { ProjectListComponent } from './components/project-list/list.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -38,6 +41,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		EntityWithMembersModule,
 		SharedModule,
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		ProjectMutationModule,
 		NgxPermissionsModule.forChild()
 	],

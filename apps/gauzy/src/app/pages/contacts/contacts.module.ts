@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -19,6 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
 	ImageUploaderModule,
@@ -37,9 +36,6 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule.forChild(),
@@ -51,6 +47,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		NbToggleModule,
 		NbTooltipModule,
 		NgSelectModule,
+		CardGridModule,
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,

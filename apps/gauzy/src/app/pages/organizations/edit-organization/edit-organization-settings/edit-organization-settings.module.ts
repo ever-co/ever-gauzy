@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -58,13 +56,10 @@ import { EditOrganizationSettingsComponent } from './edit-organization-settings.
 
 @NgModule({
 	imports: [
-		CommonModule,
 		NbBadgeModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

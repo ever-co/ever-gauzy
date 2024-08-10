@@ -1,6 +1,4 @@
-import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NbLayoutModule, NbCardModule, NbSelectModule, NbButtonModule } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,20 +8,17 @@ import { AccountingTemplatesComponent } from './accounting-templates.component';
 
 @NgModule({
 	imports: [
-		NbLayoutModule,
-		CommonModule,
-		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
-		NbSelectModule,
-		TranslateModule.forChild(),
 		NbButtonModule,
+		NbCardModule,
+		NbLayoutModule,
+		NbSelectModule,
 		AceEditorModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		LanguageSelectorModule,
 		AccountingTemplatesRoutingModule
 	],
-	providers: [],
-	declarations: [AccountingTemplatesComponent]
+	declarations: [AccountingTemplatesComponent],
+	providers: []
 })
 export class AccountingTemplatesModule {}

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
 	NbActionsModule,
@@ -45,6 +43,7 @@ import {
 	CandidateMultiSelectModule,
 	CandidateMutationModule,
 	CandidateSelectModule,
+	CardGridModule,
 	DeleteFeedbackModule,
 	DeleteInterviewModule,
 	EmployeeLocationModule,
@@ -142,9 +141,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		FullCalendarModule,
 		NbAccordionModule,
 		NbActionsModule,
@@ -185,6 +181,7 @@ const COMPONENTS = [
 		EmployeeLocationModule,
 		EmployeeRatesModule,
 		StarRatingInputModule,
+		CardGridModule,
 		StarRatingOutputModule,
 		CandidateMultiSelectModule,
 		EmployeeMultiSelectModule,

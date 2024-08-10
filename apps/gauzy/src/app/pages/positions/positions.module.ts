@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -13,6 +11,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -23,8 +22,6 @@ import { PositionsComponent } from './positions.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -35,6 +32,7 @@ import { PositionsComponent } from './positions.component';
 		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
+		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
 		SmartDataViewLayoutModule

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -18,6 +16,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	CurrencyModule,
 	LeafletMapModule,
 	LocationFormModule,
@@ -47,15 +46,13 @@ const NB_MODULES = [
 @NgModule({
 	declarations: [MerchantComponent, MerchantFormComponent, MerchantTableComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		CurrencyModule,
 		InventoryTableComponentsModule,
 		LeafletMapModule,

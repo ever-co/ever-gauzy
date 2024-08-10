@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -16,6 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EquipmentSharingMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -28,12 +27,10 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		EquipmentSharingRoutingModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -41,6 +38,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
 		NbDatepickerModule,
+		CardGridModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
