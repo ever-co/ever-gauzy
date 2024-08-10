@@ -112,9 +112,6 @@ let applicationMenu: AppMenu;
 setupTitlebar();
 ipcMain.removeHandler('request-application-menu');
 ipcMain.handle('request-application-menu', async () => {
-	console.log('xxx===', JSON.stringify(
-		Menu.getApplicationMenu(),
-		(key: string, value: any) => (key !== 'commandsMap' && key !== 'menu') ? value : undefined))
 	return JSON.parse(JSON.stringify(
 		Menu.getApplicationMenu(),
 		(key: string, value: any) => (key !== 'commandsMap' && key !== 'menu') ? value : undefined)
@@ -407,7 +404,7 @@ app.on('ready', async () => {
 		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 

@@ -1,4 +1,5 @@
 import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
+import { MenuBar } from 'custom-electron-titlebar/menubar';
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
 window.addEventListener('DOMContentLoaded', async () => {
@@ -41,6 +42,33 @@ window.addEventListener('DOMContentLoaded', async () => {
             min-width: 130px;
             border: solid 1px rgba(255, 255, 255, 0.5);
         }
+
+        .cet-menubar-menu-container .cet-action-menu-item {
+            -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+            display: -ms-flexbox;
+            display: flex;
+            height: 2.231em;
+            margin: 0px 0px;
+            align-items: center;
+            position: relative;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .cet-menubar .cet-menubar-menu-button {
+            box-sizing: border-box;
+            padding: 0px 5px;
+            height: 100%;
+            cursor: default;
+            zoom: 0.95;
+            white-space: nowrap;
+            -webkit-app-region: no-drag;
+            outline: 0;
+        }
+
+
+
     `;
     document.head.appendChild(overStyle);
 });

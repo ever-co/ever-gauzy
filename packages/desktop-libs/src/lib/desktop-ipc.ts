@@ -830,6 +830,7 @@ export function ipcTimer(
 	ipcMain.on('show_image', (event, arg) => {
 		imageView.show();
 		imageView.webContents.send('show_image', arg);
+		imageView.webContents.send('refresh_menu');
 	});
 
 	ipcMain.on('close_image_view', () => {

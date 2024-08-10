@@ -1,6 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
@@ -11,9 +12,9 @@ Object.assign(console, log.functions);
 const Store = require('electron-store');
 const store = new Store();
 
-export async function createImageViewerWindow(imageViewWindow, filePath) {
+export async function createImageViewerWindow(imageViewWindow, filePath, preloadPath?) {
 	const manager = WindowManager.getInstance();
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	imageViewWindow = new BrowserWindow(mainWindowSettings);
 	remoteMain.enable(imageViewWindow.webContents);
 	const launchPath = url.format({
@@ -33,10 +34,13 @@ export async function createImageViewerWindow(imageViewWindow, filePath) {
 		event.preventDefault();
 	});
 	manager.register(RegisteredWindow.IMAGE_VIEWER, imageViewWindow);
+	if (preloadPath) {
+		attachTitlebarToWindow(imageViewWindow);
+	}
 	return imageViewWindow;
 }
 
-const windowSetting = () => {
+const windowSetting = (preloadPath) => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: true,
@@ -58,6 +62,11 @@ const windowSetting = () => {
 
 	const filesPath = store.get('filePath');
 	mainWindowSettings.icon = filesPath.iconPath;
+	if (preloadPath) {
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
+		mainWindowSettings.webPreferences.preload = preloadPath;
+	}
 
 	return mainWindowSettings;
 };

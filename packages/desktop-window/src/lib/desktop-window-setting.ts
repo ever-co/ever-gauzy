@@ -34,7 +34,7 @@ export async function createSettingsWindow(settingsWindow, filePath, preloadPath
 		event.preventDefault();
 	});
 
-	settingsWindow.webContents.toggleDevTools();
+	// settingsWindow.webContents.toggleDevTools();
 	manager.register(RegisteredWindow.SETTINGS, settingsWindow);
 	if (preloadPath) {
 		attachTitlebarToWindow(settingsWindow);
@@ -63,8 +63,8 @@ const windowSetting = (preloadPath?) => {
 	};
 	if (preloadPath) {
 		mainWindowSettings.webPreferences.preload = preloadPath;
-		mainWindowSettings.titleBarStyle = 'hidden',
-			mainWindowSettings.titleBarOverlay = true
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
 	}
 	const filesPath = store.get('filePath');
 	mainWindowSettings.icon = filesPath.iconPath;
