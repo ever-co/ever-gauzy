@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbCardModule,
 	NbSpinnerModule,
@@ -11,7 +10,6 @@ import {
 	NbButtonModule,
 	NbPopoverModule
 } from '@nebular/theme';
-import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
@@ -30,8 +28,6 @@ import {
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
 		SharedModule,
 		NbCardModule,
 		NbButtonModule,

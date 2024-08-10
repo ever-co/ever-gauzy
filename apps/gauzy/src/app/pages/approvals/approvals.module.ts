@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -29,8 +28,6 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 
 @NgModule({
 	imports: [
-		CommonModule,
-		SharedModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -45,6 +42,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		NbTooltipModule,
 		NbRadioModule,
 		ApprovalsRoutingModule,
+		SharedModule,
 		RequestApprovalMutationModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),

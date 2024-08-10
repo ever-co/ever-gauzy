@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { TranslateModule } from '@ngx-translate/core';
@@ -13,8 +11,6 @@ import { AvailabilitySlotsComponent } from './availability-slots.component';
 @NgModule({
 	declarations: [AvailabilitySlotsComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbDialogModule,
