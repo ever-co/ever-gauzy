@@ -12,12 +12,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import {
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	RecurringExpenseBlockModule,
-	SharedModule
-} from '@gauzy/ui-core/shared';
+import { RecurringExpenseBlockModule, SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 
@@ -37,8 +32,7 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		RecurringExpenseBlockModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ExpenseRecurringComponent]
 })

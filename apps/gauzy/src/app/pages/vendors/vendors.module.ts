@@ -17,6 +17,7 @@ import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -45,7 +46,8 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TagsColorInputModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		CardGridModule
 	],
 	declarations: [VendorsComponent]
 })
