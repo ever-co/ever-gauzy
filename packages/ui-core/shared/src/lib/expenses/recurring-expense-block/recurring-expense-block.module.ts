@@ -12,9 +12,9 @@ import { RecurringExpenseBlockComponent } from './recurring-expense-block.compon
 		CommonModule,
 		NbIconModule,
 		NbTooltipModule,
-		SmartDataViewLayoutModule,
 		TranslateModule.forChild(),
 		SharedModule,
+		SmartDataViewLayoutModule,
 		RecurringExpenseHistoryModule
 	],
 	exports: [RecurringExpenseBlockComponent],

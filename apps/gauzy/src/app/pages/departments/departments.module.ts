@@ -15,6 +15,7 @@ import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
@@ -42,6 +43,7 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
+		CardGridModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,

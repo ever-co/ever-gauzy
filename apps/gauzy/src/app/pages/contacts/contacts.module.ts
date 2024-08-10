@@ -17,6 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	FileUploaderModule,
 	ImageUploaderModule,
@@ -46,6 +47,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		NbToggleModule,
 		NbTooltipModule,
 		NgSelectModule,
+		CardGridModule,
 		ContactsRoutingModule,
 		EmployeeMultiSelectModule,
 		FileUploaderModule,

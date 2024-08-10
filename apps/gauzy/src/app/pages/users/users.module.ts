@@ -20,6 +20,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
 	ImageUploaderModule,
@@ -83,6 +84,7 @@ const COMPONENTS = [
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		SharedModule
 	],
 	declarations: [...COMPONENTS],

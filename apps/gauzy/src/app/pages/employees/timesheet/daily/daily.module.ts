@@ -15,10 +15,10 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	SmartDataViewLayoutModule,
 	DialogsModule,
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,

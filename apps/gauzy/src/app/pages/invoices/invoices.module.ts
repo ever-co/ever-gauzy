@@ -49,6 +49,7 @@ import { InvoicesReceivedComponent } from './invoices-received/invoices-received
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
@@ -97,6 +98,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
+		CardGridModule,
 		NbBadgeModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),

@@ -18,6 +18,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ProposalsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	ContactSelectModule,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
@@ -57,6 +58,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 		TagsColorInputModule,
 		TableComponentsModule,
 		UserFormsModule,
+		CardGridModule,
 		ProposalTemplateSelectModule,
 		SmartDataViewLayoutModule,
 		ContactSelectModule,

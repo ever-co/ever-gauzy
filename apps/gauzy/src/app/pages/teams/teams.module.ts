@@ -16,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	ImageUploaderModule,
 	ProjectSelectModule,
@@ -40,6 +41,7 @@ import { TeamsMutationComponent } from './teams-mutation/teams-mutation.componen
 		NbSelectModule,
 		NbBadgeModule,
 		SharedModule,
+		CardGridModule,
 		NbTooltipModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),

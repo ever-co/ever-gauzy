@@ -21,7 +21,7 @@ export class CustomViewComponent implements OnInit, OnDestroy {
 	@ViewChild('dynamicTarget', { read: ViewContainerRef, static: true })
 	dynamicTarget: any;
 
-	constructor(private readonly resolver: ComponentFactoryResolver) {}
+	constructor(private resolver: ComponentFactoryResolver) {}
 
 	ngOnInit() {
 		this.createCustomComponent();

@@ -30,6 +30,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
 	EmployeeLocationModule,
@@ -137,6 +138,7 @@ const COMPONENTS = [
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		TimeZoneSelectorModule
 	],
 	declarations: [...COMPONENTS],

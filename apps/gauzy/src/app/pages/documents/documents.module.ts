@@ -14,6 +14,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	FileUploaderModule,
 	SharedModule,
 	TableComponentsModule
@@ -34,6 +35,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NbIconModule,
 		NbActionsModule,
 		SharedModule,
+		CardGridModule,
 		TableComponentsModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
