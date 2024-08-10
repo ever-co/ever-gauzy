@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '@gauzy/ui-core/common';
 import { CardGridComponent } from './card-grid.component';
 import { CustomViewComponent } from './card-grid-custom.component';
-import { NoDataMessageModule } from '../no-data-message/no-data-message.module';
+import { NoDataMessageModule } from '../smart-data-layout/no-data-message/no-data-message.module';
 
 @NgModule({
 	imports: [

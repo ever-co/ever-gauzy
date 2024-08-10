@@ -21,7 +21,6 @@ export * from './equipment';
 export * from './entity-with-members-card';
 export * from './expenses';
 export * from './editable-grid';
-export * from './no-data-message';
 export * from './faq';
 export * from './feature-toggle';
 export * from './file-uploader-input';

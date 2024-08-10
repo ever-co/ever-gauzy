@@ -14,7 +14,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -40,8 +39,7 @@ import { PositionsComponent } from './positions.component';
 		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
-		SmartDataViewLayoutModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]

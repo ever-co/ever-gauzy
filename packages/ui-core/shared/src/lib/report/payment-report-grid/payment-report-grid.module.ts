@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { PaymentReportGridComponent } from './payment-report-grid.component';
 import { ProjectColumnViewModule } from '../project-column-view/project-column-view.module';
-import { NoDataMessageModule } from '../../no-data-message/no-data-message.module';
+import { NoDataMessageModule } from '../../smart-data-layout/no-data-message/no-data-message.module';
 
 @NgModule({
 	declarations: [PaymentReportGridComponent],

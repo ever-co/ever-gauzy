@@ -16,7 +16,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -36,6 +35,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		NbIconModule,
 		TagsColorInputModule,
 		NbActionsModule,
+		NbSpinnerModule,
 		CardGridModule,
 		NbDialogModule,
 		TableComponentsModule,
@@ -45,9 +45,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
-		SmartDataViewLayoutModule,
-		NoDataMessageModule,
-		NbSpinnerModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EmployeeLevelComponent],
 	providers: []

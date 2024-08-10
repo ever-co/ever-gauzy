@@ -18,7 +18,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -48,8 +47,7 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TableComponentsModule,
 		VendorsRoutingModule,
 		SmartDataViewLayoutModule,
-		CardGridModule,
-		NoDataMessageModule
+		CardGridModule
 	],
 	declarations: [VendorsComponent]
 })

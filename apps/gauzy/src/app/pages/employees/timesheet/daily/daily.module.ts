@@ -19,9 +19,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
-	GauzyButtonActionModule,
 	GauzyFiltersModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,
@@ -61,8 +60,7 @@ import { DailyComponent } from './daily/daily.component';
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class DailyModule {}

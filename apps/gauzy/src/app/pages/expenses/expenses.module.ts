@@ -20,7 +20,6 @@ import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	ExpensesMutationModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -55,8 +54,7 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		TableComponentsModule,
 		CardGridModule,
 		TagsColorInputModule,
-		SmartDataViewLayoutModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
 	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]

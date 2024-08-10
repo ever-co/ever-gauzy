@@ -18,7 +18,6 @@ import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	FileUploaderModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -49,8 +48,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NgSelectModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
-		SmartDataViewLayoutModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []
