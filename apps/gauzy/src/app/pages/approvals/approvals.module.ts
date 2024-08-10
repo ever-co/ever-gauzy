@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -15,12 +14,10 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	RequestApprovalMutationModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
@@ -31,8 +28,6 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 
 @NgModule({
 	imports: [
-		CommonModule,
-		SharedModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -43,16 +38,15 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		CardGridModule,
 		NbTooltipModule,
 		NbRadioModule,
 		ApprovalsRoutingModule,
+		SharedModule,
 		RequestApprovalMutationModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module
+		SmartDataViewLayoutModule
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	providers: [RequestApprovalService]

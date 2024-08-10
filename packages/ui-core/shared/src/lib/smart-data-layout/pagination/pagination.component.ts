@@ -1,8 +1,8 @@
 import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy } from '@ngneat/until-destroy';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,8 +62,6 @@ export class PaginationComponent implements OnInit {
 	@Output() selectedPage = new EventEmitter<Number>();
 	@Output() selectedOption = new EventEmitter<Number>();
 
-	constructor() {}
-
 	ngOnInit() {
 		this.subject$
 			.pipe(
@@ -72,11 +70,17 @@ export class PaginationComponent implements OnInit {
 				tap(() => this.selectedPage.emit(this.activePage))
 			)
 			.subscribe();
+
+		// Do not emit pagination on multiple click on same element
 		if (this.doEmit) {
 			this.subject$.next(this.activePage);
 		}
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	getPages() {
 		const pagesCount = this.getPagesCount();
 		let pages = [];
@@ -93,10 +97,18 @@ export class PaginationComponent implements OnInit {
 		return pages;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	getStartPagesCount() {
 		return (this.activePage - 1) * this.itemsPerPage + 1;
 	}
 
+	/**
+	 *
+	 * @returns
+	 */
 	getEndPagesCount() {
 		const entriesEndPage = (this.activePage - 1) * this.itemsPerPage + this.itemsPerPage;
 
@@ -106,19 +118,31 @@ export class PaginationComponent implements OnInit {
 		return entriesEndPage;
 	}
 
+	/**
+	 *
+	 */
 	getPagesCount() {
 		return Math.ceil(this.totalItems / this.itemsPerPage);
 	}
 
+	/**
+	 *
+	 */
 	onChangePage(pageIdx: number) {
 		this.activePage = pageIdx;
 	}
 
+	/**
+	 * Next page click
+	 */
 	onNextPageClick() {
 		this.activePage = this.activePage >= this.getPagesCount() ? this.getPagesCount() : this.activePage + 1;
 		this.subject$.next(this.activePage);
 	}
 
+	/**
+	 * Previous page click
+	 */
 	onPrevPageClick() {
 		if (this.activePage == 1) return;
 

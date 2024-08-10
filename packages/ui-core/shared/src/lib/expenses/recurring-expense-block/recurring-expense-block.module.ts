@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbIconModule, NbTooltipModule } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
+import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
 import { RecurringExpenseHistoryModule } from '../recurring-expense-history/recurring-expense-history.module';
 import { RecurringExpenseBlockComponent } from './recurring-expense-block.component';
 
@@ -12,9 +12,9 @@ import { RecurringExpenseBlockComponent } from './recurring-expense-block.compon
 		CommonModule,
 		NbIconModule,
 		NbTooltipModule,
-		Angular2SmartTableModule,
 		TranslateModule.forChild(),
 		SharedModule,
+		SmartDataViewLayoutModule,
 		RecurringExpenseHistoryModule
 	],
 	exports: [RecurringExpenseBlockComponent],

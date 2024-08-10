@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -12,7 +10,6 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CKEditorModule } from 'ckeditor4-angular';
@@ -20,10 +17,9 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProposalsService } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	ContactSelectModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProposalTemplateSelectModule,
 	SelectorsModule,
 	SharedModule,
@@ -43,11 +39,7 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		ProposalsRoutingModule,
-		Angular2SmartTableModule,
 		CKEditorModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -68,10 +60,9 @@ import { JobTitleComponent } from './table-components/job-title/job-title.compon
 		UserFormsModule,
 		CardGridModule,
 		ProposalTemplateSelectModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		ContactSelectModule,
 		TableFiltersModule,
-		GauzyButtonActionModule,
 		SelectorsModule
 	],
 	declarations: [

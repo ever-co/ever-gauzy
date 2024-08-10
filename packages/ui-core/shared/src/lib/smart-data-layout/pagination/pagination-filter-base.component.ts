@@ -6,6 +6,7 @@ import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { cleanKeys, isNotEmpty, mergeDeep } from '@gauzy/ui-core/common';
 
+// Interfaces
 export interface IPaginationBase {
 	totalItems?: number;
 	activePage: number;
@@ -29,6 +30,9 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		return this._minItemPerPage;
 	}
 
+	/**
+	 * Pagination
+	 */
 	private _pagination: IPaginationBase = {
 		totalItems: this.totalItems,
 		activePage: this.activePage,
@@ -112,6 +116,10 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		}
 	}
 
+	/**
+	 *
+	 * @param selectedPage
+	 */
 	public onPageChange(selectedPage: number) {
 		this.setPagination({
 			...this.getPagination(),
@@ -122,10 +130,16 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		this.scrollTop();
 	}
 
+	/**
+	 *
+	 */
 	protected getPagination(): IPaginationBase {
 		return this.pagination;
 	}
 
+	/**
+	 *
+	 */
 	protected setPagination(pagination: IPaginationBase) {
 		this.pagination = pagination;
 
@@ -133,6 +147,10 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		this.pagination$.next({ activePage, itemsPerPage });
 	}
 
+	/**
+	 *
+	 * @param itemsPerPage
+	 */
 	public onUpdateOption(itemsPerPage: number) {
 		this.refreshPagination();
 		this.pagination.itemsPerPage = itemsPerPage;
@@ -142,6 +160,9 @@ export class PaginationFilterBaseComponent extends TranslationBaseComponent impl
 		});
 	}
 
+	/**
+	 * Scroll to the table top after set pagination
+	 */
 	public onScroll() {
 		const activePage = this.pagination.activePage + 1;
 		this.setPagination({

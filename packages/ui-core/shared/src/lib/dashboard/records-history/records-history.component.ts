@@ -11,7 +11,7 @@ import {
 	IEmployeeStatisticsHistory
 } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { PaginationFilterBaseComponent } from '../../smart-table/pagination/pagination-filter-base.component';
+import { PaginationFilterBaseComponent } from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent } from '../../table-components';
 
 @UntilDestroy({ checkProperties: true })
@@ -39,10 +39,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 		}
 	};
 
-	constructor(
-		public readonly translateService: TranslateService,
-		private readonly dialogRef: NbDialogRef<RecordsHistoryComponent>
-	) {
+	constructor(translateService: TranslateService, private readonly dialogRef: NbDialogRef<RecordsHistoryComponent>) {
 		super(translateService);
 	}
 

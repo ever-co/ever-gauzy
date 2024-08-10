@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbCheckboxModule,
@@ -19,9 +17,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
-	GauzyButtonActionModule,
 	GauzyFiltersModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	TableComponentsModule,
 	TaskSelectModule,
@@ -36,8 +33,6 @@ import { DailyComponent } from './daily/daily.component';
 @NgModule({
 	declarations: [DailyComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		DailyRoutingModule,
 		NbButtonModule,
 		NbCardModule,
@@ -61,8 +56,7 @@ import { DailyComponent } from './daily/daily.component';
 		ViewTimeLogModule,
 		DialogsModule,
 		TableComponentsModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class DailyModule {}

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbCardModule,
@@ -24,7 +23,6 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 @NgModule({
 	imports: [
 		ContactViewRoutingModule,
-		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
 		TranslateModule.forChild(),

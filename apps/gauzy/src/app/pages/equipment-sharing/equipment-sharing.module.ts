@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -12,14 +10,12 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentSharingMutationModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
@@ -31,16 +27,13 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		EquipmentSharingRoutingModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentSharingMutationModule,
 		TableComponentsModule,
@@ -49,8 +42,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
-		PaginationV2Module,
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		NbTooltipModule
 	],
 	providers: [EquipmentSharingService, ApprovalPolicyService, EmployeesService],
