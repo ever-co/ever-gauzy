@@ -14,6 +14,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -36,6 +37,7 @@ import { EmploymentTypesComponent } from './employment-types.component';
 		NbIconModule,
 		TagsColorInputModule,
 		TableComponentsModule,
+		CardGridModule,
 		NbDialogModule,
 		NbActionsModule,
 		NbDialogModule.forChild(),

@@ -18,6 +18,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	ExpensesMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -51,6 +52,7 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		ExpensesMutationModule,
 		UserFormsModule,
 		TableComponentsModule,
+		CardGridModule,
 		TagsColorInputModule,
 		SmartDataViewLayoutModule
 	],

@@ -31,6 +31,7 @@ import {
 } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	CurrencyModule,
 	ImageAssetModule,
 	LanguageSelectorModule,
@@ -84,6 +85,7 @@ const NB_MODULES = [
 		VariantTableComponent
 	],
 	imports: [
+		CardGridModule,
 		CommonModule,
 		CurrencyModule,
 		FormsModule,

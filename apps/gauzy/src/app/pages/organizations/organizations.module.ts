@@ -18,6 +18,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	DirectivesModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
@@ -68,6 +69,7 @@ import {
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		DirectivesModule
 	],
 	declarations: [

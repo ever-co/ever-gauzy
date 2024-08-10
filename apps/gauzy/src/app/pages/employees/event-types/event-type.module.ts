@@ -14,6 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EventTypeService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -39,6 +40,7 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		NbSpinnerModule,
 		EventTypeMutationModule,
 		UserFormsModule,
+		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
 		SmartDataViewLayoutModule
