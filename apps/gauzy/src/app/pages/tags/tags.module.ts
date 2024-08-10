@@ -21,7 +21,7 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	SharedModule,
 	TagsMutationModule,
@@ -58,7 +58,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		UserFormsModule,
 		TagsMutationModule,
 		CardGridModule,
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })

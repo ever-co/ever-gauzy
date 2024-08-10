@@ -5,7 +5,7 @@ import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipM
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	ProductMutationModule,
 	TableComponentsModule
@@ -31,7 +31,7 @@ import { ProductTypesRoutingModule } from './product-types-routing.module';
 		SharedModule,
 		CardGridModule,
 		ProductMutationModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		TableComponentsModule
 	]
 })

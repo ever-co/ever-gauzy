@@ -15,7 +15,7 @@ import {
 import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	FileUploaderModule,
 	NoDataMessageModule,
@@ -49,7 +49,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		NgSelectModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NoDataMessageModule
 	],
 	declarations: [...COMPONENTS],

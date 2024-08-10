@@ -14,7 +14,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	NoDataMessageModule,
 	SharedModule,
@@ -45,7 +45,7 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbTooltipModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NoDataMessageModule,
 		NbSpinnerModule
 	],

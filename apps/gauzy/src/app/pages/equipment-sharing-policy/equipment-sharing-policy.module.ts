@@ -17,7 +17,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentSharingPolicyMutationModule,
 	SharedModule,
@@ -47,7 +47,7 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		EquipmentSharingPolicyRoutingModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		TableComponentsModule
 	],
 	declarations: [EquipmentSharingPolicyComponent]

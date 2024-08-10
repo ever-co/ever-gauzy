@@ -16,7 +16,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { TranslateModule } from '@ngx-translate/core';
-import { AngularSmartTableModule, CardGridModule, SharedModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, CardGridModule, SharedModule } from '@gauzy/ui-core/shared';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PipelineFormComponent } from './pipeline-form/pipeline-form.component';
 import { StageFormComponent } from './stage-form/stage-form.component';
@@ -70,7 +70,7 @@ import { DealResolver } from './routes/deal.resolver';
 		CardGridModule,
 		SharedModule,
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbTabsetModule
 	],
 	providers: [PipelinesService, DealsService, PipelineResolver, DealResolver]

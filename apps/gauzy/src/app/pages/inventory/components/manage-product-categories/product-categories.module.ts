@@ -12,7 +12,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProductCategoryService } from '@gauzy/ui-core/core';
-import { AngularSmartTableModule, CardGridModule, ProductMutationModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, CardGridModule, ProductMutationModule } from '@gauzy/ui-core/shared';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { ProductCategoriesComponent } from './product-categories.component';
 import { ProductCategoriesRoutingModule } from './product-categories-routing.module';
@@ -35,7 +35,7 @@ import { ProductCategoriesRoutingModule } from './product-categories-routing.mod
 		ProductCategoriesRoutingModule,
 		ProductMutationModule,
 		CardGridModule,
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	providers: [ProductCategoryService]
 })

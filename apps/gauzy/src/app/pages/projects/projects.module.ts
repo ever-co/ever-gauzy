@@ -13,7 +13,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EntityWithMembersModule,
 	ProjectMutationModule
@@ -42,7 +42,7 @@ import { ProjectListComponent } from './components/project-list/list.component';
 		TableComponentsModule,
 		EntityWithMembersModule,
 		SharedModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		CardGridModule,
 		ProjectMutationModule,
 		NgxPermissionsModule.forChild()

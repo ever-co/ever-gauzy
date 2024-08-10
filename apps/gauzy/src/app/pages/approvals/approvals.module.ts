@@ -17,7 +17,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	RequestApprovalMutationModule,
 	SharedModule
@@ -48,7 +48,7 @@ import { RequestApprovalActionComponent } from './table-components/request-appro
 		RequestApprovalMutationModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ApprovalsComponent, RequestApprovalActionComponent],
 	providers: [RequestApprovalService]

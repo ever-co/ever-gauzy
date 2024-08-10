@@ -21,7 +21,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsService, TimeOffService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	SharedModule,
 	TimeOffMutationModule,
@@ -58,7 +58,7 @@ import { PaidIcon } from './table-components/paid-icon';
 		NbSpinnerModule,
 		TimeOffMutationModule,
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbToggleModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],

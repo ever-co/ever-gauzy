@@ -31,7 +31,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
@@ -142,7 +142,7 @@ const COMPONENTS = [
 		EmployeeRatesModule,
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		CardGridModule,
 		TimeZoneSelectorModule
 	],

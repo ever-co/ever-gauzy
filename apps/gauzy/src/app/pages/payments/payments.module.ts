@@ -9,7 +9,7 @@ import {
 	OrganizationContactService,
 	PaymentService
 } from '@gauzy/ui-core/core';
-import { AngularSmartTableModule, CardGridModule, SharedModule, TableFiltersModule } from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, CardGridModule, SharedModule, TableFiltersModule } from '@gauzy/ui-core/shared';
 import { PaymentsComponent } from './payments.component';
 import { PaymentsRoutingModule } from './payments-routing.module';
 
@@ -26,7 +26,7 @@ import { PaymentsRoutingModule } from './payments-routing.module';
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		TableFiltersModule
 	],
 	providers: [PaymentService, OrganizationContactService, InvoicesService, InvoiceEstimateHistoryService],

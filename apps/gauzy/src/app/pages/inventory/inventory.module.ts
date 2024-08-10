@@ -30,7 +30,7 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	CurrencyModule,
 	ImageAssetModule,
@@ -104,7 +104,7 @@ const NB_MODULES = [
 		TranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		ProductTypeSelectorModule,
 		ProductCategorySelectorModule,
 		NgxPermissionsModule.forChild()

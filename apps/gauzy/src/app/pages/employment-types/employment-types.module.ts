@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	NoDataMessageModule,
 	SharedModule,
@@ -43,7 +43,7 @@ import { EmploymentTypesComponent } from './employment-types.component';
 		NbActionsModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NbTabsetModule,
 		NoDataMessageModule,
 		NbTooltipModule,

@@ -13,7 +13,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import { EventTypeService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	SharedModule,
 	TableComponentsModule,
@@ -43,7 +43,7 @@ import { EventTypeMutationModule } from './event-type-mutation/event-type-mutati
 		CardGridModule,
 		NbDialogModule.forChild(),
 		TranslateModule.forChild(),
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EventTypeComponent],
 	providers: [EventTypeService]

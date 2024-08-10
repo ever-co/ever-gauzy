@@ -11,7 +11,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentMutationModule,
 	SharedModule,
@@ -39,7 +39,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		CardGridModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
-		AngularSmartTableModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })

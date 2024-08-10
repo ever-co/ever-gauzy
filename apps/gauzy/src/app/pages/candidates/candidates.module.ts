@@ -37,7 +37,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
 	CandidateInterviewMutationModule,
@@ -193,7 +193,7 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		WorkInProgressModule
 	],
 	declarations: [...COMPONENTS],

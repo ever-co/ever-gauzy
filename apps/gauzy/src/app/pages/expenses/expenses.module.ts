@@ -17,7 +17,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import { ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService } from '@gauzy/ui-core/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	ExpensesMutationModule,
 	NoDataMessageModule,
@@ -55,7 +55,7 @@ import { ExpenseCategoryMutationComponent } from './expense-categories/expense-c
 		TableComponentsModule,
 		CardGridModule,
 		TagsColorInputModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		NoDataMessageModule
 	],
 	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],

@@ -17,7 +17,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-	AngularSmartTableModule,
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	LeafletMapModule,
 	LocationFormModule,
@@ -72,7 +72,7 @@ const NB_MODULES = [
 		LocationFormModule,
 		LeafletMapModule,
 		TagsColorInputModule,
-		AngularSmartTableModule,
+		SmartDataViewLayoutModule,
 		CardGridModule,
 		InventoryTableComponentsModule
 	],
