@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -28,7 +27,6 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		NbBadgeModule,
 		NbButtonModule,

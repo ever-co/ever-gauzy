@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -63,9 +61,6 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		SprintTaskComponent
 	],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbTooltipModule,
 		NbBadgeModule,
 		NbCardModule,

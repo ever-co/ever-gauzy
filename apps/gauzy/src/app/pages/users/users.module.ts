@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -57,7 +55,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
@@ -68,8 +65,6 @@ const COMPONENTS = [
 		OrganizationsModule,
 		NbActionsModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -48,9 +46,6 @@ const NB_MODULES = [
 @NgModule({
 	declarations: [MerchantComponent, MerchantFormComponent, MerchantTableComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
 		MerchantRoutingModule,

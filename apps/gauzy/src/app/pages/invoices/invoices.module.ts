@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CurrencyPipe } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -91,7 +90,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,
@@ -101,9 +99,7 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbIconModule,
 		NbButtonModule,
 		CardGridModule,
-		FormsModule,
 		NbBadgeModule,
-		ReactiveFormsModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),
 		NbInputModule,

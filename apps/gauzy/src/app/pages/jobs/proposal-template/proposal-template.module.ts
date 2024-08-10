@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbIconModule,
 	NbSpinnerModule,
@@ -30,9 +28,6 @@ import { AddEditProposalTemplateComponent } from './add-edit-proposal-template/a
 @NgModule({
 	declarations: [ProposalTemplateComponent, AddEditProposalTemplateComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		CKEditorModule,
 		MomentModule,
 		NbIconModule,
