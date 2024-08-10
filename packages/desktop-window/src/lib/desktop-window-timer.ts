@@ -73,6 +73,9 @@ const windowSetting = (preloadPath?) => {
 		mainWindowSettings.titleBarStyle = 'hidden';
 		mainWindowSettings.titleBarOverlay = true;
 		mainWindowSettings.webPreferences.preload = preloadPath;
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
 	}
 	return mainWindowSettings;
 };

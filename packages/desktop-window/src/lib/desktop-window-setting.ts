@@ -65,6 +65,9 @@ const windowSetting = (preloadPath?) => {
 		mainWindowSettings.webPreferences.preload = preloadPath;
 		mainWindowSettings.titleBarStyle = 'hidden';
 		mainWindowSettings.titleBarOverlay = true;
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
 	}
 	const filesPath = store.get('filePath');
 	mainWindowSettings.icon = filesPath.iconPath;
