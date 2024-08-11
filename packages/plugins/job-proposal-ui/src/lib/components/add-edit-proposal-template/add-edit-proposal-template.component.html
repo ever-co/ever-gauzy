@@ -1,6 +1,6 @@
 <nb-card class="main">
 	<nb-card-header class="d-flex flex-column">
-    <span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
+		<span class="cancel"><i class="fas fa-times" (click)="close()"></i></span>
 		<h5 class="title">
 			{{
 				(proposalTemplate
@@ -12,10 +12,7 @@
 	</nb-card-header>
 	<nb-card-body class="body">
 		<form [formGroup]="form">
-			<ng-template
-				[ngIf]="!selectedEmployee && !proposalTemplate"
-				[ngIfElse]="employeeInfoEl"
-			>
+			<ng-template [ngIf]="!selectedEmployee && !proposalTemplate" [ngIfElse]="employeeInfoEl">
 				<div class="form-group">
 					<ga-employee-multi-select
 						[label]="'PROPOSAL_TEMPLATE.SELECT_EMPLOYEE' | translate"
@@ -49,12 +46,7 @@
 		<button (click)="close()" status="basic" outline class="mr-3" nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button
-			(click)="onSave()"
-			[disabled]="form.invalid"
-			status="success"
-			nbButton
-		>
+		<button (click)="onSave()" [disabled]="form.invalid" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
@@ -65,10 +57,7 @@
 			{{ 'PROPOSAL_TEMPLATE.EMPLOYEE' | translate }}
 		</label>
 		<ng-container *ngIf="!proposalTemplate">
-			<ngx-avatar
-				[name]="selectedEmployee?.fullName"
-				[src]="selectedEmployee?.imageUrl"
-			></ngx-avatar>
+			<ngx-avatar [name]="selectedEmployee?.fullName" [src]="selectedEmployee?.imageUrl"></ngx-avatar>
 		</ng-container>
 		<ng-container *ngIf="proposalTemplate">
 			<ngx-avatar
