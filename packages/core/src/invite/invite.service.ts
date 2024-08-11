@@ -727,7 +727,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return { items, total };
 		} catch (error) {
 			// Handle the error here, e.g., logging, returning an error response, etc.
-			console.error('An error occurred in get current user tnvites:', error);
+			console.error('An error occurred in get current user invites:', error);
 			throw new BadRequestException(error); // Re-throwing the error for higher-level handling if needed
 		}
 	}

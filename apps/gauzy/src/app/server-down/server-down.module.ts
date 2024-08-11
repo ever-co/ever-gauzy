@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Routes, RouterModule } from '@angular/router';
 import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ServerDownPage } from './server-down.page';
 
 const routes: Routes = [
@@ -20,7 +20,7 @@ const routes: Routes = [
 		NbSidebarModule,
 		NbLayoutModule,
 		RouterModule.forChild(routes),
-		I18nTranslateModule.forChild()
+		TranslateModule.forChild()
 	],
 	declarations: [ServerDownPage]
 })

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
 	NbActionsModule,
@@ -21,7 +19,6 @@ import {
 } from '@nebular/theme';
 import { CKEditorModule } from 'ckeditor4-angular';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	CandidatesService,
@@ -30,8 +27,9 @@ import {
 	OrganizationsService,
 	SkillsService
 } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EmployeeEndWorkModule,
@@ -39,12 +37,10 @@ import {
 	EmployeeMutationModule,
 	EmployeeRatesModule,
 	EmployeeStartWorkModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
 	LanguageSelectorModule,
-	PaginationV2Module,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseMutationModule,
@@ -103,10 +99,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		CKEditorModule,
 		NbAccordionModule,
 		NbActionsModule,
@@ -126,7 +118,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EmployeesRoutingModule,
 		SharedModule,
 		TableComponentsModule,
@@ -145,8 +137,7 @@ const COMPONENTS = [
 		EmployeeRatesModule,
 		EmployeeStartWorkModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		CardGridModule,
 		TimeZoneSelectorModule
 	],

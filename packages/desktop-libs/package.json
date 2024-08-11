@@ -52,10 +52,12 @@
 		"sound-play": "1.1.0",
 		"sqlite3": "^5.1.7",
 		"underscore": "^1.13.3",
-		"undici": "^6.10.2"
+		"undici": "^6.10.2",
+		"unzipper": "^0.12.1"
 	},
 	"devDependencies": {
 		"@types/node": "^20.14.9",
+		"@types/unzipper": "^0.10.9",
 		"electron": "28.1.0"
 	}
 }

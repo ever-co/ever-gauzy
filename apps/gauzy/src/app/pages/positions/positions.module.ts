@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbActionsModule,
 	NbButtonModule,
@@ -10,12 +8,10 @@ import {
 	NbInputModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -26,9 +22,6 @@ import { PositionsComponent } from './positions.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		Angular2SmartTableModule,
 		NbActionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -36,14 +29,13 @@ import { PositionsComponent } from './positions.component';
 		NbIconModule,
 		NbInputModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		SharedModule,
 		TableComponentsModule,
 		CardGridModule,
 		PositionsRoutingModule,
 		TagsColorInputModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [PositionsComponent],
 	providers: [OrganizationPositionsService]

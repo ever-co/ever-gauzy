@@ -1,22 +1,23 @@
 import {
-	Component,
-	OnInit,
-	ChangeDetectorRef,
 	ChangeDetectionStrategy,
-	ViewChild,
+	ChangeDetectorRef,
+	Component,
 	ElementRef,
-	Inject
+	Inject,
+	OnInit,
+	ViewChild
 } from '@angular/core';
-import { SetupService } from './setup.service';
-import { NbDialogService } from '@nebular/theme';
-import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
-import { ElectronService, LoggerService } from '../electron/services';
-import { ErrorHandlerService, Store } from '../services';
-import { LanguageSelectorComponent } from '../language/language-selector.component';
-import { TranslateService } from '@ngx-translate/core';
-import { GAUZY_ENV } from '../constants';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { IProxyConfig } from '@gauzy/contracts';
+import { NbDialogService } from '@nebular/theme';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertComponent } from '../../lib/dialogs/alert/alert.component';
+import { GAUZY_ENV } from '../constants';
+import { ElectronService, LoggerService } from '../electron/services';
+import { LanguageElectronService } from '../language/language-electron.service';
+import { LanguageSelectorComponent } from '../language/language-selector.component';
+import { ErrorHandlerService, Store } from '../services';
+import { SetupService } from './setup.service';
 
 @Component({
 	selector: 'ngx-setup',
@@ -42,7 +43,8 @@ export class SetupComponent implements OnInit {
 		private _store: Store,
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
-		private readonly _domSanitizer: DomSanitizer
+		private readonly _domSanitizer: DomSanitizer,
+		private languageElectronService: LanguageElectronService
 	) {
 		electronService.ipcRenderer.on('setup-data', (event, arg) => {
 			this.desktopFeatures.gauzyPlatform = arg.gauzyWindow;
@@ -408,13 +410,26 @@ export class SetupComponent implements OnInit {
 		});
 	}
 
-	checkServerConn() {
-		const serverHostOptions = this.getServerConfig();
-		console.log('server host', serverHostOptions);
-		this.setupService
-			.pingServer({
-				host: serverHostOptions.serverUrl
+	async serverProtocolCheck(host, retry = false) {
+		const url = new URL(host);
+		try {
+			const resp = await this.setupService.pingServer({
+				host: url.origin
 			})
+			this.serverConfig.custom.apiHost = url.origin;
+			return resp;
+		} catch (error) {
+			if (!retry) {
+				url.protocol = url.protocol === 'http:' ?  'https' : 'http';
+				return this.serverProtocolCheck(url.origin, true);
+			}
+			throw error;
+		}
+	}
+
+	async checkServerConn() {
+		const serverHostOptions = this.getServerConfig();
+		this.serverProtocolCheck(serverHostOptions.serverUrl)
 			.then(async (res) => {
 				if (this.runApp) {
 					await this.saveAndRun();
@@ -469,6 +484,7 @@ export class SetupComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		this.languageElectronService.initialize<void>();
 		this.welcomeText();
 		this.electronService.ipcRenderer.on('database_status', (event, arg) => {
 			// this.open(true);

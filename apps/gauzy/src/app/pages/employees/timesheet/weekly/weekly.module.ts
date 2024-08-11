@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbDatepickerModule,
 	NbIconModule,
@@ -13,7 +11,7 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
@@ -28,13 +26,11 @@ import { WeeklyComponent } from './weekly/weekly.component';
 @NgModule({
 	declarations: [WeeklyComponent],
 	imports: [
-		CommonModule,
 		WeeklyRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		NbDatepickerModule,
 		NbIconModule,
-		FormsModule,
 		NbButtonModule,
 		SharedModule,
 		GauzyFiltersModule,

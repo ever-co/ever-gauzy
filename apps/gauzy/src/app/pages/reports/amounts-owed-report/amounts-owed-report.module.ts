@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { AmountsOwedGridModule, GauzyFiltersModule, LineChartModule, SharedModule } from '@gauzy/ui-core/shared';
 import { AmountsOwedReportRoutingModule } from './amounts-owed-report-routing.module';
 import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-report.component';
@@ -10,15 +8,13 @@ import { AmountsOwedReportComponent } from './amounts-owed-report/amounts-owed-r
 @NgModule({
 	declarations: [AmountsOwedReportComponent],
 	imports: [
-		CommonModule,
 		AmountsOwedReportRoutingModule,
 		SharedModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbIconModule,
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		AmountsOwedGridModule,
 		LineChartModule,
 		GauzyFiltersModule

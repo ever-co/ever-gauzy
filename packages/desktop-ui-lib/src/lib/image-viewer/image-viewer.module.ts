@@ -1,22 +1,22 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ImageViewerComponent } from './image-viewer.component';
+import { NgModule } from '@angular/core';
+import { NbEvaIconsModule } from '@nebular/eva-icons';
 import {
-	NbLayoutModule,
+	NbButtonModule,
 	NbCardModule,
-	NbIconModule,
 	NbDialogModule,
 	NbDialogService,
-	NbButtonModule,
+	NbIconModule,
+	NbLayoutModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { dateTimePipe } from '../time-tracker/pipes/date-time.pipe';
-import { ImageViewerService } from './image-viewer.service';
 import { ImageCacheService, StorageService, Store } from '../services';
-import { NbEvaIconsModule } from '@nebular/eva-icons';
+import { PipeModule } from '../time-tracker/pipes/pipe.module';
+import { ImageViewerComponent } from './image-viewer.component';
+import { ImageViewerService } from './image-viewer.service';
 
 @NgModule({
-	declarations: [ImageViewerComponent, dateTimePipe],
+	declarations: [ImageViewerComponent],
 	imports: [
 		CommonModule,
 		NbLayoutModule,
@@ -25,15 +25,10 @@ import { NbEvaIconsModule } from '@nebular/eva-icons';
 		NbDialogModule,
 		NbButtonModule,
 		NbSpinnerModule,
-		NbEvaIconsModule
+		NbEvaIconsModule,
+		PipeModule
 	],
 	exports: [ImageViewerComponent],
-	providers: [
-		NbDialogService,
-		ImageViewerService,
-		ImageCacheService,
-		StorageService,
-		Store
-	],
+	providers: [NbDialogService, ImageViewerService, ImageCacheService, StorageService, Store]
 })
 export class ImageViewerModule {}

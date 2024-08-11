@@ -1,0 +1,11 @@
+<nb-card>
+	<nb-card-header>{{ 'TIMESHEET.APPS_URLS' | translate }}</nb-card-header>
+	<ng-template [ngIf]="(activities$ | async).length > 0" [ngIfElse]="noActivities">
+		<nb-card-body class="custom-card-body-inner-list">
+			<ngx-statistic [items]="(activities$ | async)"></ngx-statistic>
+		</nb-card-body>
+	</ng-template>
+	<ng-template #noActivities>
+		<ngx-no-data-message [message]="'TIMESHEET.NO_APP_URL_ACTIVITY_DAY' | translate"></ngx-no-data-message>
+	</ng-template>
+</nb-card>

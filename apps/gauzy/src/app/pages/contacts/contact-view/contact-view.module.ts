@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbAccordionModule,
 	NbCardModule,
@@ -17,17 +16,16 @@ import {
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 
 @NgModule({
 	imports: [
 		ContactViewRoutingModule,
-		CommonModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbLayoutModule,
 		NbSidebarModule,
 		NbTabsetModule,

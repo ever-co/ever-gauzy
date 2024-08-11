@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbCardModule, NbIconModule, NbRouteTabsetModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { EditOrganizationRoutingModule } from './edit-organization-routing.module';
 import { EditOrganizationComponent } from './edit-organization.component';
 import { EditOrganizationSettingsModule } from './edit-organization-settings/edit-organization-settings.module';
@@ -15,7 +15,7 @@ import { EditOrganizationSettingsModule } from './edit-organization-settings/edi
 		NbRouteTabsetModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		EditOrganizationSettingsModule
 	],
 	declarations: [EditOrganizationComponent],

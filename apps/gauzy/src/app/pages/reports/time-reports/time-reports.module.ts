@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import {
 	DailyGridModule,
@@ -9,25 +7,23 @@ import {
 	LineChartModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
 
 @NgModule({
 	declarations: [TimeReportsComponent],
 	imports: [
-		CommonModule,
+		NbCardModule,
+		NbIconModule,
+		NbSelectModule,
+		NbSpinnerModule,
+		TranslateModule.forChild(),
 		SharedModule,
 		DailyGridModule,
 		DailyStatisticsModule,
 		TimeReportsRoutingModule,
 		LineChartModule,
-		I18nTranslateModule.forChild(),
-		NbIconModule,
-		NbSpinnerModule,
-		NbCardModule,
-		NbSelectModule,
-		FormsModule,
 		GauzyFiltersModule
 	]
 })

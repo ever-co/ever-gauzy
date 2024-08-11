@@ -15,15 +15,13 @@ import {
 	NbActionsModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationEmploymentTypesService } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	DirectivesModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	OrganizationsMutationModule,
-	PaginationV2Module,
 	RecurringExpenseBlockModule,
 	RecurringExpenseDeleteConfirmationModule,
 	RecurringExpenseHistoryModule,
@@ -32,7 +30,7 @@ import {
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
 import {
@@ -52,7 +50,6 @@ import {
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
-		Angular2SmartTableModule,
 		NbIconModule,
 		NbDialogModule.forChild(),
 		OrganizationsMutationModule,
@@ -65,15 +62,14 @@ import {
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,
 		RecurringExpenseBlockModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		CardGridModule,
-		PaginationV2Module,
 		DirectivesModule
 	],
 	declarations: [

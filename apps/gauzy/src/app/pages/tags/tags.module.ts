@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -17,14 +15,12 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { ColorPickerModule } from 'ngx-color-picker';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TagsMutationModule,
 	UserFormsModule
@@ -35,9 +31,6 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -52,8 +45,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgSelectModule,
-		Angular2SmartTableModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		ColorPickerModule,
 		TagsRoutingModule,
@@ -61,8 +53,7 @@ import { TagsColorComponent } from './tags-color/tags-color.component';
 		UserFormsModule,
 		TagsMutationModule,
 		CardGridModule,
-		GauzyButtonActionModule,
-		PaginationV2Module
+		SmartDataViewLayoutModule
 	],
 	declarations: [TagsComponent, TagsColorComponent]
 })

@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { InventoryRoutingModule } from './inventory-routing.module';
 import {
 	NbCardModule,
@@ -15,9 +14,7 @@ import {
 	NbTooltipModule,
 	NbStepperModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { ProductFormComponent } from './components/edit-inventory-item/product-form.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
@@ -31,19 +28,18 @@ import {
 	TranslatableService
 } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	CurrencyModule,
-	GauzyButtonActionModule,
 	ImageAssetModule,
 	LanguageSelectorModule,
-	PaginationV2Module,
 	ProductCategorySelectorModule,
 	ProductTypeSelectorModule,
 	SelectAssetModule,
 	SharedModule,
 	TagsColorInputModule
 } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { TableInventoryComponent } from './components/table-inventory-items/table-inventory.component';
 import { InventoryComponent } from './components/inventory.component';
 import { VariantTableComponent } from './components/edit-inventory-item/variant-table/variant-table.component';
@@ -88,27 +84,22 @@ const NB_MODULES = [
 	],
 	imports: [
 		CardGridModule,
-		CommonModule,
 		CurrencyModule,
-		FormsModule,
 		ImageAssetModule,
 		InventoryRoutingModule,
 		MerchantModule,
 		...NB_MODULES,
 		NgSelectModule,
-		Angular2SmartTableModule,
-		PaginationV2Module,
 		ProductTypesModule,
 		ProductCategoriesModule,
-		ReactiveFormsModule,
 		SharedModule,
 		SelectAssetModule,
 		InventoryTableComponentsModule,
 		TagsColorInputModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		WarehousesModule,
 		LanguageSelectorModule,
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		ProductTypeSelectorModule,
 		ProductCategorySelectorModule,
 		NgxPermissionsModule.forChild()

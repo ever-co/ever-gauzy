@@ -1,32 +1,22 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { PaymentsComponent } from './payments.component';
 import { NbCardModule, NbIconModule, NbButtonModule, NbDialogModule, NbSpinnerModule } from '@nebular/theme';
-import { PaymentsRoutingModule } from './payments-routing.module';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import {
-	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
-	SharedModule,
-	TableFiltersModule
-} from '@gauzy/ui-core/shared';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	InvoiceEstimateHistoryService,
 	InvoicesService,
 	OrganizationContactService,
 	PaymentService
 } from '@gauzy/ui-core/core';
+import { SmartDataViewLayoutModule, CardGridModule, SharedModule, TableFiltersModule } from '@gauzy/ui-core/shared';
+import { PaymentsComponent } from './payments.component';
+import { PaymentsRoutingModule } from './payments-routing.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbCardModule,
 		PaymentsRoutingModule,
-		Angular2SmartTableModule,
 		CardGridModule,
 		SharedModule,
 		NbIconModule,
@@ -34,9 +24,8 @@ import {
 		NbButtonModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		PaginationV2Module,
-		TableFiltersModule,
-		GauzyButtonActionModule
+		SmartDataViewLayoutModule,
+		TableFiltersModule
 	],
 	providers: [PaymentService, OrganizationContactService, InvoicesService, InvoiceEstimateHistoryService],
 	declarations: [PaymentsComponent]

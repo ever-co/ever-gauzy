@@ -9,11 +9,10 @@ import {
 	NbTooltipModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
+	SmartDataViewLayoutModule,
 	SharedModule,
 	SidebarModule,
 	UserFormsModule
@@ -40,10 +39,9 @@ import { AddArticleModule } from './add-article/add-article.module';
 		NbSpinnerModule,
 		EmployeeMultiSelectModule,
 		SidebarModule,
-		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
-		SharedModule,
-		NoDataMessageModule
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule,
+		SharedModule
 	],
 	declarations: [HelpCenterComponent]
 })

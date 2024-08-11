@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -9,13 +7,11 @@ import {
 	NbDialogModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentMutationModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	UserFormsModule
@@ -26,24 +22,20 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		EquipmentRoutingModule,
 		SharedModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NbSpinnerModule,
-		PaginationV2Module,
-		GauzyButtonActionModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [EquipmentComponent, AutoApproveComponent]
 })

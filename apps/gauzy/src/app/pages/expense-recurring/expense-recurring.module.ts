@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -10,24 +8,17 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import {
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	RecurringExpenseBlockModule,
-	SharedModule
-} from '@gauzy/ui-core/shared';
+import { RecurringExpenseBlockModule, SmartDataViewLayoutModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ExpenseRecurringRoutingModule } from './expense-recurring-routing.module';
 import { ExpenseRecurringComponent } from './expense-recurring.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		ExpenseRecurringRoutingModule,
 		SharedModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
@@ -35,10 +26,9 @@ import { ExpenseRecurringComponent } from './expense-recurring.component';
 		NbTooltipModule,
 		NbDialogModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		RecurringExpenseBlockModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	],
 	declarations: [ExpenseRecurringComponent]
 })

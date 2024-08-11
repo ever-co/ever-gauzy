@@ -1,13 +1,41 @@
 {
-	"extends": "../../tsconfig.json",
 	"compilerOptions": {
-		"declaration": true,
-		"sourceMap": true,
-		"baseUrl": "./src",
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["node", "jest", "google.maps"]
+		"target": "es2022",
+		"useDefineForClassFields": false,
+		"forceConsistentCasingInFileNames": true,
+		"strict": false,
+		"noImplicitOverride": false,
+		"noPropertyAccessFromIndexSignature": false,
+		"noImplicitReturns": false,
+		"noFallthroughCasesInSwitch": true,
+		"baseUrl": ".",
+		"paths": {
+			"@gauzy/ui-core": ["./src/index.ts"],
+			"@gauzy/ui-core/common": ["./common/src/index.ts"],
+			"@gauzy/ui-core/core": ["./core/src/index.ts"],
+			"@gauzy/ui-core/i18n": ["./i18n/src/index.ts"],
+			"@gauzy/ui-core/shared": ["./shared/src/index.ts"],
+			"@gauzy/ui-core/theme": ["./theme/src/index.ts"],
+			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
+			"ngx-draggable-dom": ["./node_modules/ngx-draggable-dom"],
+			"ngx-permissions": ["./node_modules/ngx-permissions"],
+			"ngx-infinite-scroll": ["./node_modules/ngx-infinite-scroll"]
+		}
 	},
-	"include": ["./src/**/*.ts"],
-	"exclude": ["node_modules", "dist", "**/*.spec.ts"]
+	"files": [],
+	"references": [
+		{
+			"path": "./tsconfig.lib.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	],
+	"extends": "../../tsconfig.base.json",
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"strictInjectionParameters": false,
+		"strictInputAccessModifiers": false,
+		"strictTemplates": false
+	}
 }

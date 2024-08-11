@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -14,15 +13,13 @@ import {
 	NbTooltipModule,
 	NbRadioModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalPolicyService } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	ApprovalPolicyMutationModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule
 } from '@gauzy/ui-core/shared';
 import { ApprovalPolicyComponent } from './approval-policy.component';
@@ -30,8 +27,6 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 
 @NgModule({
 	imports: [
-		SharedModule,
-		CommonModule,
 		NbBadgeModule,
 		NbButtonModule,
 		NbCardModule,
@@ -42,16 +37,15 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
+		SharedModule,
 		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module
+		SmartDataViewLayoutModule
 	],
 	declarations: [ApprovalPolicyComponent],
 	providers: [ApprovalPolicyService]

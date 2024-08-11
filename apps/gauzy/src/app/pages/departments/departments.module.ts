@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -13,16 +11,14 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EmployeeMultiSelectModule,
 	EntityWithMembersModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -35,13 +31,10 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		DepartmentsRoutingModule,
 		NbCardModule,
-		FormsModule,
 		NbDialogModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
@@ -51,15 +44,13 @@ const COMPONENTS = [DepartmentsComponent, DepartmentsMutationComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		CardGridModule,
-		Angular2SmartTableModule,
 		EntityWithMembersModule,
 		TagsColorInputModule,
 		EmployeeMultiSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		PaginationV2Module,
-		GauzyButtonActionModule,
+		SmartDataViewLayoutModule,
 		TableComponentsModule
 	],
 	declarations: [...COMPONENTS],

@@ -1,0 +1,89 @@
+@import 'themes';
+
+
+#drag-handle {
+	-webkit-app-region: drag;
+}
+
+nb-card-body,
+nb-card-footer {
+	padding: 1rem;
+	background-color: var(--gauzy-card-2);
+}
+
+.no-draggable {
+	-webkit-app-region: no-drag;
+}
+
+.layout-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 1.5rem 0.5rem 1rem 1rem;
+	gap: 1rem;
+	background-color: var(--gauzy-card-2);
+	height: 100vh;
+}
+
+::ng-deep nb-layout .layout .layout-container .content nb-layout-footer nav {
+	padding: 0px;
+}
+
+::ng-deep nb-route-tabset {
+	nb-tab.content-active {
+		background-color: var(--gauzy-card-2);
+		border-radius: 0 var(--border-radius) var(--border-radius);
+		max-height: calc(100vh - 11.75rem);
+		padding: 1rem 1rem 0 1rem;
+
+		nb-card {
+			margin-bottom: 1rem;
+		}
+	}
+
+	.nb-tab-card,
+	.nb-tab-body {
+		background-color: unset;
+		padding: 0;
+		margin: 0;
+	}
+}
+
+.loader {
+	color: var(--gauzy-text-color-2);
+	font-size: 14px;
+	animation: rotate 1s linear 0s infinite;
+}
+
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+:host {
+	#scrollable-area {
+		overflow-y: scroll;
+		height: calc(100vh - 19.625rem);
+		border-radius: var(--border-radius);
+	}
+
+	#fixed-area {
+		width: calc(100% - 0.5rem);
+	}
+
+	#fixed-area,
+	#scrollable-area {
+		flex-direction: column;
+		width: 100%;
+		display: flex;
+		@include nb-ltr(padding-right, 0.5rem);
+		@include nb-rtl(padding-left, 0.5rem);
+		gap: 1rem;
+	}
+}

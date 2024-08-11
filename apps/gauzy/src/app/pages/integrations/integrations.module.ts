@@ -10,13 +10,8 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
-import {
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	SharedModule,
-	TableComponentsModule
-} from '@gauzy/ui-core/shared';
+import { TranslateModule } from '@ngx-translate/core';
+import { SmartDataViewLayoutModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { IntegrationLayoutComponent } from './layout/layout.component';
@@ -35,10 +30,9 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		SharedModule,
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
-		I18nTranslateModule.forChild(),
-		GauzyButtonActionModule,
-		TableComponentsModule,
-		NoDataMessageModule
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule,
+		TableComponentsModule
 	],
 	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent]
 })

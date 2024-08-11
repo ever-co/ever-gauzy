@@ -1,7 +1,5 @@
 // tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -15,16 +13,14 @@ import {
 	NbCheckboxModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { GauzyButtonActionModule, NoDataMessageModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { SmartDataViewLayoutModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
+import { TranslateModule } from '@ngx-translate/core';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 
 @NgModule({
 	declarations: [ApprovalsComponent],
 	imports: [
-		CommonModule,
-		FormsModule,
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,
@@ -35,13 +31,12 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 		NbPopoverModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
+		TranslateModule.forChild(),
 		MomentModule,
 		SharedModule,
 		ApprovalsRoutingModule,
 		StatusBadgeModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class ApprovalsModule {}

@@ -16,18 +16,18 @@
       @include nb-rtl(margin-left, 0.625rem);
     }
   }
-  nb-tabset{
+  nb-tabset {
     height: calc(100% - 1.5rem);
   }
   nb-card,
   nb-tab.content-active {
     background-color: var(--gauzy-card-2);
   }
-  nb-card-body{
+  nb-card-body {
     overflow: unset;
     background-color: unset;
   }
-  nb-card{
+  nb-card {
     height: 100%;
   }
 }
@@ -44,8 +44,7 @@ nb-accordion-item-header ::ng-deep nb-icon {
   height: 1.75rem;
 }
 
-.grid{
+.grid {
   overflow: auto;
   height: 100%;
 }
-

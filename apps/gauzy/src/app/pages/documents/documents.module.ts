@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbButtonModule,
 	NbCardModule,
@@ -12,15 +10,12 @@ import {
 	NbActionsModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { I18nTranslateModule } from '@gauzy/ui-core/i18n';
+import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	PaginationModule,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -32,11 +27,8 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 
 @NgModule({
 	imports: [
-		CommonModule,
 		DocumentsRoutingModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbSelectModule,
@@ -45,16 +37,13 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		SharedModule,
 		CardGridModule,
 		TableComponentsModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		NbTooltipModule,
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		I18nTranslateModule.forChild(),
-		PaginationModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		TranslateModule.forChild(),
+		SmartDataViewLayoutModule
 	],
 	declarations: [...COMPONENTS],
 	providers: []

@@ -23,7 +23,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
 import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-core/common';
-import { I18nTranslateService } from '@gauzy/ui-core/i18n';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
@@ -42,13 +42,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 		private readonly _store: Store,
 		private readonly _languagesService: LanguagesService,
 		private readonly _translateService: TranslateService,
-		private readonly _i18nTranslateService: I18nTranslateService,
+		private readonly _i18nService: I18nService,
 		private readonly _router: Router,
 		private readonly _activatedRoute: ActivatedRoute,
 		private readonly _selectorBuilderService: SelectorBuilderService,
 		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		this.getActivateRouterDataEvent();
+		this.getPreferredLanguage();
 	}
 
 	/**
@@ -71,23 +72,23 @@ export class AppComponent implements OnInit, AfterViewInit {
 		// Observable that emits when system languages change.
 		const systemLanguages$ = this._store.systemLanguages$.pipe(
 			distinctUntilChange(),
-			untilDestroyed(this),
-			take(1)
+			take(1),
+			untilDestroyed(this)
 		);
 		// Subscribe to changes in system languages
 		systemLanguages$.subscribe((languages: ILanguage[]) => {
 			// Returns the language code name from the browser, e.g., "en", "bg", "he", "ru"
-			const browserLang = this._i18nTranslateService.getBrowserLang();
+			const browserLang = this._i18nService.getBrowserLang();
 
 			// Gets default available enum languages, e.g., "en", "bg", "he", "ru"
-			const availableLanguages: string[] = this._i18nTranslateService.availableLanguages;
+			const availableLanguages: string[] = this._i18nService.availableLanguages;
 
 			// Gets system languages
 			let systemLanguages: string[] = pluck(languages, 'code');
 			systemLanguages = union(systemLanguages, availableLanguages);
 
 			// Sets the default language to use as a fallback, e.g., "en"
-			this._i18nTranslateService.setDefaultLang(LanguagesEnum.ENGLISH);
+			this._i18nService.setDefaultFallbackLang(LanguagesEnum.ENGLISH);
 
 			// Get preferredLanguage if it exists
 			const preferredLanguage = this._store?.user?.preferredLanguage ?? this._store.preferredLanguage ?? null;
@@ -213,6 +214,18 @@ export class AppComponent implements OnInit, AfterViewInit {
 					}
 				),
 				// Automatically unsubscribe when the component is destroyed
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Subscribe to the preferred language observable and set the language
+	 */
+	getPreferredLanguage(): void {
+		this._i18nService.preferredLanguage$
+			.pipe(
+				tap((lang: string) => this._translateService.use(lang)),
 				untilDestroyed(this)
 			)
 			.subscribe();
