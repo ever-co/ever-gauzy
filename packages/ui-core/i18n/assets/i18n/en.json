@@ -4112,9 +4112,9 @@
 		"MENU": {
 			"ZOOM_IN": "Zoom In",
 			"ZOOM_OUT": "Zoom Out",
-			"SETTING_DEV_MODE": "Setting Developer Mode",
+			"SETTING_DEV_MODE": "Setting Dev Mode",
 			"SERVER_DEV_MODE": "Server Dashboard Developer Mode",
-			"TIMER_DEV_MODE": "Time Tracker Developer Mode",
+			"TIMER_DEV_MODE": "Timer Dev Mode",
 			"NOW_TRACKING": "Now tracking time - {{ time }}",
 			"START_TRACKING": "Start Tracking Time",
 			"STOP_TRACKING": "Stop Tracking Time",

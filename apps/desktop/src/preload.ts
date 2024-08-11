@@ -1,6 +1,10 @@
 import { CustomTitlebar, TitlebarColor } from "custom-electron-titlebar";
 import { nativeImage, ipcRenderer } from 'electron';
 import * as path from 'path';
+let contentInteval;
+const  getElementByXpath = (path) => {
+    return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+}
 window.addEventListener('DOMContentLoaded', async () => {
     // Title bar implementation
     const appPath = await ipcRenderer.invoke('get-app-path');
@@ -14,7 +18,22 @@ window.addEventListener('DOMContentLoaded', async () => {
         menuTransparency: 0.2
     })
     ipcRenderer.on('refresh_menu', () => {
+        clearInterval(contentInteval);
         titleBar.refreshMenu();
+        const headerIcon = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[1]/div/div/div';
+        const headerCompany = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[2]/div/div/div/div[1]/div';
+        contentInteval = setInterval(() => {
+            const elHeaderIcon:any = getElementByXpath(headerIcon);
+            const elHeaderCompany:any = getElementByXpath(headerCompany);
+            if (elHeaderIcon) {
+                elHeaderIcon.style.marginTop = '30px';
+                clearInterval(contentInteval);
+            }
+            if (elHeaderCompany) {
+                elHeaderCompany.style.marginTop = '30px';
+                clearInterval(contentInteval);
+            }
+        }, 1000)
     });
 
     const overStyle = document.createElement('style');

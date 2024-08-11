@@ -388,6 +388,7 @@ export class TrayIcon {
 					timeTrackerWindow.show();
 				}
 			}
+			event.sender.send('refresh_menu');
 		});
 
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
