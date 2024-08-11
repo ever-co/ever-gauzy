@@ -107,7 +107,6 @@ let serverDesktop = null;
 let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
-let applicationMenu: AppMenu;
 
 setupTitlebar();
 ipcMain.removeHandler('request-application-menu');
@@ -283,7 +282,7 @@ async function startServer(value, restart = false) {
 		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	const auth = store.get('auth');
-	applicationMenu = new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
+	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 	if (tray) {
 		tray.destroy();
@@ -304,7 +303,7 @@ async function startServer(value, restart = false) {
 	);
 
 	TranslateService.onLanguageChange(() => {
-		applicationMenu = new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
+		new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
 
 		if (tray) {
 			tray.destroy();
