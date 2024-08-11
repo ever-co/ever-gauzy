@@ -18,8 +18,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         menuTransparency: 0.2
     })
     ipcRenderer.on('refresh_menu', () => {
-        clearInterval(contentInteval);
         titleBar.refreshMenu();
+    });
+    ipcRenderer.on('adjust_view', () => {
+        clearInterval(contentInteval);
         const headerIcon = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[1]/div/div/div';
         const headerCompany = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[2]/div/div/div/div[1]/div';
         contentInteval = setInterval(() => {

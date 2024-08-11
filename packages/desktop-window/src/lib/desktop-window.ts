@@ -67,6 +67,7 @@ export async function createGauzyWindow(gauzyWindow, serve, config, filePath, pr
 	manager.register(RegisteredWindow.MAIN, gauzyWindow);
 	if (preloadPath) {
 		attachTitlebarToWindow(gauzyWindow);
+		gauzyWindow.webContents.send('adjust_view');
 	}
 
 	return gauzyWindow;
