@@ -45,12 +45,9 @@
 		"@ngx-translate/core": "^15.0.0",
 		"angular2-smart-table": "^3.2.0",
 		"ckeditor4-angular": "4.0.1",
-		"ng2-file-upload": "^5.0.0",
-		"ngx-moment": "^6.0.2",
 		"ngx-permissions": "^13.0.1",
 		"rxjs": "^7.4.0",
-		"tslib": "^2.6.2",
-		"underscore": "^1.13.3"
+		"tslib": "^2.6.2"
 	},
 	"devDependencies": {
 		"@types/jest": "^29.4.4",
