@@ -410,13 +410,26 @@ export class SetupComponent implements OnInit {
 		});
 	}
 
-	checkServerConn() {
-		const serverHostOptions = this.getServerConfig();
-		console.log('server host', serverHostOptions);
-		this.setupService
-			.pingServer({
-				host: serverHostOptions.serverUrl
+	async serverProtocolCheck(host, retry = false) {
+		const url = new URL(host);
+		try {
+			const resp = await this.setupService.pingServer({
+				host: url.origin
 			})
+			this.serverConfig.custom.apiHost = url.origin;
+			return resp;
+		} catch (error) {
+			if (!retry) {
+				url.protocol = url.protocol === 'http:' ?  'https' : 'http';
+				return this.serverProtocolCheck(url.origin, true);
+			}
+			throw error;
+		}
+	}
+
+	async checkServerConn() {
+		const serverHostOptions = this.getServerConfig();
+		this.serverProtocolCheck(serverHostOptions.serverUrl)
 			.then(async (res) => {
 				if (this.runApp) {
 					await this.saveAndRun();
