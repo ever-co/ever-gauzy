@@ -32,6 +32,8 @@
 		</nb-tabset>
 	</nb-card-body>
 </nb-card>
+
+<!-- Actions Buttons -->
 <ng-template #actionButtons let-buttonSize="buttonSize">
 	<div class="btn-group actions">
 		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
@@ -64,14 +66,13 @@
 			<button
 				nbButton
 				status="basic"
+				size="small"
 				ngxConfirmDialog
 				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
 				(confirm)="deleteProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
-				class="mr-2"
-				class="action"
-				size="small"
-				[nbToolTip]="'BUTTONS.DELETE' | translate"
+				class="action mr-2"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
 			</button>
@@ -102,6 +103,8 @@
 		</ng-template>
 	</div>
 </ng-template>
+
+<!-- Buttons -->
 <ng-template #visibleButton>
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
 		<button nbButton status="success" size="small" (click)="createProposalTemplate()">
@@ -110,6 +113,8 @@
 		</button>
 	</ng-template>
 </ng-template>
+
+<!-- Smart Table -->
 <ng-template #tableLayout>
 	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
 		<div class="table-scroll-container">
