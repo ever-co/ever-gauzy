@@ -391,7 +391,7 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	}
 
 	/**
-	 * Updates the 'tags' field in 'contMainForm' with the selected tags and revalidates the form.
+	 * Updates the 'tags' field in 'contMainForm' with the selected tags and validate the form.
 	 * @param tags An array of selected tag objects.
 	 */
 	selectedTagsEvent(tags: ITag[]) {
@@ -459,5 +459,5 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 	/*
 	 * Google Place Geometry Changed Event Emitter
 	 */
-	onGeometrySend(geometry: any) { }
+	onGeometrySend(geometry: any) {}
 }

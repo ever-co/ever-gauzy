@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset, CurrenciesEnum } from '@gauzy/contracts';
+import { ICurrency, IOrganization, ITag, CrudActionEnum, IImageAsset } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
@@ -18,7 +18,8 @@ import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, Toas
 })
 export class EditOrganizationMainComponent
 	extends TranslationBaseComponent
-	implements OnInit, OnDestroy, AfterViewInit {
+	implements OnInit, OnDestroy, AfterViewInit
+{
 	hoverState: boolean;
 	employeesCount: number;
 
@@ -73,7 +74,7 @@ export class EditOrganizationMainComponent
 			.subscribe();
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 
 	ngAfterViewInit() {
 		this.cdr.detectChanges();
@@ -182,5 +183,5 @@ export class EditOrganizationMainComponent
 	/*
 	 * On Changed Currency Event Emitter
 	 */
-	currencyChanged($event: ICurrency) { }
+	currencyChanged($event: ICurrency) {}
 }

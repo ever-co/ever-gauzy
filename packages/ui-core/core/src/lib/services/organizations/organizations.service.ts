@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import {
 	IOrganization,
 	IOrganizationCreateInput,
@@ -8,14 +8,13 @@ import {
 	IOrganizationContactFindInput,
 	IPagination,
 	IOrganizationContact,
-	IOptionsSelect,
+	IOptionsSelect
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class OrganizationsService {
-
-	constructor(private readonly http: HttpClient) { }
+	constructor(private readonly http: HttpClient) {}
 
 	create(body: IOrganizationCreateInput): Promise<IOrganization> {
 		return firstValueFrom(this.http.post<IOrganization>(`${API_PREFIX}/organization`, body));
