@@ -250,7 +250,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.defaultTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	defaultTeamId?: IOrganizationTeam['id'];
+	defaultTeamId?: ID;
 
 	/**
 	 * Last Team : This field is used to know what was the last team the user logged in
