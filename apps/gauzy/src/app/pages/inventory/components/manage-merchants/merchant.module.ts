@@ -18,6 +18,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	CurrencyModule,
 	LeafletMapModule,
 	LocationFormModule,
@@ -56,6 +57,7 @@ const NB_MODULES = [
 		SharedModule,
 		TranslateModule.forChild(),
 		SmartDataViewLayoutModule,
+		CardGridModule,
 		CurrencyModule,
 		InventoryTableComponentsModule,
 		LeafletMapModule,

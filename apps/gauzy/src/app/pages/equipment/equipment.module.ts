@@ -12,6 +12,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CardGridModule,
 	EquipmentMutationModule,
 	SharedModule,
 	TableComponentsModule,
@@ -35,6 +36,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		NbDialogModule.forChild(),
 		EquipmentMutationModule,
 		TableComponentsModule,
+		CardGridModule,
 		TranslateModule.forChild(),
 		NbSpinnerModule,
 		SmartDataViewLayoutModule

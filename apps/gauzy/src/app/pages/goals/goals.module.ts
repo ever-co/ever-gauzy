@@ -29,11 +29,10 @@ import { NgChartsModule } from 'ng2-charts';
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
 	GoalCustomUnitModule,
 	GoalLevelSelectModule,
-	NoDataMessageModule,
 	SharedModule,
+	SmartDataViewLayoutModule,
 	TaskSelectModule
 } from '@gauzy/ui-core/shared';
 import { GoalsRoutingModule } from './goals-routing.module';
@@ -96,8 +95,7 @@ import { KeyresultTypeSelectModule } from './keyresult-type-select/keyresult-typ
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		EmployeeMultiSelectModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule
 	]
 })
 export class GoalsModule {}

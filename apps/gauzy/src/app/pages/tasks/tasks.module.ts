@@ -28,6 +28,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	AddTaskDialogModule,
+	CardGridModule,
 	EmployeeMultiSelectModule,
 	GauzyEditableGridModule,
 	ProjectSelectModule,
@@ -92,6 +93,7 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TagsColorInputModule,
 		SharedModule,
 		UserFormsModule,
+		CardGridModule,
 		AddTaskDialogModule,
 		EmployeeMultiSelectModule,
 		GauzyEditableGridModule,
