@@ -1,5 +1,5 @@
 import { IAccountingTemplate } from './accounting-template.model';
-import { IBasePerTenantEntityModel, ID } from './base-entity.model';
+import { IBasePerTenantEntityModel } from './base-entity.model';
 import { IContact } from './contact.model';
 import { CurrenciesEnum } from './currency.model';
 import { IEmployee } from './employee.model';
