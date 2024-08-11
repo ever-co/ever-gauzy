@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbAccordionModule,
 	NbActionsModule,
@@ -23,7 +21,6 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgChartsModule } from 'ng2-charts';
 import { FullCalendarModule } from '@fullcalendar/angular';
@@ -38,6 +35,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
 	CandidateInterviewMutationModule,
@@ -52,11 +50,9 @@ import {
 	EmployeeMultiSelectModule,
 	EmployeeRatesModule,
 	FileUploaderModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
-	PaginationV2Module,
 	SharedModule,
 	StarRatingInputModule,
 	StarRatingOutputModule,
@@ -145,10 +141,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
-		Angular2SmartTableModule,
 		FullCalendarModule,
 		NbAccordionModule,
 		NbActionsModule,
@@ -196,8 +188,7 @@ const COMPONENTS = [
 		CandidateInterviewFeedbackModule,
 		DeleteInterviewModule,
 		DeleteFeedbackModule,
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		WorkInProgressModule
 	],
 	declarations: [...COMPONENTS],

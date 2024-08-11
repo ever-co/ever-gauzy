@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -18,18 +16,16 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import { InviteGuard, OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EditEmployeeMembershipFormModule,
 	EditProfileFormModule,
-	GauzyButtonActionModule,
 	ImageUploaderModule,
 	InviteMutationModule,
 	InviteTableModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
@@ -59,7 +55,6 @@ const COMPONENTS = [
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TagsColorInputModule,
 		TableComponentsModule,
 		NbSidebarModule,
@@ -70,12 +65,9 @@ const COMPONENTS = [
 		OrganizationsModule,
 		NbActionsModule,
 		NbCardModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,
-		Angular2SmartTableModule,
 		NbDialogModule.forChild(),
 		UserMutationModule,
 		NbTooltipModule,
@@ -91,8 +83,7 @@ const COMPONENTS = [
 		InviteTableModule,
 		EditEmployeeMembershipFormModule,
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		CardGridModule,
 		SharedModule
 	],

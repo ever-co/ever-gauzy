@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CurrencyPipe } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -24,7 +23,6 @@ import {
 	NbListModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -50,13 +48,12 @@ import { InvoiceEditComponent } from './invoice-edit/invoice-edit.component';
 import { InvoicesReceivedComponent } from './invoices-received/invoices-received.component';
 import { InvoiceSendMutationComponent } from './invoice-send/invoice-send-mutation.component';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	ContactSelectModule,
 	CurrencyModule,
 	CurrencyPositionPipe,
 	EmployeeMultiSelectModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	ProjectSelectModule,
 	SharedModule,
 	TableComponentsModule,
@@ -93,7 +90,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 
 @NgModule({
 	imports: [
-		CommonModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,
@@ -102,11 +98,8 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		NbSpinnerModule,
 		NbIconModule,
 		NbButtonModule,
-		Angular2SmartTableModule,
 		CardGridModule,
-		FormsModule,
 		NbBadgeModule,
-		ReactiveFormsModule,
 		NbCheckboxModule,
 		NbDialogModule.forChild(),
 		NbInputModule,
@@ -128,12 +121,11 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,
-		NbAccordionModule,
-		GauzyButtonActionModule
+		NbAccordionModule
 	],
 	providers: [
 		InvoicesService,

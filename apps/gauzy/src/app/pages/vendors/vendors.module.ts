@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -13,13 +11,11 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
-	GauzyButtonActionModule,
-	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule
@@ -29,9 +25,6 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,
@@ -41,7 +34,6 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		NbBadgeModule,
 		NbDialogModule.forChild(),
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		InfiniteScrollModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
@@ -49,9 +41,8 @@ import { VendorsRoutingModule } from './vendors-routing.module';
 		TagsColorInputModule,
 		TableComponentsModule,
 		VendorsRoutingModule,
-		CardGridModule,
-		GauzyButtonActionModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule,
+		CardGridModule
 	],
 	declarations: [VendorsComponent]
 })

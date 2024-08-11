@@ -11,12 +11,7 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import {
-	GauzyButtonActionModule,
-	NoDataMessageModule,
-	SharedModule,
-	TableComponentsModule
-} from '@gauzy/ui-core/shared';
+import { SmartDataViewLayoutModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationsRoutingModule } from './integrations-routing.module';
 import { IntegrationsComponent } from './integrations.component';
 import { IntegrationLayoutComponent } from './layout/layout.component';
@@ -36,9 +31,8 @@ import { IntegrationListComponent } from './components/integration-list/list.com
 		NbIconModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
-		GauzyButtonActionModule,
-		TableComponentsModule,
-		NoDataMessageModule
+		SmartDataViewLayoutModule,
+		TableComponentsModule
 	],
 	declarations: [IntegrationLayoutComponent, IntegrationListComponent, IntegrationsComponent]
 })

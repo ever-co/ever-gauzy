@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -17,7 +15,6 @@ import { PaymentReportComponent } from './payment-report/payment-report.componen
 @NgModule({
 	declarations: [PaymentReportComponent],
 	imports: [
-		CommonModule,
 		PaymentReportRoutingModule,
 		SharedModule,
 		TranslateModule.forChild(),
@@ -25,7 +22,6 @@ import { PaymentReportComponent } from './payment-report/payment-report.componen
 		NbSpinnerModule,
 		NbCardModule,
 		NbSelectModule,
-		FormsModule,
 		LineChartModule,
 		PaymentReportGridModule,
 		GauzyFiltersModule,

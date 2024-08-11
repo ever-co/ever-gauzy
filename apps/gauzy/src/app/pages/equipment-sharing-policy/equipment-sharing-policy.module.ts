@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -15,13 +14,11 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentSharingPolicyMutationModule,
-	GauzyButtonActionModule,
-	PaginationV2Module,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -30,7 +27,6 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -42,7 +38,6 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		NbRouteTabsetModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		Angular2SmartTableModule,
 		NbTooltipModule,
 		NbRadioModule,
 		CardGridModule,
@@ -50,8 +45,7 @@ import { EquipmentSharingPolicyRoutingModule } from './equipment-sharing-policy.
 		EquipmentSharingPolicyRoutingModule,
 		TranslateModule.forChild(),
 		NgxPermissionsModule.forChild(),
-		GauzyButtonActionModule,
-		PaginationV2Module,
+		SmartDataViewLayoutModule,
 		TableComponentsModule
 	],
 	declarations: [EquipmentSharingPolicyComponent]
