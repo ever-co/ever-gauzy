@@ -1,5 +1,5 @@
 import { IAccountingTemplate } from './accounting-template.model';
-import { IBasePerTenantEntityModel } from './base-entity.model';
+import { IBasePerTenantEntityModel, ID } from './base-entity.model';
 import { IContact } from './contact.model';
 import { CurrenciesEnum } from './currency.model';
 import { IEmployee } from './employee.model';
@@ -11,7 +11,7 @@ import { ISkill } from './skill-entity.model';
 import { ITag } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
-import { IImageAsset, IRelationalImageAsset } from './image-asset.model';
+import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IRegisterAsEmployee {
 	registerAsEmployee?: boolean;
@@ -122,7 +122,7 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee {
+export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee, IRelationalImageAsset {
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;
@@ -167,8 +167,6 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee 
 	isImporting?: boolean;
 	sourceId?: string;
 	userOrganizationSourceId?: string;
-	imageId?: string;
-	image?: IImageAsset;
 	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;

@@ -1,9 +1,9 @@
-import { FileStorageProvider } from "./file-provider";
-import { IBasePerTenantAndOrganizationEntityModel } from "./base-entity.model";
+import { FileStorageProvider } from './file-provider';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 
 export interface IRelationalImageAsset {
 	image?: IImageAsset | null;
-	imageId?: IImageAsset['id'] | null;
+	imageId?: ID | null;
 }
 
 export interface IImageAsset extends IImageAssetCreateInput {
@@ -11,9 +11,11 @@ export interface IImageAsset extends IImageAssetCreateInput {
 	thumbUrl?: string;
 }
 
-export interface IImageAssetFindInput extends IBasePerTenantAndOrganizationEntityModel, Pick<IImageAsset, 'isFeatured'> { }
+export interface IImageAssetFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Pick<IImageAsset, 'isFeatured'> {}
 
-export interface IImageAssetUploadInput extends IBasePerTenantAndOrganizationEntityModel { }
+export interface IImageAssetUploadInput extends IBasePerTenantAndOrganizationEntityModel {}
 
 export interface IImageAssetCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
