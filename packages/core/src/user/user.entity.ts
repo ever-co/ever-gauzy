@@ -19,7 +19,8 @@ import {
 	TimeFormatEnum,
 	ISocialAccount,
 	IOrganizationTeam,
-	IOrganization
+	IOrganization,
+	ID
 } from '@gauzy/contracts';
 import {
 	ImageAsset,
@@ -270,7 +271,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.lastTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	lastTeamId?: IOrganizationTeam['id'];
+	lastTeamId?: ID;
 
 	/**
 	 * Default organization
@@ -291,7 +292,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.defaultOrganization)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	defaultOrganizationId?: IOrganization['id'];
+	defaultOrganizationId?: ID;
 
 	/**
 	 * Last organization : This field is used to know what was the last organization the user was connected on or just set
@@ -312,7 +313,7 @@ export class User extends TenantBaseEntity implements IUser {
 	@RelationId((it: User) => it.lastOrganization)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	lastOrganizationId?: IOrganization['id'];
+	lastOrganizationId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

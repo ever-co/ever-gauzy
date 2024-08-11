@@ -123,6 +123,9 @@ export class AuthService extends SocialAuthService {
 			// Store the current refresh token with the user for later validation.
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
+			// Set last the login timestamp
+			await this.userService.setUserLastLoginTimestamp(user.id);
+
 			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
 				user: new User({

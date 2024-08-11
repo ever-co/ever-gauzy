@@ -386,6 +386,20 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Update the last login time after user logged in
+	 * @param {string} userId - The ID of the user for whom to set the last login time
+	 * @return - A promise that resolves once the last login time is set
+	 * @memberof UserService
+	 */
+	async setUserLastLoginTimestamp(userId: string): Promise<UpdateResult> {
+		try {
+			return await this.typeOrmRepository.update({ id: userId }, { lastLoginAt: new Date() });
+		} catch (error) {
+			console.log('Error while updating last login time', error);
+		}
+	}
+
+	/**
 	 * Get user if refresh token matches
 	 *
 	 * @param refreshToken

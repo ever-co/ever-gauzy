@@ -13,7 +13,7 @@ import { ICandidate } from './candidate.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
-import { IOrganizationTeam } from 'organization-team.model';
+import { IOrganizationTeam } from './organization-team.model';
 
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
@@ -45,13 +45,13 @@ export interface IUser extends IBasePerTenantEntityModel, IRelationalImageAsset 
 	candidate?: ICandidate;
 	candidateId?: ICandidate['id'];
 	defaultTeam?: IOrganizationTeam;
-	defaultTeamId?: IOrganizationTeam['id'];
+	defaultTeamId?: ID;
 	lastTeam?: IOrganizationTeam;
-	lastTeamId?: IOrganizationTeam['id'];
+	lastTeamId?: ID;
 	defaultOrganization?: IOrganization;
-	defaultOrganizationId?: IOrganization['id'];
+	defaultOrganizationId?: ID;
 	lastOrganization?: IOrganization;
-	lastOrganizationId?: IOrganization['id'];
+	lastOrganizationId?: ID;
 	tags?: ITag[];
 	preferredLanguage?: string;
 	payments?: IPayment[];
