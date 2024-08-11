@@ -109,13 +109,6 @@ let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
 setupTitlebar();
-ipcMain.removeHandler('request-application-menu');
-ipcMain.handle('request-application-menu', async () => {
-	return JSON.parse(JSON.stringify(
-		Menu.getApplicationMenu(),
-		(key: string, value: any) => (key !== 'commandsMap' && key !== 'menu') ? value : undefined)
-	)
-})
 
 console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
