@@ -16,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import {
 	ComponentLayoutStyleEnum,
+	ID,
 	IEmployee,
 	IFindMeUser,
 	IUser,
@@ -391,7 +392,7 @@ export class UserService extends TenantAwareCrudService<User> {
 	 * @return - A promise that resolves once the last login time is set
 	 * @memberof UserService
 	 */
-	async setUserLastLoginTimestamp(userId: string): Promise<UpdateResult> {
+	async setUserLastLoginTimestamp(userId: ID): Promise<UpdateResult> {
 		try {
 			return await this.typeOrmRepository.update({ id: userId }, { lastLoginAt: new Date() });
 		} catch (error) {

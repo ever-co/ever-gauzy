@@ -31,7 +31,8 @@ import {
 	ISocialAccountLogin,
 	ISocialAccount,
 	ILastTeam,
-	ILastOrganization
+	ILastOrganization,
+	ID
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -1073,6 +1074,9 @@ export class AuthService extends SocialAuthService {
 				// Store the current refresh token with the user for later validation.
 				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
 
+				// Update the last login timestamp for the user
+				await this.userService.setUserLastLoginTimestamp(user.id);
+
 				// Return the user object with user details, tokens, and optionally employee info if it exists.
 				return {
 					user: new User({
@@ -1120,11 +1124,7 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @returns A Promise that resolves to an array of IOrganizationTeam objects.
 	 */
-	private async getTeamsForUser(
-		tenantId: string,
-		userId: string,
-		employeeId: string | null
-	): Promise<IOrganizationTeam[]> {
+	private async getTeamsForUser(tenantId: ID, userId: ID, employeeId: ID | null): Promise<IOrganizationTeam[]> {
 		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder('organization_team');
 		query.innerJoin(
 			`organization_team_employee`,
@@ -1214,6 +1214,7 @@ export class AuthService extends SocialAuthService {
 	}): Promise<IUserSigninWorkspaceResponse> {
 		const workspaces: IWorkspaceResponse[] = [];
 
+		// Iterate through the users and create workspaces for each user
 		for (const user of users) {
 			const workspace = await this.createWorkspace(user, code, includeTeams);
 			workspaces.push(workspace);

@@ -1,75 +1,70 @@
 {
-  "npmScope": "gauzy",
-  "affected": {
-    "defaultBase": "master"
-  },
-  "implicitDependencies": {
-    "angular.json": "*",
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
-    "tsconfig.json": "*",
-    "tslint.json": "*",
-    ".eslintrc.json": "*",
-    "nx.json": "*"
-  },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "nx-cloud",
-      "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e"
-        ],
-        "parallel": 1,
-        "accessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU="
-      }
-    }
-  },
-  "cli": {
-    "warnings": {
-      "typescriptMismatch": false,
-      "versionMismatch": false
-    },
-    "packageManager": "yarn",
-    "analytics": false,
-    "defaultCollection": "@nstudio/xplat"
-  },
-  "generators": {
-    "@nrwl/angular": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      },
-      "storybook-configuration": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/angular:application": {
-      "style": "scss",
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
-    },
-    "@nrwl/angular:component": {
-      "style": "scss",
-      "prefix": "ngx"
-    },
-    "@nrwl/angular:directive": {
-      "prefix": "ngx"
-    },
-    "@nrwl/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "buildable": true,
-      "style": "scss"
-    }
-  },
-  "defaultProject": "gauzy",
-  "$schema": "./node_modules/nx/schemas/nx-schema.json"
+	"npmScope": "gauzy",
+	"affected": {
+		"defaultBase": "master"
+	},
+	"implicitDependencies": {
+		"angular.json": "*",
+		"package.json": {
+			"dependencies": "*",
+			"devDependencies": "*"
+		},
+		"tsconfig.json": "*",
+		"tslint.json": "*",
+		".eslintrc.json": "*",
+		"nx.json": "*"
+	},
+	"tasksRunnerOptions": {
+		"default": {
+			"runner": "nx-cloud",
+			"options": {
+				"cacheableOperations": ["build", "lint", "test", "e2e"],
+				"parallel": 1,
+				"accessToken": "NWJlMDFmMTMtYzUyZS00ZGE4LTk0NzctNWIzZTkxMzNhMTFlfHJlYWQtd3JpdGU="
+			}
+		}
+	},
+	"cli": {
+		"warnings": {
+			"typescriptMismatch": false,
+			"versionMismatch": false
+		},
+		"packageManager": "yarn",
+		"analytics": false,
+		"defaultCollection": "@nstudio/xplat"
+	},
+	"generators": {
+		"@nrwl/angular": {
+			"application": {
+				"linter": "eslint"
+			},
+			"library": {
+				"linter": "eslint"
+			},
+			"storybook-configuration": {
+				"linter": "eslint"
+			}
+		},
+		"@nrwl/angular:application": {
+			"style": "scss",
+			"linter": "eslint",
+			"unitTestRunner": "jest",
+			"e2eTestRunner": "cypress"
+		},
+		"@nrwl/angular:component": {
+			"style": "scss",
+			"prefix": "ngx"
+		},
+		"@nrwl/angular:directive": {
+			"prefix": "ngx"
+		},
+		"@nrwl/angular:library": {
+			"linter": "eslint",
+			"unitTestRunner": "jest",
+			"buildable": true,
+			"style": "scss"
+		}
+	},
+	"defaultProject": "gauzy",
+	"$schema": "./node_modules/nx/schemas/nx-schema.json"
 }
