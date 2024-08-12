@@ -7,7 +7,7 @@ export type IAutoRefreshState = {
 
 export function createInitialState(): IAutoRefreshState {
 	return {
-		enabled: false
+		enabled: true
 	};
 }
 
