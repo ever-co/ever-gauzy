@@ -266,12 +266,50 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`lastLoginAt\` datetime NULL`);
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`defaultTeamId\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`lastTeamId\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`defaultOrganizationId\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`user\` ADD \`lastOrganizationId\` varchar(255) NULL`);
+		await queryRunner.query(`CREATE INDEX \`IDX_1a8ae1126aae1823d62ccf3f82\` ON \`user\` (\`defaultTeamId\`)`);
+		await queryRunner.query(`CREATE INDEX \`IDX_5864814596f85fe59bd1a0dc76\` ON \`user\` (\`lastTeamId\`)`);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_0e9f745ad08103a1c21523326c\` ON \`user\` (\`defaultOrganizationId\`)`
+		);
+		await queryRunner.query(`CREATE INDEX \`IDX_f725c3df76a1a94e3e9f0313a5\` ON \`user\` (\`lastOrganizationId\`)`);
+		await queryRunner.query(
+			`ALTER TABLE \`user\` ADD CONSTRAINT \`FK_1a8ae1126aae1823d62ccf3f821\` FOREIGN KEY (\`defaultTeamId\`) REFERENCES \`organization_team\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`user\` ADD CONSTRAINT \`FK_5864814596f85fe59bd1a0dc766\` FOREIGN KEY (\`lastTeamId\`) REFERENCES \`organization_team\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`user\` ADD CONSTRAINT \`FK_0e9f745ad08103a1c21523326c6\` FOREIGN KEY (\`defaultOrganizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`user\` ADD CONSTRAINT \`FK_f725c3df76a1a94e3e9f0313a5f\` FOREIGN KEY (\`lastOrganizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`user\` DROP FOREIGN KEY \`FK_f725c3df76a1a94e3e9f0313a5f\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP FOREIGN KEY \`FK_0e9f745ad08103a1c21523326c6\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP FOREIGN KEY \`FK_5864814596f85fe59bd1a0dc766\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP FOREIGN KEY \`FK_1a8ae1126aae1823d62ccf3f821\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f725c3df76a1a94e3e9f0313a5\` ON \`user\``);
+		await queryRunner.query(`DROP INDEX \`IDX_0e9f745ad08103a1c21523326c\` ON \`user\``);
+		await queryRunner.query(`DROP INDEX \`IDX_5864814596f85fe59bd1a0dc76\` ON \`user\``);
+		await queryRunner.query(`DROP INDEX \`IDX_1a8ae1126aae1823d62ccf3f82\` ON \`user\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastOrganizationId\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`defaultOrganizationId\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastTeamId\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`defaultTeamId\``);
+		await queryRunner.query(`ALTER TABLE \`user\` DROP COLUMN \`lastLoginAt\``);
+	}
 }
