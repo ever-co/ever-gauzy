@@ -10,7 +10,3 @@ export * from './user-password.dto';
 export * from './user-token.dto';
 export * from './user-code.dto';
 export * from './include-teams.dto';
-export * from './user-default-team.dto';
-export * from './user-default-organization.dto';
-export * from './user-last-organization.dto';
-export * from './user-last-team.dto';
