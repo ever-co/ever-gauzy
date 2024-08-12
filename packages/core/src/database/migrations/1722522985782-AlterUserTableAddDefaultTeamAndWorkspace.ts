@@ -56,14 +56,50 @@ export class AlterUserTableAddDefaultTeamAndWorkspace1722522985782 implements Mi
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "user" ADD "lastLoginAt" TIMESTAMP`);
+		await queryRunner.query(`ALTER TABLE "user" ADD "defaultTeamId" uuid`);
+		await queryRunner.query(`ALTER TABLE "user" ADD "lastTeamId" uuid`);
+		await queryRunner.query(`ALTER TABLE "user" ADD "defaultOrganizationId" uuid`);
+		await queryRunner.query(`ALTER TABLE "user" ADD "lastOrganizationId" uuid`);
+		await queryRunner.query(`CREATE INDEX "IDX_1a8ae1126aae1823d62ccf3f82" ON "user" ("defaultTeamId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_5864814596f85fe59bd1a0dc76" ON "user" ("lastTeamId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_0e9f745ad08103a1c21523326c" ON "user" ("defaultOrganizationId") `);
+		await queryRunner.query(`CREATE INDEX "IDX_f725c3df76a1a94e3e9f0313a5" ON "user" ("lastOrganizationId") `);
+		await queryRunner.query(
+			`ALTER TABLE "user" ADD CONSTRAINT "FK_1a8ae1126aae1823d62ccf3f821" FOREIGN KEY ("defaultTeamId") REFERENCES "organization_team"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "user" ADD CONSTRAINT "FK_5864814596f85fe59bd1a0dc766" FOREIGN KEY ("lastTeamId") REFERENCES "organization_team"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "user" ADD CONSTRAINT "FK_0e9f745ad08103a1c21523326c6" FOREIGN KEY ("defaultOrganizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE "user" ADD CONSTRAINT "FK_f725c3df76a1a94e3e9f0313a5f" FOREIGN KEY ("lastOrganizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * PostgresDB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_f725c3df76a1a94e3e9f0313a5f"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_0e9f745ad08103a1c21523326c6"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_5864814596f85fe59bd1a0dc766"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_1a8ae1126aae1823d62ccf3f821"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_f725c3df76a1a94e3e9f0313a5"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_0e9f745ad08103a1c21523326c"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_5864814596f85fe59bd1a0dc76"`);
+		await queryRunner.query(`DROP INDEX "public"."IDX_1a8ae1126aae1823d62ccf3f82"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastOrganizationId"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "defaultOrganizationId"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastTeamId"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "defaultTeamId"`);
+		await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "lastLoginAt"`);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Up Migration
