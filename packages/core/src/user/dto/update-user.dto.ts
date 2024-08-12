@@ -1,15 +1,22 @@
-import { IUserUpdateInput } from "@gauzy/contracts";
-import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
-import { IsBoolean, IsOptional } from "class-validator";
-import { CreateUserDTO } from "./create-user.dto";
+import { IUserUpdateInput } from '@gauzy/contracts';
+import { IntersectionType, PartialType, PickType } from '@nestjs/swagger';
+import { User } from '../user.entity';
+import { CreateUserDTO } from './create-user.dto';
 
 /**
- * Update User DTO validation
+ * Base class for updating user-related fields.
  */
-export class UpdateUserDTO extends PartialType(CreateUserDTO) implements IUserUpdateInput {
+class UpdateUserBaseDTO extends PickType(User, [
+	'defaultOrganizationId',
+	'defaultTeamId',
+	'lastOrganizationId',
+	'lastTeamId',
+	'isActive'
+] as const) {}
 
-    @ApiPropertyOptional({ type: () => Boolean })
-    @IsOptional()
-    @IsBoolean()
-    readonly isActive?: boolean;
-}
+/**
+ * Update User Data Transfer Object (DTO) validation.
+ */
+export class UpdateUserDTO
+	extends IntersectionType(PartialType(CreateUserDTO), UpdateUserBaseDTO)
+	implements IUserUpdateInput {}

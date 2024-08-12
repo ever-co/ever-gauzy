@@ -16,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
 import {
 	ComponentLayoutStyleEnum,
+	ID,
 	IEmployee,
 	IFindMeUser,
 	IUser,
@@ -382,6 +383,32 @@ export class UserService extends TenantAwareCrudService<User> {
 			}
 		} catch (error) {
 			console.log('Error while logout device', error);
+		}
+	}
+
+	/**
+	 * Update the last login time after user logged in
+	 * @param {string} userId - The ID of the user for whom to set the last login time
+	 * @return - A promise that resolves once the last login time is set
+	 * @memberof UserService
+	 */
+	async setUserLastLoginTimestamp(userId: ID): Promise<UpdateResult> {
+		try {
+			const lastLoginAt = new Date(); // Define the last login time
+			const id = userId; // Define the user ID
+
+			// Update the last login time
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					const updatedRow = await this.mikroOrmRepository.nativeUpdate({ id }, { lastLoginAt });
+					return { affected: updatedRow } as UpdateResult;
+				case MultiORMEnum.TypeORM:
+					return await this.typeOrmRepository.update({ id }, { lastLoginAt });
+				default:
+					throw new Error(`Not implemented for ${this.ormType}`);
+			}
+		} catch (error) {
+			console.log('Error while updating last login time', error);
 		}
 	}
 
