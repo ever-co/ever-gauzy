@@ -95,4 +95,12 @@ export class TimeTrackerDateManager {
 		moment.locale(language);
 		this.instance._language = language;
 	}
+
+	public static get startCurrentDay(): string {
+		return moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+	}
+
+	public static get endCurrentDay(): string {
+		return moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+	}
 }
