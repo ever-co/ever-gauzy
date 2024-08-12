@@ -113,6 +113,10 @@ export class InventoryItemViewComponent extends TranslationBaseComponent impleme
 	}
 
 	getTranslatedProp(item: any, prop: string) {
+		if (!item) {
+			console.warn('Translatable item object is undefined');
+			return null;
+		}
 		return this.translatableService.getTranslatedProperty(item, prop);
 	}
 

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -24,12 +22,10 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		EquipmentRoutingModule,
 		SharedModule,
 		UserFormsModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		NbInputModule,
 		NbIconModule,

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -36,9 +34,6 @@ import { ReportsComponent } from './components/reports/reports.component';
 		ReportsComponent
 	],
 	imports: [
-		CommonModule,
-		FormsModule,
-		ReactiveFormsModule,
 		NbCardModule,
 		NbButtonModule,
 		NbInputModule,

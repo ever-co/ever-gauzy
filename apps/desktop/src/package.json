@@ -44,6 +44,7 @@
 			"../../../packages/plugins/job-proposal",
 			"../../../packages/plugins/job-employee-ui",
 			"../../../packages/plugins/job-matching-ui",
+			"../../../packages/plugins/job-proposal-ui",
 			"../../../packages/plugins/job-search-ui"
 		]
 	},

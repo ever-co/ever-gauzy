@@ -2,21 +2,24 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService, NbTabComponent } from '@nebular/theme';
-import { combineLatest, Subject, firstValueFrom, BehaviorSubject } from 'rxjs';
+import { combineLatest, Subject, firstValueFrom, BehaviorSubject, merge } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
+import { NgxPermissionsService } from 'ngx-permissions';
 import {
 	IEmployee,
 	IEmployeeProposalTemplate,
 	IEmployeeProposalTemplateMakeDefaultInput,
 	IOrganization,
 	ISelectedEmployee,
+	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, ProposalTemplateService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	DeleteConfirmationComponent,
 	EmployeeLinksComponent,
@@ -39,7 +42,13 @@ export enum ProposalTemplateTabsEnum {
 	styleUrls: ['./proposal-template.component.scss']
 })
 export class ProposalTemplateComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	public smartTableSettings: object;
+	public smartTableSettings: any = {
+		actions: false,
+		editable: true,
+		hideSubHeader: true,
+		selectedRowIndex: -1,
+		noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE')
+	};
 	public disableButton: boolean = true;
 	public loading: boolean = false;
 	public smartTableSource: ServerDataSource;
@@ -51,23 +60,32 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	public nbTab$: Subject<string> = new BehaviorSubject(ProposalTemplateTabsEnum.ACTIONS);
 
 	constructor(
-		public readonly translateService: TranslateService,
-		private readonly store: Store,
-		private readonly toastrService: ToastrService,
-		private readonly proposalTemplateService: ProposalTemplateService,
-		private readonly dialogService: NbDialogService,
-		private readonly nl2BrPipe: Nl2BrPipe,
-		private readonly truncatePipe: TruncatePipe,
-		private readonly http: HttpClient,
-		private readonly route: ActivatedRoute,
-		private readonly errorHandler: ErrorHandlingService
+		translateService: TranslateService,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _proposalTemplateService: ProposalTemplateService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _nl2BrPipe: Nl2BrPipe,
+		private readonly _truncatePipe: TruncatePipe,
+		private readonly _http: HttpClient,
+		private readonly _route: ActivatedRoute,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
+		private readonly _i18nService: I18nService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		// Apply translation on smart table
 		this._applyTranslationOnSmartTable();
+		// Load smart table settings
 		this._loadSmartTableSettings();
+		// Initialize UI permissions
+		this.initializeUiPermissions();
+		// Initialize UI languages and Update Locale
+		this.initializeUiLanguagesAndLocale();
+
 		// Subscribe to changes in the templates$ observable stream
 		this.templates$
 			.pipe(
@@ -107,8 +125,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 				untilDestroyed(this)
 			)
 			.subscribe();
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeEmployee$ = this._store.selectedEmployee$;
 		// Combine the latest values from storeOrganization$ and storeEmployee$ observables
 		combineLatest([storeOrganization$, storeEmployee$])
 			.pipe(
@@ -132,7 +150,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.route.queryParamMap
+		this._route.queryParamMap
 			.pipe(
 				// Filter out falsy values and check if the 'openAddDialog' query parameter is 'true'
 				filter((params) => !!params && params.get('openAddDialog') === 'true'),
@@ -148,13 +166,40 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 	ngAfterViewInit() {
 		// Check if the user is logged in and does not have the specified permission
-		if (this.store.user && !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (this._store.user && !this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// Remove the 'employeeId' column from the smartTableSettings
 			delete this.smartTableSettings['columns']['employeeId'];
 
 			// Create a new object with the updated smartTableSettings
 			this.smartTableSettings = Object.assign({}, this.smartTableSettings);
 		}
+	}
+
+	/**
+	 * Initialize UI permissions
+	 */
+	private initializeUiPermissions() {
+		// Load permissions
+		const permissions = this._store.userRolePermissions.map(({ permission }) => permission);
+		this._ngxPermissionsService.flushPermissions(); // Flush permissions
+		this._ngxPermissionsService.loadPermissions(permissions); // Load permissions
+	}
+
+	/**
+	 * Initialize UI languages and Update Locale
+	 */
+	private initializeUiLanguagesAndLocale() {
+		// Observable that emits when preferred language changes.
+		const preferredLanguage$ = merge(this._store.preferredLanguage$, this._i18nService.preferredLanguage$).pipe(
+			distinctUntilChange(),
+			filter((preferredLanguage: LanguagesEnum) => !!preferredLanguage),
+			untilDestroyed(this)
+		);
+
+		// Subscribe to preferred language changes
+		preferredLanguage$.subscribe((preferredLanguage: string | LanguagesEnum) => {
+			this.translateService.use(preferredLanguage);
+		});
 	}
 
 	/*
@@ -169,14 +214,11 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 		// Set loading to true while data is being loaded
 		this.loading = true;
 
-		// Destructure 'tenantId' from the logged-in user's information
-		const { tenantId } = this.store.user;
-
 		// Destructure 'organizationId' from the 'organization' object
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		// Create a new instance of ServerDataSource with specified configuration
-		this.smartTableSource = new ServerDataSource(this.http, {
+		this.smartTableSource = new ServerDataSource(this._http, {
 			// Specify the API endpoint for data retrieval
 			endPoint: `${API_PREFIX}/employee-proposal-template/pagination`,
 
@@ -225,8 +267,9 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 			// Set paging for the smart table source
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
 		} catch (error) {
+			console.log('Error while retrieving proposal templates', error);
 			// Handle errors by displaying a danger toastr message
-			this.toastrService.danger(error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -253,11 +296,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 		// Configure Smart Table settings
 		this.smartTableSettings = {
-			actions: false,
-			editable: true,
-			hideSubHeader: true,
-			selectedRowIndex: -1,
-			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
+			...this.smartTableSettings,
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
@@ -286,7 +325,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					width: '30%',
 					filter: false,
 					sort: false,
-					valuePrepareFunction: (value: IEmployeeProposalTemplate['name']) => value.slice(0, 150)
+					valuePrepareFunction: (value: string) => value.slice(0, 150)
 				},
 				content: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.DESCRIPTION'),
@@ -294,8 +333,8 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					width: '40%',
 					filter: false,
 					sort: false,
-					valuePrepareFunction: (value: IEmployeeProposalTemplate['content']) => {
-						return value ? this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500) : '';
+					valuePrepareFunction: (value: string) => {
+						return value ? this._truncatePipe.transform(this._nl2BrPipe.transform(value), 500) : '';
 					}
 				},
 				isDefault: {
@@ -304,7 +343,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					width: '10%',
 					filter: false,
 					sort: false,
-					valuePrepareFunction: (value: IEmployeeProposalTemplate['isDefault']) => {
+					valuePrepareFunction: (value: boolean) => {
 						return value
 							? this.getTranslation('PROPOSAL_TEMPLATE.YES')
 							: this.getTranslation('PROPOSAL_TEMPLATE.NO');
@@ -320,7 +359,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	 */
 	async createProposalTemplate(): Promise<void> {
 		// Open a dialog for adding/editing a proposal template
-		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
+		const dialog = this._dialogService.open(AddEditProposalTemplateComponent, {
 			context: { selectedEmployee: this.selectedEmployee }
 		});
 
@@ -339,7 +378,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 	 */
 	async editProposalTemplate(): Promise<void> {
 		// Open a dialog for adding/editing a proposal template
-		const dialog = this.dialogService.open(AddEditProposalTemplateComponent, {
+		const dialog = this._dialogService.open(AddEditProposalTemplateComponent, {
 			context: {
 				proposalTemplate: this.selectedItem,
 				selectedEmployee: this.selectedEmployee
@@ -368,7 +407,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 		}
 
 		// Open the dialog for user confirmation
-		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
+		const dialogRef = this._dialogService.open(DeleteConfirmationComponent, {
 			context: { recordType: 'Proposal' }
 		});
 
@@ -381,19 +420,17 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 						return;
 					}
 
-					const { id: proposalTemplateId } = this.selectedItem;
+					const { id: proposalTemplateId, name } = this.selectedItem;
 
 					// Delete the proposal template for specific employee
-					await this.proposalTemplateService.delete(proposalTemplateId);
+					await this._proposalTemplateService.delete(proposalTemplateId);
 
 					// Display a success message using the toastrService
-					this.toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE', {
-						name: this.selectedItem.name
-					});
+					this._toastrService.success('PROPOSAL_TEMPLATE.PROPOSAL_DELETE_MESSAGE', { name });
 				}
 			} catch (error) {
 				// Handle errors during the process
-				this.errorHandler.handleError(error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				// Update the templates$ observable, regardless of success or failure
 				this.templates$.next(true);
@@ -413,7 +450,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 			const { id: proposalTemplateId, organizationId, tenantId } = this.selectedItem;
 
 			// Call the makeDefault method of the proposalTemplateService to update the default status
-			const result = await this.proposalTemplateService.makeDefault(proposalTemplateId, {
+			const result = await this._proposalTemplateService.makeDefault(proposalTemplateId, {
 				isDefault: input.isDefault,
 				organizationId,
 				tenantId
@@ -425,10 +462,10 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 				: 'PROPOSAL_TEMPLATE.PROPOSAL_REMOVE_DEFAULT_MESSAGE';
 
 			// Display a success message using the toastrService
-			this.toastrService.success(successMessage, { name: this.selectedItem.name });
+			this._toastrService.success(successMessage, { name: this.selectedItem.name });
 		} catch (error) {
 			// Handle errors during the process
-			this.errorHandler.handleError(error);
+			this._errorHandlingService.handleError(error);
 		} finally {
 			// Update the templates$ observable, regardless of success or failure
 			this.templates$.next(true);

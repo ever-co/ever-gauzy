@@ -45,7 +45,7 @@ export class ImageAssetComponent extends TranslationBaseComponent implements OnI
 	}
 
 	async onSaveRequest() {
-		const request = { ...this.imageAsset, ...this.form.value };
+		const request = { id: this.imageAsset.id, ...this.form.value };
 		this.imageAssetService
 			.updateImageAsset(request)
 			.then((res) => {

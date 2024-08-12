@@ -19,35 +19,4 @@ import { createRoutes } from './job.routes';
 		}
 	]
 })
-export class JobsModule {
-	constructor(private readonly _pageRouteService: PageRouteService) {
-		// Register the routes
-		this.registerRoutes(this._pageRouteService);
-	}
-
-	/**
-	 * Register routes for the Jobs module
-	 *
-	 * @param _pageRouteService
-	 * @returns {void}
-	 */
-	registerRoutes(_pageRouteService: PageRouteService): void {
-		// Register Job Proposal Template Page Routes
-		_pageRouteService.registerPageRoute({
-			// Register the location 'jobs'
-			location: 'jobs',
-			// Register the path 'proposal-template'
-			path: 'proposal-template',
-			// Register the loadChildren function to load the ProposalTemplateModule lazy module
-			loadChildren: () =>
-				import('./proposal-template/proposal-template.module').then((m) => m.ProposalTemplateModule),
-			// Register the data object
-			data: {
-				selectors: {
-					project: false,
-					team: false
-				}
-			}
-		});
-	}
-}
+export class JobsModule {}

@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -25,10 +23,8 @@ import { EmployeeLevelRoutingModule } from './employee-level-routing.module';
 
 @NgModule({
 	imports: [
-		CommonModule,
 		SharedModule,
 		NbCardModule,
-		FormsModule,
 		NbButtonModule,
 		EmployeeLevelRoutingModule,
 		NbInputModule,

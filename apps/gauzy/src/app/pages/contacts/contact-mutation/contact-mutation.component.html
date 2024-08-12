@@ -33,14 +33,8 @@
 							<div class="contact-photo">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
-									(uploadedImageAsset)="
-										contMainForm
-											.get('imageUrl')
-											.setValue($event)
-									"
-									(uploadImageAssetError)="
-										handleImageUploadError($event)
-									"
+									(uploadedImageAsset)="updateImageAsset($event)"
+									(uploadImageAssetError)="handleImageUploadError($event)"
 								></ngx-image-uploader>
 								<svg
 									*ngIf="
