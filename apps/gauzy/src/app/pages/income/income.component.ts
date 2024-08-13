@@ -220,7 +220,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '15%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -236,7 +236,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -246,7 +246,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 				},
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
-					filter: false,
+					isFilterable: false,
 					width: '15%',
 					type: 'custom',
 					sort: false,
@@ -260,7 +260,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.VALUE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -272,7 +272,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					type: 'text',
 					class: 'align-row',
 					width: '25%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -290,7 +290,7 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

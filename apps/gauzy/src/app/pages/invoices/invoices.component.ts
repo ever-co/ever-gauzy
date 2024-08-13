@@ -917,7 +917,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 					: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 				type: 'custom',
 				width: '10%',
-				filter: false,
+				isFilterable: false,
 				renderComponent: DateViewComponent,
 				componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -930,7 +930,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 				type: 'custom',
 				width: '10%',
-				filter: false,
+				isFilterable: false,
 				renderComponent: DateViewComponent,
 				componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -943,7 +943,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.TOTAL_VALUE'),
 				type: 'custom',
 				width: '10%',
-				filter: false,
+				isFilterable: false,
 				renderComponent: InvoiceTotalValueComponent,
 				componentInitFunction: (instance: InvoiceTotalValueComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -956,7 +956,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.TAX'),
 				type: 'text',
 				width: '5%',
-				filter: false,
+				isFilterable: false,
 				valuePrepareFunction: (row: { value?: any }) => {
 					return row?.value ?? '';
 				}
@@ -967,7 +967,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.TAX_2'),
 				type: 'text',
 				width: '6%',
-				filter: false,
+				isFilterable: false,
 				valuePrepareFunction: (row: { value?: any }) => {
 					return row?.value ?? '';
 				}
@@ -978,7 +978,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.INVOICES_SELECT_DISCOUNT'),
 				type: 'text',
 				width: '5%',
-				filter: false,
+				isFilterable: false,
 				valuePrepareFunction: (row: { value?: any }) => {
 					return row?.value ?? '';
 				}
@@ -989,7 +989,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.CONTACT'),
 				type: 'custom',
 				width: '12%',
-				filter: false,
+				isFilterable: false,
 				sort: false,
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
@@ -1004,7 +1004,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 					title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 					type: 'custom',
 					width: '12%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InvoicePaidComponent,
 					componentInitFunction: (instance: InvoicePaidComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -1017,7 +1017,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 				title: this.getTranslation('INVOICES_PAGE.STATUS'),
 				type: 'custom',
 				width: '5%',
-				filter: false,
+				isFilterable: false,
 				renderComponent: StatusBadgeComponent,
 				componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 					instance.value = cell.getRawValue();

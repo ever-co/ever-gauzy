@@ -128,12 +128,12 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 				name: {
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.NAME'),
 					type: 'string',
-					filter: true
+					isFilterable: true
 				},
 				employees: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -144,7 +144,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.REQUIRES_APPROVAL'),
 					type: 'custom',
 					width: '20%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: RequestApprovalIcon,
 					componentInitFunction: (instance: RequestApprovalIcon, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -155,7 +155,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 					title: this.getTranslation('TIME_OFF_PAGE.POLICY.PAID'),
 					type: 'custom',
 					width: '20%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: PaidIcon,
 					componentInitFunction: (instance: PaidIcon, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

@@ -153,7 +153,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 					title: this.getTranslation('SM_TABLE.EMPLOYEES'),
 					type: 'custom',
 					width: '200px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: OrganizationTotalEmployeesCountComponent,
 					componentInitFunction: (instance: OrganizationTotalEmployeesCountComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -172,7 +172,7 @@ export class OrganizationsComponent extends PaginationFilterBaseComponent implem
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: OrganizationsStatusComponent,
 					componentInitFunction: (instance: OrganizationsStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

@@ -362,7 +362,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 					public: {
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.VISIBILITY'),
 						type: 'custom',
-						filter: false,
+						isFilterable: false,
 						renderComponent: VisibilityComponent,
 						componentInitFunction: (instance: VisibilityComponent, cell: Cell) => {
 							instance.rowData = cell.getRow().getData();
@@ -392,7 +392,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.START_DATE'),
 						type: 'custom',
 						class: 'text-center',
-						filter: false,
+						isFilterable: false,
 						renderComponent: DateViewComponent,
 						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 							instance.value = cell.getValue();
@@ -402,7 +402,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 						title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.END_DATE'),
 						type: 'custom',
 						class: 'text-center',
-						filter: false,
+						isFilterable: false,
 						renderComponent: DateViewComponent,
 						componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 							instance.value = cell.getValue();
@@ -426,7 +426,7 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 							instance.rowData = cell.getRow().getData();
 							instance.value = cell.getValue();
 						},
-						filter: {
+						isFilterable: {
 							type: 'custom',
 							component: TagsColorFilterComponent
 						},

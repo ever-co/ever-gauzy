@@ -397,7 +397,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					sortDirection: 'desc',
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -415,7 +415,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -427,7 +427,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('SM_TABLE.JOB_POST_URL'),
 					type: 'custom', // Set column type to 'custom'
 					width: '25%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ClickableLinkComponent,
 					componentInitFunction: (instance: ClickableLinkComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -444,7 +444,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: OrganizationContactFilterComponent
 					},
@@ -459,7 +459,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('SM_TABLE.AUTHOR'),
 					type: 'custom',
 					width: '20%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeLinksComponent,
 					valuePrepareFunction: (value: IEmployee) => ({
 						id: value?.id,
@@ -476,7 +476,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					type: 'custom',
 					width: '5%',
 					class: 'text-center',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -495,7 +495,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getRawValue();
 				},
-				filter: {
+				isFilterable: {
 					type: 'custom',
 					component: TagsColorFilterComponent
 				},

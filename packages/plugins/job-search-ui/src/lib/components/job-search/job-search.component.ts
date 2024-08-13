@@ -646,7 +646,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 					: {
 							employee: {
 								title: this.getTranslation('JOBS.EMPLOYEE'),
-								filter: false,
+								isFilterable: false,
 								width: '15%',
 								type: 'custom',
 								sort: false,
@@ -669,7 +669,7 @@ export class JobSearchComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('JOBS.JOB_DETAILS'),
 					width: '85%',
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					sort: false,
 					renderComponent: JobTitleDescriptionDetailsComponent,
 					componentInitFunction(instance: JobTitleDescriptionDetailsComponent, cell: Cell) {

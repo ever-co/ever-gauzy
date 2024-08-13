@@ -265,7 +265,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 			columns: {
 				employee: {
 					title: this.getTranslation('PROPOSAL_TEMPLATE.EMPLOYEE'),
-					filter: false,
+					isFilterable: false,
 					width: '20%',
 					type: 'custom',
 					sort: false,
@@ -284,7 +284,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					title: this.getTranslation('PROPOSAL_TEMPLATE.NAME'),
 					type: 'text',
 					width: '30%',
-					filter: false,
+					isFilterable: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['name']) => value.slice(0, 150)
 				},
@@ -292,7 +292,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					title: this.getTranslation('PROPOSAL_TEMPLATE.DESCRIPTION'),
 					type: 'html',
 					width: '40%',
-					filter: false,
+					isFilterable: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['content']) => {
 						return value ? this.truncatePipe.transform(this.nl2BrPipe.transform(value), 500) : '';
@@ -302,7 +302,7 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 					title: this.getTranslation('PROPOSAL_TEMPLATE.IS_DEFAULT'),
 					type: 'text',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					sort: false,
 					valuePrepareFunction: (value: IEmployeeProposalTemplate['isDefault']) => {
 						return value

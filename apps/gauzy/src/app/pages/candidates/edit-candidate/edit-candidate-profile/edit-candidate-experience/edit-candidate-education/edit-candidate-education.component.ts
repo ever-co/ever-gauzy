@@ -121,7 +121,7 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 				degree: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DEGREE'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				field: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.FIELD'),
@@ -130,12 +130,12 @@ export class EditCandidateEducationComponent extends PaginationFilterBaseCompone
 				notes: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.ADDITIONAL_NOTES'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				completionDate: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.COMPLETION_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

@@ -306,7 +306,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
@@ -315,7 +315,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%'
 			};
 		} else if (
@@ -326,7 +326,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
@@ -336,7 +336,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 				type: 'text',
 				width: '13%',
-				filter: false
+				isFilterable: false
 			};
 		}
 		this.settingsSmartTable['columns']['description'] = {
@@ -354,7 +354,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			valuePrepareFunction: (cell, row) => {
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
-			filter: false,
+			isFilterable: false,
 			width: '13%'
 		};
 		if (this.organization.separateInvoiceItemTaxAndDiscount) {
@@ -364,7 +364,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
@@ -380,7 +380,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (cell) => {
 					if (cell) {
