@@ -312,7 +312,7 @@ export class EventTypeComponent extends PaginationFilterBaseComponent implements
 				employeeName: {
 					title: this.getTranslation('EVENT_TYPE_PAGE.EMPLOYEE'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					sort: false
 				}
 			},

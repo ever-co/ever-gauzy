@@ -331,7 +331,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				projects: {
 					title: this.getTranslation('SM_TABLE.PROJECTS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ProjectNamesComponent,
 					componentInitFunction: (instance: ProjectNamesComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -340,7 +340,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				contact: {
 					title: this.getTranslation('SM_TABLE.CONTACTS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ClientNamesComponent,
 					componentInitFunction: (instance: ClientNamesComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -349,7 +349,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				departments: {
 					title: this.getTranslation('SM_TABLE.DEPARTMENTS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DepartmentNamesComponent,
 					componentInitFunction: (instance: DepartmentNamesComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -362,7 +362,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 				createdDate: {
 					title: this.getTranslation('SM_TABLE.CREATED'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

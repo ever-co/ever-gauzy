@@ -227,12 +227,12 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				min_count: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_MIN_COUNT'),
 					type: 'number',
-					filter: false
+					isFilterable: false
 				},
 				approvalPolicy: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_APPROVAL_POLICY'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ApprovalPolicyComponent,
 					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -241,7 +241,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				createdByName: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_BY'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: CreateByComponent,
 					componentInitFunction: (instance: CreateByComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -250,7 +250,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				createdAt: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.CREATED_AT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -260,7 +260,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				employees: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.EMPLOYEES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -270,7 +270,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 				teams: {
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.TEAMS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: TaskTeamsComponent,
 					componentInitFunction: (instance: TaskTeamsComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -280,7 +280,7 @@ export class ApprovalsComponent extends PaginationFilterBaseComponent implements
 					title: this.getTranslation('APPROVAL_REQUEST_PAGE.APPROVAL_REQUEST_STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getValue();
