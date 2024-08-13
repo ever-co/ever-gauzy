@@ -119,9 +119,8 @@ export class PluginListComponent implements OnInit {
 			.subscribe();
 	}
 
-	public handleRowSelection(event) {
-		const selected = event.selected[0];
-		this.plugin = selected && selected.id === this.plugin?.id ? this.plugin : selected;
+	public handleRowSelection({ isSelected, data }) {
+		this.plugin = isSelected ? data : null;
 	}
 
 	public changeStatus() {
