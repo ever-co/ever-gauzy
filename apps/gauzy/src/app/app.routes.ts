@@ -1,8 +1,7 @@
-import { ExtraOptions, RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { AuthGuard } from '@gauzy/ui-core/core';
-import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
-import { SignInSuccessModule } from './auth/signin-success/signin-success.module';
+import { SignInSuccessModule } from './auth/sign-in-success/sign-in-success.module';
 import { AppModuleGuard } from './app.module.guard';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
@@ -10,7 +9,7 @@ import { OnboardOrganizationClientModule } from './auth/onboard-organization-cli
 /**
  * Routes for the application.
  */
-export const routes: Routes = [
+const routes: Routes = [
 	{
 		path: 'pages',
 		loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule),
@@ -40,8 +39,8 @@ export const routes: Routes = [
 		loadChildren: () => import('./legal/legal.module').then((m) => m.LegalModule)
 	},
 	{
-		path: 'sign-in/success',
-		component: SignInSuccessComponent
+		path: 'sign-in',
+		loadChildren: () => import('./auth/sign-in-success/sign-in-success.module').then((m) => m.SignInSuccessModule)
 	},
 	{
 		path: '',
@@ -56,7 +55,12 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-	imports: [SignInSuccessModule, AcceptInviteModule, OnboardOrganizationClientModule],
+	imports: [
+		RouterModule.forRoot(routes, { useHash: true }),
+		SignInSuccessModule,
+		AcceptInviteModule,
+		OnboardOrganizationClientModule
+	],
 	exports: [RouterModule]
 })
 export class AppRoutingModule {}

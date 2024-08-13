@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
-import { SignInSuccessComponent } from './sign-in-success.component';
 import { PageRouteService } from '@gauzy/ui-core/core';
+import { SignInSuccessComponent } from './sign-in-success.component';
 
 /**
  * Creates signin success routes for the application
@@ -10,7 +10,11 @@ import { PageRouteService } from '@gauzy/ui-core/core';
  */
 export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 	{
-		path: '',
+		path: 'success',
+		component: SignInSuccessComponent
+	},
+	{
+		path: 'google',
 		component: SignInSuccessComponent
 	}
 ];

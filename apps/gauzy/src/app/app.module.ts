@@ -3,7 +3,7 @@
 
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { Router, RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
@@ -50,7 +50,7 @@ import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n'
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
-import { AppRoutingModule, routes } from './app.routes';
+import { AppRoutingModule } from './app.routes';
 import { AppModuleGuard } from './app.module.guard';
 import { initializeSentry } from './sentry';
 
@@ -86,7 +86,6 @@ const NB_MODULES = [
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
-		RouterModule.forRoot(routes, { useHash: true }),
 		AppRoutingModule,
 		...NB_MODULES,
 		TranslateModule.forRoot({
