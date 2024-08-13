@@ -1,17 +1,12 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Route, ROUTES } from '@angular/router';
 import { NbSidebarModule, NbLayoutModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { ServerDownPage } from './server-down.page';
-
-const routes: Routes = [
-	{
-		path: '',
-		component: ServerDownPage
-	}
-];
+import { PageRouteService } from '@gauzy/ui-core/core';
+import { createRoutes } from './server-down.routes';
+import { ServerDownComponent } from './server-down.component';
 
 @NgModule({
 	imports: [
@@ -19,9 +14,17 @@ const routes: Routes = [
 		FormsModule,
 		NbSidebarModule,
 		NbLayoutModule,
-		RouterModule.forChild(routes),
+		RouterModule.forChild([]),
 		TranslateModule.forChild()
 	],
-	declarations: [ServerDownPage]
+	declarations: [ServerDownComponent],
+	providers: [
+		{
+			provide: ROUTES,
+			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
+			deps: [PageRouteService],
+			multi: true
+		}
+	]
 })
 export class ServerDownModule {}

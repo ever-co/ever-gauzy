@@ -3,11 +3,14 @@ import { NgModule } from '@angular/core';
 import { AuthGuard } from '@gauzy/ui-core/core';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
 import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
-import { AppModuleGuard } from './app.module.guards';
+import { AppModuleGuard } from './app.module.guard';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
 
-const routes: Routes = [
+/**
+ * Routes for the application.
+ */
+export const routes: Routes = [
 	{
 		path: 'pages',
 		loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule),
@@ -41,17 +44,8 @@ const routes: Routes = [
 	{ path: '**', redirectTo: 'pages' }
 ];
 
-const config: ExtraOptions = {
-	useHash: true
-};
-
 @NgModule({
-	imports: [
-		RouterModule.forRoot(routes, config),
-		SignInSuccessModule,
-		AcceptInviteModule,
-		OnboardOrganizationClientModule
-	],
+	imports: [SignInSuccessModule, AcceptInviteModule, OnboardOrganizationClientModule],
 	exports: [RouterModule]
 })
 export class AppRoutingModule {}

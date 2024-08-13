@@ -5,10 +5,11 @@ import { Store } from '@gauzy/ui-core/common';
 import { ServerConnectionService } from '@gauzy/ui-core/core';
 
 @Component({
-	styleUrls: ['./server-down.page.scss'],
-	templateUrl: 'server-down.page.html'
+	selector: 'ga-server-down-page',
+	styleUrls: ['./server-down.component.scss'],
+	templateUrl: './server-down.component.html'
 })
-export class ServerDownPage implements OnInit, OnDestroy {
+export class ServerDownComponent implements OnInit, OnDestroy {
 	noInternetLogo: string;
 	interval: any;
 
@@ -25,6 +26,9 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		this.checkConnection();
 	}
 
+	/**
+	 * Checks the server connection every 5 seconds.
+	 */
 	private async checkConnection() {
 		const url = this.environment.API_BASE_URL;
 		console.log('Checking server connection to URL: ', url);
@@ -44,6 +48,11 @@ export class ServerDownPage implements OnInit, OnDestroy {
 		}, 5000);
 	}
 
+	/**
+	 * Checks if the company site is defined in the environment.
+	 *
+	 * @return {string} The company site name.
+	 */
 	public get companySite(): string {
 		return this.environment.COMPANY_SITE_NAME;
 	}
