@@ -23,7 +23,8 @@ const routes: Routes = [
 	},
 	{
 		path: 'time-tracker',
-		component: TimeTrackerComponent
+		component: TimeTrackerComponent,
+		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	},
 	{
 		path: 'screen-capture',
@@ -53,10 +54,6 @@ const routes: Routes = [
 	{
 		path: 'always-on',
 		component: AlwaysOnComponent
-	},
-	{
-		path: 'recap',
-		loadChildren: () => import('@gauzy/desktop-ui-lib').then((m) => m.recapRoutes)
 	}
 ];
 
