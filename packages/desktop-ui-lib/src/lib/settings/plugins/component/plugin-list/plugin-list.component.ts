@@ -5,6 +5,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Angular2SmartTableComponent, Cell, LocalDataSource } from 'angular2-smart-table';
 import { BehaviorSubject, concatMap, filter, from, Observable, switchMap, tap } from 'rxjs';
+import { ToastrNotificationService } from '../../../../services';
 import { PluginElectronService } from '../../services/plugin-electron.service';
 import { IPlugin } from '../../services/plugin-loader.service';
 import { AddPluginComponent } from '../add-plugin/add-plugin.component';
@@ -20,6 +21,7 @@ import { PluginUpdateComponent } from './plugin-update/plugin-update.component';
 export class PluginListComponent implements OnInit {
 	private readonly translateService = inject(TranslateService);
 	private readonly pluginElectronService = inject(PluginElectronService);
+	private readonly toastrNotificationService = inject(ToastrNotificationService);
 	private readonly dialog = inject(NbDialogService);
 	private readonly router = inject(Router);
 	private readonly ngZone = inject(NgZone);
@@ -93,7 +95,7 @@ export class PluginListComponent implements OnInit {
 	private observePlugins(): void {
 		this.pluginElectronService.status
 			.pipe(
-				tap(() => (this.processing = false)),
+				tap((response) => this.ngZone.run(() => this.handleStatus(response))),
 				filter((response) => response.status === 'success'),
 				switchMap(() => from(this.pluginElectronService.plugins)),
 				tap((plugins) => this.ngZone.run(() => (this.plugins = plugins))),
@@ -108,6 +110,27 @@ export class PluginListComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private handleStatus(notification: { status: string; message?: string }) {
+		switch (notification.status) {
+			case 'success':
+				this.processing = false;
+				this.toastrNotificationService.success(notification.message);
+				break;
+			case 'error':
+				this.processing = false;
+				this.toastrNotificationService.error(notification.message);
+				break;
+			case 'inProgress':
+				this.processing = true;
+				this.toastrNotificationService.info(notification.message);
+				break;
+			default:
+				this.processing = false;
+				this.toastrNotificationService.warn('Unexpected Status');
+				break;
+		}
 	}
 
 	private loadPlugins(): void {

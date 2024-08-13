@@ -61,7 +61,6 @@ class ElectronPluginListener {
 		return async (event: IpcMainEvent, ...args: any[]) => {
 			try {
 				await handler.call(this, event, ...args);
-				event.reply(PluginChannel.STATUS, { status: 'success' });
 			} catch (error: any) {
 				logger.error('Error handling event:', error);
 				event.reply(PluginChannel.STATUS, { status: 'error', message: error?.message ?? String(error) });
@@ -70,31 +69,45 @@ class ElectronPluginListener {
 	}
 
 	private async loadPlugins(event: IpcMainEvent): Promise<void> {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugins loading...' });
 		await this.pluginManager.loadPlugins();
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins loaded' });
 	}
 
 	private initializePlugins(event: IpcMainEvent): void {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugins initializing' });
 		this.pluginManager.initializePlugins();
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins initialized' });
 	}
 
 	private disposePlugins(event: IpcMainEvent): void {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugins Disposing...' });
 		this.pluginManager.disposePlugins();
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugins Disposed' });
 	}
 
 	private async downloadPlugin(event: IpcMainEvent, config: any): Promise<void> {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Downloading...' });
 		await this.pluginManager.downloadPlugin(config);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Downloaded' });
 	}
 
 	private async activatePlugin(event: IpcMainEvent, name: string): Promise<void> {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Activating...' });
 		await this.pluginManager.activatePlugin(name);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Activated' });
 	}
 
 	private async deactivatePlugin(event: IpcMainEvent, name: string): Promise<void> {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Deactivating...' });
 		await this.pluginManager.deactivatePlugin(name);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Deactivated' });
 	}
 
 	private async uninstallPlugin(event: IpcMainEvent, name: string): Promise<void> {
+		event.reply(PluginChannel.STATUS, { status: 'inProgress', message: 'Plugin Uninstalling...' });
 		await this.pluginManager.uninstallPlugin(name);
+		event.reply(PluginChannel.STATUS, { status: 'success', message: 'Plugin Uninstalled' });
 	}
 }
 
