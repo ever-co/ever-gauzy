@@ -12,13 +12,10 @@ import { AppService } from '@gauzy/ui-core/core';
 export interface ISocialLink {
 	/** The URL of the social link. */
 	url: string;
-
 	/** The icon associated with the social link. */
 	icon: string;
-
 	/** Indicates whether to show or hide the social link. */
 	show: boolean;
-
 	/** (Optional) The target attribute for the link. */
 	target?: string;
 }

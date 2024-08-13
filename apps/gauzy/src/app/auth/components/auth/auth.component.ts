@@ -1,32 +1,28 @@
-import { NbAuthComponent, NbAuthService } from "@nebular/auth";
-import { Component, OnInit } from "@angular/core";
+import { NbAuthComponent, NbAuthService } from '@nebular/auth';
+import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { ActivatedRoute, NavigationStart, Params, Router } from "@angular/router";
-import { filter } from "rxjs/operators";
-import { Observable, map, tap } from "rxjs";
-import { UntilDestroy, untilDestroyed } from "@ngneat/until-destroy";
+import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
+import { Observable, map, tap } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-auth',
 	templateUrl: './auth.component.html',
-	styleUrls: ['./auth.component.scss'],
+	styleUrls: ['./auth.component.scss']
 })
 export class NgxAuthComponent extends NbAuthComponent implements OnInit {
-	isRegister: boolean = false;
+	public isRegister: boolean = false;
 	public queryParams$: Observable<Params>; // Observable for the query params
 
 	constructor(
-		protected readonly auth: NbAuthService,
-		protected readonly location: Location,
+		readonly auth: NbAuthService,
+		readonly location: Location,
 		private readonly _router: Router,
 		private readonly _route: ActivatedRoute
 	) {
 		super(auth, location);
-	}
-
-	updateRegisterClass(url: string) {
-		this.isRegister = url === '/auth/register';
 	}
 
 	ngOnInit() {
@@ -41,17 +37,30 @@ export class NgxAuthComponent extends NbAuthComponent implements OnInit {
 			untilDestroyed(this)
 		);
 
-		this._router.events.pipe(
-			filter((event) => event instanceof NavigationStart),
-			map((event) => event as NavigationStart),
-		).subscribe((event) => {
-			this.updateRegisterClass(event.url);
-		});
+		// Listen to router events to update the register class.
+		this._router.events
+			.pipe(
+				filter((event) => event instanceof NavigationStart),
+				map((event) => event as NavigationStart),
+				tap((event: NavigationStart) => {
+					this.updateRegisterClass(event.url);
+				})
+			)
+			.subscribe();
 	}
 
 	/**
- * Go back to the return URL.
- */
+	 * Update the register class based on the current URL.
+	 *
+	 * @param url
+	 */
+	updateRegisterClass(url: string) {
+		this.isRegister = url === '/auth/register';
+	}
+
+	/**
+	 * Go back to the return URL.
+	 */
 	goBack() {
 		// Access query parameters from the snapshot.
 		const returnUrl = this._route.snapshot.queryParamMap.get('returnUrl');

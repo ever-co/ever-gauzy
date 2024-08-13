@@ -1,22 +1,27 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Route } from '@angular/router';
 import { NbLogoutComponent } from '@nebular/auth';
-import { NoAuthGuard } from '@gauzy/ui-core/core';
-import { NgxLoginComponent } from './login/login.component';
-import { NgxRegisterComponent } from './register/register.component';
-import { NgxAuthComponent } from './auth/auth.component';
-import { NgxForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { NoAuthGuard, PageRouteService } from '@gauzy/ui-core/core';
 import { AcceptInvitePage } from './accept-invite/accept-invite.component';
 import { AcceptClientInvitePage } from './onboard-organization-client';
 import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email';
-import { NgxResetPasswordComponent } from './reset-password/reset-password.component';
-import { ConfirmEmailComponent } from './confirm-email';
-import { ConfirmEmailResolver } from './confirm-email/confirm-email.resolver';
-import { NgxLoginMagicComponent } from './login-magic/login-magic.component';
-import { NgxLoginWorkspaceComponent } from './login-workspace/login-workspace.component';
-import { NgxMagicSignInWorkspaceComponent } from './magic-login-workspace/magic-login-workspace.component';
+import { NgxAuthComponent } from './components/auth/auth.component';
+import { NgxLoginComponent } from './components/login/login.component';
+import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
+import { NgxLoginMagicComponent } from './components/login-magic/login-magic.component';
+import { NgxMagicSignInWorkspaceComponent } from './components/magic-login-workspace/magic-login-workspace.component';
+import { NgxForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
+import { NgxResetPasswordComponent } from './components/reset-password/reset-password.component';
+import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
+import { ConfirmEmailResolver } from './components/confirm-email/confirm-email.resolver';
+import { NgxRegisterComponent } from './components/register/register.component';
 
-export const routes: Routes = [
+/**
+ * Creates routes for the auth module.
+ *
+ * @param _pageRouteService An instance of PageRouteService
+ * @returns An array of Route objects
+ */
+export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 	{
 		path: '',
 		component: NgxAuthComponent,
@@ -51,7 +56,6 @@ export const routes: Routes = [
 				component: NgxMagicSignInWorkspaceComponent,
 				canActivate: [NoAuthGuard]
 			},
-
 			{
 				path: 'request-password',
 				component: NgxForgotPasswordComponent,
@@ -66,9 +70,7 @@ export const routes: Routes = [
 				path: 'confirm-email',
 				component: ConfirmEmailComponent,
 				canActivate: [NoAuthGuard],
-				resolve: {
-					resolver: ConfirmEmailResolver
-				}
+				resolve: { resolver: ConfirmEmailResolver }
 			},
 			{
 				path: 'accept-invite',
@@ -93,9 +95,3 @@ export const routes: Routes = [
 		]
 	}
 ];
-
-@NgModule({
-	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule]
-})
-export class NgxAuthRoutingModule {}

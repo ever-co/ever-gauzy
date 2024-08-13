@@ -8,14 +8,15 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
+	selector: 'ngx-confirm-email',
 	templateUrl: './confirm-email.component.html'
 })
 export class ConfirmEmailComponent extends TranslationBaseComponent implements OnInit {
-	loading: boolean = true;
-	errorMessage: string;
-	successMessage: string;
+	public loading: boolean = true;
+	public errorMessage: string;
+	public successMessage: string;
 
-	constructor(private readonly route: ActivatedRoute, public readonly translateService: TranslateService) {
+	constructor(private readonly route: ActivatedRoute, translateService: TranslateService) {
 		super(translateService);
 	}
 
@@ -29,6 +30,11 @@ export class ConfirmEmailComponent extends TranslationBaseComponent implements O
 			.subscribe();
 	}
 
+	/**
+	 * Verify the email.
+	 *
+	 * @param response - The response from the API.
+	 */
 	async verifiedEmail(response: HttpErrorResponse) {
 		try {
 			if ('status' in response && response.status === HttpStatusCode.BadRequest) {

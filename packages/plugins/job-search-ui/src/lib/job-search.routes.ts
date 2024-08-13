@@ -5,6 +5,7 @@ import { JobSearchComponent } from './components/job-search/job-search.component
 
 /**
  * Creates jobs browse routes for the application
+ *
  * @param _pageRouteService An instance of PageRouteService
  * @returns An array of Route objects
  */

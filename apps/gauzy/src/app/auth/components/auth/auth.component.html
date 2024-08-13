@@ -1,8 +1,8 @@
 <nb-layout>
 	<nb-layout-column class="wrapper">
 		<nb-card class="card">
-			<nb-card-header class="header" [ngClass]="{register: isRegister }">
-				<nav [ngClass]="{ 'hide-go-back' : !(queryParams$ | async)?.returnUrl }" class="navigation">
+			<nb-card-header class="header" [ngClass]="{ register: isRegister }">
+				<nav [ngClass]="{ 'hide-go-back': !(queryParams$ | async)?.returnUrl }" class="navigation">
 					<a (click)="goBack()" class="link back-link" aria-label="Back">
 						<nb-icon icon="arrow-back"></nb-icon>
 					</a>

@@ -54,21 +54,22 @@ export class WorkspaceSelectionComponent extends TranslationBaseComponent implem
 	 */
 	@Output() selectedWorkspace: EventEmitter<IWorkspaceResponse> = new EventEmitter();
 
-	constructor(public readonly translateService: TranslateService) {
+	constructor(translateService: TranslateService) {
 		super(translateService);
 	}
 
 	ngOnInit() {}
 
 	/**
+	 * Select a workspace.
 	 *
-	 * @param workspace
-	 * @returns
+	 * @param workspace - The workspace to select.
 	 */
 	selectWorkspace(workspace: IWorkspaceResponse) {
 		if (!workspace) {
 			return; // Exit if the no workspace
 		}
+
 		this.selectedWorkspace.emit(workspace);
 	}
 }
