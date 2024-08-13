@@ -1,43 +1,14 @@
 {
 	"name": "@gauzy/ui-auth",
 	"version": "0.1.0",
+	"type": "commonjs",
+	"description": "A UI module for authentication in the Ever Gauzy Platform, providing reusable components and services for managing user authentication.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
 		"url": "https://ever.co"
 	},
 	"license": "AGPL-3.0",
-	"private": true,
-	"files": [
-		"dist"
-	],
-	"directories": {
-		"lib": "dist",
-		"test": "__test__"
-	},
-	"publishConfig": {
-		"access": "restricted"
-	},
-	"scripts": {
-		"lib:build": "ng build ui-auth --configuration=development",
-		"lib:build:prod": "ng build ui-auth --configuration=production",
-		"lib:watch": "ng build ui-auth --watch --configuration=development",
-		"clean": "rimraf dist"
-	},
-	"peerDependencies": {
-		"@angular/common": "^16.2.12",
-		"@angular/core": "^16.2.12"
-	},
-	"dependencies": {
-		"tslib": "^2.6.2"
-	},
-	"devDependencies": {
-		"@types/jest": "^29.4.4",
-		"@types/node": "^20.14.9",
-		"rimraf": "^3.0.2",
-		"typescript": "5.1.6",
-		"jest-preset-angular": "^13.1.4"
-	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ever-co/ever-gauzy"
@@ -47,11 +18,42 @@
 	},
 	"homepage": "https://ever.co",
 	"keywords": [
-		"gauzy",
-		"plugin",
 		"angular",
-		"ui"
+		"ui",
+		"authentication",
+		"auth",
+		"gauzy",
+		"ever-co"
 	],
+	"private": true,
+	"scripts": {
+		"lib:build": "ng build ui-auth --configuration=development",
+		"lib:build:prod": "ng build ui-auth --configuration=production",
+		"lib:watch": "ng build ui-auth --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"@angular/forms": "^16.2.12",
+		"@angular/router": "^16.2.12",
+		"@gauzy/contracts": "^0.1.0",
+		"@nebular/auth": "^12.0.0",
+		"@nebular/theme": "^12.0.0",
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^15.0.0",
+		"@ng-select/ng-select": "^11.2.0",
+		"ngx-cookie-service": "^16.1.0",
+		"ngx-permissions": "^13.0.1",
+		"rxjs": "^7.4.0",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.4.4",
+		"@types/node": "^20.14.9",
+		"jest-preset-angular": "^13.1.4"
+	},
 	"engines": {
 		"node": ">=20.11.1",
 		"yarn": ">=1.22.19"
