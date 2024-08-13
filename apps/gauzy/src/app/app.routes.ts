@@ -2,7 +2,7 @@ import { ExtraOptions, RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { AuthGuard } from '@gauzy/ui-core/core';
 import { SignInSuccessComponent } from './auth/signin-success/sign-in-success.component';
-import { SignInSuccessModule } from './auth/signin-success/signin-success-login-google.module';
+import { SignInSuccessModule } from './auth/signin-success/signin-success.module';
 import { AppModuleGuard } from './app.module.guard';
 import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
 import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
@@ -39,9 +39,20 @@ export const routes: Routes = [
 		path: 'legal',
 		loadChildren: () => import('./legal/legal.module').then((m) => m.LegalModule)
 	},
-	{ path: 'sign-in/success', component: SignInSuccessComponent },
-	{ path: '', redirectTo: 'pages', pathMatch: 'full' },
-	{ path: '**', redirectTo: 'pages' }
+	{
+		path: 'sign-in/success',
+		component: SignInSuccessComponent
+	},
+	{
+		path: '',
+		redirectTo: 'pages',
+		pathMatch: 'full'
+	},
+	{
+		path: '**',
+		redirectTo: 'pages',
+		pathMatch: 'full'
+	}
 ];
 
 @NgModule({

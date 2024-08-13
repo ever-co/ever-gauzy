@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Store } from '@gauzy/ui-core/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 
 @Component({
 	selector: 'ga-sign-in-success',
@@ -13,10 +13,20 @@ export class SignInSuccessComponent {
 		private readonly _route: ActivatedRoute,
 		private readonly _router: Router
 	) {
-		this._route.queryParams.pipe(filter((params) => params.jwt)).subscribe(async ({ jwt, userId }) => {
-			this._store.token = jwt;
-			this._store.userId = userId;
-			await this._router.navigate(['/']);
-		});
+		this._route.queryParams
+			.pipe(
+				tap((params) => {
+					// If no 'jwt' param is found, navigate to root
+					if (!params.jwt) {
+						this._router.navigate(['/']);
+					}
+				}),
+				filter((params) => !!params.jwt) // Continue only if 'jwt' exists
+			)
+			.subscribe(async ({ jwt, userId }) => {
+				this._store.token = jwt;
+				this._store.userId = userId;
+				await this._router.navigate(['/']);
+			});
 	}
 }
