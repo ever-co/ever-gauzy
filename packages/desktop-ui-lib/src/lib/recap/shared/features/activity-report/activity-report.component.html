@@ -1,12 +1,4 @@
-<nb-card class="main-report-wrapper">
-	<nb-card-header class="p-3 main-report-header">
-		<h6>{{ 'REPORT_PAGE.APPS_AND_URLS_REPORT' | translate }}</h6>
-		<ngx-date-range-picker [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
-			class="medium"></ngx-date-range-picker>
-		<ngx-filter></ngx-filter>
-	</nb-card-header>
-	<nb-card-body class="main-report-body">
-		<div class="weekly-logs row-table" [nbSpinner]="isLoading$ | async" nbSpinnerSize="giant"
+<div class="weekly-logs row-table" [nbSpinner]="isLoading$ | async" nbSpinnerSize="giant"
 			nbSpinnerStatus="primary">
 			<ng-template #columnsHeader>
 				<div class="columns-header">
@@ -39,8 +31,6 @@
 					[message]="'REPORT_PAGE.NO_DATA.APP_AND_URL_ACTIVITY' | translate"></ngx-no-data-message>
 			</ng-template>
 		</div>
-	</nb-card-body>
-</nb-card>
 
 <ng-template let-day #dailyEl>
 	<nb-card-header class="card-title">
