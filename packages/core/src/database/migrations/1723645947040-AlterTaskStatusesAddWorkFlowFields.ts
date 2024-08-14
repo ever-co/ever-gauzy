@@ -56,14 +56,22 @@ export class AlterTaskStatusesAddWorkFlowFields1723645947040 implements Migratio
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "task_status" ADD "isTodo" boolean NOT NULL DEFAULT false`);
+		await queryRunner.query(`ALTER TABLE "task_status" ADD "isInProgress" boolean NOT NULL DEFAULT false`);
+		await queryRunner.query(`ALTER TABLE "task_status" ADD "isDone" boolean NOT NULL DEFAULT false`);
+	}
 
 	/**
 	 * PostgresDB Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async postgresDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE "task_status" DROP COLUMN "isDone"`);
+		await queryRunner.query(`ALTER TABLE "task_status" DROP COLUMN "isInProgress"`);
+		await queryRunner.query(`ALTER TABLE "task_status" DROP COLUMN "isTodo"`);
+	}
 
 	/**
 	 * SqliteDB and BetterSQlite3DB Up Migration
@@ -138,12 +146,20 @@ export class AlterTaskStatusesAddWorkFlowFields1723645947040 implements Migratio
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`task_status\` ADD \`isTodo\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`task_status\` ADD \`isInProgress\` tinyint NOT NULL DEFAULT 0`);
+		await queryRunner.query(`ALTER TABLE \`task_status\` ADD \`isDone\` tinyint NOT NULL DEFAULT 0`);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(`ALTER TABLE \`task_status\` DROP COLUMN \`isDone\``);
+		await queryRunner.query(`ALTER TABLE \`task_status\` DROP COLUMN \`isInProgress\``);
+		await queryRunner.query(`ALTER TABLE \`task_status\` DROP COLUMN \`isTodo\``);
+	}
 }
