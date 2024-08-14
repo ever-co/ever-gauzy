@@ -1,9 +1,7 @@
 import {
 	createSettingsWindow,
 	getApiBaseUrl,
-	IBaseWindow,
 	loginPage,
-	RecapWindow,
 	RegisteredWindow,
 	timeTrackerPage,
 	WindowManager
@@ -165,25 +163,6 @@ export class TrayIcon {
 				async click(menuItem) {
 					timeTrackerWindow.show();
 					manager.webContents(timeTrackerWindow).send('auth_success_tray_init');
-				}
-			},
-			{
-				type: 'separator',
-				visible: appConfig.timeTrackerWindow
-			},
-			{
-				id: 'gauzy-recap',
-				label: TranslateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
-				accelerator: 'CmdOrCtrl+D',
-				enabled: true,
-				visible: appConfig.timeTrackerWindow,
-				async click() {
-					let recapWindow = manager.getOne(RegisteredWindow.RECAP) as IBaseWindow;
-					if (!recapWindow) {
-						recapWindow = new RecapWindow(windowPath.timeTrackerUi);
-						await recapWindow.loadURL();
-					}
-					recapWindow.show();
 				}
 			},
 			{
@@ -390,8 +369,6 @@ export class TrayIcon {
 			this.tray.setTitle('--:--:--', options);
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
-
-			manager.hide(RegisteredWindow.RECAP);
 
 			menuWindowTime.enabled = false;
 
