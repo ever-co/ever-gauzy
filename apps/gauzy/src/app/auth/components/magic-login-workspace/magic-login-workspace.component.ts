@@ -1,14 +1,11 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { EMPTY, firstValueFrom } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
-import { NbAuthService } from '@nebular/auth';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { HttpStatus, IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
-import { sleep } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/common';
-import { ErrorHandlingService } from '@gauzy/ui-core/core';
-import { AuthService } from '@gauzy/ui-core/core';
+import { IAuthResponse, IUser, IUserSigninWorkspaceResponse, IWorkspaceResponse } from '@gauzy/contracts';
+import { Store, sleep } from '@gauzy/ui-core/common';
+import { AuthService, ErrorHandlingService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,34 +23,26 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 
 	constructor(
 		private readonly _activatedRoute: ActivatedRoute,
-		public readonly nbAuthService: NbAuthService,
-		public readonly cdr: ChangeDetectorRef,
-		public readonly router: Router,
+		private readonly _router: Router,
 		private readonly _store: Store,
 		private readonly _authService: AuthService,
 		private readonly _errorHandlingService: ErrorHandlingService
 	) {}
 
-	/**
-	 *
-	 */
 	ngOnInit(): void {
 		// Create an observable to listen to query parameter changes in the current route.
 		this._activatedRoute.queryParams
 			.pipe(
 				// Filter and ensure that query parameters are present.
 				filter((params: Params) => !!params),
-
 				// Filter and ensure that query parameters are present.
 				filter(({ email, code }: Params) => !!email && !!code),
-
 				// Tap into the observable to update the 'form.email' property with the 'email' query parameter.
 				tap(({ email, code }: Params) => {
 					if (email && code) {
 						this.confirmSingInCode();
 					}
 				}),
-
 				// Use 'untilDestroyed' to handle component lifecycle and avoid memory leaks.
 				untilDestroyed(this)
 			)
@@ -61,7 +50,7 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 	}
 
 	/**
-	 *
+	 * Confirm the sign in code
 	 */
 	async confirmSingInCode() {
 		// Get the email & code value from the query params
@@ -70,39 +59,45 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 			return;
 		}
 
-		// Send a request to sign in to workspaces using the authentication service
-		await firstValueFrom(
-			this._authService.confirmSignInByCode({ email, code }).pipe(
-				tap(async (response: any) => {
-					if (response['status'] === HttpStatus.UNAUTHORIZED) {
-						this.error = true;
+		try {
+			// Send a request to sign in to workspaces using the authentication service
+			await firstValueFrom(
+				this._authService.confirmSignInByCode({ email, code }).pipe(
+					// Update component state with the fetched workspaces
+					tap(
+						({
+							workspaces,
+							show_popup,
+							total_workspaces,
+							confirmed_email
+						}: IUserSigninWorkspaceResponse) => {
+							if (confirmed_email) {
+								this.workspaces = workspaces;
+								this.show_popup = show_popup;
+								this.confirmed_email = confirmed_email;
+								this.total_workspaces = total_workspaces;
 
-						// Sleeps for 2 seconds before Redirecting you to the app
-						const sleepDelay = 2000;
-						await sleep(sleepDelay);
-
-						this.router.navigate(['/auth/login-magic']);
-					}
-				}),
-				// Update component state with the fetched workspaces
-				tap(({ workspaces, show_popup, total_workspaces, confirmed_email }: IUserSigninWorkspaceResponse) => {
-					if (confirmed_email) {
-						this.workspaces = workspaces;
-						this.show_popup = show_popup;
-						this.confirmed_email = confirmed_email;
-						this.total_workspaces = total_workspaces;
-
-						/** */
-						if (total_workspaces == 1) {
-							const [workspace] = workspaces;
-							this.signInWorkspace(workspace);
+								/** */
+								if (total_workspaces == 1) {
+									const [workspace] = workspaces;
+									this.signInWorkspace(workspace);
+								}
+							}
 						}
-					}
-				}),
-				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			)
-		); // Wait for the login request to complete
+					),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this)
+				)
+			); // Wait for the login request to complete
+		} catch (error) {
+			this.error = true;
+
+			// Sleeps for 5 seconds before Redirecting you to the app
+			const sleepDelay = 5000;
+			await sleep(sleepDelay);
+
+			this._router.navigate(['/auth/login-magic']);
+		}
 	}
 
 	/**
@@ -124,39 +119,39 @@ export class NgxMagicSignInWorkspaceComponent implements OnInit {
 		const email = this.confirmed_email;
 		const token = workspace.token;
 
-		// Send a request to sign in to the workspace using the authentication service
-		this._authService
-			.signinWorkspaceByToken({ email, token })
-			.pipe(
-				tap((response: any) => {
-					if (response['status'] === HttpStatus.UNAUTHORIZED) {
-						throw new Error(`${response['message']}`);
-					}
-				}),
-				filter(({ user, token }: IAuthResponse) => !!user && !!token),
-				tap((response: IAuthResponse) => {
-					const user: IUser = response.user;
-					const token: string = response.token;
-					const refresh_token: string = response.refresh_token;
+		try {
+			// Send a request to sign in to the workspace using the authentication service
+			this._authService
+				.signinWorkspaceByToken({ email, token })
+				.pipe(
+					filter(({ user, token }: IAuthResponse) => !!user && !!token),
+					tap((response: IAuthResponse) => {
+						const user: IUser = response.user;
+						const token: string = response.token;
+						const refresh_token: string = response.refresh_token;
 
-					/** */
-					this._store.userId = user.id;
-					this._store.user = user;
-					this._store.token = token;
-					this._store.refresh_token = refresh_token;
-					this._store.organizationId = user.employee?.organizationId;
-					this._store.tenantId = user.tenantId;
+						/** */
+						this._store.userId = user.id;
+						this._store.user = user;
+						this._store.token = token;
+						this._store.refresh_token = refresh_token;
+						this._store.organizationId = user.employee?.organizationId;
+						this._store.tenantId = user.tenantId;
 
-					this.router.navigate(['/']);
-				}),
-				catchError((error) => {
-					// Handle and log errors using the error handling service
-					this._errorHandlingService.handleError(error);
-					return EMPTY;
-				}),
-				// Handle component lifecycle to avoid memory leaks
-				untilDestroyed(this)
-			)
-			.subscribe();
+						this._router.navigate(['/']);
+					}),
+					catchError((error) => {
+						// Handle and log errors using the error handling service
+						this._errorHandlingService.handleError(error);
+						return EMPTY;
+					}),
+					// Handle component lifecycle to avoid memory leaks
+					untilDestroyed(this)
+				)
+				.subscribe();
+		} catch (error) {
+			console.log('Error while signing in workspace', error);
+			this._errorHandlingService.handleError(error);
+		}
 	}
 }

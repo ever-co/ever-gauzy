@@ -97,7 +97,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 			const systemLanguage = systemLanguages.includes(browserLang) ? browserLang : LanguagesEnum.ENGLISH;
 
 			// Set the selected language
-			this._translateService.use(preferredLanguage || systemLanguage);
+			this._i18nService.setLanguage(preferredLanguage || systemLanguage);
 
 			// Observable that emits when theme languages change.
 			this._translateService.onLangChange.subscribe(() => {
@@ -225,7 +225,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 	getPreferredLanguage(): void {
 		this._i18nService.preferredLanguage$
 			.pipe(
-				tap((lang: string) => this._translateService.use(lang)),
+				tap((preferredLanguage: string) => this._translateService.use(preferredLanguage)),
 				untilDestroyed(this)
 			)
 			.subscribe();

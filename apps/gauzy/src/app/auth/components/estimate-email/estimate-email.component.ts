@@ -4,16 +4,20 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEstimateEmail, EstimateStatusTypesEnum } from '@gauzy/contracts';
-import { InvoicesService } from '@gauzy/ui-core/core';
+import { IEstimateEmail, EstimateStatusTypesEnum, ID } from '@gauzy/contracts';
+import { InvoicesService, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
+	selector: 'ga-estimate-email',
 	templateUrl: './estimate-email.component.html'
 })
 export class EstimateEmailComponent extends TranslationBaseComponent implements OnInit {
+	public errorMessage: string;
+	public isAccepted: boolean = false;
+	public loading: boolean = true;
+
 	constructor(
 		private readonly route: ActivatedRoute,
 		private readonly invoicesService: InvoicesService,
@@ -22,10 +26,6 @@ export class EstimateEmailComponent extends TranslationBaseComponent implements 
 	) {
 		super(translateService);
 	}
-
-	errorMessage: string;
-	isAccepted: boolean = false;
-	loading: boolean = true;
 
 	ngOnInit() {
 		this.route.data
@@ -37,6 +37,12 @@ export class EstimateEmailComponent extends TranslationBaseComponent implements 
 			.subscribe();
 	}
 
+	/**
+	 * Validate the estimate email and update the estimate status.
+	 *
+	 * @param estimateEmail - The estimate email to validate.
+	 * @param params - The query params from the route.
+	 */
 	async validateEstimateEmail(estimateEmail: IEstimateEmail, params: Params) {
 		try {
 			if (estimateEmail instanceof HttpErrorResponse) {
@@ -58,7 +64,15 @@ export class EstimateEmailComponent extends TranslationBaseComponent implements 
 		}
 	}
 
-	async updateEstimate(id: string, token: string, isAccepted: boolean, convertAcceptedEstimates: boolean) {
+	/**
+	 * Update the estimate status based on the provided parameters.
+	 *
+	 * @param id - The estimate ID.
+	 * @param token - The estimate token.
+	 * @param isAccepted - Whether the estimate is accepted or rejected.
+	 * @param convertAcceptedEstimates - Whether to convert accepted estimates to drafts.
+	 */
+	async updateEstimate(id: ID, token: string, isAccepted: boolean, convertAcceptedEstimates: boolean) {
 		let status: EstimateStatusTypesEnum;
 		if (isAccepted) {
 			if (convertAcceptedEstimates) {

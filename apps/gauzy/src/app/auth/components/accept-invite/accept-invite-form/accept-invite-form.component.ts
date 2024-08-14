@@ -8,8 +8,8 @@ import { FormHelpers } from '@gauzy/ui-core/shared';
 
 @Component({
 	selector: 'ga-accept-invite-form',
-	templateUrl: 'accept-invite-form.component.html',
-	styleUrls: ['accept-invite-form.component.scss']
+	templateUrl: './accept-invite-form.component.html',
+	styleUrls: ['./accept-invite-form.component.scss']
 })
 export class AcceptInviteFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
@@ -20,8 +20,8 @@ export class AcceptInviteFormComponent extends TranslationBaseComponent implemen
 	@Output()
 	submitForm: EventEmitter<IUserRegistrationInput> = new EventEmitter<IUserRegistrationInput>();
 
-	tenant: ITenant;
-	tags: ITag[];
+	public tenant: ITenant;
+	public tags: ITag[];
 
 	public readonly form: UntypedFormGroup = AcceptInviteFormComponent.buildForm(this.fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: AcceptInviteFormComponent): UntypedFormGroup {

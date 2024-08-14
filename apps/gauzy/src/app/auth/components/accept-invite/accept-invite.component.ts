@@ -1,23 +1,22 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
-import { SetLanguageBaseComponent } from '@gauzy/ui-core/i18n';
-import { ToastrService } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IAuthResponse, IInvite, IUserEmailInput, IUserRegistrationInput, IUserTokenInput } from '@gauzy/contracts';
+import { InviteService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/common';
-import { InviteService } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	styleUrls: ['./accept-invite.component.scss'],
-	templateUrl: 'accept-invite.component.html'
+	templateUrl: './accept-invite.component.html'
 })
-export class AcceptInvitePage extends SetLanguageBaseComponent implements OnInit, OnDestroy {
-	invitation: IInvite;
-	loading: boolean;
-	inviteLoadErrorMessage: string;
+export class AcceptInviteComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+	public invitation: IInvite;
+	public loading: boolean;
+	public inviteLoadErrorMessage: string;
 
 	constructor(
 		private readonly router: Router,
@@ -33,7 +32,6 @@ export class AcceptInvitePage extends SetLanguageBaseComponent implements OnInit
 	ngOnInit(): void {
 		this.route.queryParams
 			.pipe(
-				tap(() => (this.loading = true)),
 				tap(({ email, token }) => this.loadInvite({ email, token })),
 				untilDestroyed(this)
 			)
@@ -46,20 +44,24 @@ export class AcceptInvitePage extends SetLanguageBaseComponent implements OnInit
 	 * @param param0
 	 */
 	loadInvite = async ({ email, token }: IUserEmailInput & IUserTokenInput) => {
+		this.loading = true;
+
 		try {
 			this.invitation = await this.inviteService.validateInvite([], {
 				email,
 				token
 			});
-			if (this.invitation.status) {
-				throw new Error();
-			}
 		} catch (error) {
 			this.inviteLoadErrorMessage = this.getTranslation('ACCEPT_INVITE.INVITATION_NO_LONGER_VALID');
 		}
+
 		this.loading = false;
 	};
 
+	/**
+	 *
+	 * @param input
+	 */
 	submitForm = async (input: IUserRegistrationInput) => {
 		try {
 			const { user, password } = input;

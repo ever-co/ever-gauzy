@@ -25,7 +25,8 @@
 			<ngx-password-form-field
 				[id]="'passwordInput'"
 				[placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
-				[ctrl]="form.get('password')"
+				[label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.PASSWORD' | translate"
+				[ctrl]="form.controls.password"
 				formControlName="password"
 				[fieldSize]="'large'"
 				[ngClass]="{
@@ -40,7 +41,8 @@
 			<ngx-password-form-field
 				[id]="'repeatPasswordInput'"
 				[placeholder]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
-				[ctrl]="form.get('repeatPassword')"
+				[label]="'ACCEPT_INVITE.ACCEPT_INVITE_FORM.REPEAT_PASSWORD' | translate"
+				[ctrl]="form.controls.repeatPassword"
 				formControlName="repeatPassword"
 				[fieldSize]="'large'"
 				[ngClass]="{

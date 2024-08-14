@@ -7,6 +7,7 @@ import {
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbDialogModule,
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
@@ -17,11 +18,10 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { ElectronService, PageRouteService } from '@gauzy/ui-core/core';
+import { ElectronService, InviteService, PageRouteService, RoleService } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createRoutes } from './auth.routes';
-import { EstimateEmailModule } from './estimate-email/estimate-email.module';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
 import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
@@ -36,6 +36,11 @@ import { NgxForgotPasswordComponent } from './components/forgot-password/forgot-
 import { NgxWhatsNewComponent } from './components/whats-new/whats-new.component';
 import { NgxLoginComponent } from './components/login/login.component';
 import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
+import { AcceptInviteComponent } from './components/accept-invite/accept-invite.component';
+import { AcceptInviteFormComponent } from './components/accept-invite/accept-invite-form/accept-invite-form.component';
+import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
+import { AcceptClientInviteFormComponent } from './components/accept-client-invite/accept-client-invite-form/accept-client-invite-form.component';
+import { EstimateEmailComponent } from './components/estimate-email/estimate-email.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -45,6 +50,7 @@ const NB_MODULES = [
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbDialogModule.forChild(),
 	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
@@ -57,35 +63,40 @@ const NB_MODULES = [
 
 // Components
 const COMPONENTS = [
-	NgxLoginComponent,
-	NgxWhatsNewComponent,
+	AcceptClientInviteComponent,
+	AcceptClientInviteFormComponent,
+	AcceptInviteComponent,
+	AcceptInviteFormComponent,
+	ConfirmEmailComponent,
+	EstimateEmailComponent,
+	NgxAuthComponent,
 	NgxForgotPasswordComponent,
+	NgxLoginComponent,
+	NgxLoginMagicComponent,
+	NgxLoginWorkspaceComponent,
+	NgxMagicSignInWorkspaceComponent,
+	NgxRegisterComponent,
 	NgxRegisterSideFeaturesComponent,
 	NgxRegisterSideSingleFeatureComponent,
-	NgxAuthComponent,
-	NgxRegisterComponent,
 	NgxResetPasswordComponent,
-	NgxLoginMagicComponent,
-	NgxMagicSignInWorkspaceComponent,
-	NgxLoginWorkspaceComponent,
+	NgxWhatsNewComponent,
 	SocialLinksComponent,
-	WorkspaceSelectionComponent,
-	ConfirmEmailComponent
+	WorkspaceSelectionComponent
 ];
+
+const THIRD_PARTY_MODULES = [TranslateModule.forChild()];
 
 @NgModule({
 	imports: [
-		...NB_MODULES,
 		RouterModule.forChild([]),
-		TranslateModule.forChild(),
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
 		ThemeSelectorModule,
 		NgxFaqModule,
-		EstimateEmailModule,
 		ThemeModule,
 		SharedModule,
 		PasswordFormFieldModule
 	],
-	exports: [RouterModule],
 	declarations: [...COMPONENTS],
 	providers: [
 		ElectronService,
@@ -94,7 +105,9 @@ const COMPONENTS = [
 			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
 			deps: [PageRouteService],
 			multi: true
-		}
+		},
+		InviteService,
+		RoleService
 	]
 })
 export class NgxAuthModule {}

@@ -1,15 +1,11 @@
-import { RouterModule, Routes } from '@angular/router';
-import { NgModule } from '@angular/core';
+import { Routes } from '@angular/router';
 import { AuthGuard } from '@gauzy/ui-core/core';
-import { SignInSuccessModule } from './auth/sign-in-success/sign-in-success.module';
 import { AppModuleGuard } from './app.module.guard';
-import { AcceptInviteModule } from './auth/accept-invite/accept-invite.module';
-import { OnboardOrganizationClientModule } from './auth/onboard-organization-client/onboard-organization-client.module';
 
 /**
  * Routes for the application.
  */
-const routes: Routes = [
+export const routes: Routes = [
 	{
 		path: 'pages',
 		loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule),
@@ -53,14 +49,3 @@ const routes: Routes = [
 		pathMatch: 'full'
 	}
 ];
-
-@NgModule({
-	imports: [
-		RouterModule.forRoot(routes, { useHash: true }),
-		SignInSuccessModule,
-		AcceptInviteModule,
-		OnboardOrganizationClientModule
-	],
-	exports: [RouterModule]
-})
-export class AppRoutingModule {}

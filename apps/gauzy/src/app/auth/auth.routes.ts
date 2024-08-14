@@ -1,9 +1,6 @@
 import { Route } from '@angular/router';
 import { NbLogoutComponent } from '@nebular/auth';
 import { NoAuthGuard, PageRouteService } from '@gauzy/ui-core/core';
-import { AcceptInvitePage } from './accept-invite/accept-invite.component';
-import { AcceptClientInvitePage } from './onboard-organization-client';
-import { EstimateEmailComponent, EstimateEmailResolver } from './estimate-email';
 import { NgxAuthComponent } from './components/auth/auth.component';
 import { NgxLoginComponent } from './components/login/login.component';
 import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
@@ -14,6 +11,10 @@ import { NgxResetPasswordComponent } from './components/reset-password/reset-pas
 import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
 import { ConfirmEmailResolver } from './components/confirm-email/confirm-email.resolver';
 import { NgxRegisterComponent } from './components/register/register.component';
+import { AcceptInviteComponent } from './components/accept-invite/accept-invite.component';
+import { EstimateEmailComponent } from './components/estimate-email/estimate-email.component';
+import { EstimateEmailResolver } from './components/estimate-email/estimate-email.resolver';
+import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
 
 /**
  * Creates routes for the auth module.
@@ -74,12 +75,12 @@ export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 			},
 			{
 				path: 'accept-invite',
-				component: AcceptInvitePage,
+				component: AcceptInviteComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{
 				path: 'accept-client-invite',
-				component: AcceptClientInvitePage,
+				component: AcceptClientInviteComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{

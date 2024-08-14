@@ -1,7 +1,4 @@
-
-<ng-container
-  	*ngIf="show_popup; then showWorkspacesTemplate; else showMessagesTemplate">
-</ng-container>
+<ng-container *ngIf="show_popup; then showWorkspacesTemplate; else showMessagesTemplate"></ng-container>
 
 <ng-template #showWorkspacesTemplate>
 	<ngx-workspace-selection
@@ -17,20 +14,20 @@
 		<!-- Error Message -->
 		<div *ngIf="error" class="error">
 			<div class="text">
-				<p class="title">{{ "WORKSPACES.FAIL_SIGNIN_TITLE" | translate }}</p>
-				<p class="sub-title">{{ "WORKSPACES.FAIL_SIGNIN_SUB_TITLE" | translate }}</p>
+				<p class="title">{{ 'WORKSPACES.FAIL_SIGNIN_TITLE' | translate }}</p>
+				<p class="sub-title">{{ 'WORKSPACES.FAIL_SIGNIN_SUB_TITLE' | translate }}</p>
 			</div>
 		</div>
 		<!-- Success Message -->
 		<div *ngIf="success" class="success">
 			<div class="text">
-				<p class="title">{{ "WORKSPACES.SUCCESS_SIGNIN_TITLE" | translate }}</p>
-				<p class="sub-title">{{ "WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE" | translate }}</p>
+				<p class="title">{{ 'WORKSPACES.SUCCESS_SIGNIN_TITLE' | translate }}</p>
+				<p class="sub-title">{{ 'WORKSPACES.SUCCESS_SIGNIN_SUB_TITLE' | translate }}</p>
 			</div>
 		</div>
 		<!-- Thanking text -->
 		<div>
-			<p class="thanking-text">{{ "WORKSPACES.THANKING_TEXT" | translate }}</p>
+			<p class="thanking-text">{{ 'WORKSPACES.THANKING_TEXT' | translate }}</p>
 		</div>
 	</div>
 </ng-template>
