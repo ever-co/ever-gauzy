@@ -861,11 +861,12 @@ export class GauzyAIService {
 			return null;
 		}
 
-		const filters: IGetEmployeeJobPostFilters = data.filters ? <any>data.filters : undefined;
+		const filters: IGetEmployeeJobPostFilters = data.filters ?? undefined;
 		console.log(`getEmployeesJobPosts. Filters ${JSON.stringify(filters)}`);
 
-		const employeeIdFilter =
-			filters && filters.employeeIds && filters.employeeIds.length > 0 ? filters.employeeIds[0] : undefined;
+		const employeeIdFilter = filters?.employeeIds?.[0] ?? undefined; // Employee ID filter
+		const tenantIdFilter = filters?.tenantId ?? undefined; // Tenant ID filter
+
 		try {
 			// TODO: use Query saved in SDK, not hard-code it here. Note: we may add much more fields to that query as we need more info!
 			const employeesQuery: DocumentNode<EmployeeJobPostsQuery> = gql`
@@ -989,8 +990,27 @@ export class GauzyAIService {
 					: {})
 			};
 
+			// Get tenant by externalTenantId
+			const tenant = await this.getTenantByExternalTenantId(tenantIdFilter);
+
+			// If tenantIdFilter is provided, filter for tenantId
+			if (tenant) {
+				filter.tenantId = {
+					eq: tenant?.id ?? undefined
+				};
+			} else {
+				// If no tenantIdFilter is provided, filter for null tenantId
+				filter.tenantId = {
+					is: null
+				};
+			}
+
+			// Employee ID filter
 			if (employeeIdFilter) {
+				// Get employee by externalEmployeeId
 				const employeeId = await this.getEmployeeGauzyAIId(employeeIdFilter);
+
+				// Employee ID filter
 				filter.employeeId = {
 					eq: employeeId
 				};
