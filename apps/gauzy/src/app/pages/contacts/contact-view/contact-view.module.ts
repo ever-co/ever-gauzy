@@ -5,7 +5,6 @@ import {
 	NbLayoutModule,
 	NbListModule,
 	NbRouteTabsetModule,
-	NbSidebarModule,
 	NbTabsetModule,
 	NbTagModule,
 	NbUserModule
@@ -27,7 +26,6 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		NbRouteTabsetModule,
 		TranslateModule.forChild(),
 		NbLayoutModule,
-		NbSidebarModule,
 		NbTabsetModule,
 		NbUserModule,
 		NbAccordionModule,
