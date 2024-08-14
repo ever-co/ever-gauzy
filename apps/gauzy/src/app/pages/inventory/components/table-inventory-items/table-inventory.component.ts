@@ -143,7 +143,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					width: '79px',
-					filter: false,
+					isFilterable: false,
 					type: 'custom',
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
@@ -176,7 +176,7 @@ export class TableInventoryComponent extends PaginationFilterBaseComponent imple
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.TAGS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: TagsOnlyComponent,
 					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

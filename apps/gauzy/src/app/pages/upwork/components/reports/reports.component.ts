@@ -83,7 +83,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -92,7 +92,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 				type: {
 					title: this.getTranslation('SM_TABLE.TRANSACTION_TYPE'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value, item) => {
 						if (item.hasOwnProperty('category')) {
 							return item.category ? item.category.name : null;
@@ -114,7 +114,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 					title: this.getTranslation('SM_TABLE.AMOUNT'),
 					type: 'custom',
 					width: '15%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: IncomeExpenseAmountComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -128,7 +128,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 				employee: {
 					title: this.getTranslation('SM_TABLE.EMPLOYEE'),
 					type: 'string',
-					filter: true,
+					isFilterable: true,
 					valuePrepareFunction: (item) => {
 						const user = item.user || null;
 						if (user) {

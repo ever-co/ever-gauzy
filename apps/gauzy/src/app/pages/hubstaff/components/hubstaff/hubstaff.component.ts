@@ -98,12 +98,12 @@ export class HubstaffComponent extends TranslationBaseComponent implements OnIni
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				description: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'),

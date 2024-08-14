@@ -97,7 +97,7 @@ export class WarehouseProductsTableComponent extends PaginationFilterBaseCompone
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

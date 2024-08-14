@@ -138,7 +138,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -149,7 +149,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 				code: {
 					title: this.getTranslation('INVENTORY_PAGE.CODE'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -160,7 +160,7 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 				contact: {
 					title: this.getTranslation('INVENTORY_PAGE.CONTACT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ContactRowComponent,
 					componentInitFunction: (instance: ContactRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -170,14 +170,14 @@ export class MerchantTableComponent extends PaginationFilterBaseComponent implem
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value: string) => (value ? value.slice(0, 15) + '...' : '')
 				},
 				active: {
 					title: this.getTranslation('INVENTORY_PAGE.ACTIVE'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EnabledStatusComponent,
 					componentInitFunction: (instance: EnabledStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

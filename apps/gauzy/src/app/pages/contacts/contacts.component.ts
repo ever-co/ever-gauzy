@@ -221,7 +221,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -232,7 +232,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -242,7 +242,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				primaryPhone: {
 					title: this.getTranslation('CONTACTS_PAGE.PHONE'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -253,7 +253,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				primaryEmail: {
 					title: this.getTranslation('CONTACTS_PAGE.EMAIL'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -267,7 +267,7 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				projects: {
 					title: this.getTranslation('CONTACTS_PAGE.PROJECTS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ProjectComponent,
 					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -277,13 +277,13 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 				country: {
 					title: this.getTranslation('CONTACTS_PAGE.COUNTRY'),
 					type: 'string',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value: string) => this.getCountry(value)
 				},
 				city: {
 					title: this.getTranslation('CONTACTS_PAGE.CITY'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};
