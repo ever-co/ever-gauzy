@@ -20,7 +20,7 @@ import {
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { ElectronService, InviteService, PageRouteService, RoleService } from '@gauzy/ui-core/core';
+import { ElectronService, InviteService, NoAuthGuard, PageRouteService, RoleService } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
@@ -141,7 +141,40 @@ export class NgxAuthModule {
 			return;
 		}
 
-		console.log('registering auth routes');
+		// Register the login workspace route
+		this._pageRouteService.registerPageRoutes([
+			{
+				// Register the location 'auth'
+				location: 'auth',
+				// Register the path 'login-workspace'
+				path: 'login-workspace',
+				// Register the component to load component: NgxLoginWorkspaceComponent,
+				component: NgxLoginWorkspaceComponent,
+				// Register the data object
+				canActivate: [NoAuthGuard]
+			},
+			{
+				// Register the location 'auth'
+				location: 'auth',
+				// Register the path 'login-magic'
+				path: 'login-magic',
+				// Register the component to load component: NgxLoginMagicComponent,
+				component: NgxLoginMagicComponent,
+				// Register the data object
+				canActivate: [NoAuthGuard]
+			},
+			{
+				// Register the location 'auth'
+				location: 'auth',
+				// Register the path 'magic-sign-in'
+				path: 'magic-sign-in',
+				// Register the component to load component: NgxMagicSignInWorkspaceComponent,
+				component: NgxMagicSignInWorkspaceComponent,
+				// Register the data object
+				canActivate: [NoAuthGuard]
+			}
+		]);
+
 		// Set hasRegisteredRoutes to true
 		NgxAuthModule.hasRegisteredPageRoutes = true;
 	}

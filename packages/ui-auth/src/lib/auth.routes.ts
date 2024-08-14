@@ -3,9 +3,6 @@ import { NbLogoutComponent } from '@nebular/auth';
 import { NoAuthGuard, PageRouteService } from '@gauzy/ui-core/core';
 import { NgxAuthComponent } from './components/auth/auth.component';
 import { NgxLoginComponent } from './components/login/login.component';
-import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
-import { NgxLoginMagicComponent } from './components/login-magic/login-magic.component';
-import { NgxMagicSignInWorkspaceComponent } from './components/magic-login-workspace/magic-login-workspace.component';
 import { NgxForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
 import { NgxResetPasswordComponent } from './components/reset-password/reset-password.component';
 import { ConfirmEmailComponent } from './components/confirm-email/confirm-email.component';
@@ -40,21 +37,6 @@ export const createAuthRoutes = (_pageRouteService: PageRouteService): Route[] =
 			{
 				path: 'register',
 				component: NgxRegisterComponent,
-				canActivate: [NoAuthGuard]
-			},
-			{
-				path: 'login-workspace',
-				component: NgxLoginWorkspaceComponent,
-				canActivate: [NoAuthGuard]
-			},
-			{
-				path: 'login-magic',
-				component: NgxLoginMagicComponent,
-				canActivate: [NoAuthGuard]
-			},
-			{
-				path: 'magic-sign-in',
-				component: NgxMagicSignInWorkspaceComponent,
 				canActivate: [NoAuthGuard]
 			},
 			{
