@@ -67,8 +67,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-				? `http://localhost:${arg.port}`
-				: `http://localhost:${config.API_DEFAULT_PORT}`;
+					? `http://localhost:${arg.port}`
+					: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -830,6 +830,7 @@ export function ipcTimer(
 	ipcMain.on('show_image', (event, arg) => {
 		imageView.show();
 		imageView.webContents.send('show_image', arg);
+		imageView.webContents.send('refresh_menu');
 	});
 
 	ipcMain.on('close_image_view', () => {
@@ -855,7 +856,7 @@ export function ipcTimer(
 		const addSetting = LocalStore.getStore('additionalSetting');
 
 		if (!settingWindow) {
-			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi);
+			settingWindow = await createSettingsWindow(settingWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
 		}
 
 		settingWindow.show();

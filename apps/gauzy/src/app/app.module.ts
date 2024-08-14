@@ -3,7 +3,7 @@
 
 import { APP_BASE_HREF } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ExtraOptions, Router, RouterModule } from '@angular/router';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule, APP_INITIALIZER, ErrorHandler } from '@angular/core';
@@ -50,10 +50,11 @@ import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n'
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
-import { AppRoutingModule } from './app-routing.module';
-import { AppModuleGuard } from './app.module.guards';
+import { appRoutes } from './app.routes';
+import { AppModuleGuard } from './app.module.guard';
 import { initializeSentry } from './sentry';
 
+// Initialize Sentry
 if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
@@ -65,6 +66,11 @@ if (environment.SENTRY_DSN) {
 
 // Is production mode?
 const isProd = environment.production;
+
+// Router config
+const config: ExtraOptions = {
+	useHash: true
+};
 
 // NB Modules
 const NB_MODULES = [
@@ -80,34 +86,43 @@ const NB_MODULES = [
 	NbEvaIconsModule
 ];
 
+// Third Party Modules
+const THIRD_PARTY_MODULES = [
+	isProd ? [] : AkitaNgDevtools,
+	CloudinaryModule,
+	FeatureToggleModule,
+	FileUploadModule,
+	NgxPermissionsModule.forRoot(),
+	TranslateModule.forRoot({
+		loader: {
+			provide: TranslateLoader,
+			useFactory: HttpLoaderFactory,
+			deps: [HttpClient]
+		}
+	})
+];
+
+// Feature Modules
+const FEATURE_MODULES = [
+	ThemeModule.forRoot(),
+	UiCoreModule.forRoot(),
+	CommonModule.forRoot(),
+	CoreModule.forRoot(),
+	SharedModule.forRoot(),
+	TimeTrackerModule.forRoot(),
+	I18nModule.forRoot()
+];
+
 @NgModule({
 	declarations: [AppComponent],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
-		AppRoutingModule,
+		RouterModule.forRoot(appRoutes, config),
 		...NB_MODULES,
-		TranslateModule.forRoot({
-			defaultLanguage: LanguagesEnum.ENGLISH,
-			loader: {
-				provide: TranslateLoader,
-				useFactory: HttpLoaderFactory,
-				deps: [HttpClient]
-			}
-		}),
-		CloudinaryModule,
-		FileUploadModule,
-		isProd ? [] : AkitaNgDevtools,
-		FeatureToggleModule,
-		NgxPermissionsModule.forRoot(),
-		I18nModule.forRoot(),
-		UiCoreModule.forRoot(),
-		CommonModule.forRoot(),
-		CoreModule.forRoot(),
-		ThemeModule.forRoot(),
-		SharedModule.forRoot(),
-		TimeTrackerModule.forRoot()
+		...FEATURE_MODULES,
+		...THIRD_PARTY_MODULES
 	],
 	bootstrap: [AppComponent],
 	providers: [

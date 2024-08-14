@@ -29,7 +29,10 @@ import {
 	ISocialAccountBase,
 	ISocialAccountExistUser,
 	ISocialAccountLogin,
-	ISocialAccount
+	ISocialAccount,
+	ILastTeam,
+	ILastOrganization,
+	ID
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { SocialAuthService } from '@gauzy/auth';
@@ -120,6 +123,9 @@ export class AuthService extends SocialAuthService {
 
 			// Store the current refresh token with the user for later validation.
 			await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+			// Set last the login timestamp
+			await this.userService.setUserLastLoginTimestamp(user.id);
 
 			// Return the user object with user details, tokens, and optionally employee info if it exists.
 			return {
@@ -1005,9 +1011,11 @@ export class AuthService extends SocialAuthService {
 	 * @param input - The user email and token input.
 	 * @returns An object containing user information and tokens.
 	 */
-	async workspaceSigninVerifyToken(input: IUserEmailInput & IUserTokenInput): Promise<IAuthResponse | null> {
+	async workspaceSigninVerifyToken(
+		input: IUserEmailInput & IUserTokenInput & ILastOrganization & ILastTeam
+	): Promise<IAuthResponse | null> {
 		try {
-			const { email, token } = input;
+			const { email, token, lastOrganizationId, lastTeamId } = input;
 
 			// Check for missing email or token
 			if (!email || !token) {
@@ -1042,7 +1050,10 @@ export class AuthService extends SocialAuthService {
 					},
 					{
 						code: null,
-						codeExpireAt: null
+						codeExpireAt: null,
+						lastLoginAt: new Date(),
+						lastOrganizationId: lastOrganizationId ?? user.lastOrganizationId,
+						lastTeamId
 					}
 				);
 
@@ -1062,6 +1073,9 @@ export class AuthService extends SocialAuthService {
 
 				// Store the current refresh token with the user for later validation.
 				await this.userService.setCurrentRefreshToken(refresh_token, user.id);
+
+				// Update the last login timestamp for the user
+				await this.userService.setUserLastLoginTimestamp(user.id);
 
 				// Return the user object with user details, tokens, and optionally employee info if it exists.
 				return {
@@ -1110,11 +1124,7 @@ export class AuthService extends SocialAuthService {
 	 *
 	 * @returns A Promise that resolves to an array of IOrganizationTeam objects.
 	 */
-	private async getTeamsForUser(
-		tenantId: string,
-		userId: string,
-		employeeId: string | null
-	): Promise<IOrganizationTeam[]> {
+	private async getTeamsForUser(tenantId: ID, userId: ID, employeeId: ID | null): Promise<IOrganizationTeam[]> {
 		const query = this.typeOrmOrganizationTeamRepository.createQueryBuilder('organization_team');
 		query.innerJoin(
 			`organization_team_employee`,
@@ -1204,6 +1214,7 @@ export class AuthService extends SocialAuthService {
 	}): Promise<IUserSigninWorkspaceResponse> {
 		const workspaces: IWorkspaceResponse[] = [];
 
+		// Iterate through the users and create workspaces for each user
 		for (const user of users) {
 			const workspace = await this.createWorkspace(user, code, includeTeams);
 			workspaces.push(workspace);
@@ -1263,6 +1274,8 @@ export class AuthService extends SocialAuthService {
 			email: user.email || null, // Sets email to null if it's undefined
 			name: user.name || null, // Sets name to null if it's undefined
 			imageUrl: user.imageUrl || null, // Sets imageUrl to null if it's undefined
+			lastTeamId: user.lastTeamId || null, // Sets lastTeam id to null if it's undefined
+			lastLoginAt: user.lastLoginAt || null, // Sets last logout timestamp to null if it's undefined
 			tenant: user.tenant
 				? new Tenant({
 						id: user.tenant.id, // Assuming tenantId is a direct property of tenant

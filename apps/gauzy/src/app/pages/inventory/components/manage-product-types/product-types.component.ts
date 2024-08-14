@@ -132,7 +132,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 				icon: {
 					title: this.getTranslation('INVENTORY_PAGE.ICON'),
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					type: 'custom',
 					renderComponent: IconRowComponent,
 					componentInitFunction: (instance: IconRowComponent, cell: Cell) => {
@@ -143,7 +143,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 					title: this.getTranslation('INVENTORY_PAGE.NAME'),
 					type: 'string',
 					width: '40%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -154,7 +154,7 @@ export class ProductTypesComponent extends PaginationFilterBaseComponent impleme
 				description: {
 					title: this.getTranslation('INVENTORY_PAGE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};

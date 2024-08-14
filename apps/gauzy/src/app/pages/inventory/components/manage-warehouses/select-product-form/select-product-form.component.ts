@@ -118,7 +118,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 				selected: {
 					title: this.getTranslation('INVENTORY_PAGE.SELECTED'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						// ToDo - We need to uncomment below and fix issue.
 						// row.selected = !!this.selectedRows.find(p => p.id == row.id);
@@ -132,7 +132,7 @@ export class SelectProductComponent extends PaginationFilterBaseComponent implem
 				image: {
 					title: this.getTranslation('INVENTORY_PAGE.IMAGE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ImageRowComponent,
 					componentInitFunction: (instance: ImageRowComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

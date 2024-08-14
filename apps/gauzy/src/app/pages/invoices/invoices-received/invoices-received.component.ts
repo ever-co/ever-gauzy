@@ -340,7 +340,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					renderComponent: this.isEstimate ? null : NotesWithTagsComponent,
 					sortDirection: 'asc',
 					width: '20%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -357,7 +357,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 						? this.getTranslation('INVOICES_PAGE.ESTIMATE_DATE')
 						: this.getTranslation('INVOICES_PAGE.INVOICE_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					width: '10%',
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -368,7 +368,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				dueDate: {
 					title: this.getTranslation('INVOICES_PAGE.DUE_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					width: '10%',
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -381,7 +381,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 					type: 'custom',
 					renderComponent: InvoiceTotalValueComponent,
 					width: '12%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -399,7 +399,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 			this.settingsSmartTable['columns']['toContact'] = {
 				title: this.getTranslation('INVOICES_PAGE.SENDER'),
 				type: 'custom',
-				filter: false,
+				isFilterable: false,
 				sort: false,
 				renderComponent: ContactLinksComponent,
 				componentInitFunction: (instance: ContactLinksComponent, cell: Cell) => {
@@ -413,7 +413,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				title: this.getTranslation('INVOICES_PAGE.PAID_STATUS'),
 				type: 'custom',
 				width: '15%',
-				filter: false,
+				isFilterable: false,
 				renderComponent: InvoicePaidComponent,
 				componentInitFunction: (instance: InvoicePaidComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
@@ -427,7 +427,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				class: 'align-row',
 				width: '10%',
 				renderComponent: TagsOnlyComponent,
-				filter: {
+				isFilterable: {
 					type: 'custom',
 					component: TagsColorFilterComponent
 				},
@@ -451,7 +451,7 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				type: 'custom',
 				width: '5%',
 				renderComponent: StatusBadgeComponent,
-				filter: {
+				isFilterable: {
 					type: 'custom',
 					component: InputFilterComponent
 				},

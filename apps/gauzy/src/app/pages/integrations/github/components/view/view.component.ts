@@ -357,7 +357,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				repository: {
 					title: this.getTranslation('SM_TABLE.GITHUB_REPOSITORY'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: GithubRepositoryComponent,
 					componentInitFunction: (instance: GithubRepositoryComponent, cell: Cell) => {
 						// Set properties on the ProjectComponent instance
@@ -369,7 +369,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				project: {
 					title: this.getTranslation('SM_TABLE.PROJECT'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ProjectComponent,
 					valuePrepareFunction: (_: any, cell: Cell) => ({
 						project: cell.getRow().getData()
@@ -383,7 +383,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				issuesCount: {
 					title: this.getTranslation('SM_TABLE.ISSUES_SYNC'), // Set column title based on translation
 					type: 'number',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						// Get the data of the entire row
 						const row = cell.getRow().getData();
@@ -395,7 +395,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ToggleSwitchComponent,
 					componentInitFunction: (instance: ToggleSwitchComponent, cell: Cell) => {
 						// Get the data of the entire row
@@ -423,7 +423,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				resync: {
 					title: this.getTranslation('SM_TABLE.RESYNC_ISSUES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ResyncButtonComponent,
 					componentInitFunction: (instance: ResyncButtonComponent, cell: Cell) => {
 						// Get the data of the entire row
@@ -450,7 +450,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				status: {
 					title: this.getTranslation('SM_TABLE.STATUS'), // Set column title based on translation
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						// Get the data of the entire row

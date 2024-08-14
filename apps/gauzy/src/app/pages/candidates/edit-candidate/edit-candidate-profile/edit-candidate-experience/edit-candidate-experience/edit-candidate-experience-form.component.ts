@@ -208,12 +208,12 @@ export class EditCandidateExperienceFormComponent extends PaginationFilterBaseCo
 				duration: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DURATION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				description: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};

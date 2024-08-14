@@ -10,7 +10,8 @@
 	::ng-deep {
 		nb-progress-bar {
 			.progress-container {
-				height: 5px !important;
+				height: 1rem !important;
+				border-radius: calc(var(--border-radius) / 2);
 			}
 
 			.progress-value {

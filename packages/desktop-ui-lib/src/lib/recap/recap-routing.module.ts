@@ -8,7 +8,7 @@ export const recapRoutes: Routes = [
 	},
 	{
 		path: 'daily',
-		loadComponent: () => import('./features/recap/recap.component').then((m) => m.RecapComponent)
+		loadChildren: () => import('./recap-children-routing.module').then((m) => m.recapChildRoutes)
 	},
 	{
 		path: '**',

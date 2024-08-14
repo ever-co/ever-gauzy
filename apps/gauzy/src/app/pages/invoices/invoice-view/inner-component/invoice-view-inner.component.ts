@@ -73,22 +73,22 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 				name: {
 					title: this.getTranslation('INVOICES_PAGE.ITEM'),
 					type: 'text',
-					filter: false
+					isFilterable: false
 				},
 				description: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.DESCRIPTION'),
 					type: 'text',
-					filter: false
+					isFilterable: false
 				},
 				quantity: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 					type: 'text',
-					filter: false
+					isFilterable: false
 				},
 				price: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 					type: 'text',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value: number, cell: Cell) => {
 						const row = cell.getRow().getData();
 						const priceTransformed = this.getPipesTransform(
@@ -102,7 +102,7 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 				totalValue: {
 					title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.TOTAL_VALUE'),
 					type: 'text',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value: number, cell: Cell) => {
 						const row = cell.getRow().getData();
 						const priceTransformed = this.getPipesTransform(

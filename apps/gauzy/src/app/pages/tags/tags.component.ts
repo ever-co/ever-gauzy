@@ -241,7 +241,7 @@ export class TagsComponent extends PaginationFilterBaseComponent implements Afte
 					title: this.getTranslation('Counter'),
 					type: 'string',
 					width: '10%',
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						if (cell instanceof Cell) {
 							const data = cell.getRow().getData();

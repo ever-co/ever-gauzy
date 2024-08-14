@@ -1,0 +1,7 @@
+<div class="segment-container">
+	<div *ngFor="let segment of segments" [ngClass]="{selected: (segment$ | async).title === segment.title}"
+		class="segment" (click)="onSelect(segment)">
+		<nb-icon *ngIf="segment.icon" [icon]="segment.icon" pack="font-awesome" size="tiny"></nb-icon>
+		<span>{{ segment.title | translate }}</span>
+	</div>
+</div>

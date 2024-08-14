@@ -117,7 +117,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
 							width: '30%',
-							filter: false,
+							isFilterable: false,
 							renderComponent: DateViewComponent,
 							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
@@ -137,7 +137,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.VALUE'),
 							type: 'custom',
 							width: '15%',
-							filter: false,
+							isFilterable: false,
 							renderComponent: IncomeExpenseAmountComponent,
 							componentInitFunction: (instance: IncomeExpenseAmountComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
@@ -160,7 +160,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.SOURCE'),
 							type: 'html',
 							class: 'text-center',
-							filter: false,
+							isFilterable: false,
 							width: '8%',
 							valuePrepareFunction: (_) =>
 								`<div class='text-center'>
@@ -172,7 +172,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 							title: this.getTranslation('SM_TABLE.DATE'),
 							type: 'custom',
 							width: '20%',
-							filter: false,
+							isFilterable: false,
 							renderComponent: DateViewComponent,
 							componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 								instance.rowData = cell.getRow().getData();
@@ -186,7 +186,7 @@ export class RecordsHistoryComponent extends PaginationFilterBaseComponent imple
 						categoryName: {
 							title: this.getTranslation('SM_TABLE.CATEGORY'),
 							type: 'html',
-							filter: false,
+							isFilterable: false,
 							valuePrepareFunction: (_) => this.getCategoryName(_)
 						},
 						amount: {
