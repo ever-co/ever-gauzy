@@ -21,7 +21,7 @@ import { MultiORMEnum } from '../../core/utils';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
-import { TASK_STATUSES_TAMPLATES } from './standard-statuses-template';
+import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
@@ -44,7 +44,7 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	async createStatus(entity: ITaskStatusCreateInput): Promise<ITaskStatus> {
 		try {
 			const { template, ...taskStatus } = entity;
-			const taskTemplate = TASK_STATUSES_TAMPLATES[template];
+			const taskTemplate = TASK_STATUSES_TEMPLATES[template];
 
 			return await this.save({ ...taskStatus, ...taskTemplate });
 		} catch (error) {
