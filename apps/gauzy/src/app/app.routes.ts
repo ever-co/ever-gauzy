@@ -5,7 +5,7 @@ import { AppModuleGuard } from './app.module.guard';
 /**
  * Routes for the application.
  */
-export const routes: Routes = [
+export const appRoutes: Routes = [
 	{
 		path: 'auth',
 		loadChildren: () => import('@gauzy/ui-auth').then((m) => m.NgxAuthModule),

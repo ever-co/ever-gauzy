@@ -50,7 +50,7 @@ import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n'
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { AppComponent } from './app.component';
-import { routes } from './app.routes';
+import { appRoutes } from './app.routes';
 import { AppModuleGuard } from './app.module.guard';
 import { initializeSentry } from './sentry';
 
@@ -119,7 +119,7 @@ const FEATURE_MODULES = [
 		BrowserModule,
 		BrowserAnimationsModule,
 		HttpClientModule,
-		RouterModule.forRoot(routes, config),
+		RouterModule.forRoot(appRoutes, config),
 		...NB_MODULES,
 		...FEATURE_MODULES,
 		...THIRD_PARTY_MODULES
