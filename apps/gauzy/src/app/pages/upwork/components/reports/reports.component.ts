@@ -165,7 +165,7 @@ export class ReportsComponent extends TranslationBaseComponent implements OnInit
 	}
 
 	/*
-	 * Set 1 month default daterange for filter
+	 * Set 1 month default date range for filter
 	 */
 	private _setDefaultRange(): void {
 		this.defaultDateRange$ = this._upworkStoreService.dateRangeActivity$.pipe(
