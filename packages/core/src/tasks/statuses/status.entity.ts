@@ -4,12 +4,17 @@ import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../../core/decorators/entity';
 import { MikroOrmTaskStatusRepository } from './repository';
 
 @MultiORMEntity('task_status', { mikroOrmRepository: () => MikroOrmTaskStatusRepository })
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
-
 	[EntityRepositoryType]?: MikroOrmTaskStatusRepository;
 
 	@ApiProperty({ type: () => String })
@@ -53,6 +58,18 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@MultiORMColumn({ default: false })
 	isCollapsed?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	isTodo?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	isInProgress?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@MultiORMColumn({ default: false })
+	isDone?: boolean;
 
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()

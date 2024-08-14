@@ -21,6 +21,7 @@ import { MultiORMEnum } from '../../core/utils';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
 import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
+import { TASK_STATUSES_TAMPLATES } from './standard-statuses-template';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
@@ -38,6 +39,17 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	) {
 		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
+	}
+
+	async createStatus(entity: ITaskStatusCreateInput): Promise<ITaskStatus> {
+		try {
+			const { template, ...taskStatus } = entity;
+			const taskTemplate = TASK_STATUSES_TAMPLATES[template];
+
+			return await this.save({ ...taskStatus, ...taskTemplate });
+		} catch (error) {
+			throw new BadRequestException('Task Status could not be saved due to wrong values');
+		}
 	}
 
 	/**

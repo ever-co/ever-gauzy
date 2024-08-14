@@ -2,7 +2,10 @@ import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
-export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
+export interface ITaskStatus
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalOrganizationTeam,
+		TaskStatusWorkFlow {
 	name: string;
 	value: string;
 	description?: string;
@@ -16,7 +19,15 @@ export interface ITaskStatus extends IBasePerTenantAndOrganizationEntityModel, I
 	projectId?: IOrganizationProject['id'];
 }
 
-export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> { }
+export interface TaskStatusWorkFlow {
+	isTodo?: boolean;
+	isInProgress?: boolean;
+	isDone?: boolean;
+}
+
+export interface ITaskStatusCreateInput extends Omit<ITaskStatus, 'isSystem'>, Omit<ITaskStatus, 'value'> {
+	template?: TaskStatusEnum;
+}
 
 export interface ITaskStatusUpdateInput extends Partial<ITaskStatusCreateInput> {
 	id?: string;
@@ -24,18 +35,21 @@ export interface ITaskStatusUpdateInput extends Partial<ITaskStatusCreateInput> 
 
 export interface ITaskStatusFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-	Pick<ITaskStatus, 'projectId' | 'organizationTeamId'> { }
+		Pick<ITaskStatus, 'projectId' | 'organizationTeamId'> {}
 
 /**
  * Default task statuses
  */
 export enum TaskStatusEnum {
+	BACKLOG = 'backlog',
 	OPEN = 'open',
 	IN_PROGRESS = 'in-progress',
 	READY_FOR_REVIEW = 'ready-for-review',
 	IN_REVIEW = 'in-review',
 	BLOCKED = 'blocked',
-	COMPLETED = 'completed'
+	DONE = 'done',
+	COMPLETED = 'completed',
+	CUSTOM = 'custom'
 }
 
 /**

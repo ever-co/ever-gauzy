@@ -1,5 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Body, Controller, Get, HttpStatus, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
 	IPagination,
@@ -31,6 +31,28 @@ export class TaskStatusController extends CrudFactory<
 >(PaginationParams, CreateStatusDTO, UpdatesStatusDTO, CountQueryDTO) {
 	constructor(private readonly queryBus: QueryBus, protected readonly taskStatusService: TaskStatusService) {
 		super(taskStatusService);
+	}
+
+	/**
+	 * Create task status
+	 *
+	 * @param entity - object that contains the input values and template to be used
+	 * @returns - a promise that resolves after task status created
+	 */
+	@ApiOperation({ summary: 'Create new task status.' })
+	@ApiResponse({
+		status: HttpStatus.CREATED,
+		description: 'Task status has been successfully created.'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input, The response body may contain clues as to what went wrong.'
+	})
+	@HttpCode(HttpStatus.CREATED)
+	@Post()
+	@UseValidationPipe({ transform: true, whitelist: true })
+	async create(@Body() entity: CreateStatusDTO): Promise<ITaskStatus> {
+		return await this.taskStatusService.createStatus(entity);
 	}
 
 	/**
