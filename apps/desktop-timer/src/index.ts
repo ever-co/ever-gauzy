@@ -10,6 +10,7 @@ import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } 
 import { environment } from './environments/environment';
 import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
 
 require('module').globalPaths.push(path.join(__dirname, 'node_modules'));
 require('sqlite3');
@@ -107,10 +108,13 @@ let popupWin: BrowserWindow | null = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
 
+setupTitlebar();
+
 console.log('Time Tracker UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {
-	timeTrackerUi: path.join(__dirname, './index.html')
+	timeTrackerUi: path.join(__dirname, './index.html'),
+	preloadPath: path.join(__dirname, 'preload.js')
 };
 
 LocalStore.setFilePath({
@@ -232,12 +236,12 @@ async function startServer(value, restart = false) {
 			project: projectConfig
 				? projectConfig
 				: {
-						projectId: null,
-						taskId: null,
-						note: null,
-						aw,
-						organizationContactId: null
-				  }
+					projectId: null,
+					taskId: null,
+					note: null,
+					aw,
+					organizationContactId: null
+				}
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -248,7 +252,7 @@ async function startServer(value, restart = false) {
 		setupWindow.hide();
 		try {
 			if (!timeTrackerWindow) {
-				timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
+				timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 			} else {
 				await timeTrackerWindow.loadURL(
 					Url.format({
@@ -268,6 +272,7 @@ async function startServer(value, restart = false) {
 		gauzyWindow.setVisibleOnAllWorkspaces(false);
 		gauzyWindow.show();
 		splashScreen.close();
+		// timeTrackerWindow.webContents.toggleDevTools();
 	}
 	const auth = store.get('auth');
 	new AppMenu(timeTrackerWindow, settingsWindow, updaterWindow, knex, pathWindow, null, false);
@@ -275,6 +280,8 @@ async function startServer(value, restart = false) {
 	if (tray) {
 		tray.destroy();
 	}
+	console.log('dir name:', __dirname);
+	console.log('app path', app.getAppPath());
 	tray = new TrayIcon(
 		setupWindow,
 		knex,
@@ -317,6 +324,7 @@ async function startServer(value, restart = false) {
 			});
 		}
 	});
+
 
 	return true;
 }
@@ -385,10 +393,10 @@ app.on('ready', async () => {
 	];
 	Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
 	try {
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
 
@@ -772,3 +780,5 @@ const showPopup = async (url: string, options: Electron.BrowserWindowConstructor
 app.on('browser-window-created', (_, window) => {
 	require('@electron/remote/main').enable(window.webContents);
 });
+
+ipcMain.handle('get-app-path', () => app.getAppPath());

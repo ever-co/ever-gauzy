@@ -49,6 +49,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -62,6 +63,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -88,6 +90,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -101,6 +104,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -180,6 +184,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -193,6 +198,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -361,6 +367,7 @@ export class TrayIcon {
 					timeTrackerWindow.show();
 				}
 			}
+			event.sender.send('refresh_menu');
 		});
 
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {

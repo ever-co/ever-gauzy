@@ -19,7 +19,9 @@ export class ToastrNotificationService extends NotificationService {
 	}
 
 	public success(message: string): void {
-		this._toastrService.success(message, this._notification.title);
+		this._toastrService.success(message, this._notification.title, {
+			toastClass: 'toast-top-custom-title-bar'
+		});
 	}
 
 	public error(message: string): void {

@@ -1,6 +1,7 @@
 import * as remoteMain from '@electron/remote/main';
 import { BrowserWindow } from 'electron';
 import * as url from 'url';
+import { attachTitlebarToWindow } from 'custom-electron-titlebar/main';
 
 import log from 'electron-log';
 import { WindowManager } from './concretes/window.manager';
@@ -11,8 +12,8 @@ Object.assign(console, log.functions);
 const Store = require('electron-store');
 const store = new Store();
 
-export async function createSettingsWindow(settingsWindow, filePath) {
-	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting();
+export async function createSettingsWindow(settingsWindow, filePath, preloadPath?) {
+	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = windowSetting(preloadPath);
 	const manager = WindowManager.getInstance();
 
 	settingsWindow = new BrowserWindow(mainWindowSettings);
@@ -35,11 +36,13 @@ export async function createSettingsWindow(settingsWindow, filePath) {
 
 	// settingsWindow.webContents.toggleDevTools();
 	manager.register(RegisteredWindow.SETTINGS, settingsWindow);
-
+	if (preloadPath) {
+		attachTitlebarToWindow(settingsWindow);
+	}
 	return settingsWindow;
 }
 
-const windowSetting = () => {
+const windowSetting = (preloadPath?) => {
 	const mainWindowSettings: Electron.BrowserWindowConstructorOptions = {
 		frame: true,
 		resizable: false,
@@ -58,8 +61,15 @@ const windowSetting = () => {
 		maximizable: false,
 		show: false
 	};
+	if (preloadPath) {
+		mainWindowSettings.webPreferences.preload = preloadPath;
+		mainWindowSettings.titleBarStyle = 'hidden';
+		mainWindowSettings.titleBarOverlay = true;
+		if (process.platform === 'linux') {
+			mainWindowSettings.frame = false;
+		}
+	}
 	const filesPath = store.get('filePath');
 	mainWindowSettings.icon = filesPath.iconPath;
-
 	return mainWindowSettings;
 };
