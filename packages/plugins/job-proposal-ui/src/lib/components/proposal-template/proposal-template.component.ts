@@ -42,13 +42,7 @@ export enum ProposalTemplateTabsEnum {
 	styleUrls: ['./proposal-template.component.scss']
 })
 export class ProposalTemplateComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
-	public smartTableSettings: any = {
-		actions: false,
-		editable: true,
-		hideSubHeader: true,
-		selectedRowIndex: -1,
-		noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE')
-	};
+	public smartTableSettings: any;
 	public disableButton: boolean = true;
 	public loading: boolean = false;
 	public smartTableSource: ServerDataSource;
@@ -296,7 +290,11 @@ export class ProposalTemplateComponent extends PaginationFilterBaseComponent imp
 
 		// Configure Smart Table settings
 		this.smartTableSettings = {
-			...this.smartTableSettings,
+			actions: false,
+			editable: true,
+			hideSubHeader: true,
+			selectedRowIndex: -1,
+			noDataMessage: this.getTranslation('SM_TABLE.NO_DATA.PROPOSAL_TEMPLATE'),
 			pager: {
 				display: false,
 				perPage: pagination ? pagination.itemsPerPage : 10
