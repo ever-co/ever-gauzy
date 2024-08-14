@@ -2,13 +2,12 @@
 @import "var";
 
 .project-row {
-	margin-bottom: 10px;
 	padding-top: 10px;
 	padding-bottom: 10px;
 	background-color: var(--gauzy-card-1);
 	border-radius: var(--border-radius);
 	height: calc(100vh - 23.75rem);
-    overflow-y: auto;
+	overflow-y: auto;
 
 	.table-row-custom {
 		background-color: var(--gauzy-card-1);
@@ -74,12 +73,8 @@
 }
 
 @include respond(lg) {
-	.project-row {
-		margin-bottom: 20px;
-	}
-
 	.main-column-responsive {
-		background-color:var(--background-basic-color-3);
+		background-color: var(--background-basic-color-3);
 	}
 
 	.progress-bar-column {
@@ -94,7 +89,6 @@
 
 .activities-container {
 	padding: 1rem;
-	padding-bottom: 6px !important;
 }
 
 .main-report-wrapper {
@@ -129,8 +123,13 @@ h6 {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+	gap: 1rem;
 }
 
 .card {
 	margin: 0 !important;
+}
+
+nb-card-header {
+	padding: 1rem !important;
 }

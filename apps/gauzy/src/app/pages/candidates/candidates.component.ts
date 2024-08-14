@@ -343,7 +343,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -355,7 +355,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 					title: this.getTranslation('SM_TABLE.EMAIL'),
 					type: 'email',
 					class: 'email-column',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -368,7 +368,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					class: 'text-center',
 					width: '200px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: CandidateSourceComponent,
 					componentInitFunction: (instance: CandidateSourceComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -377,7 +377,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 				appliedDate: {
 					title: this.getTranslation('SM_TABLE.APPLIED_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -386,7 +386,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 				hiredDate: {
 					title: this.getTranslation('SM_TABLE.HIRED_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -395,7 +395,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 				rejectDate: {
 					title: this.getTranslation('SM_TABLE.REJECTED_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -405,7 +405,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 					title: this.getTranslation('SM_TABLE.TAGS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: TagsOnlyComponent,
 					componentInitFunction: (instance: TagsOnlyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -417,7 +417,7 @@ export class CandidatesComponent extends PaginationFilterBaseComponent implement
 					type: 'custom',
 					class: 'text-center',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: CandidateStatusComponent,
 					componentInitFunction: (instance: CandidateStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

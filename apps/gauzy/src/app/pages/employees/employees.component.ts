@@ -597,7 +597,6 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		const start = this._dateFormatPipe.transform(startedWorkOn, null, 'LL');
 		const end = this._dateFormatPipe.transform(endWork, null, 'LL');
 		const workStatus = [start, end].filter(Boolean).join(' - ');
-
 		return {
 			fullName: `${user.name}`,
 			email: user.email,
@@ -644,7 +643,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -657,7 +656,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					type: 'email',
 					class: 'email-column',
 					width: '20%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -668,7 +667,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageIncome: {
 					title: this.getTranslation('SM_TABLE.INCOME'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageIncomeComponent,
@@ -679,7 +678,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageExpenses: {
 					title: this.getTranslation('SM_TABLE.EXPENSES'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageExpensesComponent,
@@ -690,7 +689,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				averageBonus: {
 					title: this.getTranslation('SM_TABLE.BONUS_AVG'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					class: 'text-center',
 					width: '5%',
 					renderComponent: EmployeeAverageBonusComponent,
@@ -707,7 +706,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeTimeTrackingStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -727,7 +726,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},
@@ -749,7 +748,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					componentInitFunction: (instance: EmployeeWorkStatusComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: ToggleFilterComponent
 					},
@@ -785,7 +784,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				addable: false,
 				notShownField: true,
 				// Configure custom filter for the column
-				filter: {
+				isFilterable: {
 					type: 'custom',
 					component: ToggleFilterComponent
 				},
@@ -907,5 +906,5 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void { }
 }

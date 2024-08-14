@@ -1,0 +1,134 @@
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="card-header-title">
+		<div class="card-header-title">
+			<ngx-back-navigation></ngx-back-navigation>
+			<h4>
+				<ngx-header-title>
+					{{ 'PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE' | translate }}
+				</ngx-header-title>
+			</h4>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="p-0">
+		<div class="gauzy-button-container">
+			<ngx-gauzy-button-action
+				[hasLayoutSelector]="false"
+				[buttonTemplateVisible]="visibleButton"
+				[buttonTemplate]="actionButtons"
+				[isDisable]="!selectedItem && disableButton"
+			></ngx-gauzy-button-action>
+		</div>
+		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
+			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.BROWSE' | translate" [tabId]="proposalTemplateTabsEnum.ACTIONS">
+				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.ACTIONS">
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+			<nb-tab [tabTitle]="'PROPOSAL_TEMPLATE.SEARCH' | translate" [tabId]="proposalTemplateTabsEnum.SEARCH">
+				<ng-container *ngIf="(nbTab$ | async) === proposalTemplateTabsEnum.SEARCH">
+					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
+				</ng-container>
+			</nb-tab>
+		</nb-tabset>
+	</nb-card-body>
+</nb-card>
+
+<!-- Actions Buttons -->
+<ng-template #actionButtons let-buttonSize="buttonSize">
+	<div class="btn-group actions">
+		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+			<button
+				nbButton
+				status="basic"
+				[disabled]="!selectedItem && disableButton"
+				class="mr-2"
+				class="action secondary"
+				size="small"
+				underConstruction
+			>
+				<nb-icon class="mr-1" icon="eye-outline"></nb-icon>
+				{{ 'BUTTONS.VIEW' | translate }}
+			</button>
+		</ng-template>
+		<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
+			<button
+				nbButton
+				status="basic"
+				(click)="editProposalTemplate()"
+				[disabled]="!selectedItem && disableButton"
+				class="mr-2"
+				class="action primary"
+				size="small"
+			>
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
+				nbButton
+				status="basic"
+				size="small"
+				ngxConfirmDialog
+				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
+				(confirm)="deleteProposalTemplate()"
+				[disabled]="!selectedItem && disableButton"
+				class="action mr-2"
+				[nbTooltip]="'BUTTONS.DELETE' | translate"
+			>
+				<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
+			</button>
+			<ng-template [ngIf]="selectedItem?.isDefault" [ngIfElse]="makeDefaultTemplateButton">
+				<button
+					nbButton
+					status="basic"
+					(click)="makeDefaultTemplate({ isDefault: false })"
+					class="mr-2"
+					class="action primary"
+					size="small"
+				>
+					{{ 'BUTTONS.REMOVE_DEFAULT' | translate }}
+				</button>
+			</ng-template>
+			<ng-template #makeDefaultTemplateButton>
+				<button
+					nbButton
+					status="basic"
+					(click)="makeDefaultTemplate({ isDefault: true })"
+					class="mr-2"
+					class="action primary"
+					size="small"
+				>
+					{{ 'BUTTONS.MAKE_DEFAULT' | translate }}
+				</button>
+			</ng-template>
+		</ng-template>
+	</div>
+</ng-template>
+
+<!-- Buttons -->
+<ng-template #visibleButton>
+	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_EDIT">
+		<button nbButton status="success" size="small" (click)="createProposalTemplate()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+	</ng-template>
+</ng-template>
+
+<!-- Smart Table -->
+<ng-template #tableLayout>
+	<ng-template ngxPermissionsOnly="ORG_PROPOSAL_TEMPLATES_VIEW">
+		<div class="table-scroll-container">
+			<angular2-smart-table
+				style="cursor: pointer"
+				[settings]="smartTableSettings"
+				[source]="smartTableSource"
+				(userRowSelect)="selectProposalTemplate($event)"
+			></angular2-smart-table>
+		</div>
+		<div class="pagination-container">
+			<ng-container *ngIf="smartTableSource">
+				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+			</ng-container>
+		</div>
+	</ng-template>
+</ng-template>

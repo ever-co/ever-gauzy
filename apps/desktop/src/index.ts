@@ -8,6 +8,7 @@ Object.assign(console, log.functions);
 import * as path from 'path';
 import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
 import * as remoteMain from '@electron/remote/main';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
 
 import { environment } from './environments/environment';
 
@@ -97,13 +98,15 @@ let updaterWindow: BrowserWindow = null;
 let imageView: BrowserWindow = null;
 let splashScreen: SplashScreen = null;
 let alwaysOn: AlwaysOn = null;
+setupTitlebar();
 
 console.log('App UI Render Path:', path.join(__dirname, './index.html'));
 
 const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
-	screenshotWindow: path.join(__dirname, './ui/index.html')
+	screenshotWindow: path.join(__dirname, './ui/index.html'),
+	preloadPath: path.join(__dirname, 'preload.js')
 };
 
 const updater = new DesktopUpdater({
@@ -303,7 +306,8 @@ async function startServer(value, restart = false) {
 			gauzyWindow,
 			serve,
 			{ ...environment, gauzyWindow: value.gauzyWindow },
-			pathWindow.gauzyWindow
+			pathWindow.gauzyWindow,
+			pathWindow.preloadPath
 		);
 	} catch (error) {
 		throw new AppError('MAINWININIT', error);
@@ -452,10 +456,10 @@ app.on('ready', async () => {
 
 	try {
 		/* create window */
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi);
-		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi);
-		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi);
-		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi);
+		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 
 		alwaysOn = new AlwaysOn(pathWindow.timeTrackerUi);
 		await alwaysOn.loadURL();
@@ -686,7 +690,7 @@ app.on('activate', async () => {
 	} else if (!onWaitingServer && LocalStore.getStore('configs') && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi);
+		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();
@@ -785,6 +789,8 @@ ipcMain.on('launch_on_startup', (event, arg) => {
 ipcMain.on('minimize_on_startup', (event, arg) => {
 	launchAtStartup(arg.autoLaunch, arg.hidden);
 });
+
+ipcMain.handle('get-app-path', () => app.getAppPath());
 
 function closeAllWindows(): void {
 	const windows = [notificationWindow, splashScreen, alwaysOn];

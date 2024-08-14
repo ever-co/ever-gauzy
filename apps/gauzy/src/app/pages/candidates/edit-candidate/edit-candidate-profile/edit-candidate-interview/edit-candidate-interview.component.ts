@@ -137,7 +137,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.DATE'),
 					type: 'custom',
 					width: '120px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewDateTableComponent,
 					componentInitFunction: (instance: InterviewDateTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -147,7 +147,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
 					width: '136px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewStarRatingComponent,
 					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -157,7 +157,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.INTERVIEWERS'),
 					type: 'custom',
 					width: '155px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewersTableComponent,
 					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -166,7 +166,7 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 				criterions: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.CRITERIONS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewCriterionsTableComponent,
 					componentInitFunction: (instance: InterviewCriterionsTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -179,13 +179,13 @@ export class EditCandidateInterviewComponent extends PaginationFilterBaseCompone
 				note: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.NOTES'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				actions: {
 					title: this.getTranslation('SM_TABLE.LAST_UPDATED'),
 					width: '150px',
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewActionsTableComponent,
 					componentInitFunction: (instance: InterviewActionsTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

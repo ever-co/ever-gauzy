@@ -15,5 +15,4 @@ export * from './lib/interfaces/base-window';
 export * from './lib/interfaces/ibase-window';
 export * from './lib/interfaces/iwindow-config';
 export * from './lib/interfaces/iwindow.manager';
-export * from './lib/recap.window';
 export * from './lib/screen-capture-notification';

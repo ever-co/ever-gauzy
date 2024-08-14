@@ -122,7 +122,7 @@ export class ProfitHistoryComponent extends PaginationFilterBaseComponent implem
 					type: 'custom',
 					width: '25%',
 					sortDirection: 'desc',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

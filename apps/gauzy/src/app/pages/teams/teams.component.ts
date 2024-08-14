@@ -425,7 +425,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				name: {
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -436,7 +436,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				managers: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -446,7 +446,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -462,7 +462,7 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

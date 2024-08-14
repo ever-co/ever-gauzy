@@ -4,6 +4,7 @@ import { JobLayoutComponent } from './job-layout/job-layout.component';
 
 /**
  * Creates jobs routes for the application
+ *
  * @param _pageRouteService An instance of PageRouteService
  * @returns An array of Route objects
  */

@@ -342,7 +342,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURLY_RATE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (value: IInvoiceItem['price']) => {
 					return `${this.currency.value} ${value}`;
@@ -351,7 +351,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.HOURS_WORKED'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%'
 			};
 		} else if (
@@ -362,7 +362,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			price = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.PRICE'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%',
 				valuePrepareFunction: (cell, row) => {
 					return `${this.currency.value} ${cell}`;
@@ -371,7 +371,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 			quantity = {
 				title: this.getTranslation('INVOICES_PAGE.INVOICE_ITEM.QUANTITY'),
 				type: 'text',
-				filter: false,
+				isFilterable: false,
 				width: '13%'
 			};
 		}
@@ -391,7 +391,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 				const row = cell.getRow().getData();
 				return `${this.currency.value} ${row.quantity * row.price}`;
 			},
-			filter: false,
+			isFilterable: false,
 			width: '13%'
 		};
 		if (this.organization && this.organization.separateInvoiceItemTaxAndDiscount) {
@@ -401,7 +401,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (isApplied: any) => {
 					return isApplied
@@ -415,7 +415,7 @@ export class InvoiceEditComponent extends PaginationFilterBaseComponent implemen
 					type: 'custom',
 					component: InvoiceApplyTaxDiscountComponent
 				},
-				filter: false,
+				isFilterable: false,
 				width: '10%',
 				valuePrepareFunction: (isApplied: any) => {
 					return isApplied

@@ -1,5 +1,5 @@
 import { IEmployee, IRelationalEmployee } from './employee.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IExpenseCategory } from './expense-category.model';
 import { IOrganizationVendor } from './organization-vendors.model';
@@ -10,13 +10,13 @@ import { IOrganizationContact } from './organization-contact.model';
 export interface IExpense extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
 	amount: number;
 	vendor: IOrganizationVendor;
-	vendorId: IOrganizationVendor['id'];
+	vendorId: ID;
 	typeOfExpense: string;
 	category: IExpenseCategory;
-	categoryId: IExpenseCategory['id'];
-	organizationContactId?: IOrganizationContact['id'];
+	categoryId: ID;
+	organizationContactId?: ID;
 	organizationContact?: IOrganizationContact;
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
@@ -36,9 +36,9 @@ export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntity
 	typeOfExpense?: string;
 	category: IExpenseCategory;
 	vendor: IOrganizationVendor;
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 	organizationContact?: IOrganizationContact;
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;
@@ -61,9 +61,9 @@ export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityMo
 	categoryName?: string;
 	categoryId?: string;
 	amount?: number;
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 	organizationContact?: IOrganizationContact;
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 	project?: IOrganizationProject;
 	notes?: string;
 	valueDate?: Date;

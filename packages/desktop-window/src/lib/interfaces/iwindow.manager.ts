@@ -11,7 +11,6 @@ export enum RegisteredWindow {
 	SPLASH = 'splash',
 	MAIN = 'main',
 	SETUP = 'setup',
-	RECAP = 'recap',
 	CAPTURE = 'capture'
 }
 

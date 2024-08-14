@@ -98,7 +98,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 				engagement_start_date: {
 					title: this.getTranslation('SM_TABLE.START_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					valuePrepareFunction: (value: string) => moment.unix(parseInt(value) / 1000),
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -109,7 +109,7 @@ export class ContractsComponent extends TranslationBaseComponent implements OnIn
 					title: this.getTranslation('SM_TABLE.END_DATE'),
 					type: 'custom',
 					renderComponent: DateViewComponent,
-					filter: false,
+					isFilterable: false,
 					valuePrepareFunction: (value: string) => moment.unix(parseInt(value) / 1000),
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

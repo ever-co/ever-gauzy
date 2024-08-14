@@ -120,7 +120,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				name: {
 					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -131,7 +131,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 				description: {
 					title: this.getTranslation('EQUIPMENT_SHARING_POLICY_PAGE.EQUIPMENT_SHARING_POLICY_DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};

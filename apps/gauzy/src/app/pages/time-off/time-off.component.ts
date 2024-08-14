@@ -362,7 +362,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -376,7 +376,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				extendedDescription: {
 					title: this.getTranslation('SM_TABLE.DESCRIPTION'),
 					type: 'html',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -392,7 +392,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -403,7 +403,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				start: {
 					title: this.getTranslation('SM_TABLE.START'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -412,7 +412,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				end: {
 					title: this.getTranslation('SM_TABLE.END'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -421,7 +421,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				requestDate: {
 					title: this.getTranslation('SM_TABLE.REQUEST_DATE'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -431,7 +431,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					title: this.getTranslation('SM_TABLE.STATUS'),
 					type: 'custom',
 					width: '5%',
-					filter: false,
+					isFilterable: false,
 					renderComponent: StatusBadgeComponent,
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();

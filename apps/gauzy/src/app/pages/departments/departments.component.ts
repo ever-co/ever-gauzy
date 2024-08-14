@@ -151,7 +151,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				name: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -162,7 +162,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 				members: {
 					title: this.getTranslation('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MEMBERS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeeWithLinksComponent,
 					componentInitFunction: (instance: EmployeeWithLinksComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -178,7 +178,7 @@ export class DepartmentsComponent extends PaginationFilterBaseComponent implemen
 						instance.rowData = cell.getRow().getData();
 						instance.value = cell.getRawValue();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TagsColorFilterComponent
 					},

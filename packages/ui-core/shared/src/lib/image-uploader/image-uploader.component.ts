@@ -3,8 +3,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
 import { IImageAsset, IOrganization, IUser } from '@gauzy/contracts';
-import { API_PREFIX, distinctUntilChange, Store } from '@gauzy/ui-core/common';
 import { environment } from '@gauzy/ui-config';
+import { API_PREFIX, distinctUntilChange, Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy()
 @Component({
@@ -81,6 +81,9 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	}
 
 	ngAfterViewInit() {
+		if (!this.uploader) {
+			return;
+		}
 		this.uploader.onAfterAddingFile = (file) => {
 			file.withCredentials = false;
 		};

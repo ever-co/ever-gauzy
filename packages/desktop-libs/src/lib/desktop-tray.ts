@@ -1,9 +1,7 @@
 import {
 	createSettingsWindow,
 	getApiBaseUrl,
-	IBaseWindow,
 	loginPage,
-	RecapWindow,
 	RegisteredWindow,
 	timeTrackerPage,
 	WindowManager
@@ -51,6 +49,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -64,6 +63,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -90,6 +90,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -103,6 +104,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -172,25 +174,6 @@ export class TrayIcon {
 				visible: appConfig.timeTrackerWindow
 			},
 			{
-				id: 'gauzy-recap',
-				label: TranslateService.instant('TIMER_TRACKER.MENU.DAILY_RECAP'),
-				accelerator: 'CmdOrCtrl+D',
-				enabled: true,
-				visible: appConfig.timeTrackerWindow,
-				async click() {
-					let recapWindow = manager.getOne(RegisteredWindow.RECAP) as IBaseWindow;
-					if (!recapWindow) {
-						recapWindow = new RecapWindow(windowPath.timeTrackerUi);
-						await recapWindow.loadURL();
-					}
-					recapWindow.show();
-				}
-			},
-			{
-				type: 'separator',
-				visible: appConfig.timeTrackerWindow
-			},
-			{
 				id: '6',
 				label: TranslateService.instant('BUTTONS.CHECK_UPDATE'),
 				accelerator: 'CmdOrCtrl+U',
@@ -201,6 +184,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('goto_update');
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -214,6 +198,7 @@ export class TrayIcon {
 					settingsWindow.show();
 					manager.webContents(settingsWindow).send('app_setting', LocalStore.getApplicationConfig());
 					manager.webContents(settingsWindow).send('goto_top_menu');
+					manager.webContents(settingsWindow).send('refresh_menu');
 				}
 			},
 			{
@@ -382,6 +367,7 @@ export class TrayIcon {
 					timeTrackerWindow.show();
 				}
 			}
+			event.sender.send('refresh_menu');
 		});
 
 		ipcMain.handle('FINAL_LOGOUT', async (event, arg) => {
@@ -390,8 +376,6 @@ export class TrayIcon {
 			this.tray.setTitle('--:--:--', options);
 
 			this.tray.setContextMenu(Menu.buildFromTemplate(unAuthMenu));
-
-			manager.hide(RegisteredWindow.RECAP);
 
 			menuWindowTime.enabled = false;
 

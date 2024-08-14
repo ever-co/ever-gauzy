@@ -148,13 +148,13 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 				description: {
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				},
 				rating: {
 					title: this.getTranslation('CANDIDATES_PAGE.MANAGE_INTERVIEWS.RATING'),
 					type: 'custom',
 					width: '136px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewStarRatingComponent,
 					componentInitFunction: (instance: InterviewStarRatingComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
@@ -169,7 +169,7 @@ export class EditCandidateFeedbacksComponent extends PaginationFilterBaseCompone
 					title: this.getTranslation('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER'),
 					type: 'custom',
 					width: '130px',
-					filter: false,
+					isFilterable: false,
 					renderComponent: InterviewersTableComponent,
 					componentInitFunction: (instance: InterviewersTableComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();

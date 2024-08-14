@@ -163,7 +163,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 					title: this.getTranslation('TASKS_PAGE.TASK_ID'),
 					type: 'string',
 					width: '10%',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -183,7 +183,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -194,7 +194,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				project: {
 					title: this.getTranslation('TASKS_PAGE.TASKS_PROJECT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: ProjectComponent,
 					componentInitFunction: (instance: ProjectComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -204,7 +204,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				createdAt: {
 					title: this.getTranslation('SM_TABLE.CREATED_AT'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: CreatedAtComponent,
 					componentInitFunction: (instance: CreatedAtComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -218,7 +218,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -233,7 +233,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				dueDate: {
 					title: this.getTranslation('TASKS_PAGE.DUE_DATE'),
 					type: 'custom',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -255,7 +255,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: TaskStatusFilterComponent
 					},
@@ -276,7 +276,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						'/' +
 						this.getTranslation('TASKS_PAGE.TASK_TEAMS'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: EmployeesMergedTeamsComponent,
 					componentInitFunction: (instance: EmployeesMergedTeamsComponent, cell: Cell) => {
 						instance.value = cell.getRawValue();
@@ -289,7 +289,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 				assignTo: {
 					title: this.getTranslation('TASKS_PAGE.TASK_ASSIGNED_TO'),
 					type: 'custom',
-					filter: false,
+					isFilterable: false,
 					renderComponent: AssignedToComponent,
 					componentInitFunction: (instance: AssignedToComponent, cell: Cell) => {
 						instance.value = cell.getValue();
@@ -308,7 +308,7 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 						instance.value = cell.getValue();
 						instance.rowData = cell.getRow().getData();
 					},
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: OrganizationTeamFilterComponent
 					},

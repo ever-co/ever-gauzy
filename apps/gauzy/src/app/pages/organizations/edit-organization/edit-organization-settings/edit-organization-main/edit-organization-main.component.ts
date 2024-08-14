@@ -85,7 +85,7 @@ export class EditOrganizationMainComponent
 	 *
 	 * @param image
 	 */
-	updateImageAsset(image: IImageAsset) {
+	async updateImageAsset(image: IImageAsset) {
 		try {
 			if (image && image.id) {
 				this.form.get('imageId').setValue(image.id);
@@ -93,15 +93,17 @@ export class EditOrganizationMainComponent
 			} else {
 				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
 			}
+			await this.updateOrganizationSettings();
 			this.form.updateValueAndValidity();
 		} catch (error) {
 			console.log('Error while updating organization avatars');
-			this.handleImageUploadError(error);
+			this.errorHandler.handleError(error);
 		}
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error);
+		// Delegate error handling to the _errorHandlingService
+		this.errorHandler.handleError(error);
 	}
 
 	/**
@@ -142,11 +144,10 @@ export class EditOrganizationMainComponent
 	 *
 	 * @returns
 	 */
-	private _setFormValues() {
+	private async _setFormValues() {
 		if (!this.organization) {
 			return;
 		}
-
 		this.form.setValue({
 			imageId: this.organization.imageId || null,
 			imageUrl: this.organization.imageUrl || null,
@@ -159,6 +160,13 @@ export class EditOrganizationMainComponent
 			website: this.organization.website || null,
 			registrationDate: this.organization.registrationDate ? new Date(this.organization.registrationDate) : null
 		});
+		const { id: organizationId, tenantId } = this.organization;
+		const values = {
+			organizationId,
+			tenantId,
+			...(this.form.valid ? this.form.value : {})
+		};
+		await this.organizationEditStore.updateOrganizationForm(values);
 		this.form.updateValueAndValidity();
 	}
 

@@ -174,7 +174,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent imple
 				name: {
 					title: this.getTranslation('APPROVAL_POLICY_PAGE.APPROVAL_POLICY_NAME'),
 					type: 'string',
-					filter: {
+					isFilterable: {
 						type: 'custom',
 						component: InputFilterComponent
 					},
@@ -185,7 +185,7 @@ export class ApprovalPolicyComponent extends PaginationFilterBaseComponent imple
 				description: {
 					title: this.getTranslation('APPROVAL_POLICY_PAGE.APPROVAL_POLICY_DESCRIPTION'),
 					type: 'string',
-					filter: false
+					isFilterable: false
 				}
 			}
 		};
