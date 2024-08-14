@@ -1,5 +1,6 @@
-import { NgModule } from '@angular/core';
+import { Inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { NbAuthModule } from '@nebular/auth';
 import {
 	NbAccordionModule,
@@ -17,11 +18,13 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { LanguagesEnum } from '@gauzy/contracts';
 import { ElectronService, InviteService, PageRouteService, RoleService } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
-import { createRoutes } from './auth.routes';
+import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
+import { createAuthRoutes } from './auth.routes';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
 import { NgxLoginWorkspaceComponent } from './components/login-workspace/login-workspace.component';
@@ -84,7 +87,16 @@ const COMPONENTS = [
 	WorkspaceSelectionComponent
 ];
 
-const THIRD_PARTY_MODULES = [TranslateModule.forChild()];
+const THIRD_PARTY_MODULES = [
+	TranslateModule.forRoot({
+		defaultLanguage: LanguagesEnum.ENGLISH,
+		loader: {
+			provide: TranslateLoader,
+			useFactory: HttpLoaderFactory,
+			deps: [HttpClient]
+		}
+	})
+];
 
 @NgModule({
 	imports: [
@@ -102,7 +114,7 @@ const THIRD_PARTY_MODULES = [TranslateModule.forChild()];
 		ElectronService,
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
+			useFactory: (pageRouteService: PageRouteService) => createAuthRoutes(pageRouteService),
 			deps: [PageRouteService],
 			multi: true
 		},
@@ -110,4 +122,27 @@ const THIRD_PARTY_MODULES = [TranslateModule.forChild()];
 		RoleService
 	]
 })
-export class NgxAuthModule {}
+export class NgxAuthModule {
+	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
+
+	constructor(@Inject(PageRouteService) readonly _pageRouteService: PageRouteService) {
+		// Register the routes
+		this.registerPageRoutes();
+	}
+
+	/**
+	 * Registers routes for the auth module.
+	 * Ensures that routes are registered only once.
+	 *
+	 * @returns {void}
+	 */
+	registerPageRoutes(): void {
+		if (NgxAuthModule.hasRegisteredPageRoutes) {
+			return;
+		}
+
+		console.log('registering auth routes');
+		// Set hasRegisteredRoutes to true
+		NgxAuthModule.hasRegisteredPageRoutes = true;
+	}
+}

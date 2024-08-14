@@ -22,7 +22,7 @@ import { AcceptClientInviteComponent } from './components/accept-client-invite/a
  * @param _pageRouteService An instance of PageRouteService
  * @returns An array of Route objects
  */
-export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
+export const createAuthRoutes = (_pageRouteService: PageRouteService): Route[] => [
 	{
 		path: '',
 		component: NgxAuthComponent,
@@ -92,7 +92,8 @@ export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 			{
 				path: 'logout',
 				component: NbLogoutComponent
-			}
+			},
+			..._pageRouteService.getPageLocationRoutes('auth')
 		]
 	}
 ];

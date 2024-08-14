@@ -18,6 +18,10 @@ export interface ISocialLink {
 	show: boolean;
 	/** (Optional) The target attribute for the link. */
 	target?: string;
+	/** (Optional) The link attribute for the link. */
+	link?: string;
+	/** (Optional) The title attribute for the link. */
+	title?: string;
 }
 
 @UntilDestroy({ checkProperties: true })

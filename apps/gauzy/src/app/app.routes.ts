@@ -7,9 +7,9 @@ import { AppModuleGuard } from './app.module.guard';
  */
 export const routes: Routes = [
 	{
-		path: 'pages',
-		loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule),
-		canActivate: [AuthGuard, AppModuleGuard]
+		path: 'auth',
+		loadChildren: () => import('@gauzy/ui-auth').then((m) => m.NgxAuthModule),
+		canActivate: []
 	},
 	{
 		path: 'onboarding',
@@ -17,13 +17,13 @@ export const routes: Routes = [
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
-		path: 'share',
-		loadChildren: () => import('./share/share.module').then((m) => m.ShareModule),
-		canActivate: []
+		path: 'pages',
+		loadChildren: () => import('./pages/pages.module').then((m) => m.PagesModule),
+		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
-		path: 'auth',
-		loadChildren: () => import('./auth/auth.module').then((m) => m.NgxAuthModule),
+		path: 'share',
+		loadChildren: () => import('./share/share.module').then((m) => m.ShareModule),
 		canActivate: []
 	},
 	{
@@ -36,7 +36,7 @@ export const routes: Routes = [
 	},
 	{
 		path: 'sign-in',
-		loadChildren: () => import('./auth/sign-in-success/sign-in-success.module').then((m) => m.SignInSuccessModule)
+		loadChildren: () => import('@gauzy/ui-auth').then((m) => m.SignInSuccessModule)
 	},
 	{
 		path: '',
