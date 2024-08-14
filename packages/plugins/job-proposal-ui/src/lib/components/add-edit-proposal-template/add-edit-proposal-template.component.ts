@@ -110,21 +110,21 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent i
 
 		// Get the organization and tenant ID
 		const { id: organizationId, tenantId } = this.organization;
-		const employeeId = this.selectedEmployee?.id;
 
 		// Create a new object with the form values
-		const input = {
-			...this.form.value,
+		const request = {
 			organizationId,
 			tenantId,
-			employeeId: employeeId || this.proposalTemplate?.employeeId
+			// Only include employeeId if creating a new proposal template
+			...(this.proposalTemplate ? {} : { employeeId: this.selectedEmployee?.id ?? this.form.value.employeeId }),
+			...this.form.value
 		};
 
 		try {
 			// Call the create or update method of the proposalTemplateService
 			const data = !this.proposalTemplate
-				? await this._proposalTemplateService.create(input)
-				: await this._proposalTemplateService.update(this.proposalTemplate.id, input);
+				? await this._proposalTemplateService.create(request)
+				: await this._proposalTemplateService.update(this.proposalTemplate.id, request);
 
 			this._dialogRef.close(data);
 
@@ -132,7 +132,7 @@ export class AddEditProposalTemplateComponent extends TranslationBaseComponent i
 				? 'PROPOSAL_TEMPLATE.PROPOSAL_CREATE_MESSAGE'
 				: 'PROPOSAL_TEMPLATE.PROPOSAL_EDIT_MESSAGE';
 
-			this._toastrService.success(messageKey, { name: input.name });
+			this._toastrService.success(messageKey, { name: request.name });
 		} catch (error) {
 			console.log('Error while saving proposal template', error);
 			this._errorHandlingService.handleError(error);
