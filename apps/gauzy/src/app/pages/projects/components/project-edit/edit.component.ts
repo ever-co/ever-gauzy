@@ -11,8 +11,7 @@ import {
 	IOrganizationProjectUpdateInput
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -84,6 +83,7 @@ export class ProjectEditMutationComponent extends TranslationBaseComponent imple
 		}
 		/** Make loading true  */
 		this.loading = true;
+
 		try {
 			const { id: organizationId, tenantId } = this.organization;
 			const { id } = this.project;

@@ -13,9 +13,9 @@ import {
 	ProductVariantPriceService,
 	ProductVariantService,
 	ProductVariantSettingService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 import { SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 export interface IOptionCreateInput {

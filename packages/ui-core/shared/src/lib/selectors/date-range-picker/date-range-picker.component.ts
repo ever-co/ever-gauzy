@@ -17,10 +17,11 @@ import {
 	NavigationService,
 	OrganizationsService,
 	SelectorBuilderService,
+	Store,
 	TimesheetFilterService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';

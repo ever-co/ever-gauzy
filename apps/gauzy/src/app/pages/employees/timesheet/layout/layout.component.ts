@@ -5,7 +5,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

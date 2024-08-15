@@ -4,8 +4,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { IOrganization, ICandidate, IImageAsset } from '@gauzy/contracts';
-import { CandidateStore, ToastrService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 /**
  * This component contains the properties stored within the User Entity of an candidate.

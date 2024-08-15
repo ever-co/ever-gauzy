@@ -11,6 +11,7 @@ import {
 	ErrorHandlingService,
 	MyTasksStoreService,
 	ServerDataSource,
+	Store,
 	TasksStoreService,
 	TeamTasksStoreService
 } from '@gauzy/ui-core/core';
@@ -43,7 +44,7 @@ import {
 	PermissionsEnum,
 	TaskListTypeEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { MyTaskDialogComponent } from './../my-task-dialog/my-task-dialog.component';
 import { TeamTaskDialogComponent } from '../team-task-dialog/team-task-dialog.component';
 

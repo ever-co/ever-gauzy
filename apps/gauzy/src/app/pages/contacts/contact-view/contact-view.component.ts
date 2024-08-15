@@ -7,7 +7,7 @@ import { LatLng } from 'leaflet';
 import { firstValueFrom } from 'rxjs';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

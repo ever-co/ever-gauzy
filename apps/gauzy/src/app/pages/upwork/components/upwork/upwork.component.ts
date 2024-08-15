@@ -1,14 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';
 import { tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
-import { ID, IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { ID, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
-import { UpworkStoreService } from '@gauzy/ui-core/core';
+import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

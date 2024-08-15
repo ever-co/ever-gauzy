@@ -9,6 +9,7 @@ import {
 	KeyResultService,
 	KeyResultUpdateService,
 	OrganizationProjectsService,
+	Store,
 	TasksService,
 	TasksStoreService
 } from '@gauzy/ui-core/core';
@@ -24,7 +25,6 @@ import {
 	IKPI,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { AddTaskDialogComponent, AlertModalComponent } from '@gauzy/ui-core/shared';

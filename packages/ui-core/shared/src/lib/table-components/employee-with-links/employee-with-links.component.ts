@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IEmployee, ISelectedEmployee } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ngx-employee-with-links',

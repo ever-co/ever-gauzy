@@ -4,8 +4,8 @@ import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, IPipeline } from '@gauzy/contracts';
-import { ErrorHandlingService, PipelinesService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, PipelinesService, Store } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

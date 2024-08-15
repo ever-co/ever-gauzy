@@ -25,7 +25,7 @@ import {
 	OrganizationEmploymentTypesService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { ckEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })

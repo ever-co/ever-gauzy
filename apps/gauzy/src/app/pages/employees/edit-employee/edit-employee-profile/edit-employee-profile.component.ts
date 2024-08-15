@@ -7,7 +7,7 @@ import { NbRouteTab } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IEmployeeUpdateInput, IUserUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import {
 	EmployeesService,
 	EmployeeStore,

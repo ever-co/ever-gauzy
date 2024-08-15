@@ -8,10 +8,10 @@ import {
 	EmployeesService,
 	ErrorHandlingService,
 	OrganizationsService,
+	Store,
 	TenantService,
 	UsersService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy()
 @Component({

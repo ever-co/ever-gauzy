@@ -15,6 +15,7 @@ import {
 	ErrorHandlingService,
 	ProposalTemplateService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {
@@ -44,7 +45,7 @@ import {
 	PaginationFilterBaseComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
-import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange, isNotEmpty, toUTC } from '@gauzy/ui-core/common';
 import { ApplyJobManuallyComponent } from '../apply-job-manually/apply-job-manually.component';
 import { JobTitleDescriptionDetailsComponent } from '../job-title-description-details/job-title-description-details.component';
 

@@ -3,7 +3,7 @@ import { IProductOptionTranslatable, LanguagesEnum, VariantCreateInput } from '@
 import { Router } from '@angular/router';
 import { InventoryStore, TranslatableService } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({

@@ -4,10 +4,10 @@ import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@an
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ICandidateExperience, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum, Store } from '@gauzy/ui-core/common';
+import { ComponentEnum } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
-import { CandidateExperienceService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
+import { CandidateExperienceService, CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-edit-candidate-experience-form',

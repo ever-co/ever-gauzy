@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { EMPTY, Observable, catchError, filter, map, of, switchMap } from 'rxjs';
 import { CandidateStatusEnum, ICandidate, IOrganization, IPagination } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({

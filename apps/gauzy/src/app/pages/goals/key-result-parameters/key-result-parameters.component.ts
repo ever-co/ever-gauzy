@@ -11,8 +11,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { GoalSettingsService, KeyResultService, TasksService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { GoalSettingsService, KeyResultService, Store, TasksService } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
 @UntilDestroy()

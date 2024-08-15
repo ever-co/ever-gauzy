@@ -17,8 +17,14 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, ProposalTemplateService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	ErrorHandlingService,
+	ProposalTemplateService,
+	ServerDataSource,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	DeleteConfirmationComponent,

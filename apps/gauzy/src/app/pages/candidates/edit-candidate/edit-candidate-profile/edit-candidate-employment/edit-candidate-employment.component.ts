@@ -19,7 +19,7 @@ import {
 	OrganizationPositionsService
 } from '@gauzy/ui-core/core';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

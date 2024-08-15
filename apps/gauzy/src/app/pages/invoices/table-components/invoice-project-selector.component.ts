@@ -3,8 +3,7 @@ import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { DefaultEditor } from 'angular2-smart-table';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-core/common';
-import { OrganizationProjectsService } from '@gauzy/ui-core/core';
+import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IUser } from '@gauzy/contracts';
 import { Router } from '@angular/router';
-import { NgxPermissionsService } from 'ngx-permissions';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../store/store.service';
 import { PermissionsService } from '../permission/permissions.service';
 import { UsersService } from '../users';
 import { AuthStrategy } from '../auth/auth-strategy.service';
@@ -13,7 +12,6 @@ export class AppInitService {
 
 	constructor(
 		private readonly _router: Router,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _store: Store,
 		private readonly _usersService: UsersService,
 		private readonly _authStrategy: AuthStrategy,

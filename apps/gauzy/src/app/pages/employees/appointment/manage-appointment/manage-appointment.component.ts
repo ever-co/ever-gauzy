@@ -26,7 +26,7 @@ import {
 	EmployeesService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { AlertModalComponent, EmployeeSelectComponent } from '@gauzy/ui-core/shared';
 import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';

@@ -6,7 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { ContactType, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { OrganizationContactService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

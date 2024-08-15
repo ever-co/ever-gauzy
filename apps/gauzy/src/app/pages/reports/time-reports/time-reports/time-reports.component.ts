@@ -4,7 +4,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick, pluck } from 'underscore';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	IGetTimeLogReportInput,
 	ITimeLogFilters,
@@ -12,7 +12,7 @@ import {
 	ReportGroupFilterEnum,
 	TimeLogType
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,

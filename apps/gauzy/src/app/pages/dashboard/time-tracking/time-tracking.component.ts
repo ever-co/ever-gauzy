@@ -45,11 +45,12 @@ import {
 	ITimeLogTodayFilters,
 	TimeFormatEnum
 } from '@gauzy/contracts';
-import { GuiDrag, Store, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-core/common';
+import { GuiDrag, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	EmployeesService,
 	OrganizationProjectsService,
+	Store,
 	TimesheetStatisticsService,
 	ToastrService
 } from '@gauzy/ui-core/core';

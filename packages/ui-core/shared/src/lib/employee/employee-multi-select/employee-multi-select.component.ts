@@ -5,7 +5,7 @@ import { debounceTime } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IDateRangePicker, IEmployee, IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, EmployeesService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

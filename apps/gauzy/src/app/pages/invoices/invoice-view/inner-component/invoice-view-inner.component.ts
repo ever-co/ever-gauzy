@@ -7,8 +7,7 @@ import { LocalDataSource, Angular2SmartTableComponent, Cell } from 'angular2-sma
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/common';
-import { TranslatableService, UsersOrganizationsService } from '@gauzy/ui-core/core';
+import { Store, TranslatableService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

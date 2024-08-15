@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { OrganizationTeamsService } from '@gauzy/ui-core/core';
 
 @Component({

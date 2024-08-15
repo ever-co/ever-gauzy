@@ -7,9 +7,8 @@ import { Subject, combineLatest, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization, IProductTypeTranslated, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ProductTypeService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ProductTypeService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,

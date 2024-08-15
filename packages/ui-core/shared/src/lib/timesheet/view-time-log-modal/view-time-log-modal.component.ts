@@ -4,8 +4,8 @@ import { filter, tap } from 'rxjs/operators';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITimeLog, PermissionsEnum, IOrganization, TimeLogSourceEnum } from '@gauzy/contracts';
-import { Store, TimeLogsLabel, TimeTrackerService } from '@gauzy/ui-core/common';
-import { TimesheetService } from '@gauzy/ui-core/core';
+import { TimeLogsLabel } from '@gauzy/ui-core/common';
+import { Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 
 @UntilDestroy({ checkProperties: true })

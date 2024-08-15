@@ -15,7 +15,7 @@ import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { untilDestroyed, UntilDestroy } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { InterviewStarRatingComponent } from './table-components/rating/rating.component';
 import { ComponentEnum } from '@gauzy/ui-core/common';
 import {
@@ -25,6 +25,7 @@ import {
 	CandidateStore,
 	EmployeesService,
 	ErrorHandlingService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {

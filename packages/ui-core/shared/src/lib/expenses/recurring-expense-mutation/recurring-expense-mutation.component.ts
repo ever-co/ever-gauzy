@@ -12,6 +12,7 @@ import {
 	ErrorHandlingService,
 	ExpenseCategoriesStoreService,
 	OrganizationRecurringExpenseService,
+	Store,
 	ToastrService,
 	defaultDateFormat
 } from '@gauzy/ui-core/core';
@@ -24,7 +25,7 @@ import {
 	IOrganization,
 	IExpenseCategory
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeeSelectorComponent } from '../../selectors/employee/employee.component';
 import { DEFAULT_CATEGORIES } from './recurring-expense.setting';

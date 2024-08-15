@@ -12,10 +12,11 @@ import {
 	DateRangePickerBuilderService,
 	EmployeeStatisticsService,
 	EmployeesService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { IAggregatedEmployeeStatistic, IDateRangePicker, IOrganization, ISelectedEmployee } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { ALL_EMPLOYEES_SELECTED, ChartUtil, IChartData } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

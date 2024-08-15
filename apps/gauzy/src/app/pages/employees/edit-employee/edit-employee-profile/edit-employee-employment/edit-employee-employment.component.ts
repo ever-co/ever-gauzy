@@ -11,7 +11,7 @@ import {
 	IEmployeeLevel
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { combineLatest } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
@@ -21,7 +21,8 @@ import {
 	EmployeeStore,
 	OrganizationDepartmentsService,
 	OrganizationEmploymentTypesService,
-	OrganizationPositionsService
+	OrganizationPositionsService,
+	Store
 } from '@gauzy/ui-core/core';
 import { ToastrService } from '@gauzy/ui-core/core';
 

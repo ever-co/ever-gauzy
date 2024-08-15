@@ -24,7 +24,7 @@ import {
 	EmployeesService,
 	ErrorHandlingService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';

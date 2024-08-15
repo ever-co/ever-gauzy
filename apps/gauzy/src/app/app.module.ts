@@ -42,10 +42,11 @@ import {
 	LanguageInterceptor,
 	SentryErrorHandler,
 	ServerConnectionService,
+	Store,
 	TenantInterceptor,
 	TokenInterceptor
 } from '@gauzy/ui-core/core';
-import { CommonModule, Store } from '@gauzy/ui-core/common';
+import { CommonModule } from '@gauzy/ui-core/common';
 import { HttpLoaderFactory, I18nModule, I18nService } from '@gauzy/ui-core/i18n';
 import { SharedModule, TimeTrackerModule, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';

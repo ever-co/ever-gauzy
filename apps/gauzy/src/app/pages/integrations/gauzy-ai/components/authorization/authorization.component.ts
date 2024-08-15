@@ -5,8 +5,7 @@ import { EMPTY } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IIntegrationTenant, IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, GauzyAIService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, GauzyAIService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ReplacePipe } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

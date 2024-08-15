@@ -4,5 +4,4 @@
 export * from './lib/common.module';
 export * from './lib/constants';
 export * from './lib/interfaces';
-export * from './lib/providers/services';
 export * from './lib/utils/shared-utils';

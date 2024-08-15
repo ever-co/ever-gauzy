@@ -7,8 +7,14 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { DUMMY_PROFILE_IMAGE, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, OrganizationEditStore, OrganizationsService, ToastrService } from '@gauzy/ui-core/core';
+import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	ErrorHandlingService,
+	OrganizationEditStore,
+	OrganizationsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

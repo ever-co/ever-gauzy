@@ -7,7 +7,7 @@ import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ActivatedRoute } from '@angular/router';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidateInterviewService, ToastrService } from '@gauzy/ui-core/core';
 import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 

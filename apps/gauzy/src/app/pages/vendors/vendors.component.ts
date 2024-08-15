@@ -8,9 +8,15 @@ import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Cell } from 'angular2-smart-table';
-import { ErrorHandlingService, OrganizationVendorsService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import {
+	ErrorHandlingService,
+	OrganizationVendorsService,
+	ServerDataSource,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { IOrganizationVendor, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	CompanyLogoComponent,
 	DeleteConfirmationComponent,

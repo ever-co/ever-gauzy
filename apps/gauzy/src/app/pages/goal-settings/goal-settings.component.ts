@@ -6,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell, LocalDataSource } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { GoalSettingsService, ToastrService } from '@gauzy/ui-core/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { GoalSettingsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	AlertModalComponent,
 	DateViewComponent,

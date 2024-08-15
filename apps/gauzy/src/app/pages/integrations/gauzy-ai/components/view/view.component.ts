@@ -15,12 +15,13 @@ import {
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ReplacePipe } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 import {
+	ErrorHandlingService,
 	GauzyAIService,
 	IntegrationEntitySettingService,
-	IntegrationEntitySettingServiceStoreService
+	IntegrationEntitySettingServiceStoreService,
+	Store,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import { SettingTitlesEnum } from '../integration-setting-card/integration-setting-card.component';
 

@@ -6,8 +6,8 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
-import { DateRangePickerBuilderService, ExpensesService, TimesheetFilterService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, ExpensesService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,

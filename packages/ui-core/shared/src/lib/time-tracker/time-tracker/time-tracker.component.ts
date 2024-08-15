@@ -18,8 +18,15 @@ import {
 	TimeLogSourceEnum,
 	IEmployee
 } from '@gauzy/contracts';
-import { ITimerSynced, Store, TimeTrackerService, distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, toLocal, toUTC } from '@gauzy/ui-core/common';
+import {
+	ErrorHandlingService,
+	ITimerSynced,
+	Store,
+	TimeTrackerService,
+	TimesheetService,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from '../components/time-tracker-status/time-tracker-status.service';
 
 @UntilDestroy({ checkProperties: true })

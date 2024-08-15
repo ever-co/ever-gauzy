@@ -6,7 +6,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TasksService } from '@gauzy/ui-core/core';
 
