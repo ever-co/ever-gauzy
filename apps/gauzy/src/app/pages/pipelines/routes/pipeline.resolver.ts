@@ -4,8 +4,7 @@ import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { IPipeline } from '@gauzy/contracts';
-import { ErrorHandlingService, PipelinesService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, PipelinesService, Store } from '@gauzy/ui-core/core';
 
 @Injectable()
 export class PipelineResolver implements Resolve<Observable<IPipeline | Observable<never>>> {

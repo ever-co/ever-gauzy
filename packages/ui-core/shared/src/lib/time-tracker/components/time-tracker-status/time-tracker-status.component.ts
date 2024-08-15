@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ITimerIcon } from '@gauzy/ui-core/common';
+import { ITimerIcon } from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from './time-tracker-status.service';
 
 @Component({

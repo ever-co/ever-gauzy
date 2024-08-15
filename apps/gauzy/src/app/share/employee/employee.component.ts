@@ -8,8 +8,7 @@ import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauz
 import moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
-import { EmployeesService, ErrorHandlingService, ToastrService, UsersService } from '@gauzy/ui-core/core';
+import { EmployeesService, ErrorHandlingService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
 import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

@@ -19,10 +19,11 @@ import {
 	JitsuService,
 	LanguagesService,
 	SelectorBuilderService,
-	SeoService
+	SeoService,
+	Store
 } from '@gauzy/ui-core/core';
 import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
 

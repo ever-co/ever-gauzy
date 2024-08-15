@@ -14,8 +14,8 @@ import {
 	ICandidateSource,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { CandidatesService, ErrorHandlingService, RoleService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, RoleService, Store } from '@gauzy/ui-core/core';
 import { BasicInfoFormComponent } from '../../user/forms';
 import { CandidateCvComponent } from '../candidate-cv/candidate-cv.component';
 

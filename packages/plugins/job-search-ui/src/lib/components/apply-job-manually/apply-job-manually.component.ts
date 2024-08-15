@@ -20,8 +20,8 @@ import {
 	JobPostSourceEnum
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/ui-config';
-import { API_PREFIX, Store, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, JobService } from '@gauzy/ui-core/core';
+import { API_PREFIX, distinctUntilChange, isNotEmpty, sleep } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, JobService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeeSelectorComponent, FormHelpers, ckEditorConfig } from '@gauzy/ui-core/shared';
 

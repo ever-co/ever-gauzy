@@ -9,8 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IHubstaffOrganization, IHubstaffProject, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, HubstaffService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, HubstaffService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { SettingsDialogComponent } from '../settings-dialog/settings-dialog.component';
 
 @UntilDestroy({ checkProperties: true })

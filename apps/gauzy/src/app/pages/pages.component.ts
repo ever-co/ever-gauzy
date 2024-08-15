@@ -16,10 +16,11 @@ import {
 	NavMenuBuilderService,
 	NavMenuSectionItem,
 	PermissionsService,
+	Store,
 	UsersService
 } from '@gauzy/ui-core/core';
 import { FeatureEnum, IOrganization, IRolePermission, IUser, IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ReportService } from './reports/all-report/report.service';
 
 @UntilDestroy({ checkProperties: true })

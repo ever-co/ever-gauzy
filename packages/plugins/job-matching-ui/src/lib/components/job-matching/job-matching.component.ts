@@ -19,12 +19,13 @@ import {
 	ID,
 	LanguagesEnum
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	JobPresetService,
 	JobSearchCategoryService,
 	JobSearchOccupationService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { I18nService, TranslationBaseComponent } from '@gauzy/ui-core/i18n';

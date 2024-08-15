@@ -7,8 +7,8 @@ import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITag, IOrganization, ComponentLayoutStyleEnum } from '@gauzy/contracts';
-import { ComponentEnum, Store, distinctUntilChange, splitCamelCase } from '@gauzy/ui-core/common';
-import { TagsService, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange, splitCamelCase } from '@gauzy/ui-core/common';
+import { Store, TagsService, ToastrService } from '@gauzy/ui-core/core';
 import {
 	DeleteConfirmationComponent,
 	IPaginationBase,

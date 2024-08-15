@@ -7,8 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, ProposalTemplateService, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ProposalTemplateService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy()

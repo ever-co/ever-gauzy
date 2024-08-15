@@ -5,9 +5,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { takeUntil } from 'rxjs/operators';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { ISkill, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
-import { ComponentEnum, Store } from '@gauzy/ui-core/common';
+import { ComponentEnum } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
-import { CandidateSkillsService, CandidateStore, ToastrService } from '@gauzy/ui-core/core';
+import { CandidateSkillsService, CandidateStore, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-edit-candidate-skills',

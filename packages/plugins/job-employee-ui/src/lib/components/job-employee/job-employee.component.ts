@@ -17,8 +17,8 @@ import {
 	LanguagesEnum,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { EmployeesService, JobService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,

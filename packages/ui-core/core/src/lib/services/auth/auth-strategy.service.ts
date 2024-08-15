@@ -6,10 +6,12 @@ import { NbAuthResult, NbAuthStrategy } from '@nebular/auth';
 import { NbAuthStrategyClass } from '@nebular/auth';
 import { CookieService } from 'ngx-cookie-service';
 import { IUser, IAuthResponse, IUserLoginInput, LanguagesEnum } from '@gauzy/contracts';
-import { Store, TimeTrackerService, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { ElectronService } from './electron.service';
 import { AuthService } from './auth.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
+import { TimeTrackerService } from '../time-tracker/time-tracker.service';
+import { Store } from '../store/store.service';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {

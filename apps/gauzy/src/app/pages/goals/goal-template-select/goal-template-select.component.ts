@@ -21,9 +21,9 @@ import {
 	GoalSettingsService,
 	GoalTemplatesService,
 	KeyResultService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 import { TranslateService } from '@ngx-translate/core';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
 

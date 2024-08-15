@@ -19,12 +19,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	ExpensesService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {

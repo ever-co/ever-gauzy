@@ -3,7 +3,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IOrganization, RegionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isEmpty, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({

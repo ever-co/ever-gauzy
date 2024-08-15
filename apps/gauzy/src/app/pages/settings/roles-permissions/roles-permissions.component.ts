@@ -8,8 +8,7 @@ import { Observable, Subject, of as observableOf, startWith, catchError } from '
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
-import { RolePermissionsService, RoleService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

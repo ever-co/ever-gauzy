@@ -15,8 +15,8 @@ import {
 	IRequestApproval,
 	RequestApprovalStatusTypesEnum
 } from '@gauzy/contracts';
-import { RequestApprovalService, ToastrService } from '@gauzy/ui-core/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { RequestApprovalService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,

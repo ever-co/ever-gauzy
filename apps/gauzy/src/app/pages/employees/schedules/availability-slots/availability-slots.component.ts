@@ -23,9 +23,9 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
-import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { AvailabilitySlotsService, TimeOffService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

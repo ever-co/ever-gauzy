@@ -9,7 +9,7 @@ import * as _ from 'underscore';
 import { environment } from '@gauzy/ui-config';
 import { IFeature, IFeatureOrganization, IFeatureToggle, IOrganization, IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { FeatureStoreService } from '@gauzy/ui-core/core';
 import { CountdownConfirmationComponent } from '../user/forms';
 

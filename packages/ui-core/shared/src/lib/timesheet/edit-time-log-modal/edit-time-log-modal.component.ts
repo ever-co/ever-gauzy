@@ -17,8 +17,8 @@ import {
 	TimeLogType,
 	TimeLogSourceEnum
 } from '@gauzy/contracts';
-import { toUTC, toLocal, distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { toUTC, toLocal, distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -5,9 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { IFeature, IUser } from '@gauzy/contracts';
-import { FeatureStoreService, UsersService } from '@gauzy/ui-core/core';
+import { FeatureStoreService, Store, UsersService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

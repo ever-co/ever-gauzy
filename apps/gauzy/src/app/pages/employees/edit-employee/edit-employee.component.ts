@@ -6,10 +6,10 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IEmployee, IImageAsset, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

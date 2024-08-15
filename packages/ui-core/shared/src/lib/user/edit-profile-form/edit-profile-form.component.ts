@@ -4,7 +4,7 @@ import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_T
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import {
 	AuthService,
 	ErrorHandlingService,

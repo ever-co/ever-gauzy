@@ -17,10 +17,10 @@ import {
 	TimeLogSourceEnum,
 	ITimerStatusInput
 } from '@gauzy/contracts';
+import { toLocal, toParams, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '@gauzy/ui-core/common';
 import { Store as AppStore } from '../store/store.service';
 import { ITimerSynced } from './interfaces';
-import { toLocal, toParams, toUTC } from '../../../utils/shared-utils';
-import { API_PREFIX, BACKGROUND_SYNC_INTERVAL } from '../../../constants';
 
 export function createInitialTimerState(): TimerState {
 	let timerConfig = {

@@ -35,8 +35,13 @@ import {
 	DEFAULT_AUTO_ARCHIVE_ISSUE_PERIOD,
 	DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS
 } from '@gauzy/contracts';
-import { Store, isEmpty } from '@gauzy/ui-core/common';
-import { AccountingTemplateService, OrganizationEditStore, OrganizationTaskSettingService } from '@gauzy/ui-core/core';
+import { isEmpty } from '@gauzy/ui-core/common';
+import {
+	AccountingTemplateService,
+	OrganizationEditStore,
+	OrganizationTaskSettingService,
+	Store
+} from '@gauzy/ui-core/core';
 import { OrganizationsService, ToastrService } from '@gauzy/ui-core/core';
 import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
 

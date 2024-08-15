@@ -5,9 +5,9 @@ import { IOrganization, ITimeLogFilters } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import { Store, toUtcOffset } from '@gauzy/ui-core/common';
+import { toUtcOffset } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { DateRangePickerBuilderService } from '@gauzy/ui-core/core';
 import { TimeZoneService } from '../timezone-filter';
 import { getAdjustDateRangeFutureAllowed } from '../../../selectors/date-range-picker/date-picker.utils';
 

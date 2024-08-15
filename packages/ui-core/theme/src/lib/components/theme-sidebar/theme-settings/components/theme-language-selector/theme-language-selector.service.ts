@@ -3,8 +3,8 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, from, tap } from 'rxjs';
 import { NbLayoutDirection, NbLayoutDirectionService } from '@nebular/theme';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { ElectronService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { ElectronService, Store } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })

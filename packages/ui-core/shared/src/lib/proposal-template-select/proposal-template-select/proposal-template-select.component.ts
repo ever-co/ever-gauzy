@@ -4,8 +4,8 @@ import { Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ID, IEmployeeProposalTemplate, IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, ProposalTemplateService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ProposalTemplateService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({

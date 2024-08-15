@@ -28,9 +28,10 @@ import {
 	EmployeeStore,
 	EmployeesService,
 	NavigationService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { TruncatePipe } from '../../pipes';
 import { ALL_EMPLOYEES_SELECTED } from './default-employee';
 

@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { firstValueFrom } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	IEmployee,
 	IOrganization,
@@ -20,7 +20,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmployeesService, OrganizationTeamsService, TasksService } from '@gauzy/ui-core/core';
+import { EmployeesService, OrganizationTeamsService, Store, TasksService } from '@gauzy/ui-core/core';
 import { richTextCKEditorConfig } from '../../ckeditor.config';
 
 @UntilDestroy({ checkProperties: true })

@@ -26,7 +26,7 @@ import {
 	KeyResultNumberUnitsEnum,
 	IOrganization
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { endOfTomorrow } from 'date-fns';
 
 @Component({

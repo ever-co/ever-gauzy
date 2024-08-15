@@ -7,7 +7,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck } from 'underscore';
 import { NbDialogService } from '@nebular/theme';
-import { ErrorHandlingService, ServerDataSource, TasksService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, ServerDataSource, Store, TasksService } from '@gauzy/ui-core/core';
 import {
 	IOrganization,
 	IOrganizationProject,
@@ -16,7 +16,7 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
 import { AddTaskDialogComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
 

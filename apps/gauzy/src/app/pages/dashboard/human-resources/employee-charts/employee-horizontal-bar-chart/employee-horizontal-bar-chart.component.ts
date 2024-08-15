@@ -9,9 +9,9 @@ import { ChartConfiguration, ChartType } from 'chart.js';
 import { environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
-import { months } from '@gauzy/ui-core/core';
+import { Store, months } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -94,8 +94,8 @@ export class EmployeeHorizontalBarChartComponent
 	@ViewChild(BaseChartDirective, { static: false }) baseChartDirective: BaseChartDirective;
 
 	constructor(
-		private readonly _themeService: NbThemeService,
 		public readonly translateService: TranslateService,
+		private readonly _themeService: NbThemeService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _currencyPositionPipe: CurrencyPositionPipe,
 		private readonly _store: Store

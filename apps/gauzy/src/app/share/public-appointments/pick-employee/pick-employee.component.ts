@@ -4,8 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
-import { EventTypeService, ToastrService } from '@gauzy/ui-core/core';
+import { EventTypeService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { EmployeeSelectorComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

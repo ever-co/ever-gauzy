@@ -14,7 +14,7 @@ import { filter, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { pluck } from 'underscore';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
@@ -22,7 +22,7 @@ import {
 	IChartData,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
-import { DateRangePickerBuilderService, PaymentService, TimesheetFilterService } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, PaymentService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

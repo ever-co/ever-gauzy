@@ -4,7 +4,8 @@ import { HttpClient } from '@angular/common/http';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { firstValueFrom } from 'rxjs';
 import { IPagination, IRolePermission } from '@gauzy/contracts';
-import { API_PREFIX, Store } from '@gauzy/ui-core/common';
+import { API_PREFIX } from '@gauzy/ui-core/common';
+import { Store } from '../store/store.service';
 
 @Injectable({
 	providedIn: 'root'

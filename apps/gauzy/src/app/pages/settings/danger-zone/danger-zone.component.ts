@@ -7,8 +7,7 @@ import { filter, tap } from 'rxjs/operators';
 import { IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Environment, environment } from '@gauzy/ui-config';
-import { ToastrService, UsersService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
 import { DangerZoneMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

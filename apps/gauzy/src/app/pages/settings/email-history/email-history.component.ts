@@ -12,10 +12,10 @@ import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { EmailFiltersComponent } from './email-filters/email-filters.component';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { EmailService, EmployeesService, OrganizationContactService, ToastrService } from '@gauzy/ui-core/core';
+import { EmailService, EmployeesService, OrganizationContactService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

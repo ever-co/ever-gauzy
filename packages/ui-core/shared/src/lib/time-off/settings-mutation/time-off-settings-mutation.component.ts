@@ -3,7 +3,7 @@ import { filter, firstValueFrom, tap } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization, IOrganizationTeam, ITimeOffPolicy } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { EmployeesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

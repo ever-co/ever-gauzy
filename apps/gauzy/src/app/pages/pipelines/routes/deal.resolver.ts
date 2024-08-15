@@ -3,8 +3,7 @@ import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { catchError, from, of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { IDeal } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { DealsService, ErrorHandlingService } from '@gauzy/ui-core/core';
+import { DealsService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @Injectable()
 export class DealResolver implements Resolve<Observable<IDeal | Observable<never>>> {

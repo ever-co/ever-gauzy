@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
-import { Store } from '@gauzy/ui-core/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, tap } from 'rxjs/operators';
+import { Store } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-sign-in-success',
