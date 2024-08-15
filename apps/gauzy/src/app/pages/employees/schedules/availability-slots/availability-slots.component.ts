@@ -447,7 +447,7 @@ export class AvailabilitySlotsComponent extends TranslationBaseComponent impleme
 			start: eventStartTime,
 			end: eventEndTime,
 			allDay: slot.allDay,
-			color: isDayOff ? '#FF0000' : '#4682B4', // Hexadecimal for red and seablue
+			color: isDayOff ? '#FF0000' : '#4682B4',
 			extendedProps: {
 				id: slot.id,
 				isDayOff: !!isDayOff // Simplified boolean assignment

@@ -163,7 +163,7 @@ export class OptionsFormComponent implements OnInit {
 		});
 
 		this.optionGroups = this.optionGroups.filter(
-			(optinGroup) => optinGroup.formOptionGroupId !== optionGroupDeleted.formOptionGroupId
+			(optionGroup) => optionGroup.formOptionGroupId !== optionGroupDeleted.formOptionGroupId
 		);
 
 		this.inventoryStore.addDeletedOptionGroup(optionGroupDeleted);
@@ -223,7 +223,7 @@ export class OptionsFormComponent implements OnInit {
 
 		if (checkDuplicateOption) {
 			this.form.controls['activeOptionName'].setErrors({
-				error: 'dublicate option'
+				error: 'duplicate option'
 			});
 		} else {
 			this.form.controls['activeOptionName'].setErrors(null);
@@ -238,7 +238,7 @@ export class OptionsFormComponent implements OnInit {
 
 		if (checkDuplicateCode) {
 			this.form.controls['activeOptionCode'].setErrors({
-				error: 'dublicate code'
+				error: 'duplicate code'
 			});
 		} else {
 			this.form.controls['activeOptionCode'].setErrors(null);
