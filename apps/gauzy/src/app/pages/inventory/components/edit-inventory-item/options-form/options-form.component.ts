@@ -63,7 +63,7 @@ export class OptionsFormComponent implements OnInit {
 	optionGroups: any[] = [];
 
 	@HostListener('document:click', ['$event'])
-	clickout(event) {
+	onClick(event: MouseEvent) {
 		if (!this.eRef.nativeElement.contains(event.target)) {
 			this.activeOptionGroup = this.getEmptyOptionGroup();
 			this.activeOption = this.getEmptyOption();
@@ -157,7 +157,7 @@ export class OptionsFormComponent implements OnInit {
 		this.optionGroups.splice(0, 0, newOptionGroup);
 	}
 
-	onDeleteOptinGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
+	onDeleteOptionGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
 		optionGroupDeleted.options.forEach((option) => {
 			this.onDeleteOption(option);
 		});
@@ -205,7 +205,7 @@ export class OptionsFormComponent implements OnInit {
 	updateActiveOptionGroupName(value: string) {
 		if (this.optionGroups.find((optionGroup) => optionGroup.name == value)) {
 			this.form.controls['activeOptionGroupName'].setErrors({
-				error: 'alredy group'
+				error: 'already group'
 			});
 
 			return;
@@ -219,9 +219,9 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	updateActiveOptionName(value: string) {
-		let checkDublicateOption = this.activeOptionGroup.options.find((option) => option.name == value);
+		let checkDuplicateOption = this.activeOptionGroup.options.find((option) => option.name == value);
 
-		if (checkDublicateOption) {
+		if (checkDuplicateOption) {
 			this.form.controls['activeOptionName'].setErrors({
 				error: 'dublicate option'
 			});
@@ -234,9 +234,9 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	updateActiveOptionCode(value: string) {
-		let checkDublicateCode = this.activeOptionGroup.options.find((option) => option.code == value);
+		let checkDuplicateCode = this.activeOptionGroup.options.find((option) => option.code == value);
 
-		if (checkDublicateCode) {
+		if (checkDuplicateCode) {
 			this.form.controls['activeOptionCode'].setErrors({
 				error: 'dublicate code'
 			});

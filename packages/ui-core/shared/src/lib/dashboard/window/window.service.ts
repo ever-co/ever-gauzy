@@ -6,7 +6,7 @@ import { BackupStrategy, GuiDrag } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 import { LayoutPersistance } from '../concretes/contexts/layout-persistance.class';
 import { PersistanceTakers } from '../concretes/contexts/persistance-takers.class';
-import { LocalstorageStrategy } from '../concretes/strategies/localstorage-strategy.class';
+import { LocalStorageStrategy } from '../concretes/strategies/local-storage-strategy.class';
 
 @UntilDestroy({ checkProperties: true })
 @Injectable({
@@ -23,7 +23,7 @@ export class WindowService implements OnDestroy {
 
 	constructor(private readonly store: Store) {
 		this._windowLayoutPersistance = new LayoutPersistance();
-		this._localStorage = new LocalstorageStrategy();
+		this._localStorage = new LocalStorageStrategy();
 		this._windowsTakers = new PersistanceTakers(this._windowLayoutPersistance);
 		this._windows$ = new Subject();
 		this._windows$

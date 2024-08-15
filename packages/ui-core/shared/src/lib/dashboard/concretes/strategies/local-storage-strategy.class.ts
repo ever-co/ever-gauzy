@@ -1,6 +1,6 @@
 import { BackupStrategy, GuiDrag } from '@gauzy/ui-core/common';
 
-export class LocalstorageStrategy implements BackupStrategy {
+export class LocalStorageStrategy implements BackupStrategy {
 	private _serializables: Partial<GuiDrag>[];
 
 	constructor() {}
@@ -26,6 +26,7 @@ export class LocalstorageStrategy implements BackupStrategy {
 	}
 
 	/**
+	 * Serialize all draggables
 	 *
 	 * @returns
 	 */
@@ -34,14 +35,14 @@ export class LocalstorageStrategy implements BackupStrategy {
 	}
 
 	/**
-	 *
+	 * Get all serializables
 	 */
 	public get serializables(): Partial<GuiDrag>[] {
 		return this._serializables;
 	}
 
 	/**
-	 *
+	 * Set all serializables
 	 */
 	public set serializables(value: Partial<GuiDrag>[]) {
 		this._serializables = value;

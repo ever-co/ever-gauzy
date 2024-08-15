@@ -100,10 +100,10 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeGroupValueLng = languageCode;
 		this.activeOptionValueLng = '';
 
-		let newtr = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCode);
+		let newTranslation = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCode);
 
-		if (newtr && newtr.name) {
-			this.form.get(languageCode).setValue(newtr.name);
+		if (newTranslation && newTranslation.name) {
+			this.form.get(languageCode).setValue(newTranslation.name);
 		}
 	}
 
@@ -120,10 +120,10 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeOptionValueLng = languageCode;
 		this.activeOption = option;
 		this.activeGroupValueLng = '';
-		let newtr = option.translations.find((tr) => tr.languageCode == languageCode);
+		let newTranslation = option.translations.find((tr) => tr.languageCode == languageCode);
 
-		if (newtr && newtr.name) {
-			this.form.get(languageCode).setValue(newtr.name);
+		if (newTranslation && newTranslation.name) {
+			this.form.get(languageCode).setValue(newTranslation.name);
 		}
 	}
 

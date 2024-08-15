@@ -153,7 +153,7 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 
 	async permissionChanged(permission: string, enabled: boolean, allowChange: boolean) {
 		/**
-		 * If anyone trying to update another users permissions without enough permisison
+		 * If anyone trying to update another users permissions without enough permission
 		 */
 		if (!allowChange) {
 			this.toastrService.danger(
