@@ -1,5 +1,5 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IOrganizationProject, IRelationalOrganizationProject } from './organization-projects.model';
+import { IRelationalOrganizationProject } from './organization-projects.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 
 export interface ITaskStatus
