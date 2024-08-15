@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
@@ -155,6 +155,55 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			return await this.getAllPlans(options, employeeId);
 		} catch (error) {
 			console.log('Error fetching all daily plans');
+		}
+	}
+
+	/**
+	 * Retrieves daily plans for all employees of a specific team with pagination and additional query options.
+	 *
+	 * @param teamId - The ID of the team for whom to retrieve daily plans.
+	 * @param options - Pagination and additional query options for filtering and retrieving daily plans.
+	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
+	 * @throws BadRequestException - If there's an error during the query.
+	 */
+	async getTeamDailyPlans(options: PaginationParams): Promise<IPagination<IDailyPlan>> {
+		try {
+			const { where } = options;
+			const { organizationId, teamIds } = where;
+			const tenantId = RequestContext.currentTenantId();
+
+			// Create the initial query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Join related entities
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+			query.leftJoinAndSelect('employee.teams', 'teams');
+
+			// Apply optional find options if provided
+			query.setFindOptions({
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.where) && {
+						where: options.where
+					}),
+				...(isNotEmpty(options) &&
+					isNotEmpty(options.relations) && {
+						relations: options.relations
+					})
+			});
+
+			// Filter conditions
+			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+			query.andWhere('teams."organizationTeamId" IN (:...teamIds)', { teamIds });
+
+			// Retrieve results and total count
+			const [items, total] = await query.getManyAndCount();
+			// Return the pagination result
+			return { items, total };
+		} catch (error) {
+			console.log('Error while fetching daily plans for team');
+			throw new HttpException(`Failed to fetch daily plans for team : ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 

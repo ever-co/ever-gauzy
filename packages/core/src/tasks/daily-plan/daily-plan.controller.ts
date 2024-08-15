@@ -64,6 +64,31 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET daily plans for a given team
+	 *
+	 * @param options
+	 * @param employeeId
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find team daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
+	@Get('team')
+	async getTeamDailyPlans(@Query() params: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		return await this.dailyPlanService.getTeamDailyPlans(params);
+	}
+
+	/**
 	 * GET daily plans for a given employee
 	 *
 	 * @param options
