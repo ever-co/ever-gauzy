@@ -25,11 +25,6 @@ export class LocalStorageStrategy implements BackupStrategy {
 			: [];
 	}
 
-	/**
-	 * Serialize all draggables
-	 *
-	 * @returns
-	 */
 	serialize(): Partial<GuiDrag>[] {
 		return this.serializables.map((restored: Partial<GuiDrag>) => restored.toObject());
 	}
