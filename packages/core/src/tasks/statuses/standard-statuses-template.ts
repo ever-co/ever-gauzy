@@ -1,5 +1,8 @@
 import { TaskStatusEnum, TaskStatusWorkFlow } from '@gauzy/contracts';
 
+/**
+ * Default task statuses
+ */
 export const TASK_STATUSES_TEMPLATES: { [key in TaskStatusEnum]: TaskStatusWorkFlow } = {
 	[TaskStatusEnum.BACKLOG]: { isTodo: true, isInProgress: false, isDone: false },
 	[TaskStatusEnum.OPEN]: { isTodo: true, isInProgress: false, isDone: false },

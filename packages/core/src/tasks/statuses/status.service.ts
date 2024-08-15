@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { Knex as KnexConnection } from 'knex';
@@ -15,13 +15,14 @@ import {
 	ITenant
 } from '@gauzy/contracts';
 import { isPostgres } from '@gauzy/config';
-import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { RequestContext } from '../../core/context';
 import { MultiORMEnum } from '../../core/utils';
+import { IPartialEntity } from '../../core/crud/icrud.service';
+import { TaskStatusPrioritySizeService } from '../task-status-priority-size.service';
 import { TaskStatus } from './status.entity';
 import { DEFAULT_GLOBAL_STATUSES } from './default-global-statuses';
-import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
 import { TASK_STATUSES_TEMPLATES } from './standard-statuses-template';
+import { MikroOrmTaskStatusRepository, TypeOrmTaskStatusRepository } from './repository';
 
 @Injectable()
 export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus> {
@@ -31,24 +32,32 @@ export class TaskStatusService extends TaskStatusPrioritySizeService<TaskStatus>
 	constructor(
 		@InjectRepository(TaskStatus)
 		readonly typeOrmTaskStatusRepository: TypeOrmTaskStatusRepository,
-
 		readonly mikroOrmTaskStatusRepository: MikroOrmTaskStatusRepository,
-
-		@InjectConnection()
-		readonly knexConnection: KnexConnection
+		@InjectConnection() readonly knexConnection: KnexConnection
 	) {
 		console.log(`TaskStatusService initialized. Unique Service ID: ${uuidv4()} `);
 		super(typeOrmTaskStatusRepository, mikroOrmTaskStatusRepository, knexConnection);
 	}
 
-	async createStatus(entity: ITaskStatusCreateInput): Promise<ITaskStatus> {
+	/**
+	 * Create task status
+	 *
+	 * @param entity - object that contains the input values and template to be used
+	 * @returns - a promise that resolves after task status created
+	 */
+	public async create(entity: IPartialEntity<TaskStatus>): Promise<ITaskStatus> {
 		try {
-			const { template, ...taskStatus } = entity;
-			const taskTemplate = TASK_STATUSES_TEMPLATES[template];
+			// Extract the template from the entity
+			const { template, ...partialEntity } = entity;
 
-			return await this.save({ ...taskStatus, ...taskTemplate });
+			// Get the work flow for the template
+			const workFlow = TASK_STATUSES_TEMPLATES[template];
+
+			// Save the entity with the work flow
+			return await this.save({ ...partialEntity, ...workFlow });
 		} catch (error) {
-			throw new BadRequestException('Task Status could not be saved due to wrong values');
+			// Handle errors and return an appropriate error response
+			throw new HttpException(`Failed to add task status: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
