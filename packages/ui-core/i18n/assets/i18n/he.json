@@ -159,6 +159,7 @@
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
+			"LOADING": "טוען, אנא המתן...",
 			"RECEIVE_ESTIMATE": "לא קיבלתם אף הערכה.",
 			"INCOME": "לא יצרתם הכנסות.",
 			"EXPENSE_CATEGORY": "לא יצרתם קטגוריות הוצאה.",

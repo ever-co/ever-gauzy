@@ -169,7 +169,7 @@
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
-			"LOADING": "Loading, please hold...",
+			"LOADING": "Loading, Please wait...",
 			"RECEIVE_ESTIMATE": "You have not received any estimates.",
 			"INCOME": "You have not created any incomes.",
 			"EXPENSE_CATEGORY": "You have not created any expense categories.",
