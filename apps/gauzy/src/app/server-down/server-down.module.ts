@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule, ROUTES } from '@angular/router';
 import { NbLayoutModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { createRoutes } from './server-down.routes';
 import { ServerDownComponent } from './server-down.component';
 
@@ -14,8 +14,8 @@ import { ServerDownComponent } from './server-down.component';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (pageRouteRegistryService: PageRouteRegistryService) => createRoutes(pageRouteRegistryService),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]

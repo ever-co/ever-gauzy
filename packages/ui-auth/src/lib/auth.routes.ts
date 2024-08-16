@@ -1,6 +1,6 @@
 import { Route } from '@angular/router';
 import { NbLogoutComponent } from '@nebular/auth';
-import { NoAuthGuard, PageRouteService } from '@gauzy/ui-core/core';
+import { NoAuthGuard, PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { NgxAuthComponent } from './components/auth/auth.component';
 import { NgxLoginComponent } from './components/login/login.component';
 import { NgxForgotPasswordComponent } from './components/forgot-password/forgot-password.component';
@@ -16,10 +16,10 @@ import { AcceptClientInviteComponent } from './components/accept-client-invite/a
 /**
  * Creates routes for the auth module.
  *
- * @param _pageRouteService An instance of PageRouteService
+ * @param _pageRouteRegistryService An instance of PageRouteRegistryService
  * @returns An array of Route objects
  */
-export const createAuthRoutes = (_pageRouteService: PageRouteService): Route[] => [
+export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: NgxAuthComponent,
@@ -75,7 +75,7 @@ export const createAuthRoutes = (_pageRouteService: PageRouteService): Route[] =
 				path: 'logout',
 				component: NbLogoutComponent
 			},
-			..._pageRouteService.getPageLocationRoutes('auth')
+			..._pageRouteRegistryService.getPageLocationRoutes('auth')
 		]
 	}
 ];
