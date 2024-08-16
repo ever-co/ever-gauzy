@@ -9,8 +9,7 @@ import {
 	IDailyPlanTasksUpdateInput,
 	IDailyPlanUpdateInput,
 	IEmployee,
-	IPagination,
-	ITask
+	IPagination
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { prepareSQLQuery as p } from '../../database/database.helper';
