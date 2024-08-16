@@ -36,7 +36,7 @@ export interface PageRouteRegistryConfig extends Route {
 /**
  * Page registry service interface.
  */
-export interface IPageRegistry {
+export interface IPageRouteRegistry {
 	registerPageRoute(config: PageRouteRegistryConfig): void; // Register a single page route configuration.
 	registerPageRoutes(configs: PageRouteRegistryConfig[]): void; // Register multiple page route configurations.
 }

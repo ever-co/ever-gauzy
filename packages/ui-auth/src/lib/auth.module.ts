@@ -20,7 +20,13 @@ import {
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { ElectronService, InviteService, NoAuthGuard, PageRegistryService, RoleService } from '@gauzy/ui-core/core';
+import {
+	ElectronService,
+	InviteService,
+	NoAuthGuard,
+	PageRouteRegistryService,
+	RoleService
+} from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
@@ -114,8 +120,9 @@ const THIRD_PARTY_MODULES = [
 		ElectronService,
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRegistryService) => createAuthRoutes(pageRouteService),
-			deps: [PageRegistryService],
+			useFactory: (pageRouteRegistryService: PageRouteRegistryService) =>
+				createAuthRoutes(pageRouteRegistryService),
+			deps: [PageRouteRegistryService],
 			multi: true
 		},
 		InviteService,
@@ -125,7 +132,7 @@ const THIRD_PARTY_MODULES = [
 export class NgxAuthModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRegistryService) readonly _pageRegistryService: PageRegistryService) {
+	constructor(@Inject(PageRouteRegistryService) readonly _pageRouteRegistryService: PageRouteRegistryService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -142,7 +149,7 @@ export class NgxAuthModule {
 		}
 
 		// Register the login workspace route
-		this._pageRegistryService.registerPageRoutes([
+		this._pageRouteRegistryService.registerPageRoutes([
 			{
 				// Register the location 'auth'
 				location: 'auth',

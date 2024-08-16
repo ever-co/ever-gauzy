@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
 import { PageLocationRegistryId } from '../../common/component-registry.types';
-import { IPageRegistry, PageRouteRegistryConfig } from './page-registry.types';
+import { IPageRouteRegistry, PageRouteRegistryConfig } from './page-route-registry.types';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class PageRegistryService implements IPageRegistry {
+export class PageRouteRegistryService implements IPageRouteRegistry {
 	/**
 	 * Registry for storing page route configurations.
 	 *

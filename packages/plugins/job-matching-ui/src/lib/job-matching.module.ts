@@ -17,10 +17,10 @@ import { NgSelectModule } from '@ng-select/ng-select';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRegistryService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
-import { createRoutes } from './job-matching.routes';
+import { createJobMatchingRoutes } from './job-matching.routes';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 import { COMPONENTS } from './components';
 
@@ -63,8 +63,8 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRegistryService) => createRoutes(pageRouteService),
-			deps: [PageRegistryService],
+			useFactory: (service: PageRouteRegistryService) => createJobMatchingRoutes(service),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
@@ -72,7 +72,9 @@ const THIRD_PARTY_MODULES = [
 export class JobMatchingModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRegistryService) private readonly _pageRegistryService: PageRegistryService) {
+	constructor(
+		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
+	) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -89,7 +91,7 @@ export class JobMatchingModule {
 		}
 
 		// Register Job Matching Page Routes
-		this._pageRegistryService.registerPageRoute({
+		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
 			location: 'jobs',
 			// Register the path 'matching'

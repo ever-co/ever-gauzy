@@ -1,15 +1,15 @@
 import { Route } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
 import { JobMatchingComponent } from './components/job-matching/job-matching.component';
 
 /**
  * Creates jobs matching routes for the application
  *
- * @param _pageRegistryService An instance of PageRegistryService
+ * @param _pageRouteRegistryService An instance of PageRouteRegistryService
  * @returns An array of Route objects
  */
-export const createRoutes = (_pageRegistryService: PageRegistryService): Route[] => [
+export const createJobMatchingRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: JobMatchingComponent,
