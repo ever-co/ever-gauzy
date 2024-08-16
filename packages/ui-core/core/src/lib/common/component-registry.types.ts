@@ -1,6 +1,6 @@
 /**
  * @description
- * Type representing the possible page locations for dynamic routes and tabs.
+ * Type representing the possible page locations for dynamic routes and tabs and table columns.
  *
  * This type is used to identify different sections of the application where dynamic
  * routes and tabs can be registered. Each value corresponds to a specific page or
@@ -13,4 +13,4 @@
  * - 'dashboard': The main dashboard page of the application.
  * - 'jobs': The jobs or job search section of the application.
  */
-export type PageRouteLocationId = 'auth' | 'pages' | 'dashboard' | 'jobs';
+export type PageLocationRegistryId = 'auth' | 'pages' | 'dashboard' | 'jobs';

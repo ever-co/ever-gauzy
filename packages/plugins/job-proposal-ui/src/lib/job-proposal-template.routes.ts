@@ -1,15 +1,15 @@
 import { Route } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { PageRouteService, PermissionsGuard } from '@gauzy/ui-core/core';
+import { PageRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
 import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
 
 /**
  * Creates jobs proposal template routes for the application
  *
- * @param _pageRouteService An instance of PageRouteService
+ * @param _pageRegistryService An instance of PageRegistryService
  * @returns An array of Route objects
  */
-export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
+export const createRoutes = (_pageRegistryService: PageRegistryService): Route[] => [
 	{
 		path: '',
 		component: ProposalTemplateComponent,

@@ -1,2 +1,2 @@
-export * from './page-route.service';
-export * from './page-route.types';
+export * from './page-registry.service';
+export * from './page-registry.types';

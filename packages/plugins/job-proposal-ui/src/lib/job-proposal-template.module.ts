@@ -17,7 +17,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
@@ -73,8 +73,8 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (pageRouteService: PageRegistryService) => createRoutes(pageRouteService),
+			deps: [PageRegistryService],
 			multi: true
 		}
 	]
@@ -82,7 +82,7 @@ const THIRD_PARTY_MODULES = [
 export class JobProposalTemplateModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
+	constructor(@Inject(PageRegistryService) private readonly _pageRegistryService: PageRegistryService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -99,7 +99,7 @@ export class JobProposalTemplateModule {
 		}
 
 		// Register Job Proposal Template Page Routes
-		this._pageRouteService.registerPageRoute({
+		this._pageRegistryService.registerPageRoute({
 			// Register the location 'jobs'
 			location: 'jobs',
 			// Register the path 'proposal-template'
