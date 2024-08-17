@@ -99,9 +99,10 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 			name: this.selectedContact.name,
 			organizationId: this.selectedContact.organizationId,
 			id: this.selectedContact.id,
-			members: this.selectedMembers
+			members: this.selectedMembers,
+			contactType: this.selectedContact.contactType
 		};
 
-		await this.organizationContactService.create(organizationContactData);
+		await this.organizationContactService.update(this.selectedContact.id, organizationContactData);
 	}
 }
