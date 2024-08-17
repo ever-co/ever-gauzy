@@ -32,7 +32,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'legal',
-		loadChildren: () => import('@gauzy/plugins/legal-ui').then((m) => m.LegalModule)
+		loadChildren: () => import('@gauzy/plugin-legal-ui').then((m) => m.LegalModule)
 	},
 	{
 		path: 'sign-in',

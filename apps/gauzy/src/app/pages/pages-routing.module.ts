@@ -632,7 +632,7 @@ const routes: Routes = [
 			},
 			{
 				path: 'legal',
-				loadChildren: () => import('@gauzy/plugins/legal-ui').then((m) => m.PageLegalModule)
+				loadChildren: () => import('@gauzy/plugin-legal-ui').then((m) => m.PageLegalModule)
 			},
 			{
 				path: '**',

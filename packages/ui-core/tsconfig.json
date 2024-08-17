@@ -10,7 +10,6 @@
 		"noFallthroughCasesInSwitch": true,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/ui-core": ["./src/index.ts"],
 			"@gauzy/ui-core/common": ["./common/src/index.ts"],
 			"@gauzy/ui-core/core": ["./core/src/index.ts"],
 			"@gauzy/ui-core/i18n": ["./i18n/src/index.ts"],
