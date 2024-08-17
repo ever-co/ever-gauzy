@@ -1,7 +1,7 @@
-import { JobEmployeeModule } from '@gauzy/plugins/job-employee-ui';
-import { JobMatchingModule } from '@gauzy/plugins/job-matching-ui';
-import { JobSearchModule } from '@gauzy/plugins/job-search-ui';
-import { JobProposalTemplateModule } from '@gauzy/plugins/job-proposal-ui';
+import { JobEmployeeModule } from '@gauzy/plugin-job-employee-ui';
+import { JobMatchingModule } from '@gauzy/plugin-job-matching-ui';
+import { JobSearchModule } from '@gauzy/plugin-job-search-ui';
+import { JobProposalTemplateModule } from '@gauzy/plugin-job-proposal-ui';
 
 /**
  * An array of plugins to be included or used in the codebase.
