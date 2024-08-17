@@ -507,7 +507,8 @@
 		"COMMONPROGRAMFILES",
 		"serverapi",
 		"serializables",
-		"drppicker"
+		"drppicker",
+		"titlebar"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
