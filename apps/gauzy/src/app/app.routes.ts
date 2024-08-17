@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard, NoAuthGuard } from '@gauzy/ui-core/core';
+import { AuthGuard } from '@gauzy/ui-core/core';
 import { AppModuleGuard } from './app.module.guard';
 
 /**
