@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { AuthGuard } from '@gauzy/ui-core/core';
+import { AuthGuard, NoAuthGuard } from '@gauzy/ui-core/core';
 import { AppModuleGuard } from './app.module.guard';
 
 /**
@@ -32,7 +32,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'legal',
-		loadChildren: () => import('./legal/legal.module').then((m) => m.LegalModule)
+		loadChildren: () => import('@gauzy/plugins/legal-ui').then((m) => m.LegalModule)
 	},
 	{
 		path: 'sign-in',

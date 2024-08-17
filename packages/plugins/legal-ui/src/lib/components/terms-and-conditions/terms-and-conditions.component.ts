@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { LegalService } from '../legal.service';
+import { LegalService } from '../../providers/legal.service';
 
 export const TERM_AND_POLICY_ENDPOINT = 'https://www.iubenda.com/api/terms-and-conditions/7927924';
 
@@ -10,7 +10,7 @@ export const TERM_AND_POLICY_ENDPOINT = 'https://www.iubenda.com/api/terms-and-c
 	styleUrls: ['./terms-and-conditions.component.scss']
 })
 export class TermsAndConditionsComponent implements OnInit, OnDestroy {
-	term_and_policy: string;
+	public term_and_policy: string;
 
 	constructor(private readonly legalService: LegalService, @Inject(DOCUMENT) private readonly _document: Document) {}
 
@@ -24,14 +24,20 @@ export class TermsAndConditionsComponent implements OnInit, OnDestroy {
 	 *
 	 * @param url https://www.iubenda.com/api/terms-and-conditions/7927924
 	 */
-	getTermJsonFromUrl(url: string) {
-		this.legalService.getContentFromFromUrl(url).then((data: any) => {
-			if (!!data.content) {
+	async getTermJsonFromUrl(url: string) {
+		try {
+			const data: any = await this.legalService.getContentFromFromUrl(url);
+			if (data?.content) {
 				this.term_and_policy = data.content;
 			}
-		});
+		} catch (error) {
+			console.error('Error fetching terms and conditions:', error);
+		}
 	}
 
+	/**
+	 * Remove class to body to hide terms and conditions
+	 */
 	ngOnDestroy() {
 		this._document.body.classList.remove('term-container');
 	}

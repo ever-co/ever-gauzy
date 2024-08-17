@@ -9,6 +9,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, map, mergeMap, take, tap } from 'rxjs';
 import { pluck, union } from 'underscore';
+import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
+import { environment } from '@gauzy/ui-config';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	AnalyticsService,
 	DEFAULT_DATE_PICKER_CONFIG,
@@ -22,10 +25,7 @@ import {
 	SeoService,
 	Store
 } from '@gauzy/ui-core/core';
-import { IDateRangePicker, ILanguage, LanguagesEnum } from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { I18nService } from '@gauzy/ui-core/i18n';
-import { environment } from '@gauzy/ui-config';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

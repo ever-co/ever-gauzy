@@ -30,7 +30,6 @@ export * from './gauzy-button-action';
 export * from './invite';
 export * from './income';
 export * from './invoice';
-export * from './legal';
 export * from './integrations';
 export * from './single-statistic';
 export * from './sidebar';
