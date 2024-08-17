@@ -328,7 +328,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				type: 'text',
 				isFilterable: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell) => {
 					return `${this.currency.value} ${cell}`;
 				}
 			};
@@ -351,8 +351,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			type: 'text',
 			addable: false,
 			editable: false,
-			valuePrepareFunction: (cell, row) => {
-				return `${this.currency.value} ${row.quantity * row.price}`;
+			valuePrepareFunction: (cell) => {
+				return `${this.currency.value} ${cell}`;
 			},
 			isFilterable: false,
 			width: '13%'
