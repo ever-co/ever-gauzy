@@ -16,11 +16,11 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 })
 export class OnboardingCompleteComponent extends TranslationBaseComponent implements OnInit {
 	constructor(
-		private router: Router,
-		public readonly translationService: TranslateService,
-		private readonly store: Store,
-		private usersService: UsersService,
-		private ngxPermissionsService: NgxPermissionsService,
+		translationService: TranslateService,
+		private readonly _router: Router,
+		private readonly _store: Store,
+		private readonly _usersService: UsersService,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _featureStoreService: FeatureStoreService
 	) {
 		super(translationService);
@@ -30,28 +30,31 @@ export class OnboardingCompleteComponent extends TranslationBaseComponent implem
 	features$: Observable<IFeature[]> = this._featureStoreService.features$;
 
 	ngOnInit() {
-		const id = this.store.userId;
+		const id = this._store.userId;
 		if (!id) return;
 
-		this.usersService
+		this._usersService
 			.getMe(['role', 'role.rolePermissions', 'tenant'])
 			.then((user: IUser) => {
 				//only enabled permissions assign to logged in user
 				const permissions = user.role.rolePermissions
 					.filter(({ enabled }) => enabled)
 					.map(({ permission }) => permission);
-				this.ngxPermissionsService.loadPermissions(permissions);
+				this._ngxPermissionsService.loadPermissions(permissions);
 			})
 			.catch()
 			.finally(() => this.getFeatures());
 	}
 
+	/**
+	 * Get Features
+	 */
 	getFeatures() {
 		this._featureStoreService.loadFeatures(['children']).pipe(untilDestroyed(this)).subscribe();
 	}
 
 	navigateTo(link: string) {
 		const url = `pages/${link}`;
-		this.router.navigate([url]);
+		this._router.navigate([url]);
 	}
 }
