@@ -469,6 +469,42 @@
 				}
 			}
 		},
+		"plugin-onboarding-ui": {
+			"projectType": "library",
+			"root": "packages/plugins/onboarding-ui",
+			"sourceRoot": "packages/plugins/onboarding-ui",
+			"prefix": "lib",
+			"architect": {
+				"build": {
+					"builder": "@angular-devkit/build-angular:ng-packagr",
+					"options": {
+						"project": "packages/plugins/onboarding-ui/ng-package.json"
+					},
+					"configurations": {
+						"production": {
+							"tsConfig": "packages/plugins/onboarding-ui/tsconfig.lib.prod.json"
+						},
+						"development": {
+							"tsConfig": "packages/plugins/onboarding-ui/tsconfig.lib.json"
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"test": {
+					"builder": "@angular-devkit/build-angular:karma",
+					"options": {
+						"tsConfig": "packages/plugins/onboarding-ui/tsconfig.spec.json",
+						"polyfills": ["zone.js", "zone.js/testing"]
+					}
+				}
+			},
+			"schematics": {
+				"@nrwl/angular:component": {
+					"prefix": "ngx",
+					"style": "scss"
+				}
+			}
+		},
 		"gauzy-e2e": {
 			"root": "apps/gauzy-e2e",
 			"sourceRoot": "apps/gauzy-e2e/src",

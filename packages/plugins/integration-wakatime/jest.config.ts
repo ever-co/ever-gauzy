@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-	displayName: 'plugins-integration-wakatime',
+	displayName: 'plugin-integration-wakatime',
 	preset: '../../../jest.preset.js',
 	testEnvironment: 'node',
 	transform: {

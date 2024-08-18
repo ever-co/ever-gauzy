@@ -47,7 +47,8 @@
 			"../../../packages/plugins/job-matching-ui",
 			"../../../packages/plugins/job-proposal-ui",
 			"../../../packages/plugins/job-search-ui",
-			"../../../packages/plugins/legal-ui"
+			"../../../packages/plugins/legal-ui",
+			"../../../packages/plugins/onboarding-ui"
 		]
 	},
 	"build": {
