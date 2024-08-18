@@ -1,10 +1,14 @@
+<!-- Switch theme -->
 <gauzy-switch-theme class="switch-theme" [hasText]="false"></gauzy-switch-theme>
+
+<!-- Gauzy logo -->
 <div class="logo">
 	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
-	<h4>{{ 'ONBOARDING.COMPLETE' | translate }}</h4>
-	<h6>Where would you like to go now?</h6>
+	<h4>{{ 'ONBOARDING.COMPLETE_TITLE' | translate }}</h4>
+	<h6>{{ 'ONBOARDING.COMPLETE_SUB_TITLE' | translate }}</h6>
 </div>
 
+<!-- Blocks -->
 <ng-container *ngFor="let block of blocks$ | async">
 	<div class="row centered">
 		<ng-container *ngFor="let row of block">
