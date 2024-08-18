@@ -13,3 +13,8 @@ ngx-avatar ::ng-deep .inner-wrapper {
     margin: 0 10px;
   }
 }
+.container {
+  padding: inherit;
+  display: flex;
+  flex-direction: column;
+}
