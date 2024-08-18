@@ -4169,8 +4169,9 @@
 		"NO_RECORD_FOUND": "No se encontraron registros. Por favor, seleccione un rango de fechas, empleado o proyecto."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Creemos tu primera organización.",
-		"COMPLETE": "¡Estás listo!"
+		"FIRST_ORGANIZATION": "Vamos a crear tu primera organización",
+		"COMPLETE_TITLE": "¡Todo listo!",
+		"COMPLETE_SUB_TITLE": "¿A dónde te gustaría ir ahora?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "¡Este campo es obligatorio!",

@@ -4167,8 +4167,9 @@
 		"NO_RECORD_FOUND": "Nie znaleziono żadnych rekordów. Proszę wybrać zakres daty, pracownika lub projekt"
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Utwórzmy Twoją pierwszą organizację",
-		"COMPLETE": "Wszystko gotowe!"
+		"FIRST_ORGANIZATION": "Let's create your first organization",
+		"COMPLETE_TITLE": "You're all set!",
+		"COMPLETE_SUB_TITLE": "Where would you like to go now?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "To pole jest wymagane!",

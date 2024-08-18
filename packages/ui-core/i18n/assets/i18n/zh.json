@@ -4167,8 +4167,9 @@
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。"
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "让我们创建你的第一个组织。",
-		"COMPLETE": "你已准备妥当！"
+		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
+		"COMPLETE_TITLE": "你已经准备好了！",
+		"COMPLETE_SUB_TITLE": "现在你想去哪儿？"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "此字段为必填项！",

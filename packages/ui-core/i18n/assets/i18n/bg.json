@@ -4190,7 +4190,8 @@
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
-		"COMPLETE": "Готови сте!"
+		"COMPLETE_TITLE": "Всичко е готово!",
+		"COMPLETE_SUB_TITLE": "Къде искате да отидете сега?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",

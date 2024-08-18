@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
-import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
 import { filter, firstValueFrom, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IOrganization, IOrganizationCreateInput, IUser } from '@gauzy/contracts';
 import {
 	AuthService,
 	EmployeesService,

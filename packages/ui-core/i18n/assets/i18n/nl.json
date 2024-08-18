@@ -4167,8 +4167,9 @@
 		"NO_RECORD_FOUND": "Geen gegevens gevonden. Selecteer alstublieft een datumbereik, medewerker of project."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Laten we je eerste organisatie aanmaken.",
-		"COMPLETE": "Je bent helemaal klaar!"
+		"FIRST_ORGANIZATION": "Laten we je eerste organisatie maken",
+		"COMPLETE_TITLE": "Je bent klaar!",
+		"COMPLETE_SUB_TITLE": "Waar wil je nu heen?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Dit veld is verplicht!",
