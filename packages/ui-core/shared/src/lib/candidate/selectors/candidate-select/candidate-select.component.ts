@@ -37,7 +37,7 @@ export class CandidateSelectComponent extends BaseCandidateSelectorComponent imp
 	}
 
 	override ngOnInit(): void {
-		super.ngOnInit();
+		super.ngOnInit(); // Call the parent class's ngOnInit function
 		this.filteredCandidates$ = this.searchControl.valueChanges.pipe(
 			startWith(''),
 			switchMap((term) =>
@@ -57,6 +57,10 @@ export class CandidateSelectComponent extends BaseCandidateSelectorComponent imp
 		return candidates.filter((candidate) => candidate.user?.name.toLowerCase().includes(lowerTerm));
 	}
 
+	/**
+	 *
+	 * @param candidate
+	 */
 	onCandidateSelected(candidateId: ICandidate['id']): void {
 		const selectedCandidate = this.candidatesMap.get(candidateId);
 		if (selectedCandidate) {
