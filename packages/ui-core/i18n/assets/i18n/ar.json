@@ -4166,8 +4166,9 @@
 		"NO_RECORD_FOUND": "لم يتم العثور على سجلات. يرجى تحديد نطاق التاريخ، الموظف، أو المشروع."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "لنقم بإنشاء منظمتك الأولى",
-		"COMPLETE": "أنت جاهز تماما!"
+		"FIRST_ORGANIZATION": "لنقم بإنشاء مؤسستك الأولى",
+		"COMPLETE_TITLE": "كل شيء جاهز!",
+		"COMPLETE_SUB_TITLE": "إلى أين تريد أن تذهب الآن؟"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "هذا الحقل مطلوب!",

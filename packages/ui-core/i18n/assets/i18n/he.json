@@ -4179,8 +4179,9 @@
 		"NO_RECORD_FOUND": "No records found. Please select date range, employee or project."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Let's create your first organization",
-		"COMPLETE": "You're all set!"
+		"FIRST_ORGANIZATION": "בואו ניצור את הארגון הראשון שלכם",
+		"COMPLETE_TITLE": "אתם מוכנים!",
+		"COMPLETE_SUB_TITLE": "לאן תרצו ללכת עכשיו?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "This field is required!",

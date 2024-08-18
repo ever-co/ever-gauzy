@@ -4168,8 +4168,9 @@
 		"NO_RECORD_FOUND": "Aucun résultat trouvé. Veuillez sélectionner une plage de dates, un employé ou un projet."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Créons votre première organisation.",
-		"COMPLETE": "Vous êtes prêt(e) !"
+		"FIRST_ORGANIZATION": "Créons votre première organisation",
+		"COMPLETE_TITLE": "Vous êtes prêt !",
+		"COMPLETE_SUB_TITLE": "Où voulez-vous aller maintenant ?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Ce champ est obligatoire !",

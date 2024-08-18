@@ -4168,7 +4168,8 @@
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Creiamo la tua prima organizzazione",
-		"COMPLETE": "Sei pronto!"
+		"COMPLETE_TITLE": "Tutto pronto!",
+		"COMPLETE_SUB_TITLE": "Dove vuoi andare adesso?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Questo campo è obbligatorio!",

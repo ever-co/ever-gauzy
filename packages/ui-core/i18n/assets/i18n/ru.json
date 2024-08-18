@@ -4188,7 +4188,8 @@
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Давайте создадим вашу первую организацию",
-		"COMPLETE": "Все готово!"
+		"COMPLETE_TITLE": "Все готово!",
+		"COMPLETE_SUB_TITLE": "Куда вы хотите пойти сейчас?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Это поле обязательно!",
