@@ -9,7 +9,7 @@ import {
 	Output,
 	ViewChild
 } from '@angular/core';
-import { WeekDaysEnum } from '@gauzy/contracts';
+import { IOrganization, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,10 +19,10 @@ import {
 	LocaleConfig,
 	DaterangepickerComponent as NgxDateRangePickerComponent
 } from 'ngx-daterangepicker-material';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, filter, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { RecapQuery } from '../../../+state/recap.query';
-import { RecapStore } from '../../../+state/recap.store';
+import { Store } from '../../../../services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { DateRangeKeyEnum, DateRanges, IDateRangePicker, TimePeriod } from './date-picker.interface';
@@ -190,7 +190,7 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 	/** */
 	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
-	constructor(public readonly translateService: TranslateService, readonly recapStore: RecapStore) {}
+	constructor(public readonly translateService: TranslateService, readonly store: Store) {}
 
 	@Output() rangeChanges = new EventEmitter<IDateRangePicker>();
 
@@ -216,10 +216,19 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.selectedDateRange = this.getSelectorDates();
-		this.createDateRangeMenus();
-		this.setPastStrategy();
-		this.setFutureStrategy();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.futureDateAllowed = organization.futureDateAllowed;
+					this.selectedDateRange = this.getSelectorDates();
+					this.createDateRangeMenus();
+					this.setPastStrategy();
+					this.setFutureStrategy();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**

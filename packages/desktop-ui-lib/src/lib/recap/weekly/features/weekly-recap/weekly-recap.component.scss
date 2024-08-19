@@ -1,9 +1,11 @@
+@import '../../../features/recap/recap.component.scss';
+
 .recap-weekly {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 	background-color: var(--gauzy-card-2);
-    padding: 1rem;
-    border-radius: var(--border-radius);
-    height: 100%;
+	padding: 1rem;
+	border-radius: var(--border-radius);
+	height: 100%;
 }

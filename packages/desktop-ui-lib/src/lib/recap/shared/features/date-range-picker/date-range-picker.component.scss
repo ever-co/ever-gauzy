@@ -234,3 +234,11 @@ $button-radius: var(--button-rectangle-border-radius);
 		}
 	}
 }
+
+:host(.full) {
+	::ng-deep {
+		&.md-drppicker {
+			@include nb-ltr(margin-left, -155%);
+		}
+	}
+}
