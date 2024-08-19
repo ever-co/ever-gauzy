@@ -1,14 +1,14 @@
 import { Route } from '@angular/router';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
 
 /**
  * Creates jobs routes for the application
  *
- * @param _pageRouteService An instance of PageRouteService
+ * @param _pageRouteRegistryService An instance of PageRouteRegistryService
  * @returns An array of Route objects
  */
-export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
+export const createJobsRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: JobLayoutComponent,
@@ -18,7 +18,7 @@ export const createRoutes = (_pageRouteService: PageRouteService): Route[] => [
 				redirectTo: 'employee',
 				pathMatch: 'full'
 			},
-			..._pageRouteService.getPageLocationRoutes('jobs')
+			..._pageRouteRegistryService.getPageLocationRoutes('jobs')
 		]
 	}
 ];

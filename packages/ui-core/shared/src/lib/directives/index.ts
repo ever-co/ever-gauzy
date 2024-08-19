@@ -7,6 +7,7 @@ import { ReadMoreDirective } from './read-more';
 import { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
 import { NoSpaceEdgesDirective } from './no-space-edges.directive';
 import { TextMaskDirective } from './text-mask.directive';
+import { TriggerParentClickDirective } from './trigger-parent-click.directive';
 
 export { AutocompleteOffDirective } from './autocomplete-off.directive';
 export { DebounceClickDirective } from './debounce-click.directive';
@@ -17,6 +18,7 @@ export { ReadMoreDirective } from './read-more';
 export { TimeTrackingAuthorizedDirective } from './time-tracking-authorized-directive';
 export { NoSpaceEdgesDirective } from './no-space-edges.directive';
 export { TextMaskDirective } from './text-mask.directive';
+export { TriggerParentClickDirective } from './trigger-parent-click.directive';
 
 export const DIRECTIVES = [
 	AutocompleteOffDirective,
@@ -27,5 +29,6 @@ export const DIRECTIVES = [
 	OutsideDirective,
 	UnderConstructionDirective,
 	NoSpaceEdgesDirective,
-	TextMaskDirective
+	TextMaskDirective,
+	TriggerParentClickDirective
 ];

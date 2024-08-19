@@ -17,7 +17,7 @@ import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
@@ -26,7 +26,7 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createRoutes } from './job-proposal-template.routes';
+import { createJobProposalTemplateRoutes } from './job-proposal-template.routes';
 import { ProposalTemplateComponent } from './components/proposal-template/proposal-template.component';
 import { AddEditProposalTemplateComponent } from './components/add-edit-proposal-template/add-edit-proposal-template.component';
 
@@ -73,8 +73,8 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (service: PageRouteRegistryService) => createJobProposalTemplateRoutes(service),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
@@ -82,7 +82,9 @@ const THIRD_PARTY_MODULES = [
 export class JobProposalTemplateModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
+	constructor(
+		@Inject(PageRouteRegistryService) private readonly _pageRouteRegistryService: PageRouteRegistryService
+	) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -99,7 +101,7 @@ export class JobProposalTemplateModule {
 		}
 
 		// Register Job Proposal Template Page Routes
-		this._pageRouteService.registerPageRoute({
+		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
 			location: 'jobs',
 			// Register the path 'proposal-template'

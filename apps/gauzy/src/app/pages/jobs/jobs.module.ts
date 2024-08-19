@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, ROUTES } from '@angular/router';
 import { SharedModule } from '@gauzy/ui-core/shared';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { PLUGINS } from './plugins';
 import { JobLayoutComponent } from './job-layout/job-layout.component';
-import { createRoutes } from './job.routes';
+import { createJobsRoutes } from './job.routes';
 
 @NgModule({
 	declarations: [JobLayoutComponent],
@@ -13,8 +13,8 @@ import { createRoutes } from './job.routes';
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (service: PageRouteRegistryService) => createJobsRoutes(service),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
