@@ -1,0 +1,32 @@
+@import 'report';
+
+.activity {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.week-days {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+
+	.day,
+	.hours {
+		text-wrap: nowrap;
+	}
+}
+
+.week-range {
+	font-weight: 500;
+}
+
+.week-wrapper {
+	display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    background-color: var(--gauzy-card-3);
+}

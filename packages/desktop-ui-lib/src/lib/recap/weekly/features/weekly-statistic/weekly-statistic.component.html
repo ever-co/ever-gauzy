@@ -1,0 +1,38 @@
+<nb-card>
+	<nb-card-body class="card-wrapper">
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">Today</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ todayDuration$ | async | durationFormat : 'h[h] m[m] s[s]':{trim: 'both'} }}</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">Today Activity</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ todayActivity$ | async | percent:'1.0-2' }}</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">This Week</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ weeklyDuration$ | async | durationFormat : 'h[h] m[m] s[s]':{trim: 'both'} }}</div>
+				<div *ngIf="weeklyLimit$ | async">of {{ weeklyLimit$ | async | durationFormat : 'h[h]':{trim: 'both'} }}
+				</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">Week Activity</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ weeklyActivity$ | async | percent:'1.0-2' }}</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>
