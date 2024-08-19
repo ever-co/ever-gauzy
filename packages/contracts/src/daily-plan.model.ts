@@ -1,4 +1,4 @@
-import { IRelationalOrganizationTeam } from 'organization-team.model';
+import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
