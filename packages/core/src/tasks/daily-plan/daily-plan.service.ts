@@ -163,10 +163,10 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getTeamDailyPlans(options: PaginationParams): Promise<IPagination<IDailyPlan>> {
+	async getTeamDailyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
-			const { organizationId, teamIds } = where;
+			const { organizationId, organizationTeamId } = where;
 			const tenantId = RequestContext.currentTenantId();
 
 			// Create the initial query
@@ -175,7 +175,6 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// Join related entities
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
 			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
-			query.leftJoinAndSelect('employee.teams', 'teams');
 
 			// Apply optional find options if provided
 			query.setFindOptions({
@@ -190,9 +189,9 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			});
 
 			// Filter conditions
-			query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere('teams."organizationTeamId" IN (:...teamIds)', { teamIds });
+			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
 
 			// Retrieve results and total count
 			const [items, total] = await query.getManyAndCount();

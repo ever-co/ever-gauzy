@@ -1,4 +1,5 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IRelationalOrganizationTeam } from 'organization-team.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { IRelationalEmployee } from './employee.model';
 import { ITask } from './task.model';
 
@@ -14,15 +15,22 @@ export interface IDailyPlanBase extends IBasePerTenantAndOrganizationEntityModel
 	status: DailyPlanStatusEnum;
 }
 
-export interface IDailyPlan extends IDailyPlanBase, IRelationalEmployee {
+export interface IDailyPlan extends IDailyPlanBase, IRelationalEmployee, IRelationalOrganizationTeam {
 	tasks?: ITask[];
 }
 
-export interface IDailyPlanCreateInput extends IDailyPlanBase, IRelationalEmployee {
-	taskId?: ITask['id'];
+export interface IDailyPlanCreateInput extends IDailyPlanBase, IRelationalEmployee, IRelationalOrganizationTeam {
+	taskId?: ID;
 }
 
-export interface IDailyPlanUpdateInput extends Partial<IDailyPlanBase>, Pick<IDailyPlanCreateInput, 'employeeId'> {}
+export interface IDailyPlanUpdateInput
+	extends Partial<IDailyPlanBase>,
+		Pick<IDailyPlanCreateInput, 'employeeId'>,
+		Partial<Pick<IRelationalOrganizationTeam, 'organizationTeamId'>> {}
+
+export interface IGetDailyPlansByTeamInput extends IBaseRelationsEntityModel, IBasePerTenantAndOrganizationEntityModel {
+	teamIds?: ID[];
+}
 
 export interface IDailyPlanTasksUpdateInput
 	extends Pick<IDailyPlanCreateInput, 'taskId' | 'employeeId'>,
@@ -32,5 +40,5 @@ export interface IDailyPlanTasksUpdateInput
 export interface IDailyPlansTasksUpdateInput
 	extends Pick<IDailyPlanCreateInput, 'employeeId'>,
 		IBasePerTenantAndOrganizationEntityModel {
-	plansIds: IDailyPlan['id'][];
+	plansIds: ID[];
 }

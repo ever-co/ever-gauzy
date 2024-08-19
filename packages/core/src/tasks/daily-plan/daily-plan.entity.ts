@@ -3,7 +3,7 @@ import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DailyPlanStatusEnum, IDailyPlan, IEmployee, ITask } from '@gauzy/contracts';
+import { DailyPlanStatusEnum, ID, IDailyPlan, IEmployee, IOrganizationTeam, ITask } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -11,7 +11,7 @@ import {
 	MultiORMManyToMany,
 	MultiORMManyToOne
 } from '../../core/decorators/entity';
-import { Employee, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
+import { Employee, OrganizationTeam, Task, TenantOrganizationBaseEntity } from '../../core/entities/internal';
 import { MikroOrmDailyPlanRepository } from './repository';
 
 @MultiORMEntity('daily_plan', { mikroOrmRepository: () => MikroOrmDailyPlanRepository })
@@ -61,7 +61,28 @@ export class DailyPlan extends TenantOrganizationBaseEntity implements IDailyPla
 	@RelationId((it: DailyPlan) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
+
+	/**
+	 * OrganizationTeam
+	 */
+	@MultiORMManyToOne(() => OrganizationTeam, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	organizationTeam?: IOrganizationTeam;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: DailyPlan) => it.organizationTeam)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	organizationTeamId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
