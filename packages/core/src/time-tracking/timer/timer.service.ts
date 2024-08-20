@@ -329,15 +329,19 @@ export class TimerService {
 			relations: { timeSlots: true }
 		});
 
-		// Calculate the duration and stoppedAt date
-		const duration = lastLog.timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
-		let stoppedAt = moment.utc(lastLog.startedAt).add(duration, 'seconds').toDate();
+		// Get the current date and set the initial stoppedAt date
+		const now = moment.utc().toDate();
+		let stoppedAt = moment.utc(request.stoppedAt ?? now).toDate();
 
-		// If the minutes difference is greater than 20, update the stoppedAt date
-		if (moment.utc().diff(stoppedAt, 'minutes') <= 20) {
-			// Get the stoppedAt date
-			const now = moment.utc().toDate();
-			stoppedAt = moment.utc(request.stoppedAt ?? now).toDate();
+		// Handle DESKTOP source case
+		if (request.source === TimeLogSourceEnum.DESKTOP) {
+			const duration = lastLog?.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
+			const calculatedStoppedAt = moment.utc(lastLog.startedAt).add(duration, 'seconds').toDate();
+
+			// If the time difference is more than 20 minutes and no slots exist, update stoppedAt to calculatedStoppedAt
+			if (moment.utc().diff(calculatedStoppedAt, 'minutes') > 20) {
+				stoppedAt = calculatedStoppedAt;
+			}
 		}
 
 		/** Function that performs the date range validation */
