@@ -16,5 +16,12 @@ ngx-avatar ::ng-deep .inner-wrapper {
 .container {
   padding: inherit;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 2%;
+  input {
+    width: inherit;
+  }
+}
+nb-checkbox {
+  text-wrap: nowrap;
 }
