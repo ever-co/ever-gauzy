@@ -333,7 +333,7 @@ export class TimerService {
 		const duration = lastLog.timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
 		let stoppedAt = moment.utc(lastLog.startedAt).add(duration, 'seconds').toDate();
 
-		// If the minutes difference is greater than 10, update the stoppedAt date
+		// If the minutes difference is greater than 20, update the stoppedAt date
 		if (moment.utc().diff(stoppedAt, 'minutes') <= 20) {
 			// Get the stoppedAt date
 			const now = moment.utc().toDate();
