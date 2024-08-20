@@ -183,7 +183,7 @@ export class AlterDailyPlanAddTeamRelation1724062299873 implements MigrationInte
 	 * @param queryRunner
 	 */
 	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`ALTER TABLE \`daily_plan\` ADD \`organizationTeamId\` CHAR(36)`);
+		await queryRunner.query(`ALTER TABLE \`daily_plan\` ADD \`organizationTeamId\` varchar(255) NULL`);
 		await queryRunner.query(
 			`CREATE INDEX \`IDX_b022c2b684c35dcc63c22850f1\` ON \`daily_plan\` (\`organizationTeamId\`)`
 		);
