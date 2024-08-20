@@ -1,15 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SelectQueryBuilder, UpdateResult } from 'typeorm';
 import {
+	ID,
 	IDailyPlan,
 	IDailyPlanCreateInput,
 	IDailyPlansTasksUpdateInput,
 	IDailyPlanTasksUpdateInput,
 	IDailyPlanUpdateInput,
 	IEmployee,
-	IPagination,
-	ITask
+	IPagination
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { prepareSQLQuery as p } from '../../database/database.helper';
@@ -146,15 +146,60 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
 	 * @throws BadRequestException - If there's an error during the query.
 	 */
-	async getDailyPlansByEmployee(
-		options: PaginationParams,
-		employeeId?: IEmployee['id']
-	): Promise<IPagination<IDailyPlan>> {
+	async getDailyPlansByEmployee(options: PaginationParams, employeeId?: ID): Promise<IPagination<IDailyPlan>> {
 		try {
 			// Fetch all daily plans for specific employee
 			return await this.getAllPlans(options, employeeId);
 		} catch (error) {
 			console.log('Error fetching all daily plans');
+		}
+	}
+
+	/**
+	 * Retrieves daily plans for all employees of a specific team with pagination and additional query options.
+	 *
+	 * @param teamId - The ID of the team for whom to retrieve daily plans.
+	 * @param options - Pagination and additional query options for filtering and retrieving daily plans.
+	 * @returns A promise that resolves to an object containing the list of daily plans and the total count.
+	 * @throws BadRequestException - If there's an error during the query.
+	 */
+	async getTeamDailyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		try {
+			// Apply optional find options if provided
+			const { where, relations = [] } = options || {};
+			const { organizationId, organizationTeamId } = where;
+			const tenantId = RequestContext.currentTenantId();
+
+			// Create the initial query
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Join related entities
+			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
+			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
+
+			query.setFindOptions({
+				where: isNotEmpty(where) && where,
+				relations: isNotEmpty(relations) && relations
+			});
+
+			// Filter conditions
+			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+
+			if (organizationTeamId) {
+				query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+					organizationTeamId
+				});
+			}
+
+			// Retrieve results and total count
+			const [items, total] = await query.getManyAndCount();
+
+			// Return the pagination result
+			return { items, total };
+		} catch (error) {
+			console.log('Error while fetching daily plans for team');
+			throw new HttpException(`Failed to fetch daily plans for team: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -183,7 +228,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param input - An object containing details about the task to add, including task ID, employee ID, and organization ID.
 	 * @returns The updated daily plan with the newly added task.
 	 */
-	async addTaskToPlan(planId: IDailyPlan['id'], input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
+	async addTaskToPlan(planId: ID, input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
@@ -224,7 +269,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @param input - An object containing details about the task to remove, including task ID, employee ID, and organization ID.
 	 * @returns The updated daily plan without the deleted task.
 	 */
-	async removeTaskFromPlan(planId: IDailyPlan['id'], input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
+	async removeTaskFromPlan(planId: ID, input: IDailyPlanTasksUpdateInput): Promise<IDailyPlan> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, taskId, organizationId } = input;
@@ -269,7 +314,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns The updated daily plans without the deleted task.
 	 */
 
-	async removeTaskFromManyPlans(taskId: ITask['id'], input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
+	async removeTaskFromManyPlans(taskId: ID, input: IDailyPlansTasksUpdateInput): Promise<IDailyPlan[]> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, plansIds, organizationId } = input;
@@ -343,10 +388,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 * @returns The updated daily plan including related tasks.
 	 * @memberof DailyPlanService
 	 */
-	async updateDailyPlan(
-		id: IDailyPlan['id'],
-		partialEntity: IDailyPlanUpdateInput
-	): Promise<IDailyPlan | UpdateResult> {
+	async updateDailyPlan(id: ID, partialEntity: IDailyPlanUpdateInput): Promise<IDailyPlan | UpdateResult> {
 		try {
 			const { employeeId, organizationId } = partialEntity;
 
@@ -379,23 +421,12 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	}
 
 	/**
-	 * DELETE daily plan
-	 *
-	 * @param {IDailyPlan['id']} planId
-	 * @returns
-	 * @memberof DailyPlanService
-	 */
-	async deletePlan(planId: IDailyPlan['id']) {
-		return await super.delete(planId);
-	}
-
-	/**
 	 * Retrieves daily plans for a specific task including employee
 	 * @param options pagination and additional query options
 	 * @param taskId - The ID of the task for whom to retrieve daily plans.
 	 * @returns A promise that resolves to an object containing the list of plans and total count
 	 */
-	async getDailyPlansByTask(options: PaginationParams, taskId: ITask['id']): Promise<IPagination<IDailyPlan>> {
+	async getDailyPlansByTask(options: PaginationParams, taskId: ID): Promise<IPagination<IDailyPlan>> {
 		try {
 			const { where } = options;
 			const { organizationId } = where;
