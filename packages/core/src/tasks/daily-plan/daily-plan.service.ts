@@ -165,7 +165,8 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	 */
 	async getTeamDailyPlans(options: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
 		try {
-			const { where } = options;
+			// Apply optional find options if provided
+			const { where, relations = [] } = options || {};
 			const { organizationId, organizationTeamId } = where;
 			const tenantId = RequestContext.currentTenantId();
 
@@ -176,30 +177,29 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			query.leftJoinAndSelect(`${query.alias}.employee`, 'employee');
 			query.leftJoinAndSelect(`${query.alias}.tasks`, 'tasks');
 
-			// Apply optional find options if provided
 			query.setFindOptions({
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.where) && {
-						where: options.where
-					}),
-				...(isNotEmpty(options) &&
-					isNotEmpty(options.relations) && {
-						relations: options.relations
-					})
+				where: isNotEmpty(where) && where,
+				relations: isNotEmpty(relations) && relations
 			});
 
 			// Filter conditions
 			query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 			query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-			query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), { organizationTeamId });
+
+			if (organizationTeamId) {
+				query.andWhere(p(`"${query.alias}"."organizationTeamId" = :organizationTeamId`), {
+					organizationTeamId
+				});
+			}
 
 			// Retrieve results and total count
 			const [items, total] = await query.getManyAndCount();
+
 			// Return the pagination result
 			return { items, total };
 		} catch (error) {
 			console.log('Error while fetching daily plans for team');
-			throw new HttpException(`Failed to fetch daily plans for team : ${error.message}`, HttpStatus.BAD_REQUEST);
+			throw new HttpException(`Failed to fetch daily plans for team: ${error.message}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 

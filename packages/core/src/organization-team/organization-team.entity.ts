@@ -267,7 +267,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	/**
 	 * Team daily plans
 	 */
-	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
 	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.organizationTeam, {
 		cascade: true
 	})

@@ -10,7 +10,7 @@ export class OrganizationTeamFeatureDTO implements IRelationalOrganizationTeam {
 	readonly organizationTeam: IOrganizationTeam;
 
 	@ApiPropertyOptional({ type: () => String })
-	@ValidateIf((it) => !it.employee || it.employeeId)
+	@ValidateIf((it) => !it.organizationTeam || it.organizationTeamId)
 	@IsUUID()
 	readonly organizationTeamId: ID;
 }
