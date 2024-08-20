@@ -323,26 +323,9 @@ export class TimerService {
 		// Get the organization ID
 		const organizationId = request.organizationTeamId || employee.organizationId;
 
-		// Get the lastLog
-		lastLog = await this.typeOrmTimeLogRepository.findOne({
-			where: { id: lastLog.id, tenantId, organizationId, employeeId },
-			relations: { timeSlots: true }
-		});
-
 		// Get the current date and set the initial stoppedAt date
 		const now = moment.utc().toDate();
 		let stoppedAt = moment.utc(request.stoppedAt ?? now).toDate();
-
-		// Handle DESKTOP source case
-		if (request.source === TimeLogSourceEnum.DESKTOP) {
-			const duration = lastLog?.timeSlots?.reduce((sum, slot) => sum + (slot?.duration || 0), 0) || 0;
-			const calculatedStoppedAt = moment.utc(lastLog.startedAt).add(duration, 'seconds').toDate();
-
-			// If the time difference is more than 20 minutes and no slots exist, update stoppedAt to calculatedStoppedAt
-			if (moment.utc().diff(calculatedStoppedAt, 'minutes') > 20) {
-				stoppedAt = calculatedStoppedAt;
-			}
-		}
 
 		/** Function that performs the date range validation */
 		try {
