@@ -95,12 +95,12 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 					console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
 
 					// Calculate the stoppedAt date
-					const stoppedAt = moment.utc(timeLog.startedAt).add(10, 'seconds');
+					const stoppedAt = moment.utc(timeLog.startedAt).add(10, 'seconds').toDate();
 
 					// Calculate the stoppedAt date
 					await this.typeOrmTimeLogRepository.save({
 						id: timeLog.id,
-						stoppedAt: stoppedAt.toDate()
+						stoppedAt
 					});
 				}
 			}
@@ -110,7 +110,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				const duration = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
 
 				// Calculate the stoppedAt date
-				const stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds');
+				const stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').toDate();
 
 				// Calculate the minutes difference
 				const minutes = moment.utc().diff(moment.utc(stoppedAt), 'minutes');
@@ -121,12 +121,15 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				if (minutes > 10) {
 					await this.typeOrmTimeLogRepository.save({
 						id: timeLog.id,
-						stoppedAt: stoppedAt.toDate()
+						stoppedAt
 					});
 				}
 			}
 
-			// Stop previous pending timer
+			/**
+			 * Stop previous pending timer anyway.
+			 * If we have any pending TimeLog entry
+			 */
 			await this.typeOrmTimeLogRepository.save({
 				id: timeLog.id,
 				isRunning: false
