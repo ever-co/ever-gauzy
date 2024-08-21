@@ -1626,6 +1626,7 @@
 		"APPLIED": "应用",
 		"HIRED": "雇佣的",
 		"REJECTED": "被拒绝",
+		"SHOW_REJECTED": "显示被拒绝",
 		"DELETED": "已刪除",
 		"ARCHIVED": "存档",
 		"SELECT_EMPLOYEE_MSG": "请从上面的菜单中选择员工。",

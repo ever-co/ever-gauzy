@@ -1626,6 +1626,7 @@
 		"APPLIED": "Toegepast",
 		"HIRED": "Aangenomen",
 		"REJECTED": "Afgewezen",
+		"SHOW_REJECTED": "Toon afgewezen",
 		"DELETED": "Verwijderd",
 		"ARCHIVED": "Gearchiveerd",
 		"SELECT_EMPLOYEE_MSG": "Selecteer alstublieft een medewerker uit het bovenstaande menu.",

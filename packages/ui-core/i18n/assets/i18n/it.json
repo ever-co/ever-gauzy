@@ -1626,6 +1626,7 @@
 		"APPLIED": "Applicato",
 		"HIRED": "Assunto",
 		"REJECTED": "Respinto",
+		"SHOW_REJECTED": "Mostra rifiutata",
 		"DELETED": "Cancellato",
 		"ARCHIVED": "Archiviato",
 		"SELECT_EMPLOYEE_MSG": "Seleziona un dipendente dal menu sopra",
