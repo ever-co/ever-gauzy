@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -6,13 +6,19 @@ import { Router } from '@angular/router';
 	styleUrls: ['./not-found.component.scss'],
 	templateUrl: './not-found.component.html'
 })
-export class NotFoundComponent implements OnInit {
+export class NotFoundComponent implements AfterViewInit {
 	constructor(private readonly router: Router) {}
 
-	ngOnInit() {
+	/**
+	 * After view init
+	 */
+	ngAfterViewInit() {
 		setTimeout(() => this.goToHome(), 3000);
 	}
 
+	/**
+	 * Redirect to home page
+	 */
 	goToHome() {
 		this.router.navigate(['/pages/dashboard']);
 	}

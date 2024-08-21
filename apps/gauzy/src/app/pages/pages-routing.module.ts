@@ -2,9 +2,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { PermissionsGuard, UserResolver } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
+import { DateRangePickerResolver, NotFoundComponent } from '@gauzy/ui-core/shared';
 import { PagesComponent } from './pages.component';
-import { NotFoundComponent } from './miscellaneous/not-found/not-found.component';
 
 const routes: Routes = [
 	{
@@ -636,7 +635,10 @@ const routes: Routes = [
 			},
 			{
 				path: '**',
-				component: NotFoundComponent
+				component: NotFoundComponent,
+				data: {
+					selectors: false
+				}
 			}
 		]
 	}
