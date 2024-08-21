@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { PublicOrganizationResolver } from '../organization/public-organization.resolver';
-import { PublicEmployeeResolver } from './public-employee.resolver';
+import { PublicEmployeeResolver, PublicOrganizationResolver } from '@gauzy/plugin-public-layout-ui';
 import { EmployeeComponent } from './employee.component';
 
 const routes: Routes = [
