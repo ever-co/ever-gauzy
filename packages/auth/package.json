@@ -1,7 +1,7 @@
 {
 	"name": "@gauzy/auth",
 	"version": "0.1.0",
-	"description": "Ever Gauzy Platform Auth module",
+	"description": "Authentication module for the Ever Gauzy Platform, providing various authentication strategies and integrations.",
 	"author": {
 		"name": "Ever Co. LTD",
 		"email": "ever@ever.co",
@@ -25,7 +25,16 @@
 		"build:prod": "rimraf dist && yarn run compile",
 		"compile": "tsc -p tsconfig.build.json"
 	},
-	"keywords": [],
+	"keywords": [
+		"auth",
+		"authentication",
+		"authorization",
+		"gauzy",
+		"nestjs",
+		"oauth",
+		"jwt",
+		"passport"
+	],
 	"dependencies": {
 		"@gauzy/common": "^0.1.0",
 		"@gauzy/config": "^0.1.0",

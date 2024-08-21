@@ -61,7 +61,6 @@
 		"@fullcalendar/timegrid": "~6.1.10",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
-		"@gauzy/ui-core": "^0.1.0",
 		"@jitsu/js": "^1.8.2",
 		"@kurkle/color": "^0.2.0",
 		"@nebular/auth": "^12.0.0",
