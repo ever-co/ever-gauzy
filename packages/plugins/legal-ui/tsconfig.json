@@ -10,8 +10,7 @@
 		"noFallthroughCasesInSwitch": false,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/ui-core/core": ["./../../../dist/packages/ui-core/core"],
-			"@gauzy/ui-core/shared": ["./../../../dist/packages/ui-core/shared"],
+			"@gauzy/ui-core/*": ["./../../../dist/packages/ui-core/*/index.d.ts"],
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"]
 		}
 	},
