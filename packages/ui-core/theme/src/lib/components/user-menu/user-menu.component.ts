@@ -16,6 +16,7 @@ export class UserMenuComponent implements OnInit {
 	private _user$: Observable<IUser>;
 	private _employee$: BehaviorSubject<IEmployee>;
 	private _isSubmit$: BehaviorSubject<boolean>;
+	platFormWebSiteUrl: string;
 
 	@Output()
 	public close: EventEmitter<any> = new EventEmitter<any>(null);
@@ -52,6 +53,7 @@ export class UserMenuComponent implements OnInit {
 		this._user$ = new Observable();
 		this._employee$ = new BehaviorSubject(null);
 		this._isSubmit$ = new BehaviorSubject(false);
+		this.platFormWebSiteUrl = environment.PLATFORM_WEBSITE_URL;
 	}
 
 	ngOnInit(): void {
