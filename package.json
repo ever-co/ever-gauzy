@@ -171,6 +171,8 @@
 		"build:package:plugin:legal-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/legal-ui lib:build:prod",
 		"build:package:plugin:onboarding-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/onboarding-ui lib:build",
 		"build:package:plugin:onboarding-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/onboarding-ui lib:build:prod",
+		"build:package:plugin:public-layout-ui": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/public-layout-ui lib:build",
+		"build:package:plugin:public-layout-ui:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/public-layout-ui lib:build:prod",
 		"build:package:plugin:job-proposal": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build",
 		"build:package:plugin:job-proposal:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/job-proposal build:prod",
 		"build:package:plugin:knowledge-base": "cross-env NODE_ENV=development NODE_OPTIONS=--max-old-space-size=12288 yarn --cwd ./packages/plugins/knowledge-base build",

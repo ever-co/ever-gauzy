@@ -1,0 +1,45 @@
+{
+	"name": "@gauzy/plugin-public-layout-ui",
+	"version": "0.1.0",
+	"type": "commonjs",
+	"description": "",
+	"author": {
+		"name": "Ever Co. LTD",
+		"email": "ever@ever.co",
+		"url": "https://ever.co"
+	},
+	"license": "AGPL-3.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ever-co/ever-gauzy"
+	},
+	"bugs": {
+		"url": "https://github.com/ever-co/ever-gauzy/issues"
+	},
+	"homepage": "https://ever.co",
+	"keywords": [],
+	"private": true,
+	"scripts": {
+		"lib:build": "ng build plugin-public-layout-ui --configuration=development",
+		"lib:build:prod": "ng build plugin-public-layout-ui --configuration=production",
+		"lib:watch": "ng build plugin-public-layout-ui --watch --configuration=development"
+	},
+	"peerDependencies": {
+		"@angular/common": "^16.2.12",
+		"@angular/core": "^16.2.12"
+	},
+	"dependencies": {
+		"@angular/router": "^16.2.12",
+		"tslib": "^2.6.2"
+	},
+	"devDependencies": {
+		"@types/jest": "^29.4.4",
+		"@types/node": "^20.14.9",
+		"jest-preset-angular": "^13.1.4"
+	},
+	"engines": {
+		"node": ">=20.11.1",
+		"yarn": ">=1.22.19"
+	},
+	"sideEffects": false
+}
