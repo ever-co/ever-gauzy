@@ -29,7 +29,15 @@
 		"@angular/core": "^16.2.12"
 	},
 	"dependencies": {
+		"@angular/forms": "^16.2.12",
 		"@angular/router": "^16.2.12",
+		"@gauzy/contracts": "^0.1.0",
+		"@nebular/theme": "^12.0.0",
+		"@ngneat/until-destroy": "^9.2.0",
+		"@ngx-translate/core": "^15.0.0",
+		"moment": "^2.30.1",
+		"ngx-permissions": "^13.0.1",
+		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2"
 	},
 	"devDependencies": {

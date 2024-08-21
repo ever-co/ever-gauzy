@@ -7,9 +7,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ngx-share',
 	template: `
-		<ga-public-layout>
+		<ngx-public-layout>
 			<router-outlet></router-outlet>
-		</ga-public-layout>
+		</ngx-public-layout>
 	`
 })
 export class ShareComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
