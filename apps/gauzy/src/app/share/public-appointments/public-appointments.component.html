@@ -6,16 +6,9 @@
 	</nb-card-header>
 	<nb-card-body>
 		<div class="employee-info" *ngIf="employee">
-			<img
-				class="employee-image"
-				[src]="employee.user.imageUrl"
-				alt="Employee Avatar"
-			/>
+			<img class="employee-image" [src]="employee.user.imageUrl" alt="Employee Avatar" />
 			<div class="employee-details">
-				<span class="employee-name"
-					>{{ employee.user.firstName }}
-					{{ employee.user.lastName }}</span
-				>
+				<span class="employee-name">{{ employee.user.firstName }} {{ employee.user.lastName }}</span>
 				<div class="employee-position">
 					{{ employee.organizationPosition?.name }}
 				</div>
@@ -30,7 +23,7 @@
 		</div>
 		<div class="body-header" *ngIf="!eventTypesExist">
 			<h5>
-				{{ 'PUBLIC_APPOINTMENTS.NO_ACTIVE_EVENT_TYpES' | translate }}
+				{{ 'PUBLIC_APPOINTMENTS.NO_ACTIVE_EVENT_TYPES' | translate }}
 			</h5>
 		</div>
 		<div>
@@ -44,16 +37,10 @@
 				</div>
 				<div class="col-3">
 					{{ 'PUBLIC_APPOINTMENTS.DURATION' | translate }}
-					<strong>
-						{{ eventType.duration }} {{ eventType.durationUnit }}
-					</strong>
+					<strong> {{ eventType.duration }} {{ eventType.durationUnit }} </strong>
 				</div>
 				<div class="col-3 text-right">
-					<button
-						(click)="selectEventType(eventType.id)"
-						status="success"
-						nbButton
-					>
+					<button (click)="selectEventType(eventType.id)" status="success" nbButton>
 						{{ 'BUTTONS.SELECT' | translate }}
 					</button>
 				</div>

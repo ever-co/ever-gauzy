@@ -4239,7 +4239,7 @@
 		"SELECT_EMPLOYEE_ERROR": "请选择一个员工。",
 		"EXPIRED_OR_CANCELLED": "该约会已过期或已取消。",
 		"EMAIL_SENT": "已经向主持人和所有参会人员发送了一封电子邮件。",
-		"NO_ACTIVE_EVENT_TYpES": "没有活动类型。"
+		"NO_ACTIVE_EVENT_TYPES": "没有活动类型。"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "电子邮件模板",

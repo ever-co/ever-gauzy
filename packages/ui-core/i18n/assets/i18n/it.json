@@ -4239,7 +4239,7 @@
 		"SELECT_EMPLOYEE_ERROR": "Seleziona un dipendente, per favore",
 		"EXPIRED_OR_CANCELLED": "Questo appuntamento è scaduto o è stato annullato",
 		"EMAIL_SENT": "È stata inviata un'email all'host oltre che a tutti i partecipanti per questa riunione",
-		"NO_ACTIVE_EVENT_TYpES": "Non ci sono tipi di eventi attivi"
+		"NO_ACTIVE_EVENT_TYPES": "Non ci sono tipi di eventi attivi"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modelli di email",

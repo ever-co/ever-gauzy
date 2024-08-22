@@ -4238,7 +4238,7 @@
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
-		"NO_ACTIVE_EVENT_TYpES": "لا توجد أنواع فعالة للأحداث"
+		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "قوالب البريد الإلكتروني",

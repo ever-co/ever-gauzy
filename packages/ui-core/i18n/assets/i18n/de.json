@@ -4235,7 +4235,7 @@
 		"SELECT_EMPLOYEE_ERROR": "Bitte wählen Sie einen Mitarbeiter aus.",
 		"EXPIRED_OR_CANCELLED": "Dieser Termin ist abgelaufen oder wurde abgesagt.",
 		"EMAIL_SENT": "Eine E-Mail wurde an den Gastgeber sowie an alle Teilnehmer für dieses Treffen gesendet.",
-		"NO_ACTIVE_EVENT_TYpES": "Es gibt keine aktiven Ereignistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Es gibt keine aktiven Ereignistypen."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-Mail-Vorlagen",

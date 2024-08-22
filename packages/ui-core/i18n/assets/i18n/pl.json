@@ -4239,7 +4239,7 @@
 		"SELECT_EMPLOYEE_ERROR": "Proszę wybrać pracownika",
 		"EXPIRED_OR_CANCELLED": "To spotkanie wygasło lub zostało anulowane",
 		"EMAIL_SENT": "E-mail został wysłany do organizatora oraz wszystkich uczestników tego spotkania",
-		"NO_ACTIVE_EVENT_TYpES": "Nie ma aktywnych typów wydarzeń"
+		"NO_ACTIVE_EVENT_TYPES": "Nie ma aktywnych typów wydarzeń"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Szablony wiadomości e-mail",

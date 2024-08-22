@@ -4241,7 +4241,7 @@
 		"SELECT_EMPLOYEE_ERROR": "Por favor, seleccione un empleado.",
 		"EXPIRED_OR_CANCELLED": "Esta cita ha expirado o ha sido cancelada.",
 		"EMAIL_SENT": "Se ha enviado un correo electrónico al anfitrión, así como a todos los participantes de esta reunión.",
-		"NO_ACTIVE_EVENT_TYpES": "No hay tipos de eventos activos."
+		"NO_ACTIVE_EVENT_TYPES": "No hay tipos de eventos activos."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Plantillas de correo electrónico",

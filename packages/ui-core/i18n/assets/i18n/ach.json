@@ -3757,7 +3757,7 @@
 		"SELECT_EMPLOYEE_ERROR": "crwdns7274:0crwdne7274:0",
 		"EXPIRED_OR_CANCELLED": "crwdns5094:0crwdne5094:0",
 		"EMAIL_SENT": "crwdns4568:0crwdne4568:0",
-		"NO_ACTIVE_EVENT_TYpES": "crwdns9052:0crwdne9052:0"
+		"NO_ACTIVE_EVENT_TYPES": "crwdns9052:0crwdne9052:0"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "crwdns10334:0crwdne10334:0",

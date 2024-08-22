@@ -4239,7 +4239,7 @@
 		"SELECT_EMPLOYEE_ERROR": "Por favor, selecione um funcionário.",
 		"EXPIRED_OR_CANCELLED": "**Esta consulta expirou ou foi cancelada.",
 		"EMAIL_SENT": "**Um e-mail foi enviado para o anfitrião, bem como para todos os participantes desta reunião.",
-		"NO_ACTIVE_EVENT_TYpES": "Não há tipos de eventos ativos."
+		"NO_ACTIVE_EVENT_TYPES": "Não há tipos de eventos ativos."
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modelos de Email",
