@@ -10,11 +10,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"baseUrl": ".",
 		"paths": {
-			"@gauzy/ui-core/common": ["./common/src/index.ts"],
-			"@gauzy/ui-core/core": ["./core/src/index.ts"],
-			"@gauzy/ui-core/i18n": ["./i18n/src/index.ts"],
-			"@gauzy/ui-core/shared": ["./shared/src/index.ts"],
-			"@gauzy/ui-core/theme": ["./theme/src/index.ts"],
+			"@gauzy/ui-core/*": ["./*/src/index.ts"],
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
 			"ngx-draggable-dom": ["./node_modules/ngx-draggable-dom"],
 			"ngx-permissions": ["./node_modules/ngx-permissions"],
