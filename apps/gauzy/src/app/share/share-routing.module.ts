@@ -8,6 +8,7 @@ import {
 	PublicOrganizationResolver
 } from '@gauzy/plugin-public-layout-ui';
 import { ShareComponent } from './share.component';
+import { InvoiceEstimateViewComponent } from './invoices-estimates/invoice-estimate-view.component';
 
 const routes: Routes = [
 	{
@@ -81,14 +82,9 @@ const routes: Routes = [
 					)
 			},
 			{
-				path: 'invoices/:id/:token',
-				loadChildren: () =>
-					import('./invoices-estimates/invoice-estimate.module').then((m) => m.InvoiceEstimateModule)
-			},
-			{
-				path: 'estimates/:id/:token',
-				loadChildren: () =>
-					import('./invoices-estimates/invoice-estimate.module').then((m) => m.InvoiceEstimateModule)
+				path: ':type/:id/:token',
+				component: InvoiceEstimateViewComponent,
+				children: []
 			},
 			{
 				path: '**',

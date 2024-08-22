@@ -16,6 +16,7 @@ import {
 import { TranslateModule } from '@ngx-translate/core';
 import {
 	ImageUploaderModule,
+	InvoiceViewInnerModule,
 	MiscellaneousModule,
 	SharedModule,
 	TableComponentsModule,
@@ -25,6 +26,7 @@ import { PublicLayoutModule } from '@gauzy/plugin-public-layout-ui';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { ShareComponent } from './share.component';
 import { ShareRoutingModule } from './share-routing.module';
+import { InvoiceEstimateViewComponent } from './invoices-estimates/invoice-estimate-view.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -53,9 +55,10 @@ const NB_MODULES = [
 		TableComponentsModule,
 		WorkInProgressModule,
 		ImageUploaderModule,
-		PublicLayoutModule
+		PublicLayoutModule,
+		InvoiceViewInnerModule
 	],
-	declarations: [ShareComponent],
+	declarations: [ShareComponent, InvoiceEstimateViewComponent],
 	providers: []
 })
 export class ShareModule {}

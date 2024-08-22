@@ -78,6 +78,13 @@ const routes: Routes = [
 			permissions: {
 				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.INVOICES_VIEW],
 				redirectTo
+			},
+			selectors: {
+				organization: false,
+				date: false,
+				employee: false,
+				project: false,
+				team: false
 			}
 		}
 	},
@@ -131,6 +138,13 @@ const routes: Routes = [
 					permissions: {
 						only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ESTIMATES_VIEW],
 						redirectTo
+					},
+					selectors: {
+						organization: false,
+						date: false,
+						employee: false,
+						project: false,
+						team: false
 					}
 				}
 			}
@@ -161,8 +175,9 @@ const routes: Routes = [
 			selectors: {
 				organization: false,
 				date: false,
+				employee: false,
 				project: false,
-				employee: false
+				team: false
 			}
 		}
 	},

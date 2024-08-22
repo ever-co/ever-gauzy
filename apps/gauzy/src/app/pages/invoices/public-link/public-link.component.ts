@@ -13,19 +13,19 @@ import { InvoicesService } from '@gauzy/ui-core/core';
 	styleUrls: ['./public-link.component.scss']
 })
 export class PublicLinkComponent implements OnInit {
+	public publicLink: string;
+
 	/*
 	 * Getter & Setter for dynamic invoice property
 	 */
-	_invoice: IInvoice;
-	get invoice(): IInvoice {
+	private _invoice: IInvoice;
+	public get invoice(): IInvoice {
 		return this._invoice;
 	}
-	@Input() set invoice(value: IInvoice) {
+	@Input() public set invoice(value: IInvoice) {
 		this._invoice = value;
 		this.createPublicLink();
 	}
-
-	publicLink: IInvoice['token'];
 
 	constructor(
 		private readonly _router: Router,
@@ -47,6 +47,9 @@ export class PublicLinkComponent implements OnInit {
 		}
 	}
 
+	/**
+	 * Generate public invoice link
+	 */
 	async generatePublicInvoiceLink() {
 		this.invoice = await this._invoicesService.generateLink(this.invoice.id);
 	}
@@ -55,19 +58,24 @@ export class PublicLinkComponent implements OnInit {
 	 * Create invoice public link
 	 */
 	createPublicLink() {
-		if (this.invoice) {
-			const { id, token } = this.invoice;
-			// The call to Location.prepareExternalUrl is the key thing here.
-			let tree = this._router.createUrlTree([`/share/invoices/${id}/${token}`]);
-
-			// As far as I can tell you don't really need the UrlSerializer.
-			this.publicLink = __prepareExternalUrlLocation(
-				this._location.prepareExternalUrl(this._urlSerializer.serialize(tree))
-			);
+		if (!this.invoice) {
+			return;
 		}
+		const { id, token, isEstimate } = this.invoice;
+		// Define the base URL based on whether it's an estimate or an invoice
+		const basePath = isEstimate ? 'estimates' : 'invoices';
+		// Create the URL tree with the appropriate path
+		const urlTree = this._router.createUrlTree([`/share/${basePath}/${id}/${token}`]);
+		// Serialize the URL tree and prepare the external URL
+		const serializedUrl = this._urlSerializer.serialize(urlTree);
+		// As far as I can tell you don't really need the UrlSerializer.
+		this.publicLink = __prepareExternalUrlLocation(this._location.prepareExternalUrl(serializedUrl));
 	}
 
-	cancel() {
+	/**
+	 * Close the dialog
+	 */
+	close() {
 		this._dialogRef.close();
 	}
 }
