@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Data } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization } from '@gauzy/contracts';
-import moment from 'moment';
+import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization, IUser } from '@gauzy/contracts';
+import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeesService, ErrorHandlingService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
@@ -18,61 +18,67 @@ import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-core/shared';
 	styleUrls: ['./employee.component.scss']
 })
 export class EmployeeComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	hasEditPermission$: Observable<boolean>;
-	imageUrl: string;
-	imageUpdateButton: boolean;
+	public hasEditPermission$: Observable<boolean>;
+	public imageUrl: string;
+	public imageUpdateButton: boolean;
 	public organization$: Observable<IOrganization>;
 	public organization: IOrganization;
 	public employee$: Observable<IEmployee>;
-	hoverState: boolean;
-	employeeAwards: IEmployeeAward[] = [];
+	public hoverState: boolean;
+	public employeeAwards: IEmployeeAward[] = [];
 
 	constructor(
-		private readonly employeeService: EmployeesService,
-		private readonly userService: UsersService,
-		private readonly route: ActivatedRoute,
 		readonly translateService: TranslateService,
-		private readonly dialogService: NbDialogService,
-		private readonly toastrService: ToastrService,
-		private readonly store: Store,
-		private readonly errorHandlingService: ErrorHandlingService
+		private readonly _employeeService: EmployeesService,
+		private readonly _userService: UsersService,
+		private readonly _route: ActivatedRoute,
+		private readonly _dialogService: NbDialogService,
+		private readonly _toastrService: ToastrService,
+		private readonly _store: Store,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.organization$ = this.route.data.pipe(
-			map(({ organization }) => organization),
+		this.organization$ = this._route.data.pipe(
+			map(({ organization }: Data) => organization),
 			tap((organization: IOrganization) => (this.organization = organization))
 		);
-		this.employee$ = this.route.data.pipe(
-			map(({ employee }) => ({
+		this.employee$ = this._route.data.pipe(
+			map(({ employee }: Data) => ({
 				...employee,
-				startedWorkOn: employee.startedWorkOn ? moment(employee.startedWorkOn).toDate() : undefined
+				startedWorkOn: employee.startedWorkOn ? new Date(employee.startedWorkOn) : null
 			})),
 			tap((employee: IEmployee) => (this.imageUrl = employee.user.imageUrl)),
 			tap((employee: IEmployee) => (this.employeeAwards = employee.awards))
 		);
-		this.hasEditPermission$ = this.store.userRolePermissions$.pipe(
-			map(() => this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT))
+		this.hasEditPermission$ = this._store.userRolePermissions$.pipe(
+			map(() => this._store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT))
 		);
 	}
 
-	ngAfterViewInit() {}
-
+	/**
+	 * Updates the image url of an employee.
+	 *
+	 * @param url - The image url to be updated.
+	 */
 	updateImageUrl(url: string) {
 		this.imageUrl = url;
 		this.imageUpdateButton = true;
 	}
 
-	async saveImage({ userId, imageUrl }) {
+	/**
+	 * Saves the image of an employee.
+	 *
+	 * @param param0 - The user id and image url to be saved.
+	 */
+	async saveImage({ userId, imageUrl }): Promise<void> {
 		try {
-			await this.userService.update(userId, {
-				imageUrl
-			});
-			this.toastrService.success('PUBLIC_PAGE.IMAGE_UPDATED');
-		} catch (e) {
-			this.errorHandlingService.handleError(e);
+			await this._userService.update(userId, { imageUrl });
+			this._toastrService.success('PUBLIC_PAGE.IMAGE_UPDATED');
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
 		}
 
 		this.imageUpdateButton = false;
@@ -85,20 +91,23 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 	 * @return {void} This function does not return a value.
 	 */
 	openEditEmployeeDialog(employee: IEmployee): void {
-		if (!this.store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
+		if (!this._store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT)) {
 			return;
 		}
-		this.dialogService
-			.open(PublicPageEmployeeMutationComponent, {
-				context: {
-					employee,
-					employeeAwards: this.employeeAwards
-				}
-			})
-			.onClose.pipe(
-				tap(async (empFormValue) => {
-					if (empFormValue) {
-						await this.handleEmployeeUpdate(employee, empFormValue);
+
+		// Open the dialog.
+		const dialog$ = this._dialogService.open(PublicPageEmployeeMutationComponent, {
+			context: {
+				employee,
+				employeeAwards: this.employeeAwards
+			}
+		});
+
+		dialog$.onClose
+			.pipe(
+				tap(async (formValue) => {
+					if (formValue) {
+						await this.handleEmployeeUpdate(employee, formValue);
 					}
 				}),
 				untilDestroyed(this)
@@ -106,27 +115,40 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 			.subscribe();
 	}
 
-	async handleEmployeeUpdate(employee, { username, email, firstName, lastName, preferredLanguage, ...empFormValue }) {
+	/**
+	 * Handles the update of an employee.
+	 *
+	 * @param employee
+	 * @param formValue
+	 * @returns
+	 */
+	async handleEmployeeUpdate(employee: IEmployee, formValue: any) {
 		try {
-			if (!this.organization) {
-				return;
-			}
+			if (!this.organization) return;
+
 			const { id: organizationId, tenantId } = this.organization;
-			const updatedUser: any = await this.userService.update(employee.user.id, {
+			const { username, email, firstName, lastName, preferredLanguage, ...employeeFormValue } = formValue;
+
+			// Update the user.
+			const updatedUser: IUser = await this._userService.update(employee.user.id, {
 				username,
 				email,
 				firstName,
 				lastName,
 				preferredLanguage
 			});
-			const employeeUpdatedRes = await this.employeeService.update(employee.id, {
+
+			// Update the employee.
+			const updatedEmployee: IEmployee = await this._employeeService.update(employee.id, {
 				organizationId,
 				tenantId,
-				...empFormValue
+				...employeeFormValue
 			});
-			const updatedEmployee = {
+
+			// Update the employee$ observable.
+			this.employee$ = of({
 				...employee,
-				...employeeUpdatedRes,
+				...updatedEmployee,
 				isActive: employee.isActive,
 				billRateCurrency: employee.billRateCurrency,
 				user: {
@@ -134,19 +156,27 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 					...updatedUser,
 					imageUrl: updatedUser.imageUrl ? updatedUser.imageUrl : employee.user.imageUrl
 				},
-				startedWorkOn: employeeUpdatedRes.startedWorkOn
-					? moment(new Date(employeeUpdatedRes.startedWorkOn)).format('MM-DD-YYYY')
+				startedWorkOn: updatedEmployee.startedWorkOn
+					? moment(updatedEmployee.startedWorkOn).toDate()
 					: employee.startedWorkOn
-			};
-			this.employee$ = of(updatedEmployee);
-			this.toastrService.success('PUBLIC_PAGE.EMPLOYEE_UPDATED');
-		} catch (e) {
-			this.errorHandlingService.handleError(e);
+			});
+
+			// Display a success toastr.
+			this._toastrService.success('PUBLIC_PAGE.EMPLOYEE_UPDATED');
+		} catch (error) {
+			console.log('Error while updating employee', error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
-	handleImageUploadError(error: any) {
-		this.toastrService.danger(error, 'Error');
+	/**
+	 *
+	 * @param error - The error to be handled.
+	 * @return {void} This function does not return a value.
+	 */
+	handleImageUploadError(error: any): void {
+		console.log('Error while uploading image', error);
+		this._errorHandlingService.handleError(error);
 	}
 
 	ngOnDestroy(): void {}

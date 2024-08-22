@@ -1,25 +1,65 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { NbMenuModule, NbSpinnerModule, NbToastrModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule,
+	NbIconModule,
+	NbInputModule,
+	NbListModule,
+	NbMenuModule,
+	NbSpinnerModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToastrModule,
+	NbUserModule
+} from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { AuthService, RoleGuard } from '@gauzy/ui-core/core';
-import { MiscellaneousModule } from '@gauzy/ui-core/shared';
+import {
+	ImageUploaderModule,
+	MiscellaneousModule,
+	PublicPageEmployeeMutationModule,
+	PublicPageMutationModule,
+	SharedModule,
+	TableComponentsModule,
+	WorkInProgressModule
+} from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { ShareComponent } from './share.component';
 import { ShareRoutingModule } from './share-routing.module';
+import { OrganizationComponent } from './organization/organization.component';
+import { EmployeeComponent } from './employee/employee.component';
+
+// Nebular Modules
+const NB_MODULES = [
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule.forChild(),
+	NbIconModule,
+	NbInputModule,
+	NbListModule,
+	NbMenuModule,
+	NbSpinnerModule,
+	NbTabsetModule,
+	NbTagModule,
+	NbToastrModule.forRoot(),
+	NbUserModule
+];
 
 @NgModule({
 	imports: [
-		CommonModule,
-		NbMenuModule,
-		NbSpinnerModule,
-		NbToastrModule.forRoot(),
+		...NB_MODULES,
 		TranslateModule.forChild(),
 		ShareRoutingModule,
 		MiscellaneousModule,
-		ThemeModule
+		ThemeModule,
+		SharedModule,
+		PublicPageMutationModule,
+		PublicPageEmployeeMutationModule,
+		TableComponentsModule,
+		WorkInProgressModule,
+		ImageUploaderModule
 	],
-	declarations: [ShareComponent],
-	providers: [AuthService, RoleGuard]
+	declarations: [ShareComponent, OrganizationComponent, EmployeeComponent],
+	providers: []
 })
 export class ShareModule {}

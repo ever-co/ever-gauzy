@@ -1,8 +1,10 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
-
 import { NotFoundComponent } from '@gauzy/ui-core/shared';
+import { PublicEmployeeResolver, PublicOrganizationResolver } from '@gauzy/plugin-public-layout-ui';
 import { ShareComponent } from './share.component';
+import { OrganizationComponent } from './organization/organization.component';
+import { EmployeeComponent } from './employee/employee.component';
 
 const routes: Routes = [
 	{
@@ -10,13 +12,32 @@ const routes: Routes = [
 		component: ShareComponent,
 		children: [
 			{
-				path: '',
-				redirectTo: 'organization',
-				pathMatch: 'full'
-			},
-			{
 				path: 'organization/:profileLink/:organizationId',
-				loadChildren: () => import('./organization/organization.module').then((m) => m.OrganizationModule)
+				children: [
+					{
+						path: '',
+						component: OrganizationComponent,
+						data: {
+							relations: ['skills', 'awards', 'languages', 'languages.language']
+						},
+						resolve: {
+							organization: PublicOrganizationResolver
+						},
+						runGuardsAndResolvers: 'always'
+					},
+					{
+						path: ':slug/:employeeId',
+						component: EmployeeComponent,
+						data: {
+							relations: []
+						},
+						resolve: {
+							organization: PublicOrganizationResolver,
+							employee: PublicEmployeeResolver
+						},
+						runGuardsAndResolvers: 'always'
+					}
+				]
 			},
 			{
 				path: 'employee/edit-appointment',
