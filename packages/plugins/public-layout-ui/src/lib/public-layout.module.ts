@@ -2,42 +2,68 @@ import { NgModule } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ROUTES, RouterModule } from '@angular/router';
 import {
+	NbActionsModule,
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
+	NbDatepickerModule,
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
 	NbListModule,
 	NbMenuModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbTagModule,
 	NbToastrModule,
+	NbToggleModule,
+	NbTooltipModule,
 	NbUserModule
 } from '@nebular/theme';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { CKEditorModule } from 'ckeditor4-angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import {
+	CurrencyModule,
+	ImageUploaderModule,
+	LanguageSelectorModule,
+	MiscellaneousModule,
+	SharedModule,
+	SkillsInputModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	WorkInProgressModule
+} from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { createPublicLayoutRoutes } from './public-layout.routes';
-import { PublicLayoutComponent } from './components/public-layout/public-layout.component';
+import { COMPONENTS } from './components';
 
 // Nebular Modules
 const NB_MODULES = [
+	NbActionsModule,
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
+	NbCheckboxModule,
+	NbDatepickerModule,
 	NbDialogModule.forChild(),
 	NbIconModule,
 	NbInputModule,
 	NbListModule,
 	NbMenuModule,
 	NbSpinnerModule,
+	NbSelectModule,
 	NbTabsetModule,
 	NbTagModule,
 	NbToastrModule.forRoot(),
+	NbToggleModule,
+	NbTooltipModule,
 	NbUserModule
 ];
 
@@ -45,6 +71,8 @@ const NB_MODULES = [
  * Third Party Modules
  */
 const THIRD_PARTY_MODULES = [
+	CKEditorModule,
+	NgSelectModule,
 	NgxPermissionsModule.forRoot(),
 	TranslateModule.forRoot({
 		defaultLanguage: LanguagesEnum.ENGLISH,
@@ -56,10 +84,29 @@ const THIRD_PARTY_MODULES = [
 	})
 ];
 
+/**
+ * Feature Modules
+ */
+const FEATURE_MODULES = [
+	CurrencyModule,
+	ImageUploaderModule,
+	LanguageSelectorModule,
+	MiscellaneousModule,
+	SharedModule,
+	SkillsInputModule,
+	TableComponentsModule,
+	TagsColorInputModule,
+	ThemeModule,
+	WorkInProgressModule
+];
+
 @NgModule({
-	declarations: [PublicLayoutComponent],
-	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ThemeModule, SharedModule],
+	declarations: [...COMPONENTS],
+	imports: [RouterModule.forChild([]), ...NB_MODULES, ...THIRD_PARTY_MODULES, ...FEATURE_MODULES],
+	exports: [...COMPONENTS],
 	providers: [
+		LanguagesService,
+		SkillsService,
 		{
 			provide: ROUTES,
 			useFactory: (service: PageRouteRegistryService) => createPublicLayoutRoutes(service),

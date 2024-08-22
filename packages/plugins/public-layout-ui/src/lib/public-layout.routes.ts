@@ -1,6 +1,7 @@
 import { Route } from '@angular/router';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
-import { PublicLayoutComponent } from './components/public-layout/public-layout.component';
+import { NotFoundComponent } from '@gauzy/ui-core/shared';
+import { PublicLayoutComponent } from './components/public-layout.component';
 
 /**
  * Creates public layout routes for the application
@@ -12,6 +13,11 @@ export const createPublicLayoutRoutes = (_pageRouteRegistryService: PageRouteReg
 	{
 		path: '',
 		component: PublicLayoutComponent,
-		children: []
+		children: [
+			{
+				path: '**',
+				component: NotFoundComponent
+			}
+		]
 	}
 ];

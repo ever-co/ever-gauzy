@@ -1,7 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
+import { Observable, EMPTY } from 'rxjs';
+import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import {
 	IEmployee,
 	ISkill,
@@ -13,20 +17,16 @@ import {
 	IEmployeeLevel,
 	IOrganization
 } from '@gauzy/contracts';
-import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
-import { Observable, EMPTY } from 'rxjs';
-import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeAwardService,
 	EmployeeLevelService,
 	ErrorHandlingService,
 	OrganizationEmploymentTypesService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
-import { ckEditorConfig } from '../../ckeditor.config';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

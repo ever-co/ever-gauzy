@@ -14,19 +14,17 @@ import {
 	ClientFocusEnum,
 	MinimumProjectSizeEnum
 } from '@gauzy/contracts';
+import { OrganizationAwardsService, OrganizationLanguagesService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
-import { OrganizationAwardsService, OrganizationLanguagesService } from '@gauzy/ui-core/core';
-import { ckEditorConfig } from '../../ckeditor.config';
+import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'ngx-public-page-mutation',
-	templateUrl: './public-page-mutation.component.html',
-	styleUrls: ['./public-page-mutation.component.scss']
+	selector: 'ngx-public-page-organization-mutation',
+	templateUrl: './public-page-organization-mutation.component.html',
+	styleUrls: ['./public-page-organization-mutation.component.scss']
 })
-export class PublicPageMutationComponent extends TranslationBaseComponent implements OnInit {
-	income?: IIncome;
+export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {
+	income: IIncome;
 	organization?: IOrganization;
 	client_focus = Object.values(ClientFocusEnum);
 	minimumProjectSizes = Object.values(MinimumProjectSizeEnum);
@@ -77,12 +75,12 @@ export class PublicPageMutationComponent extends TranslationBaseComponent implem
 	selectedClientFocus: any;
 
 	constructor(
+		readonly translateService: TranslateService,
 		private readonly fb: UntypedFormBuilder,
-		protected readonly dialogRef: NbDialogRef<PublicPageMutationComponent>,
+		private readonly dialogRef: NbDialogRef<PublicPageOrganizationMutationComponent>,
 		private readonly toastrService: ToastrService,
 		private readonly organizationAwardsService: OrganizationAwardsService,
 		private readonly organizationLanguagesService: OrganizationLanguagesService,
-		readonly translateService: TranslateService,
 		private readonly store: Store
 	) {
 		super(translateService);
@@ -241,6 +239,9 @@ export class PublicPageMutationComponent extends TranslationBaseComponent implem
 		}
 	}
 
+	/**
+	 * Load languages
+	 */
 	private async loadLanguages() {
 		const { organizationId, tenantId } = this;
 		const res = await this.organizationLanguagesService.getAll({ organizationId, tenantId }, ['language']);

@@ -11,10 +11,7 @@
 								[src]="organization.imageUrl"
 								alt="Organization Avatar"
 							/>
-							<div
-								class="organization-photo"
-								*ngIf="hasEditPublicPage$ | async"
-							>
+							<div class="organization-photo" *ngIf="hasEditPublicPage$ | async">
 								<ngx-image-uploader
 									(changeHoverState)="hoverState = $event"
 									(uploadedImageAsset)="updateImageUrl($event)"
@@ -37,25 +34,9 @@
 										/>
 									</defs>
 									<g fill="none" fill-rule="evenodd">
-										<circle
-											cx="34"
-											cy="34"
-											r="34"
-											fill="#0091FF"
-											opacity=".3"
-										/>
-										<circle
-											cx="34"
-											cy="34"
-											r="26"
-											fill="#0091FF"
-											opacity=".9"
-										/>
-										<use
-											fill="#FFF"
-											fill-rule="nonzero"
-											xlink:href="#a"
-										/>
+										<circle cx="34" cy="34" r="34" fill="#0091FF" opacity=".3" />
+										<circle cx="34" cy="34" r="26" fill="#0091FF" opacity=".9" />
+										<use fill="#FFF" fill-rule="nonzero" xlink:href="#a" />
 									</g>
 								</svg>
 								<div
@@ -68,10 +49,7 @@
 								<img
 									*ngIf="imageUrl"
 									[src]="imageUrl"
-									alt="{{
-										'PUBLIC_PAGE.COMPANY_PROFILE'
-											| translate
-									}}"
+									alt="{{ 'PUBLIC_PAGE.COMPANY_PROFILE' | translate }}"
 									(mouseenter)="hoverState = true"
 									(mouseleave)="hoverState = false"
 								/>
@@ -85,105 +63,57 @@
 									{{ 'BUTTONS.UPDATE' | translate }}
 								</button>
 							</div>
-							<h4
-								class="org-name"
-								[textContent]="organization.name"
-							></h4>
-							<span
-								class="org-banner"
-								[textContent]="organization.banner"
-							></span>
+							<h4 class="org-name" [textContent]="organization.name"></h4>
+							<span class="org-banner" [textContent]="organization.banner"></span>
 						</div>
 						<div class="col-md-6 org-head-right-sec">
 							<div class="org-head-details">
 								<div class="org-year-found">
-									<h5
-										*ngIf="organization.registrationDate"
-										class="org-title label-text"
-									>
-										<span class="org-key">
-											{{
-												'PUBLIC_PAGE.YEAR_FOUNDED'
-													| translate
-											}}:
-										</span>
+									<h5 *ngIf="organization.registrationDate" class="org-title label-text">
+										<span class="org-key"> {{ 'PUBLIC_PAGE.YEAR_FOUNDED' | translate }}: </span>
 										<span class="org-value">
 											{{ organization.registrationDate | dateFormat : null : 'Y' }}
 										</span>
 									</h5>
 								</div>
 								<div class="org-size">
-									<h5
-										*ngIf="(employeeCounts | async) as employeeCounts"
-										class="org-title label-text"
-									>
-										<span class="org-key">
-											{{ 'PUBLIC_PAGE.COMPANY_SIZE' | translate }}:
-										</span>
+									<h5 *ngIf="employeeCounts$ | async as employeeCounts" class="org-title label-text">
+										<span class="org-key"> {{ 'PUBLIC_PAGE.COMPANY_SIZE' | translate }}: </span>
 										<span class="org-value">
 											{{ employeeCounts }}
 										</span>
 									</h5>
 								</div>
-								<div
-									class="org-size"
-									*ngIf="organization.show_clients_count"
-								>
+								<div class="org-size" *ngIf="organization.show_clients_count">
 									<h5 class="org-title label-text">
-										<span class="org-key">
-											{{
-												'PUBLIC_PAGE.TOTAL_CLIENTS'
-													| translate
-											}}:
-										</span>
+										<span class="org-key"> {{ 'PUBLIC_PAGE.TOTAL_CLIENTS' | translate }}: </span>
 										<span class="org-value">
-											{{ (clientCounts$ | async) }}
+											{{ clientCounts$ | async }}
 										</span>
 									</h5>
 								</div>
-								<div
-									class="org-client-focus"
-									*ngIf="organization.client_focus"
-								>
+								<div class="org-client-focus" *ngIf="organization.client_focus">
 									<h5 class="org-title label-text">
-										<span class="org-key">
-											{{
-												'PUBLIC_PAGE.CLIENT_FOCUS'
-													| translate
-											}}:
-										</span>
+										<span class="org-key"> {{ 'PUBLIC_PAGE.CLIENT_FOCUS' | translate }}: </span>
 										<span
 											class="client-focus"
-											[textContent]="
-												organization.client_focus.replace(
-													',',
-													', '
-												)
-											"
+											[textContent]="organization.client_focus.replace(',', ', ')"
 										></span>
 									</h5>
 								</div>
-								<div
-									class="row"
-									*ngIf="organization.show_profits"
-								>
+								<div class="row" *ngIf="organization.show_profits">
 									<div class="col">
 										<h5 class="org-title label-text">
 											<span class="org-key">
-												{{
-													'PUBLIC_PAGE.PROFITS'
-														| translate
-												}}
+												{{ 'PUBLIC_PAGE.PROFITS' | translate }}
 												:
 											</span>
 											<span
 												class="org-value"
 												[textContent]="
 													profits || 0
-														| currency
-															: organization?.currency
-														| position
-															: organization?.currencyPosition
+														| currency : organization?.currency
+														| position : organization?.currencyPosition
 												"
 											></span>
 										</h5>
@@ -198,10 +128,7 @@
 									size="small"
 									nbButton
 								>
-									<nb-icon
-										class="open"
-										icon="edit-outline"
-									></nb-icon>
+									<nb-icon class="open" icon="edit-outline"></nb-icon>
 									{{ 'BUTTONS.EDIT' | translate }}
 								</button>
 							</ng-container>
@@ -210,32 +137,14 @@
 				</div>
 				<div class="section_block"></div>
 				<nb-tabset class="o__p__s" #tabset>
-					<nb-tab
-						#profileTab
-						[tabTitle]="'PUBLIC_PAGE.PROFILE' | translate"
-						class="o__p__s__t"
-					>
-						<ng-container
-							*ngTemplateOutlet="profileTemplate"
-						></ng-container>
+					<nb-tab #profileTab [tabTitle]="'PUBLIC_PAGE.PROFILE' | translate" class="o__p__s__t">
+						<ng-container *ngTemplateOutlet="profileTemplate"></ng-container>
 					</nb-tab>
-					<nb-tab
-						#employeeTab
-						[tabTitle]="'ORGANIZATIONS_PAGE.EMPLOYEES' | translate"
-						class="o__p__s__t"
-					>
-						<ng-container
-							*ngTemplateOutlet="employeeTemplate"
-						></ng-container>
+					<nb-tab #employeeTab [tabTitle]="'ORGANIZATIONS_PAGE.EMPLOYEES' | translate" class="o__p__s__t">
+						<ng-container *ngTemplateOutlet="employeeTemplate"></ng-container>
 					</nb-tab>
-					<nb-tab
-						#portfolioTab
-						[tabTitle]="'PUBLIC_PAGE.PORTFOLIO' | translate"
-						class="o__p__s__t"
-					>
-						<ng-container
-							*ngTemplateOutlet="portfolioTemplate"
-						></ng-container>
+					<nb-tab #portfolioTab [tabTitle]="'PUBLIC_PAGE.PORTFOLIO' | translate" class="o__p__s__t">
+						<ng-container *ngTemplateOutlet="portfolioTemplate"></ng-container>
 					</nb-tab>
 					<nb-tab
 						#clientTab
@@ -243,9 +152,7 @@
 						[tabTitle]="'ORGANIZATIONS_PAGE.CLIENTS' | translate"
 						*ngIf="organization.show_clients"
 					>
-						<ng-container
-							*ngTemplateOutlet="clientTemplate"
-						></ng-container>
+						<ng-container *ngTemplateOutlet="clientTemplate"></ng-container>
 					</nb-tab>
 				</nb-tabset>
 			</div>
@@ -260,18 +167,10 @@
 			<div class="row mb-3">
 				<div class="col">
 					<div class="org-year-found row">
-						<h5
-							class="org-title org-key label-text col-xl-1 col-md-2"
-						>
-							{{
-								'PUBLIC_PAGE.TOTAL_PROJECTS'
-									| translate
-							}}:
+						<h5 class="org-title org-key label-text col-xl-1 col-md-2">
+							{{ 'PUBLIC_PAGE.TOTAL_PROJECTS' | translate }}:
 						</h5>
-						<span
-							class="org-value col text-left"
-							[textContent]="(projectCounts$ | async)"
-						></span>
+						<span class="org-value col text-left" [textContent]="projectCounts$ | async"></span>
 					</div>
 				</div>
 			</div>
@@ -281,13 +180,8 @@
 			<div class="row mb-3">
 				<div class="col">
 					<div class="org-year-found row">
-						<h5
-							class="org-title org-key col-xl-1 col-md-2 label-text"
-						>
-							{{
-								'PUBLIC_PAGE.TOTAL_INCOME'
-									| translate
-							}}:
+						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
+							{{ 'PUBLIC_PAGE.TOTAL_INCOME' | translate }}:
 						</h5>
 						<span
 							class="org-value text-left col"
@@ -307,10 +201,7 @@
 				<div class="col">
 					<div class="org-year-found row">
 						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
-							{{
-								'PUBLIC_PAGE.TOTAL_BONUSES_PAID'
-									| translate
-							}}:
+							{{ 'PUBLIC_PAGE.TOTAL_BONUSES_PAID' | translate }}:
 						</h5>
 						<span
 							class="org-value col text-left"
@@ -334,14 +225,9 @@
 				<div class="col">
 					<div class="org-year-found row">
 						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
-							{{
-								'PUBLIC_PAGE.EMPLOYEES' | translate
-							}}:
+							{{ 'PUBLIC_PAGE.EMPLOYEES' | translate }}:
 						</h5>
-						<span
-							class="col org-value text-left"
-							[textContent]="(employeeCounts$ | async)"
-						></span>
+						<span class="col org-value text-left" [textContent]="employeeCounts$ | async"></span>
 					</div>
 				</div>
 			</div>
@@ -351,20 +237,10 @@
 			<div class="row wrapper mb-3">
 				<div class="col">
 					<div class="row">
-						<h5
-							class="org-title org-key col-xl-1 col-md-2 label-text"
-						>
-							{{
-								'PUBLIC_PAGE.DESCRIPTION'
-									| translate
-							}}:
+						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
+							{{ 'PUBLIC_PAGE.DESCRIPTION' | translate }}:
 						</h5>
-						<div
-							class="org-value col text-left"
-							[textContent]="
-								organization.short_description
-							"
-						></div>
+						<div class="org-value col text-left" [textContent]="organization.short_description"></div>
 					</div>
 				</div>
 			</div>
@@ -374,17 +250,11 @@
 			<div class="row">
 				<div class="col">
 					<div class="row">
-						<h5
-							class="org-title org-key col-xl-1 col-md-2 label-text"
-						>
-							{{
-								'PUBLIC_PAGE.OVERVIEW' | translate
-							}}:
+						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
+							{{ 'PUBLIC_PAGE.OVERVIEW' | translate }}:
 						</h5>
 						<div class="org-value col text-left">
-							<div
-								[innerHtml]="organization.overview"
-							></div>
+							<div [innerHtml]="organization.overview"></div>
 						</div>
 					</div>
 				</div>
@@ -395,13 +265,8 @@
 			<div class="row mb-3">
 				<div class="col">
 					<div class="row">
-						<h5
-							class="org-title org-key col-xl-1 col-md-2 label-text"
-						>
-							{{
-								'POP_UPS.MINIMUM_PROJECT_SIZE'
-									| translate
-							}}:
+						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
+							{{ 'POP_UPS.MINIMUM_PROJECT_SIZE' | translate }}:
 						</h5>
 						<div class="col org-value text-left">
 							<div>
@@ -418,18 +283,14 @@
 			<div class="row mb-3">
 				<div class="col">
 					<div class="org-skills row">
-						<h5
-							class="org-title org-key col-xl-1 col-md-2 label-text"
-						>
+						<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 							{{ 'PUBLIC_PAGE.SKILLS' | translate }}:
 						</h5>
 						<div class="col">
 							<nb-tag-list size="small" class="mt-1">
 								<nb-tag
 									size="small"
-									*ngFor="
-										let skill of organization.skills
-									"
+									*ngFor="let skill of organization.skills"
 									[text]="skill.name"
 									[removable]="false"
 								></nb-tag>
@@ -447,9 +308,7 @@
 					<div class="row mb-3">
 						<div class="col">
 							<div class="org-year-found row">
-								<h5
-									class="org-title org-key col-xl-1 col-md-2 label-text"
-								>
+								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{ 'PUBLIC_PAGE.LANGUAGES' | translate }}:
 								</h5>
 								<div class="col org-value">
@@ -476,18 +335,14 @@
 					<div class="row mb-3">
 						<div class="col">
 							<div class="org-year-found row">
-								<h5
-									class="org-title org-key col-xl-1 col-md-2 label-text"
-								>
+								<h5 class="org-title org-key col-xl-1 col-md-2 label-text">
 									{{ 'PUBLIC_PAGE.AWARDS' | translate }}:
 								</h5>
 								<div class="col org-value">
 									<nb-tag-list size="small" class="mt-1">
 										<nb-tag
 											*ngFor="let award of awards"
-											[text]="
-												award.name + ' (' + award.year + ')'
-											"
+											[text]="award.name + ' (' + award.year + ')'"
 											[removable]="false"
 											size="small"
 										></nb-tag>
@@ -519,23 +374,13 @@
 							*ngFor="let employee of employees; let last = last"
 							[ngClass]="{ 'border-bottom': !last }"
 						>
-							<ng-container
-								*ngIf="
-									!employee.anonymousBonus;
-									else anonymousTemplate
-								"
-							>
+							<ng-container *ngIf="!employee.anonymousBonus; else anonymousTemplate">
 								<div class="main-details">
 									<div class="row align-items-center">
 										<div>
 											<div class="avatar has-aura">
 												<a>
-													<img
-														[src]="
-															employee?.user
-																?.imageUrl
-														"
-													/>
+													<img [src]="employee?.user?.imageUrl" />
 												</a>
 											</div>
 										</div>
@@ -543,10 +388,7 @@
 											<div>
 												<a
 													class="name margin-right-10"
-													[routerLink]="[
-														employee.profile_link,
-														employee.id
-													]"
+													[routerLink]="[employee.profile_link, employee.id]"
 												>
 													{{ employee?.fullName }}
 												</a>
@@ -559,17 +401,9 @@
 											</div>
 										</div>
 										<div class="col">
-											<ng-template
-												[ngIf]="employee.payPeriod"
-											>
-												<div
-													class="label label-hourly margin-right-10"
-												>
-													{{
-														employee.payPeriod
-															| replace: '_':' '
-															| titlecase
-													}}
+											<ng-template [ngIf]="employee.payPeriod">
+												<div class="label label-hourly margin-right-10">
+													{{ employee.payPeriod | replace : '_' : ' ' | titlecase }}
 												</div>
 											</ng-template>
 										</div>
@@ -577,10 +411,7 @@
 											<div>
 												<a
 													class="works-at"
-													[routerLink]="[
-														'/share/organization',
-														organization.profile_link
-													]"
+													[routerLink]="['/share/organization', organization.profile_link]"
 												>
 													<nb-icon
 														size="tiny"
@@ -594,9 +425,7 @@
 												</a>
 											</div>
 											<div>
-												<span
-													class="location text-secondary"
-												>
+												<span class="location text-secondary">
 													<nb-icon
 														size="tiny"
 														icon="pin-outline"
@@ -610,21 +439,11 @@
 											</div>
 											<div class="profile-bio">
 												<span class="average-bonus">
-													{{
-														'PUBLIC_PAGE.AVERAGE_BONUS'
-															| translate
-													}}:
+													{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
 												</span>
 												<span class="text-secondary">
-													{{
-														employee.billRateCurrency
-													}}
-													{{
-														employee.averageBonus ===
-														null
-															? 0
-															: employee.averageBonus
-													}}
+													{{ employee.billRateCurrency }}
+													{{ employee.averageBonus === null ? 0 : employee.averageBonus }}
 												</span>
 											</div>
 										</div>
@@ -636,11 +455,7 @@
 										</div>
 										<div class="col-1">
 											<div class="list-inline">
-												<li
-													*ngFor="
-														let skill of employee.skills
-													"
-												>
+												<li *ngFor="let skill of employee.skills">
 													<span class="tag tag-sm">
 														{{ skill.name }}
 													</span>
@@ -649,37 +464,19 @@
 										</div>
 										<div class="col-2 text-right">
 											<div class="pay-label">
-												<ng-template
-													[ngIf]="
-														employee.billRateValue
-													"
-												>
+												<ng-template [ngIf]="employee.billRateValue">
 													<div class="pay-rate">
 														{{
 															employee.billRateValue
-																| currency
-																	: employee.billRateCurrency
-																	: 'symbol'
-																| position
-																	: organization?.currencyPosition
+																| currency : employee.billRateCurrency : 'symbol'
+																| position : organization?.currencyPosition
 														}}/hr
 													</div>
 												</ng-template>
-												<ng-template
-													[ngIf]="
-														employee.totalWorkHours
-													"
-												>
-													<div
-														class="caption label-total-hours mt-2"
-													>
-														{{
-															employee.totalWorkHours
-														}}
-														{{
-															'ORGANIZATIONS_PAGE.HOURS_WORKED'
-																| translate
-														}}
+												<ng-template [ngIf]="employee.totalWorkHours">
+													<div class="caption label-total-hours mt-2">
+														{{ employee.totalWorkHours }}
+														{{ 'ORGANIZATIONS_PAGE.HOURS_WORKED' | translate }}
 													</div>
 												</ng-template>
 											</div>
@@ -691,33 +488,18 @@
 								<div class="main-details">
 									<div class="row align-items-center">
 										<div>
-											<div class="anonymous-avatar">
-												A
-											</div>
+											<div class="anonymous-avatar">A</div>
 										</div>
 										<div class="col-2">
 											<div class="align-items-center">
-												{{
-													'PUBLIC_PAGE.ANONYMOUS'
-														| translate
-												}}
+												{{ 'PUBLIC_PAGE.ANONYMOUS' | translate }}
 											</div>
-											<div class="specialty">
-												Full Stack Web Developer
-											</div>
+											<div class="specialty">Full Stack Web Developer</div>
 										</div>
 										<div class="col-2">
-											<ng-template
-												[ngIf]="employee.payPeriod"
-											>
-												<div
-													class="label label-hourly margin-right-10"
-												>
-													{{
-														employee.payPeriod
-															| replace: '_':' '
-															| titlecase
-													}}
+											<ng-template [ngIf]="employee.payPeriod">
+												<div class="label label-hourly margin-right-10">
+													{{ employee.payPeriod | replace : '_' : ' ' | titlecase }}
 												</div>
 											</ng-template>
 										</div>
@@ -725,10 +507,7 @@
 											<div>
 												<a
 													class="works-at"
-													[routerLink]="[
-														'/share/organization',
-														organization.profile_link
-													]"
+													[routerLink]="['/share/organization', organization.profile_link]"
 												>
 													<nb-icon
 														size="tiny"
@@ -742,9 +521,7 @@
 												</a>
 											</div>
 											<div>
-												<span
-													class="location text-secondary"
-												>
+												<span class="location text-secondary">
 													<nb-icon
 														size="tiny"
 														icon="pin-outline"
@@ -758,31 +535,17 @@
 											</div>
 											<div class="profile-bio">
 												<span class="average-bonus">
-													{{
-														'PUBLIC_PAGE.AVERAGE_BONUS'
-															| translate
-													}}:
+													{{ 'PUBLIC_PAGE.AVERAGE_BONUS' | translate }}:
 												</span>
 												<span class="text-secondary">
-													{{
-														employee.billRateCurrency
-													}}
-													{{
-														employee.averageBonus ===
-														null
-															? 0
-															: employee.averageBonus
-													}}
+													{{ employee.billRateCurrency }}
+													{{ employee.averageBonus === null ? 0 : employee.averageBonus }}
 												</span>
 											</div>
 										</div>
 										<div class="col-1">
 											<div class="list-inline">
-												<li
-													*ngFor="
-														let skill of employee.skills
-													"
-												>
+												<li *ngFor="let skill of employee.skills">
 													<span class="tag tag-sm">
 														{{ skill.name }}
 													</span>
@@ -802,11 +565,11 @@
 
 <!-- Client HTML Template -->
 <ng-template #clientTemplate>
-	<ng-container *ngIf="(clients$ | async) as clients">
+	<ng-container *ngIf="clients$ | async as clients">
 		<nb-list class="nb_list">
 			<nb-list-item
 				class="search-result"
-				*ngFor=" let client of clients; let last = last;"
+				*ngFor="let client of clients; let last = last"
 				[ngClass]="{ 'border-bottom': !last }"
 			>
 				<div class="avatar has-aura">
@@ -816,9 +579,7 @@
 					{{ client?.name }}
 				</div>
 				<div *ngIf="hasEditPublicPage$ | async" class="specialty">
-					<gauzy-email
-						[rowData]="{ email: client?.primaryEmail }"
-					></gauzy-email>
+					<gauzy-email [rowData]="{ email: client?.primaryEmail }"></gauzy-email>
 				</div>
 			</nb-list-item>
 		</nb-list>

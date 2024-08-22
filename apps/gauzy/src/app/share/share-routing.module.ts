@@ -1,10 +1,13 @@
 import { RouterModule, Routes } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { NotFoundComponent } from '@gauzy/ui-core/shared';
-import { PublicEmployeeResolver, PublicOrganizationResolver } from '@gauzy/plugin-public-layout-ui';
+import {
+	EmployeeComponent,
+	OrganizationComponent,
+	PublicEmployeeResolver,
+	PublicOrganizationResolver
+} from '@gauzy/plugin-public-layout-ui';
 import { ShareComponent } from './share.component';
-import { OrganizationComponent } from './organization/organization.component';
-import { EmployeeComponent } from './employee/employee.component';
 
 const routes: Routes = [
 	{

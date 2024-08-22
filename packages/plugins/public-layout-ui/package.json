@@ -34,9 +34,12 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@nebular/theme": "^12.0.0",
 		"@ngneat/until-destroy": "^9.2.0",
+		"@ng-select/ng-select": "^11.2.0",
 		"@ngx-translate/core": "^15.0.0",
+		"ckeditor4-angular": "4.0.1",
 		"moment": "^2.30.1",
 		"ngx-permissions": "^13.0.1",
+		"ng2-file-upload": "^5.0.0",
 		"rxjs": "^7.4.0",
 		"tslib": "^2.6.2"
 	},

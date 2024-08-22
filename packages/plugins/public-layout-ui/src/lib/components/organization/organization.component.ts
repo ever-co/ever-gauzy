@@ -17,7 +17,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { PublicPageMutationComponent } from '@gauzy/ui-core/shared';
+import { PublicPageOrganizationMutationComponent } from '../mutation/public-page-organization-mutation/public-page-organization-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -133,20 +133,20 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		}
 
 		// Extract the organization id and tenant id.
-		const { id: organizationId, tenantId } = this.organization;
+		const { id: organizationId } = this.organization;
 
 		// Get the clients.
 		if (!!this.organization.show_clients) {
 			// Get the clients.
 			this.clients$ = this.organizationsService
-				.getAllPublicClients({ organizationId, tenantId })
+				.getAllPublicClients({ organizationId })
 				.pipe(map(({ items }) => items));
 		}
 
 		// Get the clients counts.
 		if (!!this.organization.show_clients_count) {
 			// Get the clients counts.
-			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId, tenantId });
+			this.clientCounts$ = this.organizationsService.getAllPublicClientCounts({ organizationId });
 		}
 	}
 
@@ -163,10 +163,10 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		// Get the project counts.
 		if (!!this.organization.show_projects_count) {
 			// Extract the organization id and tenant id.
-			const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId } = this.organization;
 
 			// Get the project counts.
-			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId, tenantId });
+			this.projectCounts$ = this.organizationsService.getAllPublicProjectCounts({ organizationId });
 		}
 	}
 
@@ -184,11 +184,11 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		// Get the employees and employee counts.
 		if (!!this.organization.show_employees_count) {
 			// Extract the organization id and tenant id.
-			const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId } = this.organization;
 
 			// Get the employees.
 			this.employees$ = this.employeesService
-				.getAllPublic({ organizationId, tenantId }, ['user', 'organizationPosition', 'skills'])
+				.getAllPublic({ organizationId }, ['user', 'organizationPosition', 'skills'])
 				.pipe(
 					tap(({ total }) => (this.employeeCounts$ = of(total))),
 					map(({ items }) => items)
@@ -250,7 +250,7 @@ export class OrganizationComponent extends TranslationBaseComponent implements O
 		}
 
 		// Open the dialog.
-		const dialog$ = this.dialogService.open(PublicPageMutationComponent, {
+		const dialog$ = this.dialogService.open(PublicPageOrganizationMutationComponent, {
 			context: {
 				organization: this.organization
 			}

@@ -17,17 +17,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import {
 	ImageUploaderModule,
 	MiscellaneousModule,
-	PublicPageEmployeeMutationModule,
-	PublicPageMutationModule,
 	SharedModule,
 	TableComponentsModule,
 	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
+import { PublicLayoutModule } from '@gauzy/plugin-public-layout-ui';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { ShareComponent } from './share.component';
 import { ShareRoutingModule } from './share-routing.module';
-import { OrganizationComponent } from './organization/organization.component';
-import { EmployeeComponent } from './employee/employee.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -53,13 +50,12 @@ const NB_MODULES = [
 		MiscellaneousModule,
 		ThemeModule,
 		SharedModule,
-		PublicPageMutationModule,
-		PublicPageEmployeeMutationModule,
 		TableComponentsModule,
 		WorkInProgressModule,
-		ImageUploaderModule
+		ImageUploaderModule,
+		PublicLayoutModule
 	],
-	declarations: [ShareComponent, OrganizationComponent, EmployeeComponent],
+	declarations: [ShareComponent],
 	providers: []
 })
 export class ShareModule {}

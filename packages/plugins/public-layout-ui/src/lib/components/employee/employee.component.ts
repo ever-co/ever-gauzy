@@ -4,12 +4,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
-import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization, IUser } from '@gauzy/contracts';
+import { PermissionsEnum, IEmployee, IEmployeeAward, IOrganization, IUser, IImageAsset } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeesService, ErrorHandlingService, Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
-import { PublicPageEmployeeMutationComponent } from '@gauzy/ui-core/shared';
+import { PublicPageEmployeeMutationComponent } from '../mutation/public-page-employee-mutation/public-page-employee-mutation.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -56,6 +56,19 @@ export class EmployeeComponent extends TranslationBaseComponent implements OnIni
 		this.hasEditPermission$ = this._store.userRolePermissions$.pipe(
 			map(() => this._store.hasPermission(PermissionsEnum.PUBLIC_PAGE_EDIT))
 		);
+	}
+
+	/**
+	 * Upload organization image/avatar
+	 *
+	 * @param image
+	 */
+	updateImageAsset(image: IImageAsset) {
+		try {
+			console.log('updated image', image);
+		} catch (error) {
+			console.log('Error while updating organization avatars');
+		}
 	}
 
 	/**
