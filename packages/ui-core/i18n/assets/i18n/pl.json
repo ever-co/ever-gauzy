@@ -33,6 +33,7 @@
 		"INVITE": "Zaproś",
 		"SELECT_ALL": "Zaznacz wszystko",
 		"COPY_LINK": "Skopiuj link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Zarządzaj rozmowami kwalifikacyjnymi",
 		"MANAGE_INVITES": "Zarządzaj zaproszeniami",
 		"MANAGE_SPRINTS": "Zarządzaj sprintami",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generuj publiczny link",
 			"GENERATE": "Wygeneruj link do {{ text }}, który będzie można przeglądać przez każdą osobę posiadającą link",
-			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}"
+			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

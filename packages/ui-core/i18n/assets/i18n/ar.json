@@ -33,6 +33,7 @@
 		"INVITE": "دعوة",
 		"SELECT_ALL": "حدد الكل",
 		"COPY_LINK": "نسخ الرابط",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "إدارة المقابلات",
 		"MANAGE_INVITES": "إدارة الدعوات",
 		"MANAGE_SPRINTS": "إدارة السبرنت",
@@ -3041,7 +3042,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "توليد رابط عام",
 			"GENERATE": "أنشئ رابطًا لـ {{ text }} يمكن لأي شخص يمتلك الرابط رؤيته.",
-			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}."
+			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

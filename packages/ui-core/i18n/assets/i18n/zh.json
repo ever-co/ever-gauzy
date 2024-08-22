@@ -33,6 +33,7 @@
 		"INVITE": "邀请",
 		"SELECT_ALL": "选择所有",
 		"COPY_LINK": "复制链接",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "管理面试",
 		"MANAGE_INVITES": "管理邀请",
 		"MANAGE_SPRINTS": "管理冲刺",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "生成公共链接",
 			"GENERATE": "生成一个链接，任何具有链接的人都可以查看{{ text }}。",
-			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。"
+			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

@@ -33,6 +33,7 @@
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Управление на интервюта",
 		"MANAGE_INVITES": "Управление на покани",
 		"MANAGE_SPRINTS": "Управление на спринтове",
@@ -3073,7 +3074,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generate Public Link",
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
-			"ACCESS": "Anyone with access to this link can view the {{ text }}."
+			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

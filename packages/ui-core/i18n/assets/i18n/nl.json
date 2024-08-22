@@ -33,6 +33,7 @@
 		"INVITE": "Uitnodigen",
 		"SELECT_ALL": "Alles selecteren",
 		"COPY_LINK": "Kopieer Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Beheren van interviews",
 		"MANAGE_INVITES": "Beheer uitnodigingen",
 		"MANAGE_SPRINTS": "Beheer Sprints",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Genereer openbare link",
 			"GENERATE": "Genereer een link naar de {{ text }} waar iedereen met de link het kan bekijken.",
-			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken."
+			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

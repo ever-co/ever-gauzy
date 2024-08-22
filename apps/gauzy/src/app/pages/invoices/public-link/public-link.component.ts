@@ -14,6 +14,7 @@ import { InvoicesService } from '@gauzy/ui-core/core';
 })
 export class PublicLinkComponent implements OnInit {
 	public publicLink: string;
+	public isCopied: boolean = false; // Track if link has been copied
 
 	/*
 	 * Getter & Setter for dynamic invoice property
@@ -70,6 +71,48 @@ export class PublicLinkComponent implements OnInit {
 		const serializedUrl = this._urlSerializer.serialize(urlTree);
 		// As far as I can tell you don't really need the UrlSerializer.
 		this.publicLink = __prepareExternalUrlLocation(this._location.prepareExternalUrl(serializedUrl));
+	}
+
+	/**
+	 * Copy to clipboard
+	 */
+	copyLink() {
+		try {
+			this._clipboardService.copyFromContent(this.publicLink); // Copy the link to clipboard
+			this.isCopied = true; // Show "Copied" status
+
+			// Hide "Copied" status after 2 seconds
+			setTimeout(() => {
+				this.isCopied = false;
+			}, 2000);
+		} catch (error) {
+			// Fallback for older browsers
+			this.fallbackCopyToClipboard(this.publicLink);
+		}
+	}
+
+	/**
+	 * Fallback copy to clipboard
+	 *
+	 * @param text
+	 */
+	private fallbackCopyToClipboard(text: string) {
+		// Create a temporary element to copy the link
+		const textArea = document.createElement('textarea');
+		textArea.value = text;
+
+		// Append the element to the body
+		document.body.appendChild(textArea);
+		textArea.select();
+
+		try {
+			document.execCommand('copy');
+			console.log('Link copied to clipboard');
+		} catch (error) {
+			console.error('Failed to copy: ', error);
+		}
+
+		document.body.removeChild(textArea);
 	}
 
 	/**

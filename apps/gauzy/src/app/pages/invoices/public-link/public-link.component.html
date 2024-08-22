@@ -28,8 +28,17 @@
 		<button outline nbButton status="basic" class="mr-3" (click)="close()" type="button">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [ngxClipboard]="inputTarget" class="mr-3" status="success" nbButton type="button">
-			{{ 'BUTTONS.COPY_LINK' | translate }}
+		<button
+			[ngxClipboard]="inputTarget"
+			class="mr-3"
+			status="success"
+			nbButton
+			type="button"
+			[disabled]="isCopied"
+			(click)="copyLink()"
+			[nbTooltip]="'INVOICES_PAGE.PUBLIC_LINK.COPY_TO_CLIPBOARD_TOOLTIP' | translate"
+		>
+			{{ isCopied ? ('BUTTONS.COPIED' | translate) : ('BUTTONS.COPY_LINK' | translate) }}
 		</button>
 	</nb-card-footer>
 </nb-card>

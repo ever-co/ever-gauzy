@@ -33,6 +33,7 @@
 		"INVITE": "Invitar",
 		"SELECT_ALL": "Seleccionar todo.",
 		"COPY_LINK": "Copiar enlace.",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Gestionar entrevistas",
 		"MANAGE_INVITES": "Administrar invitaciones",
 		"MANAGE_SPRINTS": "Administrar Scrum",
@@ -3044,7 +3045,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generar Enlace Público",
 			"GENERATE": "Generar un enlace al {{ text }} que cualquier persona con el enlace puede ver.",
-			"ACCESS": "Cualquier persona con acceso a este enlace puede ver el {{ text }}."
+			"ACCESS": "Cualquier persona con acceso a este enlace puede ver el {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {

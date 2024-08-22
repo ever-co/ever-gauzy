@@ -33,6 +33,7 @@
 		"INVITE": "Einladen",
 		"SELECT_ALL": "Alle auswählen",
 		"COPY_LINK": "Kopiere Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Verwalten von Vorstellungsgesprächen",
 		"MANAGE_INVITES": "Einladungen verwalten",
 		"MANAGE_SPRINTS": "Verwalten Sie Sprints",
@@ -3038,7 +3039,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generiere öffentlichen Link",
 			"GENERATE": "Erstellen Sie einen Link zu dem {{Text}}, den jeder mit dem Link sehen kann.",
-			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen."
+			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
