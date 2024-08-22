@@ -3,12 +3,12 @@ import { NgModule } from '@angular/core';
 import { NotFoundComponent } from '@gauzy/ui-core/shared';
 import {
 	EmployeeComponent,
+	InvoiceEstimateViewComponent,
 	OrganizationComponent,
 	PublicEmployeeResolver,
 	PublicOrganizationResolver
 } from '@gauzy/plugin-public-layout-ui';
 import { ShareComponent } from './share.component';
-import { InvoiceEstimateViewComponent } from './invoices-estimates/invoice-estimate-view.component';
 
 const routes: Routes = [
 	{

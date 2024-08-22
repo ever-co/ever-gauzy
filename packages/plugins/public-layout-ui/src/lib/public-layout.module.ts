@@ -32,6 +32,7 @@ import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	CurrencyModule,
 	ImageUploaderModule,
+	InvoiceViewInnerModule,
 	LanguageSelectorModule,
 	MiscellaneousModule,
 	SharedModule,
@@ -97,7 +98,8 @@ const FEATURE_MODULES = [
 	TableComponentsModule,
 	TagsColorInputModule,
 	ThemeModule,
-	WorkInProgressModule
+	WorkInProgressModule,
+	InvoiceViewInnerModule
 ];
 
 @NgModule({

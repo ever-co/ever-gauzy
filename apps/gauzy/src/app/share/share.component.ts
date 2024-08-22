@@ -1,9 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-share',
 	template: `
@@ -12,18 +10,8 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 		</ngx-public-layout>
 	`
 })
-export class ShareComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	constructor(public translate: TranslateService) {
-		super(translate);
+export class ShareComponent extends TranslationBaseComponent {
+	constructor(readonly translateService: TranslateService) {
+		super(translateService);
 	}
-
-	ngOnInit() {
-		this._applyTranslationOnSmartTable();
-	}
-
-	private _applyTranslationOnSmartTable() {
-		this.translate.onLangChange.pipe(untilDestroyed(this)).subscribe();
-	}
-
-	ngOnDestroy() {}
 }

@@ -159,12 +159,11 @@ export class InvoiceViewInnerComponent extends TranslationBaseComponent implemen
 	 * @param item Invoice item
 	 */
 	private getNameBasedOnInvoiceType(item: IInvoiceItem): string {
-		console.log('item', item);
-
 		// Return empty string if item is null
 		if (!item) {
 			return '';
 		}
+
 		switch (this.invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				return item.employeeId ? `${item.employee?.fullName}` : '';
