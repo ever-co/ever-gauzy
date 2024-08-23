@@ -9,10 +9,9 @@ import {
 	EmployeeAppointmentService,
 	TimeOffService
 } from '@gauzy/ui-core/core';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import { SharedModule, TimezoneSelectorModule } from '@gauzy/ui-core/shared';
 import { AppointmentRoutingModule } from './appointment-routing.module';
 import { AppointmentComponent } from './appointment.component';
-import { TimezoneSelectorModule } from './timezone-selector/timezone-selector.module';
 
 @NgModule({
 	imports: [

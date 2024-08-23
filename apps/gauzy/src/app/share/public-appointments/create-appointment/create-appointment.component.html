@@ -7,16 +7,12 @@
 	<nb-card-body>
 		<div class="row">
 			<div class="employee-info col-9" *ngIf="employee">
-				<img
-					class="employee-image"
-					[src]="employee.user.imageUrl"
-					alt="Employee Avatar"
-				/>
+				<img class="employee-image" [src]="employee.user.imageUrl" alt="Employee Avatar" />
 				<div class="employee-details">
 					<span class="employee-name">
 						{{ employee.user.firstName }}
-						{{ employee.user.lastName }}</span
-					>
+						{{ employee.user.lastName }}
+					</span>
 					<div class="employee-position">
 						{{ employee.organizationPosition?.name }}
 					</div>
@@ -34,9 +30,7 @@
 				</div>
 				<div>
 					{{ 'PUBLIC_APPOINTMENTS.DURATION' | translate }}
-					<strong>
-						{{ eventType.duration }} {{ eventType.durationUnit }}
-					</strong>
+					<strong> {{ eventType.duration }} {{ eventType.durationUnit }} </strong>
 				</div>
 				<div>
 					{{ eventType.description }}

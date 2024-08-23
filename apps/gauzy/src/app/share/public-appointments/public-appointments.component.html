@@ -4,40 +4,41 @@
 			<h4>{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENTS' | translate }}</h4>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="employee-info" *ngIf="employee">
-			<img class="employee-image" [src]="employee.user.imageUrl" alt="Employee Avatar" />
-			<div class="employee-details">
-				<span class="employee-name">{{ employee.user.firstName }} {{ employee.user.lastName }}</span>
-				<div class="employee-position">
-					{{ employee.organizationPosition?.name }}
-				</div>
-				<div class="transparent">
-					<strong>{{ employee.user.email }}</strong>
+	<nb-card-body *ngIf="organization$ | async as organization">
+		<ng-container *ngIf="employee$ | async as employee">
+			<div class="employee-info">
+				<img class="employee-image" [src]="employee.user?.imageUrl" alt="Employee Avatar" />
+				<div class="employee-details">
+					<span class="employee-name">{{ employee?.fullName }}</span>
+					<div class="employee-position">
+						{{ employee.organizationPosition?.name }}
+					</div>
+					<div class="transparent">
+						<strong>{{ employee.user?.email }}</strong>
+					</div>
 				</div>
 			</div>
-		</div>
-
-		<div class="body-header" *ngIf="eventTypesExist">
-			<h5>{{ 'PUBLIC_APPOINTMENTS.SELECT_EVENT_TYPES' | translate }}</h5>
-		</div>
-		<div class="body-header" *ngIf="!eventTypesExist">
+		</ng-container>
+		<div class="body-header">
 			<h5>
-				{{ 'PUBLIC_APPOINTMENTS.NO_ACTIVE_EVENT_TYPES' | translate }}
+				{{
+					(eventTypesExist
+						? 'PUBLIC_APPOINTMENTS.SELECT_EVENT_TYPES'
+						: 'PUBLIC_APPOINTMENTS.NO_ACTIVE_EVENT_TYPES'
+					) | translate
+				}}
 			</h5>
 		</div>
-		<div>
+		<div *ngIf="eventTypesExist">
 			<div class="row block-content" *ngFor="let eventType of eventTypes">
 				<div class="col-3">
 					<div class="block-info">
-						<strong>
-							{{ eventType.title }}
-						</strong>
+						<strong>{{ eventType.title }}</strong>
 					</div>
 				</div>
 				<div class="col-3">
 					{{ 'PUBLIC_APPOINTMENTS.DURATION' | translate }}
-					<strong> {{ eventType.duration }} {{ eventType.durationUnit }} </strong>
+					<strong>{{ eventType.duration }} {{ eventType.durationUnit }}</strong>
 				</div>
 				<div class="col-3 text-right">
 					<button (click)="selectEventType(eventType.id)" status="success" nbButton>

@@ -1,10 +1,12 @@
+<!--  -->
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<ga-manage-appointment
-		*ngIf="employee"
-		[employee]="employee"
-		[selectedRange]="selectedRange"
-		[hidePrivateFields]="true"
-		[allowedDuration]="allowedDuration"
-		[disabled]="true"
-	></ga-manage-appointment>
+	<ng-container *ngIf="employee">
+		<ga-manage-appointment
+			[employee]="employee"
+			[selectedRange]="selectedRange"
+			[hidePrivateFields]="true"
+			[allowedDuration]="allowedDuration"
+			[disabled]="true"
+		></ga-manage-appointment>
+	</ng-container>
 </nb-card>

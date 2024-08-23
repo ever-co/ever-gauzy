@@ -1,8 +1,8 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import * as timezone from 'moment-timezone';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @Component({
 	templateUrl: './timezone-selector.component.html'
@@ -11,8 +11,12 @@ export class TimezoneSelectorComponent extends TranslationBaseComponent implemen
 	listOfZones = timezone.tz.names().filter((zone) => zone.includes('/'));
 
 	@Input() selectedTimezone: string;
-	constructor(public dialogRef: NbDialogRef<TimezoneSelectorComponent>, private translate: TranslateService) {
-		super(translate);
+
+	constructor(
+		private readonly dialogRef: NbDialogRef<TimezoneSelectorComponent>,
+		readonly translateService: TranslateService
+	) {
+		super(translateService);
 	}
 
 	ngOnInit() {}

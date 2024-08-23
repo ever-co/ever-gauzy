@@ -14,32 +14,35 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
-import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
 	EmployeeAppointmentService,
 	EmployeesService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { AlertModalComponent, EmployeeSelectComponent } from '@gauzy/ui-core/shared';
-import { EmployeeSchedulesComponent } from '../employee-schedules/employee-schedules.component';
+import { EmployeeScheduleComponent } from '../employee-schedules/employee-schedule.component';
+import { EmployeeSelectComponent } from '../../employee/employee-multi-select/employee-multi-select.component';
+import { AlertModalComponent } from '../../components/alert-modal/alert-modal.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-manage-appointment',
 	templateUrl: './manage-appointment.component.html',
-	styleUrls: ['./manage-appointment.component.scss']
+	styleUrls: ['./manage-appointment.component.scss'],
+	providers: [AppointmentEmployeesService, AvailabilitySlotsService, EmployeeAppointmentService]
 })
 export class ManageAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	form: UntypedFormGroup;
-	employees: IEmployee[];
+	employees: IEmployee[] = [];
+
 	@Input() employee: IEmployee;
 	@Input() employeeAppointment: IEmployeeAppointment;
 	@Input() disabled: boolean;
@@ -69,18 +72,18 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	employeeSelector: EmployeeSelectComponent;
 
 	constructor(
-		private route: ActivatedRoute,
-		private router: Router,
-		private fb: UntypedFormBuilder,
-		private store: Store,
-		private dialogService: NbDialogService,
-		private employeeService: EmployeesService,
-		private employeeAppointmentService: EmployeeAppointmentService,
-		private appointmentEmployeesService: AppointmentEmployeesService,
-		private availabilitySlotsService: AvailabilitySlotsService,
-		private toastrService: ToastrService,
 		readonly translateService: TranslateService,
-		private cdr: ChangeDetectorRef
+		private readonly _route: ActivatedRoute,
+		private readonly _router: Router,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _store: Store,
+		private readonly _dialogService: NbDialogService,
+		private readonly _employeeService: EmployeesService,
+		private readonly _employeeAppointmentService: EmployeeAppointmentService,
+		private readonly _appointmentEmployeesService: AppointmentEmployeesService,
+		private readonly _availabilitySlotsService: AvailabilitySlotsService,
+		private readonly _toastrService: ToastrService,
+		private readonly _cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -100,7 +103,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 		this.timezoneOffset = timezone.tz(this.timezone).format('Z');
 		timezone.tz.setDefault(this.timezone);
 
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this)
@@ -116,7 +119,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	ngAfterViewInit() {
-		this.cdr.detectChanges();
+		this._cdr.detectChanges();
 	}
 
 	private _patchFormValue() {
@@ -153,7 +156,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	private _initializeForm() {
-		this.form = this.fb.group({
+		this.form = this._fb.group({
 			emails: ['', Validators.compose([Validators.required, this.emailListValidator])],
 			agenda: ['', Validators.required],
 			location: [''],
@@ -172,12 +175,12 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	private async _loadEmployees() {
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const organizationId = this._selectedOrganizationId;
 
 		this.employees = (
 			await firstValueFrom(
-				this.employeeService
+				this._employeeService
 					.getAll(['user'], {
 						tenantId,
 						organizationId
@@ -188,13 +191,13 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	private _parseParams() {
-		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
+		this._route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
 			const id = params.appointmentId || this.appointmentID;
 			if (id) {
 				this.editMode = true;
-				const appointment = await firstValueFrom(this.employeeAppointmentService.getById(id));
+				const appointment = await firstValueFrom(this._employeeAppointmentService.getById(id));
 				const selectedEmployees = await firstValueFrom(
-					this.appointmentEmployeesService.getById(appointment.id).pipe(untilDestroyed(this))
+					this._appointmentEmployeesService.getById(appointment.id).pipe(untilDestroyed(this))
 				);
 				this.selectedEmployeeIds = selectedEmployees.map((o) => o.employeeId);
 				this.selectedEmployeeAppointmentIds = selectedEmployees.map((o) => o.id);
@@ -216,7 +219,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 
 	async cancelAppointment() {
 		try {
-			const dialog = this.dialogService.open(AlertModalComponent, {
+			const dialog = this._dialogService.open(AlertModalComponent, {
 				context: {
 					data: {
 						title: this.getTranslation('APPOINTMENTS_PAGE.CANCEL_APPOINTMENT'),
@@ -228,15 +231,15 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			const response = await firstValueFrom(dialog.onClose);
 			if (!!response) {
 				if (response === 'yes') {
-					await this.employeeAppointmentService.update(this.employeeAppointment.id, {
+					await this._employeeAppointmentService.update(this.employeeAppointment.id, {
 						status: 'Cancelled'
 					});
-					this.toastrService.success('APPOINTMENTS_PAGE.CANCEL_SUCCESS');
+					this._toastrService.success('APPOINTMENTS_PAGE.CANCEL_SUCCESS');
 					history.back();
 				}
 			}
 		} catch (error) {
-			this.toastrService.danger(
+			this._toastrService.danger(
 				this.getTranslation('APPOINTMENTS_PAGE.CANCEL_FAIL'),
 				this.getTranslation('TOASTR.TITLE.ERROR')
 			);
@@ -244,9 +247,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	}
 
 	async fetchAvailabilitySlotsForAllEmployees() {
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const slots = (
-			await this.availabilitySlotsService.getAll([], {
+			await this._availabilitySlotsService.getAll([], {
 				organizationId: this._selectedOrganizationId,
 				tenantId
 			})
@@ -255,7 +258,11 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 		this.employees = this.employees.filter(
 			(e) =>
 				e.id !==
-				(this.employee ? this.employee.id : this.store.selectedEmployee ? this.store.selectedEmployee.id : null)
+				(this.employee
+					? this.employee.id
+					: this._store.selectedEmployee
+					? this._store.selectedEmployee.id
+					: null)
 		);
 
 		this.employees.map((e) => {
@@ -288,8 +295,8 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	async onSaveRequest() {
 		try {
 			let tenantId = null;
-			if (this.store.user) {
-				tenantId = this.store.user.tenantId;
+			if (this._store.user) {
+				tenantId = this._store.user.tenantId;
 			}
 
 			const employeeAppointmentRequest = {
@@ -310,38 +317,38 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 				),
 				employeeId: this.employee
 					? this.employee.id
-					: this.store.selectedEmployee
-					? this.store.selectedEmployee.id
+					: this._store.selectedEmployee
+					? this._store.selectedEmployee.id
 					: null,
 				organizationId: this._selectedOrganizationId,
 				tenantId
 			};
 
 			if (!this.employeeAppointment) {
-				this.employeeAppointment = await this.employeeAppointmentService.create(employeeAppointmentRequest);
+				this.employeeAppointment = await this._employeeAppointmentService.create(employeeAppointmentRequest);
 			} else {
-				await this.employeeAppointmentService.update(this.employeeAppointment.id, employeeAppointmentRequest);
+				await this._employeeAppointmentService.update(this.employeeAppointment.id, employeeAppointmentRequest);
 
 				// Removing all previously selected employee ids
 				for (const id of this.selectedEmployeeAppointmentIds) {
-					await this.appointmentEmployeesService.delete(id);
+					await this._appointmentEmployeesService.delete(id);
 				}
 			}
 
 			for (const e of this.selectedEmployeeIds) {
-				await this.appointmentEmployeesService.add({
+				await this._appointmentEmployeesService.add({
 					employeeId: e,
 					appointmentId: this.employeeAppointment.id,
 					employeeAppointment: this.employeeAppointment
 				});
 			}
 
-			this.toastrService.success('APPOINTMENTS_PAGE.SAVE_SUCCESS');
+			this._toastrService.success('APPOINTMENTS_PAGE.SAVE_SUCCESS');
 			this.employee
-				? this.router.navigate([`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`])
-				: this.router.navigate(['/pages/employees/appointments']);
+				? this._router.navigate([`/share/employee/${this.employee.id}/confirm/${this.employeeAppointment.id}`])
+				: this._router.navigate(['/pages/employees/appointments']);
 		} catch (error) {
-			this.toastrService.danger('APPOINTMENTS_PAGE.SAVE_FAILED');
+			this._toastrService.danger('APPOINTMENTS_PAGE.SAVE_FAILED');
 		}
 	}
 
@@ -359,9 +366,9 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			);
 
 			if ((slots.length > 0 && !slotInSelectedRange) || slots.length === 0) {
-				const dialog = this.dialogService.open(EmployeeSchedulesComponent, {
+				const dialog = this._dialogService.open(EmployeeScheduleComponent, {
 					context: {
-						employeeSchedule: {
+						schedule: {
 							employeeName: this.employees.find((o) => o.id === added).user.name,
 							slots,
 							timezone: this.timezone

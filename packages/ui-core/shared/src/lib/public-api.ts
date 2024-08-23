@@ -2,6 +2,7 @@
  * Public API Surface of @gauzy/ui-core/shared
  */
 export * from './shared.module';
+export * from './appointments';
 export * from './approval-policy';
 export * from './approvals';
 export * from './candidate';

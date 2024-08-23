@@ -1,17 +1,9 @@
-<nb-card
-	*ngIf="appointment && employee"
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card *ngIf="appointment && employee" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header>
 		<div class="main-header">
 			<h4 *ngIf="!appointment.status">
 				{{ 'PUBLIC_APPOINTMENTS.CONFIRM_APPOINTMENT' | translate }}
-				<nb-icon
-					icon="checkmark-circle-2-outline"
-					class="icons"
-				></nb-icon>
+				<nb-icon icon="checkmark-circle-2-outline" class="icons"></nb-icon>
 			</h4>
 			<h4 *ngIf="appointment.status">
 				{{ 'PUBLIC_APPOINTMENTS.APPOINTMENT_INFO' | translate }}
@@ -26,30 +18,21 @@
 			</h6>
 			<div class="p-2">
 				<strong>{{ 'PUBLIC_APPOINTMENTS.HOST' | translate }}: </strong
-				><span
-					>{{ employee.user.name }} ({{ employee.user.email }})</span
-				>
+				><span>{{ employee.user.name }} ({{ employee.user.email }})</span>
 			</div>
 			<div class="p-2">
-				<strong>{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}: </strong
-				><span>{{ appointment.agenda }}</span>
+				<strong>{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}: </strong><span>{{ appointment.agenda }}</span>
 			</div>
 			<div class="p-2" *ngIf="appointment.description">
-				<strong
-					>{{ 'FORM.LABELS.MEETING_DESCRIPTION' | translate }}:
-				</strong>
+				<strong>{{ 'FORM.LABELS.MEETING_DESCRIPTION' | translate }}: </strong>
 				<span>{{ appointment.description }}</span>
 			</div>
 			<div class="p-2">
-				<strong
-					>{{ 'PUBLIC_APPOINTMENTS.PARTICIPANTS' | translate }}:
-				</strong>
+				<strong>{{ 'PUBLIC_APPOINTMENTS.PARTICIPANTS' | translate }}: </strong>
 				<span>{{ appointment.emails }}</span>
 			</div>
 			<div class="p-2">
-				<strong
-					>{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}:
-				</strong>
+				<strong>{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}: </strong>
 				<span>{{ appointment.location || 'N/A' }}</span>
 			</div>
 			<div class="p-2">
@@ -63,32 +46,18 @@
 			</div>
 		</nb-card>
 		<nb-card *ngIf="editLink">
-			<div class="p-3" style="overflow-wrap: break-word;">
-				<strong
-					>{{ 'PUBLIC_APPOINTMENTS.RESCHEDULE' | translate }}:
-				</strong>
+			<div class="p-3" style="overflow-wrap: break-word">
+				<strong>{{ 'PUBLIC_APPOINTMENTS.RESCHEDULE' | translate }}: </strong>
 				<a href> {{ editLink }} </a>
 			</div>
 		</nb-card>
 		<nb-card *ngIf="appointment.status">
 			<div class="p-3">
-				<span style="color: red;"
-					>{{
-						'PUBLIC_APPOINTMENTS.EXPIRED_OR_CANCELLED' | translate
-					}}
-				</span>
+				<span style="color: red">{{ 'PUBLIC_APPOINTMENTS.EXPIRED_OR_CANCELLED' | translate }} </span>
 			</div>
 		</nb-card>
-		<div
-			*ngIf="!appointment.status"
-			class="col-3"
-			style="padding-left: 0%;"
-		>
-			<button
-				(click)="cancelAppointment(appointment.id)"
-				status="warning"
-				nbButton
-			>
+		<div *ngIf="!appointment.status" class="col-3" style="padding-left: 0%">
+			<button (click)="cancelAppointment(appointment.id)" status="warning" nbButton>
 				{{ 'PUBLIC_APPOINTMENTS.CANCEL' | translate }}
 			</button>
 		</div>

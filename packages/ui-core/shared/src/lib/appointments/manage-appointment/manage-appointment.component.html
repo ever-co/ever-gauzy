@@ -2,12 +2,7 @@
 	<nb-card-header class="header">
 		<ngx-back-navigation></ngx-back-navigation>
 		<h4>
-			{{
-				(editMode
-					? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT'
-					: 'APPOINTMENTS_PAGE.ADD_APPOINTMENT'
-				) | translate
-			}}
+			{{ (editMode ? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT' : 'APPOINTMENTS_PAGE.ADD_APPOINTMENT') | translate }}
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
@@ -16,19 +11,14 @@
 				<div class="row">
 					<div class="col-6">
 						<div class="form-group">
-							<label for="agenda" class="label">{{
-								'FORM.LABELS.MEETING_AGENDA' | translate
-							}}</label>
+							<label for="agenda" class="label">{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}</label>
 							<input
 								fullWidth
 								id="agenda"
 								type="text"
 								nbInput
 								formControlName="agenda"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.MEETING_AGENDA'
-										| translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_AGENDA' | translate }}"
 							/>
 						</div>
 					</div>
@@ -47,46 +37,34 @@
 							name="selectedRange"
 							formControlName="selectedRange"
 							fromEmployeeAppointment="true"
-						>
-						</ngx-timer-range-picker>
+						></ngx-timer-range-picker>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-2">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTime">
-								{{
-									'APPOINTMENTS_PAGE.BUFFER_TIME' | translate
-								}}
+								{{ 'APPOINTMENTS_PAGE.BUFFER_TIME' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
 					<div class="col-2" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeStart">
-								{{
-									'APPOINTMENTS_PAGE.BUFFER_AT_START'
-										| translate
-								}}
+								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_START' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
 					<div class="col-2" *ngIf="form.get('bufferTime').value">
 						<div class="form-group">
 							<nb-checkbox formControlName="bufferTimeEnd">
-								{{
-									'APPOINTMENTS_PAGE.BUFFER_AT_END'
-										| translate
-								}}
+								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_END' | translate }}
 							</nb-checkbox>
 						</div>
 					</div>
 				</div>
 				<div class="row">
-					<div
-						class="col-6 form-group"
-						*ngIf="form.get('bufferTime').value"
-					>
+					<div class="col-6 form-group" *ngIf="form.get('bufferTime').value">
 						<input
 							fullWidth
 							id="bufferTimeInMins"
@@ -94,9 +72,7 @@
 							nbInput
 							[min]="0"
 							formControlName="bufferTimeInMins"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.BUFFER_TIME' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.BUFFER_TIME' | translate }}"
 						/>
 					</div>
 				</div>
@@ -110,10 +86,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<div
-						class="col-6 form-group"
-						*ngIf="form.get('breakTime').value"
-					>
+					<div class="col-6 form-group" *ngIf="form.get('breakTime').value">
 						<ga-timer-picker
 							name="break_start_time"
 							[min]="form.get('selectedRange').value.start"
@@ -123,10 +96,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<div
-						class="col-6 form-group"
-						*ngIf="form.get('breakTime').value"
-					>
+					<div class="col-6 form-group" *ngIf="form.get('breakTime').value">
 						<input
 							fullWidth
 							id="breakTimeInMins"
@@ -134,28 +104,21 @@
 							[min]="0"
 							nbInput
 							formControlName="breakTimeInMins"
-							placeholder="{{
-								'FORM.PLACEHOLDERS.BREAK_TIME' | translate
-							}}"
+							placeholder="{{ 'FORM.PLACEHOLDERS.BREAK_TIME' | translate }}"
 						/>
 					</div>
 				</div>
 				<div class="row">
 					<div class="col-6">
 						<div class="form-group">
-							<label for="location" class="label">{{
-								'FORM.LABELS.MEETING_LOCATION' | translate
-							}}</label>
+							<label for="location" class="label">{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}</label>
 							<input
 								fullWidth
 								id="location"
 								type="text"
 								nbInput
 								formControlName="location"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.MEETING_LOCATION'
-										| translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_LOCATION' | translate }}"
 							/>
 						</div>
 					</div>
@@ -172,10 +135,7 @@
 								type="text"
 								nbInput
 								formControlName="description"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.MEETING_DESCRIPTION'
-										| translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_DESCRIPTION' | translate }}"
 							></textarea>
 						</div>
 					</div>
@@ -192,17 +152,14 @@
 								[selectedEmployeeIds]="selectedEmployeeIds"
 								[allEmployees]="employees"
 								(selectedChange)="onMembersSelected($event)"
-							>
-							</ga-employee-multi-select>
+							></ga-employee-multi-select>
 						</div>
 					</div>
 				</div>
 				<div class="row" *ngIf="hidePrivateFields">
 					<div class="col-sm-6">
 						<div class="form-group">
-							<label for="emailsSelect" class="label">{{
-								'FORM.LABELS.EMAILS' | translate
-							}}</label>
+							<label for="emailsSelect" class="label">{{ 'FORM.LABELS.EMAILS' | translate }}</label>
 							<ng-select
 								id="emailsSelect"
 								class="adjust-height"
@@ -212,20 +169,12 @@
 								multiple="true"
 								bindLabel="emailAddress"
 								formControlName="emails"
-								placeholder="{{
-									'FORM.PLACEHOLDERS.EMAILS' | translate
-								}}"
-								notFoundText="{{
-									'FORM.PLACEHOLDERS.EMAILS' | translate
-								}}"
+								placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+								notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
 								appendTo="body"
 								[ngClass]="{
-									'item-invalid':
-										emails.invalid &&
-										(emails.dirty || emails.touched),
-									'item-valid':
-										emails.valid &&
-										(emails.dirty || emails.touched)
+									'item-invalid': emails.invalid && (emails.dirty || emails.touched),
+									'item-valid': emails.valid && (emails.dirty || emails.touched)
 								}"
 							>
 							</ng-select>
@@ -239,13 +188,7 @@
 		<button status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
-		<button
-			*ngIf="editMode"
-			style="margin-left: 10px"
-			status="warning"
-			nbButton
-			(click)="cancelAppointment()"
-		>
+		<button *ngIf="editMode" style="margin-left: 10px" status="warning" nbButton (click)="cancelAppointment()">
 			{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
 		</button>
 	</nb-card-footer>

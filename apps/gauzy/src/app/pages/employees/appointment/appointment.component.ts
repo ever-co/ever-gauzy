@@ -16,14 +16,6 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import moment from 'moment';
 import * as timezone from 'moment-timezone';
 import {
-	AppointmentEmployeesService,
-	AvailabilitySlotsService,
-	EmployeeAppointmentService,
-	Store,
-	TimeOffService,
-	ToastrService
-} from '@gauzy/ui-core/core';
-import {
 	IEmployeeAppointment,
 	ITimeOff,
 	IEventType,
@@ -33,9 +25,16 @@ import {
 	WeekDaysEnum
 } from '@gauzy/contracts';
 import { convertLocalToTimezone } from '@gauzy/ui-core/common';
+import {
+	AppointmentEmployeesService,
+	AvailabilitySlotsService,
+	EmployeeAppointmentService,
+	Store,
+	TimeOffService,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { dayOfWeekAsString } from '@gauzy/ui-core/shared';
-import { TimezoneSelectorComponent } from './timezone-selector/timezone-selector.component';
+import { TimezoneSelectorComponent, dayOfWeekAsString } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -551,6 +550,9 @@ export class AppointmentComponent extends TranslationBaseComponent implements On
 		}
 	}
 
+	/**
+	 *
+	 */
 	selectTimezone() {
 		this.dialogService
 			.open(TimezoneSelectorComponent, {

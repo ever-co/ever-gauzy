@@ -9,6 +9,12 @@ import {
 	PublicOrganizationResolver
 } from '@gauzy/plugin-public-layout-ui';
 import { ShareComponent } from './share.component';
+import { EditAppointmentComponent } from './public-appointments/edit-appointment/edit-appointment.component';
+import { PickEmployeeComponent } from './public-appointments/pick-employee/pick-employee.component';
+import { AppointmentFormComponent } from './public-appointments/appointment-form/appointment-form.component';
+import { ConfirmAppointmentComponent } from './public-appointments/confirm-appointment/confirm-appointment.component';
+import { PublicAppointmentsComponent } from './public-appointments/public-appointments.component';
+import { CreateAppointmentComponent } from './public-appointments/create-appointment/create-appointment.component';
 
 const routes: Routes = [
 	{
@@ -44,42 +50,38 @@ const routes: Routes = [
 				]
 			},
 			{
-				path: 'employee/edit-appointment',
-				loadChildren: () =>
-					import('./public-appointments/edit-appointment/edit-appointment.module').then(
-						(m) => m.EditAppointmentModule
-					)
-			},
-			{
 				path: 'employee',
-				loadChildren: () =>
-					import('./public-appointments/pick-employee/pick-employee.module').then((m) => m.PickEmployeeModule)
-			},
-			{
-				path: 'employee/:id',
-				loadChildren: () =>
-					import('./public-appointments/public-appointments.module').then((m) => m.PublicAppointmentsModule)
-			},
-			{
-				path: 'employee/:id/confirm/:appointmentId',
-				loadChildren: () =>
-					import('./public-appointments/confirm-appointment/confirm-appointment.module').then(
-						(m) => m.ConfirmAppointmentModule
-					)
-			},
-			{
-				path: 'employee/:employeeId/create-appointment',
-				loadChildren: () =>
-					import('./public-appointments/appointment-form/appointment-form.module').then(
-						(m) => m.AppointmentFormModule
-					)
-			},
-			{
-				path: 'employee/:id/:eventId',
-				loadChildren: () =>
-					import('./public-appointments/create-appointment/create-appointment.module').then(
-						(m) => m.CreateAppointmentModule
-					)
+				children: [
+					{
+						path: '',
+						component: PickEmployeeComponent
+					},
+					{
+						path: 'edit-appointment',
+						component: EditAppointmentComponent
+					},
+					{
+						path: ':id',
+						children: [
+							{
+								path: '',
+								component: PublicAppointmentsComponent
+							},
+							{
+								path: 'confirm/:appointmentId',
+								component: ConfirmAppointmentComponent
+							},
+							{
+								path: 'create-appointment',
+								component: AppointmentFormComponent
+							},
+							{
+								path: ':eventId',
+								component: CreateAppointmentComponent
+							}
+						]
+					}
+				]
 			},
 			{
 				path: ':type/:id/:token',

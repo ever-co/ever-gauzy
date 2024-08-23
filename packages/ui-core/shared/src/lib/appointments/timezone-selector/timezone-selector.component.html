@@ -21,10 +21,10 @@
 		</ng-select>
 	</nb-card-body>
 	<nb-card-footer class="text-right">
-		<button (click)="dialogRef.close()" status="danger" class="mr-3" nbButton>
+		<button (click)="close()" status="danger" class="mr-3" nbButton type="button">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="select()" status="success" nbButton>
+		<button (click)="select()" status="success" nbButton type="button">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>
