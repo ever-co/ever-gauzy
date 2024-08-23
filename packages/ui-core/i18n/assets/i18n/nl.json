@@ -4239,7 +4239,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
-		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-mailsjablonen",

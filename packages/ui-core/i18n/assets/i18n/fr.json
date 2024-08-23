@@ -4240,7 +4240,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Veuillez sélectionner un employé.",
 		"EXPIRED_OR_CANCELLED": "Ce rendez-vous a expiré ou a été annulé.",
 		"EMAIL_SENT": "Un courriel a été envoyé à l'hôte ainsi qu'à tous les participants pour cette réunion.",
-		"NO_ACTIVE_EVENT_TYPES": "Il n'y a pas de types d'événements actifs."
+		"NO_ACTIVE_EVENT_TYPES": "Il n'y a pas de types d'événements actifs.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modèles d'e-mails",
