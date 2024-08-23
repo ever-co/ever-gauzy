@@ -1,4 +1,4 @@
-@import '../../payments/payments.component.scss';
+@import '@shared/_payments';
 
 .main-header {
   display: flex;
@@ -23,7 +23,7 @@
   nb-card-body {
     height: calc(100vh - 16.5rem) !important;
   }
-  .custom-calendar {
+  .calendar-container {
     height: 100%;
     overflow: auto;
   }

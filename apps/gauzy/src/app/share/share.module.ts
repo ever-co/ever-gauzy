@@ -15,6 +15,7 @@ import {
 } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	AppointmentCalendarModule,
 	ImageUploaderModule,
 	ManageAppointmentModule,
 	MiscellaneousModule,
@@ -32,7 +33,6 @@ import { PickEmployeeComponent } from './public-appointments/pick-employee/pick-
 import { AppointmentFormComponent } from './public-appointments/appointment-form/appointment-form.component';
 import { ConfirmAppointmentComponent } from './public-appointments/confirm-appointment/confirm-appointment.component';
 import { PublicAppointmentsComponent } from './public-appointments/public-appointments.component';
-import { AppointmentModule } from '../pages/employees/appointment/appointment.module';
 import { CreateAppointmentComponent } from './public-appointments/create-appointment/create-appointment.component';
 
 // Nebular Modules
@@ -65,7 +65,7 @@ const NB_MODULES = [
 		SelectorsModule,
 		PublicLayoutModule,
 		ManageAppointmentModule,
-		AppointmentModule
+		AppointmentCalendarModule
 	],
 	declarations: [
 		ShareComponent,

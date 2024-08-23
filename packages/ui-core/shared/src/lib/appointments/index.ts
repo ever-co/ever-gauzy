@@ -1,3 +1,5 @@
+export * from './appointment-calendar/appointment-calendar.component';
+export * from './appointment-calendar/appointment-calendar.module';
 export * from './employee-schedules/employee-schedule.component';
 export * from './employee-schedules/employee-schedule.module';
 export * from './manage-appointment/manage-appointment.component';

@@ -13,7 +13,7 @@ import { FullCalendarComponent } from '@fullcalendar/angular';
 import momentTimezonePlugin from '@fullcalendar/moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import {
 	IEmployeeAppointment,
@@ -38,35 +38,19 @@ import { TimezoneSelectorComponent, dayOfWeekAsString } from '@gauzy/ui-core/sha
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-appointment-calendar',
-	templateUrl: './appointment.component.html',
-	styleUrls: ['./appointment.component.scss'],
+	selector: 'ngx-appointment-calendar',
+	templateUrl: './appointment-calendar.component.html',
+	styleUrls: ['./appointment-calendar.component.scss'],
 	providers: [
 		{
 			provide: NG_VALUE_ACCESSOR,
-			useExisting: forwardRef(() => AppointmentComponent),
+			useExisting: forwardRef(() => AppointmentCalendarComponent),
 			multi: true
 		}
 	]
 })
-export class AppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class AppointmentCalendarComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	organization: IOrganization;
-
-	@Input()
-	showHeader: boolean = true;
-
-	@Input()
-	appointmentFormURL: string;
-
-	@Input()
-	employee: IEmployee;
-
-	@Input()
-	selectedEventType: IEventType;
-
-	@ViewChild('calendar', { static: true })
-	calendarComponent: FullCalendarComponent;
-
 	selectedTimeZoneName = timezone.tz.guess();
 	selectedTimeZoneOffset = timezone.tz(this.selectedTimeZoneName).format('Z');
 	calendarOptions: CalendarOptions;
@@ -89,6 +73,19 @@ export class AppointmentComponent extends TranslationBaseComponent implements On
 		center: 'title',
 		right: 'dayGridMonth,timeGridWeek'
 	};
+
+	/**
+	 * Inputs
+	 */
+	@Input() showHeader: boolean = true;
+	@Input() appointmentFormURL: string;
+	@Input() employee: IEmployee;
+	@Input() selectedEventType: IEventType;
+
+	/**
+	 *
+	 */
+	@ViewChild('calendar', { static: true }) calendarComponent: FullCalendarComponent;
 
 	constructor(
 		private router: Router,
