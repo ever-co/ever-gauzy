@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
-import { of, tap } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { EMPTY, Observable, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,7 +15,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 })
 export class EditAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public loading: boolean;
-	public appointmentID: ID;
+	public appointmentId$: Observable<ID>;
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -28,25 +28,27 @@ export class EditAppointmentComponent extends TranslationBaseComponent implement
 	}
 
 	ngOnInit(): void {
-		this._route.queryParams
-			.pipe(
-				switchMap(async ({ token }) => {
-					if (!token) {
-						throw new Error('token missing');
-					}
-					return this._employeeAppointmentService.decodeToken(token);
-				}),
-				tap((appointmentID) => {
-					this.appointmentID = appointmentID;
-				}),
-				catchError(async (error) => {
-					this._errorHandlingService.handleError(error);
-					await this._router.navigate(['/share/404']);
-					return of(null); // Return an observable that emits `null` to avoid further processing
-				}),
-				untilDestroyed(this)
-			)
-			.subscribe();
+		// Create an observable for the appointment based on route parameters
+		this.appointmentId$ = this._route.queryParams.pipe(
+			// Ensure the route parameters are valid
+			switchMap(({ token }) => {
+				if (!token) {
+					throw new Error('token missing');
+				}
+				return from(this._employeeAppointmentService.decodeToken(token));
+			}),
+			// Handle errors and redirect to 404 page
+			catchError((error: any) => {
+				// Handle and log errors
+				this._errorHandlingService.handleError(error);
+				// Redirect to 404 page
+				this._router.navigate(['/share/404']);
+				// Return an empty observable to maintain type consistency
+				return EMPTY; // Return an empty observable to maintain type consistency
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
 	}
 
 	ngOnDestroy() {}

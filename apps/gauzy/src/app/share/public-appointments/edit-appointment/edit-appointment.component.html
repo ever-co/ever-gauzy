@@ -1,9 +1,7 @@
-<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
-	<ng-container *ngIf="appointmentID">
-		<ga-manage-appointment
-			[hidePrivateFields]="true"
-			[disabled]="true"
-			[appointmentID]="appointmentID"
-		></ga-manage-appointment>
-	</ng-container>
+<nb-card *ngIf="appointmentId$ | async as appointmentId">
+	<ga-manage-appointment
+		[hidePrivateFields]="true"
+		[disabled]="true"
+		[appointmentId]="appointmentId"
+	></ga-manage-appointment>
 </nb-card>

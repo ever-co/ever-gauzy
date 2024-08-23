@@ -18,8 +18,7 @@ import * as moment from 'moment';
 import * as timezone from 'moment-timezone';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IEmployee, IEmployeeAppointment, IAvailabilitySlot } from '@gauzy/contracts';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { IEmployee, IEmployeeAppointment, IAvailabilitySlot, ID, EmployeeAppointmentStatus } from '@gauzy/contracts';
 import {
 	AppointmentEmployeesService,
 	AvailabilitySlotsService,
@@ -28,6 +27,7 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { EmployeeScheduleComponent } from '../employee-schedules/employee-schedule.component';
 import { EmployeeSelectComponent } from '../../employee/employee-multi-select/employee-multi-select.component';
 import { AlertModalComponent } from '../../components/alert-modal/alert-modal.component';
@@ -46,7 +46,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 	@Input() employee: IEmployee;
 	@Input() employeeAppointment: IEmployeeAppointment;
 	@Input() disabled: boolean;
-	@Input() appointmentID: string;
+	@Input() appointmentId: ID;
 	@Input() allowedDuration: number;
 	@Input() hidePrivateFields: boolean = false;
 	@Input() timezone: string;
@@ -192,7 +192,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 
 	private _parseParams() {
 		this._route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
-			const id = params.appointmentId || this.appointmentID;
+			const id = params.appointmentId || this.appointmentId;
 			if (id) {
 				this.editMode = true;
 				const appointment = await firstValueFrom(this._employeeAppointmentService.getById(id));
@@ -232,7 +232,7 @@ export class ManageAppointmentComponent extends TranslationBaseComponent impleme
 			if (!!response) {
 				if (response === 'yes') {
 					await this._employeeAppointmentService.update(this.employeeAppointment.id, {
-						status: 'Cancelled'
+						status: EmployeeAppointmentStatus.CANCELLED
 					});
 					this._toastrService.success('APPOINTMENTS_PAGE.CANCEL_SUCCESS');
 					history.back();

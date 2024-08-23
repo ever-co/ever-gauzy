@@ -8,31 +8,28 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<div class="col-9">
-			<div style="height: 300px" class="form-group">
-				<label for="description" class="label"
-					>{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}
-				</label>
-				<div class="center-div">
-					<ga-employee-selector
-						class="col-6"
-						style="width: 100%"
-						#employeeSelector
-						[skipGlobalChange]="true"
-						[addTag]="false"
-						class="employees"
-					></ga-employee-selector>
-					<span class="col-1"></span>
-					<button
-						class="col-3"
-						(click)="bookAppointment()"
-						status="success"
-						nbButton
-					>
-						{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENT' | translate }}
-					</button>
+		<ng-container *ngIf="organization$ | async as organization">
+			<div class="col-9">
+				<div style="height: 300px" class="form-group">
+					<label for="description" class="label">
+						{{ 'APPOINTMENTS_PAGE.EMPLOYEE' | translate }}
+					</label>
+					<div class="center-div">
+						<ga-employee-selector
+							class="col-6"
+							style="width: 100%"
+							#employeeSelector
+							[skipGlobalChange]="true"
+							[addTag]="false"
+							class="employees"
+						></ga-employee-selector>
+						<span class="col-1"></span>
+						<button class="col-3" (click)="bookPublicEmployeeAppointment()" status="success" nbButton>
+							{{ 'PUBLIC_APPOINTMENTS.BOOK_APPOINTMENT' | translate }}
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
+		</ng-container>
 	</nb-card-body>
 </nb-card>

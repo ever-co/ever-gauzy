@@ -1,53 +1,82 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router, ActivatedRoute, Params } from '@angular/router';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { firstValueFrom } from 'rxjs';
+import { Observable, catchError, filter, of, switchMap, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { IEmployee, IEventType } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { EmployeesService, EventTypeService } from '@gauzy/ui-core/core';
-import { AppointmentComponent } from '../../../pages/employees/appointment/appointment.component';
+import { EmployeesService, ErrorHandlingService, EventTypeService } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
+@UntilDestroy()
 @Component({
 	templateUrl: './create-appointment.component.html',
 	styleUrls: ['../public-appointments.component.scss'],
 	providers: [EventTypeService]
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
-	employee: IEmployee;
-	eventType: IEventType;
-	loading: boolean = true;
+	public employee$: Observable<IEmployee | null>;
+	public employee: IEmployee;
+	public eventType: IEventType;
+	public eventType$: Observable<IEventType | null>;
+	public loading: boolean = true;
 	public appointmentFormURL: string;
 
-	@ViewChild('appointmentCalendar')
-	appointmentCalendar: AppointmentComponent;
-
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly router: Router,
-		private readonly employeeService: EmployeesService,
-		private readonly eventTypeService: EventTypeService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly _route: ActivatedRoute,
+		private readonly _router: Router,
+		private readonly _employeeService: EmployeesService,
+		private readonly _eventTypeService: EventTypeService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.route.params.pipe(untilDestroyed(this)).subscribe(async (params) => {
-			try {
-				if (!params.id) {
-					return;
+		this.employee$ = this._route.params.pipe(
+			// Ensure the route parameters are valid
+			filter((params: Params) => !!params.id),
+			// Fetch the employee from the employee service
+			switchMap((params: Params) => this._employeeService.getEmployeeById(params.id, ['user'])),
+			// Store the employee in the 'employee' property
+			tap((employee: IEmployee) => (this.employee = employee)),
+			// Handle errors
+			catchError((error: any) => {
+				// Handle and log errors
+				this._errorHandlingService.handleError(error);
+				// Navigate to the 404 page
+				this._router.navigate(['/share/404']);
+				// Return null to avoid breaking the observable chain
+				return of(null);
+			}),
+			tap((employee: IEmployee) => {
+				if (employee) {
+					this.loading = false;
+					this.appointmentFormURL = `/share/employee/${employee.id}/create-appointment`;
 				}
-
-				this.employee = await firstValueFrom(this.employeeService.getEmployeeById(params.id, ['user']));
-				this.eventType = await this.eventTypeService.getEventTypeById(params.eventId);
-				this.loading = false;
-				this.appointmentFormURL = `/share/employee/${params.id}/create-appointment`;
-			} catch (error) {
-				await this.router.navigate(['/share/404']);
-			}
-		});
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
+		this.eventType$ = this._route.params.pipe(
+			// Ensure the route parameters are valid
+			filter((params: Params) => !!params.eventId),
+			// Fetch the event type from the event type service
+			switchMap((params: Params) => this._eventTypeService.getEventTypeById(params.eventId)),
+			// Store the event type in the 'eventType' property
+			tap((eventType: IEventType) => (this.eventType = eventType)),
+			// Handle errors
+			catchError((error: any) => {
+				// Handle and log errors
+				this._errorHandlingService.handleError(error);
+				// Navigate to the 404 page
+				this._router.navigate(['/share/404']);
+				// Return null to avoid breaking the observable chain
+				return of(null);
+			}),
+			// Handle component lifecycle to avoid memory leaks
+			untilDestroyed(this)
+		);
 	}
 
 	ngOnDestroy() {}
