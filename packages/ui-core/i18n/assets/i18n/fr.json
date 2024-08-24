@@ -3077,7 +3077,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page non trouvée",
 		"TAKE_ME_HOME": "Ramené moi à la maison",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "La page que vous recherchiez n'existe pas.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "La page que vous recherchiez n'existe pas.",
 		"REDIRECT_TO_HOME": "Vous serez bientôt redirigé vers la page d'accueil"
 	},
 	"HELP_PAGE": {

@@ -3076,7 +3076,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "页面未找到",
 		"TAKE_ME_HOME": "带我回家",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "您正在寻找的页面不存在。",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "您正在寻找的页面不存在。",
 		"REDIRECT_TO_HOME": "您将很快被重定向到主页"
 	},
 	"HELP_PAGE": {
