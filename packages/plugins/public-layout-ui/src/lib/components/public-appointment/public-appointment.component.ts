@@ -11,12 +11,12 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-public-appointments',
-	templateUrl: './public-appointments.component.html',
-	styleUrls: ['./public-appointments.component.scss'],
+	selector: 'ga-public-appointment',
+	templateUrl: './public-appointment.component.html',
+	styleUrls: ['./public-appointment.component.scss'],
 	providers: [EventTypeService]
 })
-export class PublicAppointmentsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
+export class PublicAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public employee: IEmployee;
 	public employee$: Observable<IEmployee | null>;
 	public organization: IOrganization;

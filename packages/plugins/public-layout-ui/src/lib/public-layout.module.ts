@@ -30,11 +30,14 @@ import { LanguagesEnum } from '@gauzy/contracts';
 import { LanguagesService, PageRouteRegistryService, SkillsService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
+	AppointmentCalendarModule,
 	CurrencyModule,
 	ImageUploaderModule,
 	InvoiceViewInnerModule,
 	LanguageSelectorModule,
+	ManageAppointmentModule,
 	MiscellaneousModule,
+	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
@@ -42,8 +45,8 @@ import {
 	WorkInProgressModule
 } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
-import { createPublicLayoutRoutes } from './public-layout.routes';
 import { COMPONENTS } from './components';
+import { createPublicLayoutRoutes } from './public-layout.routes';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -89,17 +92,20 @@ const THIRD_PARTY_MODULES = [
  * Feature Modules
  */
 const FEATURE_MODULES = [
+	AppointmentCalendarModule,
 	CurrencyModule,
 	ImageUploaderModule,
+	InvoiceViewInnerModule,
 	LanguageSelectorModule,
+	ManageAppointmentModule,
 	MiscellaneousModule,
+	SelectorsModule,
 	SharedModule,
 	SkillsInputModule,
 	TableComponentsModule,
 	TagsColorInputModule,
 	ThemeModule,
-	WorkInProgressModule,
-	InvoiceViewInnerModule
+	WorkInProgressModule
 ];
 
 @NgModule({

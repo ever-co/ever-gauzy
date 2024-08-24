@@ -13,7 +13,8 @@
 			"@gauzy/ui-core/*": ["./../../../dist/packages/ui-core/*/index.d.ts"],
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
 			"ngx-permissions": ["./node_modules/ngx-permissions"],
-			"ng2-file-upload": ["./node_modules/ng2-file-upload"]
+			"ng2-file-upload": ["./node_modules/ng2-file-upload"],
+			"@fullcalendar/*": ["./node_modules/@fullcalendar/*"]
 		}
 	},
 	"files": [],

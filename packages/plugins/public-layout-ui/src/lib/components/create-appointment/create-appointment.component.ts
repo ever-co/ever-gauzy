@@ -10,7 +10,7 @@ import { EmployeesService, ErrorHandlingService, EventTypeService } from '@gauzy
 @UntilDestroy()
 @Component({
 	templateUrl: './create-appointment.component.html',
-	styleUrls: ['../public-appointments.component.scss'],
+	styleUrls: ['../public-appointment/public-appointment.component.scss'],
 	providers: [EventTypeService]
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

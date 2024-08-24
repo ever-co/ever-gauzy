@@ -27,7 +27,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'share',
-		loadChildren: () => import('./share/share.module').then((m) => m.ShareModule),
+		loadChildren: () => import('@gauzy/plugin-public-layout-ui').then((m) => m.PublicLayoutModule),
 		canActivate: []
 	},
 	{

@@ -14,7 +14,8 @@
 			"@ngx-translate/*": ["./node_modules/@ngx-translate/*"],
 			"ngx-draggable-dom": ["./node_modules/ngx-draggable-dom"],
 			"ngx-permissions": ["./node_modules/ngx-permissions"],
-			"ngx-infinite-scroll": ["./node_modules/ngx-infinite-scroll"]
+			"ngx-infinite-scroll": ["./node_modules/ngx-infinite-scroll"],
+			"@fullcalendar/*": ["./node_modules/@fullcalendar/*"]
 		}
 	},
 	"files": [],

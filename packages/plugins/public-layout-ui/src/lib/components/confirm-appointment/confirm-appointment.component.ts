@@ -1,8 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, ActivatedRoute, Params, UrlSerializer } from '@angular/router';
-import { EMPTY, Observable, catchError, combineLatest, filter, firstValueFrom, of, switchMap } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { EMPTY, Observable, catchError, filter, firstValueFrom, of, switchMap } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import * as moment from 'moment';

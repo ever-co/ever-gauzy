@@ -34,7 +34,8 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TimezoneSelectorComponent, dayOfWeekAsString } from '@gauzy/ui-core/shared';
+import { dayOfWeekAsString } from '../../selectors/date-range-picker/date-picker.utils';
+import { TimezoneSelectorComponent } from '../timezone-selector/timezone-selector.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -88,15 +89,15 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	@ViewChild('calendar', { static: true }) calendarComponent: FullCalendarComponent;
 
 	constructor(
-		private router: Router,
-		private store: Store,
-		private toastrService: ToastrService,
-		private dialogService: NbDialogService,
-		private availabilitySlotsService: AvailabilitySlotsService,
-		private employeeAppointmentService: EmployeeAppointmentService,
-		private timeOffService: TimeOffService,
-		private appointmentEmployeesService: AppointmentEmployeesService,
-		readonly translateService: TranslateService
+		readonly translateService: TranslateService,
+		private readonly _router: Router,
+		private readonly _store: Store,
+		private readonly _toastrService: ToastrService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _availabilitySlotsService: AvailabilitySlotsService,
+		private readonly _employeeAppointmentService: EmployeeAppointmentService,
+		private readonly _timeOffService: TimeOffService,
+		private readonly _appointmentEmployeesService: AppointmentEmployeesService
 	) {
 		super(translateService);
 	}
@@ -112,7 +113,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 					? this.selectedEventType.duration * 60
 					: this.selectedEventType.duration * 1;
 		}
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				filter((organization) => !!organization),
 				untilDestroyed(this)
@@ -127,7 +128,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 					}
 				}
 			});
-		this.store.selectedEmployee$
+		this._store.selectedEmployee$
 			.pipe(
 				filter((employee) => !!employee),
 				untilDestroyed(this),
@@ -165,7 +166,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			eventClick: (event) => {
 				const eventObject = event.event;
 				if (eventObject.extendedProps['type'] !== 'BookedSlot') {
-					this.router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId)], {
+					this._router.navigate([this.appointmentFormURL || this.getManageRoute(this._selectedEmployeeId)], {
 						state: {
 							dateStart: eventObject.start,
 							dateEnd: eventObject.end,
@@ -196,7 +197,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 						config.dateEnd = new Date(nextSlot.end.toString());
 					}
 
-					this.router.navigate(
+					this._router.navigate(
 						[this.getManageRoute(this._selectedEmployeeId, eventObject.extendedProps['id'])],
 						{ state: config }
 					);
@@ -211,13 +212,13 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			weekends: true,
 			height: 'auto',
 			dayHeaderDidMount: this.headerMount.bind(this),
-			firstDay: dayOfWeekAsString(this.store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY)
+			firstDay: dayOfWeekAsString(this._store?.selectedOrganization?.startWeekOn || WeekDaysEnum.MONDAY)
 		};
 	}
 
 	async fetchTimeOff() {
 		const data = await firstValueFrom(
-			this.timeOffService.getAllTimeOffRecords(['employees', 'employees.user'], {
+			this._timeOffService.getAllTimeOffRecords(['employees', 'employees.user'], {
 				organizationId: this._selectedOrganizationId,
 				tenantId: this.organization.tenantId,
 				employeeId: this._selectedEmployeeId || (this.employee && this.employee.id) || null
@@ -229,12 +230,12 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 
 	bookPublicAppointment() {
 		this._selectedEmployeeId
-			? this.router.navigate([`/share/employee/${this._selectedEmployeeId}`])
-			: this.router.navigate(['/share/employee']);
+			? this._router.navigate([`/share/employee/${this._selectedEmployeeId}`])
+			: this._router.navigate(['/share/employee']);
 	}
 
 	renderAppointmentsAndSlots(employeeId: string) {
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const findObj = {
 			status: null,
 			organizationId: this.organization.id,
@@ -242,7 +243,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 			employeeId: employeeId || null
 		};
 
-		this.employeeAppointmentService
+		this._employeeAppointmentService
 			.getAll(['employee', 'employee.user'], findObj)
 			.pipe(untilDestroyed(this))
 			.subscribe(async (appointments) => {
@@ -261,7 +262,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	// fetch appointments where the employee is an invitee
 	async fetchEmployeeAppointments(employeeId: string) {
 		const employeeAppointments = await firstValueFrom(
-			this.appointmentEmployeesService.findEmployeeAppointments(employeeId).pipe(untilDestroyed(this))
+			this._appointmentEmployeesService.findEmployeeAppointments(employeeId).pipe(untilDestroyed(this))
 		);
 		this.renderBookedAppointments(
 			employeeAppointments.map((o) => o.employeeAppointment).filter((o) => o && o.status !== 'Cancelled')
@@ -288,7 +289,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	private async _fetchAvailableSlots(employeeId: string) {
-		const { tenantId } = this.store.user;
+		const { tenantId } = this._store.user;
 		const findObj = {
 			organizationId: this._selectedOrganizationId,
 			tenantId,
@@ -296,7 +297,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 		};
 
 		try {
-			const slots = await this.availabilitySlotsService.getAll([], findObj);
+			const slots = await this._availabilitySlotsService.getAll([], findObj);
 			this.slots = slots.items;
 			this.dateSpecificSlots = this.slots.filter((o) => o.type === 'Default');
 			this.recurringSlots = this.slots.filter((o) => o.type === 'Recurring');
@@ -309,14 +310,14 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 				dayDiff--;
 			}
 		} catch (error) {
-			this.toastrService.danger('NOTES.AVAILABILITY_SLOTS.ERROR', null, {
+			this._toastrService.danger('NOTES.AVAILABILITY_SLOTS.ERROR', null, {
 				error: error.error.message || error.message
 			});
 		}
 	}
 
 	openEventTypes() {
-		this.router.navigate(['/pages/employees/event-types']);
+		this._router.navigate(['/pages/employees/event-types']);
 	}
 
 	headerMount(config) {
@@ -548,10 +549,10 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 *
+	 * Select timezone
 	 */
 	selectTimezone() {
-		this.dialogService
+		this._dialogService
 			.open(TimezoneSelectorComponent, {
 				context: {
 					selectedTimezone: this.selectedTimeZoneName
@@ -588,7 +589,7 @@ export class AppointmentCalendarComponent extends TranslationBaseComponent imple
 	}
 
 	manageAppointments() {
-		this.router.navigate([this.getManageRoute()]);
+		this._router.navigate([this.getManageRoute()]);
 	}
 
 	ngOnDestroy() {}
