@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { IOrganizationTeamEmployee } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
-import moment from 'moment';
+import * as moment from 'moment';
 
 @Component({
 	selector: 'gauzy-team-member',

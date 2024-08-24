@@ -7,7 +7,7 @@ import { combineLatest, Subject } from 'rxjs';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	DateRangePickerBuilderService,
 	ServerDataSource,
