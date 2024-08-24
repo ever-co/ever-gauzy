@@ -1718,6 +1718,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "Show rejected",
 		"DELETED": "Deleted",
 		"ARCHIVED": "Archived",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",

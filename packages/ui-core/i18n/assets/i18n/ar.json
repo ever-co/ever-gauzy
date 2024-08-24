@@ -1627,6 +1627,7 @@
 		"APPLIED": "تم التطبيق",
 		"HIRED": "تم التوظيف",
 		"REJECTED": "مرفوض",
+		"SHOW_REJECTED": "عرض مرفوض",
 		"DELETED": "تم الحذف",
 		"ARCHIVED": "مؤرشف",
 		"SELECT_EMPLOYEE_MSG": "يرجى اختيار موظف من القائمة أعلاه.",

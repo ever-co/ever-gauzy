@@ -1669,6 +1669,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "הצגה נדחתה",
 		"DELETED": "Deleted",
 		"ARCHIVED": "נשמר בארכיון",
 		"SELECT_EMPLOYEE_MSG": "Please select employee from the menu above.",
