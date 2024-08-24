@@ -1675,6 +1675,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "Показване отказано",
 		"DELETED": "Изтрит",
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",

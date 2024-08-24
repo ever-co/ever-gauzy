@@ -1533,6 +1533,7 @@
 		"APPLIED": "crwdns3334:0crwdne3334:0",
 		"HIRED": "crwdns3336:0crwdne3336:0",
 		"REJECTED": "crwdns3338:0crwdne3338:0",
+		"SHOW_REJECTED": "Տեղադրումը մերժված է",
 		"DELETED": "crwdns3340:0crwdne3340:0",
 		"ARCHIVED": "crwdns3940:0crwdne3940:0",
 		"SELECT_EMPLOYEE_MSG": "crwdns3342:0crwdne3342:0",
