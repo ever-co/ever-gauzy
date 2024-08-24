@@ -31,8 +31,9 @@
 	"dependencies": {
 		"@angular/forms": "^16.2.12",
 		"@angular/router": "^16.2.12",
-		"@gauzy/contracts": "^0.1.0",
 		"@fullcalendar/angular": "~6.1.10",
+		"@gauzy/contracts": "^0.1.0",
+		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/theme": "^12.0.0",
 		"@ng-select/ng-select": "^11.2.0",
 		"@ngneat/until-destroy": "^9.2.0",
