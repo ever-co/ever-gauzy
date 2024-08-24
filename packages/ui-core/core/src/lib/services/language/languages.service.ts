@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ILanguage } from '@gauzy/contracts';
-import { toParams } from '@gauzy/ui-core/common';
-import { API_PREFIX } from '@gauzy/ui-core/common';
+import { ID, ILanguage } from '@gauzy/contracts';
+import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class LanguagesService {
@@ -25,11 +24,11 @@ export class LanguagesService {
 		);
 	}
 
-	delete(id: string): Promise<any> {
+	delete(id: ID): Promise<any> {
 		return firstValueFrom(this.http.delete(`${API_PREFIX}/languages/${id}`));
 	}
 
-	update(id: string, updateInput: ILanguage) {
+	update(id: ID, updateInput: ILanguage) {
 		return firstValueFrom(this.http.put(`${API_PREFIX}/languages/${id}`, updateInput));
 	}
 

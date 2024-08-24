@@ -58,7 +58,8 @@ import {
 	SharedModule,
 	TableComponentsModule,
 	TagsColorInputModule,
-	UserFormsModule
+	UserFormsModule,
+	InvoiceViewInnerModule
 } from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
@@ -86,7 +87,7 @@ import {
 	InvoicePaymentsComponent,
 	PaymentMutationComponent
 } from './invoice-payments';
-import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view';
+import { InvoiceViewComponent } from './invoice-view/invoice-view.component';
 
 @NgModule({
 	imports: [
@@ -125,7 +126,8 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		ContactSelectModule,
 		ProjectSelectModule,
 		SharedModule,
-		NbAccordionModule
+		NbAccordionModule,
+		InvoiceViewInnerModule
 	],
 	providers: [
 		InvoicesService,
@@ -156,7 +158,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		InvoiceProductsSelectorComponent,
 		InvoicePaidComponent,
 		InvoiceEmailMutationComponent,
-		InvoiceViewInnerComponent,
 		InvoiceDownloadMutationComponent,
 		EstimatesComponent,
 		EstimateAddComponent,
@@ -172,6 +173,6 @@ import { InvoiceViewComponent, InvoiceViewInnerComponent } from './invoice-view'
 		PublicLinkComponent,
 		InvoicePaymentReceiptMutationComponent
 	],
-	exports: [InvoiceViewInnerComponent]
+	exports: []
 })
 export class InvoicesModule {}

@@ -1,63 +1,40 @@
 <nb-card class="main">
 	<nb-card-header class="header">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h3 class="title" *ngIf="!isEstimate">
-			{{ 'INVOICES_PAGE.VIEW_INVOICE' | translate }}
-		</h3>
-		<h3 class="title" *ngIf="isEstimate">
-			{{ 'INVOICES_PAGE.VIEW_ESTIMATE' | translate }}
+		<h3 class="title">
+			{{ (isEstimate ? 'INVOICES_PAGE.VIEW_ESTIMATE' : 'INVOICES_PAGE.VIEW_INVOICE') | translate }}
 		</h3>
 	</nb-card-header>
 	<nb-card-body>
-		<ga-invoice-view-inner
-			id="contentToConvert"
-			*ngIf="invoice"
-			[invoice]="invoice"
-			[isEstimate]="isEstimate"
-			[buttonsOutlet]="buttons"
-		>
-		</ga-invoice-view-inner>
+		<ng-container *ngIf="invoice$ | async as invoice">
+			<ga-invoice-view-inner
+				[invoice]="invoice"
+				[isEstimate]="isEstimate"
+				[buttonsOutlet]="buttons"
+			></ga-invoice-view-inner>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
+<!-- Buttons for the invoice view component -->
 <ng-template #buttons>
 	<div class="button-container">
-		<button
-			nbButton
-			status="basic"
-			class="action secondary"
-			[disabled]="disableButton"
-			size="small"
-			(click)="print()"
-		>
+		<button nbButton type="button" status="basic" class="action secondary" size="small" (click)="print()">
 			<nb-icon icon="printer-outline" pack="eva"></nb-icon>
 			{{ 'BUTTONS.PRINT' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			size="small"
-			class="action primary"
-			(click)="download()"
-		>
+		<button nbButton type="button" status="basic" size="small" class="action primary" (click)="download()">
 			<nb-icon icon="download-outline"></nb-icon>
 			{{ 'BUTTONS.DOWNLOAD' | translate }}
 		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			[disabled]="!selectedItem && disableButton"
-			size="small"
-			(click)="edit()"
-		>
+		<button nbButton type="button" status="basic" class="action primary" size="small" (click)="edit()">
 			<nb-icon icon="edit-outline"></nb-icon>
 			{{ 'BUTTONS.EDIT' | translate }}
 		</button>
 		<button
 			nbButton
+			type="button"
 			status="basic"
 			class="action"
-			[disabled]="disableButton"
 			size="small"
 			[nbTooltip]="'BUTTONS.DELETE' | translate"
 			(click)="delete()"

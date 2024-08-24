@@ -42,10 +42,22 @@
 		"gauzy-server-ui": {
 			"tags": []
 		},
+		"job-employee-ui": {
+			"tags": []
+		},
 		"plugin-job-matching-ui": {
 			"tags": []
 		},
 		"plugin-job-search-ui": {
+			"tags": []
+		},
+		"plugin-public-layout-ui": {
+			"tags": []
+		},
+		"plugin-onboarding-ui": {
+			"tags": []
+		},
+		"plugin-legal-ui": {
 			"tags": []
 		},
 		"ui-auth": {

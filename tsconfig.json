@@ -15,6 +15,7 @@
 			"@gauzy/plugin-job-proposal-ui": ["./packages/plugins/job-proposal-ui/src/index.ts"],
 			"@gauzy/plugin-legal-ui": ["./packages/plugins/legal-ui/src/index.ts"],
 			"@gauzy/plugin-onboarding-ui": ["./packages/plugins/onboarding-ui/src/index.ts"],
+			"@gauzy/plugin-public-layout-ui": ["packages/plugins/public-layout-ui/src/index.ts"],
 			"@gauzy/ui-auth": ["./packages/ui-auth/src/index.ts"],
 			"@gauzy/ui-config": ["./packages/ui-config/src/index.ts"],
 			"@gauzy/ui-core": ["./packages/ui-core/src/index.ts"],
