@@ -4061,6 +4061,7 @@
 		"NO_TODO": "Pas de liste de tâches.",
 		"OVERLAP_MESSAGE": "Cette entrée de temps chevauche une activité dans d'autres projets/tâches, qui sera remplacée.",
 		"REASON": "Raison",
+		"CUSTOMREASON": "Raison personnalisée",
 		"NOTES": "Notes",
 		"TIME_OVERLAPS": "Le temps se chevauche.",
 		"TIME_TRACKING": "Suivi du temps",

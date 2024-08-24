@@ -1,29 +1,16 @@
 <form #f="ngForm" *ngIf="form" [formGroup]="form" (submit)="addTime()">
 	<nb-card>
 		<nb-card-header class="header">
-			<span class="cancel">
-				<i class="fas fa-times" (click)="close()"></i
-			></span>
+			<span class="cancel"> <i class="fas fa-times" (click)="close()"></i></span>
 			<div class="row">
 				<div class="col title">
-					{{
-						(mode == 'update'
-							? 'TIMESHEET.EDIT_TIME_LOGS'
-							: 'TIMESHEET.ADD_TIME_LOGS'
-						) | translate
-					}}
+					{{ (mode == 'update' ? 'TIMESHEET.EDIT_TIME_LOGS' : 'TIMESHEET.ADD_TIME_LOGS') | translate }}
 				</div>
 			</div>
 		</nb-card-header>
 		<nb-card-body>
-			<div
-				class="form-group"
-				*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
-			>
-				<div
-					class="description col-6"
-					*ngIf="mode == 'update'; else employeeSelect"
-				>
+			<div class="form-group" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+				<div class="description col-6" *ngIf="mode == 'update'; else employeeSelect">
 					<ngx-avatar
 						[id]="timeLog?.employee?.id"
 						[name]="timeLog?.employee?.user?.name"
@@ -37,18 +24,13 @@
 							name="employeeId"
 							[multiple]="false"
 							label="TIMESHEET.SELECT_EMPLOYEE"
-							[placeholder]="
-								'TIMESHEET.SELECT_EMPLOYEE' | translate
-							"
+							[placeholder]="'TIMESHEET.SELECT_EMPLOYEE' | translate"
 							formControlName="employeeId"
 							required
 						>
 						</ga-employee-multi-select>
 					</div>
-					<div
-						*ngIf="form.get('employeeId')?.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
+					<div *ngIf="form.get('employeeId')?.invalid && f.submitted" class="invalid-feedback d-block">
 						<div *ngIf="form.get('employeeId')?.errors.required">
 							{{ 'TIMESHEET.VALIDATION.EMPLOYEE' | translate }}
 						</div>
@@ -65,31 +47,22 @@
 					</ngx-timer-range-picker>
 				</div>
 				<div class="col-6 show-time" *ngIf="timeDiff">
-					<label>{{ 'FORM.LABELS.PERIOD'|translate }}</label>
+					<label>{{ 'FORM.LABELS.PERIOD' | translate }}</label>
 					<div>{{ timeDiff | durationFormat }}</div>
 				</div>
 			</div>
 			<div class="form-group">
 				<div class="col-12">
-					<nb-card
-						class="w-100 custom-card"
-						status="danger"
-						*ngIf="overlaps.length > 0"
-					>
+					<nb-card class="w-100 custom-card" status="danger" *ngIf="overlaps.length > 0">
 						<nb-card-header>
 							<div class="d-flex align-items-center">
-								<nb-icon
-									icon="alert-triangle-outline"
-									class="mr-3"
-								></nb-icon>
+								<nb-icon icon="alert-triangle-outline" class="mr-3"></nb-icon>
 								{{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
 							</div>
 						</nb-card-header>
 						<nb-card-body class="custom-card-body">
 							<p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
-							<div
-								class="row align-items-center m-0 custom-header"
-							>
+							<div class="row align-items-center m-0 custom-header">
 								<div class="col">
 									{{ 'TIMESHEET.PROJECT' | translate }} /
 									{{ 'TIMESHEET.TODO' | translate }}
@@ -107,46 +80,27 @@
 								*ngFor="let overlapTimeLog of overlaps"
 							>
 								<div class="col">
-									<span
-										*ngIf="
-											overlapTimeLog?.project;
-											else noProject
-										"
-									>
+									<span *ngIf="overlapTimeLog?.project; else noProject">
 										{{ overlapTimeLog?.project?.name }}
 									</span>
 									<ng-template #noProject>
-										<span>{{
-											'TIMESHEET.NO_PROJECT' | translate
-										}}</span>
+										<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 									</ng-template>
 									<div class="mt-2 small">
-										<span
-											*ngIf="
-												overlapTimeLog?.task;
-												else noToDo
-											"
-										>
+										<span *ngIf="overlapTimeLog?.task; else noToDo">
 											<strong
-												>{{
-													'TIMESHEET.TODO' | translate
-												}}
+												>{{ 'TIMESHEET.TODO' | translate }}
 												:
 											</strong>
 											{{ overlapTimeLog?.task?.title }}
 										</span>
 										<ng-template #noToDo>
-											<span>{{
-												'TIMESHEET.NO_TODO' | translate
-											}}</span>
+											<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
 										</ng-template>
 									</div>
 								</div>
 								<div class="col text-center">
-									{{
-										overlapTimeLog.overlapDuration
-											| durationFormat
-									}}
+									{{ overlapTimeLog.overlapDuration | durationFormat }}
 								</div>
 							</div>
 						</nb-card-body>
@@ -156,11 +110,7 @@
 
 			<div class="form-group">
 				<div class="col-12">
-					<nb-checkbox
-						formControlName="isBillable"
-						name="isBillable"
-						status="primary"
-					>
+					<nb-checkbox formControlName="isBillable" name="isBillable" status="primary">
 						{{ 'TIMER_TRACKER.IS_BILLABLE' | translate }}
 					</nb-checkbox>
 				</div>
@@ -168,9 +118,7 @@
 			<div class="form-group">
 				<div class="col-12 d-flex">
 					<div class="mr-3">
-						<label>{{
-							'TIMER_TRACKER.SELECT_CLIENT' | translate
-						}}</label>
+						<label>{{ 'TIMER_TRACKER.SELECT_CLIENT' | translate }}</label>
 						<ga-contact-selector
 							[employeeId]="form.get('employeeId')?.value"
 							name="organizationContactId"
@@ -178,50 +126,28 @@
 							[required]="organization?.requireClient"
 						></ga-contact-selector>
 						<div
-							*ngIf="
-								form.get('organizationContactId')?.invalid &&
-								f.submitted
-							"
+							*ngIf="form.get('organizationContactId')?.invalid && f.submitted"
 							class="invalid-feedback d-block"
 						>
-							<div
-								*ngIf="
-									form.get('organizationContactId')?.errors
-										.required
-								"
-							>
-								{{
-									'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED'
-										| translate
-								}}
+							<div *ngIf="form.get('organizationContactId')?.errors.required">
+								{{ 'TIMER_TRACKER.VALIDATION.CLIENT_REQUIRED' | translate }}
 							</div>
 						</div>
 					</div>
 					<div>
-						<label>{{
-							'TIMER_TRACKER.SELECT_PROJECT' | translate
-						}}</label>
+						<label>{{ 'TIMER_TRACKER.SELECT_PROJECT' | translate }}</label>
 						<ga-project-selector
 							name="projectId"
 							formControlName="projectId"
 							[skipGlobalChange]="true"
 							[showAllOption]="false"
-							[placeholder]="
-								'TIMER_TRACKER.SELECT_PROJECT' | translate
-							"
+							[placeholder]="'TIMER_TRACKER.SELECT_PROJECT' | translate"
 							[defaultSelected]="false"
 							[employeeId]="form.get('employeeId')?.value"
-							[organizationContactId]="
-								form.get('organizationContactId')?.value
-							"
+							[organizationContactId]="form.get('organizationContactId')?.value"
 							[required]="organization?.requireProject"
 						></ga-project-selector>
-						<div
-							*ngIf="
-								form.get('projectId')?.invalid && f.submitted
-							"
-							class="invalid-feedback d-block"
-						>
+						<div *ngIf="form.get('projectId')?.invalid && f.submitted" class="invalid-feedback d-block">
 							<div *ngIf="form.get('projectId')?.errors.required">
 								{{ 'TIMESHEET.VALIDATION.PROJECT' | translate }}
 							</div>
@@ -240,10 +166,7 @@
 						formControlName="taskId"
 						[required]="organization?.requireTask"
 					></ga-task-selector>
-					<div
-						*ngIf="form.get('taskId')?.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
+					<div *ngIf="form.get('taskId')?.invalid && f.submitted" class="invalid-feedback d-block">
 						<div *ngIf="form.get('taskId').errors.required">
 							{{ 'TIMESHEET.VALIDATION.TASK' | translate }}
 						</div>
@@ -263,10 +186,7 @@
 						formControlName="description"
 						[required]="organization?.requireDescription"
 					></textarea>
-					<div
-						*ngIf="form.get('description')?.invalid && f.submitted"
-						class="invalid-feedback d-block"
-					>
+					<div *ngIf="form.get('description')?.invalid && f.submitted" class="invalid-feedback d-block">
 						<div *ngIf="form.get('description')?.errors.required">
 							{{ 'TIMESHEET.VALIDATION.DESCRIPTION' | translate }}
 						</div>
@@ -276,26 +196,40 @@
 			<div class="form-group">
 				<div class="col-12">
 					<label>{{ 'TIMESHEET.REASON' | translate }}</label>
-					<textarea
-						nbInput
-						class="form-control"
+					<nb-select
 						fullWidth
 						[placeholder]="'TIMESHEET.REASON' | translate"
 						name="reason"
 						formControlName="reason"
 						[required]="organization?.requireReason"
-					></textarea>
-
-					<div
-						*ngIf="form.get('reason')?.invalid && f.submitted"
-						class="invalid-feedback d-block"
+						[(selected)]="selectedReason"
+						[required]="organization?.requireReason"
 					>
-						<div *ngIf="form.get('reason')?.errors.required">
-							{{ 'TIMESHEET.VALIDATION.REASON' | translate }}
-						</div>
+						<nb-option *ngFor="let reason of reasons" [value]="reason">{{ reason }}</nb-option>
+					</nb-select>
+				</div>
+
+				<div *ngIf="selectedReason === 'Other'" class="form-group">
+					<label for="custom-reason">{{ 'TIMESHEET.CUSTOMREASON' | translate }}</label>
+					<textarea
+						nbInput
+						id="custom-reason"
+						[defaultValue]=""
+						[placeholder]="'TIMESHEET.CUSTOMREASON' | translate"
+						formControlName="customReason"
+						fullWidth
+						name="customReason"
+						class="form-control"
+					>
+					</textarea>
+				</div>
+				<div *ngIf="form.get('reason')?.invalid && f.submitted" class="invalid-feedback d-block">
+					<div *ngIf="form.get('reason')?.errors.required">
+						{{ 'TIMESHEET.VALIDATION.REASON' | translate }}
 					</div>
 				</div>
 			</div>
+
 			<div class="form-group"></div>
 		</nb-card-body>
 		<nb-card-footer>
@@ -308,20 +242,10 @@
 				nbSpinnerStatus="primary"
 			>
 				<nb-icon icon="save-outline"></nb-icon>
-				{{
-					(mode == 'create'
-						? 'TIMESHEET.ADD_TIME'
-						: 'TIMESHEET.UPDATE_TIME'
-					) | translate
-				}}
+				{{ (mode == 'create' ? 'TIMESHEET.ADD_TIME' : 'TIMESHEET.UPDATE_TIME') | translate }}
 			</button>
-			<ng-template
-				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
-			>
-				<ng-template
-					ngxTimeTrackingAuthorized
-					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
-				>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
 					<button
 						type="button"
 						class="action ml-3"
@@ -335,10 +259,7 @@
 						*ngIf="mode === 'update'"
 						[nbTooltip]="'BUTTONS.DELETE' | translate"
 					>
-						<nb-icon
-							status="danger"
-							icon="trash-2-outline"
-						></nb-icon>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 					</button>
 				</ng-template>
 			</ng-template>

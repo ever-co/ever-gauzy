@@ -4060,6 +4060,7 @@
 		"NO_TODO": "Nessun da fare",
 		"OVERLAP_MESSAGE": "Questa voce di tempo si sovrappone all'attività in altri progetti/incarichi, che verranno sostituiti",
 		"REASON": "Motivo",
+		"CUSTOMREASON": "Motivo personalizzato",
 		"NOTES": "Note",
 		"TIME_OVERLAPS": "Sovrapposizione temporale",
 		"TIME_TRACKING": "Tracking del tempo",

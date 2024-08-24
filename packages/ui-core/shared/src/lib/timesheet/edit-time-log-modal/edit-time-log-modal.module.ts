@@ -7,6 +7,8 @@ import {
 	NbCheckboxModule,
 	NbIconModule,
 	NbInputModule,
+	NbOptionModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -35,6 +37,8 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		NbInputModule,
 		NbSpinnerModule,
 		NbTooltipModule,
+		NbSelectModule,
+		NbOptionModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		SharedModule,

@@ -43,7 +43,9 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	subject$: Subject<any> = new Subject();
 
 	changeSelectedEmployee: boolean;
-
+	reasons = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue', 'Other'];
+	selectedReason: string = ''; // To hold the selected reason
+	customReason: string = ''; // To hold a custom reason if provided
 	private _timeLog: ITimeLog | Partial<ITimeLog>;
 	get timeLog(): ITimeLog | Partial<ITimeLog> {
 		return this._timeLog;
@@ -66,6 +68,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			taskId: [],
 			description: [],
 			reason: [],
+			customReason: [],
 			selectedRange: [self.selectedRange]
 		});
 	}
@@ -97,6 +100,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 					taskId: this._timeLog.taskId || null,
 					description: this._timeLog.description || null,
 					reason: this._timeLog.reason || null,
+					customReason: [''],
 					selectedRange: {
 						start: this._timeLog.startedAt,
 						end: this._timeLog.stoppedAt
@@ -173,6 +177,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			}
 			const request: IGetTimeLogConflictInput = {
 				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
+
 				startDate,
 				endDate,
 				employeeId,
@@ -227,6 +232,10 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 			const payload = {
 				..._.omit(this.form.value, ['selectedRange']),
+				reason:
+					this.form.get('reason').value === 'Other'
+						? this.form.get('customReason').value
+						: this.form.get('reason').value,
 				startedAt,
 				stoppedAt,
 				organizationId,
