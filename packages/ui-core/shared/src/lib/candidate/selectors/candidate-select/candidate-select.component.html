@@ -1,8 +1,4 @@
 <div class="container">
-	<nb-checkbox [(ngModel)]="showRejected" class="checkbox" (ngModelChange)="toggleShowRejected()">
-		{{ 'CANDIDATES_PAGE.SHOW_REJECTED' | translate }}
-	</nb-checkbox>
-
 	<input
 		#autoInput
 		nbInput
@@ -22,4 +18,8 @@
 			></ngx-avatar>
 		</nb-option>
 	</nb-autocomplete>
+
+	<nb-checkbox [(ngModel)]="showRejected" class="checkbox" (ngModelChange)="toggleShowRejected()">
+		{{ 'CANDIDATES_PAGE.SHOW_REJECTED' | translate }}
+	</nb-checkbox>
 </div>
