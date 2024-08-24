@@ -4056,7 +4056,7 @@
 		"NO_TODO": "Keine Aufgaben.",
 		"OVERLAP_MESSAGE": "Diese Zeiterfassung überschneidet sich mit Aktivitäten in anderen Projekten/Aufgaben, die ersetzt werden.",
 		"REASON": "Grund",
-		"CUSTOMREASON": "Eigener Grund",
+		"CUSTOM_REASON": "Eigener Grund",
 		"NOTES": "Notizen",
 		"TIME_OVERLAPS": "Zeitüberschneidungen",
 		"TIME_TRACKING": "Zeiterfassung",

@@ -4188,7 +4188,7 @@
 		"NO_TODO": "No To-do",
 		"OVERLAP_MESSAGE": "This time entry overlaps activity in other projects/tasks, Which will be replaced:",
 		"REASON": "Reason",
-		"CUSTOMREASON": "Custom reason",
+		"CUSTOM_REASON": "Custom reason",
 		"NOTES": "Notes",
 		"APPS": "Apps",
 		"TIME_OVERLAPS": "Time overlaps",

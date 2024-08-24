@@ -4062,7 +4062,7 @@
 		"NO_TODO": "No hay nada por hacer.",
 		"OVERLAP_MESSAGE": "Esta entrada de tiempo se superpone con la actividad en otros proyectos/tareas, que será reemplazada.",
 		"REASON": "Razón",
-		"CUSTOMREASON": "Razón personalizada",
+		"CUSTOM_REASON": "Razón personalizada",
 		"NOTES": "Notas",
 		"TIME_OVERLAPS": "El tiempo se superpone.",
 		"TIME_TRACKING": "Seguimiento del tiempo",
