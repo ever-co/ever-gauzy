@@ -44,8 +44,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 	changeSelectedEmployee: boolean;
 	reasons = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue', 'Other'];
-	selectedReason: string = ''; // To hold the selected reason
-	customReason: string = ''; // To hold a custom reason if provided
+	selectedReason: string = '';
 	private _timeLog: ITimeLog | Partial<ITimeLog>;
 	get timeLog(): ITimeLog | Partial<ITimeLog> {
 		return this._timeLog;
@@ -177,7 +176,6 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 			}
 			const request: IGetTimeLogConflictInput = {
 				...(this.timeLog.id ? { ignoreId: [this.timeLog.id] } : {}),
-
 				startDate,
 				endDate,
 				employeeId,
