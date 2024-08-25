@@ -94,7 +94,7 @@ args.some((val) => val === '--serve');
 
 ipcMain.handle('PREFERRED_THEME', () => {
 	const applicationSetting = LocalStore.getStore('appSetting');
-	let theme: string = 'light';
+	let theme: string;
 	if (!applicationSetting || !applicationSetting.theme) {
 		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 		LocalStore.updateApplicationSetting({ theme });
