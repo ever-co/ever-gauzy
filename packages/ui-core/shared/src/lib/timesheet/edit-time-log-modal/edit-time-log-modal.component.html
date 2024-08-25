@@ -196,32 +196,24 @@
 			<div class="form-group">
 				<div class="col-12">
 					<label>{{ 'TIMESHEET.REASON' | translate }}</label>
-					<nb-select
-						fullWidth
-						[placeholder]="'TIMESHEET.REASON' | translate"
-						name="reason"
-						formControlName="reason"
-						[required]="organization?.requireReason"
-						[(selected)]="selectedReason"
-						[required]="organization?.requireReason"
-					>
-						<nb-option *ngFor="let reason of reasons" [value]="reason">{{ reason }}</nb-option>
-					</nb-select>
+					<nb-form-field fullWidth>
+						<input
+							fullWidth
+							nbInput
+							placeholder="{{ 'TIMESHEET.REASON' | translate }}"
+							name="reason"
+							formControlName="reason"
+							[nbAutocomplete]="auto"
+							[required]="organization?.requireReason"
+						/>
+						<nb-autocomplete #auto fullWidth>
+							<nb-option *ngFor="let reason of reasons" [value]="reason">
+								{{ reason }}
+							</nb-option>
+						</nb-autocomplete>
+					</nb-form-field>
 				</div>
 
-				<div *ngIf="selectedReason === 'Other'" class="form-group">
-					<label for="custom-reason">{{ 'TIMESHEET.CUSTOM_REASON' | translate }}</label>
-					<textarea
-						nbInput
-						id="custom-reason"
-						[placeholder]="'TIMESHEET.CUSTOM_REASON' | translate"
-						formControlName="customReason"
-						fullWidth
-						name="customReason"
-						class="form-control"
-					>
-					</textarea>
-				</div>
 				<div *ngIf="form.get('reason')?.invalid && f.submitted" class="invalid-feedback d-block">
 					<div *ngIf="form.get('reason')?.errors.required">
 						{{ 'TIMESHEET.VALIDATION.REASON' | translate }}

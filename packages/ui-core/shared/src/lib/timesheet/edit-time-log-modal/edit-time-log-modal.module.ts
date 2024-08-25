@@ -2,9 +2,11 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
+	NbAutocompleteModule,
 	NbButtonModule,
 	NbCardModule,
 	NbCheckboxModule,
+	NbFormFieldModule,
 	NbIconModule,
 	NbInputModule,
 	NbOptionModule,
@@ -33,6 +35,8 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		NbButtonModule,
 		NbCardModule,
 		NbCheckboxModule,
+		NbAutocompleteModule,
+		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,

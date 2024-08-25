@@ -4060,7 +4060,6 @@
 		"NO_TODO": "没有待办事项",
 		"OVERLAP_MESSAGE": "此时间记录与其他项目/任务的活动重叠，将被替换。",
 		"REASON": "原因",
-		"CUSTOM_REASON": "自定义原因",
 		"NOTES": "笔记",
 		"TIME_OVERLAPS": "时间重叠",
 		"TIME_TRACKING": "时间跟踪",
