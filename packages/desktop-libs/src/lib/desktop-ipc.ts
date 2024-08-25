@@ -357,6 +357,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 	});
 
+	ipcMain.handle('SAVED_THEME', () => {
+		return LocalStore.getStore('appSetting').theme;
+	})
+
 	pluginListeners();
 }
 

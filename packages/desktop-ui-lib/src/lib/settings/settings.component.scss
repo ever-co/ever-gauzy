@@ -52,22 +52,22 @@
 }
 
 :host .warning-config {
-	@include nb-rtl(text-align, left);
-	@include nb-ltr(text-align, right);
-	margin-bottom: 10px;
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--color-warning-default);
-	position: absolute;
-	@include nb-rtl(left, var(--sidebar-width));
-	@include nb-ltr(right, 10px);
-	top: 30px;
+  @include nb-rtl(text-align, left);
+  @include nb-ltr(text-align, right);
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-warning-default);
+  position: absolute;
+  @include nb-rtl(left, var(--sidebar-width));
+  @include nb-ltr(right, 10px);
+  top: 30px;
 
-	span {
-		background-color: var(--color-warning-transparent-300);
-		padding: 8px 12px;
-		border-radius: 8px;
-	}
+  span {
+    background-color: var(--color-warning-transparent-300);
+    padding: 8px 12px;
+    border-radius: 8px;
+  }
 }
 
 ::ng-deep body {
@@ -322,11 +322,11 @@ warn-container {
 }
 
 :host .close-warn {
-	position: absolute;
-	top: calc(-15px / 2);
-	box-shadow: var(--gauzy-shadow);
-	@include nb-rtl(left, calc(15px / 2));
-	@include nb-ltr(right, calc(15px / 2));
+  position: absolute;
+  top: calc(-15px / 2);
+  box-shadow: var(--gauzy-shadow);
+  @include nb-rtl(left, calc(15px / 2));
+  @include nb-ltr(right, calc(15px / 2));
 }
 
 .restart-btn-container {
@@ -335,9 +335,9 @@ warn-container {
 
 .nb-tab-card,
 .nb-tab-body {
-    background-color: unset;
-    padding: 0;
-    margin: 0;
+  background-color: unset;
+  padding: 0;
+  margin: 0;
 }
 
 .nb-tab-footer {
@@ -345,7 +345,13 @@ warn-container {
 }
 
 .language {
-	position: absolute;
-	left: 1rem;
-	bottom: 5.5rem;
+  position: absolute;
+  left: 1rem;
+  bottom: 5.5rem;
+}
+
+.switch-theme-toggle {
+  position: absolute;
+  right: 1rem;
+  bottom: 6.2rem;
 }
