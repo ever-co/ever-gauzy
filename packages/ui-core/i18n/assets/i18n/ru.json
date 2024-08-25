@@ -33,6 +33,7 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Управление интервью",
 		"MANAGE_INVITES": "Управление приглашениями",
 		"MANAGE_SPRINTS": "Управление спринтами",
@@ -1675,6 +1676,7 @@
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
+		"SHOW_REJECTED": "Показ отклонен",
 		"DELETED": "Удалено",
 		"ARCHIVED": "Архивирован",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
@@ -3072,7 +3074,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Сгенерировать публичную ссылку",
 			"GENERATE": "Генерировать ссылку на {{ text }} , которую могут просматривать любой, кто имеет ссылку.",
-			"ACCESS": "Любой, у кого есть доступ к этой ссылке, может просмотреть {{ text }}."
+			"ACCESS": "Любой, у кого есть доступ к этой ссылке, может просмотреть {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3103,7 +3106,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "страница не найдена",
 		"TAKE_ME_HOME": "Вернуть меня домой",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Страница, которую вы ищете, не существует",
 		"REDIRECT_TO_HOME": "Вы будете перенаправлены на домашнюю страницу в ближайшее время"
 	},
 	"HELP_PAGE": {
@@ -4257,7 +4260,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Пожалуйста, выберите сотрудника.",
 		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания.",
-		"NO_ACTIVE_EVENT_TYpES": "Нет активных типов событий"
+		"NO_ACTIVE_EVENT_TYPES": "Нет активных типов событий",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны писем",

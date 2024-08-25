@@ -1533,6 +1533,7 @@
 		"APPLIED": "crwdns3334:0crwdne3334:0",
 		"HIRED": "crwdns3336:0crwdne3336:0",
 		"REJECTED": "crwdns3338:0crwdne3338:0",
+		"SHOW_REJECTED": "Տեղադրումը մերժված է",
 		"DELETED": "crwdns3340:0crwdne3340:0",
 		"ARCHIVED": "crwdns3940:0crwdne3940:0",
 		"SELECT_EMPLOYEE_MSG": "crwdns3342:0crwdne3342:0",
@@ -2858,7 +2859,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "crwdns2249:0crwdne2249:0",
 		"TAKE_ME_HOME": "crwdns2251:0crwdne2251:0",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "crwdns2253:0crwdne2253:0"
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "crwdns2253:0crwdne2253:0"
 	},
 	"HELP_PAGE": {
 		"HELP": "crwdns2255:0crwdne2255:0",
@@ -3757,7 +3758,7 @@
 		"SELECT_EMPLOYEE_ERROR": "crwdns7274:0crwdne7274:0",
 		"EXPIRED_OR_CANCELLED": "crwdns5094:0crwdne5094:0",
 		"EMAIL_SENT": "crwdns4568:0crwdne4568:0",
-		"NO_ACTIVE_EVENT_TYpES": "crwdns9052:0crwdne9052:0"
+		"NO_ACTIVE_EVENT_TYPES": "crwdns9052:0crwdne9052:0"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "crwdns10334:0crwdne10334:0",

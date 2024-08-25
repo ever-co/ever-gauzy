@@ -33,6 +33,7 @@
 		"INVITE": "Zaproś",
 		"SELECT_ALL": "Zaznacz wszystko",
 		"COPY_LINK": "Skopiuj link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Zarządzaj rozmowami kwalifikacyjnymi",
 		"MANAGE_INVITES": "Zarządzaj zaproszeniami",
 		"MANAGE_SPRINTS": "Zarządzaj sprintami",
@@ -1626,6 +1627,7 @@
 		"APPLIED": "Zastosowany",
 		"HIRED": "Zatrudniony",
 		"REJECTED": "Odrzucone",
+		"SHOW_REJECTED": "Pokaz odrzucony",
 		"DELETED": "Usunięte",
 		"ARCHIVED": "Zarchiwizowane",
 		"SELECT_EMPLOYEE_MSG": "Proszę wybrać pracownika z menu powyżej",
@@ -3042,7 +3044,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generuj publiczny link",
 			"GENERATE": "Wygeneruj link do {{ text }}, który będzie można przeglądać przez każdą osobę posiadającą link",
-			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}"
+			"ACCESS": "Każda osoba mająca dostęp do tego linku może zobaczyć {{ text }}",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3076,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Strona nie znaleziona",
 		"TAKE_ME_HOME": "Zabierz mnie do domu",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Strona, której szukałeś, nie istnieje",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Strona, której szukałeś, nie istnieje",
 		"REDIRECT_TO_HOME": "Za chwilę zostaniesz przekierowany na stronę główną"
 	},
 	"HELP_PAGE": {
@@ -4237,7 +4240,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Proszę wybrać pracownika",
 		"EXPIRED_OR_CANCELLED": "To spotkanie wygasło lub zostało anulowane",
 		"EMAIL_SENT": "E-mail został wysłany do organizatora oraz wszystkich uczestników tego spotkania",
-		"NO_ACTIVE_EVENT_TYpES": "Nie ma aktywnych typów wydarzeń"
+		"NO_ACTIVE_EVENT_TYPES": "Nie ma aktywnych typów wydarzeń",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Szablony wiadomości e-mail",

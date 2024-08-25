@@ -33,6 +33,7 @@
 		"INVITE": "Invitar",
 		"SELECT_ALL": "Seleccionar todo.",
 		"COPY_LINK": "Copiar enlace.",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Gestionar entrevistas",
 		"MANAGE_INVITES": "Administrar invitaciones",
 		"MANAGE_SPRINTS": "Administrar Scrum",
@@ -1628,6 +1629,7 @@
 		"APPLIED": "Aplicado",
 		"HIRED": "Contratado",
 		"REJECTED": "Rechazado",
+		"SHOW_REJECTED": "Mostrar rechazado",
 		"DELETED": "Borrado",
 		"ARCHIVED": "Archivado",
 		"SELECT_EMPLOYEE_MSG": "Por favor, seleccione un empleado del menú de arriba.",
@@ -3044,7 +3046,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generar Enlace Público",
 			"GENERATE": "Generar un enlace al {{ text }} que cualquier persona con el enlace puede ver.",
-			"ACCESS": "Cualquier persona con acceso a este enlace puede ver el {{ text }}."
+			"ACCESS": "Cualquier persona con acceso a este enlace puede ver el {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3075,7 +3078,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Página no encontrada",
 		"TAKE_ME_HOME": "Llévame a casa.",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "La página que estabas buscando no existe.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "La página que estabas buscando no existe.",
 		"REDIRECT_TO_HOME": "Serás redirigido a la página de inicio pronto"
 	},
 	"HELP_PAGE": {
@@ -4239,7 +4242,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Por favor, seleccione un empleado.",
 		"EXPIRED_OR_CANCELLED": "Esta cita ha expirado o ha sido cancelada.",
 		"EMAIL_SENT": "Se ha enviado un correo electrónico al anfitrión, así como a todos los participantes de esta reunión.",
-		"NO_ACTIVE_EVENT_TYpES": "No hay tipos de eventos activos."
+		"NO_ACTIVE_EVENT_TYPES": "No hay tipos de eventos activos.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Plantillas de correo electrónico",

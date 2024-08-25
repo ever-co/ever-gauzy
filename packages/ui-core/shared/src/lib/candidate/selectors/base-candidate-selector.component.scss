@@ -13,3 +13,15 @@ ngx-avatar ::ng-deep .inner-wrapper {
     margin: 0 10px;
   }
 }
+.container {
+  padding: inherit;
+  display: flex;
+  align-items: center;
+  gap: 2%;
+  input {
+    width: inherit;
+  }
+}
+nb-checkbox {
+  text-wrap: nowrap;
+}

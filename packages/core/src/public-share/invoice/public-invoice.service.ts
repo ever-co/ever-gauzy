@@ -9,11 +9,10 @@ import { TypeOrmInvoiceRepository } from '../../invoice/repository/type-orm-invo
 
 @Injectable()
 export class PublicInvoiceService {
-
 	constructor(
 		@InjectRepository(Invoice)
-		private typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
-	) { }
+		private readonly typeOrmInvoiceRepository: TypeOrmInvoiceRepository
+	) {}
 
 	/**
 	 * Find public invoice by token
@@ -22,18 +21,16 @@ export class PublicInvoiceService {
 	 * @param relations
 	 * @returns
 	 */
-	async findOneByConditions(
-		params: FindOptionsWhere<Invoice>,
-		relations: string[] = []
-	): Promise<IInvoice> {
+	async findOneByConditions(params: FindOptionsWhere<Invoice>, relations: string[] = []): Promise<IInvoice> {
+		if (!params.id || !params.token) {
+			throw new ForbiddenException();
+		}
+
 		try {
-			if (!params.id || !params.token) {
-				throw new ForbiddenException();
-			}
+			// verify token
 			const { id, organizationId, tenantId } = verify(params.token as string, environment.JWT_SECRET) as IInvoice;
-			if (id !== params.id) {
-				throw new ForbiddenException();
-			}
+
+			// Get invoice
 			return await this.typeOrmInvoiceRepository.findOneOrFail({
 				select: {
 					tenant: {
@@ -59,13 +56,17 @@ export class PublicInvoiceService {
 						applyDiscount: true,
 						employeeId: true,
 						employee: {
+							id: true,
+							userId: true,
 							user: {
+								id: true,
 								firstName: true,
-								lastName: true,
+								lastName: true
 							}
 						},
 						projectId: true,
 						project: {
+							id: true,
 							imageUrl: true,
 							name: true,
 							description: true
@@ -73,18 +74,21 @@ export class PublicInvoiceService {
 						productId: true,
 						expenseId: true,
 						expense: {
+							id: true,
 							purpose: true
 						},
 						taskId: true,
 						task: {
+							id: true,
 							title: true,
-							description: true,
+							description: true
 						}
 					},
 					toContact: {
+						id: true,
 						contactType: true,
 						imageUrl: true,
-						name: true,
+						name: true
 					}
 				},
 				where: {
@@ -92,11 +96,7 @@ export class PublicInvoiceService {
 					organizationId,
 					tenantId
 				},
-				...(
-					(relations) ? {
-						relations: relations
-					} : {}
-				),
+				...(relations ? { relations: relations } : {})
 			});
 		} catch (error) {
 			throw new ForbiddenException();
@@ -110,16 +110,13 @@ export class PublicInvoiceService {
 	 * @param entity
 	 * @returns
 	 */
-	async updateInvoice(
-		params: IInvoice,
-		entity: IInvoiceUpdateInput
-	): Promise<IInvoice | UpdateResult> {
+	async updateInvoice(params: IInvoice, entity: IInvoiceUpdateInput): Promise<IInvoice | UpdateResult> {
 		try {
 			const decoded = verify(params.token as string, environment.JWT_SECRET) as any;
 			const invoice = await this.typeOrmInvoiceRepository.findOneByOrFail({
 				id: decoded.invoiceId,
 				organizationId: decoded.organizationId,
-				tenantId: decoded.tenantId,
+				tenantId: decoded.tenantId
 			});
 			return await this.typeOrmInvoiceRepository.update(invoice.id, entity);
 		} catch (error) {
