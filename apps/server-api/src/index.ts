@@ -15,7 +15,8 @@ import {
 	Menu,
 	shell,
 	MenuItemConstructorOptions,
-	screen
+	screen,
+	nativeTheme
 } from 'electron';
 
 import { environment } from './environments/environment';
@@ -50,7 +51,8 @@ import {
 	DialogErrorHandler,
 	AppError,
 	DialogOpenFile,
-	ReverseUiProxy
+	ReverseUiProxy,
+	DesktopThemeListener
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -149,6 +151,18 @@ ipcMain.setMaxListeners(0);
 
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
+ipcMain.handle('PREFERRED_THEME', () => {
+	const applicationSetting = LocalStore.getStore('appSetting');
+	let theme: string = 'light';
+	if (!applicationSetting || !applicationSetting.theme) {
+		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+	} else {
+		theme = applicationSetting.theme;
+	}
+	return theme;
+});
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -263,6 +277,12 @@ const runMainWindow = async () => {
 	serverWindow.webContents.send('dashboard_ready', {
 		setting: serverConfig.setting
 	});
+
+	new DesktopThemeListener({
+		settingsWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		serverWindow
+	}).listen();
 };
 
 const initializeConfig = async (val) => {

@@ -14,6 +14,7 @@ export class DesktopThemeListener {
         updaterWindow?: BrowserWindow;
         popupWindow?: BrowserWindow;
         alwaysOnWindow?: BrowserWindow;
+        serverWindow?: BrowserWindow;
     } = {}
     constructor(
         desktopWindow: {
@@ -26,6 +27,7 @@ export class DesktopThemeListener {
             updaterWindow?: BrowserWindow;
             popupWindow?: BrowserWindow;
             alwaysOnWindow?: BrowserWindow;
+            serverWindow?: BrowserWindow;
         }
     ) {
         this.desktopWindow = desktopWindow;
@@ -58,6 +60,9 @@ export class DesktopThemeListener {
             }
             if (this.desktopWindow.alwaysOnWindow) {
                 this.desktopWindow.alwaysOnWindow.webContents.send('THEME_CHANGE', theme);
+            }
+            if (this.desktopWindow.serverWindow) {
+                this.desktopWindow.serverWindow.webContents.send('THEME_CHANGE', theme);
             }
         });
     }
