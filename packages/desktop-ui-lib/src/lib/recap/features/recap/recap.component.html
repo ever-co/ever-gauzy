@@ -5,8 +5,8 @@
 			<nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
 		</ng-container>
 		<div class="tools">
-			<ngx-date-range-picker [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
-				class="medium"></ngx-date-range-picker>
+			<ngx-date-range-picker [isLockDatePicker]="true" [arrows]="true" [isSingleDatePicker]="true" [isDisableFutureDatePicker]="true"
+				class="medium" (rangeChanges)="onRangeChange($event)"></ngx-date-range-picker>
 			<ngx-filter></ngx-filter>
 		</div>
 	</nb-card-header>

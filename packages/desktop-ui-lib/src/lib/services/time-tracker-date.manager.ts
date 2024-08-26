@@ -1,5 +1,5 @@
-import * as moment from 'moment';
 import { IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import * as moment from 'moment';
 
 export class TimeTrackerDateManager {
 	private static _instance: TimeTrackerDateManager;
@@ -26,31 +26,19 @@ export class TimeTrackerDateManager {
 	}
 
 	public static get startWeek(): string {
-		return moment()
-			.startOf('week')
-			.subtract(this.utcOffset, 'minutes')
-			.format('YYYY-MM-DD HH:mm:ss');
+		return moment().startOf('week').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endWeek(): string {
-		return moment()
-			.endOf('week')
-			.subtract(this.utcOffset, 'minutes')
-			.format('YYYY-MM-DD HH:mm:ss');
+		return moment().endOf('week').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get startToday(): string {
-		return moment()
-			.startOf('day')
-			.subtract(this.utcOffset, 'minutes')
-			.format('YYYY-MM-DD HH:mm:ss');
+		return moment().startOf('day').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get endToday(): string {
-		return moment()
-			.endOf('day')
-			.subtract(this.utcOffset, 'minutes')
-			.format('YYYY-MM-DD HH:mm:ss');
+		return moment().endOf('day').subtract(this.utcOffset, 'minutes').format('YYYY-MM-DD HH:mm:ss');
 	}
 
 	public static get utcOffset(): number {
@@ -77,17 +65,15 @@ export class TimeTrackerDateManager {
 	public static get isMidnight(): boolean {
 		const now = moment();
 		const endOfDay = now.clone().endOf('day');
-		return moment(now.format('YYYY-MM-DD HH:mm:ss')).isSame(
-			endOfDay.format('YYYY-MM-DD HH:mm:ss')
-		);
+		return moment(now.format('YYYY-MM-DD HH:mm:ss')).isSame(endOfDay.format('YYYY-MM-DD HH:mm:ss'));
 	}
 
 	// Set the start of the week
 	private startWeekDay() {
 		moment.updateLocale(this._language, {
 			week: {
-				dow: TimeTrackerDateManager._startWeekDayNumber,
-			},
+				dow: TimeTrackerDateManager._startWeekDayNumber
+			}
 		});
 	}
 
@@ -102,5 +88,13 @@ export class TimeTrackerDateManager {
 
 	public static get endCurrentDay(): string {
 		return moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+	}
+
+	public static get startCurrentWeek(): string {
+		return moment().startOf('week').format('YYYY-MM-DD HH:mm:ss');
+	}
+
+	public static get endCurrentWeek(): string {
+		return moment().endOf('week').format('YYYY-MM-DD HH:mm:ss');
 	}
 }

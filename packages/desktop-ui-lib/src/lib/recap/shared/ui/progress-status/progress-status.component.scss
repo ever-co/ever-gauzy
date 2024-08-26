@@ -3,6 +3,7 @@
 .wrapper {
 	display: flex;
 	align-items: center;
+	gap: 0.5rem
 }
 
 :host {
@@ -20,12 +21,6 @@
 			.progress-container {
 				height: 5px !important;
 			}
-
-			.progress-value {
-				span {
-					display: none;
-				}
-			}
 		}
 	}
 }
@@ -34,12 +29,11 @@
 	width: 100%;
 
 	.percentage-col {
-		margin-right: 10px;
 		width: 60px;
 	}
 
 	.progress-col {
-		width: 75%;
+		width: 100%;
 		display: flex;
 		align-items: flex-end;
 	}
