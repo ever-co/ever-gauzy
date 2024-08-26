@@ -138,7 +138,6 @@ export class JobProposalModule {
 			resolve: { dates: DateRangePickerResolver }
 		});
 
-		console.log(this._pageRouteRegistryService.getPageLocationRoutes('proposals'));
 		// Set hasRegisteredRoutes to true
 		JobProposalModule.hasRegisteredPageRoutes = true;
 	}

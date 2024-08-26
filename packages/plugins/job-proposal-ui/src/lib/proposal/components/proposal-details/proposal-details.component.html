@@ -7,9 +7,9 @@
 			</h4>
 		</div>
 		<div>
-			<button nbButton (click)="edit()" status="basic" class="action primary" size="small">
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
+			<button (click)="edit()" nbButton type="button" status="basic" class="action primary" size="small">
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 		</div>
 	</nb-card-header>
@@ -65,13 +65,9 @@
 							</h6>
 							<div [innerHTML]="jobPostContent"></div>
 							<div class="tags">
-								<nb-badge
-									*ngFor="let tag of proposal?.tags"
-									class="color"
-									position="centered"
-									[style.background]="tag.color"
-									[text]="tag.name"
-								></nb-badge>
+								<ng-container *ngFor="let tag of proposal?.tags">
+									<nb-badge class="color" [style.background]="tag.color" [text]="tag.name"></nb-badge>
+								</ng-container>
 							</div>
 						</nb-card>
 					</div>

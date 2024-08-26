@@ -54,7 +54,7 @@ import {
 	styleUrls: ['./proposal.component.scss']
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
-	public smartTableSettings: object;
+	public smartTableSettings: any;
 	public selectedEmployeeId: ID | null;
 	public selectedDateRange: IDateRangePicker;
 	public proposals: IProposal[] = [];
@@ -186,6 +186,25 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Navigates to the edit page of a proposal.
+	 * @param selectedItem - The proposal item for which edit page is to be displayed.
+	 */
+	edit(selectedItem?: IProposal): void {
+		// If a proposal item is selected, mark it as selected
+		if (selectedItem) {
+			this.selectProposal({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		// If a proposal is selected, navigate to its edit page
+		if (this.selectedProposal) {
+			this._router.navigate([`/pages/sales/proposals/edit`, this.selectedProposal.id]);
+		}
 	}
 
 	/**

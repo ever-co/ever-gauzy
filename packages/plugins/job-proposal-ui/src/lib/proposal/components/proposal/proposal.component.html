@@ -83,10 +83,11 @@
 				(click)="details(selectedItem)"
 				status="basic"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				size="small"
 			>
-				<nb-icon icon="edit-outline"></nb-icon>{{ 'BUTTONS.DETAILS' | translate }}
+				<nb-icon icon="info-outline"></nb-icon>
+				{{ 'BUTTONS.DETAILS' | translate }}
 			</button>
 			<ng-container
 				[ngTemplateOutlet]="statusButtonTemplate"
@@ -96,14 +97,26 @@
 				}"
 			></ng-container>
 			<button
+				(click)="edit()"
+				nbButton
+				type="button"
+				status="basic"
+				class="action primary"
+				size="small"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
+			</button>
+			<button
 				nbButton
 				type="button"
 				(click)="delete(selectedItem)"
 				status="basic"
 				class="action"
-				[disabled]="!selectedItem && disableButton"
 				size="small"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				[disabled]="disableButton"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>

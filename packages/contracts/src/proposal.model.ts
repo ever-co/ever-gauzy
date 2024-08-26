@@ -1,53 +1,52 @@
 import { IOrganizationContactEntityMutationInput, IRelationalOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee, IEmployeeEntityMutationInput, IEmployeeFindInput } from './employee.model';
-import { ITag } from './tag.model';
+import { IEmployee, IEmployeeEntityMutationInput, IRelationalEmployee } from './employee.model';
+import { ITaggable } from './tag.model';
 
-export interface IProposal extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationContact {
-	employeeId?: string;
-	employee?: IEmployee;
+/**
+ * Proposal Status Enum
+ */
+export enum ProposalStatusEnum {
+	SENT = 'SENT',
+	ACCEPTED = 'ACCEPTED'
+}
+
+// Base interface for common proposal fields
+export interface IProposalBase extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	jobPostUrl: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: ProposalStatusEnum;
-	tags?: ITag[];
 }
 
-export interface IProposalCreateInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityMutationInput, IOrganizationContactEntityMutationInput {
-	jobPostUrl?: string;
-	valueDate?: Date;
-	jobPostContent?: string;
-	proposalContent?: string;
-	status?: ProposalStatusEnum;
-	tags?: ITag[];
+export interface IProposal extends IProposalBase, IRelationalEmployee, IRelationalOrganizationContact {
+	author?: IEmployee;
 }
 
-export interface IProposalFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	employeeId?: string;
-	employee?: IEmployeeFindInput;
-	jobPostUrl?: string;
-	valueDate?: Date;
-	jobPostContent?: string;
-	proposalContent?: string;
-	status?: ProposalStatusEnum;
-	tags?: ITag[];
-}
+/**
+ * Proposal Base Create Input
+ */
+export interface IProposalBaseCreateInput extends IEmployeeEntityMutationInput, Partial<IProposalBase> {}
 
-export enum ProposalStatusEnum {
-	SENT = 'SENT',
-	ACCEPTED = 'ACCEPTED'
-}
-export interface IProposalViewModel extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationContact {
-	tags?: ITag[];
+/**
+ * Proposal Create Input
+ */
+export interface IProposalCreateInput extends IProposalBaseCreateInput, IOrganizationContactEntityMutationInput {}
+
+/**
+ * Proposal Find Input
+ */
+export interface IProposalFindInput extends Omit<IProposalBase, 'jobPostLink' | 'jobPostContent' | 'proposalContent'> {}
+
+/**
+ * Proposal View Model
+ */
+export interface IProposalViewModel extends IRelationalOrganizationContact, Partial<IProposalBase> {
 	valueDate: Date;
 	id: string;
 	employeeId?: string;
 	employee?: IEmployee;
-	jobPostUrl?: string;
 	jobPostLink?: string;
-	jobPostContent?: string;
-	proposalContent?: string;
-	status?: ProposalStatusEnum;
-	author?: string;
+	author?: IEmployee;
 }
