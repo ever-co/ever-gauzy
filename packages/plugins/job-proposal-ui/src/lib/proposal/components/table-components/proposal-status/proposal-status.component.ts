@@ -6,7 +6,6 @@ import { Component, Input } from '@angular/core';
 	styleUrls: ['./proposal-status.component.scss']
 })
 export class ProposalStatusComponent {
-	@Input()
-	rowData: any;
-	value: string | number;
+	@Input() rowData: any;
+	@Input() value: string | number;
 }

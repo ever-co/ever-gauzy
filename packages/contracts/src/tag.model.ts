@@ -1,6 +1,10 @@
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 
+export interface ITaggable {
+	tags?: ITag[];
+}
+
 export interface ITag extends IBasePerTenantAndOrganizationEntityModel, IRelationalOrganizationTeam {
 	name: string;
 	color: string;
@@ -18,7 +22,7 @@ export interface ITagFindInput extends IBasePerTenantAndOrganizationEntityModel,
 	isSystem?: boolean;
 }
 
-export interface ITagCreateInput extends ITag { }
+export interface ITagCreateInput extends ITag {}
 
 export interface ITagUpdateInput extends Partial<ITagCreateInput> {
 	id?: string;

@@ -29,13 +29,13 @@ export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityMo
 }
 
 export interface IEmployeeEntityMutationInput {
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 	employee?: Pick<IEmployee, 'id'>;
 }
 
 export interface IRelationalEmployee {
 	readonly employee?: IEmployee;
-	readonly employeeId?: IEmployee['id'];
+	readonly employeeId?: ID;
 }
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {

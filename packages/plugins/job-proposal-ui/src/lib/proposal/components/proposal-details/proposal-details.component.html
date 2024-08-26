@@ -3,22 +3,13 @@
 		<div class="card-header-title">
 			<ngx-back-navigation></ngx-back-navigation>
 			<h4>
-				{{
-					'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS'
-						| translate
-				}}
+				{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_DETAILS' | translate }}
 			</h4>
 		</div>
 		<div>
-			<button
-				nbButton
-				(click)="edit()"
-				status="basic"
-				class="action primary"
-        		size="small"
-			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
-				{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.EDIT' | translate }}
+			<button (click)="edit()" nbButton type="button" status="basic" class="action primary" size="small">
+				<nb-icon icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 		</div>
 	</nb-card-header>
@@ -28,7 +19,7 @@
 				<ng-container *ngIf="!employee?.id">
 					<nb-card class="custom author d-flex flex-row p-3">
 						<div class="image-container">
-							<img [src]="proposal?.author?.user?.imageUrl" alt=""/>
+							<img [src]="proposal?.author?.user?.imageUrl" alt="" />
 						</div>
 						<div class="identity">
 							<h6 class="role">
@@ -42,10 +33,7 @@
 				</ng-container>
 				<nb-card class="custom status">
 					<div>{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.STATUS' | translate }}</div>
-					<ga-proposal-status
-						*ngIf="proposal"
-						[rowData]="proposal"
-					></ga-proposal-status>
+					<ga-proposal-status *ngIf="proposal" [rowData]="proposal"></ga-proposal-status>
 				</nb-card>
 			</div>
 			<div class="col-xl-9 col-12">
@@ -53,33 +41,19 @@
 					<div class="col-lg-6 col-12">
 						<nb-card class="custom job">
 							<h6 class="role">
-								{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL'
-										| translate
-								}}
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_URL' | translate }}
 							</h6>
-							<a
-								*ngIf="jobPostLink"
-								[href]="jobPostLink"
-								target="_blank"
-							>
+							<a *ngIf="jobPostLink" [href]="jobPostLink" target="_blank">
 								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.VIEW_JOB_POST' | translate }}
-							</a >
+							</a>
 						</nb-card>
 					</div>
 					<div class="col-lg-6 col-12">
 						<nb-card class="custom job">
 							<h6 class="role">
-								{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON'
-										| translate
-								}}
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_SENT_ON' | translate }}
 							</h6>
-							{{
-								proposal?.valueDate
-									| date: 'shortDate'
-									| dateFormat
-							}}
+							{{ proposal?.valueDate | date : 'shortDate' | dateFormat }}
 						</nb-card>
 					</div>
 				</div>
@@ -87,30 +61,20 @@
 					<div class="col-lg-6 col-12">
 						<nb-card class="custom cont">
 							<h6 class="role">
-								{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT'
-										| translate
-								}}
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
 							</h6>
 							<div [innerHTML]="jobPostContent"></div>
 							<div class="tags">
-								<nb-badge
-									*ngFor="let tag of proposal?.tags"
-									class="color"
-									position="centered"
-									[style.background]="tag.color"
-									[text]="tag.name"
-								></nb-badge>
+								<ng-container *ngFor="let tag of proposal?.tags">
+									<nb-badge class="color" [style.background]="tag.color" [text]="tag.name"></nb-badge>
+								</ng-container>
 							</div>
 						</nb-card>
 					</div>
 					<div class="col-lg-6 col-12">
 						<nb-card class="custom cont">
 							<h6 class="role">
-								{{
-									'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT'
-										| translate
-								}}
+								{{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
 							</h6>
 							<div [innerHTML]="proposalContent"></div>
 						</nb-card>

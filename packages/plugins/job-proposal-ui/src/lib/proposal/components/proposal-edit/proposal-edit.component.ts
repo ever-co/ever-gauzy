@@ -5,9 +5,15 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { OrganizationSettingService, ProposalsService, ToastrService, UrlPatternValidator } from '@gauzy/ui-core/core';
-import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { IProposal, ITag } from '@gauzy/contracts';
+import {
+	ErrorHandlingService,
+	OrganizationSettingService,
+	ProposalsService,
+	ToastrService,
+	UrlPatternValidator
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 
@@ -18,18 +24,18 @@ import { ckEditorConfig } from '@gauzy/ui-core/shared';
 	styleUrls: ['./proposal-edit.component.scss']
 })
 export class ProposalEditComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
-	proposal: IProposal;
-	ckConfig: CKEditor4.Config = ckEditorConfig;
+	public proposal: IProposal;
+	public ckConfig: CKEditor4.Config = ckEditorConfig;
 
 	/*
 	 * Proposal Mutation Form
 	 */
-	public form: UntypedFormGroup = ProposalEditComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ProposalEditComponent.buildForm(this._fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: ProposalEditComponent): UntypedFormGroup {
 		return fb.group(
 			{
 				jobPostUrl: [],
-				valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
+				valueDate: [self._organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 				jobPostContent: [null, Validators.required],
 				proposalContent: [null, Validators.required],
 				tags: [],
@@ -43,40 +49,26 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 	}
 
 	constructor(
-		private readonly route: ActivatedRoute,
-		private readonly fb: UntypedFormBuilder,
-		private readonly router: Router,
-		private readonly toastrService: ToastrService,
-		private readonly proposalsService: ProposalsService,
-		public readonly translate: TranslateService,
-		private readonly organizationSettingService: OrganizationSettingService,
-		private readonly cdRef: ChangeDetectorRef
+		public readonly translateService: TranslateService,
+		private readonly _route: ActivatedRoute,
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _router: Router,
+		private readonly _toastrService: ToastrService,
+		private readonly _proposalsService: ProposalsService,
+		private readonly _organizationSettingService: OrganizationSettingService,
+		private readonly _cdRef: ChangeDetectorRef,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
-		super(translate);
+		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.route.data
+		this._route.data
 			.pipe(
 				debounceTime(100),
 				distinctUntilChange(),
 				filter((data) => !!data && !!data.proposal),
-				tap(({ proposal }) => {
-					try {
-						this.proposal = Object.assign({}, proposal, {
-							jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
-							jobTitle: proposal.jobPostContent
-								.toString()
-								.replace(/<[^>]*(>|$)|&nbsp;/g, '')
-								.split(/[\s,\n]+/)
-								.slice(0, 3)
-								.join(' '),
-							author: proposal.employee
-						});
-					} catch (error) {
-						this.router.navigate(['/pages/sales/proposals']);
-					}
-				}),
+				tap(({ proposal }) => this.selectProposal(proposal)),
 				tap(() => this._patchFormValue()),
 				untilDestroyed(this)
 			)
@@ -84,35 +76,65 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 	}
 
 	ngAfterViewInit(): void {
-		this.cdRef.detectChanges();
+		this._cdRef.detectChanges();
 	}
 
 	/**
-	 * Patches the form values based on the current proposal data.
+	 * Selects the proposal and sets the form values.
 	 *
-	 * This method checks if a proposal exists and, if so, populates the form fields with
-	 * the relevant data from the proposal. This can be useful for initializing or editing a form.
+	 * @param proposal
+	 */
+	selectProposal(proposal: IProposal): void {
+		try {
+			this.proposal = Object.assign({}, proposal, {
+				jobPostLink: proposal.jobPostUrl ? proposal.jobPostUrl : '',
+				jobTitle: proposal.jobPostContent
+					.toString()
+					.replace(/<[^>]*(>|$)|&nbsp;/g, '')
+					.split(/[\s,\n]+/)
+					.slice(0, 3)
+					.join(' '),
+				author: proposal.employee
+			});
+		} catch (error) {
+			console.log('Error while selecting proposal', error);
+			this._router.navigate(['/pages/sales/proposals']);
+		}
+	}
+
+	/**
+	 * Patches the form with values from the current proposal, if available.
+	 *
+	 * This method populates the form fields with data from the existing proposal,
+	 * which is useful for initializing or editing a form.
 	 */
 	private _patchFormValue(): void {
-		// Check if the proposal object exists
 		if (!this.proposal) {
 			console.warn('No proposal found to patch the form.');
-			return; // Exit early if there's no proposal
+			return;
 		}
 
-		// Patch the form with values from the existing proposal
+		const {
+			jobPostUrl,
+			valueDate,
+			jobPostContent,
+			proposalContent,
+			organizationContact,
+			tags = [],
+			employee
+		} = this.proposal;
+
 		this.form.patchValue({
-			jobPostUrl: this.proposal.jobPostUrl,
-			valueDate: this.proposal.valueDate,
-			jobPostContent: this.proposal.jobPostContent,
-			proposalContent: this.proposal.proposalContent,
-			organizationContact: this.proposal.organizationContact,
-			tags: this.proposal.tags,
-			employee: this.proposal.employee
+			jobPostUrl,
+			valueDate,
+			jobPostContent,
+			proposalContent,
+			organizationContact,
+			tags,
+			employee
 		});
 
-		// Optional: Trigger form validation to ensure the form's state is consistent
-		this.form.updateValueAndValidity();
+		this.form.updateValueAndValidity(); // Ensure the form's state is consistent
 	}
 
 	/**
@@ -137,7 +159,7 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 			const { jobPostContent, jobPostUrl, proposalContent, tags, organizationContact } = this.form.value;
 
 			// Update the proposal with new values
-			await this.proposalsService.update(this.proposal.id, {
+			await this._proposalsService.update(this.proposal.id, {
 				tenantId,
 				organizationId,
 				jobPostContent,
@@ -148,13 +170,14 @@ export class ProposalEditComponent extends TranslationBaseComponent implements O
 			});
 
 			// Show success message upon successful update
-			this.toastrService.success('NOTES.PROPOSALS.EDIT_PROPOSAL');
+			this._toastrService.success('NOTES.PROPOSALS.EDIT_PROPOSAL');
 
 			// Navigate to the proposals page after editing
-			this.router.navigate(['/pages/sales/proposals']);
+			this._router.navigate(['/pages/sales/proposals']);
 		} catch (error) {
+			console.log('Error while editing proposal', error);
 			// Handle errors that occur during the update
-			this.toastrService.danger(error); // Display error message
+			this._errorHandlingService.handleError(error);
 		}
 	}
 

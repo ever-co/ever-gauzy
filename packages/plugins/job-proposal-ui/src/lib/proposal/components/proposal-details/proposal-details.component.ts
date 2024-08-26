@@ -1,9 +1,9 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { IEmployee, IProposal, IUser } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
+import { IEmployee, IProposal, IUser } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -13,12 +13,12 @@ import { Store } from '@gauzy/ui-core/core';
 	styleUrls: ['./proposal-details.component.scss']
 })
 export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestroy {
-	user: IUser;
-	employee: IEmployee;
-	proposal: IProposal;
-	jobPostLink: SafeHtml;
-	jobPostContent: SafeHtml;
-	proposalContent: SafeHtml;
+	public user: IUser;
+	public employee: IEmployee;
+	public proposal: IProposal;
+	public jobPostLink: SafeHtml;
+	public jobPostContent: SafeHtml;
+	public proposalContent: SafeHtml;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -65,12 +65,18 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 			.subscribe();
 	}
 
+	/**
+	 * Sets the proposal data.
+	 */
 	setProposal() {
 		this.jobPostLink = this.proposal.jobPostUrl;
 		this.jobPostContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.jobPostContent);
 		this.proposalContent = this.sanitizer.bypassSecurityTrustHtml(this.proposal.proposalContent);
 	}
 
+	/**
+	 * Navigates to the edit page of the proposal.
+	 */
 	edit() {
 		if (this.proposal) {
 			this.router.navigate([`/pages/sales/proposals/edit`, this.proposal.id]);

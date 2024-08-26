@@ -2191,45 +2191,44 @@
 		"ANONYMOUS": "Anonymous"
 	},
 	"PROPOSALS_PAGE": {
-		"HEADER": "Proposals Management Page",
-		"STATISTICS": "Statistics",
-		"ACCEPTED_PROPOSALS": "Accepted Proposals",
-		"TOTAL_PROPOSALS": "Total Proposals",
-		"SUCCESS_RATE": "Success Rate",
-		"PROPOSALS": "Proposals",
+		"HEADER": "הצעות - ניהול",
+		"STATISTICS": "סטטיסטיקה",
+		"ACCEPTED_PROPOSALS": "הצעות שהתקבלו",
+		"TOTAL_PROPOSALS": "סך כל ההצעות",
+		"SUCCESS_RATE": "שיעור הצלחה",
+		"PROPOSALS": "הצעות",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Register Proposal",
-			"AUTHOR": "Author",
-			"TEMPLATE": "Template",
-			"JOB_POST_URL": "Job Post URL",
-			"PICK_A_DATE": "תבחר תאריך",
-			"PROPOSAL_DATE": "Proposal Date",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"UPLOAD": "Upload",
-			"PROPOSALS_CONTENT": "Proposal Content",
-			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+			"REGISTER_PROPOSALS": "רישום הצעה",
+			"AUTHOR": "מחבר",
+			"TEMPLATE": "תבנית",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PICK_A_DATE": "בחר תאריך",
+			"PROPOSAL_DATE": "תאריך הצעה",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"UPLOAD": "העלה",
+			"PROPOSALS_CONTENT": "תוכן הצעה",
+			"REGISTER_PROPOSALS_BUTTON": "רשום הצעה"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "ערוך",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"STATUS": "עבודה",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"VIEW_JOB_POST": "View Job Post"
+			"PROPOSAL_DETAILS": "פרטי הצעה",
+			"AUTHOR": "מחבר",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PROPOSAL_SENT_ON": "הצעה נשלחה בתאריך",
+			"STATUS": "סטטוס",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"PROPOSAL_CONTENT": "תוכן הצעה",
+			"VIEW_JOB_POST": "צפה במשרה"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"EDIT_PROPOSAL": "ערוך הצעה",
+			"AUTHOR": "מחבר",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PROPOSAL_SENT_ON": "הצעה נשלחה בתאריך",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"PROPOSAL_CONTENT": "תוכן הצעה",
+			"EDIT_PROPOSAL_BUTTON": "ערוך הצעה",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "כתובת URL של משרה"
 			}
 		}
 	},

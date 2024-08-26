@@ -2203,40 +2203,39 @@
 		"ACCEPTED_PROPOSALS": "Приети предложения",
 		"TOTAL_PROPOSALS": "Общо предложения",
 		"SUCCESS_RATE": "Успеваемост",
-		"PROPOSALS": "Proposals",
+		"PROPOSALS": "Предложения",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Register Proposal",
+			"REGISTER_PROPOSALS": "Регистрирай предложение",
 			"AUTHOR": "Автор",
-			"TEMPLATE": "Template",
-			"JOB_POST_URL": "Job Post URL",
+			"TEMPLATE": "Шаблон",
+			"JOB_POST_URL": "URL на обява за работа",
 			"PICK_A_DATE": "Изберете дата",
-			"PROPOSAL_DATE": "Proposal Date",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"UPLOAD": "Upload",
-			"PROPOSALS_CONTENT": "Proposal Content",
-			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+			"PROPOSAL_DATE": "Дата на предложението",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"UPLOAD": "Качване",
+			"PROPOSALS_CONTENT": "Съдържание на предложението",
+			"REGISTER_PROPOSALS_BUTTON": "Регистрирай предложение"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Редактиране",
+			"PROPOSAL_DETAILS": "Детайли на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
 			"STATUS": "Статус",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"VIEW_JOB_POST": "Преглед на публикация"
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"VIEW_JOB_POST": "Преглед на обява"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
+			"EDIT_PROPOSAL": "Редактиране на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"EDIT_PROPOSAL_BUTTON": "Редактиране на предложението",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "URL на обява за работа"
 			}
 		}
 	},

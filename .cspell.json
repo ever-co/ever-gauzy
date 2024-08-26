@@ -508,7 +508,8 @@
 		"serverapi",
 		"serializables",
 		"drppicker",
-		"titlebar"
+		"titlebar",
+		"xaxis"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
