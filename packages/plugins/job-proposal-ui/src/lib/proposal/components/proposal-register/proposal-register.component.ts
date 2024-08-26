@@ -8,6 +8,18 @@ import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { NbDateService } from '@nebular/theme';
 import * as moment from 'moment';
 import {
+	ITag,
+	IOrganization,
+	IEmployee,
+	IEmployeeProposalTemplate,
+	IOrganizationContact,
+	ISelectedEmployee,
+	ID
+} from '@gauzy/contracts';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import {
+	ErrorHandlingService,
 	OrganizationSettingService,
 	ProposalsService,
 	Store,
@@ -15,16 +27,6 @@ import {
 	UrlPatternValidator
 } from '@gauzy/ui-core/core';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
-import {
-	ITag,
-	IOrganization,
-	IEmployee,
-	IEmployeeProposalTemplate,
-	IOrganizationContact,
-	ISelectedEmployee
-} from '@gauzy/contracts';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -34,21 +36,21 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {
 	proposalTemplate: IEmployeeProposalTemplate;
-	proposalTemplateId: IEmployeeProposalTemplate['id'];
+	proposalTemplateId: ID;
 	organization: IOrganization;
 	ckConfig: CKEditor4.Config = ckEditorConfig;
-	minDate: Date;
 	selectedEmployee: IEmployee;
+	minDate: Date;
 
 	/*
 	 * Payment Mutation Form
 	 */
-	public form: UntypedFormGroup = ProposalRegisterComponent.buildForm(this.fb, this);
+	public form: UntypedFormGroup = ProposalRegisterComponent.buildForm(this._fb, this);
 	static buildForm(fb: UntypedFormBuilder, self: ProposalRegisterComponent): UntypedFormGroup {
 		return fb.group(
 			{
 				jobPostUrl: [],
-				valueDate: [self.organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
+				valueDate: [self._organizationSettingService.getDateFromOrganizationSettings(), Validators.required],
 				jobPostContent: ['', Validators.required],
 				proposalContent: ['', Validators.required],
 				tags: [],
@@ -62,22 +64,23 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 	}
 
 	constructor(
-		private readonly fb: UntypedFormBuilder,
-		private readonly store: Store,
-		private readonly router: Router,
-		private readonly proposalsService: ProposalsService,
-		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
-		private readonly cdRef: ChangeDetectorRef,
-		private readonly organizationSettingService: OrganizationSettingService,
-		private readonly dateService: NbDateService<Date>
+		private readonly _fb: UntypedFormBuilder,
+		private readonly _store: Store,
+		private readonly _router: Router,
+		private readonly _dateService: NbDateService<Date>,
+		private readonly _proposalsService: ProposalsService,
+		private readonly _toastrService: ToastrService,
+		private readonly _cdRef: ChangeDetectorRef,
+		private readonly _organizationSettingService: OrganizationSettingService,
+		private readonly _errorHandlingService: ErrorHandlingService
 	) {
 		super(translateService);
-		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
+		this.minDate = this._dateService.addMonth(this._dateService.today(), 0);
 	}
 
 	ngOnInit(): void {
-		this.store.selectedOrganization$
+		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
 				filter((organization: IOrganization) => !!organization),
@@ -88,7 +91,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 	}
 
 	ngAfterViewInit(): void {
-		this.cdRef.detectChanges();
+		this._cdRef.detectChanges();
 	}
 
 	/**
@@ -150,7 +153,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 
 		if (!employee) {
 			// No employee selected, show a specific message
-			this.toastrService.success(
+			this._toastrService.success(
 				'NOTES.PROPOSALS.REGISTER_PROPOSAL_NO_EMPLOYEE_SELECTED',
 				null,
 				'TOASTR.MESSAGE.REGISTER_PROPOSAL_NO_EMPLOYEE_MSG'
@@ -162,7 +165,7 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 			const { id: organizationId, tenantId } = this.organization; // Extract current tenant ID & organization ID
 
 			// Create the new proposal with the collected data
-			await this.proposalsService.create({
+			await this._proposalsService.create({
 				organizationId,
 				tenantId,
 				jobPostUrl,
@@ -177,15 +180,15 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 			});
 
 			// Show success message and navigate to the sales/proposals page with query params
-			this.toastrService.success('NOTES.PROPOSALS.REGISTER_PROPOSAL');
-			this.router.navigate(['/pages/sales/proposals'], {
-				queryParams: {
-					date: moment(valueDate).format('MM-DD-YYYY')
-				}
+			this._toastrService.success('NOTES.PROPOSALS.REGISTER_PROPOSAL');
+
+			// Navigate to the proposals page with query params
+			this._router.navigate(['/pages/sales/proposals'], {
+				queryParams: { date: moment(valueDate).format('MM-DD-YYYY') }
 			});
 		} catch (error) {
 			// Handle error cases, show an appropriate message
-			this.toastrService.danger(error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
@@ -194,8 +197,8 @@ export class ProposalRegisterComponent extends TranslationBaseComponent implemen
 	 *
 	 * @param organizationContact The selected organization contact to be set in the form.
 	 */
-	selectOrganizationContact(organizationContact: IOrganizationContact) {
-		this.form.get('organizationContact').setValue(organizationContact);
+	selectOrganizationContact(contact: IOrganizationContact) {
+		this.form.get('organizationContact').setValue(contact);
 		this.form.get('organizationContact').updateValueAndValidity();
 	}
 

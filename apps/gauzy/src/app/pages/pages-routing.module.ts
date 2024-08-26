@@ -109,7 +109,7 @@ const routes: Routes = [
 				children: [
 					{
 						path: 'proposals',
-						loadChildren: () => import('./proposals/proposals.module').then((m) => m.ProposalsModule)
+						loadChildren: () => import('@gauzy/plugin-job-proposal-ui').then((m) => m.JobProposalModule)
 					},
 					{
 						path: 'estimates',

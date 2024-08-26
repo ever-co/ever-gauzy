@@ -6,6 +6,7 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { Cell } from 'angular2-smart-table';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IProposal,
 	ComponentLayoutStyleEnum,
@@ -16,9 +17,9 @@ import {
 	IDateRangePicker,
 	ITag,
 	PermissionsEnum,
-	IEmployee
+	IEmployee,
+	ID
 } from '@gauzy/contracts';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
@@ -48,15 +49,15 @@ import {
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-proposals',
-	templateUrl: './proposals.component.html',
-	styleUrls: ['./proposals.component.scss']
+	selector: 'ga-proposal-list',
+	templateUrl: './proposal.component.html',
+	styleUrls: ['./proposal.component.scss']
 })
-export class ProposalsComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public smartTableSettings: object;
-	public selectedEmployeeId: IEmployee['id'] | null;
+	public selectedEmployeeId: ID | null;
 	public selectedDateRange: IDateRangePicker;
-	public proposals: IProposalViewModel[];
+	public proposals: IProposal[] = [];
 	public smartTableSource: ServerDataSource;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -73,15 +74,15 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 	private _refresh$: Subject<any> = new Subject();
 
 	constructor(
-		private readonly store: Store,
-		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		private readonly router: Router,
-		private readonly proposalsService: ProposalsService,
-		private readonly toastrService: ToastrService,
-		private readonly dialogService: NbDialogService,
-		private readonly errorHandler: ErrorHandlingService,
 		readonly translateService: TranslateService,
-		private readonly httpClient: HttpClient
+		private readonly _store: Store,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService,
+		private readonly _router: Router,
+		private readonly _proposalsService: ProposalsService,
+		private readonly _toastrService: ToastrService,
+		private readonly _dialogService: NbDialogService,
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _httpClient: HttpClient
 	) {
 		super(translateService);
 		this.setView();
@@ -90,7 +91,6 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 	ngOnInit() {
 		this._loadSmartTableSettings();
 		this._applyTranslationOnSmartTable();
-
 		// Subscribe to changes in the proposals$ observable stream
 		this.proposals$
 			.pipe(
@@ -118,9 +118,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 			)
 			.subscribe();
 		// Combine observable streams to react to changes in organization, date range, and employee
-		const storeOrganization$ = this.store.selectedOrganization$;
-		const storeDateRange$ = this.dateRangePickerBuilderService.selectedDateRange$;
-		const storeEmployee$ = this.store.selectedEmployee$;
+		const storeOrganization$ = this._store.selectedOrganization$;
+		const storeDateRange$ = this._dateRangePickerBuilderService.selectedDateRange$;
+		const storeEmployee$ = this._store.selectedEmployee$;
 		combineLatest([storeOrganization$, storeDateRange$, storeEmployee$])
 			.pipe(
 				// Wait for 500 milliseconds to debounce rapid changes
@@ -159,7 +159,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 
 	ngAfterViewInit() {
 		// Check if a user exists in the store and the user lacks a specific permission
-		if (this.store.user && !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (this._store.user && !this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			// Delete the 'author' column from the smartTableSettings.columns object
 			delete this.smartTableSettings['columns']['author'];
 
@@ -172,7 +172,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 	 * Sets the view based on the component layout.
 	 */
 	setView(): void {
-		this.store
+		this._store
 			.componentLayout$(this.viewComponentName)
 			.pipe(
 				distinctUntilChange(),
@@ -203,7 +203,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 
 		// If a proposal is selected, navigate to its details page
 		if (this.selectedProposal) {
-			this.router.navigate([`/pages/sales/proposals/details`, this.selectedProposal.id]);
+			this._router.navigate([`/pages/sales/proposals/details`, this.selectedProposal.id]);
 		}
 	}
 
@@ -221,7 +221,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 		}
 
 		// Open the dialog for user confirmation
-		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
+		const dialogRef = this._dialogService.open(DeleteConfirmationComponent, {
 			context: {
 				recordType: 'Proposal'
 			}
@@ -239,14 +239,14 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					const { id: proposalId } = this.selectedProposal;
 
 					// Delete the proposal
-					await this.proposalsService.delete(proposalId);
+					await this._proposalsService.delete(proposalId);
 
 					// Display a success message
-					this.toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
+					this._toastrService.success('NOTES.PROPOSALS.DELETE_PROPOSAL');
 				}
 			} catch (error) {
 				// Handle errors during the process
-				this.errorHandler.handleError(error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				// Trigger refresh actions
 				this._refresh$.next(true);
@@ -269,7 +269,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 		}
 
 		// Open the dialog for user confirmation
-		const dialogRef = this.dialogService.open(ActionConfirmationComponent, {
+		const dialogRef = this._dialogService.open(ActionConfirmationComponent, {
 			context: {
 				recordType: 'status'
 			}
@@ -288,18 +288,18 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					const { id: proposalId } = this.selectedProposal;
 
 					// Update the proposal status to "ACCEPTED"
-					await this.proposalsService.update(proposalId, {
+					await this._proposalsService.update(proposalId, {
 						status: ProposalStatusEnum.ACCEPTED,
 						organizationId,
 						tenantId
 					});
 
 					// TODO: Translate the success message
-					this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_ACCEPTED');
+					this._toastrService.success('NOTES.PROPOSALS.PROPOSAL_ACCEPTED');
 				}
 			} catch (error) {
 				// Handle errors during the process
-				this.errorHandler.handleError(error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				// Trigger refresh actions
 				this._refresh$.next(true);
@@ -322,7 +322,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 		}
 
 		// Open the dialog for user confirmation
-		const dialogRef = this.dialogService.open(ActionConfirmationComponent, {
+		const dialogRef = this._dialogService.open(ActionConfirmationComponent, {
 			context: {
 				recordType: 'status'
 			}
@@ -341,17 +341,17 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 					const { id: proposalId } = this.selectedProposal;
 
 					// Update the proposal status to "SENT"
-					await this.proposalsService.update(proposalId, {
+					await this._proposalsService.update(proposalId, {
 						status: ProposalStatusEnum.SENT,
 						organizationId,
 						tenantId
 					});
 
-					this.toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
+					this._toastrService.success('NOTES.PROPOSALS.PROPOSAL_SENT');
 				}
 			} catch (error) {
 				// Handle errors during the process
-				this.errorHandler.handleError(error);
+				this._errorHandlingService.handleError(error);
 			} finally {
 				this._refresh$.next(true);
 				this.proposals$.next(true);
@@ -382,6 +382,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 		};
 	};
 
+	/**
+	 * Load Smart Table settings to configure the component.
+	 */
 	private _loadSmartTableSettings() {
 		const pagination: IPaginationBase = this.getPagination();
 		this.smartTableSettings = {
@@ -538,7 +541,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 		const { id: organizationId, tenantId } = this.organization;
 		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this.selectedDateRange);
 
-		this.smartTableSource = new ServerDataSource(this.httpClient, {
+		this.smartTableSource = new ServerDataSource(this._httpClient, {
 			endPoint: `${API_PREFIX}/proposal/pagination`,
 			relations: ['organization', 'employee', 'employee.user', 'tags', 'organizationContact'],
 			join: {
@@ -556,9 +559,9 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 			},
 			resultMap: (proposal: IProposal) => this.proposalMapper(proposal),
 			finalize: () => {
-				//
+				// Calculate the statistics
 				this.calculateStatistics();
-				//
+				// Set pagination
 				this.setPagination({
 					...this.getPagination(),
 					totalItems: this.smartTableSource.count()
@@ -595,6 +598,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 
 	/**
 	 * Maps properties of an IProposal object to a new object with a modified structure.
+	 *
 	 * @param item - The IProposal object to be mapped.
 	 * @returns {object} - The mapped object.
 	 */
@@ -636,6 +640,8 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 
 			// Set paging and sorting for the smart table source
 			this.smartTableSource.setPaging(activePage, itemsPerPage, false);
+
+			// Set sort for the smart table source
 			this.smartTableSource.setSort(
 				[
 					{
@@ -646,6 +652,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 				false
 			);
 
+			// If the layout style is GRID, initiate GRID view pagination
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
 				// If the layout style is GRID, initiate GRID view pagination
 				await this.smartTableSource.getElements();
@@ -661,7 +668,7 @@ export class ProposalsComponent extends PaginationFilterBaseComponent implements
 			}
 		} catch (error) {
 			// Handle errors by displaying a danger toastr message
-			this.toastrService.danger(error);
+			this._errorHandlingService.handleError(error);
 		}
 	}
 
