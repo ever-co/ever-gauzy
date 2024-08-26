@@ -1,0 +1,7 @@
+<div class="switch-container">
+	<span *ngIf="hasText">{{ 'SETTINGS_MENU.LIGHT' | translate }}/{{
+		'SETTINGS_MENU.DARK' | translate
+		}}</span>
+	<nb-toggle class="switch" [checked]="switch" [ngClass]="(switch) ? 'dark' : 'light'" (checkedChange)="switchTheme()"
+		size="small"></nb-toggle>
+</div>

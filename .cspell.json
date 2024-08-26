@@ -509,6 +509,11 @@
 		"serializables",
 		"drppicker",
 		"titlebar",
+		"raleway",
+		"browserslist",
+		"flexbox",
+		"nbinput",
+		"nbbutton",
 		"xaxis"
 	],
 	"useGitignore": true,
