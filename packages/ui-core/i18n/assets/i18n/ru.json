@@ -2198,45 +2198,44 @@
 		"ANONYMOUS": "Анонимный"
 	},
 	"PROPOSALS_PAGE": {
-		"HEADER": "Страница управления предложениями",
+		"HEADER": "Предложения - управление",
 		"STATISTICS": "Статистика",
 		"ACCEPTED_PROPOSALS": "Принятые предложения",
 		"TOTAL_PROPOSALS": "Всего предложений",
-		"SUCCESS_RATE": "Скорость успеха",
+		"SUCCESS_RATE": "Успешность",
 		"PROPOSALS": "Предложения",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Регистрация предложения",
+			"REGISTER_PROPOSALS": "Зарегистрировать предложение",
 			"AUTHOR": "Автор",
 			"TEMPLATE": "Шаблон",
-			"JOB_POST_URL": "URL записи задания",
-			"PICK_A_DATE": "Выбрать дату",
+			"JOB_POST_URL": "URL объявления о работе",
+			"PICK_A_DATE": "Выберите дату",
 			"PROPOSAL_DATE": "Дата предложения",
-			"JOB_POST_CONTENT": "Контент должности",
-			"UPLOAD": "Выгрузить",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
+			"UPLOAD": "Загрузить",
 			"PROPOSALS_CONTENT": "Содержание предложения",
-			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
+			"REGISTER_PROPOSALS_BUTTON": "Зарегистрировать предложение"
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Детали предложения",
-			"EDIT": "Редактировать",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "URL записи задания",
+			"JOB_POST_URL": "URL объявления о работе",
 			"PROPOSAL_SENT_ON": "Предложение отправлено",
 			"STATUS": "Статус",
-			"JOB_POST_CONTENT": "Контент должности",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
 			"PROPOSAL_CONTENT": "Содержание предложения",
-			"VIEW_JOB_POST": "Просмотр должности"
+			"VIEW_JOB_POST": "Просмотр объявления"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Изменить предложение",
+			"EDIT_PROPOSAL": "Редактировать предложение",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "URL записи задания",
+			"JOB_POST_URL": "URL объявления о работе",
 			"PROPOSAL_SENT_ON": "Предложение отправлено",
-			"JOB_POST_CONTENT": "Контент должности",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
 			"PROPOSAL_CONTENT": "Содержание предложения",
-			"EDIT_PROPOSAL_BUTTON": "Изменить предложение",
+			"EDIT_PROPOSAL_BUTTON": "Редактировать предложение",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "URL записи задания"
+				"JOB_POST_URL": "URL объявления о работе"
 			}
 		}
 	},
