@@ -17,6 +17,7 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgChartsModule } from 'ng2-charts';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { CKEditorModule } from 'ckeditor4-angular';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService, PermissionsGuard } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
@@ -32,9 +33,19 @@ import {
 	TagsColorInputModule,
 	DateRangePickerResolver
 } from '@gauzy/ui-core/shared';
-import { createJobProposalRoutes } from './job-proposal.routes';
-import { COMPONENTS } from './components';
+import { createProposalsRoutes } from './job-proposal.routes';
+import { COMPONENTS, ProposalDetailsComponent, ProposalEditComponent, ProposalRegisterComponent } from './components';
 import { ProposalComponent } from './components/proposal/proposal.component';
+import { ProposalDetailsResolver } from './resolvers/proposal-details.resolver';
+
+/**
+ * Redirects to the dashboard page
+ *
+ * @returns
+ */
+function redirectTo() {
+	return '/pages/dashboard';
+}
 
 /**
  * NB Modules
@@ -89,7 +100,7 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (service: PageRouteRegistryService) => createJobProposalRoutes(service),
+			useFactory: (service: PageRouteRegistryService) => createProposalsRoutes(service),
 			deps: [PageRouteRegistryService],
 			multi: true
 		}
@@ -136,6 +147,74 @@ export class JobProposalModule {
 				datePicker: { unitOfTime: 'month' }
 			},
 			resolve: { dates: DateRangePickerResolver }
+		});
+
+		// Register Job Proposal Register Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			// Register the location 'jobs'
+			location: 'proposals',
+			// Register the path 'proposal-template'
+			path: 'register',
+			// Register the component
+			component: ProposalRegisterComponent,
+			// Register the canActivate guard
+			canActivate: [PermissionsGuard],
+			// Register the data object
+			data: {
+				permissions: {
+					only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
+					redirectTo
+				},
+				selectors: {
+					employee: false,
+					project: false,
+					team: false
+				},
+				datePicker: { unitOfTime: 'month' }
+			},
+			resolve: { dates: DateRangePickerResolver }
+		});
+
+		// Register Job Proposal Details Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			// Register the location 'jobs'
+			location: 'proposals',
+			// Register the path 'proposal-template'
+			path: 'details/:id',
+			// Register the component
+			component: ProposalDetailsComponent,
+			// Register the canActivate guard
+			canActivate: [PermissionsGuard],
+			// Register the data object
+			data: {
+				permissions: {
+					only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
+					redirectTo
+				},
+				selectors: false
+			},
+			resolve: { proposal: ProposalDetailsResolver }
+		});
+
+		// Register Job Proposal Edit Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			// Register the location 'jobs'
+			location: 'proposals',
+			// Register the path 'proposal-template'
+			path: 'edit/:id',
+			// Register the component
+			component: ProposalEditComponent,
+			// Register the canActivate guard
+			canActivate: [PermissionsGuard],
+			// Register the data object
+			data: {
+				permissions: {
+					only: [PermissionsEnum.ORG_PROPOSALS_EDIT],
+					redirectTo
+				},
+				selectors: false
+			},
+			resolve: { proposal: ProposalDetailsResolver }
 		});
 
 		// Set hasRegisteredRoutes to true
