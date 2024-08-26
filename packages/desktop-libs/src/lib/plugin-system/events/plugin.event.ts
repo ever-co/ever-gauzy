@@ -2,9 +2,11 @@ import { ipcMain, IpcMainEvent } from 'electron';
 import * as logger from 'electron-log';
 import { PluginManager } from '../data-access/plugin-manager';
 import { IPluginManager, PluginChannel, PluginHandlerChannel } from '../shared';
+import { PluginEventManager } from './plugin-event.manager';
 
 class ElectronPluginListener {
 	private pluginManager: IPluginManager;
+	private eventManager = PluginEventManager.getInstance();
 
 	constructor(pluginManager: IPluginManager) {
 		this.pluginManager = pluginManager;
@@ -61,6 +63,7 @@ class ElectronPluginListener {
 		return async (event: IpcMainEvent, ...args: any[]) => {
 			try {
 				await handler.call(this, event, ...args);
+				this.eventManager.notify();
 			} catch (error: any) {
 				logger.error('Error handling event:', error);
 				event.reply(PluginChannel.STATUS, { status: 'error', message: error?.message ?? String(error) });
@@ -112,7 +115,7 @@ class ElectronPluginListener {
 }
 
 export async function pluginListeners(): Promise<void> {
-	const pluginManager: IPluginManager = new PluginManager();
+	const pluginManager: IPluginManager = PluginManager.getInstance();
 	const listener = new ElectronPluginListener(pluginManager);
 	listener.registerListeners();
 	listener.registerHandlers();

@@ -1,18 +1,30 @@
-import { app } from 'electron';
+import { app, MenuItemConstructorOptions } from 'electron';
 import * as logger from 'electron-log';
 import * as fs from 'fs';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
+import { PluginEventManager } from '../events/plugin-event.manager';
 import { IPlugin, IPluginManager, IPluginMetadata, PluginDownloadContextType } from '../shared';
 import { lazyLoader } from '../shared/lazy-loader';
 import { DownloadContextFactory } from './download-context.factory';
 
 export class PluginManager implements IPluginManager {
 	private plugins: Map<string, IPlugin> = new Map();
-	private activePlugins: Set<string> = new Set();
+	private activePlugins: Set<IPlugin> = new Set();
 	private pluginMetadataService = new PluginMetadataService();
 	private pluginPath = path.join(app.getPath('userData'), 'plugins');
 	private factory = DownloadContextFactory;
+	private eventManager = PluginEventManager.getInstance();
+	private static instance: IPluginManager;
+
+	private constructor() {}
+
+	public static getInstance(): IPluginManager {
+		if (!this.instance) {
+			this.instance = new PluginManager();
+		}
+		return this.instance;
+	}
 
 	public async downloadPlugin<U>(config: U, contextType?: PluginDownloadContextType): Promise<void> {
 		logger.info(`Downloading plugin...`);
@@ -25,7 +37,7 @@ export class PluginManager implements IPluginManager {
 		} else {
 			await this.installPlugin(metadata, pathDirname);
 		}
-		fs.rmSync(pathDirname, { recursive: true, force: true });
+		fs.rmSync(pathDirname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
 		process.noAsar = false;
 	}
 
@@ -86,19 +98,19 @@ export class PluginManager implements IPluginManager {
 	public async activatePlugin(name: string): Promise<void> {
 		const plugin = this.plugins.get(name);
 		if (plugin) {
-			plugin.activate();
-			this.activePlugins.add(name);
+			await plugin.activate();
+			this.activePlugins.add(plugin);
 			await this.pluginMetadataService.update({ name, isActivate: true });
-			plugin.initialize();
+			await plugin.initialize();
 		}
 	}
 
 	public async deactivatePlugin(name: string): Promise<void> {
 		const plugin = this.plugins.get(name);
 		if (plugin) {
-			plugin.dispose();
-			plugin.deactivate();
-			this.activePlugins.delete(name);
+			await plugin.dispose();
+			await plugin.deactivate();
+			this.activePlugins.delete(plugin);
 			await this.pluginMetadataService.update({ name, isActivate: false });
 		}
 	}
@@ -110,7 +122,7 @@ export class PluginManager implements IPluginManager {
 			await this.deactivatePlugin(name);
 			this.plugins.delete(name);
 			await this.pluginMetadataService.delete({ name });
-			fs.rmSync(metadata.pathname, { recursive: true, force: true });
+			fs.rmSync(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
 			logger.info(`Uninstalling plugin ${name}`);
 		}
 	}
@@ -127,6 +139,7 @@ export class PluginManager implements IPluginManager {
 				await this.activatePlugin(metadata.name);
 			}
 		}
+		this.eventManager.notify();
 	}
 
 	public getAllPlugins(): Promise<IPluginMetadata[]> {
@@ -138,10 +151,21 @@ export class PluginManager implements IPluginManager {
 	}
 
 	public initializePlugins(): void {
-		this.plugins.forEach((plugin) => plugin.initialize());
+		this.activePlugins.forEach(async (plugin) => await plugin.initialize());
 	}
 
 	public disposePlugins(): void {
-		this.plugins.forEach((plugin) => plugin.dispose());
+		this.activePlugins.forEach(async (plugin) => await plugin.dispose());
+	}
+
+	public getMenuPlugins(): MenuItemConstructorOptions[] {
+		try {
+			const plugins = Array.from(this.activePlugins);
+			logger.info('Active Plugins:', plugins);
+			return plugins.map((plugin) => plugin?.menu).filter((menu): menu is MenuItemConstructorOptions => !!menu);
+		} catch (error) {
+			logger.error('Error retrieving plugin submenu:', error);
+			return [];
+		}
 	}
 }
