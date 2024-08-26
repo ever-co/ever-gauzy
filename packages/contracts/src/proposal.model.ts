@@ -37,7 +37,8 @@ export interface IProposalCreateInput extends IProposalBaseCreateInput, IOrganiz
 /**
  * Proposal Find Input
  */
-export interface IProposalFindInput extends Omit<IProposalBase, 'jobPostLink' | 'jobPostContent' | 'proposalContent'> {}
+export interface IProposalFindInput
+	extends Omit<IProposalBase, 'jobPostLink' | 'jobPostContent' | 'proposalContent' | 'jobPostUrl'> {}
 
 /**
  * Proposal View Model
