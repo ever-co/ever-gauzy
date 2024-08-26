@@ -1,22 +1,21 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
+import { environment } from '@gauzy/ui-config';
 import { ServerConnectionService, Store } from '@gauzy/ui-core/core';
 
 @Component({
-	selector: 'ga-server-down-page',
-	styleUrls: ['./server-down.component.scss'],
-	templateUrl: './server-down.component.html'
+	selector: 'ga-maintenance-mode',
+	styleUrls: ['./maintenance-mode.component.scss'],
+	templateUrl: './maintenance-mode.component.html'
 })
-export class ServerDownComponent implements OnInit, OnDestroy {
+export class MaintenanceModeComponent implements OnInit, OnDestroy {
 	noInternetLogo: string;
 	interval: any;
 
 	constructor(
-		private readonly store: Store,
-		private readonly location: Location,
-		private readonly serverConnectionService: ServerConnectionService,
-		@Inject(GAUZY_ENV) private environment: Environment
+		private readonly _store: Store,
+		private readonly _location: Location,
+		private readonly _serverConnectionService: ServerConnectionService
 	) {
 		this.noInternetLogo = environment['NO_INTERNET_LOGO'];
 	}
@@ -29,18 +28,18 @@ export class ServerDownComponent implements OnInit, OnDestroy {
 	 * Checks the server connection every 5 seconds.
 	 */
 	private async checkConnection() {
-		const url = this.environment.API_BASE_URL;
+		const url = environment.API_BASE_URL;
 		console.log('Checking server connection to URL: ', url);
 
 		this.interval = setInterval(async () => {
 			console.log('Checking server connection...');
+			await this._serverConnectionService.checkServerConnection(url);
 
-			await this.serverConnectionService.checkServerConnection(url);
-
-			if (Number(this.store.serverConnection) === 200) {
+			// Check if the server is online
+			if (Number(this._store.serverConnection) === 200) {
 				console.log('Server is online');
 				clearInterval(this.interval);
-				this.location.back();
+				this._location.back();
 			} else {
 				console.log('Server is offline');
 			}
@@ -53,7 +52,7 @@ export class ServerDownComponent implements OnInit, OnDestroy {
 	 * @return {string} The company site name.
 	 */
 	public get companySite(): string {
-		return this.environment.COMPANY_SITE_NAME;
+		return environment.COMPANY_SITE_NAME;
 	}
 
 	ngOnDestroy(): void {}
