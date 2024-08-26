@@ -8,6 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NgxDaterangepickerMd as NgxDateRangePickerMd } from 'ngx-daterangepicker-material';
 import { RecapQuery } from '../../../+state/recap.query';
 import { RecapStore } from '../../../+state/recap.store';
+import { PipeModule } from '../../../../time-tracker/pipes/pipe.module';
 import { dayOfWeekAsString } from './date-picker.utils';
 import { DateRangePickerComponent } from './date-range-picker.component';
 
@@ -22,6 +23,7 @@ import { DateRangePickerComponent } from './date-range-picker.component';
 		NbInputModule,
 		NgSelectModule,
 		TranslateModule,
+		PipeModule,
 		NgxDateRangePickerMd.forRoot({
 			firstDay: dayOfWeekAsString(WeekDaysEnum.MONDAY)
 		})

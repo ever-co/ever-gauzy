@@ -36,7 +36,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'server-down',
-		loadChildren: () => import('./server-down/server-down.module').then((m) => m.ServerDownModule)
+		loadChildren: () => import('@gauzy/plugin-maintenance-ui').then((m) => m.MaintenanceModeModule)
 	},
 	{
 		path: '',

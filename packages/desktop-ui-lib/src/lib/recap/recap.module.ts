@@ -43,6 +43,10 @@ import { AutoRefreshComponent } from './shared/ui/auto-refresh/auto-refresh.comp
 import { ProgressStatusModule } from './shared/ui/progress-status/progress-status.module';
 import { ProjectColumnViewModule } from './shared/ui/project-column-view/project-column-view.module';
 import { StatisticComponent } from './shared/ui/statistic/statistic.component';
+import { WeeklyCalendarComponent } from './weekly/features/weekly-calendar/weekly-calendar.component';
+import { WeeklyProgressComponent } from './weekly/features/weekly-progress/weekly-progress.component';
+import { WeeklyRecapComponent } from './weekly/features/weekly-recap/weekly-recap.component';
+import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/weekly-statistic.component';
 
 @NgModule({
 	declarations: [
@@ -55,7 +59,11 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		StatisticComponent,
 		AutoRefreshComponent,
 		ActivityReportComponent,
-		SegmentedControlComponent
+		SegmentedControlComponent,
+		WeeklyRecapComponent,
+		WeeklyCalendarComponent,
+		WeeklyProgressComponent,
+		WeeklyStatisticComponent
 	],
 	imports: [
 		CommonModule,
@@ -95,6 +103,6 @@ import { StatisticComponent } from './shared/ui/statistic/statistic.component';
 		RequestQuery,
 		RequestStore
 	],
-	exports: [RecapComponent]
+	exports: [RecapComponent, WeeklyRecapComponent]
 })
 export class RecapModule {}

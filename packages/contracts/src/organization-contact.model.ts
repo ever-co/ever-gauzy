@@ -5,18 +5,22 @@ import { IOrganizationCreateInput } from './organization.model';
 import { IUser, LanguagesEnum } from './user.model';
 import { ITag } from './tag.model';
 import { IContact, IContactCreateInput } from './contact.model';
-import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantAndOrganizationEntityMutationInput } from './base-entity.model';
+import {
+	IBasePerTenantAndOrganizationEntityModel,
+	IBasePerTenantAndOrganizationEntityMutationInput,
+	ID
+} from './base-entity.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 
 export interface IOrganizationContactEntityMutationInput {
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 	organizationContact?: Pick<IOrganizationContact, 'id'>;
 }
 
 export interface IRelationalOrganizationContact {
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 }
 
 export interface IOrganizationContact extends IBaseEntityWithMembers, IRelationalImageAsset {
@@ -43,8 +47,7 @@ export enum OrganizationContactBudgetTypeEnum {
 	COST = 'cost'
 }
 
-export interface IOrganizationContactFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationContactFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
 	primaryEmail?: string;
 	primaryPhone?: string;
@@ -54,7 +57,10 @@ export interface IOrganizationContactFindInput
 	createdBy?: string;
 }
 
-export interface IOrganizationContactCreateInput extends IContactCreateInput, IBasePerTenantAndOrganizationEntityMutationInput, IRelationalImageAsset {
+export interface IOrganizationContactCreateInput
+	extends IContactCreateInput,
+		IBasePerTenantAndOrganizationEntityMutationInput,
+		IRelationalImageAsset {
 	name: string;
 	primaryEmail?: string;
 	primaryPhone?: string;

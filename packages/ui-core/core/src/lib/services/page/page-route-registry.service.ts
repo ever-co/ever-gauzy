@@ -104,10 +104,10 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 		return configs.map((config: PageRouteRegistryConfig) => {
 			// Create a new route object
 			const route: Route = {
-				path: config.path,
-				pathMatch: config.path ? 'prefix' : 'full',
-				data: config.data || {},
-				canActivate: config.canActivate || []
+				path: config.path, // Add path property
+				pathMatch: config.path ? 'prefix' : 'full', // Set pathMatch property
+				data: config.data || {}, // Add data property if it exists
+				canActivate: config.canActivate || [] // Add canActivate property if it exists
 			};
 
 			// Check if the route configuration has a component or loadChildren property
@@ -117,6 +117,12 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 			} else if (config.loadChildren) {
 				// Set the loadChildren property to the config object
 				route.loadChildren = config.loadChildren;
+			}
+
+			// Check if the route configuration has a resolve property
+			if (config.resolve) {
+				// Set the resolve property to the config object
+				route.resolve = config.resolve;
 			}
 
 			// Check if the route configuration has additional route options

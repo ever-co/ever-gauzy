@@ -513,7 +513,8 @@
 		"browserslist",
 		"flexbox",
 		"nbinput",
-		"nbbutton"
+		"nbbutton",
+		"xaxis"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

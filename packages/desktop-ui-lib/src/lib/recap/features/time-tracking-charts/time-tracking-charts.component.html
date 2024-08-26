@@ -3,7 +3,7 @@
 			m[m]':
 			{trim: 'both'}
 			}}</span> &#183;
-		<span class="today">{{dailyActivities$ | async}}%</span></nb-card-header>
+		<span class="today">{{dailyActivities$ | async | percent:'1.0-2' }}</span></nb-card-header>
 	<nb-card-body *ngIf="(chartData$ | async).length; else noDataChart">
 		<ngx-charts-bar-vertical [animations]="animations" [results]="(chartData$ | async)" [gradient]="gradient"
 			[xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend" [showXAxisLabel]="showXAxisLabel"
