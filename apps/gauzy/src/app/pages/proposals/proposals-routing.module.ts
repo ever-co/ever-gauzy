@@ -23,12 +23,8 @@ const routes: Routes = [
 				only: [PermissionsEnum.ORG_PROPOSALS_VIEW],
 				redirectTo
 			},
-			selectors: {
-				project: false
-			},
-			datePicker: {
-				unitOfTime: 'month'
-			}
+			selectors: { project: false },
+			datePicker: { unitOfTime: 'month' }
 		},
 		resolve: { dates: DateRangePickerResolver }
 	},
@@ -45,13 +41,9 @@ const routes: Routes = [
 				project: false,
 				employee: false
 			},
-			datePicker: {
-				unitOfTime: 'month'
-			}
+			datePicker: { unitOfTime: 'month' }
 		},
-		resolve: {
-			dates: DateRangePickerResolver
-		}
+		resolve: { dates: DateRangePickerResolver }
 	},
 	{
 		path: 'details/:id',
@@ -69,9 +61,7 @@ const routes: Routes = [
 				project: false
 			}
 		},
-		resolve: {
-			proposal: ProposalEditOrDetailsResolver
-		}
+		resolve: { proposal: ProposalEditOrDetailsResolver }
 	},
 	{
 		path: 'edit/:id',
@@ -89,9 +79,7 @@ const routes: Routes = [
 				project: false
 			}
 		},
-		resolve: {
-			proposal: ProposalEditOrDetailsResolver
-		}
+		resolve: { proposal: ProposalEditOrDetailsResolver }
 	}
 ];
 
