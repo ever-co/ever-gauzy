@@ -1,93 +1,105 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, AfterContentChecked } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { NbRouteTab } from '@nebular/theme';
-import { tap } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { PermissionsEnum } from '@gauzy/contracts';
+import { PageTabRegistryService, Store, TabsetRegistryId } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/core';
 
-@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-timesheet-layout',
 	templateUrl: './layout.component.html',
 	styleUrls: ['./layout.component.scss']
 })
-export class TimesheetLayoutComponent
-	extends TranslationBaseComponent
-	implements AfterContentChecked, OnInit, OnDestroy
-{
+export class TimesheetLayoutComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];
+	public tabsetId: TabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
 
 	constructor(
-		private readonly cdr: ChangeDetectorRef,
 		public readonly translateService: TranslateService,
-		private readonly store: Store
+		private readonly _route: ActivatedRoute,
+		private readonly _store: Store,
+		private readonly _pageTabRegistryService: PageTabRegistryService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this._loadTabs();
-		this._applyTranslationOnTabs();
-	}
-
-	ngAfterContentChecked(): void {
-		this.cdr.detectChanges();
-	}
-
-	private _loadTabs() {
-		this.tabs = [
-			...(this.store.hasAnyPermission(
-				PermissionsEnum.TIME_TRACKER,
-				PermissionsEnum.ALL_ORG_EDIT,
-				PermissionsEnum.TIME_TRACKING_DASHBOARD
-			)
-				? [
-						{
-							title: this.getTranslation('TIMESHEET.DAILY'),
-							responsive: true,
-							route: '/pages/employees/timesheets/daily',
-							activeLinkOptions: { exact: false }
-						},
-						{
-							title: this.getTranslation('TIMESHEET.WEEKLY'),
-							responsive: true,
-							route: '/pages/employees/timesheets/weekly',
-							activeLinkOptions: { exact: false }
-						},
-						{
-							title: this.getTranslation('TIMESHEET.CALENDAR'),
-							responsive: true,
-							route: '/pages/employees/timesheets/calendar',
-							activeLinkOptions: { exact: false }
-						}
-				  ]
-				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)
-				? [
-						{
-							title: this.getTranslation('TIMESHEET.APPROVALS'),
-							responsive: true,
-							route: '/pages/employees/timesheets/approvals',
-							activeLinkOptions: { exact: false }
-						}
-				  ]
-				: [])
-		];
+		// Register the page tabs
+		this.registerPageTabs();
 	}
 
 	/**
-	 * Translate context menus
+	 * Registers page tabs for the timesheet module.
+	 * Ensures that tabs are registered only once.
+	 *
+	 * @returns {void}
 	 */
-	private _applyTranslationOnTabs() {
-		this.translateService.onLangChange
-			.pipe(
-				tap(() => this._loadTabs()),
-				untilDestroyed(this)
-			)
-			.subscribe();
+	registerPageTabs(): void {
+		// Define the permissions required to view daily, weekly, or calendar timesheets
+		const permissions = [
+			PermissionsEnum.TIME_TRACKER,
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.TIME_TRACKING_DASHBOARD
+		];
+
+		// Check if the user has permission to view daily, weekly, or calendar timesheets
+		if (this._store.hasAnyPermission(...permissions)) {
+			// Register the daily timesheet tab
+			this._pageTabRegistryService.registerPageTab({
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'daily', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/daily', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.DAILY'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 1 // The order of the tab
+			});
+
+			// Register the weekly timesheet tab
+			this._pageTabRegistryService.registerPageTab({
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'weekly', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/weekly', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.WEEKLY'), // The title for the tab
+				activeLinkOptions: { exact: false }, //	The options for the active link
+				order: 2 // The order of the tab
+			});
+
+			// Register the calendar timesheet tab
+			this._pageTabRegistryService.registerPageTab({
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'calendar', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/calendar', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.CALENDAR'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 3 // The order of the tab
+			});
+		}
+
+		// Check if the user has permission to approve timesheets
+		if (this._store.hasPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)) {
+			// Register the approvals tab
+			this._pageTabRegistryService.registerPageTab({
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'approvals', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/approvals', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.APPROVALS'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 4 // The order of the tab
+			});
+		}
 	}
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		// Clear the registry
+		this._pageTabRegistryService.clear();
+	}
 }

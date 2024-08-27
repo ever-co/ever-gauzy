@@ -14,9 +14,9 @@
  */
 export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
 
-// Define sub-page types for 'jobs'
-type JobsSubPageLocationRegistryId = 'job-employee';
-type SalesSubPageLocationRegistryId = 'proposals';
+// Define sub-page types for 'jobs', 'employees' and 'sales'
+export type JobsSubPageLocationRegistryId = 'job-employee';
+export type SalesSubPageLocationRegistryId = 'proposals';
 
 /**
  * @description
@@ -42,3 +42,34 @@ export type PageLocationRegistryId =
 	| JobsSubPageLocationRegistryId
 	| 'sales'
 	| SalesSubPageLocationRegistryId;
+
+/**
+ * @description
+ * Type representing the possible dynamic tabs for pages.
+ *
+ * This type is used to identify different types of tabs that can be registered
+ * for dynamic pages. Each value corresponds to a specific
+ * tab type in the application. This allows for flexible and dynamic registration
+ * based on the context and requirements of the application.
+ *
+ * Possible values:
+ * - 'timesheet': A timesheet tab.
+ * - 'time-activity': A time and activity tab.
+ */
+export type TabsetRegistryId = 'timesheet' | 'time-activity';
+
+/**
+ * Enum representing the possible dynamic tabs for pages.
+ *
+ * This enum is used to identify different types of tabs that can be registered
+ * for dynamic pages. Each value corresponds to a specific
+ * tab type in the application. This allows for flexible and dynamic registration
+ * based on the context and requirements of the application.
+ *
+ * @readonly
+ * @enum {string}
+ */
+export enum TabsetRegistryIdEnum {
+	Timesheet = 'timesheet',
+	TimeActivity = 'time-activity'
+}
