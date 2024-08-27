@@ -31,9 +31,10 @@ export class PageTabRegistryService implements IPageTabRegistry {
 			throw new Error('Page tab configuration must have a tabsetId property');
 		}
 
-		config.order = config?.order ?? 0; // Set the default order to 0 if not provided
-		config.hide = config?.hide ?? false; // Set the default hide to false if not provided
-		config.responsive = config?.responsive ?? true; // Set the default responsive to true if not provided
+		// Ensure config is defined before accessing its properties
+		config.order = config.order ?? 0; // Set the default order to 0 if not provided
+		config.hide = config.hide ?? false; // Set the default hide to false if not provided
+		config.responsive = config.responsive ?? true; // Set the default responsive to true if not provided
 
 		// Get all registered tabs for the specified location
 		const tabs = this.registry.get(config.tabsetId) || [];
