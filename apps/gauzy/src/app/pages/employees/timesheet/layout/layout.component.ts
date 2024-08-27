@@ -47,62 +47,38 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		if (this._store.hasAnyPermission(...permissions)) {
 			// Register the daily timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				// The identifier for the tabset
-				tabsetId: 'timesheet',
-				// The identifier for the tab
-				tabId: 'daily',
-				// The type of tabset to use
-				tabsetType: 'route',
-				// Whether the tab is responsive
-				responsive: true,
-				// The route for the tab
-				route: '/pages/employees/timesheets/daily',
-				// The title for the tab
-				tabTitle: () => this.getTranslation('TIMESHEET.DAILY'),
-				//	The options for the active link
-				activeLinkOptions: { exact: false },
-				// The order of the tab
-				order: 1
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'daily', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/daily', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.DAILY'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 1 // The order of the tab
 			});
 
 			// Register the weekly timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				// The identifier for the tabset
-				tabsetId: 'timesheet',
-				// The identifier for the tab
-				tabId: 'weekly',
-				// The type of tabset to use
-				tabsetType: 'route',
-				// Whether the tab is responsive
-				responsive: true,
-				// The route for the tab
-				route: '/pages/employees/timesheets/weekly',
-				// The title for the tab
-				tabTitle: () => this.getTranslation('TIMESHEET.WEEKLY'),
-				//	The options for the active link
-				activeLinkOptions: { exact: false },
-				// The order of the tab
-				order: 2
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'weekly', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/weekly', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.WEEKLY'), // The title for the tab
+				activeLinkOptions: { exact: false }, //	The options for the active link
+				order: 2 // The order of the tab
 			});
 
 			// Register the calendar timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				// The identifier for the tabset
-				tabsetId: 'timesheet',
-				// The identifier for the tab
-				tabId: 'calendar',
-				// The type of tabset to use
-				tabsetType: 'route',
-				// Whether the tab is responsive
-				responsive: true,
-				// The route for the tab
-				route: '/pages/employees/timesheets/calendar',
-				// The title for the tab
-				tabTitle: () => this.getTranslation('TIMESHEET.CALENDAR'),
-				//	The options for the active link
-				activeLinkOptions: { exact: false },
-				// The order of the tab
-				order: 3
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'calendar', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/calendar', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.CALENDAR'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 3 // The order of the tab
 			});
 		}
 
@@ -110,22 +86,14 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		if (this._store.hasPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)) {
 			// Register the approvals tab
 			this._pageTabRegistryService.registerPageTab({
-				// The identifier for the tabset
-				tabsetId: 'timesheet',
-				// The identifier for the tab
-				tabId: 'approvals',
-				// The type of tabset to use
-				tabsetType: 'route',
-				// Whether the tab is responsive
-				responsive: true,
-				// The route for the tab
-				route: '/pages/employees/timesheets/approvals',
-				// The title for the tab
-				tabTitle: () => this.getTranslation('TIMESHEET.APPROVALS'),
-				//	The options for the active link
-				activeLinkOptions: { exact: false },
-				// The order of the tab
-				order: 4
+				tabsetId: 'timesheet', // The identifier for the tabset
+				tabId: 'approvals', // The identifier for the tab
+				tabsetType: 'route', // The type of tabset to use
+				responsive: true, // Whether the tab is responsive
+				route: '/pages/employees/timesheets/approvals', // The route for the tab
+				tabTitle: () => this.getTranslation('TIMESHEET.APPROVALS'), // The title for the tab
+				activeLinkOptions: { exact: false }, // The options for the active link
+				order: 4 // The order of the tab
 			});
 		}
 	}
