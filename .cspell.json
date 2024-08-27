@@ -514,7 +514,8 @@
 		"flexbox",
 		"nbinput",
 		"nbbutton",
-		"xaxis"
+		"xaxis",
+		"wdth"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
