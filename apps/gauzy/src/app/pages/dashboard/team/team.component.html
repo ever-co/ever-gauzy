@@ -1,14 +1,20 @@
 <nb-card>
-    <nb-card-header class="mb-3">
-        <h4 class="header-title">
+	<nb-card-header class="mb-3">
+		<h4 class="header-title">
 			<div>
-				<button (click)="reset()" *ngIf="selectedTeam && selectedTeam?.isSelected" nbButton outline size="small"
-						status="primary">
+				<button
+					(click)="reset()"
+					*ngIf="selectedTeam && selectedTeam?.isSelected"
+					nbButton
+					outline
+					size="small"
+					status="primary"
+				>
 					<nb-icon icon="arrow-back-outline"></nb-icon>
 				</button>
 			</div>
 			<ngx-header-title>
-				{{'ORGANIZATIONS_PAGE.TEAMS' | translate}}
+				{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}
 			</ngx-header-title>
 		</h4>
 	</nb-card-header>
@@ -21,10 +27,10 @@
 							<gauzy-team-card
 								(click)="select(team)"
 								[ngClass]="{
-                                'team-selected-card': selectedTeam?.isSelected &&
-                                 selectedTeam?.data.id === team?.id
-                             }"
-								[team]="team">
+									'team-selected-card': selectedTeam?.isSelected && selectedTeam?.data.id === team?.id
+								}"
+								[team]="team"
+							>
 							</gauzy-team-card>
 						</ng-container>
 					</div>
@@ -36,28 +42,28 @@
 										<div class="col-3">
 											<div class="row">
 												<div class="col-3">
-													{{'TIMESHEET.STATUS'|translate}}
+													{{ 'TIMESHEET.STATUS' | translate }}
 												</div>
 												<div class="col-9">
-													{{'ORGANIZATIONS_PAGE.NAME'|translate}}
+													{{ 'ORGANIZATIONS_PAGE.NAME' | translate }}
 												</div>
 											</div>
 										</div>
 										<div class="col-8">
 											<div class="row">
 												<div class="col-6">
-													{{'MENU.IMPORT_EXPORT.TASK'|translate}}
+													{{ 'MENU.IMPORT_EXPORT.TASK' | translate }}
 												</div>
 												<div class="col-6">
 													<div class="row">
 														<div class="col-3">
-															{{'TIMESHEET.DURATION'|translate}}
+															{{ 'TIMESHEET.DURATION' | translate }}
 														</div>
 														<div class="col text-center">
-															{{'MENU.IMPORT_EXPORT.PROGRESS'|translate}}
+															{{ 'MENU.IMPORT_EXPORT.PROGRESS' | translate }}
 														</div>
 														<div class="col-3">
-															{{'TASKS_PAGE.ESTIMATE'|translate}}
+															{{ 'TASKS_PAGE.ESTIMATE' | translate }}
 														</div>
 													</div>
 												</div>
@@ -70,27 +76,28 @@
 								</nb-card-body>
 							</nb-card>
 						</div>
-                        <div class="team-list">
-                            <ng-container *ngFor="let member of members; trackBy: fnTracker">
-                                <gauzy-team-member [member]="member"></gauzy-team-member>
-                            </ng-container>
-                        </div>
-                    </div>
-                </ng-template>
-            </div>
-        </ng-template>
-    </nb-card-body>
+						<div class="team-list">
+							<ng-container *ngFor="let member of members; trackBy: fnTracker">
+								<gauzy-team-member [member]="member"></gauzy-team-member>
+							</ng-container>
+						</div>
+					</div>
+				</ng-template>
+			</div>
+		</ng-template>
+	</nb-card-body>
 </nb-card>
 
+<!--  -->
 <ng-template #noTeamSelected>
-    <gauzy-all-team
+	<gauzy-all-team
 		(selectedTeam)="select($event)"
 		[organization]="todayOrganization"
 		[teams]="todayTeamsWorkers"
 	></gauzy-all-team>
 </ng-template>
+
+<!--  -->
 <ng-template #noTeam>
-    <ngx-no-data-message
-		[message]="'SM_TABLE.NO_DATA.TEAM_DASHBOARD' | translate"
-	></ngx-no-data-message>
+	<ngx-no-data-message [message]="'SM_TABLE.NO_DATA.TEAM_DASHBOARD' | translate"></ngx-no-data-message>
 </ng-template>

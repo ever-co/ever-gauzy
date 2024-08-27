@@ -49,7 +49,6 @@ import { HumanResourcesComponent } from './human-resources/human-resources.compo
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
-import { TeamModule } from './team/team.module';
 import { TimeTrackingComponent } from './time-tracking/time-tracking.component';
 import {
 	EmployeeChartsComponent,
@@ -57,6 +56,7 @@ import {
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent
 } from './employee-charts';
+import { AllTeamComponent, ChartComponent, TeamCardComponent, TeamComponent, TeamMemberComponent } from './team';
 
 // NB Modules
 const NB_MODULES = [
@@ -101,7 +101,12 @@ const COMPONENTS = [
 	EmployeeChartsComponent,
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent,
-	EmployeeDoughnutChartComponent
+	EmployeeDoughnutChartComponent,
+	TeamComponent,
+	TeamCardComponent,
+	TeamMemberComponent,
+	ChartComponent,
+	AllTeamComponent
 ];
 
 @NgModule({
@@ -114,7 +119,6 @@ const COMPONENTS = [
 		ProfitHistoryModule,
 		SingleStatisticModule,
 		InfoBlockModule,
-		TeamModule,
 		SharedModule,
 		TableComponentsModule,
 		NoDataMessageModule,

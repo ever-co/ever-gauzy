@@ -7,7 +7,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'gauzy-chart',
+	selector: 'gz-doughnut-chart',
 	templateUrl: './chart.component.html',
 	styleUrls: ['./chart.component.scss']
 })
@@ -23,13 +23,14 @@ export class ChartComponent extends TranslationBaseComponent implements OnInit, 
 	}
 
 	private get _labels() {
+		// Retrieve the statistics
+		const { countOnline, countWorking, countNotWorking } = this.statistics;
+		// Build the labels
 		return {
 			labels: [
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING_NOW')}: ${this.statistics.countOnline}`,
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING')}: ${
-					this.statistics.countWorking - this.statistics.countOnline
-				}`,
-				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.NOT_WORKING')}: ${this.statistics.countNotWorking}`
+				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING_NOW')}: ${countOnline}`,
+				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.WORKING')}: ${countWorking - countOnline}`,
+				`${this.getTranslation('DASHBOARD_PAGE.CHARTS.NOT_WORKING')}: ${countNotWorking}`
 			]
 		};
 	}
