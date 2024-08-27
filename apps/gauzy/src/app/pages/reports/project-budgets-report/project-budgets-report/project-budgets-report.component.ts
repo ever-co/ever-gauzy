@@ -12,8 +12,8 @@ import {
 	ReportGroupByFilter,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

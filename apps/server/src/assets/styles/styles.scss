@@ -55,3 +55,7 @@
   @include material-overrides();
   @include gauzy-overrides();
 }
+
+::-webkit-scrollbar {
+  display: none;
+}

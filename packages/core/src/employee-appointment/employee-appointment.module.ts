@@ -1,6 +1,5 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
 import { CqrsModule } from '@nestjs/cqrs';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { EmployeeAppointment } from './employee-appointment.entity';
@@ -11,10 +10,10 @@ import { EmailSendModule } from '../email-send/email-send.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { TypeOrmEmployeeAppointmentRepository } from './repository/type-orm-employee-appointment.repository';
 
 @Module({
 	imports: [
-		RouterModule.register([{ path: '/employee-appointment', module: EmployeeAppointmentModule }]),
 		TypeOrmModule.forFeature([EmployeeAppointment]),
 		MikroOrmModule.forFeature([EmployeeAppointment]),
 		EmailSendModule,
@@ -24,7 +23,7 @@ import { RolePermissionModule } from '../role-permission/role-permission.module'
 		CqrsModule
 	],
 	controllers: [EmployeeAppointmentController],
-	providers: [EmployeeAppointmentService, ...CommandHandlers],
-	exports: [EmployeeAppointmentService]
+	providers: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository, ...CommandHandlers],
+	exports: [EmployeeAppointmentService, TypeOrmEmployeeAppointmentRepository]
 })
 export class EmployeeAppointmentModule {}

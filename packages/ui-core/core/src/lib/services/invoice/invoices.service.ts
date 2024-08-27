@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
+	ID,
 	IEstimateEmail,
 	IInvoice,
 	IInvoiceCreateInput,
@@ -26,7 +27,7 @@ export class InvoicesService {
 		);
 	}
 
-	getHighestInvoiceNumber(tenantId: string): Promise<IInvoice> {
+	getHighestInvoiceNumber(tenantId: ID): Promise<IInvoice> {
 		return firstValueFrom(
 			this.http.get<IInvoice>(`${API_PREFIX}/invoices/highest`, {
 				params: toParams({ tenantId })
@@ -34,7 +35,7 @@ export class InvoicesService {
 		);
 	}
 
-	getById(id: string, relations?: string[], findInput?: IInvoiceFindInput) {
+	getById(id: ID, relations?: string[], findInput?: IInvoiceFindInput) {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
 			this.http.get<IInvoice>(`${API_PREFIX}/invoices/${id}`, {
@@ -43,7 +44,7 @@ export class InvoicesService {
 		);
 	}
 
-	getPublicInvoice(id: string, token: string, relations: string[] = []) {
+	getPublicInvoice(id: ID, token: string, relations: string[] = []) {
 		return firstValueFrom(
 			this.http.get<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, {
 				params: toParams({ relations })
@@ -55,23 +56,19 @@ export class InvoicesService {
 		return firstValueFrom(this.http.post<IInvoice>(`${API_PREFIX}/invoices`, invoice));
 	}
 
-	update(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+	update(id: ID, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}`, updateInput));
 	}
 
-	updateEstimate(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+	updateEstimate(id: ID, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}/estimate`, updateInput));
 	}
 
-	updateAction(id: string, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
+	updateAction(id: ID, updateInput: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${id}/action`, updateInput));
 	}
 
-	updateWithoutAuth(
-		id: IInvoice['id'],
-		token: IEstimateEmail['token'],
-		input: IInvoiceUpdateInput
-	): Promise<IInvoice> {
+	updateWithoutAuth(id: ID, token: IEstimateEmail['token'], input: IInvoiceUpdateInput): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/public/invoice/${id}/${token}`, input));
 	}
 
@@ -79,21 +76,21 @@ export class InvoicesService {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/${invoice.id}`, invoice));
 	}
 
-	generateLink(id: string): Promise<IInvoice> {
+	generateLink(id: ID): Promise<IInvoice> {
 		return firstValueFrom(this.http.put<IInvoice>(`${API_PREFIX}/invoices/generate/${id}`, {}));
 	}
 
-	delete(id: string): Promise<any> {
+	delete(id: ID): Promise<any> {
 		return firstValueFrom(this.http.delete(`${API_PREFIX}/invoices/${id}`));
 	}
 
 	sendEmail(
 		email: string,
 		invoiceNumber: number,
-		invoiceId: string,
+		invoiceId: ID,
 		isEstimate: boolean,
-		organizationId: string,
-		tenantId: string
+		organizationId: ID,
+		tenantId: ID
 	): Promise<any> {
 		return firstValueFrom(
 			this.http.put<any>(`${API_PREFIX}/invoices/email/${email}`, {
@@ -112,13 +109,13 @@ export class InvoicesService {
 		this.source.next(message);
 	}
 
-	downloadInvoicePdf(invoiceId: string) {
+	downloadInvoicePdf(invoiceId: ID) {
 		return this.http.get(`${API_PREFIX}/invoices/download/${invoiceId}`, {
 			responseType: 'blob'
 		});
 	}
 
-	downloadInvoicePaymentPdf(invoiceId: string) {
+	downloadInvoicePaymentPdf(invoiceId: ID) {
 		return this.http.get(`${API_PREFIX}/invoices/payment/download/${invoiceId}`, {
 			responseType: 'blob'
 		});

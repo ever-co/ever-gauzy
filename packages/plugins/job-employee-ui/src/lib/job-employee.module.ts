@@ -12,10 +12,10 @@ import {
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import { SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
-import { createRoutes } from './job-employee.routes';
+import { createJobEmployeeRoutes } from './job-employee.routes';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
 /**
@@ -50,8 +50,8 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (service: PageRouteRegistryService) => createJobEmployeeRoutes(service),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
@@ -59,24 +59,26 @@ const THIRD_PARTY_MODULES = [
 export class JobEmployeeModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteService) private readonly _pageRouteService: PageRouteService) {
-		// Register the routes
-		this.registerRoutes(this._pageRouteService);
+	constructor(
+		@Inject(PageRouteRegistryService)
+		private readonly _pageRouteRegistryService: PageRouteRegistryService
+	) {
+		this.registerPageRoutes(this._pageRouteRegistryService); // Register the routes
 	}
 
 	/**
 	 * Register routes for the JobEmployeeModule
 	 *
-	 * @param _pageRouteService
+	 * @param _pageRouteRegistryService
 	 * @returns {void}
 	 */
-	registerRoutes(_pageRouteService: PageRouteService): void {
+	registerPageRoutes(_pageRouteRegistryService: PageRouteRegistryService): void {
 		if (JobEmployeeModule.hasRegisteredPageRoutes) {
 			return;
 		}
 
 		// Register Job Employee Page Routes
-		_pageRouteService.registerPageRoute({
+		_pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
 			location: 'jobs',
 			// Register the path 'employee'

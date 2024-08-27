@@ -13,21 +13,14 @@ import {
 } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import {
-	IDailyPlan,
-	IDailyPlanTasksUpdateInput,
-	IEmployee,
-	IPagination,
-	ITask,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ID, IDailyPlan, IDailyPlanTasksUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from '../../core/crud';
 import { UseValidationPipe } from '../../shared/pipes';
-import { DailyPlan } from './daily-plan.entity';
-import { DailyPlanService } from './daily-plan.service';
 import { CreateDailyPlanDTO, RemoveTaskFromManyPlansDTO, UpdateDailyPlanDTO } from './dto';
 import { PermissionGuard, TenantPermissionGuard } from '../../shared/guards';
 import { Permissions } from '../../shared/decorators';
+import { DailyPlan } from './daily-plan.entity';
+import { DailyPlanService } from './daily-plan.service';
 
 @ApiTags('Daily Plan')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -64,6 +57,32 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	}
 
 	/**
+	 * GET daily plans for a given team
+	 *
+	 * @param options
+	 * @param employeeId
+	 * @returns
+	 */
+	@ApiOperation({
+		summary: 'Find team daily plans.'
+	})
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found plans',
+		type: DailyPlan
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'No Record found'
+	})
+	@Get('team')
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
+	@UseValidationPipe()
+	async getTeamDailyPlans(@Query() params: PaginationParams<DailyPlan>): Promise<IPagination<IDailyPlan>> {
+		return await this.dailyPlanService.getTeamDailyPlans(params);
+	}
+
+	/**
 	 * GET daily plans for a given employee
 	 *
 	 * @param options
@@ -85,7 +104,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('employee/:id')
 	async getEmployeeDailyPlans(
-		@Param('id') employeeId: IEmployee['id'],
+		@Param('id') employeeId: ID,
 		@Query() params: PaginationParams<DailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getDailyPlansByEmployee(params, employeeId);
@@ -113,7 +132,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.DAILY_PLAN_READ)
 	@Get('task/:id')
 	async getDailyPlansForTaskId(
-		@Param('id') taskId: ITask['id'],
+		@Param('id') taskId: ID,
 		@Query() params: PaginationParams<IDailyPlan>
 	): Promise<IPagination<IDailyPlan>> {
 		return await this.dailyPlanService.getDailyPlansByTask(params, taskId);
@@ -141,7 +160,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Post(':id/task') // Route for adding a task to a daily plan
 	async addTaskToDailyPlan(
-		@Param('id') planId: IDailyPlan['id'], // Extract the plan ID from the URL parameter
+		@Param('id') planId: ID, // Extract the plan ID from the URL parameter
 		@Body() input: IDailyPlanTasksUpdateInput // Data for updating the daily plan
 	): Promise<IDailyPlan> {
 		// Call the service method to add a task to the daily plan
@@ -171,7 +190,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_CREATE, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Put(':id/task') // Endpoint for removing a task from a daily plan
 	async removeTaskFromDailyPlan(
-		@Param('id') planId: IDailyPlan['id'], // Extract the daily plan ID from the URL parameter
+		@Param('id') planId: ID, // Extract the daily plan ID from the URL parameter
 		@Body() input: IDailyPlanTasksUpdateInput // Data for updating the daily plan
 	): Promise<IDailyPlan> {
 		// Call the service to remove the task from the daily plan
@@ -200,7 +219,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	})
 	@Put(':taskId/remove') // Endpoint for removing a task from many daily plans
 	async removeTaskFromManyPlans(
-		@Param('taskId') taskId: ITask['id'],
+		@Param('taskId') taskId: ID,
 		@Body() input: RemoveTaskFromManyPlansDTO
 	): Promise<IDailyPlan[]> {
 		return this.dailyPlanService.removeTaskFromManyPlans(taskId, input);
@@ -275,10 +294,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_UPDATE)
 	@Put(':id')
 	@UseValidationPipe({ transform: true, whitelist: true })
-	async update(
-		@Query('id') id: IDailyPlan['id'],
-		@Body() entity: UpdateDailyPlanDTO
-	): Promise<IDailyPlan | UpdateResult> {
+	async update(@Query('id') id: ID, @Body() entity: UpdateDailyPlanDTO): Promise<IDailyPlan | UpdateResult> {
 		return await this.dailyPlanService.updateDailyPlan(id, entity);
 	}
 
@@ -303,7 +319,7 @@ export class DailyPlanController extends CrudController<DailyPlan> {
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.DAILY_PLAN_DELETE)
 	@Delete(':id')
-	async delete(@Param('id') planId: IDailyPlan['id']) {
-		return await this.dailyPlanService.deletePlan(planId);
+	async delete(@Param('id') planId: ID) {
+		return await this.dailyPlanService.delete(planId);
 	}
 }

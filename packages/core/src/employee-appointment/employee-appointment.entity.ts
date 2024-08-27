@@ -1,27 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-	IsNotEmpty,
-	IsString,
-	IsDate,
-	IsBoolean,
-	IsNumber
-} from 'class-validator';
-import {
-	JoinColumn,
-	RelationId
-} from 'typeorm';
-import { IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
-import {
-	AppointmentEmployee,
-	Employee,
-	TenantOrganizationBaseEntity
-} from '../core/entities/internal';
+import { IsNotEmpty, IsString, IsDate, IsBoolean, IsNumber } from 'class-validator';
+import { JoinColumn, RelationId } from 'typeorm';
+import { EmployeeAppointmentStatus, ID, IEmployee, IEmployeeAppointment } from '@gauzy/contracts';
+import { AppointmentEmployee, Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany } from './../core/decorators/entity';
 import { MikroOrmEmployeeAppointmentRepository } from './repository/mikro-orm-employee-appointment.repository';
 
 @MultiORMEntity('employee_appointment', { mikroOrmRepository: () => MikroOrmEmployeeAppointmentRepository })
 export class EmployeeAppointment extends TenantOrganizationBaseEntity implements IEmployeeAppointment {
-
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@IsNotEmpty()
@@ -83,24 +69,31 @@ export class EmployeeAppointment extends TenantOrganizationBaseEntity implements
 	@ApiProperty({ type: () => String })
 	@IsString()
 	@MultiORMColumn({ nullable: true })
-	status?: string;
+	status?: EmployeeAppointmentStatus;
 
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+
 	/**
-	 *
+	 * Appointment Employee
 	 */
-	@MultiORMManyToOne(() => Employee, { nullable: true, onDelete: 'CASCADE' })
+	@MultiORMManyToOne(() => Employee, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
 	@JoinColumn()
 	employee?: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: EmployeeAppointment) => it.employee)
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

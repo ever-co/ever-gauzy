@@ -4,7 +4,7 @@ import { IEmployee, ICandidate } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { LatLng } from 'leaflet';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
 import { LeafletMapComponent, LocationFormComponent } from '../../forms';
 

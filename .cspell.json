@@ -507,7 +507,15 @@
 		"COMMONPROGRAMFILES",
 		"serverapi",
 		"serializables",
-		"drppicker"
+		"drppicker",
+		"titlebar",
+		"raleway",
+		"browserslist",
+		"flexbox",
+		"nbinput",
+		"nbbutton",
+		"xaxis",
+		"wdth"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

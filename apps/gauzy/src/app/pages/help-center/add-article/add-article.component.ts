@@ -1,18 +1,21 @@
-import { IHelpCenterArticle, IEmployee, IHelpCenterAuthor, IOrganization } from '@gauzy/contracts';
 import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
-import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { IHelpCenterArticle, IEmployee, IHelpCenterAuthor, IOrganization } from '@gauzy/contracts';
 import { ckEditorConfig } from '@gauzy/ui-core/shared';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, HelpCenterAuthorService } from '@gauzy/ui-core/core';
-import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { HelpCenterArticleService } from '@gauzy/ui-core/core';
-import { EmployeesService } from '@gauzy/ui-core/core';
-import { takeUntil } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-core/common';
+import {
+	EmployeesService,
+	ErrorHandlingService,
+	HelpCenterArticleService,
+	HelpCenterAuthorService,
+	Store
+} from '@gauzy/ui-core/core';
 
+@UntilDestroy()
 @Component({
 	selector: 'ga-add-article',
 	templateUrl: 'add-article.component.html',
@@ -23,7 +26,7 @@ export class AddArticleComponent extends TranslationBaseComponent implements OnI
 	@Input() editType: string;
 	@Input() length: number;
 	@Input() id: string;
-	private _ngDestroy$ = new Subject<void>();
+
 	constructor(
 		protected dialogRef: NbDialogRef<AddArticleComponent>,
 		readonly translateService: TranslateService,
@@ -67,7 +70,7 @@ export class AddArticleComponent extends TranslationBaseComponent implements OnI
 		const { id: organizationId, tenantId } = this.organization;
 		this.employeeService
 			.getAll(['user'], { organizationId, tenantId })
-			.pipe(takeUntil(this._ngDestroy$))
+			.pipe(untilDestroyed(this))
 			.subscribe((employees) => {
 				this.employees = employees.items;
 			});
@@ -179,10 +182,7 @@ export class AddArticleComponent extends TranslationBaseComponent implements OnI
 		this.dialogRef.close();
 	}
 
-	ngOnDestroy() {
-		this._ngDestroy$.next();
-		this._ngDestroy$.complete();
-	}
+	ngOnDestroy() {}
 
 	public get name(): AbstractControl {
 		return this.form.get('name');

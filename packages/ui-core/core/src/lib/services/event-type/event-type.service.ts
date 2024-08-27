@@ -1,42 +1,82 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { IEventType, IEventTypeFindInput, IEventTypeCreateInput, IEventTypeUpdateInput } from '@gauzy/contracts';
 import { firstValueFrom } from 'rxjs';
+import {
+	IEventType,
+	IEventTypeFindInput,
+	IEventTypeCreateInput,
+	IEventTypeUpdateInput,
+	IPagination,
+	ID
+} from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 @Injectable()
 export class EventTypeService {
-	EVENT_TYPE_BASE_URI = `${API_PREFIX}/event-type`;
+	API_BASE_URI = `${API_PREFIX}/event-type`;
 
-	constructor(private http: HttpClient) {}
+	constructor(private readonly http: HttpClient) {}
 
-	create(createInput: IEventTypeCreateInput): Promise<any> {
-		return firstValueFrom(this.http.post<IEventType>(this.EVENT_TYPE_BASE_URI, createInput));
+	/**
+	 * Creates a new event type.
+	 *
+	 * @param input - The input data to create a new event type.
+	 * @returns An observable of the created event type.
+	 */
+	create(input: IEventTypeCreateInput): Promise<any> {
+		return firstValueFrom(this.http.post<IEventType>(this.API_BASE_URI, input));
 	}
 
-	getEventTypeById(id: string, relations?: string[]) {
+	/**
+	 * Gets an event type by ID.
+	 *
+	 * @param id - The ID of the event type to get.
+	 * @param relations - Optional array of relations to include in the response.
+	 * @returns An observable of the event type.
+	 */
+	getEventTypeById(id: ID, relations?: string[]) {
 		const data = JSON.stringify({ relations });
 		return firstValueFrom(
-			this.http.get<IEventType>(`${this.EVENT_TYPE_BASE_URI}/${id}`, {
+			this.http.get<IEventType>(`${this.API_BASE_URI}/${id}`, {
 				params: { data }
 			})
 		);
 	}
 
-	getAll(relations?: string[], findInput?: IEventTypeFindInput): Promise<{ items: IEventType[]; total: number }> {
+	/**
+	 * Gets all event types.
+	 *
+	 * @param relations
+	 * @param findInput
+	 * @returns
+	 */
+	getAll(relations?: string[], findInput?: IEventTypeFindInput): Promise<IPagination<IEventType>> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(
-			this.http.get<{ items: IEventType[]; total: number }>(this.EVENT_TYPE_BASE_URI, {
+			this.http.get<IPagination<IEventType>>(this.API_BASE_URI, {
 				params: { data }
 			})
 		);
 	}
 
-	update(id: string, updateInput: IEventTypeUpdateInput): Promise<any> {
-		return firstValueFrom(this.http.put(`${this.EVENT_TYPE_BASE_URI}/${id}`, updateInput));
+	/**
+	 * Updates an event type.
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	update(id: ID, input: IEventTypeUpdateInput): Promise<IEventType> {
+		return firstValueFrom(this.http.put<IEventType>(`${this.API_BASE_URI}/${id}`, input));
 	}
 
-	delete(id: string): Promise<any> {
-		return firstValueFrom(this.http.delete(`${this.EVENT_TYPE_BASE_URI}/${id}`));
+	/**
+	 * Deletes an event type.
+	 *
+	 * @param id
+	 * @returns
+	 */
+	delete(id: ID): Promise<any> {
+		return firstValueFrom(this.http.delete(`${this.API_BASE_URI}/${id}`));
 	}
 }

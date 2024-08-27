@@ -3,7 +3,7 @@ import { IGetReportCategory, IOrganization, IReport, IReportCategory, Permission
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
 import { chain } from 'underscore';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { ReportService } from '../report.service';
 
 @UntilDestroy()

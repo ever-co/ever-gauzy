@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IOrganization } from '@gauzy/contracts';
-import { ErrorHandlingService, ToastrService, UpworkService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, ToastrService, UpworkService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

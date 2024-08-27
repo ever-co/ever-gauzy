@@ -4,9 +4,9 @@ import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FeatureEnum, IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService } from '../../services';
+import { NavMenuBuilderService, NavMenuSectionItem, SidebarMenuService, Store } from '../../services';
 
 @UntilDestroy()
 @Directive({

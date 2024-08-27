@@ -7,8 +7,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { OrganizationsService, ToastrService, UsersOrganizationsService, UsersService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import {
+	OrganizationsService,
+	Store,
+	ToastrService,
+	UsersOrganizationsService,
+	UsersService
+} from '@gauzy/ui-core/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

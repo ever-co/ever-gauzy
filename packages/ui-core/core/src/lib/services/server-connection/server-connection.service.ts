@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../store/store.service';
 
 @Injectable()
 export class ServerConnectionService {

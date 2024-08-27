@@ -6,17 +6,18 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule,
-	NbTreeGridModule,
-	NbSelectModule,
-	NbRouteTabsetModule
+	NbTreeGridModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
 import {
+	DynamicTabsModule,
 	InfoBlockModule,
 	LineChartModule,
 	NoDataMessageModule,
@@ -38,37 +39,50 @@ import { TimeTrackingModule } from './time-tracking/time-tracking.module';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
 import { TeamModule } from './team/team.module';
 
+// NB Modules
+const NB_MODULES = [
+	NbAlertModule,
+	NbButtonModule,
+	NbCardModule,
+	NbDialogModule.forChild(),
+	NbIconModule,
+	NbInputModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTooltipModule,
+	NbTreeGridModule
+];
+
+// Third Party Modules
+const THIRD_PARTY_MODULES = [
+	InfiniteScrollModule,
+	LineChartModule,
+	NgSelectModule,
+	NgxPermissionsModule.forChild(),
+	TranslateModule.forChild()
+];
+
 @NgModule({
 	imports: [
 		DashboardRoutingModule,
-		NbCardModule,
-		NgSelectModule,
-		NbButtonModule,
-		NbInputModule,
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
+		// Feature Modules
 		RecordsHistoryModule,
-		NbDialogModule.forChild(),
-		NbTreeGridModule,
-		NbIconModule,
-		NbTooltipModule,
-		NbSpinnerModule,
-		NbSelectModule,
-		NbAlertModule,
-		NgxPermissionsModule.forChild(),
 		ProfitHistoryModule,
-		TranslateModule.forChild(),
 		EmployeeChartsModule,
-		NbSpinnerModule,
 		SingleStatisticModule,
 		InfoBlockModule,
-		NbRouteTabsetModule,
 		TimeTrackingModule,
+		TeamModule,
+		// Shared Modules
 		SharedModule,
-		LineChartModule,
-		InfiniteScrollModule,
 		TableComponentsModule,
 		NoDataMessageModule,
 		WorkInProgressModule,
-		TeamModule
+		// Custom Modules
+		DynamicTabsModule
 	],
 	declarations: [
 		DashboardComponent,

@@ -22,8 +22,14 @@ import {
 	SYNC_TAG_GAUZY,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { ErrorHandlingService, GithubService, OrganizationProjectsService, ToastrService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	ErrorHandlingService,
+	GithubService,
+	OrganizationProjectsService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ClickableLinkComponent,
 	ProjectComponent,

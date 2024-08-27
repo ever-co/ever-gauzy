@@ -8,8 +8,7 @@ import { Observable, Subject, of as observableOf, startWith, catchError } from '
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { environment } from '@gauzy/ui-config';
-import { RolePermissionsService, RoleService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { RolePermissionsService, RoleService, Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -154,7 +153,7 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 
 	async permissionChanged(permission: string, enabled: boolean, allowChange: boolean) {
 		/**
-		 * If anyone trying to update another users permissions without enough permisison
+		 * If anyone trying to update another users permissions without enough permission
 		 */
 		if (!allowChange) {
 			this.toastrService.danger(

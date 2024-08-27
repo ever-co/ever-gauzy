@@ -5,7 +5,7 @@ import { tap } from 'rxjs/operators';
 import { NbComponentSize } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IRole, IUser, RolesEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { RoleService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

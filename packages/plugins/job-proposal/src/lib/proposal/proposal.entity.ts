@@ -1,16 +1,7 @@
-import {
-	JoinColumn,
-	RelationId,
-	JoinTable
-} from 'typeorm';
+import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
-import {
-	IProposal,
-	IEmployee,
-	IOrganizationContact,
-	ProposalStatusEnum
-} from '@gauzy/contracts';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+import { IProposal, IEmployee, IOrganizationContact, ProposalStatusEnum, ID } from '@gauzy/contracts';
 import {
 	ColumnIndex,
 	Employee,
@@ -27,24 +18,29 @@ import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repo
 
 @MultiORMEntity('proposal', { mikroOrmRepository: () => MikroOrmProposalRepository })
 export class Proposal extends TenantOrganizationBaseEntity implements IProposal, Taggable {
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	jobPostUrl: string;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@MultiORMColumn()
 	jobPostContent?: string;
 
-	@ApiPropertyOptional({ type: () => String })
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@MultiORMColumn()
 	proposalContent?: string;
 
 	@ApiProperty({ type: () => String, enum: ProposalStatusEnum })
+	@IsEnum(ProposalStatusEnum)
 	@MultiORMColumn()
 	status?: ProposalStatusEnum;
 
@@ -70,7 +66,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	@IsUUID()
 	@RelationId((it: Proposal) => it.employee)
 	@MultiORMColumn({ nullable: true, relationId: true })
-	employeeId?: string;
+	employeeId?: ID;
 
 	/**
 	 *
@@ -90,7 +86,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	@IsUUID()
 	@RelationId((it: Proposal) => it.organizationContact)
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationContactId?: string;
+	organizationContactId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpRequest, HttpHandler, HttpEvent, HttpInterceptor } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
 import { I18nService } from '@gauzy/ui-core/i18n';
+import { Store } from '../services/store';
 
 @Injectable()
 export class LanguageInterceptor implements HttpInterceptor {

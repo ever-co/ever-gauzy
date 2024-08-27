@@ -1,0 +1,10 @@
+<nb-card *ngIf="invoice$ | async as invoice">
+	<nb-card-header class="d-flex">
+		<h3>
+			{{ (invoice.isEstimate ? 'INVOICES_PAGE.VIEW_ESTIMATE' : 'INVOICES_PAGE.VIEW_INVOICE') | translate }}
+		</h3>
+	</nb-card-header>
+	<nb-card-body class="invoice-body">
+		<ga-invoice-view-inner [invoice]="invoice" [isEstimate]="invoice.isEstimate"></ga-invoice-view-inner>
+	</nb-card-body>
+</nb-card>

@@ -20,7 +20,7 @@ import {
 	OrganizationTeamsService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { EmailInviteFormComponent } from '../forms/email-invite-form/email-invite-form.component';
 
 @UntilDestroy({ checkProperties: true })

@@ -4,8 +4,7 @@ import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
-import { Store } from '@gauzy/ui-core/common';
-import { TasksStoreService } from '@gauzy/ui-core/core';
+import { Store, TasksStoreService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -21,8 +21,8 @@ import {
 	PaginationFilterBaseComponent,
 	TagsOnlyComponent
 } from '@gauzy/ui-core/shared';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ProductService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ProductService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ImageRowComponent, NameWithDescriptionComponent } from '../inventory-table-components';
 
 @UntilDestroy({ checkProperties: true })

@@ -6,10 +6,10 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IEmployee, IImageAsset, IOrganization, ISelectedEmployee, IUser, PermissionsEnum } from '@gauzy/contracts';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ALL_EMPLOYEES_SELECTED } from '@gauzy/ui-core/shared';
-import { ErrorHandlingService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -118,7 +118,7 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
-	 * Edit public employee page redirection
+	 * Create URL tree for edit public employee page
 	 *
 	 * @returns
 	 */
@@ -126,15 +126,14 @@ export class EditEmployeeComponent extends TranslationBaseComponent implements O
 		if (!this.organization || !this.selectedEmployee) {
 			return;
 		}
+		const { id, profile_link } = this.organization;
+		const { id: employeeId, profile_link: employeeProfileLink } = this.selectedEmployee;
+
 		// The call to Location.prepareExternalUrl is the key thing here.
 		let tree = this.router.createUrlTree([
-			`/share/organization/
-			${this.organization.profile_link}/
-			${this.organization.id}/
-			${this.selectedEmployee.profile_link}/
-			${this.selectedEmployee.id}
-		`
+			`/share/organization/${profile_link}/${id}/${employeeProfileLink}/${employeeId}`
 		]);
+
 		// As far as I can tell you don't really need the UrlSerializer.
 		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
 		window.open(externalUrl, '_blank');

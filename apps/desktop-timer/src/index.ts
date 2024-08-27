@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions } from 'electron';
+import { app, BrowserWindow, ipcMain, shell, Menu, MenuItemConstructorOptions, nativeTheme } from 'electron';
 import { environment } from './environments/environment';
 import * as Url from 'url';
 import * as Sentry from '@sentry/electron';
@@ -44,7 +44,8 @@ import {
 	ErrorEventManager,
 	DialogErrorHandler,
 	AppError,
-	UIError
+	UIError,
+	DesktopThemeListener
 } from '@gauzy/desktop-libs';
 import {
 	createSetupWindow,
@@ -90,6 +91,18 @@ const updater = new DesktopUpdater({
 const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER, process.env.REPO_NAME));
 const eventErrorManager = ErrorEventManager.instance;
 args.some((val) => val === '--serve');
+
+ipcMain.handle('PREFERRED_THEME', () => {
+	const applicationSetting = LocalStore.getStore('appSetting');
+	let theme: string;
+	if (!applicationSetting || !applicationSetting.theme) {
+		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+	} else {
+		theme = applicationSetting.theme;
+	}
+	return theme;
+});
 
 let notificationWindow = null;
 let gauzyWindow: BrowserWindow = null;
@@ -236,12 +249,12 @@ async function startServer(value, restart = false) {
 			project: projectConfig
 				? projectConfig
 				: {
-					projectId: null,
-					taskId: null,
-					note: null,
-					aw,
-					organizationContactId: null
-				}
+						projectId: null,
+						taskId: null,
+						note: null,
+						aw,
+						organizationContactId: null
+				  }
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -425,6 +438,15 @@ app.on('ready', async () => {
 	}
 	removeMainListener();
 	ipcMainHandler(store, startServer, knex, { ...environment }, timeTrackerWindow);
+	new DesktopThemeListener({
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		imageViewerWindow: imageView,
+		gauzyWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		alwaysOnWindow: alwaysOn.browserWindow
+	}).listen();
 });
 
 app.on('window-all-closed', () => {

@@ -6,8 +6,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { IImageAsset, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ImageAssetService, InventoryStore, ProductService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ImageAssetService, InventoryStore, ProductService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { GalleryComponent, GalleryService, ImageAssetComponent, SelectAssetComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
@@ -100,10 +99,10 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 		if (!selectedImages) return;
 		selectedImages = selectedImages.length
 			? selectedImages.filter((image) => {
-				return !this.inventoryStore.gallery.find((galleryImg) => {
-					return galleryImg.id == image.id || galleryImg.name == image.name;
-				});
-			})
+					return !this.inventoryStore.gallery.find((galleryImg) => {
+						return galleryImg.id == image.id || galleryImg.name == image.name;
+					});
+			  })
 			: [];
 
 		try {
@@ -231,5 +230,5 @@ export class ProductGalleryComponent extends TranslationBaseComponent implements
 			});
 	}
 
-	ngOnDestroy(): void { }
+	ngOnDestroy(): void {}
 }

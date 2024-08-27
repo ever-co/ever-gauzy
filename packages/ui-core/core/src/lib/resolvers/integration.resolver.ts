@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import { catchError, EMPTY, Observable, of } from 'rxjs';
 import { IIntegrationTenant } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { IntegrationsService } from '../services';
+import { IntegrationsService, Store } from '../services';
 
 @Injectable({
 	providedIn: 'root'

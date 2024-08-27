@@ -33,6 +33,7 @@
 		"INVITE": "Einladen",
 		"SELECT_ALL": "Alle auswählen",
 		"COPY_LINK": "Kopiere Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Verwalten von Vorstellungsgesprächen",
 		"MANAGE_INVITES": "Einladungen verwalten",
 		"MANAGE_SPRINTS": "Verwalten Sie Sprints",
@@ -1626,6 +1627,7 @@
 		"APPLIED": "Angewendet",
 		"HIRED": "Angestellt",
 		"REJECTED": "Abgelehnt",
+		"SHOW_REJECTED": "Anzeige abgelehnt",
 		"DELETED": "Gelöscht",
 		"ARCHIVED": "Archiviert",
 		"SELECT_EMPLOYEE_MSG": "Bitte wählen Sie einen Mitarbeiter aus dem Menü oben aus.",
@@ -2180,7 +2182,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Details des Vorschlags",
-			"EDIT": "Bearbeiten",
 			"AUTHOR": "Autor",
 			"JOB_POST_URL": "Stellenanzeigen-URL",
 			"PROPOSAL_SENT_ON": "Vorschlag gesendet am",
@@ -3038,7 +3039,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generiere öffentlichen Link",
 			"GENERATE": "Erstellen Sie einen Link zu dem {{Text}}, den jeder mit dem Link sehen kann.",
-			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen."
+			"ACCESS": "Jeder, der Zugriff auf diesen Link hat, kann den {{ Text }} anzeigen.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3069,7 +3071,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Seite nicht gefunden",
 		"TAKE_ME_HOME": "Bring mich nach Hause",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Die Seite, nach der du gesucht hast, existiert nicht.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Die Seite, nach der du gesucht hast, existiert nicht.",
 		"REDIRECT_TO_HOME": "Sie werden bald zur Startseite weitergeleitet"
 	},
 	"HELP_PAGE": {
@@ -4163,8 +4165,9 @@
 		"NO_RECORD_FOUND": "Keine Einträge gefunden. Bitte wählen Sie einen Datumsbereich, einen Mitarbeiter oder ein Projekt aus."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Lassen Sie uns Ihre erste Organisation erstellen.",
-		"COMPLETE": "Du bist fertig!"
+		"FIRST_ORGANIZATION": "Lass uns deine erste Organisation erstellen",
+		"COMPLETE_TITLE": "Alles bereit!",
+		"COMPLETE_SUB_TITLE": "Wohin möchtest du jetzt gehen?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Dieses Feld ist erforderlich!",
@@ -4232,7 +4235,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Bitte wählen Sie einen Mitarbeiter aus.",
 		"EXPIRED_OR_CANCELLED": "Dieser Termin ist abgelaufen oder wurde abgesagt.",
 		"EMAIL_SENT": "Eine E-Mail wurde an den Gastgeber sowie an alle Teilnehmer für dieses Treffen gesendet.",
-		"NO_ACTIVE_EVENT_TYpES": "Es gibt keine aktiven Ereignistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Es gibt keine aktiven Ereignistypen.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-Mail-Vorlagen",

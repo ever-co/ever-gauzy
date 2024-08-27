@@ -9,8 +9,9 @@ import { ChartConfiguration, ChartType, TooltipItem } from 'chart.js';
 import { environment } from '@gauzy/ui-config';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -17,12 +17,12 @@ import bootstrapPlugin from '@fullcalendar/bootstrap';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsService } from 'ngx-permissions';
 import { TranslateService } from '@ngx-translate/core';
-import moment from 'moment';
+import * as moment from 'moment';
 import { pick } from 'underscore';
 import { Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
-import { Store, isEmpty, toTimezone } from '@gauzy/ui-core/common';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { isEmpty, toTimezone } from '@gauzy/ui-core/common';
 import { IGetTimeLogInput, ITimeLog, ITimeLogFilters, PermissionsEnum, TimeFormatEnum } from '@gauzy/contracts';
 import {
 	BaseSelectorFilterComponent,

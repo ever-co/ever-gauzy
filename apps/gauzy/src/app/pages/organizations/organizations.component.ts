@@ -7,11 +7,12 @@ import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { debounceTime, firstValueFrom, Subject } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationEditStore,
 	OrganizationsService,
+	Store,
 	ToastrService,
 	UsersOrganizationsService
 } from '@gauzy/ui-core/core';

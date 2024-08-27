@@ -225,3 +225,20 @@ $button-radius: var(--button-rectangle-border-radius);
 		background-color: unset;
 	}
 }
+
+:host(.right) {
+	::ng-deep {
+		&.md-drppicker {
+			@include nb-ltr(margin-left, -30%);
+			@include nb-rtl(margin-left, -132%);
+		}
+	}
+}
+
+:host(.full) {
+	::ng-deep {
+		&.md-drppicker {
+			@include nb-ltr(margin-left, -155%);
+		}
+	}
+}

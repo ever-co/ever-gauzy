@@ -5,8 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { firstValueFrom, filter, tap, Subject, debounceTime } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { OrganizationPositionsService, ToastrService } from '@gauzy/ui-core/core';
-import { ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { OrganizationPositionsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,

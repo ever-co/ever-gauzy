@@ -3,8 +3,8 @@ import { BehaviorSubject, Observable, EMPTY } from 'rxjs';
 import { tap, switchMap, map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { ID, IEngagement, IOrganization, IUpworkApiConfig, IUpworkDateRange } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
 import { UpworkService } from './upwork.service';
+import { Store } from '../store/store.service';
 
 const DEFAULT_DATE_RANGE = {
 	start: new Date(moment().subtract(1, 'months').format('YYYY-MM-DD')),

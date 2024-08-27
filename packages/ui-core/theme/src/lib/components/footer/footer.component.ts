@@ -4,7 +4,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { IUser } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
 import { Environment, GAUZY_ENV } from '@gauzy/ui-config';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ngx-footer',

@@ -4,8 +4,7 @@ import * as moment from 'moment';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { Store, TimeTrackerService } from '@gauzy/ui-core/common';
-import { TimesheetService } from '@gauzy/ui-core/core';
+import { Store, TimeTrackerService, TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from './../edit-time-log-modal';
 import { ViewTimeLogModalComponent } from './../view-time-log-modal';
 

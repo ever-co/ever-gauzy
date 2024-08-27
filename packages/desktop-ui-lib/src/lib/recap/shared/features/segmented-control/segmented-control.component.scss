@@ -36,7 +36,7 @@ $text-color: var(--gauzy-text-color-2);
 // Segment component styles
 .segment {
 	@include flex-center($gap-small);
-	padding: $padding-small;
+	padding: 0 $padding-small;
 
 	span {
 		display: none;

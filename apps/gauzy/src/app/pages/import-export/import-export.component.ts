@@ -21,8 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, ToastrService, UsersOrganizationsService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, Store, ToastrService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 import { ExportAllService, GauzyCloudService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

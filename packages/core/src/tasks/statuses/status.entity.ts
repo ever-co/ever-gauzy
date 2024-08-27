@@ -1,15 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/knex';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
-import { IOrganizationProject, IOrganizationTeam, ITaskStatus } from '@gauzy/contracts';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ID, IOrganizationProject, IOrganizationTeam, ITaskStatus, TaskStatusEnum } from '@gauzy/contracts';
 import { OrganizationProject, OrganizationTeam, TenantOrganizationBaseEntity } from '../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../../core/decorators/entity';
 import { MikroOrmTaskStatusRepository } from './repository';
 
 @MultiORMEntity('task_status', { mikroOrmRepository: () => MikroOrmTaskStatusRepository })
 export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskStatus {
-
 	[EntityRepositoryType]?: MikroOrmTaskStatusRepository;
 
 	@ApiProperty({ type: () => String })
@@ -54,7 +59,31 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@MultiORMColumn({ default: false })
 	isCollapsed?: boolean;
 
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isTodo?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isInProgress?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isDone?: boolean;
+
 	/** Additional virtual columns */
+	@ApiPropertyOptional({ type: () => String, enum: TaskStatusEnum })
+	@IsOptional()
+	@IsEnum(TaskStatusEnum)
+	@VirtualMultiOrmColumn()
+	template?: TaskStatusEnum;
+
 	@VirtualMultiOrmColumn()
 	fullIconUrl?: string;
 	/*
@@ -84,7 +113,7 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@RelationId((it: TaskStatus) => it.project)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 
 	/**
 	 * Organization Team
@@ -104,5 +133,5 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	@RelationId((it: TaskStatus) => it.organizationTeam)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 }

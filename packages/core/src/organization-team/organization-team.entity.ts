@@ -1,5 +1,7 @@
 import { JoinTable, JoinColumn, RelationId } from 'typeorm';
 import {
+	ID,
+	IDailyPlan,
 	IEquipmentSharing,
 	IGoal,
 	IImageAsset,
@@ -20,6 +22,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
+	DailyPlan,
 	EquipmentSharing,
 	Goal,
 	ImageAsset,
@@ -166,7 +169,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@RelationId((it: OrganizationTeam) => it.createdBy)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	createdById?: IUser['id'];
+	createdById?: ID;
 
 	/**
 	 * ImageAsset
@@ -190,7 +193,7 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	@RelationId((it: OrganizationTeam) => it.image)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	imageId?: IImageAsset['id'];
+	imageId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -260,6 +263,14 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	 */
 	@MultiORMOneToMany(() => IssueType, (it) => it.organizationTeam)
 	issueTypes?: IIssueType[];
+
+	/**
+	 * Team daily plans
+	 */
+	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.organizationTeam, {
+		cascade: true
+	})
+	dailyPlans?: IDailyPlan[];
 
 	/*
 	|--------------------------------------------------------------------------

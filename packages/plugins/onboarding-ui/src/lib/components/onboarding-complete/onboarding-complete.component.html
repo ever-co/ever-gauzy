@@ -1,0 +1,32 @@
+<!-- Switch theme -->
+<gauzy-switch-theme class="switch-theme" [hasText]="false"></gauzy-switch-theme>
+
+<!-- Gauzy logo -->
+<div class="logo">
+	<ngx-gauzy-logo [isAccordion]="false"></ngx-gauzy-logo>
+	<h4>{{ 'ONBOARDING.COMPLETE_TITLE' | translate }}</h4>
+	<h6>{{ 'ONBOARDING.COMPLETE_SUB_TITLE' | translate }}</h6>
+</div>
+
+<!-- Blocks -->
+<ng-container *ngFor="let block of blocks$ | async">
+	<div class="row centered">
+		<ng-container *ngFor="let row of block">
+			<div class="col-3">
+				<nb-card class="shortcut-card" [status]="row?.status" (click)="navigateTo(row?.link)">
+					<nb-card-header>
+						<nb-icon [icon]="row?.icon" *ngIf="row?.icon"></nb-icon>
+						{{ row?.name }}
+					</nb-card-header>
+					<nb-card-body class="border border-top-0">
+						<div class="shortcut">
+							<div>
+								{{ row?.description }}
+							</div>
+						</div>
+					</nb-card-body>
+				</nb-card>
+			</div>
+		</ng-container>
+	</div>
+</ng-container>

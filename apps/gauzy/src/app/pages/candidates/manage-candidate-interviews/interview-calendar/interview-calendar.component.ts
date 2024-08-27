@@ -15,8 +15,14 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IDateRange, ICandidateInterview, IOrganization, IPagination } from '@gauzy/contracts';
 import * as moment from 'moment';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { CandidateInterviewService, EmployeesService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import {
+	CandidateInterviewService,
+	EmployeesService,
+	ErrorHandlingService,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { CandidateInterviewInfoComponent, CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

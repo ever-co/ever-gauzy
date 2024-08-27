@@ -33,6 +33,7 @@
 		"INVITE": "邀请",
 		"SELECT_ALL": "选择所有",
 		"COPY_LINK": "复制链接",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "管理面试",
 		"MANAGE_INVITES": "管理邀请",
 		"MANAGE_SPRINTS": "管理冲刺",
@@ -1626,6 +1627,7 @@
 		"APPLIED": "应用",
 		"HIRED": "雇佣的",
 		"REJECTED": "被拒绝",
+		"SHOW_REJECTED": "显示被拒绝",
 		"DELETED": "已刪除",
 		"ARCHIVED": "存档",
 		"SELECT_EMPLOYEE_MSG": "请从上面的菜单中选择员工。",
@@ -2184,7 +2186,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "提案细节",
-			"EDIT": "编辑",
 			"AUTHOR": "作者",
 			"JOB_POST_URL": "職位網址",
 			"PROPOSAL_SENT_ON": "投递日期",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "生成公共链接",
 			"GENERATE": "生成一个链接，任何具有链接的人都可以查看{{ text }}。",
-			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。"
+			"ACCESS": "任何有权访问此链接的人都可以查看{{ text }}。",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3075,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "页面未找到",
 		"TAKE_ME_HOME": "带我回家",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "您正在寻找的页面不存在。",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "您正在寻找的页面不存在。",
 		"REDIRECT_TO_HOME": "您将很快被重定向到主页"
 	},
 	"HELP_PAGE": {
@@ -4167,8 +4169,9 @@
 		"NO_RECORD_FOUND": "没有找到记录。请选择日期范围、员工或项目。"
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "让我们创建你的第一个组织。",
-		"COMPLETE": "你已准备妥当！"
+		"FIRST_ORGANIZATION": "让我们创建您的第一个组织",
+		"COMPLETE_TITLE": "你已经准备好了！",
+		"COMPLETE_SUB_TITLE": "现在你想去哪儿？"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "此字段为必填项！",
@@ -4236,7 +4239,8 @@
 		"SELECT_EMPLOYEE_ERROR": "请选择一个员工。",
 		"EXPIRED_OR_CANCELLED": "该约会已过期或已取消。",
 		"EMAIL_SENT": "已经向主持人和所有参会人员发送了一封电子邮件。",
-		"NO_ACTIVE_EVENT_TYpES": "没有活动类型。"
+		"NO_ACTIVE_EVENT_TYPES": "没有活动类型。",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "电子邮件模板",

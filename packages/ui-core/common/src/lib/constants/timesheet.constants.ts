@@ -1,5 +1,8 @@
 import { TimeLogType } from '@gauzy/contracts';
 
+/**
+ * TimeLogsLabel
+ */
 export const TimeLogsLabel = {
 	[TimeLogType.TRACKED]: {
 		status: 'success',

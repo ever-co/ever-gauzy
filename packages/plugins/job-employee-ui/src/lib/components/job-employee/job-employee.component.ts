@@ -9,16 +9,17 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { NgxPermissionsService } from 'ngx-permissions';
+import { ID, IEmployee, IOrganization, LanguagesEnum, PermissionsEnum } from '@gauzy/contracts';
+import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
-	ID,
-	IEmployee,
-	IEmployeeJobsStatisticsResponse,
-	IOrganization,
-	LanguagesEnum,
-	PermissionsEnum
-} from '@gauzy/contracts';
-import { EmployeesService, JobService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
-import { API_PREFIX, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+	PageDataTableRegistryService,
+	EmployeesService,
+	JobService,
+	ServerDataSource,
+	Store,
+	ToastrService
+} from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import {
 	EmployeeLinksComponent,
 	IPaginationBase,
@@ -26,7 +27,6 @@ import {
 	PaginationFilterBaseComponent,
 	SmartTableToggleComponent
 } from '@gauzy/ui-core/shared';
-import { I18nService } from '@gauzy/ui-core/i18n';
 
 /**
  * Job Employee Component
@@ -66,9 +66,13 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		private readonly _toastrService: ToastrService,
 		private readonly _currencyPipe: CurrencyPipe,
 		private readonly _ngxPermissionsService: NgxPermissionsService,
-		private readonly _i18nService: I18nService
+		private readonly _i18nService: I18nService,
+		readonly _pageDataTableRegistryService: PageDataTableRegistryService
 	) {
 		super(translateService);
+
+		// Register data table columns
+		this.registerDataTableColumns(_pageDataTableRegistryService);
 	}
 
 	ngOnInit(): void {
@@ -129,6 +133,126 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Register data table columns for the JobEmployee
+	 *
+	 * @param _pageDataTableRegistryService
+	 */
+	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'name',
+			order: 0,
+			title: 'JOB_EMPLOYEE.EMPLOYEE',
+			type: 'custom',
+			width: '20%',
+			isSortable: true,
+			isEditable: true,
+			renderComponent: EmployeeLinksComponent,
+			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
+			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
+				// Get the row data from the cell
+				instance.rowData = cell.getRow().getData();
+				// Get the value from the cell
+				instance.value = cell.getValue();
+			}
+		});
+
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'availableJobs',
+			order: 1,
+			title: 'JOB_EMPLOYEE.AVAILABLE_JOBS',
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: false,
+			valuePrepareFunction: (rawValue: any) => rawValue || 0
+		});
+
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'appliedJobs',
+			order: 2,
+			title: 'JOB_EMPLOYEE.APPLIED_JOBS',
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: false,
+			valuePrepareFunction: (rawValue: any) => rawValue || 0
+		});
+
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'billRateValue',
+			order: 3,
+			title: 'JOB_EMPLOYEE.BILLING_RATE',
+			type: 'text',
+			width: '10%',
+			isSortable: false,
+			isEditable: true,
+			editor: {
+				type: 'custom',
+				component: NumberEditorComponent
+			},
+			valuePrepareFunction: (rawValue: any, cell: Cell) => {
+				// Get the employee data from the cell
+				const employee: IEmployee = cell.getRow().getData();
+				// Return the transformed value
+				return this._currencyPipe.transform(rawValue, employee?.billRateCurrency);
+			}
+		});
+
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'minimumBillingRate',
+			order: 4,
+			title: 'JOB_EMPLOYEE.MINIMUM_BILLING_RATE',
+			type: 'text',
+			width: '20%',
+			isSortable: false,
+			isEditable: true,
+			editor: {
+				type: 'custom',
+				component: NumberEditorComponent
+			},
+			valuePrepareFunction: (value: number, cell: Cell) => {
+				const employee: IEmployee = cell.getRow().getData();
+				return this._currencyPipe.transform(value, employee?.billRateCurrency);
+			}
+		});
+
+		// Register the data table column
+		_pageDataTableRegistryService.registerPageDataTableColumn({
+			location: 'job-employee',
+			columnId: 'isJobSearchActive',
+			order: 5,
+			title: 'JOB_EMPLOYEE.JOB_SEARCH_STATUS',
+			type: 'custom',
+			width: '20%',
+			isSortable: false,
+			isEditable: false,
+			renderComponent: SmartTableToggleComponent,
+			componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
+				// Get the employee data from the cell
+				const employee: IEmployee = cell.getRow().getData();
+
+				// Set the initial value of the toggle
+				instance.value = employee.isJobSearchActive;
+
+				// Subscribe to the toggleChange event
+				instance.toggleChange.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
+					this.updateJobSearchAvailability(employee, toggle);
+				});
+			}
+		});
 	}
 
 	/**
@@ -268,85 +392,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 				confirmSave: true
 			},
 			columns: {
-				employee: {
-					title: this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'),
-					width: '30%',
-					type: 'custom',
-					isSortable: false,
-					isEditable: false,
-					renderComponent: EmployeeLinksComponent,
-					valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
-					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
-						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getValue();
-					}
-				},
-				availableJobs: {
-					title: this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'),
-					type: 'text',
-					width: '10%',
-					isSortable: false,
-					isEditable: false,
-					valuePrepareFunction: (value: IEmployeeJobsStatisticsResponse['availableJobs']) => value || 0
-				},
-				appliedJobs: {
-					title: this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'),
-					type: 'text',
-					width: '10%',
-					isSortable: false,
-					isEditable: false,
-					valuePrepareFunction: (value: IEmployeeJobsStatisticsResponse['appliedJobs']) => value || 0
-				},
-				billRateValue: {
-					title: this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'),
-					type: 'text',
-					width: '10%',
-					isSortable: false,
-					isEditable: true,
-					editor: {
-						type: 'custom',
-						component: NumberEditorComponent
-					},
-					valuePrepareFunction: (value: number, cell: Cell) => {
-						const employee: IEmployee = cell.getRow().getData();
-						return this._currencyPipe.transform(value, employee?.billRateCurrency);
-					}
-				},
-				minimumBillingRate: {
-					title: this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'),
-					type: 'text',
-					width: '20%',
-					isSortable: false,
-					isEditable: true,
-					editor: {
-						type: 'custom',
-						component: NumberEditorComponent
-					},
-					valuePrepareFunction: (value: number, cell: Cell) => {
-						const employee: IEmployee = cell.getRow().getData();
-						return this._currencyPipe.transform(value, employee?.billRateCurrency);
-					}
-				},
-				isJobSearchActive: {
-					title: this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'),
-					type: 'custom',
-					width: '20%',
-					isSortable: false,
-					isEditable: false,
-					renderComponent: SmartTableToggleComponent,
-					componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
-						// Get the employee data from the cell
-						const employee: IEmployee = cell.getRow().getData();
-
-						// Set the initial value of the toggle
-						instance.value = employee.isJobSearchActive;
-
-						// Subscribe to the toggleChange event
-						instance.toggleChange.pipe(untilDestroyed(this)).subscribe((toggle: boolean) => {
-							this.updateJobSearchAvailability(employee, toggle);
-						});
-					}
-				}
+				...this._pageDataTableRegistryService.getPageDataTableColumns('job-employee')
 			}
 		};
 	}
@@ -357,10 +403,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	 * @param cell The cell to prepare the value for.
 	 * @returns The prepared value.
 	 */
-	private prepareEmployeeValue(
-		_: any,
-		cell: Cell
-	): { name: string | null; imageUrl: string | null; id: string | null } {
+	private prepareEmployeeValue(_: any, cell: Cell): any {
 		// Get the employee data from the cell
 		const employee: IEmployee | undefined = cell.getRow().getData();
 

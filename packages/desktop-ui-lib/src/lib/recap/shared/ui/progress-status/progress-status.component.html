@@ -1,8 +1,8 @@
 <div class="wrapper">
-	<div class="percentage-col">{{ percentage }}%</div>
+	<div *ngIf="displayValue.out" class="percentage-col">{{ (percentage / 100) | percent:'1.0-2' }}</div>
 	<div class="progress-col">
-		<nb-progress-bar [value]="percentage" [status]="progressStatus(percentage)"
-			[displayValue]="true" size="tiny">
+		<nb-progress-bar [value]="percentage" [status]="progressStatus(percentage)" [displayValue]="displayValue.in"
+			size="tiny">
 		</nb-progress-bar>
 	</div>
 </div>

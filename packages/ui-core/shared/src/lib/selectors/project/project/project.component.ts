@@ -5,11 +5,12 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject, switchMap } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	NavigationService,
 	OrganizationProjectStore,
 	OrganizationProjectsService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TruncatePipe } from '../../../pipes';

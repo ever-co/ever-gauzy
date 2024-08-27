@@ -1,8 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { RolesEnum, IUser, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { ToastrService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { BasicInfoFormComponent } from '../forms/basic-info/basic-info-form.component';
 import { filter, tap } from 'rxjs/operators';
 

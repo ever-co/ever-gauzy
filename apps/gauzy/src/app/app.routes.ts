@@ -12,8 +12,12 @@ export const appRoutes: Routes = [
 		canActivate: []
 	},
 	{
+		path: 'sign-in',
+		loadChildren: () => import('@gauzy/ui-auth').then((m) => m.SignInSuccessModule)
+	},
+	{
 		path: 'onboarding',
-		loadChildren: () => import('./onboarding/onboarding.module').then((m) => m.OnboardingModule),
+		loadChildren: () => import('@gauzy/plugin-onboarding-ui').then((m) => m.OnboardingModule),
 		canActivate: [AuthGuard, AppModuleGuard]
 	},
 	{
@@ -23,20 +27,16 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'share',
-		loadChildren: () => import('./share/share.module').then((m) => m.ShareModule),
+		loadChildren: () => import('@gauzy/plugin-public-layout-ui').then((m) => m.PublicLayoutModule),
 		canActivate: []
 	},
 	{
-		path: 'server-down',
-		loadChildren: () => import('./server-down/server-down.module').then((m) => m.ServerDownModule)
-	},
-	{
 		path: 'legal',
-		loadChildren: () => import('./legal/legal.module').then((m) => m.LegalModule)
+		loadChildren: () => import('@gauzy/plugin-legal-ui').then((m) => m.LegalModule)
 	},
 	{
-		path: 'sign-in',
-		loadChildren: () => import('@gauzy/ui-auth').then((m) => m.SignInSuccessModule)
+		path: 'server-down',
+		loadChildren: () => import('@gauzy/plugin-maintenance-ui').then((m) => m.MaintenanceModeModule)
 	},
 	{
 		path: '',

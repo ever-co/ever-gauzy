@@ -1,37 +1,26 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Body,
-	Param,
-	Get,
-	Post,
-	Put,
-	HttpCode,
-	Query,
-	ValidationPipe,
-	UsePipes
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Body, Param, Get, Post, Put, HttpCode, Query } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { I18nLang } from 'nestjs-i18n';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
+	ID,
 	LanguagesEnum,
 	IEmployeeAppointmentCreateInput,
 	IEmployeeAppointmentUpdateInput,
 	IEmployeeAppointment,
 	IPagination
 } from '@gauzy/contracts';
+import { CrudController, PaginationParams } from './../core/crud';
+import { RelationsQueryDTO } from '../shared/dto';
+import { TenantPermissionGuard } from './../shared/guards';
+import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { EmployeeAppointmentService } from './employee-appointment.service';
 import { EmployeeAppointmentCreateCommand, EmployeeAppointmentUpdateCommand } from './commands';
 import { EmployeeAppointment } from './employee-appointment.entity';
-import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
-import { CrudController, PaginationParams } from './../core/crud';
 
 @ApiTags('EmployeeAppointment')
 @UseGuards(TenantPermissionGuard)
-@Controller()
+@Controller('/employee-appointment')
 export class EmployeeAppointmentController extends CrudController<EmployeeAppointment> {
 	constructor(
 		private readonly employeeAppointmentService: EmployeeAppointmentService,
@@ -56,8 +45,8 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.EXPECTATION_FAILED,
 		description: 'Token generation failure'
 	})
-	@Get('sign/:id')
-	async signAppointment(@Param('id', UUIDValidationPipe) id: string): Promise<string> {
+	@Get('/sign/:id')
+	async signAppointment(@Param('id', UUIDValidationPipe) id: ID): Promise<string> {
 		return this.employeeAppointmentService.signAppointmentId(id);
 	}
 
@@ -77,9 +66,9 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.EXPECTATION_FAILED,
 		description: 'Token verification failure'
 	})
-	@Get('decode/:token')
+	@Get('/decode/:token')
 	async decodeToken(@Param('token') token: string): Promise<string> {
-		const decoded = this.employeeAppointmentService.decode(token);
+		const decoded = this.employeeAppointmentService.decodeSignToken(token);
 		return decoded['appointmentId'];
 	}
 
@@ -89,7 +78,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 	 * @param filter
 	 * @returns
 	 */
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(
 		@Query() filter: PaginationParams<EmployeeAppointment>
@@ -115,7 +104,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get()
+	@Get('/')
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<IEmployeeAppointment>> {
 		const { relations, findInput } = data;
 		return this.employeeAppointmentService.findAll({
@@ -140,9 +129,12 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@Get(':id')
-	async findById(@Param('id', UUIDValidationPipe) id: string): Promise<IEmployeeAppointment> {
-		return this.employeeAppointmentService.findOneByIdString(id);
+	@Get('/:id')
+	async findById(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() query: RelationsQueryDTO
+	): Promise<IEmployeeAppointment> {
+		return await this.employeeAppointmentService.findById(id, query.relations);
 	}
 
 	/**
@@ -161,7 +153,7 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
+	@Post('/')
 	async create(
 		@Body() entity: IEmployeeAppointmentCreateInput,
 		@I18nLang() languageCode: LanguagesEnum
@@ -190,9 +182,9 @@ export class EmployeeAppointmentController extends CrudController<EmployeeAppoin
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: IEmployeeAppointmentUpdateInput
 	): Promise<IEmployeeAppointment> {
 		return await this.commandBus.execute(new EmployeeAppointmentUpdateCommand(id, entity));

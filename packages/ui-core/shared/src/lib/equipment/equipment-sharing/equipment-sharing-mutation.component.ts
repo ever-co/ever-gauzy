@@ -13,7 +13,7 @@ import {
 	EquipmentSharingParticipantEnum
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -22,7 +22,8 @@ import {
 	EquipmentService,
 	EquipmentSharingPolicyService,
 	EquipmentSharingService,
-	OrganizationTeamsService
+	OrganizationTeamsService,
+	Store
 } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 

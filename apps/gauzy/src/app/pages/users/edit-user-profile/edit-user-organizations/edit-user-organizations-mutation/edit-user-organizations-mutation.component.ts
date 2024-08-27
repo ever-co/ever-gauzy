@@ -3,8 +3,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { OrganizationsService, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { OrganizationsService, Store, UserIdService, UsersOrganizationsService } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-edit-user-organizations-mutation',

@@ -3,7 +3,8 @@ import { filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IOrganization, RegionsEnum, TimeFormatEnum } from '@gauzy/contracts';
-import { Store, isEmpty } from '@gauzy/ui-core/common';
+import { isEmpty } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Pipe({

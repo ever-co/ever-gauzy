@@ -14,9 +14,9 @@ import {
 	PermissionsEnum,
 	SMTPSecureEnum
 } from '@gauzy/contracts';
-import { isNotEmpty, Store } from '@gauzy/ui-core/common';
+import { isNotEmpty } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
+import { ErrorHandlingService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { FileStorageService, TenantService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

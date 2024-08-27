@@ -21,9 +21,10 @@ import {
 	CandidatesService,
 	CandidateStore,
 	EmployeesService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { ComponentEnum, Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { ComponentEnum, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import {
 	CandidateInterviewFeedbackComponent,
 	CandidateInterviewMutationComponent,

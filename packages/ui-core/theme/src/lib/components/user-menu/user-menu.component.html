@@ -35,12 +35,11 @@
 		<div class="links">
 			<p
 				*ngIf="employee$ | async"
-				[ngClass]="{'disabled-table': (isSubmit$ | async)}"
+				[ngClass]="{ 'disabled-table': (isSubmit$ | async) }"
 				class="link"
 				[innerHTML]="
 					((employee$ | async)?.isAway
-						?
-						'USER_MENU.SET_YOURSELF_AS_ACTIVE'
+						? 'USER_MENU.SET_YOURSELF_AS_ACTIVE'
 						: 'USER_MENU.SET_YOURSELF_AS_AWAY'
 					) | translate
 				"
@@ -54,11 +53,7 @@
 			</p>
 		</div>
 		<div class="sub-user-menu">
-			<gauzy-user
-				showIdentity="true"
-				[user$]="user$"
-				(clicked)="onClick()"
-			></gauzy-user>
+			<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
 		</div>
 	</div>
 
@@ -67,28 +62,19 @@
 		<div class="download-apps-content">
 			<span class="download-apps-label">Download Apps:</span>
 			<span class="download-apps-icons">
-				<a
-					*ngFor="let app of downloadApps"
-					target="_blank"
-					[href]="app.link"
-					rel="noopener"
-				>
+				<a *ngFor="let app of downloadApps" target="_blank" [href]="app.link" rel="noopener">
 					<i [class]="app.icon"></i>
 				</a>
 			</span>
 		</div>
 		<p>
-			<a target="_blank" href="https://gauzy.co">{{
-				'USER_MENU.HELP' | translate
-			}}</a>
+			<a target="_blank" href="{{ platFormWebSiteUrl }}">{{ 'USER_MENU.HELP' | translate }}</a>
 		</p>
 		<p class="link" underConstruction>
 			{{ 'USER_MENU.HOTKEYS' | translate }}
 		</p>
 		<p>
-			<ngx-theme-language-selector
-				class="theme"
-			></ngx-theme-language-selector>
+			<ngx-theme-language-selector class="theme"></ngx-theme-language-selector>
 		</p>
 		<p>
 			<gauzy-switch-theme class="theme"></gauzy-switch-theme>

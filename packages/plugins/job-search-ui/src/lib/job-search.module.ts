@@ -21,7 +21,7 @@ import { MomentModule } from 'ngx-moment';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { FileUploadModule } from 'ng2-file-upload';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { PageRouteService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
 import {
 	SmartDataViewLayoutModule,
@@ -31,7 +31,7 @@ import {
 	SharedModule,
 	StatusBadgeModule
 } from '@gauzy/ui-core/shared';
-import { createRoutes } from './job-search.routes';
+import { createJobSearchRoutes } from './job-search.routes';
 import { JobSearchComponent } from './components/job-search/job-search.component';
 import { COMPONENTS } from './components';
 
@@ -88,8 +88,8 @@ const THIRD_PARTY_MODULES = [
 	providers: [
 		{
 			provide: ROUTES,
-			useFactory: (pageRouteService: PageRouteService) => createRoutes(pageRouteService),
-			deps: [PageRouteService],
+			useFactory: (service: PageRouteRegistryService) => createJobSearchRoutes(service),
+			deps: [PageRouteRegistryService],
 			multi: true
 		}
 	]
@@ -97,7 +97,7 @@ const THIRD_PARTY_MODULES = [
 export class JobSearchModule {
 	private static hasRegisteredPageRoutes = false; // Flag to check if routes have been registered
 
-	constructor(@Inject(PageRouteService) readonly _pageRouteService: PageRouteService) {
+	constructor(@Inject(PageRouteRegistryService) readonly _pageRouteRegistryService: PageRouteRegistryService) {
 		// Register the routes
 		this.registerPageRoutes();
 	}
@@ -114,7 +114,7 @@ export class JobSearchModule {
 		}
 
 		// Register Job Browser Page Routes
-		this._pageRouteService.registerPageRoute({
+		this._pageRouteRegistryService.registerPageRoute({
 			// Register the location 'jobs'
 			location: 'jobs',
 			// Register the path 'search'

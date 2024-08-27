@@ -6,12 +6,7 @@
 		<div class="col-md-12">
 			<ng-container *ngxPermissionsOnly="'ORG_INVENTORY_PRODUCT_EDIT'">
 				<div class="button-new">
-					<button
-						status="basic"
-						nbButton
-						(click)="onCreateOptionGroupClick()"
-						class=""
-					>
+					<button status="basic" nbButton (click)="onCreateOptionGroupClick()" class="">
 						{{ 'INVENTORY_PAGE.NEW_OPTION_GROUP' | translate }}
 					</button>
 				</div>
@@ -20,14 +15,9 @@
 	</div>
 
 	<form [formGroup]="form" #formGroupElement>
-		<ng-container
-			*ngFor="let optionGroup of optionGroups; let idxGroup = index"
-		>
+		<ng-container *ngFor="let optionGroup of optionGroups; let idxGroup = index">
 			<ng-container
-				*ngTemplateOutlet="
-					optionGroupTemplate;
-					context: { optionGroup: optionGroup, idxGroup: idxGroup }
-				"
+				*ngTemplateOutlet="optionGroupTemplate; context: { optionGroup: optionGroup, idxGroup: idxGroup }"
 			></ng-container>
 		</ng-container>
 
@@ -42,10 +32,7 @@
 			>
 				<div class="col-md-2 d-flex pr-1">
 					<span>
-						<nb-icon
-							class="option-row-icon edit"
-							icon="edit-outline"
-						></nb-icon>
+						<nb-icon class="option-row-icon edit" icon="edit-outline"></nb-icon>
 					</span>
 					<span class="mr-3 ml-3">
 						<nb-icon
@@ -65,11 +52,7 @@
 		</ng-template>
 
 		<!-- //template for optionGroup row -->
-		<ng-template
-			#optionGroupTemplate
-			let-optionGroupData="optionGroup"
-			let-idxGroup="idxGroup"
-		>
+		<ng-template #optionGroupTemplate let-optionGroupData="optionGroup" let-idxGroup="idxGroup">
 			<div
 				class="row mb-2 edit-option-group option-group-form"
 				*ngIf="isActive(optionGroupData)"
@@ -81,9 +64,7 @@
 						fullWidth
 						type="text"
 						nbInput
-						[placeholder]="
-							'INVENTORY_PAGE.OPTION_GROUP_NAME' | translate
-						"
+						[placeholder]="'INVENTORY_PAGE.OPTION_GROUP_NAME' | translate"
 					/>
 				</div>
 				<div class="col-md-9 col-sm-12">
@@ -93,9 +74,7 @@
 								fullWidth
 								type="text"
 								nbInput
-								[placeholder]="
-									'INVENTORY_PAGE.NAME' | translate
-								"
+								[placeholder]="'INVENTORY_PAGE.NAME' | translate"
 								formControlName="activeOptionName"
 							/>
 						</div>
@@ -104,9 +83,7 @@
 								fullWidth
 								type="text"
 								nbInput
-								[placeholder]="
-									'INVENTORY_PAGE.CODE' | translate
-								"
+								[placeholder]="'INVENTORY_PAGE.CODE' | translate"
 								formControlName="activeOptionCode"
 							/>
 						</div>
@@ -117,19 +94,11 @@
 									status="success"
 									outline
 									size="small"
-									(click)="
-										onTranslateOptionClick(optionGroupData)
-									"
+									(click)="onTranslateOptionClick(optionGroupData)"
 								>
 									<nb-icon icon="globe-outline"></nb-icon>
 								</button>
-								<button
-									nbButton
-									status="success"
-									outline
-									size="small"
-									(click)="onCreateOptionClick()"
-								>
+								<button nbButton status="success" outline size="small" (click)="onCreateOptionClick()">
 									<i class="fas fa-plus"></i>
 								</button>
 								<button
@@ -137,9 +106,7 @@
 									status="danger"
 									outline
 									size="small"
-									(click)="
-										onDeleteOptinGroupClick(optionGroupData)
-									"
+									(click)="onDeleteOptionGroupClick(optionGroupData)"
 								>
 									<nb-icon icon="trash-2-outline"></nb-icon>
 								</button>
@@ -147,15 +114,8 @@
 						</div>
 					</div>
 
-					<ng-container
-						*ngFor="let option of optionGroupData.options"
-					>
-						<ng-container
-							*ngTemplateOutlet="
-								optionRowTemplate;
-								context: { option: option }
-							"
-						></ng-container>
+					<ng-container *ngFor="let option of optionGroupData.options">
+						<ng-container *ngTemplateOutlet="optionRowTemplate; context: { option: option }"></ng-container>
 					</ng-container>
 				</div>
 			</div>
@@ -171,15 +131,8 @@
 				<div class="col-md-9 option col-sm-12">
 					<div class="row mb-2"></div>
 
-					<ng-container
-						*ngFor="let option of optionGroupData.options"
-					>
-						<ng-container
-							*ngTemplateOutlet="
-								optionRowTemplate;
-								context: { option: option }
-							"
-						></ng-container>
+					<ng-container *ngFor="let option of optionGroupData.options">
+						<ng-container *ngTemplateOutlet="optionRowTemplate; context: { option: option }"></ng-container>
 					</ng-container>
 				</div>
 			</div>

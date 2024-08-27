@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
-import { CandidateInterviewService } from '@gauzy/ui-core/core';
+import { CandidateInterviewService, Store } from '@gauzy/ui-core/core';
 import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { FullCalendarComponent } from '@fullcalendar/angular';
@@ -13,7 +13,7 @@ import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

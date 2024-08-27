@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
 import { RecapQuery } from '../../+state/recap.query';
+import { RecapStore } from '../../+state/recap.store';
+import { IDateRangePicker } from '../../shared/features/date-range-picker/date-picker.interface';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,10 +15,14 @@ import { RecapQuery } from '../../+state/recap.query';
 export class RecapComponent {
 	private readonly basePath = ['/', 'time-tracker', 'daily'];
 
-	constructor(private readonly recapQuery: RecapQuery) {}
+	constructor(private readonly recapQuery: RecapQuery, private readonly recapStore: RecapStore) {}
 
 	public get isLoading$(): Observable<boolean> {
 		return this.recapQuery.isLoading$;
+	}
+
+	public onRangeChange(range: IDateRangePicker) {
+		this.recapStore.update({ range });
 	}
 
 	public get segments() {

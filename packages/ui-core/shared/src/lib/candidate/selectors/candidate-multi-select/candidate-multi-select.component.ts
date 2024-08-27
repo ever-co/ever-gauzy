@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ICandidate } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { CandidatesService, ErrorHandlingService } from '@gauzy/ui-core/core';
 import { BaseCandidateSelectorComponent } from '../base-candidate-selector.component';
 
