@@ -5,13 +5,14 @@
 
 <!-- Static tabs for the nb tabset -->
 <ng-template #staticTabs>
-	<nb-tabset>
-		<!-- <nb-tab
+	{{ tabs | json }}
+	<!-- <nb-tabset>
+		<nb-tab
 			*ngFor="let tab of tabs"
 			[tabTitle]="tab.tabTitle"
 			[tabId]="tab.tabId"
 			[tabIcon]="tab.tabIcon"
 			[route]="tab.route"
-		></nb-tab> -->
-	</nb-tabset>
+		></nb-tab>
+	</nb-tabset> -->
 </ng-template>

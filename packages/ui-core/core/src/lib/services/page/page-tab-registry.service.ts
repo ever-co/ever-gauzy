@@ -14,6 +14,19 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	private readonly registry = new Map<TabsetRegistryId, PageTabRegistryConfig[]>();
 
 	/**
+	 * Retrieves the current tab registry.
+	 *
+	 * This method returns the internal map that stores the page tab configurations,
+	 * keyed by their tabset identifiers.
+	 *
+	 * @returns A Map where the keys are tabset identifiers and the values are arrays
+	 *          of page tab configurations associated with each tabset.
+	 */
+	public getRegistry(): Map<TabsetRegistryId, PageTabRegistryConfig[]> {
+		return this.registry;
+	}
+
+	/**
 	 * Register a single page tab configuration.
 	 *
 	 * This method registers a new page tab configuration in the service's internal registry.
@@ -31,31 +44,76 @@ export class PageTabRegistryService implements IPageTabRegistry {
 			throw new Error('Page tab configuration must have a tabsetId property');
 		}
 
+		// Call addPageTab to handle the addition or update of the tab
+		this.addPageTab(config, config.tabsetId);
+	}
+
+	/**
+	 * Adds a new page tab to the specified tab set.
+	 *
+	 * @param config The configuration object representing the new tab to add.
+	 * @param tabsetId The identifier of the tab set to which the new tab should be added.
+	 */
+	public addPageTab(config: PageTabRegistryConfig, tabsetId: TabsetRegistryId): void {
+		// Check if the configuration has a location property
+		if (!config.tabsetId) {
+			throw new Error('Page tab configuration must have a tabsetId property');
+		}
+
+		// Get the list of tabs for the specified tab set from the registry, or initialize as an empty array if not found
+		const tabs = this.registry.get(tabsetId) || [];
+
 		// Ensure config is defined before accessing its properties
 		config.order = config.order ?? 0; // Set the default order to 0 if not provided
 		config.hide = config.hide ?? false; // Set the default hide to false if not provided
 		config.responsive = config.responsive ?? true; // Set the default responsive to true if not provided
 
-		// Get all registered tabs for the specified location
-		const tabs = this.registry.get(config.tabsetId) || [];
+		// Find the index of an existing tab with the same tabId in the specified tab set
+		const existing = tabs.findIndex((tab) => tab.tabId === config.tabId);
 
-		// Check if a tab with the same location and path already exists
-		const isMatchingTab = tabs.some(
-			(tab: PageTabRegistryConfig) => tab.tabsetId === config.tabsetId && tab.tabId === config.tabId
-		);
-
-		// Check if a tab with the same location already exists
-		if (isMatchingTab) {
-			throw new Error(
-				`A page with the tabsetId "${config.tabsetId}" and tabId "${config.tabId}" has already been registered`
-			);
+		if (existing !== -1) {
+			// If the tab exists, replace it with the new configuration
+			tabs[existing] = config;
+		} else {
+			// If the tab does not exist, add the new tab configuration to the list
+			tabs.push(config);
 		}
 
-		// Add the new tab configuration to the list of tabs for the specified location
-		tabs.push(config);
+		// Update the registry with the modified list of tabs for the specified tabset
+		this.registry.set(tabsetId, tabs);
+	}
 
-		// Update the registry with the new list of tabs for the specified location
-		this.registry.set(config.tabsetId, tabs);
+	/**
+	 * Removes a page tab from the specified tab set.
+	 *
+	 * This method retrieves the list of tabs associated with the provided `tabsetId`,
+	 * finds the tab with the specified `tabId`, removes it from the list, and updates
+	 * the registry. If the tabset becomes empty after removal, it also removes the tabset
+	 * entry from the registry.
+	 *
+	 * @param tabsetId The identifier of the tab set from which the tab should be removed.
+	 * @param tabId The identifier of the tab to remove.
+	 */
+	public removePageTab(tabsetId: TabsetRegistryId, tabId: string): void {
+		// Retrieve the list of tabs for the specified tabset, or initialize as an empty array if not found
+		const tabs = this.registry.get(tabsetId) || [];
+
+		// Find the index of the tab with the specified tabId
+		const index = tabs.findIndex((tab) => tab.tabId === tabId);
+
+		// If the tab exists in the list, remove it
+		if (index !== -1) {
+			// Remove the tab from the list
+			tabs.splice(index, 1);
+
+			// Update the registry with the modified list of tabs
+			if (tabs.length > 0) {
+				this.registry.set(tabsetId, tabs);
+			} else {
+				// Remove the tabset entry from the registry if no tabs are left
+				this.registry.delete(tabsetId);
+			}
+		}
 	}
 
 	/**
@@ -92,53 +150,80 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	}
 
 	/**
-	 * Get all unique page tabs for a specified tabset.
+	 * Retrieves all unique page tabs for a specified tabset.
 	 *
-	 * @param tabsetId The identifier for the tabset.
+	 * This method first retrieves all the tabs associated with the given `tabsetId`, then
+	 * ensures that each tab is unique based on its `tabId` by using a `Map`. Finally, it returns
+	 * an array of these unique tabs.
+	 *
+	 * @param tabsetId The identifier for the tabset whose tabs are to be retrieved.
 	 * @returns An array of unique page tabs for the specified tabset.
 	 */
 	public getPageTabset(tabsetId: TabsetRegistryId): PageTabRegistryConfig[] {
-		// Get all registered tabs for the specified tabset
-		let tabs = this.getPageTabsByOrder(tabsetId);
+		// Get all registered tabs for the specified tabset, ordered as required
+		const tabs = this.getPageTabsByOrder(tabsetId);
 
 		// Create a map to track unique tabs based on tabId
 		const uniqueTabsMap = new Map<string, PageTabRegistryConfig>();
 
 		// Iterate through tabs and add them to the map if not already present
 		tabs.forEach((tab) => {
-			if (!uniqueTabsMap.has(tab.tabId)) {
-				uniqueTabsMap.set(tab.tabId, tab);
-			}
+			// Ensure only unique tabs are added
+			uniqueTabsMap.set(tab.tabId, tab);
 		});
 
-		// Convert the map values to an array
+		// Convert the map values to an array and return
 		return Array.from(uniqueTabsMap.values());
 	}
 
 	/**
 	 * @description
+	 * Deletes a tabset from the registry.
 	 *
-	 * Retrieves the component associated with a specific tab id for a given tabset.
-	 * @param location - The TabsetRegistryId to retrieve tabs for.
-	 * @param tabId - The tab identifier.
-	 * @returns The component associated with the tab id.
+	 * This method removes a tabset identified by the provided `tabsetId` from the internal registry.
+	 * If the specified `tabsetId` does not exist in the registry, the function will simply return
+	 * without making any changes.
+	 *
+	 * @param tabsetId The identifier for the tabset to delete.
 	 */
-	public getComponentForTab(tabsetId: TabsetRegistryId, tabId: string): Type<any> | undefined {
-		// Retrieve the tabs for the specified tabsetId
-		const tabs = this.getPageTabset(tabsetId);
-		// Find the tab with the specified tabId
-		const tab = tabs.find((t) => t.tabId === tabId);
-		// Return the component associated with the tab id or undefined if not found
-		return tab?.component || undefined;
+	public deleteTabset(tabsetId: TabsetRegistryId): void {
+		// Check if the tabset exists in the registry
+		if (!this.registry.has(tabsetId)) {
+			console.warn(`Tabset with id "${tabsetId}" does not exist in the registry.`);
+			return;
+		}
+
+		// Remove the tabset from the registry
+		this.registry.delete(tabsetId);
+		console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
 	}
 
 	/**
-	 * Clears the registry.
+	 * @description
+	 * Retrieves the component associated with a specific tab ID for a given tabset.
 	 *
-	 * This method clears all entries in the registry map, removing all stored page tab configurations.
+	 * This method looks up the tabset using the provided `tabsetId`, then searches for the tab
+	 * with the specified `tabId` within that tabset. If the tab is found, it returns the associated
+	 * component; otherwise, it returns `undefined`.
+	 *
+	 * @param tabsetId The identifier of the tabset to retrieve tabs from.
+	 * @param tabId The identifier of the tab whose component is to be retrieved.
+	 * @returns The component associated with the specified tab ID, or `undefined` if the tab or component is not found.
 	 */
-	clear(): void {
-		// Clear the registry
-		this.registry.clear();
+	public getComponentForTab(tabsetId: TabsetRegistryId, tabId: string): Type<any> | undefined {
+		// Retrieve the list of tabs for the specified tabsetId
+		const tabs = this.getPageTabset(tabsetId);
+
+		// Ensure that tabs is an array and check if the tab exists
+		if (Array.isArray(tabs)) {
+			// Find the tab with the specified tabId
+			const tab = tabs.find((t) => t.tabId === tabId);
+
+			// Return the component associated with the tab ID or undefined if not found
+			return tab?.component;
+		}
+
+		// Return undefined if the tabs could not be retrieved or are not an array
+		return undefined;
 	}
 }

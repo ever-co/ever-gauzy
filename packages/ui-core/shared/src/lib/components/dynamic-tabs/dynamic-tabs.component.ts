@@ -1,8 +1,9 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
-import { tap } from 'rxjs/operators';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { tap } from 'rxjs/operators';
+import { Subject } from 'rxjs/internal/Subject';
 import { PageTabRegistryConfig, PageTabRegistryService, TabsetRegistryId } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
@@ -14,6 +15,7 @@ import { PageTabRegistryConfig, PageTabRegistryService, TabsetRegistryId } from 
 })
 export class DynamicTabsComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = []; // Define the structure of tabs according to your needs
+	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
 	@Input() tabsetId!: TabsetRegistryId;
 
@@ -35,6 +37,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	}
 
 	constructor(
+		private readonly _cdr: ChangeDetectorRef,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
 		private readonly _translateService: TranslateService
 	) {}
@@ -42,6 +45,19 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this._initializeTabs();
 		this._applyTranslationOnTabs();
+		this._setupReloadTabsListener();
+	}
+
+	/**
+	 * Setup listener for reloading tabs.
+	 */
+	private _setupReloadTabsListener(): void {
+		this.reload$
+			.pipe(
+				tap(() => this._initializeTabs()),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -55,6 +71,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	private _initializeTabs(): void {
 		// Retrieve and set the tabs based on the tabsetId
 		this.tabs = this.getRegisteredNbTabs(this.tabsetId);
+		this._cdr.detectChanges();
 	}
 
 	/**
@@ -123,7 +140,6 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 */
 	createDynamicComponents(): void {
 		// Add logic to create dynamic components for the tabset
-		// This may involve using Angular's view container to create nb-tab components dynamically
 	}
 
 	/**
@@ -131,7 +147,6 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 */
 	createStaticTabs(): void {
 		// Add logic to create static tabs for NbTabsetComponent if necessary
-		// This may involve using Angular's view container to create nb-tab components dynamically
 	}
 
 	ngOnDestroy(): void {}

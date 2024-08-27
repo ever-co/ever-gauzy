@@ -56,7 +56,7 @@ export type PageLocationRegistryId =
  * - 'timesheet': A timesheet tab.
  * - 'time-activity': A time and activity tab.
  */
-export type TabsetRegistryId = 'timesheet' | 'time-activity';
+export type TabsetRegistryId = 'timesheet' | 'time-activity' | 'dashboard';
 
 /**
  * Enum representing the possible dynamic tabs for pages.
@@ -70,6 +70,7 @@ export type TabsetRegistryId = 'timesheet' | 'time-activity';
  * @enum {string}
  */
 export enum TabsetRegistryIdEnum {
-	Timesheet = 'timesheet',
-	TimeActivity = 'time-activity'
+	Timesheet = 'timesheet', // The identifier for the timesheet tabset
+	TimeActivity = 'time-activity', // The identifier for the time and activity tabset
+	Dashboard = 'dashboard' // The identifier for the dashboard tabset
 }
