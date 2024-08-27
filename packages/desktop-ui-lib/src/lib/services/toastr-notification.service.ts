@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { NbToastrService } from '@nebular/theme';
-import { NotificationService } from './notification.service';
 import { GAUZY_ENV } from '../constants';
+import { NotificationService } from './notification.service';
 
 @Injectable({
 	providedIn: 'root',
@@ -30,5 +30,9 @@ export class ToastrNotificationService extends NotificationService {
 
 	public warn(message: string): void {
 		this._toastrService.warning(message, this._notification.title);
+	}
+
+	public info(message: string): void {
+		this._toastrService.info(message, this._notification.title);
 	}
 }

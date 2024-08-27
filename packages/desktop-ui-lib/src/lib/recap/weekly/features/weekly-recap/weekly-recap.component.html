@@ -1,0 +1,15 @@
+<nb-card class="main-report-wrapper">
+	<nb-card-header class="p-3 main-report-header">
+		<ng-container *ngIf="isLoading$ | async">
+			<nb-icon class="loader" size="medium" icon="loader-outline"></nb-icon>
+		</ng-container>
+		<div class="tools ml-auto">
+			<ngx-weekly-calendar></ngx-weekly-calendar>
+			<ngx-filter></ngx-filter>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="main-report-body recap-weekly">
+		<ngx-weekly-statistic></ngx-weekly-statistic>
+		<ngx-weekly-progress class="h-100"></ngx-weekly-progress>
+	</nb-card-body>
+</nb-card>

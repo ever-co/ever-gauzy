@@ -33,6 +33,7 @@
 		"INVITE": "دعوة",
 		"SELECT_ALL": "حدد الكل",
 		"COPY_LINK": "نسخ الرابط",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "إدارة المقابلات",
 		"MANAGE_INVITES": "إدارة الدعوات",
 		"MANAGE_SPRINTS": "إدارة السبرنت",
@@ -2184,7 +2185,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "تفاصيل الاقتراح",
-			"EDIT": "تعديل",
 			"AUTHOR": "المؤلف",
 			"JOB_POST_URL": "رابط منشور الوظيفة",
 			"PROPOSAL_SENT_ON": "تم إرسال الاقتراح في",
@@ -3042,7 +3042,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "توليد رابط عام",
 			"GENERATE": "أنشئ رابطًا لـ {{ text }} يمكن لأي شخص يمتلك الرابط رؤيته.",
-			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}."
+			"ACCESS": "أي شخص لديه وصول إلى هذا الرابط يمكنه عرض {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3074,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "الصفحة غير موجودة",
 		"TAKE_ME_HOME": "خذني إلى المنزل",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "الصفحة التي كنت تبحث عنها غير موجودة",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "الصفحة التي كنت تبحث عنها غير موجودة",
 		"REDIRECT_TO_HOME": "سيتم توجيهك إلى الصفحة الرئيسية قريباً"
 	},
 	"HELP_PAGE": {
@@ -4237,7 +4238,8 @@
 		"SELECT_EMPLOYEE_ERROR": "يرجى اختيار موظف.",
 		"EXPIRED_OR_CANCELLED": "تم انتهاء هذا الموعد أو إلغاؤه.",
 		"EMAIL_SENT": "تم إرسال بريد إلكتروني إلى المضيف وإلى جميع المشاركين في هذا الاجتماع.",
-		"NO_ACTIVE_EVENT_TYpES": "لا توجد أنواع فعالة للأحداث"
+		"NO_ACTIVE_EVENT_TYPES": "لا توجد أنواع فعالة للأحداث",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "قوالب البريد الإلكتروني",

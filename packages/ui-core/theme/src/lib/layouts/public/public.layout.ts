@@ -9,7 +9,7 @@ import { WindowModeBlockScrollService } from '../../services';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-public-layout',
+	selector: 'ngx-public-layout',
 	styleUrls: ['./public.layout.scss'],
 	templateUrl: './public.layout.html'
 })

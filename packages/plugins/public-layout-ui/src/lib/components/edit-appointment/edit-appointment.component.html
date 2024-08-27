@@ -1,0 +1,7 @@
+<nb-card *ngIf="appointmentId$ | async as appointmentId">
+	<ga-manage-appointment
+		[hidePrivateFields]="true"
+		[disabled]="true"
+		[appointmentId]="appointmentId"
+	></ga-manage-appointment>
+</nb-card>

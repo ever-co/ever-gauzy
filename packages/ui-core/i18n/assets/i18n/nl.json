@@ -33,6 +33,7 @@
 		"INVITE": "Uitnodigen",
 		"SELECT_ALL": "Alles selecteren",
 		"COPY_LINK": "Kopieer Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Beheren van interviews",
 		"MANAGE_INVITES": "Beheer uitnodigingen",
 		"MANAGE_SPRINTS": "Beheer Sprints",
@@ -2185,7 +2186,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Details van het voorstel",
-			"EDIT": "Bewerken",
 			"AUTHOR": "Auteur",
 			"JOB_POST_URL": "Vacature URL",
 			"PROPOSAL_SENT_ON": "Voorstel verzonden op",
@@ -3043,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Genereer openbare link",
 			"GENERATE": "Genereer een link naar de {{ text }} waar iedereen met de link het kan bekijken.",
-			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken."
+			"ACCESS": "Iedereen met toegang tot deze link kan de {{ text }} bekijken.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3074,7 +3075,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Pagina niet gevonden",
 		"TAKE_ME_HOME": "Breng me naar huis.",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "De pagina die je zocht bestaat niet",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "De pagina die je zocht bestaat niet",
 		"REDIRECT_TO_HOME": "U wordt binnenkort doorgestuurd naar de startpagina"
 	},
 	"HELP_PAGE": {
@@ -4238,7 +4239,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Selecteer alstublieft een medewerker.",
 		"EXPIRED_OR_CANCELLED": "Deze afspraak is verlopen of geannuleerd.",
 		"EMAIL_SENT": "Er is een e-mail verzonden naar de gastheer en naar alle deelnemers voor deze vergadering.",
-		"NO_ACTIVE_EVENT_TYpES": "Er zijn geen actieve gebeurtenistypen."
+		"NO_ACTIVE_EVENT_TYPES": "Er zijn geen actieve gebeurtenistypen.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "E-mailsjablonen",

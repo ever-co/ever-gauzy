@@ -27,7 +27,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'share',
-		loadChildren: () => import('./share/share.module').then((m) => m.ShareModule),
+		loadChildren: () => import('@gauzy/plugin-public-layout-ui').then((m) => m.PublicLayoutModule),
 		canActivate: []
 	},
 	{
@@ -36,7 +36,7 @@ export const appRoutes: Routes = [
 	},
 	{
 		path: 'server-down',
-		loadChildren: () => import('./server-down/server-down.module').then((m) => m.ServerDownModule)
+		loadChildren: () => import('@gauzy/plugin-maintenance-ui').then((m) => m.MaintenanceModeModule)
 	},
 	{
 		path: '',

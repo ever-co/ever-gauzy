@@ -1,7 +1,9 @@
-import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import * as moment from 'moment';
-import { TimePeriod } from './date-picker.interface';
+import { ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
+import * as momentDefault from 'moment';
+import { extendMoment } from 'moment-range';
+import { IDateRangePicker, TimePeriod } from './date-picker.interface';
 
+export const moment = extendMoment(momentDefault);
 /**
  * We are having issue, when organization not allowed future date
  * When someone run timer for today, all statistic not displaying correctly
@@ -65,4 +67,19 @@ export function dayOfWeekAsString(weekDay: WeekDaysEnum): number {
 		WeekDaysEnum.FRIDAY,
 		WeekDaysEnum.SATURDAY
 	].indexOf(weekDay);
+}
+
+/**
+ * Updates the week days based on the specified start and end dates.
+ * If no dates are provided in the request, it defaults to the current week.
+ */
+export function updateWeekDays(input: IDateRangePicker) {
+	const { startDate = moment().startOf('week'), endDate = moment().endOf('week') } = input;
+
+	const start = moment(moment(startDate).format('YYYY-MM-DD'));
+	const end = moment(moment(endDate).format('YYYY-MM-DD'));
+	const range = Array.from(moment.range(start, end).by('day'));
+	const weekDays = range.map((date: moment.Moment) => date.format('YYYY-MM-DD'));
+
+	return { range, weekDays };
 }

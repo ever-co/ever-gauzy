@@ -33,6 +33,7 @@
 		"INVITE": "Invite",
 		"SELECT_ALL": "Select All",
 		"COPY_LINK": "Copy Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Manage Interviews",
 		"MANAGE_INVITES": "Manage Invites",
 		"MANAGE_SPRINTS": "Manage Sprints",
@@ -2190,45 +2191,44 @@
 		"ANONYMOUS": "Anonymous"
 	},
 	"PROPOSALS_PAGE": {
-		"HEADER": "Proposals Management Page",
-		"STATISTICS": "Statistics",
-		"ACCEPTED_PROPOSALS": "Accepted Proposals",
-		"TOTAL_PROPOSALS": "Total Proposals",
-		"SUCCESS_RATE": "Success Rate",
-		"PROPOSALS": "Proposals",
+		"HEADER": "הצעות - ניהול",
+		"STATISTICS": "סטטיסטיקה",
+		"ACCEPTED_PROPOSALS": "הצעות שהתקבלו",
+		"TOTAL_PROPOSALS": "סך כל ההצעות",
+		"SUCCESS_RATE": "שיעור הצלחה",
+		"PROPOSALS": "הצעות",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Register Proposal",
-			"AUTHOR": "Author",
-			"TEMPLATE": "Template",
-			"JOB_POST_URL": "Job Post URL",
-			"PICK_A_DATE": "תבחר תאריך",
-			"PROPOSAL_DATE": "Proposal Date",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"UPLOAD": "Upload",
-			"PROPOSALS_CONTENT": "Proposal Content",
-			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+			"REGISTER_PROPOSALS": "רישום הצעה",
+			"AUTHOR": "מחבר",
+			"TEMPLATE": "תבנית",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PICK_A_DATE": "בחר תאריך",
+			"PROPOSAL_DATE": "תאריך הצעה",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"UPLOAD": "העלה",
+			"PROPOSALS_CONTENT": "תוכן הצעה",
+			"REGISTER_PROPOSALS_BUTTON": "רשום הצעה"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "ערוך",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"STATUS": "עבודה",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"VIEW_JOB_POST": "View Job Post"
+			"PROPOSAL_DETAILS": "פרטי הצעה",
+			"AUTHOR": "מחבר",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PROPOSAL_SENT_ON": "הצעה נשלחה בתאריך",
+			"STATUS": "סטטוס",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"PROPOSAL_CONTENT": "תוכן הצעה",
+			"VIEW_JOB_POST": "צפה במשרה"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
-			"AUTHOR": "Author",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"EDIT_PROPOSAL": "ערוך הצעה",
+			"AUTHOR": "מחבר",
+			"JOB_POST_URL": "כתובת URL של משרה",
+			"PROPOSAL_SENT_ON": "הצעה נשלחה בתאריך",
+			"JOB_POST_CONTENT": "תוכן משרה",
+			"PROPOSAL_CONTENT": "תוכן הצעה",
+			"EDIT_PROPOSAL_BUTTON": "ערוך הצעה",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "כתובת URL של משרה"
 			}
 		}
 	},
@@ -3066,7 +3066,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generate Public Link",
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
-			"ACCESS": "Anyone with access to this link can view the {{ text }}."
+			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3097,7 +3098,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "The page you were looking for doesn't exist",
 		"REDIRECT_TO_HOME": "תופנה לדף הבית בקרוב"
 	},
 	"HELP_PAGE": {
@@ -4250,7 +4251,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
-		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
+		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Email Templates",
