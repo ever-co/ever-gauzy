@@ -1,0 +1,17 @@
+<!-- NbRouteTabset for the nb tabset -->
+<ng-container *ngIf="isRouterTabset; else staticTabs">
+	<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
+</ng-container>
+
+<!-- Static tabs for the nb tabset -->
+<ng-template #staticTabs>
+	<nb-tabset>
+		<!-- <nb-tab
+			*ngFor="let tab of tabs"
+			[tabTitle]="tab.tabTitle"
+			[tabId]="tab.tabId"
+			[tabIcon]="tab.tabIcon"
+			[route]="tab.route"
+		></nb-tab> -->
+	</nb-tabset>
+</ng-template>
