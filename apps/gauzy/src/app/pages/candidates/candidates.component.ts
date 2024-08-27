@@ -15,8 +15,8 @@ import { firstValueFrom, Subject } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { CandidatesService, ErrorHandlingService, ServerDataSource, ToastrService } from '@gauzy/ui-core/core';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { CandidatesService, ErrorHandlingService, ServerDataSource, Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,

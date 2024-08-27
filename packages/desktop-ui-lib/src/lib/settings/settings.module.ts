@@ -30,6 +30,7 @@ import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { PluginsModule } from './plugins/plugins.module';
 import { SettingsComponent } from './settings.component';
 import { SslModule } from './ssl';
+import { SwitchThemeModule } from '../theme-selector/switch-theme/switch-theme.module';
 
 @NgModule({
 	declarations: [SettingsComponent],
@@ -57,9 +58,10 @@ import { SslModule } from './ssl';
 		TaskRenderModule,
 		SslModule,
 		PluginsModule,
-		PipeModule
+		PipeModule,
+		SwitchThemeModule
 	],
 	providers: [NbToastrService, TimeTrackerService, NbDialogService, Store],
 	exports: [SettingsComponent]
 })
-export class SettingsModule {}
+export class SettingsModule { }

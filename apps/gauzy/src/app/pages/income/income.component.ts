@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,
@@ -18,12 +18,13 @@ import {
 	IDateRangePicker,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, employeeMapper, toUTC } from '@gauzy/ui-core/common';
 import {
 	DateRangePickerBuilderService,
 	ErrorHandlingService,
 	IncomeService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import {

@@ -37,9 +37,10 @@ import {
 	OrganizationTeamsService,
 	CompareDateValidator,
 	ErrorHandlingService,
-	ToastrService
+	ToastrService,
+	Store
 } from '@gauzy/ui-core/core';
-import { DUMMY_PROFILE_IMAGE, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { patterns } from '../../regex/regex-patterns.const';
 import { FormHelpers } from '../../forms/helpers';

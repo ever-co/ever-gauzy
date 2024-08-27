@@ -1,0 +1,20 @@
+<div class="week-wrapper">
+	<div>
+		<div class="week-range">
+			{{(range$ | async).startDate | dateTime : 'll'}} - {{(range$ | async).endDate | dateTime : 'll'}}
+		</div>
+	</div>
+	<ng-container *ngIf="(weeklyActivities$ | async)?.sum; else noWeeklyData">
+		<div class="week-days row" *ngFor="let day of weekDays">
+			<div class="day col">{{ day | dateTime : 'D dddd' }}</div>
+			<ngx-progress-status class="report-progress col-6"
+				[percentage]="(((weeklyActivities$ | async)?.dates[day]?.sum ?? 0) * 100) / ((weeklyActivities$ | async)?.sum ?? 1)"></ngx-progress-status>
+			<div class="col hours text-end">{{ (weeklyActivities$ | async)?.dates[day]?.sum | durationFormat : 'h[h] m[m] s[s]':{trim:'both'} }}
+			</div>
+		</div>
+	</ng-container>
+</div>
+
+<ng-template #noWeeklyData>
+	<ngx-no-data-message [message]="'TIMESHEET.NO_DATA.WEEKLY_TIMESHEET' | translate"></ngx-no-data-message>
+</ng-template>

@@ -1,5 +1,5 @@
 import { ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
-import { ITimerSynced } from '@gauzy/ui-core/common';
+import { ITimerSynced } from '@gauzy/ui-core/core';
 
 export class TimerSynced implements ITimerSynced {
 	private _source: TimeLogSourceEnum;

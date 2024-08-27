@@ -4,7 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IProductCategoryTranslatable, IProductOptionGroupTranslatable } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogRef } from '@nebular/theme';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -100,10 +100,10 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeGroupValueLng = languageCode;
 		this.activeOptionValueLng = '';
 
-		let newtr = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCode);
+		let newTranslation = this.productOptionGroup.translations.find((tr) => tr.languageCode == languageCode);
 
-		if (newtr && newtr.name) {
-			this.form.get(languageCode).setValue(newtr.name);
+		if (newTranslation && newTranslation.name) {
+			this.form.get(languageCode).setValue(newTranslation.name);
 		}
 	}
 
@@ -120,10 +120,10 @@ export class ProductOptionGroupTranslationsComponent extends TranslationBaseComp
 		this.activeOptionValueLng = languageCode;
 		this.activeOption = option;
 		this.activeGroupValueLng = '';
-		let newtr = option.translations.find((tr) => tr.languageCode == languageCode);
+		let newTranslation = option.translations.find((tr) => tr.languageCode == languageCode);
 
-		if (newtr && newtr.name) {
-			this.form.get(languageCode).setValue(newtr.name);
+		if (newTranslation && newTranslation.name) {
+			this.form.get(languageCode).setValue(newTranslation.name);
 		}
 	}
 

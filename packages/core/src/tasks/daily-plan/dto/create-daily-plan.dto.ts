@@ -1,18 +1,18 @@
 import { ApiProperty, ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
-import { DailyPlanStatusEnum, IDailyPlanCreateInput, ITask } from '@gauzy/contracts';
+import { DailyPlanStatusEnum, ID, IDailyPlanCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
 import { EmployeeFeatureDTO } from '../../../employee/dto';
+import { OrganizationTeamFeatureDTO } from '../../../organization-team/dto';
 
 /**
  * Create Daily Plan DTO validation
  */
-export class CreateDailyPlanDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	EmployeeFeatureDTO
-) implements IDailyPlanCreateInput {
-
+export class CreateDailyPlanDTO
+	extends IntersectionType(TenantOrganizationBaseDTO, EmployeeFeatureDTO, OrganizationTeamFeatureDTO)
+	implements IDailyPlanCreateInput
+{
 	@ApiProperty({ type: () => Date })
 	@Type(() => Date)
 	@IsNotEmpty()
@@ -32,5 +32,5 @@ export class CreateDailyPlanDTO extends IntersectionType(
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
-	readonly taskId?: ITask['id'];
+	readonly taskId?: ID;
 }

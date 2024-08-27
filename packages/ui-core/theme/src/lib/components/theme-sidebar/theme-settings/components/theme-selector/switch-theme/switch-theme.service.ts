@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @Injectable({
 	providedIn: 'root'

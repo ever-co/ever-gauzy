@@ -18,7 +18,7 @@ import {
 	CandidatesService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { EmployeeSelectorComponent } from '../../selectors/employee';
 
 @Component({

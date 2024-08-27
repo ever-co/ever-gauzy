@@ -33,6 +33,7 @@
 		"INVITE": "Convidar",
 		"SELECT_ALL": "Selecionar Tudo",
 		"COPY_LINK": "Copiar Link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Gerir Entrevistas",
 		"MANAGE_INVITES": "Gerenciar convites",
 		"MANAGE_SPRINTS": "Gerenciar Sprints",
@@ -1626,6 +1627,7 @@
 		"APPLIED": "Aplicado",
 		"HIRED": "Contratado.",
 		"REJECTED": "Rejeitado",
+		"SHOW_REJECTED": "Mostrar rejeitado",
 		"DELETED": "Deleteado",
 		"ARCHIVED": "Arquivado",
 		"SELECT_EMPLOYEE_MSG": "Por favor, selecione um funcionário no menu acima.",
@@ -2184,7 +2186,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Detalhes da proposta.",
-			"EDIT": "Editar",
 			"AUTHOR": "Autor",
 			"JOB_POST_URL": "URL da vaga de emprego",
 			"PROPOSAL_SENT_ON": "Proposta Enviada Em",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Gerar Link Público",
 			"GENERATE": "Gerar um link para o {{ text }} que qualquer pessoa com o link possa visualizar.",
-			"ACCESS": "Qualquer pessoa com acesso a este link pode visualizar o {{ text }}."
+			"ACCESS": "Qualquer pessoa com acesso a este link pode visualizar o {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3075,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Página não encontrada",
 		"TAKE_ME_HOME": "Leve-me para casa",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "A página que você estava procurando não existe.",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "A página que você estava procurando não existe.",
 		"REDIRECT_TO_HOME": "Será redirecionado para a página inicial em breve"
 	},
 	"HELP_PAGE": {
@@ -4167,8 +4169,9 @@
 		"NO_RECORD_FOUND": "Nenhum registro encontrado. Por favor, selecione o intervalo de datas, funcionário ou projeto."
 	},
 	"ONBOARDING": {
-		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização.",
-		"COMPLETE": "Você está pronto!"
+		"FIRST_ORGANIZATION": "Vamos criar sua primeira organização",
+		"COMPLETE_TITLE": "Tudo pronto!",
+		"COMPLETE_SUB_TITLE": "Para onde você gostaria de ir agora?"
 	},
 	"VALIDATION": {
 		"FIELD_REQUIRED": "Este campo é obrigatório!",
@@ -4236,7 +4239,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Por favor, selecione um funcionário.",
 		"EXPIRED_OR_CANCELLED": "**Esta consulta expirou ou foi cancelada.",
 		"EMAIL_SENT": "**Um e-mail foi enviado para o anfitrião, bem como para todos os participantes desta reunião.",
-		"NO_ACTIVE_EVENT_TYpES": "Não há tipos de eventos ativos."
+		"NO_ACTIVE_EVENT_TYPES": "Não há tipos de eventos ativos.",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modelos de Email",

@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { WeekDaysEnum } from '@gauzy/contracts';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output,
+	ViewChild
+} from '@angular/core';
+import { IOrganization, WeekDaysEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,10 +19,10 @@ import {
 	LocaleConfig,
 	DaterangepickerComponent as NgxDateRangePickerComponent
 } from 'ngx-daterangepicker-material';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, filter, Subject } from 'rxjs';
 import { debounceTime, tap } from 'rxjs/operators';
 import { RecapQuery } from '../../../+state/recap.query';
-import { RecapStore } from '../../../+state/recap.store';
+import { Store } from '../../../../services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { DateRangeKeyEnum, DateRanges, IDateRangePicker, TimePeriod } from './date-picker.interface';
@@ -87,7 +97,7 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 	 * Getter & Setter for dynamic unitOfTime
 	 */
 	private _unitOfTime: moment.unitOfTime.Base = 'day';
-	get unitOfTime(): moment.unitOfTime.Base {
+	public get unitOfTime(): moment.unitOfTime.Base {
 		return this._unitOfTime;
 	}
 	@Input() set unitOfTime(value: moment.unitOfTime.Base) {
@@ -180,7 +190,17 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 	/** */
 	@ViewChild(DateRangePickerDirective, { static: true }) public dateRangePickerDirective: DateRangePickerDirective;
 
-	constructor(public readonly translateService: TranslateService, readonly recapStore: RecapStore) {}
+	constructor(public readonly translateService: TranslateService, readonly store: Store) {}
+
+	@Output() rangeChanges = new EventEmitter<IDateRangePicker>();
+
+	@Input()
+	public set dates(range: IDateRangePicker) {
+		this.dates$.next({
+			...range,
+			isCustomDate: false
+		});
+	}
 
 	ngOnInit(): void {
 		this.range$
@@ -188,48 +208,64 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 				distinctUntilChange(),
 				debounceTime(500),
 				tap((range: IDateRangePicker) => {
-					this.recapStore.update({
-						range: {
-							startDate: moment(range.startDate).toISOString(),
-							endDate: moment(range.endDate).toISOString()
-						}
+					this.rangeChanges.emit({
+						startDate: moment(range.startDate).toISOString(),
+						endDate: moment(range.endDate).toISOString()
 					});
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.selectedDateRange = this.getSelectorDates();
-		this.createDateRangeMenus();
-		this.setPastStrategy();
-		this.setFutureStrategy();
+		this.store.selectedOrganization$
+			.pipe(
+				filter((organization: IOrganization) => !!organization),
+				tap((organization: IOrganization) => {
+					this.futureDateAllowed = organization.futureDateAllowed;
+					this.selectedDateRange = this.getSelectorDates();
+					this.createDateRangeMenus();
+					this.setPastStrategy();
+					this.setFutureStrategy();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
 	 * Create Date Range Translated Menus
 	 */
-	createDateRangeMenus() {
-		this.ranges = {
-			[DateRangeKeyEnum.TODAY]: [moment(), moment()],
-			[DateRangeKeyEnum.YESTERDAY]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')]
+	private createDateRangeMenus() {
+		const ranges = {
+			day: {
+				[DateRangeKeyEnum.TODAY]: [moment().startOf('day'), moment().endOf('day')],
+				[DateRangeKeyEnum.YESTERDAY]: [
+					moment().subtract(1, 'days').startOf('day'),
+					moment().subtract(1, 'days').endOf('day')
+				]
+			},
+			week: {
+				[DateRangeKeyEnum.CURRENT_WEEK]: [moment().startOf('isoWeek'), moment().endOf('isoWeek')],
+				[DateRangeKeyEnum.LAST_WEEK]: [
+					moment().subtract(1, 'week').startOf('isoWeek'),
+					moment().subtract(1, 'week').endOf('isoWeek')
+				]
+			},
+			month: {
+				[DateRangeKeyEnum.CURRENT_MONTH]: [moment().startOf('month'), moment().endOf('month')],
+				[DateRangeKeyEnum.LAST_MONTH]: [
+					moment().subtract(1, 'month').startOf('month'),
+					moment().subtract(1, 'month').endOf('month')
+				]
+			}
 		};
 
-		// Define the units of time to remove based on conditions
-		const unitsToRemove = [];
-
-		if (this.isLockDatePicker && this.unitOfTime !== 'day') {
-			unitsToRemove.push(DateRangeKeyEnum.TODAY, DateRangeKeyEnum.YESTERDAY);
-		}
-		if (this.isLockDatePicker && this.unitOfTime !== 'week') {
-			unitsToRemove.push(DateRangeKeyEnum.CURRENT_WEEK, DateRangeKeyEnum.LAST_WEEK);
-		}
-		if (this.isLockDatePicker && this.unitOfTime !== 'month') {
-			unitsToRemove.push(DateRangeKeyEnum.CURRENT_MONTH, DateRangeKeyEnum.LAST_MONTH);
-		}
-
-		// Remove date ranges based on unitsToRemove
-		unitsToRemove.forEach((unit) => {
-			delete this.ranges[unit];
-		});
+		this.ranges = this.isLockDatePicker
+			? ranges[this.unitOfTime]
+			: ({
+					...ranges.day,
+					...ranges.week,
+					...ranges.month
+			  } as any as DateRanges);
 	}
 
 	/**

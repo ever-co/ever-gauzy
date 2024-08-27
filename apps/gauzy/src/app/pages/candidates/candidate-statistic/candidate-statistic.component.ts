@@ -7,9 +7,10 @@ import {
 	CandidateInterviewService,
 	CandidatesService,
 	EmployeesService,
-	ErrorHandlingService
+	ErrorHandlingService,
+	Store
 } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

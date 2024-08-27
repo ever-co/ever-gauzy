@@ -5,15 +5,14 @@ import { NbDialogModule, NbCardModule, NbButtonModule, NbIconModule, NbSpinnerMo
 import { FullCalendarModule } from '@fullcalendar/angular';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslateModule } from '@ngx-translate/core';
-import { CalendarRoutingModule } from './calendar-routing.module';
-import { CalendarComponent } from './calendar/calendar.component';
-import { ShareModule } from './../../../../share/share.module';
 import {
 	EditTimeLogModalModule,
 	GauzyFiltersModule,
 	SharedModule,
 	ViewTimeLogModalModule
 } from '@gauzy/ui-core/shared';
+import { CalendarRoutingModule } from './calendar-routing.module';
+import { CalendarComponent } from './calendar/calendar.component';
 
 @NgModule({
 	declarations: [CalendarComponent],
@@ -28,7 +27,6 @@ import {
 		NbIconModule,
 		NbSpinnerModule,
 		CalendarRoutingModule,
-		ShareModule,
 		SharedModule,
 		EditTimeLogModalModule,
 		ViewTimeLogModalModule,

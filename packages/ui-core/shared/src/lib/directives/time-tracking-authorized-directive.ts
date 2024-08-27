@@ -3,7 +3,8 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as camelcase from 'camelcase';
 import { IOrganization } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Directive({

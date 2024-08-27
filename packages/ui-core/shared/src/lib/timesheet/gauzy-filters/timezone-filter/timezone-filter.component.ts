@@ -14,8 +14,8 @@ import {
 	TimeFormatEnum,
 	TimeZoneEnum
 } from '@gauzy/contracts';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
-import { NavigationService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { NavigationService, Store } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TimeZoneService } from './time-zone.service';
 

@@ -11,8 +11,8 @@ import { pick } from 'underscore';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivityService, DateRangePickerBuilderService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
+import { ActivityService, DateRangePickerBuilderService, Store } from '@gauzy/ui-core/core';
+import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
 
 @UntilDestroy({ checkProperties: true })

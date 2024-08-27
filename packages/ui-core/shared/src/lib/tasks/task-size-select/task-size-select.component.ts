@@ -16,7 +16,7 @@ import { distinctUntilChange, sluggable } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { TaskSizesService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })

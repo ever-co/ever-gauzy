@@ -12,9 +12,9 @@ import {
 	EmployeesService,
 	ErrorHandlingService,
 	OrganizationProjectsService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
 
 const initialTaskValue = {
 	title: '',

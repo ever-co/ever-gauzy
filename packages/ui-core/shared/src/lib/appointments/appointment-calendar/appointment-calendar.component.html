@@ -1,0 +1,64 @@
+<nb-card>
+	<nb-card-header *ngIf="showHeader">
+		<ng-container *ngTemplateOutlet="headerTemplate"></ng-container>
+	</nb-card-header>
+	<nb-card-body>
+		<div class="calendar-container">
+			<full-calendar #calendar [options]="calendarOptions"></full-calendar>
+		</div>
+	</nb-card-body>
+</nb-card>
+
+<ng-template #headerTemplate>
+	<div class="main-header">
+		<h4>
+			<ngx-header-title>{{ 'MENU.APPOINTMENTS' | translate }}</ngx-header-title>
+		</h4>
+		<div class="float-right">
+			<button
+				class=""
+				status="info"
+				size="small"
+				outline
+				nbButton
+				type="button"
+				[routerLink]="'/pages/employees/schedules/recurring-availability'"
+			>
+				{{ 'BUTTONS.SCHEDULES' | translate }}
+			</button>
+			<ng-template ngxPermissionsOnly="EVENT_TYPES_VIEW">
+				<button
+					class="mr-2 ml-2"
+					status="warning"
+					size="small"
+					outline
+					nbButton
+					type="button"
+					(click)="openEventTypes()"
+				>
+					{{ 'BUTTONS.EVENT_TYPES' | translate }}
+				</button>
+			</ng-template>
+			<button
+				class=""
+				status="primary"
+				size="small"
+				outline
+				nbButton
+				type="button"
+				(click)="bookPublicAppointment()"
+			>
+				{{ 'BUTTONS.PUBLIC_APPOINTMENT_BOOK' | translate }}
+			</button>
+		</div>
+	</div>
+	<div class="block-info">
+		{{ 'PUBLIC_APPOINTMENTS.TIMEZONE' | translate }}
+		<!--  -->
+		<strong> {{ selectedTimeZoneName }} {{ selectedTimeZoneOffset }} </strong>
+		<!--  -->
+		<a style="cursor: pointer; color: var(--link-text-color)" (click)="selectTimezone()">
+			{{ 'PUBLIC_APPOINTMENTS.CHANGE' | translate }}
+		</a>
+	</div>
+</ng-template>

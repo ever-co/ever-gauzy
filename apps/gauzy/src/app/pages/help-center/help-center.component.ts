@@ -10,7 +10,7 @@ import { HelpCenterArticleService, HelpCenterAuthorService, ToastrService } from
 import { filter } from 'rxjs/operators';
 import { EmployeesService } from '@gauzy/ui-core/core';
 import { FormControl } from '@angular/forms';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { firstValueFrom } from 'rxjs';
 

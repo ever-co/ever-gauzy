@@ -37,7 +37,7 @@ export * from './lib/time-tracker/time-tracker.module';
 export * from './lib/time-tracker/time-tracker.service';
 export * from './lib/updater/updater.component';
 export * from './lib/updater/updater.module';
-
+export * from './lib/theme';
 /**
  * Auth Module
  */

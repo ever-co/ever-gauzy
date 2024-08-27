@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '../services';
 
 @Injectable()
 export class InviteGuard implements CanActivate {

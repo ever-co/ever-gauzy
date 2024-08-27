@@ -1,0 +1,50 @@
+{
+	"name": "plugin-maintenance-ui",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/maintenance-ui/src",
+	"prefix": "gauzy",
+	"tags": ["ui"],
+	"projectType": "library",
+	"targets": {
+		"build": {
+			"executor": "@nrwl/angular:package",
+			"outputs": ["{workspaceRoot}/dist/{projectRoot}"],
+			"options": {
+				"project": "packages/plugins/maintenance-ui/ng-package.json"
+			},
+			"configurations": {
+				"production": {
+					"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.prod.json"
+				},
+				"development": {
+					"tsConfig": "packages/plugins/maintenance-ui/tsconfig.lib.json"
+				}
+			},
+			"defaultConfiguration": "production"
+		},
+		"test": {
+			"executor": "@nrwl/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/maintenance-ui/jest.config.ts",
+				"passWithNoTests": true
+			},
+			"configurations": {
+				"ci": {
+					"ci": true,
+					"codeCoverage": true
+				}
+			}
+		},
+		"lint": {
+			"executor": "@nrwl/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": [
+					"packages/plugins/maintenance-ui/**/*.ts",
+					"packages/plugins/maintenance-ui/**/*.html"
+				]
+			}
+		}
+	}
+}

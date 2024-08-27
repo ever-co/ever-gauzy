@@ -19,14 +19,14 @@ import {
 	ExpenseStatusesEnum
 } from '@gauzy/contracts';
 import { filter, tap } from 'rxjs/operators';
-import { Store, compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
+import { compareDate, distinctUntilChange, isEmpty, isNotEmpty } from '@gauzy/ui-core/common';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Observable, firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import * as moment from 'moment';
-import { ToastrService } from '@gauzy/ui-core/core';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
 import {
 	ExpensesService,
 	InvoiceEstimateHistoryService,
@@ -328,7 +328,7 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 				type: 'text',
 				isFilterable: false,
 				width: '13%',
-				valuePrepareFunction: (cell, row) => {
+				valuePrepareFunction: (cell) => {
 					return `${this.currency.value} ${cell}`;
 				}
 			};
@@ -351,8 +351,8 @@ export class InvoiceAddComponent extends PaginationFilterBaseComponent implement
 			type: 'text',
 			addable: false,
 			editable: false,
-			valuePrepareFunction: (cell, row) => {
-				return `${this.currency.value} ${row.quantity * row.price}`;
+			valuePrepareFunction: (cell) => {
+				return `${this.currency.value} ${cell}`;
 			},
 			isFilterable: false,
 			width: '13%'

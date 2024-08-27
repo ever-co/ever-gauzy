@@ -6,13 +6,12 @@ import {
 	IProductOptionTranslatable
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { InventoryStore } from '@gauzy/ui-core/core';
+import { InventoryStore, Store } from '@gauzy/ui-core/core';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
-import { Store } from '@gauzy/ui-core/common';
 import { ProductOptionGroupTranslationsComponent } from '@gauzy/ui-core/shared';
 
 export interface OptionCreateInput {
@@ -64,7 +63,7 @@ export class OptionsFormComponent implements OnInit {
 	optionGroups: any[] = [];
 
 	@HostListener('document:click', ['$event'])
-	clickout(event) {
+	onClick(event: MouseEvent) {
 		if (!this.eRef.nativeElement.contains(event.target)) {
 			this.activeOptionGroup = this.getEmptyOptionGroup();
 			this.activeOption = this.getEmptyOption();
@@ -158,13 +157,13 @@ export class OptionsFormComponent implements OnInit {
 		this.optionGroups.splice(0, 0, newOptionGroup);
 	}
 
-	onDeleteOptinGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
+	onDeleteOptionGroupClick(optionGroupDeleted: IProductOptionGroupUI) {
 		optionGroupDeleted.options.forEach((option) => {
 			this.onDeleteOption(option);
 		});
 
 		this.optionGroups = this.optionGroups.filter(
-			(optinGroup) => optinGroup.formOptionGroupId !== optionGroupDeleted.formOptionGroupId
+			(optionGroup) => optionGroup.formOptionGroupId !== optionGroupDeleted.formOptionGroupId
 		);
 
 		this.inventoryStore.addDeletedOptionGroup(optionGroupDeleted);
@@ -206,7 +205,7 @@ export class OptionsFormComponent implements OnInit {
 	updateActiveOptionGroupName(value: string) {
 		if (this.optionGroups.find((optionGroup) => optionGroup.name == value)) {
 			this.form.controls['activeOptionGroupName'].setErrors({
-				error: 'alredy group'
+				error: 'already group'
 			});
 
 			return;
@@ -220,11 +219,11 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	updateActiveOptionName(value: string) {
-		let checkDublicateOption = this.activeOptionGroup.options.find((option) => option.name == value);
+		let checkDuplicateOption = this.activeOptionGroup.options.find((option) => option.name == value);
 
-		if (checkDublicateOption) {
+		if (checkDuplicateOption) {
 			this.form.controls['activeOptionName'].setErrors({
-				error: 'dublicate option'
+				error: 'duplicate option'
 			});
 		} else {
 			this.form.controls['activeOptionName'].setErrors(null);
@@ -235,11 +234,11 @@ export class OptionsFormComponent implements OnInit {
 	}
 
 	updateActiveOptionCode(value: string) {
-		let checkDublicateCode = this.activeOptionGroup.options.find((option) => option.code == value);
+		let checkDuplicateCode = this.activeOptionGroup.options.find((option) => option.code == value);
 
-		if (checkDublicateCode) {
+		if (checkDuplicateCode) {
 			this.form.controls['activeOptionCode'].setErrors({
-				error: 'dublicate code'
+				error: 'duplicate code'
 			});
 		} else {
 			this.form.controls['activeOptionCode'].setErrors(null);

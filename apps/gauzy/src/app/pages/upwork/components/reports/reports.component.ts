@@ -4,12 +4,11 @@ import { Observable, Subject } from 'rxjs';
 import { tap } from 'rxjs/internal/operators/tap';
 import { debounceTime, filter } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import { Cell } from 'angular2-smart-table';
 import { IncomeTypeEnum, IOrganization, IUpworkDateRange } from '@gauzy/contracts';
-import { UpworkStoreService } from '@gauzy/ui-core/core';
+import { Store, UpworkStoreService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store } from '@gauzy/ui-core/common';
 import { DateViewComponent, IncomeExpenseAmountComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

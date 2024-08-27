@@ -24,9 +24,10 @@ import {
 	OrganizationContactService,
 	OrganizationProjectsService,
 	ServerDataSource,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, Store, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
 import {
 	ContactWithTagsComponent,

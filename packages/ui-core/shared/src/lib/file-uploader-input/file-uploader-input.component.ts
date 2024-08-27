@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, AfterViewInit, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-base.component';
 
 @Component({

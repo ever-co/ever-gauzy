@@ -6,7 +6,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { CandidatePersonalQualitiesService, ToastrService } from '@gauzy/ui-core/core';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'ga-candidate-personal-qualities',

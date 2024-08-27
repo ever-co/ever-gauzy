@@ -18,7 +18,7 @@ import {
 	ITimeLog,
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
+import { Store } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

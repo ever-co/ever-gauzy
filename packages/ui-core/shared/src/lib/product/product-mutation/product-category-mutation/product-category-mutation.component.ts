@@ -14,8 +14,8 @@ import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ProductCategoryService, ToastrService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, Store } from '@gauzy/ui-core/common';
+import { ProductCategoryService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

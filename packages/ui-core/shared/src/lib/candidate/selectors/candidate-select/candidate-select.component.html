@@ -1,16 +1,25 @@
-<nb-select
-	fullWidth
-	[formControl]="select"
-	(selectedChange)="onCandidateSelected($event)"
-	[disabled]="disabled"
-	[placeholder]="placeholder"
->
-	<nb-option *ngFor="let candidate of candidates$ | async" [value]="candidate.id">
-		<ngx-avatar
-			size="sm"
-			[src]="candidate.user?.imageUrl"
-			[name]="candidate.user?.name"
-			[isOption]="true"
-		></ngx-avatar>
-	</nb-option>
-</nb-select>
+<div class="container">
+	<input
+		#autoInput
+		nbInput
+		type="text"
+		[formControl]="searchControl"
+		placeholder="Add candidate"
+		[nbAutocomplete]="auto"
+	/>
+
+	<nb-autocomplete #auto (selectedChange)="onCandidateSelected($event)">
+		<nb-option *ngFor="let candidate of filteredCandidates$ | async" [value]="candidate.id">
+			<ngx-avatar
+				size="sm"
+				[src]="candidate.user?.imageUrl"
+				[name]="candidate.user?.name"
+				[isOption]="true"
+			></ngx-avatar>
+		</nb-option>
+	</nb-autocomplete>
+
+	<nb-checkbox [(ngModel)]="showRejected" class="checkbox" (ngModelChange)="toggleShowRejected()">
+		{{ 'CANDIDATES_PAGE.SHOW_REJECTED' | translate }}
+	</nb-checkbox>
+</div>

@@ -5,9 +5,15 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pluck, pick } from 'underscore';
 import * as randomColor from 'randomcolor';
-import { DateRangePickerBuilderService, moment, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import {
+	DateRangePickerBuilderService,
+	moment,
+	Store,
+	TimesheetFilterService,
+	TimesheetService
+} from '@gauzy/ui-core/core';
 import { IGetTimeLogReportInput, ITimeLogFilters, ReportDayData } from '@gauzy/contracts';
-import { Store, distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,

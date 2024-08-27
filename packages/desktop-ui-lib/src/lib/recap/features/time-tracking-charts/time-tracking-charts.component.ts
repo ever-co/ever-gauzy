@@ -69,8 +69,8 @@ export class TimeTrackingChartsComponent implements OnInit {
 		return this.recapQuery.state$.pipe(map((state) => state.count.weekDuration));
 	}
 
-	public get dailyActivities$(): Observable<string> {
-		return this.recapQuery.state$.pipe(map((state) => (state.count.weekActivities || 0).toFixed(2)));
+	public get dailyActivities$(): Observable<number> {
+		return this.recapQuery.state$.pipe(map((state) => state.count.weekActivities / 100));
 	}
 
 	public get chartData$(): Observable<IChartData[]> {

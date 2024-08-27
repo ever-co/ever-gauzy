@@ -10,7 +10,7 @@ import moment from 'moment-timezone';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { DateRangePickerBuilderService, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
+import { DateRangePickerBuilderService, Store, TimesheetFilterService, TimesheetService } from '@gauzy/ui-core/core';
 import {
 	ITimeLogFilters,
 	ITimeSlot,
@@ -19,7 +19,7 @@ import {
 	IScreenshot,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone, Store } from '@gauzy/ui-core/common';
+import { isEmpty, distinctUntilChange, isNotEmpty, toTimezone } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	DeleteConfirmationComponent,

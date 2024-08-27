@@ -3,15 +3,15 @@ import { IEmployee, IOrganizationProject, IOrganizationTeam, ITag, ITask, TaskSt
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import moment from 'moment';
+import * as moment from 'moment';
 import { CKEditor4 } from 'ckeditor4-angular/ckeditor';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { richTextCKEditorConfig } from '@gauzy/ui-core/shared';
-import { Store } from '@gauzy/ui-core/common';
 import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 

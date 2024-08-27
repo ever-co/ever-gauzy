@@ -6,7 +6,7 @@ console.log = log.log;
 Object.assign(console, log.functions);
 
 import * as path from 'path';
-import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog, nativeTheme } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 
@@ -43,7 +43,8 @@ import {
 	ipcMainHandler,
 	ipcTimer,
 	removeMainListener,
-	removeTimerListener
+	removeTimerListener,
+	DesktopThemeListener
 } from '@gauzy/desktop-libs';
 import {
 	AlwaysOn,
@@ -145,6 +146,18 @@ ipcMain.setMaxListeners(0);
 
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
+ipcMain.handle('PREFERRED_THEME', () => {
+	const applicationSetting = LocalStore.getStore('appSetting');
+	let theme: string;
+	if (!applicationSetting || !applicationSetting.theme) {
+		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+	} else {
+		theme = applicationSetting.theme;
+	}
+	return theme;
+});
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -517,6 +530,16 @@ app.on('ready', async () => {
 			throw new UIError('400', error, 'MAINWININIT');
 		}
 	}
+
+	new DesktopThemeListener({
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		imageViewWindow: imageView,
+		gauzyWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		alwaysOnWindow: alwaysOn.browserWindow
+	}).listen()
 });
 
 app.on('window-all-closed', () => {

@@ -10,8 +10,8 @@ import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { finalize, map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Store, distinctUntilChange } from '@gauzy/ui-core/common';
-import { ErrorHandlingService, ProductTypeService } from '@gauzy/ui-core/core';
+import { distinctUntilChange } from '@gauzy/ui-core/common';
+import { ErrorHandlingService, ProductTypeService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

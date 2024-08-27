@@ -10,7 +10,5 @@ export * from './employee-mutation/employee-mutation.component';
 export * from './employee-mutation/employee-mutation.module';
 export * from './employee-rates/employee-rates.component';
 export * from './employee-rates/employee-rates.module';
-export * from './public-page-employee-mutation/public-page-employee-mutation.component';
-export * from './public-page-employee-mutation/public-page-employee-mutation.module';
 export * from './employee-start-work/employee-start-work.component';
 export * from './employee-start-work/employee-start-work.module';

@@ -16,7 +16,7 @@ import {
 	IOrganization
 } from '@gauzy/contracts';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
-import { ComponentEnum, Store } from '@gauzy/ui-core/common';
+import { ComponentEnum } from '@gauzy/ui-core/common';
 import {
 	CandidateCriterionsRatingService,
 	CandidateFeedbacksService,
@@ -24,6 +24,7 @@ import {
 	CandidatesService,
 	CandidateStore,
 	EmployeesService,
+	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { DeleteFeedbackComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';

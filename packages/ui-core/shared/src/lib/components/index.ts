@@ -8,3 +8,5 @@ export * from './header-title/header-title.component';
 export * from './layout-selector/layout-selector.component';
 export * from './popup/popup.component';
 export * from './search-input/search-input.component';
+export * from './dynamic-tabs/dynamic-tabs.component';
+export * from './dynamic-tabs/dynamic-tabs.module';

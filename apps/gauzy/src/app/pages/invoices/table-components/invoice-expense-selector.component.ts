@@ -3,8 +3,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { DefaultEditor } from 'angular2-smart-table';
 import { ExpenseTypesEnum, IExpense, IOrganization } from '@gauzy/contracts';
-import { Store } from '@gauzy/ui-core/common';
-import { ExpensesService } from '@gauzy/ui-core/core';
+import { ExpensesService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

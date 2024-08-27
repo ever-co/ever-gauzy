@@ -5,7 +5,7 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs/internal/Observable';
 import { chain, reduce } from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import {
 	ITimeLogFilters,
@@ -15,8 +15,8 @@ import {
 	IActivity,
 	IURLMetaData
 } from '@gauzy/contracts';
-import { ActivityService, DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
-import { Store, distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-core/common';
+import { ActivityService, DateRangePickerBuilderService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, isEmpty, isJsObject, toLocal, toUTC } from '@gauzy/ui-core/common';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })

@@ -3,8 +3,8 @@ import { UntypedFormBuilder, FormControl, UntypedFormGroup, Validators } from '@
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IEmployee, IOrganization, IImageAsset, IOrganizationProject, IOrganizationTeam, ITag } from '@gauzy/contracts';
-import { DUMMY_PROFILE_IMAGE, Store, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
-import { ToastrService } from '@gauzy/ui-core/core';
+import { DUMMY_PROFILE_IMAGE, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

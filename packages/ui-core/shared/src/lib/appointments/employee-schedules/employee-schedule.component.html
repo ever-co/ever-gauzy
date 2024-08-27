@@ -1,0 +1,35 @@
+<nb-card>
+	<nb-card-header>
+		{{ 'EMPLOYEE_SCHEDULES_MODAL.EMPLOYEE' | translate }}:
+		{{ schedule.employeeName }}
+	</nb-card-header>
+	<nb-card-body>
+		{{
+			(!schedule.slots.length
+				? 'EMPLOYEE_SCHEDULES_MODAL.SLOTS_UNAVAILABLE'
+				: 'EMPLOYEE_SCHEDULES_MODAL.SLOTS_AVAILABLE'
+			) | translate
+		}}
+		<div>
+			<nb-list *ngIf="schedule.slots.length">
+				<nb-list-item *ngFor="let item of schedule.slots">
+					<span>- {{ item.startTime }} to {{ item.endTime }} <br /></span>
+				</nb-list-item>
+			</nb-list>
+		</div>
+	</nb-card-body>
+	<nb-card-footer>
+		<button *ngIf="!schedule.slots.length" nbButton type="button" class="mr-3" (click)="closeDialog('ok')">
+			{{ 'BUTTONS.OK' | translate }}
+		</button>
+
+		<ng-container *ngIf="schedule.slots.length">
+			<button nbButton type="button" class="mr-3" (click)="closeDialog('no')">
+				{{ 'BUTTONS.NO' | translate }}
+			</button>
+			<button nbButton type="button" status="success" (click)="closeDialog('yes')">
+				{{ 'BUTTONS.YES' | translate }}
+			</button>
+		</ng-container>
+	</nb-card-footer>
+</nb-card>

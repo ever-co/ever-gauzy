@@ -1,4 +1,3 @@
-<div>
-	<nb-route-tabset [tabs]="tabs"></nb-route-tabset>
-	<nb-spinner *ngIf="loading"> </nb-spinner>
+<div class="dashboard-container">
+	<gz-dynamic-tabs #dynamicTabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
 </div>
