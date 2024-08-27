@@ -249,12 +249,12 @@ async function startServer(value, restart = false) {
 			project: projectConfig
 				? projectConfig
 				: {
-					projectId: null,
-					taskId: null,
-					note: null,
-					aw,
-					organizationContactId: null
-				}
+						projectId: null,
+						taskId: null,
+						note: null,
+						aw,
+						organizationContactId: null
+				  }
 		});
 	} catch (error) {
 		throw new AppError('MAINSTRSERVER', error);
@@ -442,11 +442,11 @@ app.on('ready', async () => {
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,
-		imageViewWindow: imageView,
+		imageViewerWindow: imageView,
 		gauzyWindow,
 		splashScreenWindow: splashScreen.browserWindow,
 		alwaysOnWindow: alwaysOn.browserWindow
-	}).listen()
+	}).listen();
 });
 
 app.on('window-all-closed', () => {
