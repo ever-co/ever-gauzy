@@ -3,11 +3,7 @@
 	<nb-card-body class="body">
 		<div class="row">
 			<div class="col-3" *ngIf="hasPermissionI && hasPermissionIEdit">
-				<nb-card
-					status="success"
-					class="shortcut-card"
-					(click)="addIncome()"
-				>
+				<nb-card status="success" class="shortcut-card" (click)="addIncome()">
 					<nb-card-header>
 						<nb-icon icon="plus-circle"></nb-icon>
 						{{ 'MENU.INCOME' | translate }}
@@ -22,11 +18,7 @@
 				</nb-card>
 			</div>
 			<div class="col-3" *ngIf="hasPermissionE && hasPermissionEEdit">
-				<nb-card
-					status="danger"
-					class="shortcut-card"
-					(click)="addExpense()"
-				>
+				<nb-card status="danger" class="shortcut-card" (click)="addExpense()">
 					<nb-card-header>
 						<nb-icon icon="minus-circle"></nb-icon>
 						{{ 'MENU.EXPENSES' | translate }}
@@ -41,11 +33,7 @@
 				</nb-card>
 			</div>
 			<div class="col-3" *ngIf="hasPermissionE && hasPermissionEEdit">
-				<nb-card
-					status="danger"
-					class="shortcut-card"
-					(click)="addOrganizationRecurringExpense()"
-				>
+				<nb-card status="danger" class="shortcut-card" (click)="addOrganizationRecurringExpense()">
 					<nb-card-header>
 						<nb-icon icon="minus-circle"></nb-icon>
 						{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
@@ -53,21 +41,14 @@
 					<nb-card-body>
 						<div class="shortcut">
 							<div>
-								{{
-									'DASHBOARD_PAGE.ADD_ORGANIZATION_RECURRING_EXPENSE'
-										| translate
-								}}
+								{{ 'DASHBOARD_PAGE.ADD_ORGANIZATION_RECURRING_EXPENSE' | translate }}
 							</div>
 						</div>
 					</nb-card-body>
 				</nb-card>
 			</div>
 			<div class="col-3" *ngIf="hasPermissionE && hasPermissionEEdit">
-				<nb-card
-					status="danger"
-					class="shortcut-card"
-					(click)="addEmployeeRecurringExpense()"
-				>
+				<nb-card status="danger" class="shortcut-card" (click)="addEmployeeRecurringExpense()">
 					<nb-card-header>
 						<nb-icon icon="minus-circle"></nb-icon>
 						{{ 'DASHBOARD_PAGE.RECURRING_EXPENSES' | translate }}
@@ -75,10 +56,7 @@
 					<nb-card-body>
 						<div class="shortcut">
 							<div>
-								{{
-									'DASHBOARD_PAGE.ADD_EMPLOYEE_RECURRING_EXPENSE'
-										| translate
-								}}
+								{{ 'DASHBOARD_PAGE.ADD_EMPLOYEE_RECURRING_EXPENSE' | translate }}
 							</div>
 						</div>
 					</nb-card-body>
