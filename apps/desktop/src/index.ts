@@ -5,10 +5,10 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as path from 'path';
-import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog, nativeTheme } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
+import * as path from 'path';
 
 import { environment } from './environments/environment';
 
@@ -29,6 +29,7 @@ import {
 	AppError,
 	AppMenu,
 	DesktopServer,
+	DesktopThemeListener,
 	DesktopUpdater,
 	DialogErrorHandler,
 	ErrorEventManager,
@@ -43,8 +44,7 @@ import {
 	ipcMainHandler,
 	ipcTimer,
 	removeMainListener,
-	removeTimerListener,
-	DesktopThemeListener
+	removeTimerListener
 } from '@gauzy/desktop-libs';
 import {
 	AlwaysOn,
@@ -57,10 +57,10 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow
 } from '@gauzy/desktop-window';
-import { initSentry } from './sentry';
+import * as Sentry from '@sentry/electron';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
-import * as Sentry from '@sentry/electron';
+import { initSentry } from './sentry';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -535,7 +535,7 @@ app.on('ready', async () => {
 		timeTrackerWindow,
 		settingsWindow,
 		updaterWindow,
-		imageViewWindow: imageView,
+		imageViewerWindow: imageView,
 		gauzyWindow,
 		splashScreenWindow: splashScreen.browserWindow,
 		alwaysOnWindow: alwaysOn.browserWindow
