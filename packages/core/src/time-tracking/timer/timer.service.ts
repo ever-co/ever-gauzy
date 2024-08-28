@@ -380,9 +380,9 @@ export class TimerService {
 				await Promise.all(
 					conflicts.flatMap((timeLog: ITimeLog) => {
 						const { timeSlots = [] } = timeLog;
-						return timeSlots.map((timeSlot: ITimeSlot) =>
-							this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot))
-						);
+						return timeSlots.map(async (timeSlot: ITimeSlot) => {
+							return await this.commandBus.execute(new DeleteTimeSpanCommand(times, timeLog, timeSlot));
+						});
 					})
 				);
 			}
