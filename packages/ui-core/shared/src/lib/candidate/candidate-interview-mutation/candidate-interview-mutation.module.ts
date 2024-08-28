@@ -27,6 +27,8 @@ import { CandidateCriterionsFormComponent } from './candidate-criterions-form/ca
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
 import { CandidateEmailComponent } from './candidate-notification-form/candidate-email/candidate-email.component';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
+import { CandidateTechnologiesComponent } from './interview-criterions/candidate-technologies/candidate-technologies.component';
+import { CandidatePersonalQualitiesComponent } from './interview-criterions/candidate-personal-qualities/candidate-personal-qualities.component';
 
 @NgModule({
 	imports: [
@@ -64,7 +66,9 @@ import { CandidateInterviewFormComponent } from './candidate-interview-form/cand
 		CandidateInterviewFormComponent,
 		CandidateCriterionsFormComponent,
 		CandidateNotificationFormComponent,
-		CandidateEmailComponent
+		CandidateEmailComponent,
+		CandidateTechnologiesComponent,
+		CandidatePersonalQualitiesComponent
 	],
 	providers: [CandidateTechnologiesService]
 })

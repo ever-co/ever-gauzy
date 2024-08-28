@@ -114,6 +114,7 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		private readonly router: Router,
 		private readonly candidateStore: CandidateStore
 	) {}
+	isGaInterviewCriterionsVisible = false;
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
@@ -374,5 +375,8 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		this.router.navigate(['/pages/employees/candidates/interviews/criterion']);
 	}
 
+	showGaInterviewCriterions() {
+		this.isGaInterviewCriterionsVisible = !this.isGaInterviewCriterionsVisible;
+	}
 	ngOnDestroy() {}
 }
