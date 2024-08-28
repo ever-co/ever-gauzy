@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
+import * as moment from 'moment';
 import { IOrganizationTeamEmployee } from '@gauzy/contracts';
 import { progressStatus } from '@gauzy/ui-core/common';
-import * as moment from 'moment';
 
 @Component({
 	selector: 'gauzy-team-member',
@@ -9,10 +9,6 @@ import * as moment from 'moment';
 	styleUrls: ['./team-member.component.scss']
 })
 export class TeamMemberComponent implements OnInit {
-	constructor() {
-		this._isClassic = false;
-	}
-
 	private _member: IOrganizationTeamEmployee | any;
 
 	public get member(): IOrganizationTeamEmployee | any {
@@ -47,6 +43,10 @@ export class TeamMemberComponent implements OnInit {
 
 	public humanize(duration: number) {
 		return moment.duration(duration, 'seconds').humanize();
+	}
+
+	constructor() {
+		this._isClassic = false;
 	}
 
 	ngOnInit(): void {}

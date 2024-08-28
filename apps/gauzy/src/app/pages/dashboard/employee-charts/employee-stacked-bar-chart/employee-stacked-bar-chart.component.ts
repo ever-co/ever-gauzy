@@ -2,8 +2,8 @@ import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { monthNames } from '@gauzy/ui-core/core';
 import { IMonthAggregatedEmployeeStatistics } from '@gauzy/contracts';
+import { monthNames } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
