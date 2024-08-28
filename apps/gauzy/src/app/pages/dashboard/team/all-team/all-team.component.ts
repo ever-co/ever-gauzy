@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { Store } from '@gauzy/ui-core/core';
-import { OrganizationProjectsService } from '@gauzy/ui-core/core';
+import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({

@@ -2,14 +2,14 @@
 	<div class="widgets-container">
 		<nb-card>
 			<nb-card-header class="team-header">
-				<h6 class="title">{{'ORGANIZATIONS_PAGE.TEAMS' | translate}}</h6>
+				<h6 class="title">{{ 'ORGANIZATIONS_PAGE.TEAMS' | translate }}</h6>
 			</nb-card-header>
 			<nb-card-body class="team-container">
 				<div class="d-flex align-items-center">
 					<div class="h1">
-						{{organization?.statistics?.countWorking}}
+						{{ organization?.statistics?.countWorking }}
 					</div>
-					<div>/{{organization?.statistics?.countTeams}}</div>
+					<div>/{{ organization?.statistics?.countTeams }}</div>
 				</div>
 
 				<div class="counter-container">
@@ -27,9 +27,9 @@
 			<nb-card-body class="team-container">
 				<div class="d-flex align-items-center">
 					<div class="h1">
-						{{organization?.statistics?.counts?.employeesCount || 0}}
+						{{ organization?.statistics?.counts?.employeesCount || 0 }}
 					</div>
-					<div>/{{organization?.statistics?.counts?.employeesCountTotal || 0}}</div>
+					<div>/{{ organization?.statistics?.counts?.employeesCountTotal || 0 }}</div>
 				</div>
 				<div class="counter-container">
 					<gauzy-counter-point
@@ -46,9 +46,9 @@
 			<nb-card-body class="team-container">
 				<div class="d-flex align-items-center">
 					<div class="h1">
-						{{organization?.statistics?.counts?.projectsCount || 0}}
+						{{ organization?.statistics?.counts?.projectsCount || 0 }}
 					</div>
-					<div>/{{projectCount}}</div>
+					<div>/{{ projectCount }}</div>
 				</div>
 				<div class="counter-container">
 					<gauzy-counter-point
@@ -56,7 +56,6 @@
 						[value]="organization?.statistics?.counts?.projectsCount"
 					></gauzy-counter-point>
 				</div>
-
 			</nb-card-body>
 		</nb-card>
 		<nb-card>
@@ -66,7 +65,7 @@
 			<nb-card-body class="team-container">
 				<div class="d-flex align-items-center">
 					<div class="h1">
-						{{organization?.statistics?.counts?.weekActivities || 0}}
+						{{ organization?.statistics?.counts?.weekActivities || 0 }}
 					</div>
 					<div>%</div>
 				</div>
@@ -74,7 +73,7 @@
 					<gauzy-counter-point
 						[progress]="true"
 						[total]="100"
-						[value]="organization?.statistics?.counts?.weekActivities  || 0"
+						[value]="organization?.statistics?.counts?.weekActivities || 0"
 					></gauzy-counter-point>
 				</div>
 			</nb-card-body>
@@ -85,29 +84,39 @@
 			<nb-card-header class="pb-0 d-flex justify-content-between">
 				<div>
 					<div class="d-flex align-items-center">
-						<div class="h1">{{team?.statistics?.countWorking}}</div>
-						<div>/{{team?.statistics?.countWorking + team?.statistics.countNotWorking}}</div>
+						<div class="h1">{{ team?.statistics?.countWorking }}</div>
+						<div>/{{ team?.statistics?.countWorking + team?.statistics.countNotWorking }}</div>
 					</div>
-					<span>{{team?.name}}</span>
+					<span>{{ team?.name }}</span>
 				</div>
 				<div class="legend-container">
 					<div class="legend">
 						<nb-badge
-						  status="success"
-						  [text]="('DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate)+' '+ team?.statistics?.countOnline"
-					  ></nb-badge>
+							status="success"
+							[text]="
+								('DASHBOARD_PAGE.CHARTS.WORKING_NOW' | translate) + ' ' + team?.statistics?.countOnline
+							"
+						></nb-badge>
 					</div>
 					<div class="legend">
 						<nb-badge
-						  status="warning"
-						  [text]="('DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate)+' '+ (team?.statistics?.countWorking - team?.statistics?.countOnline).toString()"
-					  ></nb-badge>
+							status="warning"
+							[text]="
+								('DASHBOARD_PAGE.CHARTS.WORKING_TODAY' | translate) +
+								' ' +
+								(team?.statistics?.countWorking - team?.statistics?.countOnline).toString()
+							"
+						></nb-badge>
 					</div>
 					<div class="legend">
 						<nb-badge
-						  status="danger"
-						  [text]="('DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate)+' '+ team?.statistics?.countNotWorking"
-					  ></nb-badge>
+							status="danger"
+							[text]="
+								('DASHBOARD_PAGE.CHARTS.NOT_WORKING' | translate) +
+								' ' +
+								team?.statistics?.countNotWorking
+							"
+						></nb-badge>
 					</div>
 				</div>
 				<div>
@@ -118,9 +127,8 @@
 			</nb-card-header>
 			<nb-card-body>
 				<div class="d-flex flex-column">
-					<ng-container
-						*ngFor="let member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday)">
-						<gauzy-team-member [member]="member" class="mt-2" isClassic=true></gauzy-team-member>
+					<ng-container *ngFor="let member of team?.membersWorkingToday.concat(team?.membersNotWorkingToday)">
+						<gauzy-team-member [member]="member" class="mt-2" isClassic="true"></gauzy-team-member>
 					</ng-container>
 				</div>
 			</nb-card-body>

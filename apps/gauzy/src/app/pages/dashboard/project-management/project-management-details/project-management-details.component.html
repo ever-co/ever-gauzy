@@ -39,9 +39,7 @@
 					</div>
 				</ng-container>
 				<ng-template [ngIf]="!tasks?.length">
-					<ngx-no-data-message
-						[message]="'REPORT_PAGE.NO_TASK' | translate"
-					></ngx-no-data-message>
+					<ngx-no-data-message [message]="'REPORT_PAGE.NO_TASK' | translate"></ngx-no-data-message>
 				</ng-template>
 			</div>
 			<div *ngxPermissionsOnly="[permissions.ORG_TASK_ADD]" (click)="addTodo()" class="more">
@@ -51,10 +49,7 @@
 		</nb-card-body>
 	</nb-card>
 	<div class="last-column">
-		<nb-card
-			[ngStyle]="{ 'height': !selectedEmployeeId ? '100%' : '' }"
- 			class="projects"
-		>
+		<nb-card [ngStyle]="{ height: !selectedEmployeeId ? '100%' : '' }" class="projects">
 			<nb-card-header>
 				{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}
 			</nb-card-header>
@@ -72,15 +67,11 @@
 				<div class="card-body-content">
 					<ng-container *ngFor="let project of projects">
 						<div class="card project">
-							<ngx-project
-								[rowData]="{ project: project }"
-							></ngx-project>
+							<ngx-project [rowData]="{ project: project }"></ngx-project>
 						</div>
 					</ng-container>
 					<ng-template [ngIf]="!projects?.length">
-						<ngx-no-data-message
-							[message]="'TIMESHEET.NO_PROJECT' | translate"
-						></ngx-no-data-message>
+						<ngx-no-data-message [message]="'TIMESHEET.NO_PROJECT' | translate"></ngx-no-data-message>
 					</ng-template>
 				</div>
 			</nb-card-body>
@@ -101,10 +92,7 @@
 					>
 						{{ 'BUTTONS.VIEW_ALL' | translate }}
 					</button>
-					<div
-						[ngStyle]="{'max-height': !isMyTask ? 'calc(100% - 28px)' : ''}"
-						class="card-body-content"
-					>
+					<div [ngStyle]="{ 'max-height': !isMyTask ? 'calc(100% - 28px)' : '' }" class="card-body-content">
 						<ng-container *ngFor="let task of assigned">
 							<div class="card assigned">
 								<div class="">

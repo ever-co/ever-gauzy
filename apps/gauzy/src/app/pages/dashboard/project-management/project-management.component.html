@@ -5,9 +5,7 @@
 				{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT' | translate }}
 			</ngx-header-title>
 		</h4>
-		<ng-container
-			*ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate"
-		>
+		<ng-container *ngIf="selectedDateRange?.startDate && selectedDateRange?.endDate">
 			<ngx-date-range-title
 				[start]="selectedDateRange?.startDate"
 				[end]="selectedDateRange?.endDate"

@@ -16,9 +16,7 @@ export class EmployeeChartsComponent implements OnInit {
 	selectedChart = EmployeeChartEnum.BAR;
 	EmployeeChartEnum: typeof EmployeeChartEnum = EmployeeChartEnum;
 
-	@Input() employeeStatistics: IMonthAggregatedEmployeeStatistics[];
-
-	constructor() {}
+	@Input() employeeStatistics: IMonthAggregatedEmployeeStatistics[] = [];
 
 	ngOnInit() {}
 }

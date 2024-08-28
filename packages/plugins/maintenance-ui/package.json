@@ -32,7 +32,6 @@
 		"@angular/router": "^16.2.12",
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/ui-config": "^0.1.0",
-		"@gauzy/ui-core": "^0.1.0",
 		"@nebular/theme": "^12.0.0",
 		"@ngx-translate/core": "^15.0.0",
 		"tslib": "^2.6.2"

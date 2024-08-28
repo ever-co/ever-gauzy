@@ -7,11 +7,11 @@ import { debounceTime, filter, tap } from 'rxjs/operators';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartType } from 'chart.js';
 import { environment } from '@gauzy/ui-config';
-import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { CurrencyPosition, IMonthAggregatedEmployeeStatistics, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 import { Store, months } from '@gauzy/ui-core/core';
+import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
+import { CurrencyPositionPipe } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
