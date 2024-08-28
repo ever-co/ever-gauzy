@@ -29,6 +29,7 @@
 			"../../../packages/config",
 			"../../../packages/contracts",
 			"../../../packages/ui-config",
+			"../../../packages/ui-core",
 			"../../../packages/plugin",
 			"../../../packages/plugins/integration-ai",
 			"../../../packages/plugins/integration-hubstaff",
