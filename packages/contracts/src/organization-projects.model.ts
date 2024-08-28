@@ -11,6 +11,7 @@ import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { CustomFieldsObject } from './shared-types';
+import { IOrganizationProjectModule } from './organization-project-module.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
@@ -41,6 +42,7 @@ export interface IOrganizationProject
 	teams?: IOrganizationTeam[];
 	timeLogs?: ITimeLog[];
 	organizationSprints?: IOrganizationSprint[];
+	modules?: IOrganizationProjectModule[];
 	taskListType: TaskListTypeEnum;
 	payments?: IPayment[];
 	// prefix to project tasks / issues, e.g. GA-XXXX (GA is prefix)
@@ -73,8 +75,8 @@ export enum OrganizationProjectBudgetTypeEnum {
 
 export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
-	organizationTeamId?: IOrganizationTeam['id'];
-	organizationContactId?: IOrganizationContact['id'];
+	organizationTeamId?: ID;
+	organizationContactId?: ID;
 	organizationContact?: IOrganizationContact;
 	public?: boolean;
 	billable?: boolean;
@@ -86,7 +88,7 @@ export interface IOrganizationProjectCreateInput
 		IRelationalImageAsset {
 	name?: string;
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
@@ -108,7 +110,7 @@ export interface IOrganizationProjectCreateInput
 }
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
-	id?: IOrganizationContact['id'];
+	id?: ID;
 }
 
 export interface IOrganizationProjectStoreState {

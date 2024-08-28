@@ -22,6 +22,7 @@ import { ITimesheet, ITimeSlot } from './timesheet.model';
 import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
+import { IOrganizationProjectModule } from './organization-project-module.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
@@ -71,6 +72,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	expenses?: IExpense[];
 	timesheets?: ITimesheet[];
 	tasks?: ITask[];
+	modules?: IOrganizationProjectModule[];
 	timeSlots?: ITimeSlot[];
 	contact?: IContact;
 	candidate?: ICandidate;

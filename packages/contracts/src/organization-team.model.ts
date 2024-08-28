@@ -1,5 +1,5 @@
 import { IRelationalEmployee } from './employee.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag.model';
 import { ITask } from './task.model';
@@ -7,6 +7,7 @@ import { ITimerStatusInput } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
 import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject } from './organization-projects.model';
+import { IOrganizationProjectModule } from './organization-project-module.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
@@ -22,6 +23,7 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	members?: IOrganizationTeamEmployee[];
 	managers?: IOrganizationTeamEmployee[];
 	projects?: IOrganizationProject[];
+	modules?: IOrganizationProjectModule[];
 	tags?: ITag[];
 	tasks?: ITask[];
 }
@@ -64,7 +66,7 @@ export interface IOrganizationTeamStatisticInput extends ITimerStatusInput {
 
 export interface IRelationalOrganizationTeam {
 	organizationTeam?: IOrganizationTeam;
-	organizationTeamId?: IOrganizationTeam['id'];
+	organizationTeamId?: ID;
 }
 
 export interface IOrganizationTeamStoreState {

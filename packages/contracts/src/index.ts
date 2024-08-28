@@ -79,6 +79,7 @@ export * from './organization-expense-category.model';
 export * from './organization-language.model';
 export * from './organization-positions.model';
 export * from './organization-projects.model';
+export * from './organization-project-module.model';
 export * from './organization-recurring-expense.model';
 export * from './organization-sprint.model';
 export * from './organization-task-setting.model';

@@ -141,6 +141,7 @@ import { OrganizationTaskSettingModule } from './organization-task-setting/organ
 import { TaskEstimationModule } from './tasks/estimation/task-estimation.module';
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 import { SocialAccountModule } from './auth/social-account/social-account.module';
+import { OrganizationProjectModuleModule } from './organization-project-module/organization-project-module.module';
 
 const { unleashConfig } = environment;
 
@@ -347,6 +348,7 @@ if (environment.THROTTLE_ENABLED) {
 		OrganizationContactModule,
 		OrganizationPositionModule,
 		OrganizationProjectModule,
+		OrganizationProjectModuleModule,
 		OrganizationVendorModule,
 		OrganizationAwardModule,
 		OrganizationLanguageModule,

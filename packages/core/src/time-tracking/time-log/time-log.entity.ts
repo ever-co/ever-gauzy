@@ -13,25 +13,34 @@ import {
 	IOrganizationProject,
 	IOrganizationContact,
 	ITimeSlot,
-	IOrganizationTeam
+	IOrganizationTeam,
+	IOrganizationProjectModule,
+	ID
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationContact,
 	OrganizationProject,
+	OrganizationProjectModule,
 	OrganizationTeam,
 	Task,
 	TenantOrganizationBaseEntity,
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@ColumnIndex()
@@ -165,7 +174,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
@@ -189,7 +198,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	task?: ITask;
@@ -203,6 +212,27 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	taskId?: ITask['id'];
 
 	/**
+	 * Project Module
+	 */
+	@MultiORMManyToOne(() => OrganizationProjectModule, (it) => it.timeLogs, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	projectModule?: IOrganizationProjectModule;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: TimeLog) => it.projectModule)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	projectModuleId?: ID;
+
+	/**
 	 * OrganizationContact
 	 */
 	@MultiORMManyToOne(() => OrganizationContact, (it) => it.timeLogs, {
@@ -210,7 +240,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -231,7 +261,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationTeam?: IOrganizationTeam;

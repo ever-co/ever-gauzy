@@ -7,6 +7,7 @@ import {
 	IImageAsset,
 	IIssueType,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationTeam,
 	IOrganizationTeamEmployee,
 	IRequestApprovalTeam,
@@ -28,6 +29,7 @@ import {
 	ImageAsset,
 	IssueType,
 	OrganizationProject,
+	OrganizationProjectModule,
 	OrganizationTeamEmployee,
 	RequestApprovalTeam,
 	Tag,
@@ -303,6 +305,18 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 	})
 	@JoinTable()
 	tasks?: ITask[];
+
+	/**
+	 * Organization Project Module
+	 */
+	@MultiORMManyToMany(() => OrganizationProjectModule, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinTable()
+	modules?: IOrganizationProjectModule[];
 
 	/**
 	 * Equipment Sharing
