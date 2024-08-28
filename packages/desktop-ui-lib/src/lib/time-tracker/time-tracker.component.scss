@@ -696,7 +696,7 @@ img {
 	nb-tab.content-active {
 		background-color: var(--gauzy-card-2);
 		border-radius: 0 var(--border-radius) var(--border-radius);
-		max-height: calc(100vh - 6rem);
+		height: calc(100vh - 6rem);
 		padding: 1rem;
 		width: 900px;
 

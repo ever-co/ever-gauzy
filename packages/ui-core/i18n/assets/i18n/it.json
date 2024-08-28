@@ -33,6 +33,7 @@
 		"INVITE": "Invitare",
 		"SELECT_ALL": "Seleziona tutto",
 		"COPY_LINK": "Copia il link",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Gestire i colloqui di lavoro",
 		"MANAGE_INVITES": "Gestisci inviti",
 		"MANAGE_SPRINTS": "Gestire gli Sprint",
@@ -1626,6 +1627,7 @@
 		"APPLIED": "Applicato",
 		"HIRED": "Assunto",
 		"REJECTED": "Respinto",
+		"SHOW_REJECTED": "Mostra rifiutata",
 		"DELETED": "Cancellato",
 		"ARCHIVED": "Archiviato",
 		"SELECT_EMPLOYEE_MSG": "Seleziona un dipendente dal menu sopra",
@@ -2184,7 +2186,6 @@
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Dettagli della proposta",
-			"EDIT": "Modifica",
 			"AUTHOR": "Autore",
 			"JOB_POST_URL": "URL dell'annuncio di lavoro",
 			"PROPOSAL_SENT_ON": "Proposta inviata il",
@@ -3042,7 +3043,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generare collegamento pubblico",
 			"GENERATE": "Genera un collegamento al {{ text }} che chiunque con il collegamento può visualizzare",
-			"ACCESS": "Chiunque abbia accesso a questo link può visualizzare il {{ text }}"
+			"ACCESS": "Chiunque abbia accesso a questo link può visualizzare il {{ text }}",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3073,7 +3075,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Pagina non trovata",
 		"TAKE_ME_HOME": "Portami a casa",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "La pagina che stavi cercando non esiste",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "La pagina che stavi cercando non esiste",
 		"REDIRECT_TO_HOME": "Sarai reindirizzato alla pagina principale presto"
 	},
 	"HELP_PAGE": {
@@ -4237,7 +4239,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Seleziona un dipendente, per favore",
 		"EXPIRED_OR_CANCELLED": "Questo appuntamento è scaduto o è stato annullato",
 		"EMAIL_SENT": "È stata inviata un'email all'host oltre che a tutti i partecipanti per questa riunione",
-		"NO_ACTIVE_EVENT_TYpES": "Non ci sono tipi di eventi attivi"
+		"NO_ACTIVE_EVENT_TYPES": "Non ci sono tipi di eventi attivi",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Modelli di email",

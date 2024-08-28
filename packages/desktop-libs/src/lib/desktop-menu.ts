@@ -1,11 +1,16 @@
+import { createAboutWindow, createSettingsWindow } from '@gauzy/desktop-window';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { LocalStore } from './desktop-store';
-import { createSettingsWindow, createAboutWindow } from '@gauzy/desktop-window';
-import { TranslateService } from './translation';
 import { TimerService } from './offline';
+import { PluginManager } from './plugin-system/data-access/plugin-manager';
+import { PluginEventManager } from './plugin-system/events/plugin-event.manager';
+import { TranslateService } from './translation';
 
 export class AppMenu {
 	public menu: MenuItemConstructorOptions[] = [];
+	private readonly pluginManager = PluginManager.getInstance();
+	private readonly pluginEventManager = PluginEventManager.getInstance();
+
 	constructor(timeTrackerWindow, settingsWindow, updaterWindow, knex, windowPath, serverWindow?, isZoomVisible?) {
 		const isZoomEnabled = isZoomVisible;
 		this.menu = [
@@ -63,7 +68,11 @@ export class AppMenu {
 						enabled: true,
 						async click() {
 							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi, windowPath.preloadPath);
+								settingsWindow = await createSettingsWindow(
+									settingsWindow,
+									windowPath.timeTrackerUi,
+									windowPath.preloadPath
+								);
 							}
 							settingsWindow.show();
 							settingsWindow.webContents.send('app_setting', LocalStore.getApplicationConfig());
@@ -108,6 +117,7 @@ export class AppMenu {
 					}
 				]
 			},
+			this.pluginMenu,
 			{
 				label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
 				submenu: [
@@ -159,9 +169,37 @@ export class AppMenu {
 		if (updaterWindow) {
 			updaterWindow.webContents.send('refresh_menu');
 		}
+
+		this.pluginEventManager.listen(() => {
+			// Determine if the updated menu
+			const updatedMenu = this.menu.map((menu) => (menu.id === 'plugin-menu' ? this.pluginMenu : menu));
+			// Only rebuild the menu if there was an actual change
+			if (!this.deepArrayEqual(this.menu, updatedMenu)) {
+				this.menu = updatedMenu;
+				this.build();
+				console.log('Menu rebuilt after plugin update.');
+			} else {
+				console.log('Plugin update detected, but no changes were made to the menu.');
+			}
+		});
 	}
 
 	public build(): void {
 		Menu.setApplicationMenu(Menu.buildFromTemplate([...this.menu]));
+	}
+
+	public get pluginMenu(): MenuItemConstructorOptions {
+		const submenu = this.pluginManager.getMenuPlugins();
+
+		return {
+			id: 'plugin-menu',
+			label: TranslateService.instant('TIMER_TRACKER.SETTINGS.PLUGIN'),
+			visible: submenu.length > 0,
+			submenu
+		} as MenuItemConstructorOptions;
+	}
+
+	private deepArrayEqual<T>(arr1: T, arr2: T) {
+		return JSON.stringify(arr1) === JSON.stringify(arr2);
 	}
 }

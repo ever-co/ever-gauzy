@@ -8,7 +8,7 @@ import { BehaviorSubject, Observable, catchError, finalize, firstValueFrom, from
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { pick } from 'underscore';
-import moment from 'moment';
+import * as moment from 'moment';
 import { IGetTimeLogInput, ITimeLog, PermissionsEnum, ITimeLogFilters, TimeLogSourceEnum } from '@gauzy/contracts';
 import {
 	DateRangePickerBuilderService,

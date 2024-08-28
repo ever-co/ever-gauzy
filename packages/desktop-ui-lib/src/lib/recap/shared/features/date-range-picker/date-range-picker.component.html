@@ -12,7 +12,7 @@
 			</ng-container>
 			<i class="far fa-calendar" (click)="openDatepicker($event)"></i>
 			<input nbInput name="date-range" size="small" type="text" ngxDaterangepickerMd
-				[singleDatePicker]="isSingleDatePicker" unitOfTime="day" [autoApply]="true"
+				[singleDatePicker]="isSingleDatePicker" [autoApply]="true"
 				[showCustomRangeLabel]="!isLockDatePicker" [alwaysShowCalendars]="true" [customRangeDirection]="false"
 				[linkedCalendars]="true" [maxDate]="maxDate" [minDate]="minDate" [ranges]="ranges" [locale]="locale"
 				[(ngModel)]="selectedDateRange" (datesUpdated)="onDatesUpdated($event)"

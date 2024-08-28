@@ -1,10 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsUUID } from 'class-validator';
-import { IBasePerTenantEntityModel, ITenant } from '@gauzy/contracts';
+import { IBasePerTenantEntityModel, ID, ITenant } from '@gauzy/contracts';
 import { IsTenantBelongsToUser } from './../../shared/validators';
 
 export class TenantBaseDTO implements IBasePerTenantEntityModel {
-
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()
 	@IsObject()
@@ -15,5 +14,5 @@ export class TenantBaseDTO implements IBasePerTenantEntityModel {
 	@IsOptional()
 	@IsUUID()
 	@IsTenantBelongsToUser()
-	readonly tenantId: ITenant['id'];
+	readonly tenantId: ID;
 }

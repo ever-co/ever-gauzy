@@ -1,0 +1,26 @@
+.info-page {
+  padding: 0 !important;
+
+  .maintenance-mode-content {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    flex-direction: column;
+
+    img {
+      max-height: 96px;
+      max-width: 300px;
+      width: auto;
+    }
+
+    .info-message {
+      h3 {
+        color: red;
+        width: 100%;
+      }
+    }
+  }
+}

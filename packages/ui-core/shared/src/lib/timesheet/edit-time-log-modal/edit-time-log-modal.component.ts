@@ -43,7 +43,8 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 	subject$: Subject<any> = new Subject();
 
 	changeSelectedEmployee: boolean;
-
+	reasons = ['Worked offline', 'Internet issue', 'Forgot to track', 'Usability issue', 'App issue'];
+	selectedReason: string = '';
 	private _timeLog: ITimeLog | Partial<ITimeLog>;
 	get timeLog(): ITimeLog | Partial<ITimeLog> {
 		return this._timeLog;
@@ -227,6 +228,7 @@ export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestr
 
 			const payload = {
 				..._.omit(this.form.value, ['selectedRange']),
+
 				startedAt,
 				stoppedAt,
 				organizationId,

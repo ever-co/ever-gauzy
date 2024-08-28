@@ -33,6 +33,7 @@
 		"INVITE": "Покана",
 		"SELECT_ALL": "Селектиране на всички",
 		"COPY_LINK": "Копирай линка",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Управление на интервюта",
 		"MANAGE_INVITES": "Управление на покани",
 		"MANAGE_SPRINTS": "Управление на спринтове",
@@ -1675,6 +1676,7 @@
 		"APPLIED": "Applied",
 		"HIRED": "Hired",
 		"REJECTED": "Rejected",
+		"SHOW_REJECTED": "Показване отказано",
 		"DELETED": "Изтрит",
 		"ARCHIVED": "Архивирана",
 		"SELECT_EMPLOYEE_MSG": "Моля селектирайте служител от менюто по-долу.",
@@ -2201,40 +2203,39 @@
 		"ACCEPTED_PROPOSALS": "Приети предложения",
 		"TOTAL_PROPOSALS": "Общо предложения",
 		"SUCCESS_RATE": "Успеваемост",
-		"PROPOSALS": "Proposals",
+		"PROPOSALS": "Предложения",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Register Proposal",
+			"REGISTER_PROPOSALS": "Регистрирай предложение",
 			"AUTHOR": "Автор",
-			"TEMPLATE": "Template",
-			"JOB_POST_URL": "Job Post URL",
+			"TEMPLATE": "Шаблон",
+			"JOB_POST_URL": "URL на обява за работа",
 			"PICK_A_DATE": "Изберете дата",
-			"PROPOSAL_DATE": "Proposal Date",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"UPLOAD": "Upload",
-			"PROPOSALS_CONTENT": "Proposal Content",
-			"REGISTER_PROPOSALS_BUTTON": "Register Proposal"
+			"PROPOSAL_DATE": "Дата на предложението",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"UPLOAD": "Качване",
+			"PROPOSALS_CONTENT": "Съдържание на предложението",
+			"REGISTER_PROPOSALS_BUTTON": "Регистрирай предложение"
 		},
 		"PROPOSAL_DETAILS": {
-			"PROPOSAL_DETAILS": "Proposal Details",
-			"EDIT": "Редактиране",
+			"PROPOSAL_DETAILS": "Детайли на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
 			"STATUS": "Статус",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"VIEW_JOB_POST": "Преглед на публикация"
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"VIEW_JOB_POST": "Преглед на обява"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Edit Proposal",
+			"EDIT_PROPOSAL": "Редактиране на предложението",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "Job Post URL",
-			"PROPOSAL_SENT_ON": "Proposal Sent On",
-			"JOB_POST_CONTENT": "Job Post Content",
-			"PROPOSAL_CONTENT": "Proposal Content",
-			"EDIT_PROPOSAL_BUTTON": "Edit Proposal",
+			"JOB_POST_URL": "URL на обява за работа",
+			"PROPOSAL_SENT_ON": "Предложението е изпратено на",
+			"JOB_POST_CONTENT": "Съдържание на обява за работа",
+			"PROPOSAL_CONTENT": "Съдържание на предложението",
+			"EDIT_PROPOSAL_BUTTON": "Редактиране на предложението",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "Job Post URL"
+				"JOB_POST_URL": "URL на обява за работа"
 			}
 		}
 	},
@@ -3073,7 +3074,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Generate Public Link",
 			"GENERATE": "Generate a link to the {{ text }} that anyone with the link can view.",
-			"ACCESS": "Anyone with access to this link can view the {{ text }}."
+			"ACCESS": "Anyone with access to this link can view the {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3104,7 +3106,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
 		"TAKE_ME_HOME": "Take me home",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "The page you were looking for doesn't exist",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "The page you were looking for doesn't exist",
 		"REDIRECT_TO_HOME": "You'll be redirected to home page soon"
 	},
 	"HELP_PAGE": {
@@ -4259,7 +4261,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Please select an employee.",
 		"EXPIRED_OR_CANCELLED": "**This appointment has expired or has been cancelled.",
 		"EMAIL_SENT": "**An email has been sent to the host as well as to all the participants for this meeting.",
-		"NO_ACTIVE_EVENT_TYpES": "There are no active event types"
+		"NO_ACTIVE_EVENT_TYPES": "There are no active event types",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Шаблони на имейли",

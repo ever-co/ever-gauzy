@@ -57,7 +57,7 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 	}
 
 	@Output() changeHoverState = new EventEmitter<boolean>();
-	@Output() uploadedImageAsset = new EventEmitter<IImageAsset>();
+	@Output() uploadedImageAsset = new EventEmitter<IImageAsset | any>();
 	@Output() uploadImageAssetError = new EventEmitter<any>();
 
 	constructor(private readonly store: Store) {}

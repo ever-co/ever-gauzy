@@ -1,9 +1,10 @@
 export interface IPlugin {
 	name: string;
 	version: string;
-	initialize(): void;
-	dispose(): void;
-	activate(): void;
-	deactivate(): void;
+	initialize(): Promise<void> | void;
+	dispose(): Promise<void> | void;
+	activate(): Promise<void> | void;
+	deactivate(): Promise<void> | void;
 	component?(): void;
+	menu?: Electron.MenuItemConstructorOptions;
 }

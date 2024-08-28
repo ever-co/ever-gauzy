@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import moment from 'moment';
+import * as moment from 'moment';
 import {
 	IIncome,
 	ComponentLayoutStyleEnum,

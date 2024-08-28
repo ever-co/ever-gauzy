@@ -8,7 +8,7 @@ import { WorkInProgressComponent } from './work-in-progress.component';
  * @param _pageRouteRegistryService An instance of PageRouteRegistryService
  * @returns An array of Route objects
  */
-export const createRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
+export const createWorkInProgressRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: WorkInProgressComponent

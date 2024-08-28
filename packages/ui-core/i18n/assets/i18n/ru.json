@@ -33,6 +33,7 @@
 		"INVITE": "Пригласить",
 		"SELECT_ALL": "Выделить все",
 		"COPY_LINK": "Скопировать ссылку",
+		"COPIED": "Copied!",
 		"MANAGE_INTERVIEWS": "Управление интервью",
 		"MANAGE_INVITES": "Управление приглашениями",
 		"MANAGE_SPRINTS": "Управление спринтами",
@@ -1675,6 +1676,7 @@
 		"APPLIED": "Применяется",
 		"HIRED": "Наклонный",
 		"REJECTED": "Отклонено",
+		"SHOW_REJECTED": "Показ отклонен",
 		"DELETED": "Удалено",
 		"ARCHIVED": "Архивирован",
 		"SELECT_EMPLOYEE_MSG": "Пожалуйста, выберите сотрудника из меню выше.",
@@ -2196,45 +2198,44 @@
 		"ANONYMOUS": "Анонимный"
 	},
 	"PROPOSALS_PAGE": {
-		"HEADER": "Страница управления предложениями",
+		"HEADER": "Предложения - управление",
 		"STATISTICS": "Статистика",
 		"ACCEPTED_PROPOSALS": "Принятые предложения",
 		"TOTAL_PROPOSALS": "Всего предложений",
-		"SUCCESS_RATE": "Скорость успеха",
+		"SUCCESS_RATE": "Успешность",
 		"PROPOSALS": "Предложения",
 		"REGISTER": {
-			"REGISTER_PROPOSALS": "Регистрация предложения",
+			"REGISTER_PROPOSALS": "Зарегистрировать предложение",
 			"AUTHOR": "Автор",
 			"TEMPLATE": "Шаблон",
-			"JOB_POST_URL": "URL записи задания",
-			"PICK_A_DATE": "Выбрать дату",
+			"JOB_POST_URL": "URL объявления о работе",
+			"PICK_A_DATE": "Выберите дату",
 			"PROPOSAL_DATE": "Дата предложения",
-			"JOB_POST_CONTENT": "Контент должности",
-			"UPLOAD": "Выгрузить",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
+			"UPLOAD": "Загрузить",
 			"PROPOSALS_CONTENT": "Содержание предложения",
-			"REGISTER_PROPOSALS_BUTTON": "Регистрация предложения"
+			"REGISTER_PROPOSALS_BUTTON": "Зарегистрировать предложение"
 		},
 		"PROPOSAL_DETAILS": {
 			"PROPOSAL_DETAILS": "Детали предложения",
-			"EDIT": "Редактировать",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "URL записи задания",
+			"JOB_POST_URL": "URL объявления о работе",
 			"PROPOSAL_SENT_ON": "Предложение отправлено",
 			"STATUS": "Статус",
-			"JOB_POST_CONTENT": "Контент должности",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
 			"PROPOSAL_CONTENT": "Содержание предложения",
-			"VIEW_JOB_POST": "Просмотр должности"
+			"VIEW_JOB_POST": "Просмотр объявления"
 		},
 		"EDIT_PROPOSAL": {
-			"EDIT_PROPOSAL": "Изменить предложение",
+			"EDIT_PROPOSAL": "Редактировать предложение",
 			"AUTHOR": "Автор",
-			"JOB_POST_URL": "URL записи задания",
+			"JOB_POST_URL": "URL объявления о работе",
 			"PROPOSAL_SENT_ON": "Предложение отправлено",
-			"JOB_POST_CONTENT": "Контент должности",
+			"JOB_POST_CONTENT": "Содержание объявления о работе",
 			"PROPOSAL_CONTENT": "Содержание предложения",
-			"EDIT_PROPOSAL_BUTTON": "Изменить предложение",
+			"EDIT_PROPOSAL_BUTTON": "Редактировать предложение",
 			"PLACEHOLDER": {
-				"JOB_POST_URL": "URL записи задания"
+				"JOB_POST_URL": "URL объявления о работе"
 			}
 		}
 	},
@@ -3072,7 +3073,8 @@
 		"PUBLIC_LINK": {
 			"HEADER": "Сгенерировать публичную ссылку",
 			"GENERATE": "Генерировать ссылку на {{ text }} , которую могут просматривать любой, кто имеет ссылку.",
-			"ACCESS": "Любой, у кого есть доступ к этой ссылке, может просмотреть {{ text }}."
+			"ACCESS": "Любой, у кого есть доступ к этой ссылке, может просмотреть {{ text }}.",
+			"COPY_TO_CLIPBOARD_TOOLTIP": "Copy public link to clipboard"
 		}
 	},
 	"PAYMENTS_PAGE": {
@@ -3103,7 +3105,7 @@
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "страница не найдена",
 		"TAKE_ME_HOME": "Вернуть меня домой",
-		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOESNT_EXIST": "Страница, которую вы ищете, не существует",
+		"THE_PAGE_YOU_WERE_LOOKING_FOR_DOES_NOT_EXIST": "Страница, которую вы ищете, не существует",
 		"REDIRECT_TO_HOME": "Вы будете перенаправлены на домашнюю страницу в ближайшее время"
 	},
 	"HELP_PAGE": {
@@ -4257,7 +4259,8 @@
 		"SELECT_EMPLOYEE_ERROR": "Пожалуйста, выберите сотрудника.",
 		"EXPIRED_OR_CANCELLED": "**Срок действия контракта истёк или был отменен.",
 		"EMAIL_SENT": "**Отправлено письмо принимающей стороне, а также всем участникам этого совещания.",
-		"NO_ACTIVE_EVENT_TYpES": "Нет активных типов событий"
+		"NO_ACTIVE_EVENT_TYPES": "Нет активных типов событий",
+		"CLICK_HERE": "Click Here"
 	},
 	"EMAIL_TEMPLATES_PAGE": {
 		"HEADER": "Шаблоны писем",

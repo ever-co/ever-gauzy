@@ -5,10 +5,10 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as path from 'path';
-import { app, BrowserWindow, ipcMain, Menu, shell, MenuItemConstructorOptions, dialog } from 'electron';
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
+import * as path from 'path';
 
 import { environment } from './environments/environment';
 
@@ -29,6 +29,7 @@ import {
 	AppError,
 	AppMenu,
 	DesktopServer,
+	DesktopThemeListener,
 	DesktopUpdater,
 	DialogErrorHandler,
 	ErrorEventManager,
@@ -56,10 +57,10 @@ import {
 	createTimeTrackerWindow,
 	createUpdaterWindow
 } from '@gauzy/desktop-window';
-import { initSentry } from './sentry';
+import * as Sentry from '@sentry/electron';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
-import * as Sentry from '@sentry/electron';
+import { initSentry } from './sentry';
 
 // the folder where all app data will be stored (e.g. sqlite DB, settings, cache, etc)
 // C:\Users\USERNAME\AppData\Roaming\gauzy-desktop
@@ -145,6 +146,18 @@ ipcMain.setMaxListeners(0);
 
 /* Remove handler if exist */
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
+
+ipcMain.handle('PREFERRED_THEME', () => {
+	const applicationSetting = LocalStore.getStore('appSetting');
+	let theme: string;
+	if (!applicationSetting || !applicationSetting.theme) {
+		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+		LocalStore.updateApplicationSetting({ theme });
+	} else {
+		theme = applicationSetting.theme;
+	}
+	return theme;
+});
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
@@ -517,6 +530,16 @@ app.on('ready', async () => {
 			throw new UIError('400', error, 'MAINWININIT');
 		}
 	}
+
+	new DesktopThemeListener({
+		timeTrackerWindow,
+		settingsWindow,
+		updaterWindow,
+		imageViewerWindow: imageView,
+		gauzyWindow,
+		splashScreenWindow: splashScreen.browserWindow,
+		alwaysOnWindow: alwaysOn.browserWindow
+	}).listen()
 });
 
 app.on('window-all-closed', () => {

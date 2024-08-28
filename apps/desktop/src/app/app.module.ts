@@ -31,7 +31,8 @@ import {
 	TimeoutInterceptor,
 	TimeTrackerModule,
 	TokenInterceptor,
-	UpdaterModule
+	UpdaterModule,
+	NgxDesktopThemeModule
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import {
@@ -78,7 +79,8 @@ if (environment.SENTRY_DSN) {
 		BrowserAnimationsModule,
 		RouterModule,
 		AppRoutingModule,
-		NbThemeModule.forRoot({ name: 'gauzy-light' }),
+		NbThemeModule,
+		NgxDesktopThemeModule,
 		SetupModule,
 		TimeTrackerModule,
 		HttpClientModule,
@@ -90,7 +92,7 @@ if (environment.SENTRY_DSN) {
 		LanguageModule.forRoot(),
 		AboutModule,
 		AlwaysOnModule,
-		RecapModule
+		RecapModule,
 	],
 	providers: [
 		AppService,
@@ -129,7 +131,7 @@ if (environment.SENTRY_DSN) {
 		},
 		{
 			provide: APP_INITIALIZER,
-			useFactory: () => () => {},
+			useFactory: () => () => { },
 			deps: [Sentry.TraceService],
 			multi: true
 		},
@@ -174,5 +176,5 @@ if (environment.SENTRY_DSN) {
 	bootstrap: [AppComponent]
 })
 export class AppModule {
-	constructor() {}
+	constructor() { }
 }

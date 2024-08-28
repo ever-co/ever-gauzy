@@ -1,22 +1,21 @@
-// tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NbCardModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { NbRouteTabsetModule, NbCardModule } from '@nebular/theme';
-import { SharedModule } from '@gauzy/ui-core/shared';
+import { DynamicTabsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TimesheetRoutingModule } from './timesheet-routing.module';
 import { TimesheetLayoutComponent } from './layout/layout.component';
 
 @NgModule({
-	declarations: [TimesheetLayoutComponent],
-	exports: [],
 	imports: [
 		CommonModule,
+		NbCardModule,
+		TranslateModule.forChild(),
 		TimesheetRoutingModule,
 		SharedModule,
-		NbRouteTabsetModule,
-		NbCardModule,
-		TranslateModule.forChild()
-	]
+		DynamicTabsModule
+	],
+	declarations: [TimesheetLayoutComponent],
+	exports: []
 })
 export class TimesheetModule {}
