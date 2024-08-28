@@ -1,11 +1,9 @@
 import { ICommandHandler, CommandHandler } from '@nestjs/cqrs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { isEmpty, isNotEmpty } from "@gauzy/common";
-import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
-import { prepareSQLQuery as p } from './../../../../database/database.helper';
+import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { ITimeLog } from '@gauzy/contracts';
+import { prepareSQLQuery as p } from './../../../../database/database.helper';
 import { TimeLog } from './../../time-log.entity';
 import { ScheduleTimeLogEntriesCommand } from '../schedule-time-log-entries.command';
 import { RequestContext } from './../../../../core/context';
@@ -13,25 +11,31 @@ import { TypeOrmTimeLogRepository } from '../../repository/type-orm-time-log.rep
 
 @CommandHandler(ScheduleTimeLogEntriesCommand)
 export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTimeLogEntriesCommand> {
+	constructor(private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository) {}
 
-	constructor(
-		@InjectRepository(TimeLog)
-		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
-	) { }
-
-	public async execute(command: ScheduleTimeLogEntriesCommand) {
+	/**
+	 * Schedule TimeLog Entries
+	 *
+	 * @param command
+	 * @returns
+	 */
+	public async execute(command: ScheduleTimeLogEntriesCommand): Promise<void> {
 		const { timeLog } = command;
 		let timeLogs: ITimeLog[] = [];
-		if (timeLog) {
-			const { organizationId, employeeId } = timeLog;
-			const tenantId = RequestContext.currentTenantId();
 
-			const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-			query.setFindOptions({
-				relations: {
-					timeSlots: true
-				}
-			});
+		// Query the timeLogs
+		const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+		query.setFindOptions({
+			relations: { timeSlots: true }
+		});
+
+		if (timeLog) {
+			// Get the tenantId
+			const tenantId = RequestContext.currentTenantId() || timeLog.tenantId;
+
+			// Get the organizationId
+			const { organizationId, employeeId } = timeLog;
+
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
@@ -57,14 +61,7 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				);
 				console.log('Schedule Time Log Query For Tenant Organization Entries', qb.getQueryAndParameters());
 			});
-			timeLogs = await query.getMany();
 		} else {
-			const query = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-			query.setFindOptions({
-				relations: {
-					timeSlots: true
-				}
-			});
 			query.where((qb: SelectQueryBuilder<TimeLog>) => {
 				qb.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
@@ -79,54 +76,56 @@ export class ScheduleTimeLogEntriesHandler implements ICommandHandler<ScheduleTi
 				);
 				console.log('Schedule Time Log Query For All Entries', query.getQueryAndParameters());
 			});
-			timeLogs = await query.getMany();
 		}
 
+		// Get all pending TimeLog entries
+		timeLogs = await query.getMany();
+
+		// Loop through all the timeLogs
 		for await (const timeLog of timeLogs) {
-			console.log('Schedule Time Log Entry', timeLog);
-			const logDifference = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
-			if (
-				isEmpty(timeLog.timeSlots) &&
-				logDifference > 10
-			) {
-				console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
-				await this.typeOrmTimeLogRepository.save({
-					id: timeLog.id,
-					stoppedAt: moment(timeLog.startedAt).add(10, 'seconds').toDate()
-				});
-			} else if (isNotEmpty(timeLog.timeSlots)) {
-				let stoppedAt: any;
-				let slotDifference: any;
+			const { timeSlots } = timeLog;
 
-				const duration = timeLog.timeSlots.reduce(
-					(sum: number, current: any) => sum + current.duration, 0
-				);
-				/**
-				 * Adjust stopped date as per database selection
-				 */
-				switch (getConfig().dbConnectionOptions.type) {
-					case DatabaseTypeEnum.sqlite:
-					case DatabaseTypeEnum.betterSqlite3:
-						stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').format('YYYY-MM-DD HH:mm:ss.SSS');
-						slotDifference = moment.utc(moment()).diff(stoppedAt, 'minutes');
-						break;
-					case DatabaseTypeEnum.postgres:
-					case DatabaseTypeEnum.mysql:
-						stoppedAt = moment(timeLog.startedAt).add(duration, 'seconds').toDate();
-						slotDifference = moment().diff(moment.utc(stoppedAt), 'minutes');
-						break;
-					default:
-						throw Error(`cannot format startedAt, slotDifference due to unsupported database type: ${getConfig().dbConnectionOptions.type}`);
-				}
+			// Calculate the minutes difference
+			const minutes = moment().diff(moment.utc(timeLog.startedAt), 'minutes');
 
-				console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
-				if (slotDifference > 10) {
+			// Handle case where there are no time slots
+			if (isEmpty(timeLog.timeSlots)) {
+				// If the minutes difference is greater than 10, update the stoppedAt date
+				if (minutes > 10) {
+					console.log('Schedule Time Log Entry Updated StoppedAt Using StartedAt', timeLog.startedAt);
+
+					// Calculate the stoppedAt date
+					const stoppedAt = moment.utc(timeLog.startedAt).add(10, 'seconds').toDate();
+
+					// Calculate the stoppedAt date
 					await this.typeOrmTimeLogRepository.save({
 						id: timeLog.id,
-						stoppedAt: stoppedAt
+						stoppedAt
 					});
 				}
 			}
+			// Handle case where there are time slots
+			else if (isNotEmpty(timeLog.timeSlots)) {
+				// Calculate the duration
+				const duration = timeSlots.reduce<number>((sum, { duration }) => sum + duration, 0);
+
+				// Calculate the stoppedAt date
+				const stoppedAt = moment.utc(timeLog.startedAt).add(duration, 'seconds').toDate();
+
+				// Calculate the minutes difference
+				const minutes = moment.utc().diff(moment.utc(stoppedAt), 'minutes');
+
+				console.log('Schedule Time Log Entry Updated StoppedAt Using StoppedAt', stoppedAt);
+
+				// If the minutes difference is greater than 10, update the stoppedAt date
+				if (minutes > 10) {
+					await this.typeOrmTimeLogRepository.save({
+						id: timeLog.id,
+						stoppedAt
+					});
+				}
+			}
+
 			/**
 			 * Stop previous pending timer anyway.
 			 * If we have any pending TimeLog entry
