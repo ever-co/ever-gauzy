@@ -143,14 +143,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'name',
-			order: 0,
-			title: 'JOB_EMPLOYEE.EMPLOYEE',
-			type: 'custom',
-			width: '20%',
-			isSortable: true,
-			isEditable: true,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'name', // The identifier for the column
+			order: 0, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'), // The title of the column
+			type: 'custom', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: true, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			renderComponent: EmployeeLinksComponent,
 			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
 			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
@@ -163,40 +163,40 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'availableJobs',
-			order: 1,
-			title: 'JOB_EMPLOYEE.AVAILABLE_JOBS',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: false,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'availableJobs', // The identifier for the column
+			order: 1, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			valuePrepareFunction: (rawValue: any) => rawValue || 0
 		});
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'appliedJobs',
-			order: 2,
-			title: 'JOB_EMPLOYEE.APPLIED_JOBS',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: false,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'appliedJobs', // The identifier for the column
+			order: 2, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			valuePrepareFunction: (rawValue: any) => rawValue || 0
 		});
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'billRateValue',
-			order: 3,
-			title: 'JOB_EMPLOYEE.BILLING_RATE',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: true,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'billRateValue', // The identifier for the column
+			order: 3, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
@@ -211,14 +211,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'minimumBillingRate',
-			order: 4,
-			title: 'JOB_EMPLOYEE.MINIMUM_BILLING_RATE',
-			type: 'text',
-			width: '20%',
-			isSortable: false,
-			isEditable: true,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'minimumBillingRate', // The identifier for the column
+			order: 4, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'), // The title of the column
+			type: 'text', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
@@ -231,14 +231,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'isJobSearchActive',
-			order: 5,
-			title: 'JOB_EMPLOYEE.JOB_SEARCH_STATUS',
-			type: 'custom',
-			width: '20%',
-			isSortable: false,
-			isEditable: false,
+			datatableId: 'job-employee', // The identifier for the data table location
+			columnId: 'isJobSearchActive', // The identifier for the column
+			order: 5, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'), // The title of the column
+			type: 'custom', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			renderComponent: SmartTableToggleComponent,
 			componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
 				// Get the employee data from the cell

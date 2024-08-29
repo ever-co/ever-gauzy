@@ -1,13 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { TabsetRegistryIdEnum } from '@gauzy/ui-core/core';
 import { TimesheetLayoutComponent } from './layout/layout.component';
 
 const routes: Routes = [
 	{
 		path: '',
 		component: TimesheetLayoutComponent,
-		data: { tabsetId: TabsetRegistryIdEnum.Timesheet },
+		data: { tabsetId: 'timesheet' },
 		children: [
 			{
 				path: '',
