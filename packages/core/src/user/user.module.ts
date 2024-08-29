@@ -16,7 +16,6 @@ import { FactoryResetModule } from './factory-reset/factory-reset.module';
 import { TaskModule } from './../tasks/task.module';
 import { EmployeeModule } from './../employee/employee.module';
 import { TypeOrmUserRepository } from './repository/type-orm-user.repository';
-import { OrganizationProjectModuleModule } from 'organization-project-module/organization-project-module.module';
 
 @Module({
 	imports: [
@@ -26,7 +25,6 @@ import { OrganizationProjectModuleModule } from 'organization-project-module/org
 		forwardRef(() => RolePermissionModule),
 		forwardRef(() => TaskModule),
 		forwardRef(() => EmployeeModule),
-		forwardRef(() => OrganizationProjectModuleModule),
 		CqrsModule,
 		FactoryResetModule
 	],

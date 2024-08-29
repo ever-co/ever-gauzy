@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -6,7 +6,6 @@ import { OrganizationProjectModuleService } from './organization-project-module.
 import { OrganizationProjectModuleController } from './organization-project-module.controller';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
-import { UserModule } from './../user/user.module';
 
 @Module({
 	imports: [
@@ -17,8 +16,7 @@ import { UserModule } from './../user/user.module';
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationProjectModule]),
-		MikroOrmModule.forFeature([OrganizationProjectModule]),
-		forwardRef(() => UserModule)
+		MikroOrmModule.forFeature([OrganizationProjectModule])
 	],
 	controllers: [OrganizationProjectModuleController],
 	providers: [OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository],

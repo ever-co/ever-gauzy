@@ -14,7 +14,6 @@ import { IUser } from './user.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IScreenshot } from './screenshot.model';
 import { TimeFormatEnum } from './organization.model';
-import { IRelationalOrganizationProjectModule } from './organization-project-module.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
@@ -99,8 +98,7 @@ export interface IDateRange {
 export interface ITimeLog
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationProject,
-		IRelationalOrganizationTeam,
-		IRelationalOrganizationProjectModule {
+		IRelationalOrganizationTeam {
 	employee: IEmployee;
 	employeeId: ID;
 	timesheet?: ITimesheet;

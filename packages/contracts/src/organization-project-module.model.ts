@@ -5,7 +5,6 @@ import { IOrganizationSprint } from 'organization-sprint.model';
 import { IOrganizationTeam } from 'organization-team.model';
 import { TaskStatusEnum } from 'task-status.model';
 import { ITask } from 'task.model';
-import { ITimeLog } from 'timesheet.model';
 import { IUser } from 'user.model';
 
 export interface IRelationalOrganizationProjectModule {
@@ -38,7 +37,6 @@ export interface IOrganizationProjectModule
 	teams?: IOrganizationTeam[];
 
 	tasks?: ITask[];
-	timeLogs?: ITimeLog[];
 }
 
 export interface IOrganizationProjectModuleCreateInput extends Omit<IOrganizationProjectModule, 'id'> {}

@@ -21,11 +21,9 @@ import {
 	IOrganizationSprint,
 	IOrganizationTeam,
 	ITask,
-	ITimeLog,
 	IUser,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationProject,
@@ -33,7 +31,6 @@ import {
 	OrganizationTeam,
 	Task,
 	TenantOrganizationBaseEntity,
-	TimeLog,
 	User
 } from '../core/entities/internal';
 import {
@@ -61,7 +58,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
-	@MultiORMColumn({ nullable: true, ...(isMySQL() ? { type: 'text' } : {}) })
+	@MultiORMColumn({ nullable: true, type: 'text' })
 	description?: string;
 
 	@ApiPropertyOptional({ type: () => String })
@@ -189,13 +186,6 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	 */
 	@MultiORMOneToMany(() => Task, (it) => it.projectModule)
 	tasks?: ITask[];
-
-	/**
-	 * TimeLog
-	 */
-	@MultiORMOneToMany(() => TimeLog, (it) => it.projectModule)
-	@JoinColumn()
-	timeLogs?: ITimeLog[];
 
 	/*
 	|--------------------------------------------------------------------------

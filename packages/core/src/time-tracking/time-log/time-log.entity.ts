@@ -13,16 +13,13 @@ import {
 	IOrganizationProject,
 	IOrganizationContact,
 	ITimeSlot,
-	IOrganizationTeam,
-	IOrganizationProjectModule,
-	ID
+	IOrganizationTeam
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
 	Employee,
 	OrganizationContact,
 	OrganizationProject,
-	OrganizationProjectModule,
 	OrganizationTeam,
 	Task,
 	TenantOrganizationBaseEntity,
@@ -210,27 +207,6 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	taskId?: ITask['id'];
-
-	/**
-	 * Project Module
-	 */
-	@MultiORMManyToOne(() => OrganizationProjectModule, (it) => it.timeLogs, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL'
-	})
-	@JoinColumn()
-	projectModule?: IOrganizationProjectModule;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: TimeLog) => it.projectModule)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	projectModuleId?: ID;
 
 	/**
 	 * OrganizationContact
