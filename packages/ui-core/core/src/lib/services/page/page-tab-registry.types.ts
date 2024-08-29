@@ -1,6 +1,6 @@
 import { Type } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
-import { TabsetRegistryId } from '../../common/component-registry.types';
+import { PageTabsetRegistryId } from '../../common/component-registry.types';
 
 /**
  * Page tab configuration options.
@@ -10,7 +10,7 @@ export interface PageTabRegistryConfig extends NbRouteTab {
 	 * @description
 	 * The tabset identifier for the page tabset.
 	 */
-	tabsetId: TabsetRegistryId;
+	tabsetId: PageTabsetRegistryId;
 
 	/**
 	 * @description
@@ -64,9 +64,30 @@ export interface PageTabRegistryConfig extends NbRouteTab {
 }
 
 /**
- * Page registry service interface.
+ * Tab registry service interface.
+ *
+ * This interface defines the contract for services that manage tab registrations,
+ * including methods for registering single and multiple tabs.
  */
 export interface IPageTabRegistry {
-	registerPageTab(config: PageTabRegistryConfig): void; // Register a single page tab configuration.
-	registerPageTabs(configs: PageTabRegistryConfig[]): void; // Register multiple page tab configurations.
+	/**
+	 * Registers a single tab with the service.
+	 *
+	 * This method adds a single tab configuration to the registry. If the tab ID
+	 * already exists, an error will be thrown, but the tab will still be registered.
+	 *
+	 * @param config The configuration object for the tab to be registered.
+	 */
+	registerPageTab(config: PageTabRegistryConfig): void;
+
+	/**
+	 * Registers multiple tabs with the service.
+	 *
+	 * This method adds multiple tab configurations to the registry. If any tab
+	 * within the provided configurations already exists, an error will be thrown for that
+	 * specific tab, but other tabs will still be registered.
+	 *
+	 * @param configs An array of configuration objects for the tabs to be registered.
+	 */
+	registerPageTabs(configs: PageTabRegistryConfig[]): void;
 }

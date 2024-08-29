@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
-import { PageLocationRegistryId } from '../../common/component-registry.types';
+import { PageRouteRegistryId } from '../../common/component-registry.types';
 import { IPageRouteRegistry, PageRouteRegistryConfig } from './page-route-registry.types';
 
 @Injectable({
@@ -10,9 +10,9 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	/**
 	 * Registry for storing page route configurations.
 	 *
-	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageLocationRegistryId.
+	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageRouteRegistryId.
 	 */
-	private readonly registry = new Map<PageLocationRegistryId, PageRouteRegistryConfig[]>();
+	private readonly registry = new Map<PageRouteRegistryId, PageRouteRegistryConfig[]>();
 
 	/**
 	 * Register a single page route configuration.
@@ -78,7 +78,7 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	 * @param location The page location identifier.
 	 * @returns The array of registered routes for the specified location.
 	 */
-	getPageLocationRoutes(location: PageLocationRegistryId): Route[] {
+	getPageLocationRoutes(location: PageRouteRegistryId): Route[] {
 		// Get all registered routes for the specified location
 		let configs = this.registry.get(location) || [];
 

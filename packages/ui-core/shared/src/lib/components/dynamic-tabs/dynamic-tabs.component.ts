@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { PageTabRegistryConfig, PageTabRegistryService, TabsetRegistryId } from '@gauzy/ui-core/core';
+import { PageTabRegistryConfig, PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
 
 @UntilDestroy()
 @Component({
@@ -17,7 +17,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = []; // Define the structure of tabs according to your needs
 	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
-	@Input() tabsetId!: TabsetRegistryId;
+	@Input() tabsetId!: PageTabsetRegistryId;
 
 	/**
 	 * Determines if all tabs in the tabset have the tabsetType set to 'route'.
@@ -80,7 +80,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of PageTabRegistryConfig objects for the specified tabset, excluding tabs with hide set to true.
 	 */
-	private getRegisteredTabs(tabsetId: TabsetRegistryId): PageTabRegistryConfig[] {
+	private getRegisteredTabs(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
 		return this._pageTabRegistryService.getPageTabset(tabsetId).filter((tab: PageTabRegistryConfig) => !tab.hide);
 	}
 
@@ -96,7 +96,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of NbRouteTab objects representing the registered tabs.
 	 */
-	getRegisteredNbTabs(tabsetId: TabsetRegistryId): NbRouteTab[] {
+	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): NbRouteTab[] {
 		// Map each tab configuration to an NbRouteTab object
 		return this.getRegisteredTabs(tabsetId).map((tab: PageTabRegistryConfig): NbRouteTab => {
 			// Create a new route object
