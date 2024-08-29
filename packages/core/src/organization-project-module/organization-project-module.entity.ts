@@ -103,6 +103,22 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	|--------------------------------------------------------------------------
 	*/
 
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => OrganizationProjectModule })
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => OrganizationProjectModule, (module) => module.children, {
+		onDelete: 'SET NULL'
+	})
+	parent?: OrganizationProjectModule;
+
+	// Define the parent-child relationship
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	parentId?: ID;
+
 	/**
 	 * Organization Project
 	 */
@@ -161,6 +177,12 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 	| @OneToMany
 	|--------------------------------------------------------------------------
 	*/
+
+	/**
+	 * Children modules
+	 */
+	@MultiORMOneToMany(() => OrganizationProjectModule, (module) => module.parent)
+	children?: OrganizationProjectModule[];
 
 	/**
 	 * Organization Tasks Relationship

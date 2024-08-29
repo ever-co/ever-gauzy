@@ -23,14 +23,21 @@ export interface IOrganizationProjectModule
 	endDate?: Date;
 	isFavorite?: boolean;
 	public?: boolean;
+
+	parent?: IOrganizationProjectModule;
+	parentId?: ID; // Optional field for specifying the parent module ID
+	children?: IOrganizationProjectModule[]; // Modules related as children
+
 	manager?: IUser;
 	managerId?: ID;
 	creator?: IUser;
 	creatorId?: ID;
+
 	members?: IEmployee[];
 	organizationSprints?: IOrganizationSprint[];
-	tasks?: ITask[];
 	teams?: IOrganizationTeam[];
+
+	tasks?: ITask[];
 	timeLogs?: ITimeLog[];
 }
 
