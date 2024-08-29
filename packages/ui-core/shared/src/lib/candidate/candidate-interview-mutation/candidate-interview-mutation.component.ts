@@ -116,7 +116,7 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		private readonly candidateStore: CandidateStore,
 		private readonly communicationService: CommunicationService
 	) {}
-	isGaInterviewCriterionsVisible = false;
+	isCriterionsVisible = false;
 
 	async ngOnInit() {
 		this.store.selectedOrganization$
@@ -392,8 +392,8 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		this.router.navigate(['/pages/employees/candidates/interviews/criterion']);
 	}
 
-	showGaInterviewCriterions() {
-		this.isGaInterviewCriterionsVisible = !this.isGaInterviewCriterionsVisible;
+	showCriterions() {
+		this.isCriterionsVisible = !this.isCriterionsVisible;
 	}
 
 	private updateTechnologiesList(newTechnology: ICandidateTechnologies) {

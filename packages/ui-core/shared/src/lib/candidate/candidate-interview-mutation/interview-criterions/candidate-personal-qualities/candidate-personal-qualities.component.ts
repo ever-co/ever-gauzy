@@ -43,10 +43,6 @@ export class CandidatePersonalQualitiesComponent extends TranslationBaseComponen
 		});
 	}
 
-	cancel() {
-		(this.qualities as FormArray).reset();
-	}
-
 	private async _initializeForm() {
 		this.form = new UntypedFormGroup({
 			qualities: this.fb.array([])

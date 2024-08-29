@@ -64,7 +64,7 @@
 					[editSelectedQualities]="editData?.personalQualities"
 				></ga-candidate-criterions-form>
 
-				<div class="add-criterion" *ngIf="isGaInterviewCriterionsVisible">
+				<div class="add-criterion" *ngIf="isCriterionsVisible">
 					<ga-candidate-technologies class="add-criterion-card"></ga-candidate-technologies>
 					<ga-candidate-personal-qualities class="add-criterion-card"></ga-candidate-personal-qualities>
 				</div>
@@ -82,14 +82,12 @@
 						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.PREVIOUS' | translate }}
 					</button>
 
-					<button
-						status="warning"
-						size="small"
-						class="mr-3 ml-2"
-						(click)="showGaInterviewCriterions()"
-						nbButton
-					>
-						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS' | translate }}
+					<button status="warning" size="small" class="mr-3 ml-2" (click)="showCriterions()" nbButton>
+						{{
+							isCriterionsVisible
+								? ('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CLOSE_CRITERIONS' | translate)
+								: ('CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.CREATE_CRITERIONS' | translate)
+						}}
 					</button>
 					<button class="green" status="basic" size="small" outline nbButton nbStepperNext>
 						{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.NEXT' | translate }}

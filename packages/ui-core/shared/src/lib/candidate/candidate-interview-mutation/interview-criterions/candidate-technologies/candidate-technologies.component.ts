@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,9 +44,6 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent imp
 		});
 	}
 
-	cancel() {
-		(this.form.controls.technologies as FormArray).reset();
-	}
 	private async _initializeForm() {
 		this.form = new UntypedFormGroup({
 			technologies: this.fb.array([])
