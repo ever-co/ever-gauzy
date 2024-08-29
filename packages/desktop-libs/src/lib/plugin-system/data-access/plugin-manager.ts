@@ -1,6 +1,7 @@
 import { app, MenuItemConstructorOptions } from 'electron';
 import * as logger from 'electron-log';
-import * as fs from 'fs';
+import { existsSync } from 'fs';
+import * as fs from 'fs/promises';
 import * as path from 'path';
 import { PluginMetadataService } from '../database/plugin-metadata.service';
 import { PluginEventManager } from '../events/plugin-event.manager';
@@ -30,14 +31,13 @@ export class PluginManager implements IPluginManager {
 		logger.info(`Downloading plugin...`);
 		process.noAsar = true;
 		const context = this.factory.getContext(contextType);
-		const { metadata, pathDirname } = await context.execute(config);
+		const { metadata, pathDirname } = await context.execute({ ...config, pluginPath: this.pluginPath });
 		const plugin = this.plugins.get(metadata.name);
 		if (plugin) {
 			await this.updatePlugin(metadata);
 		} else {
 			await this.installPlugin(metadata, pathDirname);
 		}
-		fs.rmSync(pathDirname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
 		process.noAsar = false;
 	}
 
@@ -55,10 +55,10 @@ export class PluginManager implements IPluginManager {
 		}
 		const pluginPath = persistance.pathname;
 		const backupPath = persistance.pathname + '-backup';
-		fs.renameSync(pluginPath, backupPath);
+		await fs.rename(pluginPath, backupPath);
 
-		if (!fs.existsSync(pluginPath)) {
-			fs.mkdirSync(pluginPath, { recursive: true });
+		if (!existsSync(pluginPath)) {
+			await fs.mkdir(pluginPath, { recursive: true });
 		}
 		logger.info(`Updating plugin ${pluginMetadata.name}`);
 		const plugin = await lazyLoader(path.join(pluginPath, pluginMetadata.main));
@@ -74,25 +74,31 @@ export class PluginManager implements IPluginManager {
 		}
 	}
 
-	public async installPlugin(pluginMetadata: IPluginMetadata, source: string): Promise<void> {
-		const pluginDir = path.join(this.pluginPath, `${Date.now()}-${pluginMetadata.name}`);
-		if (!fs.existsSync(pluginDir)) {
-			fs.mkdirSync(pluginDir, { recursive: true });
-		}
-		if (source) {
-			fs.cpSync(source, pluginDir, { recursive: true, force: true });
-		}
-		logger.info(`Installing plugin ${pluginMetadata.name}`);
-		const plugin = await lazyLoader(path.join(pluginDir, pluginMetadata.main));
-		this.plugins.set(pluginMetadata.name, plugin);
+	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {
+		try {
+			if (!pluginDir && !pluginMetadata) {
+				const error = `An Error Occurred while Installing plugin ${pluginMetadata.name}`;
+				logger.error(error);
+				throw new Error(error);
+			}
+			logger.info(`Installing plugin ${pluginMetadata.name}`);
+			const plugin = await lazyLoader(path.join(pluginDir, pluginMetadata.main));
+			this.plugins.set(pluginMetadata.name, plugin);
 
-		await this.pluginMetadataService.create({
-			name: pluginMetadata.name,
-			version: pluginMetadata.version,
-			main: pluginMetadata.main,
-			renderer: pluginMetadata.renderer,
-			pathname: pluginDir
-		});
+			await this.pluginMetadataService.create({
+				name: pluginMetadata.name,
+				version: pluginMetadata.version,
+				main: pluginMetadata.main,
+				renderer: pluginMetadata.renderer,
+				pathname: pluginDir
+			});
+
+			logger.info(`Plugin ${pluginMetadata.name} installed.`);
+		} catch (error) {
+			await fs.rm(pluginDir, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
+			logger.error(error);
+			throw new Error(error);
+		}
 	}
 
 	public async activatePlugin(name: string): Promise<void> {
@@ -122,7 +128,7 @@ export class PluginManager implements IPluginManager {
 			await this.deactivatePlugin(name);
 			this.plugins.delete(name);
 			await this.pluginMetadataService.delete({ name });
-			fs.rmSync(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
+			await fs.rm(metadata.pathname, { recursive: true, force: true, retryDelay: 1000, maxRetries: 3 });
 			logger.info(`Uninstalling plugin ${name}`);
 		}
 	}
