@@ -26,17 +26,17 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @throws Will throw an error if a column with the same location and id has already been registered.
 	 */
 	public registerPageDataTableColumn(config: PageDataTableRegistryConfig): void {
-		if (!config.datatableId) {
-			throw new Error('A data table column configuration must have a datatableId property');
+		if (!config.dataTableId) {
+			throw new Error('A data table column configuration must have a dataTableId property');
 		}
 
 		// Get all registered columns for the specified location
-		const columns = this.registry.get(config.datatableId) || [];
+		const columns = this.registry.get(config.dataTableId) || [];
 
 		// Find the index of the column with the same location and columnId
 		const existing = columns.findIndex(
 			(column: PageDataTableRegistryConfig) =>
-				column.datatableId === config.datatableId && column.columnId === config.columnId
+				column.dataTableId === config.dataTableId && column.columnId === config.columnId
 		);
 
 		if (existing !== -1) {
@@ -48,7 +48,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 		}
 
 		// Update the registry with the new list of columns for the specified location
-		this.registry.set(config.datatableId, columns);
+		this.registry.set(config.dataTableId, columns);
 	}
 
 	/**
@@ -94,25 +94,25 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @param registryId - The identifier used to look up the data table column configurations for a specific page location.
 	 * @returns An array of `IColumn` objects representing the unique columns for the specified page location.
 	 */
-	public getPageDataTableColumns(datatableId: PageDataTableRegistryId): IColumns {
+	public getPageDataTableColumns(dataTableId: PageDataTableRegistryId): IColumns {
 		// Get all registered columns for the specified location
-		let columns = this.getDataTableColumnsByOrder(datatableId);
+		let columns = this.getDataTableColumnsByOrder(dataTableId);
 
 		// Use a Set to track unique location-id combinations
-		const datatableIds = new Set<string>();
+		const dataTableIds = new Set<string>();
 
 		// Filter the configurations to remove duplicates based on the unique identifier
 		columns = columns.filter((config: PageDataTableRegistryConfig) => {
 			// Create a unique identifier for the combination of location and id
-			const identifier = `${config.datatableId}-${config.columnId}`;
+			const identifier = `${config.dataTableId}-${config.columnId}`;
 
 			// Check if the unique identifier is already in the Set
-			if (datatableIds.has(identifier)) {
+			if (dataTableIds.has(identifier)) {
 				return false; // Duplicate found, filter it out
 			}
 
 			// Add the unique identifier to the Set
-			datatableIds.add(identifier);
+			dataTableIds.add(identifier);
 			return true; // Not a duplicate, keep it
 		});
 

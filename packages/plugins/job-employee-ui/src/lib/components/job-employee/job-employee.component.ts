@@ -143,7 +143,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'name', // The identifier for the column
 			order: 0, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'), // The title of the column
@@ -163,7 +163,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'availableJobs', // The identifier for the column
 			order: 1, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'), // The title of the column
@@ -176,7 +176,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'appliedJobs', // The identifier for the column
 			order: 2, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'), // The title of the column
@@ -189,7 +189,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'billRateValue', // The identifier for the column
 			order: 3, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'), // The title of the column
@@ -211,7 +211,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'minimumBillingRate', // The identifier for the column
 			order: 4, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'), // The title of the column
@@ -231,7 +231,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			datatableId: 'job-employee', // The identifier for the data table location
+			dataTableId: 'job-employee', // The identifier for the data table location
 			columnId: 'isJobSearchActive', // The identifier for the column
 			order: 5, // The order of the column in the table
 			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'), // The title of the column

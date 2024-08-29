@@ -9,7 +9,7 @@ export interface PageDataTableRegistryConfig extends Omit<IColumn, 'title'> {
 	 * @description
 	 * The location identifier for the page route.
 	 */
-	datatableId: PageDataTableRegistryId;
+	dataTableId: PageDataTableRegistryId;
 
 	/**
 	 * @description
