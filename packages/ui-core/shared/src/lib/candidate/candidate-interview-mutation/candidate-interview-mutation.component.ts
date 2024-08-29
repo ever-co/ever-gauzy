@@ -28,6 +28,7 @@ import { Store } from '@gauzy/ui-core/core';
 import { CandidateCriterionsFormComponent } from './candidate-criterions-form/candidate-criterions-form.component';
 import { CandidateInterviewFormComponent } from './candidate-interview-form/candidate-interview-form.component';
 import { CandidateNotificationFormComponent } from './candidate-notification-form/candidate-notification-form.component';
+import { CommunicationService } from './communication.service';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -112,7 +113,8 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 		private readonly candidateTechnologiesService: CandidateTechnologiesService,
 		private readonly candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
 		private readonly router: Router,
-		private readonly candidateStore: CandidateStore
+		private readonly candidateStore: CandidateStore,
+		private readonly communicationService: CommunicationService
 	) {}
 	isGaInterviewCriterionsVisible = false;
 
@@ -124,6 +126,21 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 				untilDestroyed(this)
 			)
 			.subscribe();
+		this.communicationService.technologyAdded$.subscribe((technology: ICandidateTechnologies) => {
+			this.updateTechnologiesList(technology);
+		});
+		this.communicationService.technologyRemoved$.subscribe((technologyId: string) => {
+			this.removeTechnologyFromList(technologyId);
+		});
+
+		// Subscribe to quality additions and removals
+		this.communicationService.qualityAdded$.subscribe((quality: ICandidatePersonalQualities) => {
+			this.updatePersonalQualitiesList(quality);
+		});
+
+		this.communicationService.qualityRemoved$.subscribe((qualityId: string) => {
+			this.removePersonalQualityFromList(qualityId);
+		});
 	}
 
 	titleExist(value: boolean) {
@@ -378,5 +395,23 @@ export class CandidateInterviewMutationComponent implements AfterViewInit, OnIni
 	showGaInterviewCriterions() {
 		this.isGaInterviewCriterionsVisible = !this.isGaInterviewCriterionsVisible;
 	}
+
+	private updateTechnologiesList(newTechnology: ICandidateTechnologies) {
+		this.candidateCriterionsForm.technologiesList.push(newTechnology);
+	}
+	private removeTechnologyFromList(removedTechId: string) {
+		this.candidateCriterionsForm.technologiesList = this.candidateCriterionsForm.technologiesList.filter(
+			(tech) => tech.id !== removedTechId
+		);
+	}
+	private updatePersonalQualitiesList(newPersonalQuality: ICandidatePersonalQualities) {
+		this.candidateCriterionsForm.personalQualitiesList.push(newPersonalQuality);
+	}
+	private removePersonalQualityFromList(removedQualityId: string) {
+		this.candidateCriterionsForm.personalQualitiesList = this.candidateCriterionsForm.personalQualitiesList.filter(
+			(quality) => quality.id !== removedQualityId
+		);
+	}
+
 	ngOnDestroy() {}
 }

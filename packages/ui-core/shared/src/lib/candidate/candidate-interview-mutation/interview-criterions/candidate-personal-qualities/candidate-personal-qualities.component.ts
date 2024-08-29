@@ -7,6 +7,7 @@ import { ICandidatePersonalQualities, IOrganization } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { CandidatePersonalQualitiesService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/core';
+import { CommunicationService } from '../../communication.service';
 
 @Component({
 	selector: 'ga-candidate-personal-qualities',
@@ -26,7 +27,8 @@ export class CandidatePersonalQualitiesComponent extends TranslationBaseComponen
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidatePersonalQualitiesService: CandidatePersonalQualitiesService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly communicationService: CommunicationService
 	) {
 		super(translateService);
 	}
@@ -108,6 +110,7 @@ export class CandidatePersonalQualitiesComponent extends TranslationBaseComponen
 					name: formValue.name
 				});
 				this.loadQualities();
+				this.communicationService.addQuality(formValue);
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -126,6 +129,7 @@ export class CandidatePersonalQualitiesComponent extends TranslationBaseComponen
 					name: formValue.name
 				});
 				this.loadQualities();
+				this.communicationService.addQuality(formValue);
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -142,6 +146,7 @@ export class CandidatePersonalQualitiesComponent extends TranslationBaseComponen
 		try {
 			await this.candidatePersonalQualitiesService.delete(quantity.id);
 			this.loadQualities();
+			this.communicationService.removeQuality(quantity.id);
 			this.toastrService.success('TOASTR.MESSAGE.PERSONAL_QUALITIES_DELETED', {
 				name: quantity.name
 			});

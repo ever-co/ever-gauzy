@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, EventEmitter, Output } from '@angular/core';
 import { Subject } from 'rxjs';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,6 +7,7 @@ import { ICandidateTechnologies, IOrganization } from '@gauzy/contracts';
 import { takeUntil } from 'rxjs/operators';
 import { CandidateTechnologiesService, ToastrService } from '@gauzy/ui-core/core';
 import { Store } from '@gauzy/ui-core/core';
+import { CommunicationService } from '../../communication.service';
 
 @Component({
 	selector: 'ga-candidate-technologies',
@@ -21,12 +22,14 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent imp
 	form: UntypedFormGroup;
 	editId = null;
 	organization: IOrganization;
+
 	constructor(
 		private fb: UntypedFormBuilder,
 		private readonly toastrService: ToastrService,
 		readonly translateService: TranslateService,
 		private candidateTechnologiesService: CandidateTechnologiesService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly communicationService: CommunicationService
 	) {
 		super(translateService);
 	}
@@ -107,6 +110,7 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent imp
 					name: formValue.name
 				});
 				this.loadTechnologies();
+				this.communicationService.addTechnology(formValue);
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -128,6 +132,7 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent imp
 					name: formValue.name
 				});
 				this.loadTechnologies();
+				this.communicationService.addTechnology(formValue);
 			} catch (error) {
 				this.toastrError(error);
 			}
@@ -144,6 +149,7 @@ export class CandidateTechnologiesComponent extends TranslationBaseComponent imp
 		try {
 			await this.candidateTechnologiesService.delete(technology.id);
 			this.loadTechnologies();
+			this.communicationService.removeTechnology(technology.id);
 			this.toastrService.success('TOASTR.MESSAGE.TECHNOLOGY_STACK_DELETED', {
 				name: technology.name
 			});
