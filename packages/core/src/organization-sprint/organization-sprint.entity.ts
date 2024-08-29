@@ -1,4 +1,4 @@
-import { JoinColumn, JoinTable } from 'typeorm';
+import { JoinColumn } from 'typeorm';
 import { IOrganizationProjectModule, IOrganizationSprint, SprintStartDayEnum } from '@gauzy/contracts';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDate, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
@@ -105,6 +105,5 @@ export class OrganizationSprint extends TenantOrganizationBaseEntity implements 
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	modules?: IOrganizationProjectModule[];
 }

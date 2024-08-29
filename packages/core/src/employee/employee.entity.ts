@@ -649,7 +649,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	modules?: IOrganizationProjectModule[];
 
 	/**

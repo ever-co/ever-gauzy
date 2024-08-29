@@ -315,7 +315,6 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		/** Defines the database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	@JoinTable()
 	modules?: IOrganizationProjectModule[];
 
 	/**
