@@ -1,18 +1,5 @@
 import { IColumn } from 'angular2-smart-table';
-
-/**
- * @description
- * Type representing the possible page data table locations for dynamic table columns.
- *
- * This type is used to identify different sections of the application where dynamic
- * columns can be registered. Each value corresponds to a specific page or
- * section in the application. This allows for flexible and dynamic routing based
- * on the context and requirements of the application.
- *
- * Possible values:
- * - 'job-employee': A sub-page under the jobs section.
- */
-export type PageDataTableLocationRegistryId = 'job-employee';
+import { PageDataTableRegistryId } from '../../common/component-registry.types';
 
 /**
  * Page route configuration with additional table columns options.
@@ -22,7 +9,7 @@ export interface PageDataTableRegistryConfig extends Omit<IColumn, 'title'> {
 	 * @description
 	 * The location identifier for the page route.
 	 */
-	datatableId: PageDataTableLocationRegistryId;
+	datatableId: PageDataTableRegistryId;
 
 	/**
 	 * @description

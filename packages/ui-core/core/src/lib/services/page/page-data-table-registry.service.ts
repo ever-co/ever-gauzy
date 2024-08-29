@@ -1,10 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Cell, IColumn, IColumns } from 'angular2-smart-table';
-import {
-	IPageDataTableRegistry,
-	PageDataTableLocationRegistryId,
-	PageDataTableRegistryConfig
-} from './page-data-table-registry.types';
+import { PageDataTableRegistryId } from '../../common/component-registry.types';
+import { IPageDataTableRegistry, PageDataTableRegistryConfig } from './page-data-table-registry.types';
 
 @Injectable({
 	providedIn: 'root'
@@ -13,9 +10,9 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	/**
 	 * Registry for storing page data table column configurations.
 	 *
-	 * This Map stores arrays of PageDataTableRegistryConfig objects, keyed by PageDataTableLocationRegistryId.
+	 * This Map stores arrays of PageDataTableRegistryConfig objects, keyed by PageDataTableRegistryId.
 	 */
-	private readonly registry = new Map<PageDataTableLocationRegistryId, PageDataTableRegistryConfig[]>();
+	private readonly registry = new Map<PageDataTableRegistryId, PageDataTableRegistryConfig[]>();
 
 	/**
 	 * Register a column configurations.
@@ -38,7 +35,8 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 
 		// Find the index of the column with the same location and columnId
 		const existing = columns.findIndex(
-			(column: PageDataTableRegistryConfig) => column.datatableId === config.datatableId && column.columnId === config.columnId
+			(column: PageDataTableRegistryConfig) =>
+				column.datatableId === config.datatableId && column.columnId === config.columnId
 		);
 
 		if (existing !== -1) {
@@ -72,20 +70,20 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * Retrieves the data table column configurations associated with a specific registry ID.
 	 *
 	 * This method fetches an array of `PageDataTableRegistryConfig` objects that are associated with the provided
-	 * `PageDataTableLocationRegistryId`. If any configurations are found, they are sorted based on their `order` property in
+	 * `PageDataTableRegistryId`. If any configurations are found, they are sorted based on their `order` property in
 	 * ascending order. If no configurations are found, an empty array is returned.
 	 *
 	 * @param location - The identifier used to look up the data table column configurations.
 	 * @returns An array of `PageDataTableRegistryConfig` objects sorted by the `order` property, or an empty array if none are found.
 	 */
-	private getDataTableColumnsByOrder(location: PageDataTableLocationRegistryId): PageDataTableRegistryConfig[] {
+	private getDataTableColumnsByOrder(location: PageDataTableRegistryId): PageDataTableRegistryConfig[] {
 		return this.registry.get(location)?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) || [];
 	}
 
 	/**
 	 * Retrieves a list of unique columns for a specific page location, based on the provided location.
 	 *
-	 * This method fetches all registered data table columns for the specified `PageDataTableLocationRegistryId`,
+	 * This method fetches all registered data table columns for the specified `PageDataTableRegistryId`,
 	 * removes any duplicate columns based on their location and ID, and maps the remaining configurations
 	 * to an array of `IColumn` objects.
 	 *
@@ -96,7 +94,7 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	 * @param registryId - The identifier used to look up the data table column configurations for a specific page location.
 	 * @returns An array of `IColumn` objects representing the unique columns for the specified page location.
 	 */
-	public getPageDataTableColumns(datatableId: PageDataTableLocationRegistryId): IColumns {
+	public getPageDataTableColumns(datatableId: PageDataTableRegistryId): IColumns {
 		// Get all registered columns for the specified location
 		let columns = this.getDataTableColumnsByOrder(datatableId);
 
