@@ -1,0 +1,24 @@
+/* Chat Widget Bubble Styles */
+.woot-widget-bubble,
+.woot--close {
+	width: 54px !important;
+	height: 54px !important;
+	background: #6e49e8 !important;
+	border-radius: 16px !important;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	right: 35px !important;
+}
+
+.woot--close::after,
+.woot--close::before {
+	top: auto !important;
+	left: auto !important;
+}
+
+@media screen and (max-width: 790px) {
+	.woot--bubble-holder {
+		display: none;
+	}
+}
