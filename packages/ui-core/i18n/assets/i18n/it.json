@@ -157,7 +157,12 @@
 		"PASTE": "Incolla",
 		"FORWARD_PORTS": "Inoltrare le porte",
 		"REPORT": "Report",
-		"IGNORE": "Ignora"
+		"IGNORE": "Ignora",
+		"INSTALL": "Installa",
+		"UNINSTALL": "Disinstalla",
+		"DEACTIVATE": "Disattiva",
+		"ACTIVATE": "Attiva",
+		"ADD_PLUGIN": "Aggiungi plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

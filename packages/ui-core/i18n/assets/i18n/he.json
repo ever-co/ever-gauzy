@@ -156,7 +156,12 @@
 		"PASTE": "הדבקה",
 		"FORWARD_PORTS": "העברת פורטים",
 		"REPORT": "דוח",
-		"IGNORE": "התעלם"
+		"IGNORE": "התעלם",
+		"INSTALL": "התקן",
+		"UNINSTALL": "הסר התקנה",
+		"DEACTIVATE": "השבת",
+		"ACTIVATE": "הפעל",
+		"ADD_PLUGIN": "הוסף תוסף"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

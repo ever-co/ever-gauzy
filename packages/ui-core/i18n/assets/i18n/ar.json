@@ -157,7 +157,12 @@
 		"PASTE": "لصق",
 		"FORWARD_PORTS": "إعادة توجيه المنافذ",
 		"REPORT": "التقرير",
-		"IGNORE": "تجاهل"
+		"IGNORE": "تجاهل",
+		"INSTALL": "تثبيت",
+		"UNINSTALL": "إلغاء التثبيت",
+		"DEACTIVATE": "تعطيل",
+		"ACTIVATE": "تفعيل",
+		"ADD_PLUGIN": "إضافة ملحق"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

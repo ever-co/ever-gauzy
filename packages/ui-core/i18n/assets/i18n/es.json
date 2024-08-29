@@ -157,7 +157,12 @@
 		"PASTE": "Pegar",
 		"FORWARD_PORTS": "Reenviar puertos",
 		"REPORT": "Informe",
-		"IGNORE": "Ignorar"
+		"IGNORE": "Ignorar",
+		"INSTALL": "Instalar",
+		"UNINSTALL": "Desinstalar",
+		"DEACTIVATE": "Desactivar",
+		"ACTIVATE": "Activar",
+		"ADD_PLUGIN": "Añadir plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

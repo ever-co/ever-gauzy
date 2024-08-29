@@ -157,7 +157,12 @@
 		"PASTE": "Plakken",
 		"FORWARD_PORTS": "Poorten doorsturen",
 		"REPORT": "Rapport",
-		"IGNORE": "Negeren"
+		"IGNORE": "Negeren",
+		"INSTALL": "Installeren",
+		"UNINSTALL": "Deïnstalleren",
+		"DEACTIVATE": "Deactiveren",
+		"ACTIVATE": "Activeren",
+		"ADD_PLUGIN": "Plugin toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
