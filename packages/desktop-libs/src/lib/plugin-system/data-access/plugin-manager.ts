@@ -77,7 +77,7 @@ export class PluginManager implements IPluginManager {
 	public async installPlugin(pluginMetadata: IPluginMetadata, pluginDir: string): Promise<void> {
 		try {
 			if (!pluginDir && !pluginMetadata) {
-				const error = `An Error Occurred while Installing plugin ${pluginMetadata.name}`;
+				const error = `An Error Occurred while Installing plugin`;
 				logger.error(error);
 				throw new Error(error);
 			}
