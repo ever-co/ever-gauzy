@@ -15,6 +15,22 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	private readonly registry = new Map<PageRouteRegistryId, PageRouteRegistryConfig[]>();
 
 	/**
+	 * Retrieves a read-only snapshot of the page route registry.
+	 *
+	 * This method returns a new `Map` instance based on the current state of the `registry`.
+	 * This approach ensures that the original `registry` remains unchanged and protected
+	 * from direct modifications, preserving encapsulation and immutability.
+	 *
+	 * @returns A `ReadonlyMap` containing the current page route registry. This map
+	 *          provides a snapshot of the registry's state and cannot be modified,
+	 *          ensuring that internal data integrity is maintained.
+	 */
+	public getRegistry(): ReadonlyMap<PageRouteRegistryId, PageRouteRegistryConfig[]> {
+		// Create and return a new Map to provide an immutable view of the current registry state
+		return new Map(this.registry);
+	}
+
+	/**
 	 * Register a single page route configuration.
 	 *
 	 * This method registers a new page route configuration in the service's internal registry.

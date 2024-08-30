@@ -15,6 +15,21 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 	private readonly registry = new Map<PageDataTableRegistryId, PageDataTableRegistryConfig[]>();
 
 	/**
+	 * Retrieves a read-only copy of the data table registry.
+	 *
+	 * This method returns a new `Map` instance based on the current state of the registry.
+	 * This approach ensures that the original `registry` is not directly modified by
+	 * external code, preserving immutability and encapsulation.
+	 *
+	 * @returns A `ReadonlyMap` containing the current data table registry. This map
+	 *          cannot be modified, ensuring that the internal state remains unchanged.
+	 */
+	public getRegistry(): ReadonlyMap<PageDataTableRegistryId, PageDataTableRegistryConfig[]> {
+		// Return a new Map to provide a snapshot of the current registry state
+		return new Map(this.registry);
+	}
+
+	/**
 	 * Register a column configurations.
 	 *
 	 * This method registers a new column configuration in the service's internal registry.
@@ -147,5 +162,30 @@ export class PageDataTableRegistryService implements IPageDataTableRegistry {
 
 			return acc;
 		}, {});
+	}
+
+	/**
+	 * Deletes a data table from the registry.
+	 *
+	 * This method removes the specified data table from the registry. If the data table does not exist,
+	 * it logs a warning message. Additionally, if the operation is successful, it logs an informational message.
+	 *
+	 * @param dataTableId The identifier of the data table to be removed.
+	 * @returns void
+	 */
+	public deleteDataTable(dataTableId: PageDataTableRegistryId): void {
+		// Check if the data table exists in the registry
+		if (!this.registry.has(dataTableId)) {
+			console.warn(`Data table with id "${dataTableId}" does not exist in the registry.`);
+			return;
+		}
+
+		try {
+			// Remove the data table from the registry
+			this.registry.delete(dataTableId);
+			console.log(`Data table with id "${dataTableId}" has been successfully removed from the registry.`);
+		} catch (error) {
+			console.error(`Failed to remove data table with id "${dataTableId}": ${error.message}`);
+		}
 	}
 }

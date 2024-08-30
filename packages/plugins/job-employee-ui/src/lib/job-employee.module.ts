@@ -14,7 +14,7 @@ import { NgxPermissionsModule } from 'ngx-permissions';
 import { LanguagesEnum } from '@gauzy/contracts';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { HttpLoaderFactory } from '@gauzy/ui-core/i18n';
-import { SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
+import { DynamicTabsModule, SharedModule, SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { createJobEmployeeRoutes } from './job-employee.routes';
 import { JobEmployeeComponent } from './components/job-employee/job-employee.component';
 
@@ -45,7 +45,8 @@ const THIRD_PARTY_MODULES = [
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,
 		SharedModule,
-		SmartDataViewLayoutModule
+		SmartDataViewLayoutModule,
+		DynamicTabsModule
 	],
 	providers: [
 		{

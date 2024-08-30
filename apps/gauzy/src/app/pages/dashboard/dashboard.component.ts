@@ -72,11 +72,11 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 		if (this._store.hasAnyPermission(PermissionsEnum.ADMIN_DASHBOARD_VIEW, PermissionsEnum.TEAM_DASHBOARD)) {
 			// Register the teams tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'dashboard', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'teams', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: this.getRoute('teams'), // The route for the tab
-				tabTitle: () => this.getTranslation('ORGANIZATIONS_PAGE.TEAMS'), // The title for the tab
+				tabTitle: (_i18n) => _i18n.getTranslation('ORGANIZATIONS_PAGE.TEAMS'), // The title for the tab
 				tabIcon: 'people-outline', // The icon for the tab
 				responsive: true, // Whether the tab is responsive
 				activeLinkOptions: { exact: false }, // The options for the active link
@@ -93,11 +93,11 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 		) {
 			// Register the project management tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'dashboard', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'project-management', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: this.getRoute('project-management'), // The route for the tab
-				tabTitle: () => this.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'), // The title for the tab
+				tabTitle: (_i18n) => _i18n.getTranslation('DASHBOARD_PAGE.PROJECT_MANAGEMENT'), // The title for the tab
 				tabIcon: 'browser-outline', // The icon for the tab
 				responsive: true, // Whether the tab is responsive
 				activeLinkOptions: { exact: false }, // The options for the active link
@@ -111,11 +111,11 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 		) {
 			// Register the time tracking tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'dashboard', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'time-tracking', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: this.getRoute('time-tracking'), // The route for the tab
-				tabTitle: () => this.getTranslation('TIMESHEET.TIME_TRACKING'), // The title for the tab
+				tabTitle: (_i18n) => _i18n.getTranslation('TIMESHEET.TIME_TRACKING'), // The title for the tab
 				tabIcon: 'clock-outline', // The icon for the tab
 				responsive: true, // Whether the tab is responsive
 				activeLinkOptions: { exact: false }, // The options for the active link
@@ -138,11 +138,11 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 			if (!this.selectedEmployee || !this.selectedEmployee.id) {
 				// Register the accounting tab
 				this._pageTabRegistryService.registerPageTab({
-					tabsetId: 'dashboard', // The identifier for the tabset
+					tabsetId: this.tabsetId, // The identifier for the tabset
 					tabId: 'accounting', // The identifier for the tab
 					tabsetType: 'route', // The type of tabset to use
 					route: this.getRoute('accounting'), // The route for the tab
-					tabTitle: () => this.getTranslation('DASHBOARD_PAGE.ACCOUNTING'), // The title for the tab
+					tabTitle: (_i18n) => _i18n.getTranslation('DASHBOARD_PAGE.ACCOUNTING'), // The title for the tab
 					tabIcon: 'credit-card-outline', // The icon for the tab
 					responsive: true, // Whether the tab is responsive
 					activeLinkOptions: { exact: false }, // The options for the active link
@@ -161,11 +161,11 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 			if (this.selectedEmployee && this.selectedEmployee.id) {
 				// Register the human resources tab
 				this._pageTabRegistryService.registerPageTab({
-					tabsetId: 'dashboard', // The identifier for the tabset
+					tabsetId: this.tabsetId, // The identifier for the tabset
 					tabId: 'hr', // The identifier for the tab
 					tabsetType: 'route', // The type of tabset to use
 					route: this.getRoute('hr'), // The route for the tab
-					tabTitle: () => this.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'), // The title for the tab
+					tabTitle: (_i18n) => _i18n.getTranslation('DASHBOARD_PAGE.HUMAN_RESOURCES'), // The title for the tab
 					tabIcon: 'person-outline', // The icon for the tab
 					responsive: true, // Whether the tab is responsive
 					activeLinkOptions: { exact: false }, // The options for the active link
@@ -183,6 +183,6 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 	 */
 	ngOnDestroy() {
 		// Delete the dashboard tabset from the registry
-		this._pageTabRegistryService.deleteTabset('dashboard');
+		this._pageTabRegistryService.deleteTabset(this.tabsetId);
 	}
 }

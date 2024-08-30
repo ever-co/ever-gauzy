@@ -1,4 +1,4 @@
-import { Injectable, Type } from '@angular/core';
+import { Injectable, TemplateRef, Type } from '@angular/core';
 import { PageTabsetRegistryId } from '../../common/component-registry.types';
 import { IPageTabRegistry, PageTabRegistryConfig } from './page-tab-registry.types';
 
@@ -66,6 +66,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 		config.order = config.order ?? 0; // Set the default order to 0 if not provided
 		config.hide = config.hide ?? false; // Set the default hide to false if not provided
 		config.responsive = config.responsive ?? true; // Set the default responsive to true if not provided
+		config.active = config.active ?? false; // Set the default active to false if not provided
 
 		// Find the index of an existing tab with the same tabId in the specified tab set
 		const existing = tabs.findIndex((tab) => tab.tabId === config.tabId);
@@ -192,24 +193,31 @@ export class PageTabRegistryService implements IPageTabRegistry {
 			return;
 		}
 
-		// Remove the tabset from the registry
-		this.registry.delete(tabsetId);
-		console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+		try {
+			// Remove the tabset from the registry
+			this.registry.delete(tabsetId);
+			console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+		} catch (error) {
+			console.error(`Failed to remove tabset with id "${tabsetId}": ${error.message}`);
+		}
 	}
 
 	/**
 	 * @description
-	 * Retrieves the component associated with a specific tab ID for a given tabset.
+	 * Retrieves the component or template associated with a specific tab ID for a given tabset.
 	 *
 	 * This method looks up the tabset using the provided `tabsetId`, then searches for the tab
-	 * with the specified `tabId` within that tabset. If the tab is found, it returns the associated
-	 * component; otherwise, it returns `undefined`.
+	 * with the specified `tabId` within that tabset. If the tab is found, it returns either the
+	 * component or the template based on the tab's configuration; otherwise, it returns `undefined`.
 	 *
 	 * @param tabsetId The identifier of the tabset to retrieve tabs from.
-	 * @param tabId The identifier of the tab whose component is to be retrieved.
-	 * @returns The component associated with the specified tab ID, or `undefined` if the tab or component is not found.
+	 * @param tabId The identifier of the tab whose component or template is to be retrieved.
+	 * @returns The component or template associated with the specified tab ID, or `undefined` if neither is found.
 	 */
-	public getComponentForTab(tabsetId: PageTabsetRegistryId, tabId: string): Type<any> | undefined {
+	public getComponentOrTemplateForTab(
+		tabsetId: PageTabsetRegistryId,
+		tabId: string
+	): Type<any> | TemplateRef<any> | undefined {
 		// Retrieve the list of tabs for the specified tabsetId
 		const tabs = this.getPageTabset(tabsetId);
 
@@ -218,8 +226,8 @@ export class PageTabRegistryService implements IPageTabRegistry {
 			// Find the tab with the specified tabId
 			const tab = tabs.find((t) => t.tabId === tabId);
 
-			// Return the component associated with the tab ID or undefined if not found
-			return tab?.component;
+			// Return the component if it exists, otherwise return the template
+			return tab?.component || tab?.template;
 		}
 
 		// Return undefined if the tabs could not be retrieved or are not an array

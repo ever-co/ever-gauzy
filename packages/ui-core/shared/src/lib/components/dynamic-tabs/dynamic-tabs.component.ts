@@ -1,10 +1,27 @@
-import { Component, OnInit, Input, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	Input,
+	OnDestroy,
+	ChangeDetectorRef,
+	ViewContainerRef,
+	Type,
+	TemplateRef,
+	ViewChildren,
+	QueryList
+} from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { PageTabRegistryConfig, PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
+import {
+	CustomNbRouteTab,
+	PageTabRegistryConfig,
+	PageTabRegistryService,
+	PageTabsetRegistryId
+} from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
@@ -14,10 +31,14 @@ import { PageTabRegistryConfig, PageTabRegistryService, PageTabsetRegistryId } f
 	providers: []
 })
 export class DynamicTabsComponent implements OnInit, OnDestroy {
-	public tabs: NbRouteTab[] = []; // Define the structure of tabs according to your needs
+	public tabs: CustomNbRouteTab[] = []; // Define the structure of tabs according to your needs
 	public reload$ = new Subject<boolean>(); // Subject to trigger reload of tabs
 
+	// Input to set the tabsetId
 	@Input() tabsetId!: PageTabsetRegistryId;
+
+	// ViewChildren to access the tab content containers
+	@ViewChildren('tabContent', { read: ViewContainerRef }) tabContents!: QueryList<ViewContainerRef>;
 
 	/**
 	 * Determines if all tabs in the tabset have the tabsetType set to 'route'.
@@ -38,14 +59,19 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly _cdr: ChangeDetectorRef,
+		private readonly _translateService: TranslateService,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
-		private readonly _translateService: TranslateService
+		readonly _i18n: I18nService
 	) {}
 
 	ngOnInit(): void {
 		this._initializeTabs();
 		this._applyTranslationOnTabs();
 		this._setupReloadTabsListener();
+	}
+
+	ngAfterViewInit(): void {
+		this._loadTabsContent(); // Load the tab content for each tab in the tabset
 	}
 
 	/**
@@ -58,6 +84,30 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Load the tab content for each tab in the tabset.
+	 */
+	private _loadTabsContent(): void {
+		// Load the tab content for each tab in the tabset
+		this.tabContents.forEach((container: ViewContainerRef, index: number) => {
+			// Get the tab configuration for the current index
+			const tab = this.tabs[index];
+
+			// Get the component or template for the tab
+			const content = this._pageTabRegistryService.getComponentOrTemplateForTab(this.tabsetId, tab.tabId);
+
+			// Check if the content is a template or component
+			if (content instanceof TemplateRef) {
+				this.loadTemplateForTab(content, container); // Handle template loading
+			} else if (content instanceof Type) {
+				this.loadComponentForTab(content, container); // Handle component loading
+			}
+		});
+
+		// Detect changes after loading tab content
+		this._cdr.detectChanges();
 	}
 
 	/**
@@ -96,20 +146,34 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of NbRouteTab objects representing the registered tabs.
 	 */
-	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): NbRouteTab[] {
+	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): CustomNbRouteTab[] {
 		// Map each tab configuration to an NbRouteTab object
 		return this.getRegisteredTabs(tabsetId).map((tab: PageTabRegistryConfig): NbRouteTab => {
-			// Create a new route object
-			const route: NbRouteTab = {
+			// Create a new route tab object
+			const route: CustomNbRouteTab = {
 				...(tab.tabTitle && {
-					title: typeof tab.tabTitle === 'function' ? tab.tabTitle() : tab.tabTitle
+					title: typeof tab.tabTitle === 'function' ? tab.tabTitle(this._i18n) : tab.tabTitle
 				}),
+				...(tab.tabId && { tabId: tab.tabId }),
 				...(tab.route && { route: tab.route }),
 				...(tab.tabIcon && { icon: tab.tabIcon }),
 				...(tab.responsive && { responsive: tab.responsive }),
 				...(tab.activeLinkOptions && { activeLinkOptions: tab.activeLinkOptions }),
-				disabled: !!tab.disabled
+				disabled: !!tab.disabled,
+				active: !!tab.active
 			};
+
+			// Check if the tabset is a router tabset
+			if (!this.isRouterTabset) {
+				// Check if the route configuration has a component or loadChildren property
+				if (tab.template) {
+					// Set the template property to the config object
+					route.template = tab.template;
+				} else if (tab.component) {
+					// Set the component property to the config object
+					route.component = tab.component;
+				}
+			}
 
 			// Return the route object
 			return route;
@@ -128,7 +192,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 		this._translateService.onLangChange
 			.pipe(
 				// Re-initialize the tabs when the language changes
-				tap(() => this._initializeTabs()),
+				tap(() => this.reload$.next(true)),
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -136,17 +200,39 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Create dynamic components for the tabs
+	 * Loads a template into a specified container.
+	 *
+	 * This method clears any existing content in the provided container
+	 * and then creates an embedded view for the given template, inserting
+	 * it into the container.
+	 *
+	 * @param template The template to be loaded into the container.
+	 * @param container The container where the template will be inserted.
 	 */
-	createDynamicComponents(): void {
-		// Add logic to create dynamic components for the tabset
+	loadTemplateForTab(template: TemplateRef<any>, container: ViewContainerRef): void {
+		// Clear any existing content in the container
+		container.clear();
+
+		// Create an embedded view for the provided template and insert it into the container
+		container.createEmbeddedView(template);
 	}
 
 	/**
-	 * Create static tabs for the tabset
+	 * Create and insert a dynamic component into the specified ViewContainerRef.
+	 *
+	 * This method clears any existing content in the provided container,
+	 * then creates a new instance of the specified component and inserts it
+	 * into the container.
+	 *
+	 * @param component The component to be created dynamically.
+	 * @param container The ViewContainerRef where the component should be inserted.
 	 */
-	createStaticTabs(): void {
-		// Add logic to create static tabs for NbTabsetComponent if necessary
+	loadComponentForTab(component: Type<any>, container: ViewContainerRef): void {
+		// Ensure the container is available and clear any existing content
+		container.clear();
+
+		// Create and insert the component into the view container
+		container.createComponent(component);
 	}
 
 	ngOnDestroy(): void {}
