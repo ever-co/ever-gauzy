@@ -6,6 +6,8 @@ import { OrganizationProjectModuleService } from './organization-project-module.
 import { OrganizationProjectModuleController } from './organization-project-module.controller';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
+import { RolePermissionModule } from '../role-permission/role-permission.module';
+import { RoleModule } from '../role/role.module';
 
 @Module({
 	imports: [
@@ -16,15 +18,13 @@ import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-or
 			}
 		]),
 		TypeOrmModule.forFeature([OrganizationProjectModule]),
-		MikroOrmModule.forFeature([OrganizationProjectModule])
+		MikroOrmModule.forFeature([OrganizationProjectModule]),
+		MikroOrmModule,
+		RolePermissionModule,
+		RoleModule
 	],
 	controllers: [OrganizationProjectModuleController],
 	providers: [OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository],
-	exports: [
-		TypeOrmModule,
-		MikroOrmModule,
-		OrganizationProjectModuleService,
-		TypeOrmOrganizationProjectModuleRepository
-	]
+	exports: [TypeOrmModule, OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository]
 })
 export class OrganizationProjectModuleModule {}

@@ -9,7 +9,7 @@ import {
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
-import { OptionParams, PaginationParams, TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
@@ -23,17 +23,6 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		readonly mikroOrmProjectModuleRepository: MikroOrmOrganizationProjectModuleRepository
 	) {
 		super(typeOrmProjectModuleRepository, mikroOrmProjectModuleRepository);
-	}
-
-	/**
-	 * @description Find project module by ID primary key
-	 * @param {ID} id - The ID string of the project module to for
-	 * @param params - Other options params finders and relations
-	 * @returns A promise that resolves after project module found
-	 * @memberof OrganizationProjectModuleService
-	 */
-	async findById(id: ID, params: OptionParams<OrganizationProjectModule>): Promise<IOrganizationProjectModule> {
-		return await this.findOneByIdString(id, params);
 	}
 
 	/**
