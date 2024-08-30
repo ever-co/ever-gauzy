@@ -204,7 +204,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'project_module_sprint',
-		joinColumn: 'projectModuleId',
+		joinColumn: 'organizationProjectModuleId',
 		inverseJoinColumn: 'organizationSprintId'
 	})
 	@JoinTable({
@@ -223,7 +223,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'project_module_team',
-		joinColumn: 'projectModuleId',
+		joinColumn: 'organizationProjectModuleId',
 		inverseJoinColumn: 'organizationTeamId'
 	})
 	@JoinTable({
@@ -242,7 +242,7 @@ export class OrganizationProjectModule extends TenantOrganizationBaseEntity impl
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'project_module_employee',
-		joinColumn: 'projectModuleId',
+		joinColumn: 'organizationProjectModuleId',
 		inverseJoinColumn: 'employeeId'
 	})
 	@JoinTable({
