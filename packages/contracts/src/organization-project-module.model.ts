@@ -1,11 +1,11 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from 'base-entity.model';
-import { IEmployee } from 'employee.model';
-import { IRelationalOrganizationProject } from 'organization-projects.model';
-import { IOrganizationSprint } from 'organization-sprint.model';
-import { IOrganizationTeam } from 'organization-team.model';
-import { TaskStatusEnum } from 'task-status.model';
-import { ITask } from 'task.model';
-import { IUser } from 'user.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IEmployee } from './employee.model';
+import { IRelationalOrganizationProject } from './organization-projects.model';
+import { IOrganizationSprint } from './organization-sprint.model';
+import { IOrganizationTeam } from './organization-team.model';
+import { TaskStatusEnum } from './task-status.model';
+import { ITask } from './task.model';
+import { IUser } from './user.model';
 
 export interface IRelationalOrganizationProjectModule {
 	projectModule?: IOrganizationProjectModule;
@@ -37,6 +37,13 @@ export interface IOrganizationProjectModule
 	teams?: IOrganizationTeam[];
 
 	tasks?: ITask[];
+}
+
+export interface IOrganizationProjectModuleFindInput extends IBasePerTenantAndOrganizationEntityModel {
+	name?: string;
+	organizationTeamId?: ID;
+	organizationProjectId?: ID;
+	organizationSprintId?: ID;
 }
 
 export interface IOrganizationProjectModuleCreateInput extends Omit<IOrganizationProjectModule, 'id'> {}

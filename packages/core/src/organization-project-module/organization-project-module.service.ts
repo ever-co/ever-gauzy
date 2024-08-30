@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
-import { ID, IOrganizationProjectModule, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ID,
+	IOrganizationProjectModule,
+	IOrganizationProjectModuleFindInput,
+	IPagination,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { OptionParams, PaginationParams, TenantAwareCrudService } from './../core/crud';
@@ -123,6 +129,12 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		}
 	}
 
+	/**
+	 * @description Find Team's project modules
+	 * @param options - Options finders and relations
+	 * @returns - A promise that resolves after found project modules
+	 * @memberof OrganizationProjectModuleService
+	 */
 	async findTeamProjectModules(
 		options: PaginationParams<OrganizationProjectModule>
 	): Promise<IPagination<IOrganizationProjectModule>> {
@@ -221,6 +233,55 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			return { items, total };
 		} catch (error) {
 			console.log(error); // Error logs for debugging
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * @description Find project modules by employee
+	 * @param employeeId - The employee ID for whom to search project modules
+	 * @param options - Finders options
+	 * @returns A promise that resolves after found project modules
+	 * @memberof OrganizationProjectModuleService
+	 */
+	async findByEmployee(
+		employeeId: ID,
+		options: IOrganizationProjectModuleFindInput
+	): Promise<IPagination<IOrganizationProjectModule>> {
+		try {
+			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+
+			// Joins
+			query.innerJoin(`${query.alias}.members`, 'member');
+			query.leftJoin(`${query.alias}.teams`, 'project_team');
+			query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
+
+			query.andWhere(
+				new Brackets((qb: WhereExpressionBuilder) => {
+					const tenantId = RequestContext.currentTenantId();
+					const { organizationId, organizationProjectId, organizationSprintId, organizationTeamId } = options;
+
+					qb.andWhere(p('member.id = :employeeId'), { employeeId });
+					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${query.alias}"."projectId" = :organizationProjectId`), { organizationProjectId });
+
+					if (isNotEmpty(organizationSprintId)) {
+						qb.andWhere(`sprint.id = :organizationSprintId`, {
+							organizationSprintId
+						});
+					}
+
+					if (isNotEmpty(organizationTeamId)) {
+						qb.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
+					}
+				})
+			);
+
+			const [items, total] = await query.getManyAndCount();
+			return { items, total };
+		} catch (error) {
+			console.log(error); // Error logging for debugging
 			throw new BadRequestException(error);
 		}
 	}
