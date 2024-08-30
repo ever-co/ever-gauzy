@@ -5,14 +5,26 @@
 
 <!-- Static tabs for the nb tabset -->
 <ng-template #staticTabs>
-	{{ tabs | json }}
-	<!-- <nb-tabset>
+	<nb-tabset>
 		<nb-tab
 			*ngFor="let tab of tabs"
-			[tabTitle]="tab.tabTitle"
+			[tabTitle]="tab.title"
 			[tabId]="tab.tabId"
-			[tabIcon]="tab.tabIcon"
-			[route]="tab.route"
-		></nb-tab>
-	</nb-tabset> -->
+			[active]="tab.active"
+			[disabled]="tab.disabled"
+		>
+			<!-- Dynamic content/template injection -->
+			<ng-container *ngIf="tab.template">
+				<ng-container *ngTemplateOutlet="tab?.template"></ng-container>
+			</ng-container>
+
+			<!-- Dynamic component injection -->
+			<ng-container *ngIf="tab.component">
+				<ng-template #tabContent></ng-template>
+				<ng-container
+					*ngTemplateOutlet="createDynamicComponentForTab(tab?.component, tabContent)"
+				></ng-container>
+			</ng-container>
+		</nb-tab>
+	</nb-tabset>
 </ng-template>

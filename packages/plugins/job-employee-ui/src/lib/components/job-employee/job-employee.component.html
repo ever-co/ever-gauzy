@@ -15,24 +15,18 @@
 				[buttonTemplate]="actionButtons"
 			></ngx-gauzy-button-action>
 		</div>
-		<nb-tabset (changeTab)="onTabChange($event)" class="mt-4">
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.BROWSE' | translate" [tabId]="jobSearchTabsEnum.BROWSE">
-				<ng-container>
-					<ng-template [ngTemplateOutlet]="tableLayout"></ng-template>
-				</ng-container>
-			</nb-tab>
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.SEARCH' | translate" [tabId]="jobSearchTabsEnum.SEARCH">
-				<ng-template [ngTemplateOutlet]="wip"></ng-template>
-			</nb-tab>
-			<nb-tab [tabTitle]="'JOB_EMPLOYEE.HISTORY' | translate" [tabId]="jobSearchTabsEnum.HISTORY">
-				<ng-template [ngTemplateOutlet]="wip"></ng-template>
-			</nb-tab>
-		</nb-tabset>
+
+		<!-- Dynamic Tabs -->
+		<gz-dynamic-tabs [tabsetId]="tabsetId"></gz-dynamic-tabs>
 	</nb-card-body>
 </nb-card>
+
+<!-- Table Layout Template -->
 <ng-template #tableLayout>
+	<!-- Check if the user has the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
 	<ng-template [ngxPermissionsOnly]="['ORG_JOB_EMPLOYEE_VIEW']">
 		<div class="table-scroll-container">
+			<!-- Smart Table Component -->
 			<angular2-smart-table
 				style="cursor: pointer"
 				[settings]="settingsSmartTable"
@@ -43,15 +37,29 @@
 		</div>
 		<div class="pagination-container">
 			<ng-container *ngIf="smartTableSource">
+				<!-- Pagination Component -->
 				<ngx-pagination [source]="smartTableSource"></ngx-pagination>
 			</ng-container>
 		</div>
 	</ng-template>
+
+	<!-- If the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
 	<ng-template [ngxPermissionsExcept]="['ORG_JOB_EMPLOYEE_VIEW']">
 		<div>
-			<!-- Content to display if the user does not have 'canEditComponent' permission -->
+			<!-- Content to display if the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
+			<!-- Placeholder: Add alternate content here -->
 		</div>
 	</ng-template>
+</ng-template>
+
+<!-- Coming Soon Template -->
+<ng-template #comingSoon>
+	<div>
+		<div [style]="{ display: 'flex', 'flex-direction': 'column', 'align-items': 'center', margin: '100px 0px' }">
+			<nb-icon icon="flash-outline" [style]="{ 'font-size': '50px', color: '#cacaca' }"></nb-icon>
+			<div>{{ 'COMING_SOON' | translate }}</div>
+		</div>
+	</div>
 </ng-template>
 
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
@@ -106,13 +114,4 @@
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
-</ng-template>
-
-<ng-template #wip>
-	<div>
-		<div [style]="{ display: 'flex', 'flex-direction': 'column', 'align-items': 'center', margin: '100px 0px' }">
-			<nb-icon icon="flash-outline" [style]="{ 'font-size': '50px', color: '#cacaca' }"></nb-icon>
-			<div>{{ 'COMING_SOON' | translate }}</div>
-		</div>
-	</div>
 </ng-template>

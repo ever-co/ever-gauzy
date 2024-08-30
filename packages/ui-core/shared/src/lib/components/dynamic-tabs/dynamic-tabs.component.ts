@@ -1,10 +1,25 @@
-import { Component, OnInit, Input, OnDestroy, ChangeDetectorRef } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	Input,
+	OnDestroy,
+	ChangeDetectorRef,
+	ViewContainerRef,
+	ComponentFactoryResolver,
+	Type
+} from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
-import { PageTabRegistryConfig, PageTabRegistryService, PageTabsetRegistryId } from '@gauzy/ui-core/core';
+import {
+	CustomNbRouteTab,
+	PageTabRegistryConfig,
+	PageTabRegistryService,
+	PageTabsetRegistryId
+} from '@gauzy/ui-core/core';
+import { I18nService } from '@gauzy/ui-core/i18n';
 
 @UntilDestroy()
 @Component({
@@ -38,8 +53,10 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private readonly _cdr: ChangeDetectorRef,
+		private readonly _componentFactoryResolver: ComponentFactoryResolver,
+		private readonly _translateService: TranslateService,
 		private readonly _pageTabRegistryService: PageTabRegistryService,
-		private readonly _translateService: TranslateService
+		readonly _i18n: I18nService
 	) {}
 
 	ngOnInit(): void {
@@ -96,20 +113,33 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	 * @param tabsetId The identifier for the tabset.
 	 * @returns An array of NbRouteTab objects representing the registered tabs.
 	 */
-	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): NbRouteTab[] {
+	getRegisteredNbTabs(tabsetId: PageTabsetRegistryId): CustomNbRouteTab[] {
 		// Map each tab configuration to an NbRouteTab object
 		return this.getRegisteredTabs(tabsetId).map((tab: PageTabRegistryConfig): NbRouteTab => {
-			// Create a new route object
-			const route: NbRouteTab = {
+			// Create a new route tab object
+			const route: CustomNbRouteTab = {
 				...(tab.tabTitle && {
-					title: typeof tab.tabTitle === 'function' ? tab.tabTitle() : tab.tabTitle
+					title: typeof tab.tabTitle === 'function' ? tab.tabTitle(this._i18n) : tab.tabTitle
 				}),
 				...(tab.route && { route: tab.route }),
 				...(tab.tabIcon && { icon: tab.tabIcon }),
 				...(tab.responsive && { responsive: tab.responsive }),
 				...(tab.activeLinkOptions && { activeLinkOptions: tab.activeLinkOptions }),
-				disabled: !!tab.disabled
+				disabled: !!tab.disabled,
+				active: !!tab.active
 			};
+
+			// Check if the tabset is a router tabset
+			if (!this.isRouterTabset) {
+				// Check if the route configuration has a component or loadChildren property
+				if (tab.template) {
+					// Set the template property to the config object
+					route.template = tab.template;
+				} else if (tab.component) {
+					// Set the component property to the config object
+					route.component = tab.component;
+				}
+			}
 
 			// Return the route object
 			return route;
@@ -128,7 +158,7 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 		this._translateService.onLangChange
 			.pipe(
 				// Re-initialize the tabs when the language changes
-				tap(() => this._initializeTabs()),
+				tap(() => this.reload$.next(true)),
 				// Automatically unsubscribe when the component is destroyed
 				untilDestroyed(this)
 			)
@@ -136,17 +166,20 @@ export class DynamicTabsComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Create dynamic components for the tabs
+	 * Create and insert a dynamic component into the specified ViewContainerRef.
+	 *
+	 * @param component The component to be created dynamically.
+	 * @param viewContainer The ViewContainerRef where the component should be inserted.
 	 */
-	createDynamicComponents(): void {
-		// Add logic to create dynamic components for the tabset
-	}
+	createDynamicComponentForTab(component: Type<any>, viewContainer: ViewContainerRef): void {
+		// Resolve the component factory for the given component type
+		const factory = this._componentFactoryResolver.resolveComponentFactory(component);
 
-	/**
-	 * Create static tabs for the tabset
-	 */
-	createStaticTabs(): void {
-		// Add logic to create static tabs for NbTabsetComponent if necessary
+		// Clear any existing view in the container
+		viewContainer.clear();
+
+		// Create and insert the component into the view container
+		viewContainer.createComponent(factory);
 	}
 
 	ngOnDestroy(): void {}

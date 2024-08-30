@@ -15,6 +15,9 @@ export const createJobEmployeeRoutes = (_pageRouteRegistryService: PageRouteRegi
 		component: JobEmployeeComponent,
 		canActivate: [PermissionsGuard],
 		data: {
+			// The tabset identifier for the route
+			tabsetId: 'job-employee',
+			// The permission required to access the route
 			permissions: {
 				only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],
 				redirectTo: '/pages/jobs/search'

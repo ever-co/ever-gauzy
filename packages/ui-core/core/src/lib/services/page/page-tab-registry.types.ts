@@ -1,11 +1,36 @@
-import { Type } from '@angular/core';
+import { TemplateRef, Type } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
+import { I18nService } from '@gauzy/ui-core/i18n';
 import { PageTabsetRegistryId } from '../../common/component-registry.types';
+
+/**
+ * Custom page tab configuration options.
+ */
+export interface CustomNbRouteTab extends NbRouteTab {
+	/**
+	 * @description
+	 * Specifies if the tab is active.
+	 */
+	active?: boolean;
+
+	/**
+	 * @description
+	 * The component to be loaded in the tab. This can be a component reference or a string identifier
+	 * for lazy loading the component.
+	 */
+	component?: Type<any>;
+
+	/**
+	 * @description
+	 * The template to be rendered in the tab. This is an alternative to the component.
+	 */
+	template?: TemplateRef<any>;
+}
 
 /**
  * Page tab configuration options.
  */
-export interface PageTabRegistryConfig extends NbRouteTab {
+export interface PageTabRegistryConfig extends CustomNbRouteTab {
 	/**
 	 * @description
 	 * The tabset identifier for the page tabset.
@@ -22,20 +47,13 @@ export interface PageTabRegistryConfig extends NbRouteTab {
 	 * @description
 	 * The translatable key for the tab title.
 	 */
-	tabTitle: string | (() => string);
+	tabTitle: string | ((_: I18nService) => string);
 
 	/**
 	 * @description
 	 * The icon name or icon configuration for the tab.
 	 */
 	tabIcon?: string;
-
-	/**
-	 * @description
-	 * The component to be loaded in the tab. This can be a component reference or a string identifier
-	 * for lazy loading the component.
-	 */
-	component?: Type<any>;
 
 	/**
 	 * @description
@@ -49,12 +67,6 @@ export interface PageTabRegistryConfig extends NbRouteTab {
 	 * Type of tabset to use. Can be 'route' for NbRouteTabsetComponent or 'standard' for NbTabsetComponent.
 	 */
 	tabsetType: 'route' | 'standard';
-
-	/**
-	 * @description
-	 * Specifies if the tab is active.
-	 */
-	active?: boolean;
 
 	/**
 	 * @description
