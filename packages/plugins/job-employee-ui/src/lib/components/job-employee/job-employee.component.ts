@@ -19,7 +19,8 @@ import {
 	Store,
 	ToastrService,
 	PageTabsetRegistryId,
-	PageTabRegistryService
+	PageTabRegistryService,
+	PageDataTableRegistryId
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import {
@@ -48,6 +49,7 @@ export enum JobSearchTabsEnum {
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public jobSearchTabsEnum = JobSearchTabsEnum;
 	public loading: boolean = false;
 	public settingsSmartTable: any;
@@ -162,6 +164,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		_pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset
 			tabId: 'browse', // The identifier for the tab
+			tabIcon: 'globe-2-outline', // The icon for the tab
 			tabsetType: 'standard', // The type of tabset to use
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.BROWSE'), // The title for the tab
 			order: 1, // The order of the tab,
@@ -173,6 +176,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		_pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset
 			tabId: 'search', // The identifier for the tab
+			tabIcon: 'search-outline', // The icon for the tab
 			tabsetType: 'standard', // The type of tabset to use
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.SEARCH'), // The title for the tab
 			order: 2, // The order of the tab,
@@ -184,6 +188,7 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		_pageTabRegistryService.registerPageTab({
 			tabsetId: this.tabsetId, // The identifier for the tabset
 			tabId: 'history', // The identifier for the tab
+			tabIcon: 'clock-outline', // The icon for the tab
 			tabsetType: 'standard', // The type of tabset to use
 			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.HISTORY'), // The title for the tab
 			order: 3, // The order of the tab,
@@ -623,5 +628,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		}
 	};
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		// Delete the dashboard tabset from the registry
+		this._pageTabRegistryService.deleteTabset(this.tabsetId);
+		this._pageDataTableRegistryService.deleteDataTable(this.dataTableId);
+	}
 }

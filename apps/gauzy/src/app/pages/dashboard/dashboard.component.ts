@@ -183,6 +183,6 @@ export class DashboardComponent extends TranslationBaseComponent implements Afte
 	 */
 	ngOnDestroy() {
 		// Delete the dashboard tabset from the registry
-		this._pageTabRegistryService.deleteTabset('dashboard');
+		this._pageTabRegistryService.deleteTabset(this.tabsetId);
 	}
 }

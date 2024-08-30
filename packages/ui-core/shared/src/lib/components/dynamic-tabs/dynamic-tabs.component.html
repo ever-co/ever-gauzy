@@ -8,23 +8,16 @@
 	<nb-tabset>
 		<nb-tab
 			*ngFor="let tab of tabs"
-			[tabTitle]="tab.title"
-			[tabId]="tab.tabId"
-			[active]="tab.active"
-			[disabled]="tab.disabled"
+			[tabTitle]="tab?.title"
+			[tabIcon]="tab?.icon"
+			[tabId]="tab?.tabId"
+			[active]="tab?.active"
+			[disabled]="tab?.disabled"
+			[responsive]="tab?.responsive"
+			[route]="tab?.route"
 		>
-			<!-- Dynamic content/template injection -->
-			<ng-container *ngIf="tab.template">
-				<ng-container *ngTemplateOutlet="tab?.template"></ng-container>
-			</ng-container>
-
-			<!-- Dynamic component injection -->
-			<ng-container *ngIf="tab.component">
-				<ng-template #tabContent></ng-template>
-				<ng-container
-					*ngTemplateOutlet="createDynamicComponentForTab(tab?.component, tabContent)"
-				></ng-container>
-			</ng-container>
+			<!-- Placeholder for dynamic content -->
+			<ng-template #tabContent></ng-template>
 		</nb-tab>
 	</nb-tabset>
 </ng-template>

@@ -47,7 +47,7 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		if (this._store.hasAnyPermission(...permissions)) {
 			// Register the daily timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'timesheet', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'daily', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: '/pages/employees/timesheets/daily', // The route for the tab
@@ -59,7 +59,7 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 
 			// Register the weekly timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'timesheet', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'weekly', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: '/pages/employees/timesheets/weekly', // The route for the tab
@@ -71,7 +71,7 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 
 			// Register the calendar timesheet tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'timesheet', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'calendar', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: '/pages/employees/timesheets/calendar', // The route for the tab
@@ -86,7 +86,7 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 		if (this._store.hasPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET)) {
 			// Register the approvals tab
 			this._pageTabRegistryService.registerPageTab({
-				tabsetId: 'timesheet', // The identifier for the tabset
+				tabsetId: this.tabsetId, // The identifier for the tabset
 				tabId: 'approvals', // The identifier for the tab
 				tabsetType: 'route', // The type of tabset to use
 				route: '/pages/employees/timesheets/approvals', // The route for the tab
@@ -100,6 +100,6 @@ export class TimesheetLayoutComponent extends TranslationBaseComponent implement
 
 	ngOnDestroy(): void {
 		// Delete the timesheet tabset from the registry
-		this._pageTabRegistryService.deleteTabset('timesheet');
+		this._pageTabRegistryService.deleteTabset(this.tabsetId);
 	}
 }

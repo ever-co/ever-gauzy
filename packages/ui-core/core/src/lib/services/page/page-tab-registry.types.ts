@@ -9,6 +9,12 @@ import { PageTabsetRegistryId } from '../../common/component-registry.types';
 export interface CustomNbRouteTab extends NbRouteTab {
 	/**
 	 * @description
+	 * The identifier for the tab.
+	 */
+	tabId?: string;
+
+	/**
+	 * @description
 	 * Specifies if the tab is active.
 	 */
 	active?: boolean;
@@ -36,12 +42,6 @@ export interface PageTabRegistryConfig extends CustomNbRouteTab {
 	 * The tabset identifier for the page tabset.
 	 */
 	tabsetId: PageTabsetRegistryId;
-
-	/**
-	 * @description
-	 * The identifier for the tab.
-	 */
-	tabId: string;
 
 	/**
 	 * @description

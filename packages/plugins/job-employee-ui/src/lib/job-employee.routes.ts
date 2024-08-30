@@ -17,6 +17,8 @@ export const createJobEmployeeRoutes = (_pageRouteRegistryService: PageRouteRegi
 		data: {
 			// The tabset identifier for the route
 			tabsetId: 'job-employee',
+			// The data table identifier for the route
+			dataTableId: 'job-employee',
 			// The permission required to access the route
 			permissions: {
 				only: [PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW],

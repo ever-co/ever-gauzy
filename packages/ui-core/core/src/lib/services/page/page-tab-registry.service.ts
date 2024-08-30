@@ -193,9 +193,13 @@ export class PageTabRegistryService implements IPageTabRegistry {
 			return;
 		}
 
-		// Remove the tabset from the registry
-		this.registry.delete(tabsetId);
-		console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+		try {
+			// Remove the tabset from the registry
+			this.registry.delete(tabsetId);
+			console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+		} catch (error) {
+			console.error(`Failed to remove tabset with id "${tabsetId}": ${error.message}`);
+		}
 	}
 
 	/**
