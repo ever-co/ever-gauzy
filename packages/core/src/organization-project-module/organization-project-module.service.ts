@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { Brackets, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
 	IOrganizationProjectModule,
@@ -36,28 +36,17 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
-			const { status, name, organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
+			const { status, organizationId, projectId, members } = where;
+			const tenantId = RequestContext.currentTenantId() || options.where?.tenantId;
 
+			// Create query builder
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
-
 			// Join employees
 			query.innerJoin(`${query.alias}.members`, 'members');
 
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.relations ? { relations: options.relations } : {})
-				});
-			}
+			// Apply pagination and query options
+			this.applyPaginationAndOptions(query, options);
+
 			query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 				const subQuery = qb.subQuery();
 				subQuery
@@ -84,37 +73,34 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
 			);
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					if (isNotEmpty(projectId)) {
-						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(name)) {
-						qb.andWhere(p(`"${query.alias}"."name" ${likeOperator} :name`), {
-							name: `%${name}%`
-						});
-					}
+					// Apply optional filters
+					const filters: IOrganizationProjectModuleFindInput = {
+						status,
+						projectId,
+						name: where.name as string
+					};
+
+					// Apply optional filters
+					this.applyOptionalFilters(query, qb, filters);
 				})
 			);
 
 			console.log('Get Employees modules', query.getSql()); // Query logs for debugging
 
-			const [items, total] = await query.getManyAndCount();
-			// Return items and total
-			return { items, total };
+			// Execute the query with pagination
+			return await this.executePaginationQuery<OrganizationProjectModule>(query);
 		} catch (error) {
-			console.log(error); // Error logs for debugging
-			throw new BadRequestException(error);
+			// Error logging for debugging
+			throw new HttpException(
+				`Error while retrieving employee project modules: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
 	}
 
@@ -129,31 +115,17 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
-
+			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
 			const { status, name, teams = [], organizationId, projectId, members } = where;
-			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Join teams
 			query.leftJoin(`${query.alias}.teams`, 'teams');
 
-			/**
-			 * If find options
-			 */
-			if (isNotEmpty(options)) {
-				if ('skip' in options) {
-					query.setFindOptions({
-						skip: (options.take || 10) * (options.skip - 1),
-						take: options.take || 10
-					});
-				}
-				query.setFindOptions({
-					...(options.select ? { select: options.select } : {}),
-					...(options.relations ? { relations: options.relations } : {}),
-					...(options.order ? { order: options.order } : {})
-				});
-			}
+			// Apply pagination and query options
+			this.applyPaginationAndOptions(query, options);
+
 			query.andWhere((qb: SelectQueryBuilder<OrganizationProjectModule>) => {
 				const subQuery = qb.subQuery();
 				subQuery
@@ -178,9 +150,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					}
 				}
 				if (isNotEmpty(teams)) {
-					subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), {
-						teams
-					});
+					subQuery.andWhere(p(`"${subQuery.alias}"."organizationTeamId" IN (:...teams)`), { teams });
 				}
 				return (
 					p(`"organization_project_module_members"."organizationProjectModuleId" IN `) +
@@ -189,7 +159,6 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			});
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 				})
@@ -202,27 +171,28 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 					if (isNotEmpty(projectId) && isEmpty(teams)) {
 						qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 					}
-					if (isNotEmpty(status)) {
-						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
-							status
-						});
-					}
-					if (isNotEmpty(name)) {
-						qb.andWhere(p(`"${query.alias}"."name" ${likeOperator} :name`), {
-							name: `%${name}%`
-						});
-					}
+
+					// Apply optional filters
+					const filters: IOrganizationProjectModuleFindInput = {
+						status,
+						name: where.name as string
+					};
+
+					// Apply optional filters
+					this.applyOptionalFilters(query, qb, filters);
 				})
 			);
 
 			console.log('Get Employees modules', query.getSql()); // Query logs for debugging
 
-			const [items, total] = await query.getManyAndCount();
-			// Return items and total
-			return { items, total };
+			// Execute the query with pagination
+			return await this.executePaginationQuery<OrganizationProjectModule>(query);
 		} catch (error) {
-			console.log(error); // Error logs for debugging
-			throw new BadRequestException(error);
+			// Error logging for debugging
+			throw new HttpException(
+				`Error while retrieving organization team project modules: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
 	}
 
@@ -238,40 +208,114 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		options: IOrganizationProjectModuleFindInput
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
+			const tenantId = RequestContext.currentTenantId() || options?.tenantId;
+			const organizationId = options?.organizationId;
+
+			// Create query builder
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
-			// Joins
+			// Joins and where clauses
 			query.innerJoin(`${query.alias}.members`, 'member');
 			query.leftJoin(`${query.alias}.teams`, 'project_team');
 			query.leftJoin(`${query.alias}."organizationSprints"`, 'sprint');
 
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
-					const tenantId = RequestContext.currentTenantId();
-					const { organizationId, projectId, organizationSprintId, organizationTeamId } = options;
+					qb.andWhere(p('member.id = :employeeId'), { employeeId })
+						.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
+						.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 
-					qb.andWhere(p('member.id = :employeeId'), { employeeId });
-					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
-
-					if (isNotEmpty(organizationSprintId)) {
-						qb.andWhere(`sprint.id = :organizationSprintId`, {
-							organizationSprintId
-						});
-					}
-
-					if (isNotEmpty(organizationTeamId)) {
-						qb.andWhere(`project_team.id = :organizationTeamId`, { organizationTeamId });
-					}
+					// Apply optional filters
+					this.applyOptionalFilters(query, qb, options);
 				})
 			);
 
-			const [items, total] = await query.getManyAndCount();
-			return { items, total };
+			// Execute the query with pagination
+			return await this.executePaginationQuery<OrganizationProjectModule>(query);
 		} catch (error) {
-			console.log(error); // Error logging for debugging
-			throw new BadRequestException(error);
+			// Error logging for debugging
+			throw new HttpException(
+				`Error while retrieving organization project modules by employee: ${error.message}`,
+				HttpStatus.BAD_REQUEST
+			);
 		}
+	}
+
+	/**
+	 * Apply pagination and query options
+	 *
+	 * @param query - The query builder to apply pagination and options
+	 * @param options - Pagination and query options
+	 */
+	private applyPaginationAndOptions(
+		query: SelectQueryBuilder<OrganizationProjectModule>,
+		params: PaginationParams<OrganizationProjectModule>
+	) {
+		if (isNotEmpty(params)) {
+			const options: FindManyOptions<OrganizationProjectModule> = {};
+
+			if ('skip' in params) {
+				options.skip = (params.take || 10) * (params.skip - 1);
+				options.take = params.take || 10;
+			}
+
+			if (params.select) {
+				options.select = params.select;
+			}
+
+			if (params.relations) {
+				options.relations = params.relations;
+			}
+
+			if (params.order) {
+				options.order = params.order;
+			}
+
+			// Apply pagination and query options
+			query.setFindOptions(options);
+		}
+	}
+
+	/**'
+	 * Apply optional filters to the query builder
+	 */
+	private applyOptionalFilters(
+		query: SelectQueryBuilder<OrganizationProjectModule>,
+		qb: WhereExpressionBuilder,
+		options: IOrganizationProjectModuleFindInput
+	) {
+		const { projectId, status, name, organizationSprintId, organizationTeamId } = options;
+
+		if (isNotEmpty(projectId)) {
+			qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
+		}
+
+		if (isNotEmpty(status)) {
+			qb.andWhere(p(`"${query.alias}"."status" = :status`), { status });
+		}
+
+		if (isNotEmpty(name)) {
+			const like = isPostgres() ? 'ILIKE' : 'LIKE';
+			qb.andWhere(p(`"${query.alias}"."name" ${like} :name`), { name: `%${name}%` });
+		}
+
+		if (isNotEmpty(organizationSprintId)) {
+			qb.andWhere('sprint.id = :organizationSprintId', { organizationSprintId });
+		}
+
+		if (isNotEmpty(organizationTeamId)) {
+			qb.andWhere('project_team.id = :organizationTeamId', { organizationTeamId });
+		}
+	}
+
+	/**
+	 * Executes the given query with pagination and returns the results.
+	 *
+	 * @param query The query builder instance to execute.
+	 * @returns A promise that resolves to an object containing the paginated items and total count.
+	 */
+	async executePaginationQuery<BaseType>(query: SelectQueryBuilder<BaseType>): Promise<IPagination<BaseType>> {
+		const [items, total] = await query.getManyAndCount();
+		return { items, total };
 	}
 }

@@ -22,26 +22,22 @@ export interface IOrganizationProjectModule
 	endDate?: Date;
 	isFavorite?: boolean;
 	public?: boolean;
-
 	parent?: IOrganizationProjectModule;
 	parentId?: ID; // Optional field for specifying the parent module ID
 	children?: IOrganizationProjectModule[]; // Modules related as children
-
 	manager?: IUser;
 	managerId?: ID;
 	creator?: IUser;
 	creatorId?: ID;
-
 	members?: IEmployee[];
 	organizationSprints?: IOrganizationSprint[];
 	teams?: IOrganizationTeam[];
-
 	tasks?: ITask[];
 }
 
 export interface IOrganizationProjectModuleFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		Partial<Pick<IOrganizationProjectModule, 'name' | 'projectId'>> {
+		Partial<Pick<IOrganizationProjectModule, 'name' | 'status' | 'projectId'>> {
 	organizationTeamId?: ID;
 	organizationSprintId?: ID;
 }
