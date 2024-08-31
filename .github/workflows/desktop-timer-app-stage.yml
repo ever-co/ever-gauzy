@@ -185,6 +185,11 @@ jobs:
           DESKTOP_TIMER_APP_DESCRIPTION: 'Ever Gauzy Desktop Timer'
           DESKTOP_TIMER_APP_ID: 'com.ever.gauzydesktoptimer'
 
+      - name: Print environment variable names
+        run: |
+          echo "Environment Variable Names:"
+          printenv | cut -d= -f1
+
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:windows:release:gh'
         env:
