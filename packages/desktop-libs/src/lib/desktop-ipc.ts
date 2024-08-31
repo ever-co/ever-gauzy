@@ -67,8 +67,8 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 			const baseUrl = arg.serverUrl
 				? arg.serverUrl
 				: arg.port
-					? `http://localhost:${arg.port}`
-					: `http://localhost:${config.API_DEFAULT_PORT}`;
+				? `http://localhost:${arg.port}`
+				: `http://localhost:${config.API_DEFAULT_PORT}`;
 
 			global.variableGlobal = {
 				API_BASE_URL: baseUrl,
@@ -359,7 +359,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 
 	ipcMain.handle('SAVED_THEME', () => {
 		return LocalStore.getStore('appSetting').theme;
-	})
+	});
 
 	pluginListeners();
 }
@@ -719,9 +719,8 @@ export function ipcTimer(
 					await offlineMode.connectivity();
 
 					if (offlineMode.enabled) {
-						console.log('Offline Mode: Timer might not stop correctly');
-						timeTrackerWindow.webContents.send('emergency_stop');
-
+						console.log('Offline Mode: Mark as stopped offline');
+						await markLastTimerAsStoppedOffline();
 						// We may want to show some notification to user that timer might not stop correctly, but not with Error, more like notification popup
 						// throw new Error('Cannot establish connection to API during Timer Stop');
 					} else {
@@ -1105,6 +1104,10 @@ export function ipcTimer(
 	ipcMain.on('ao_time_update', (event, arg) => {
 		alwaysOn.browserWindow.webContents.send('ao_time_update', arg);
 	});
+
+	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
+		await markLastTimerAsStoppedOffline();
+	});
 }
 
 export function removeMainListener() {
@@ -1164,7 +1167,7 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT'];
+	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT', 'MARK_AS_STOPPED_OFFLINE'];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});
@@ -1318,4 +1321,22 @@ export async function checkAuthenticatedUser(timeTrackerWindow: BrowserWindow): 
 	}
 
 	return false;
+}
+
+export async function markLastTimerAsStoppedOffline(): Promise<void> {
+	try {
+		// Retrieve the last timer if not provided
+		const lastTimer = await timerService.findLastOne();
+
+		// Check if a timer was found or provided
+		if (!lastTimer || !lastTimer.id) {
+			throw new Error('No valid timer found.');
+		}
+
+		// Update the timer's state to "stopped offline"
+		await timerService.update(new Timer({ ...lastTimer, isStoppedOffline: true }));
+	} catch (error) {
+		// Throw a more descriptive error message with context
+		log.error(`Failed to mark the last timer as stopped offline: ${error.message}`);
+	}
 }
