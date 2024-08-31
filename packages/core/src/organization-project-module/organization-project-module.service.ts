@@ -5,7 +5,8 @@ import {
 	IOrganizationProjectModule,
 	IOrganizationProjectModuleFindInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -36,7 +37,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
-			const { status, organizationId, projectId, members } = where;
+			const { name, status, organizationId, projectId, members } = where;
 			const tenantId = RequestContext.currentTenantId() || options.where.tenantId;
 
 			// Create query builder
@@ -81,9 +82,9 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 				new Brackets((qb: WhereExpressionBuilder) => {
 					// Apply optional filters
 					const filters: IOrganizationProjectModuleFindInput = {
-						status,
-						projectId,
-						name: where.name as string
+						status: status as TaskStatusEnum,
+						projectId: projectId as ID,
+						name: name as string
 					};
 
 					// Apply optional filters
@@ -115,9 +116,10 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
-			const { status, teams = [], organizationId, projectId, members } = where;
+			const { name, status, teams = [], organizationId, projectId, members } = where;
 			const tenantId = RequestContext.currentTenantId() || where.tenantId;
 
+			// Create query builder
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 			// Join teams
@@ -174,8 +176,8 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 
 					// Apply optional filters
 					const filters: IOrganizationProjectModuleFindInput = {
-						status,
-						name: where.name as string
+						status: status as TaskStatusEnum,
+						name: name as string
 					};
 
 					// Apply optional filters
