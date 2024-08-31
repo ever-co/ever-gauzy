@@ -39,10 +39,10 @@ export interface IOrganizationProjectModule
 	tasks?: ITask[];
 }
 
-export interface IOrganizationProjectModuleFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	name?: string;
+export interface IOrganizationProjectModuleFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		Partial<Pick<IOrganizationProjectModule, 'name' | 'projectId'>> {
 	organizationTeamId?: ID;
-	organizationProjectId?: ID;
 	organizationSprintId?: ID;
 }
 

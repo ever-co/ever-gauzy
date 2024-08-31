@@ -1,29 +1,23 @@
 import { ID, IOrganizationProjectModuleFindInput } from '@gauzy/contracts';
+import { ApiPropertyOptional, IntersectionType, PartialType, PickType } from '@nestjs/swagger';
+import { IsOptional, IsUUID } from 'class-validator';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { CreateOrganizationProjectModuleDTO } from './create-organization-project-module.dto';
 
 /** Organization Project Module query validation DTO */
 export class OrganizationProjectModuleFindInputDTO
-	extends TenantOrganizationBaseDTO
+	extends IntersectionType(
+		TenantOrganizationBaseDTO,
+		PartialType(PickType(CreateOrganizationProjectModuleDTO, ['name', 'projectId'] as const))
+	)
 	implements IOrganizationProjectModuleFindInput
 {
-	@ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsString()
-	name?: string;
-
-	@ApiProperty({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	organizationProjectId?: ID;
-
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	organizationTeamId?: ID;
 
-	@ApiProperty({ type: () => String })
+	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
 	organizationSprintId?: ID;
