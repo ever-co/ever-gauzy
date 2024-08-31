@@ -157,7 +157,12 @@
 		"PASTE": "Einfügen",
 		"FORWARD_PORTS": "Weiterleitung von Ports",
 		"REPORT": "Bericht",
-		"IGNORE": "Ignorieren"
+		"IGNORE": "Ignorieren",
+		"INSTALL": "Installieren",
+		"UNINSTALL": "Deinstallieren",
+		"DEACTIVATE": "Deaktivieren",
+		"ACTIVATE": "Aktivieren",
+		"ADD_PLUGIN": "Plugin hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "Vorherig/ Früher/ Vorangegangen",
 				"SAVE": "Speichern",
 				"CREATE_CRITERIONS": "Erstellen Sie Kriterien",
+				"CLOSE_CRITERIONS": "Kriterien schließen",
 				"EMAIL_NOTIFICATION": "E-Mail-Benachrichtigung",
 				"DELETE_INTERVIEW": "Interview löschen",
 				"DELETE_FEEDBACK": "Lösche das Feedback.",
@@ -2070,6 +2076,10 @@
 			"ORG_PROJECT_DELETE": "Projekte löschen",
 			"ORG_CONTACT_EDIT": "Kontakte erstellen/bearbeiten",
 			"ORG_CONTACT_VIEW": "Kontakte anzeigen",
+			"PROJECT_MODULE_CREATE": "Projekmodule erstellen",
+			"PROJECT_MODULE_READ": "Projekmodule anzeigen",
+			"PROJECT_MODULE_UPDATE": "Projekmodule aktualisieren",
+			"PROJECT_MODULE_DELETE": "Projekmodule löschen",
 			"ORG_TEAM_ADD": "Teams hinzufügen",
 			"ORG_TEAM_VIEW": "Teams anzeigen",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Aktive Aufgaben bearbeiten",

@@ -156,7 +156,12 @@
 		"PASTE": "הדבקה",
 		"FORWARD_PORTS": "העברת פורטים",
 		"REPORT": "דוח",
-		"IGNORE": "התעלם"
+		"IGNORE": "התעלם",
+		"INSTALL": "התקן",
+		"UNINSTALL": "הסר התקנה",
+		"DEACTIVATE": "השבת",
+		"ACTIVATE": "הפעל",
+		"ADD_PLUGIN": "הוסף תוסף"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1738,6 +1743,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "לשמור",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "סגור קריטריונים",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",
@@ -2097,6 +2103,10 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
+			"PROJECT_MODULE_CREATE": "צור מודולי פרויקט",
+			"PROJECT_MODULE_READ": "צפה במודולי פרויקט",
+			"PROJECT_MODULE_UPDATE": "עדכן מודולי פרויקט",
+			"PROJECT_MODULE_DELETE": "מחק מודולי פרויקט",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "ערוך משימות פעילות",

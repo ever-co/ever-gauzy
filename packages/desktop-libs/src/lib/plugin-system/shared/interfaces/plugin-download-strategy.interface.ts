@@ -11,4 +11,5 @@ export interface IPluginDownloadStrategy {
 
 export interface ICdnDownloadConfig {
 	url: string;
+	pluginPath: string;
 }

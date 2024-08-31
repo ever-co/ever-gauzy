@@ -156,7 +156,12 @@
 		"PASTE": "Вставить",
 		"FORWARD_PORTS": "Переадресация портов",
 		"REPORT": "Отчет",
-		"IGNORE": "Игнорировать"
+		"IGNORE": "Игнорировать",
+		"INSTALL": "Установить",
+		"UNINSTALL": "Удалить",
+		"DEACTIVATE": "Отключить",
+		"ACTIVATE": "Активировать",
+		"ADD_PLUGIN": "Добавить плагин"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1745,6 +1750,7 @@
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
 				"CREATE_CRITERIONS": "Создать критерии",
+				"CLOSE_CRITERIONS": "Закрыть критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"DELETE_INTERVIEW": "Удалить интервью",
 				"DELETE_FEEDBACK": "Удалить отзыв",
@@ -2104,6 +2110,10 @@
 			"ORG_PROJECT_EDIT": "Создание/Редактирование проектов",
 			"ORG_CONTACT_EDIT": "Создать/редактировать контакты",
 			"ORG_CONTACT_VIEW": "Контакты",
+			"PROJECT_MODULE_CREATE": "Создать модули проекта",
+			"PROJECT_MODULE_READ": "Просмотреть модули проекта",
+			"PROJECT_MODULE_UPDATE": "Обновить модули проекта",
+			"PROJECT_MODULE_DELETE": "Удалить модули проекта",
 			"ORG_TEAM_ADD": "Добавить команды",
 			"ORG_TEAM_VIEW": "Посмотреть команды",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактировать активные задачи",

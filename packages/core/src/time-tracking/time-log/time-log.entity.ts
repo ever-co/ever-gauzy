@@ -26,12 +26,18 @@ import {
 	Timesheet,
 	TimeSlot
 } from './../../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMManyToOne, VirtualMultiOrmColumn } from '../../core/decorators/entity';
+import {
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMManyToOne,
+	VirtualMultiOrmColumn
+} from '../../core/decorators/entity';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
 
 @MultiORMEntity('time_log', { mikroOrmRepository: () => MikroOrmTimeLogRepository })
 export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
-
 	@ApiProperty({ type: () => 'timestamptz' })
 	@IsDateString()
 	@ColumnIndex()
@@ -165,7 +171,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	project?: IOrganizationProject;
@@ -189,7 +195,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	task?: ITask;
@@ -210,7 +216,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationContact?: IOrganizationContact;
@@ -231,7 +237,7 @@ export class TimeLog extends TenantOrganizationBaseEntity implements ITimeLog {
 		nullable: true,
 
 		/** Defines the database cascade action on delete. */
-		onDelete: 'SET NULL',
+		onDelete: 'SET NULL'
 	})
 	@JoinColumn()
 	organizationTeam?: IOrganizationTeam;

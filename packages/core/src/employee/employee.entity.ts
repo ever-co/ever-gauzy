@@ -30,7 +30,8 @@ import {
 	IEmployeeAward,
 	IEquipmentSharing,
 	IEmployeePhone,
-	IDailyPlan
+	IDailyPlan,
+	IOrganizationProjectModule
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -59,6 +60,7 @@ import {
 	OrganizationEmploymentType,
 	OrganizationPosition,
 	OrganizationProject,
+	OrganizationProjectModule,
 	OrganizationTeamEmployee,
 	RequestApprovalEmployee,
 	Skill,
@@ -639,6 +641,15 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	})
 	@JoinTable()
 	tasks?: ITask[];
+
+	/**
+	 * Project Module
+	 */
+	@MultiORMManyToMany(() => OrganizationProjectModule, (module) => module.members, {
+		onUpdate: 'CASCADE',
+		onDelete: 'CASCADE'
+	})
+	modules?: IOrganizationProjectModule[];
 
 	/**
 	 * Equipment Sharing

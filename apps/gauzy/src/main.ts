@@ -1,7 +1,6 @@
 import { enableProdMode } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { enableAkitaProdMode, persistState } from '@datorama/akita';
-import { akitaConfig } from '@datorama/akita';
+import { akitaConfig, enableAkitaProdMode, persistState } from '@datorama/akita';
 import { environment } from '@gauzy/ui-config';
 import { AppModule } from './app/app.module';
 

@@ -157,7 +157,12 @@
 		"PASTE": "Plakken",
 		"FORWARD_PORTS": "Poorten doorsturen",
 		"REPORT": "Rapport",
-		"IGNORE": "Negeren"
+		"IGNORE": "Negeren",
+		"INSTALL": "Installeren",
+		"UNINSTALL": "Deïnstalleren",
+		"DEACTIVATE": "Deactiveren",
+		"ACTIVATE": "Activeren",
+		"ADD_PLUGIN": "Plugin toevoegen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "Vorige",
 				"SAVE": "Opslaan",
 				"CREATE_CRITERIONS": "Maak criteria",
+				"CLOSE_CRITERIONS": "Sluit criteria",
 				"EMAIL_NOTIFICATION": "E-mailmelding",
 				"DELETE_INTERVIEW": "Verwijder interview",
 				"DELETE_FEEDBACK": "Verwijder feedback",
@@ -2074,6 +2080,10 @@
 			"ORG_PROJECT_DELETE": "Verwijder Projecten",
 			"ORG_CONTACT_EDIT": "Maak/bewerk contacten",
 			"ORG_CONTACT_VIEW": "Bekijk contacten",
+			"PROJECT_MODULE_CREATE": "Projectmodules aanmaken",
+			"PROJECT_MODULE_READ": "Projectmodules bekijken",
+			"PROJECT_MODULE_UPDATE": "Projectmodules bijwerken",
+			"PROJECT_MODULE_DELETE": "Projectmodules verwijderen",
 			"ORG_TEAM_ADD": "Voeg Teams toe",
 			"ORG_TEAM_VIEW": "Bekijk Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Bewerk actieve taken",

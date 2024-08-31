@@ -166,7 +166,12 @@
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled",
-		"RESYNC": "Resync"
+		"RESYNC": "Resync",
+		"INSTALL": "Install",
+		"UNINSTALL": "Uninstall",
+		"DEACTIVATE": "Deactivate",
+		"ACTIVATE": "Activate",
+		"ADD_PLUGIN": "Add Plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1787,6 +1792,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "Save",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "Close criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",
@@ -2187,6 +2193,10 @@
 			"DAILY_PLAN_READ": "View Daily Plans",
 			"DAILY_PLAN_UPDATE": "Update Daily Plans",
 			"DAILY_PLAN_DELETE": "Delete Daily Plans",
+			"PROJECT_MODULE_CREATE": "Create Project Modules",
+			"PROJECT_MODULE_READ": "View Project Modules",
+			"PROJECT_MODULE_UPDATE": "Update Project Modules",
+			"PROJECT_MODULE_DELETE": "Delete Project Modules",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Edit Active Tasks",

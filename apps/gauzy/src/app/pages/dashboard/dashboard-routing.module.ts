@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { PermissionsGuard, TabsetRegistryIdEnum } from '@gauzy/ui-core/core';
+import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { DashboardComponent } from './dashboard.component';
@@ -14,7 +14,7 @@ const routes: Routes = [
 	{
 		path: '',
 		component: DashboardComponent,
-		data: { tabsetId: TabsetRegistryIdEnum.Dashboard },
+		data: { tabsetId: 'dashboard' },
 		children: [
 			{
 				path: '',

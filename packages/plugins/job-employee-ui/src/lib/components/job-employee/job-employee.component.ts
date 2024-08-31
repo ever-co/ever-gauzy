@@ -1,7 +1,7 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, combineLatest, merge, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { NbTabComponent } from '@nebular/theme';
@@ -17,7 +17,10 @@ import {
 	JobService,
 	ServerDataSource,
 	Store,
-	ToastrService
+	ToastrService,
+	PageTabsetRegistryId,
+	PageTabRegistryService,
+	PageDataTableRegistryId
 } from '@gauzy/ui-core/core';
 import { I18nService } from '@gauzy/ui-core/i18n';
 import {
@@ -45,6 +48,8 @@ export enum JobSearchTabsEnum {
 	providers: [CurrencyPipe]
 })
 export class JobEmployeeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	public tabsetId: PageTabsetRegistryId = this._route.snapshot.data.tabsetId; // The identifier for the tabset
+	public dataTableId: PageDataTableRegistryId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public jobSearchTabsEnum = JobSearchTabsEnum;
 	public loading: boolean = false;
 	public settingsSmartTable: any;
@@ -56,33 +61,34 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	public selectedEmployee: IEmployee;
 	public disableButton: boolean = true;
 
+	// Template References
+	@ViewChild('tableLayout', { static: true }) tableLayout: TemplateRef<any>; // Template reference for the table layout tab
+	@ViewChild('comingSoon', { static: true }) comingSoon: TemplateRef<any>; // Template reference for the coming soon tab
+
 	constructor(
 		translateService: TranslateService,
 		private readonly _http: HttpClient,
+		private readonly _route: ActivatedRoute,
 		private readonly _router: Router,
+		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _store: Store,
 		private readonly _employeesService: EmployeesService,
 		private readonly _jobService: JobService,
 		private readonly _toastrService: ToastrService,
 		private readonly _currencyPipe: CurrencyPipe,
-		private readonly _ngxPermissionsService: NgxPermissionsService,
 		private readonly _i18nService: I18nService,
-		readonly _pageDataTableRegistryService: PageDataTableRegistryService
+		readonly _pageDataTableRegistryService: PageDataTableRegistryService,
+		readonly _pageTabRegistryService: PageTabRegistryService
 	) {
 		super(translateService);
-
-		// Register data table columns
-		this.registerDataTableColumns(_pageDataTableRegistryService);
 	}
 
 	ngOnInit(): void {
-		this._applyTranslationOnSmartTable();
-		this._loadSmartTableSettings();
-
-		// Initialize UI permissions
-		this.initializeUiPermissions();
-		// Initialize UI languages and Update Locale
-		this.initializeUiLanguagesAndLocale();
+		this._applyTranslationOnSmartTable(); //
+		this._loadSmartTableSettings(); // Load smart table settings
+		this.initializeUiPermissions(); // Initialize UI permissions
+		this.initializeUiLanguagesAndLocale(); // Initialize UI languages and Update Locale
+		this._initializePageElements(); // Register page elements
 	}
 
 	ngAfterViewInit(): void {
@@ -136,6 +142,62 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	}
 
 	/**
+	 * Initializes page elements by registering page tabs and data table columns.
+	 *
+	 * This method centralizes the logic for setting up page-related configurations,
+	 * ensuring that the necessary page tabs and data table columns are registered
+	 * upon initialization.
+	 */
+	private _initializePageElements(): void {
+		// Register page elements
+		this.registerPageTabs(this._pageTabRegistryService); // Register page tabs
+		this.registerDataTableColumns(this._pageDataTableRegistryService); // Register data table columns
+	}
+
+	/**
+	 * Register page tabs for the JobEmployee
+	 *
+	 * @param _pageTabRegistryService
+	 */
+	registerPageTabs(_pageTabRegistryService: PageTabRegistryService): void {
+		// Register the browse tab
+		_pageTabRegistryService.registerPageTab({
+			tabsetId: this.tabsetId, // The identifier for the tabset
+			tabId: 'browse', // The identifier for the tab
+			tabIcon: 'globe-2-outline', // The icon for the tab
+			tabsetType: 'standard', // The type of tabset to use
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.BROWSE'), // The title for the tab
+			order: 1, // The order of the tab,
+			responsive: true, // Whether the tab is responsive,
+			template: this.tableLayout // The template to be rendered in the tab
+		});
+
+		// Register the search tab
+		_pageTabRegistryService.registerPageTab({
+			tabsetId: this.tabsetId, // The identifier for the tabset
+			tabId: 'search', // The identifier for the tab
+			tabIcon: 'search-outline', // The icon for the tab
+			tabsetType: 'standard', // The type of tabset to use
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.SEARCH'), // The title for the tab
+			order: 2, // The order of the tab,
+			responsive: true, // Whether the tab is responsive,
+			template: this.comingSoon // The template to be rendered in the tab
+		});
+
+		// Register the history tab
+		_pageTabRegistryService.registerPageTab({
+			tabsetId: this.tabsetId, // The identifier for the tabset
+			tabId: 'history', // The identifier for the tab
+			tabIcon: 'clock-outline', // The icon for the tab
+			tabsetType: 'standard', // The type of tabset to use
+			tabTitle: (_i18n) => _i18n.getTranslation('JOB_EMPLOYEE.HISTORY'), // The title for the tab
+			order: 3, // The order of the tab,
+			responsive: true, // Whether the tab is responsive,
+			template: this.comingSoon // The template to be rendered in the tab
+		});
+	}
+
+	/**
 	 * Register data table columns for the JobEmployee
 	 *
 	 * @param _pageDataTableRegistryService
@@ -143,14 +205,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 	registerDataTableColumns(_pageDataTableRegistryService: PageDataTableRegistryService): void {
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'name',
-			order: 0,
-			title: 'JOB_EMPLOYEE.EMPLOYEE',
-			type: 'custom',
-			width: '20%',
-			isSortable: true,
-			isEditable: true,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'name', // The identifier for the column
+			order: 0, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.EMPLOYEE'), // The title of the column
+			type: 'custom', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: true, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			renderComponent: EmployeeLinksComponent,
 			valuePrepareFunction: (_: any, cell: Cell) => this.prepareEmployeeValue(_, cell),
 			componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
@@ -163,40 +225,40 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'availableJobs',
-			order: 1,
-			title: 'JOB_EMPLOYEE.AVAILABLE_JOBS',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: false,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'availableJobs', // The identifier for the column
+			order: 1, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.AVAILABLE_JOBS'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			valuePrepareFunction: (rawValue: any) => rawValue || 0
 		});
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'appliedJobs',
-			order: 2,
-			title: 'JOB_EMPLOYEE.APPLIED_JOBS',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: false,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'appliedJobs', // The identifier for the column
+			order: 2, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.APPLIED_JOBS'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			valuePrepareFunction: (rawValue: any) => rawValue || 0
 		});
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'billRateValue',
-			order: 3,
-			title: 'JOB_EMPLOYEE.BILLING_RATE',
-			type: 'text',
-			width: '10%',
-			isSortable: false,
-			isEditable: true,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'billRateValue', // The identifier for the column
+			order: 3, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.BILLING_RATE'), // The title of the column
+			type: 'text', // The type of the column
+			width: '10%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
@@ -211,14 +273,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'minimumBillingRate',
-			order: 4,
-			title: 'JOB_EMPLOYEE.MINIMUM_BILLING_RATE',
-			type: 'text',
-			width: '20%',
-			isSortable: false,
-			isEditable: true,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'minimumBillingRate', // The identifier for the column
+			order: 4, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.MINIMUM_BILLING_RATE'), // The title of the column
+			type: 'text', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: true, // Indicates whether the column is editable
 			editor: {
 				type: 'custom',
 				component: NumberEditorComponent
@@ -231,14 +293,14 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 
 		// Register the data table column
 		_pageDataTableRegistryService.registerPageDataTableColumn({
-			location: 'job-employee',
-			columnId: 'isJobSearchActive',
-			order: 5,
-			title: 'JOB_EMPLOYEE.JOB_SEARCH_STATUS',
-			type: 'custom',
-			width: '20%',
-			isSortable: false,
-			isEditable: false,
+			dataTableId: 'job-employee', // The identifier for the data table location
+			columnId: 'isJobSearchActive', // The identifier for the column
+			order: 5, // The order of the column in the table
+			title: () => this.getTranslation('JOB_EMPLOYEE.JOB_SEARCH_STATUS'), // The title of the column
+			type: 'custom', // The type of the column
+			width: '20%', // The width of the column
+			isSortable: false, // Indicates whether the column is sortable
+			isEditable: false, // Indicates whether the column is editable
 			renderComponent: SmartTableToggleComponent,
 			componentInitFunction: (instance: SmartTableToggleComponent, cell: Cell) => {
 				// Get the employee data from the cell
@@ -566,5 +628,9 @@ export class JobEmployeeComponent extends PaginationFilterBaseComponent implemen
 		}
 	};
 
-	ngOnDestroy(): void {}
+	ngOnDestroy(): void {
+		// Delete the dashboard tabset from the registry
+		this._pageTabRegistryService.deleteTabset(this.tabsetId);
+		this._pageDataTableRegistryService.deleteDataTable(this.dataTableId);
+	}
 }

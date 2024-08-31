@@ -156,7 +156,12 @@
 		"PASTE": "Поставяне",
 		"FORWARD_PORTS": "Препращане на портове",
 		"REPORT": "Доклад",
-		"IGNORE": "Игнориране"
+		"IGNORE": "Игнориране",
+		"INSTALL": "Инсталирай",
+		"UNINSTALL": "Деинсталирай",
+		"DEACTIVATE": "Деактивирай",
+		"ACTIVATE": "Активирай",
+		"ADD_PLUGIN": "Добави плъгин"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1745,6 +1750,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "Запази",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "Затвори критерии",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",
@@ -2104,6 +2110,10 @@
 			"ORG_PROJECT_EDIT": "Create/Edit Projects",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
+			"PROJECT_MODULE_CREATE": "Създаване на модули на проекта",
+			"PROJECT_MODULE_READ": "Преглед на модули на проекта",
+			"PROJECT_MODULE_UPDATE": "Актуализиране на модули на проекта",
+			"PROJECT_MODULE_DELETE": "Изтриване на модули на проекта",
 			"ORG_TEAM_ADD": "Add Teams",
 			"ORG_TEAM_VIEW": "View Teams",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Редактиране на активни задачи",

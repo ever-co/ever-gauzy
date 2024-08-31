@@ -182,7 +182,13 @@ export enum PermissionsEnum {
 	DAILY_PLAN_CREATE = 'DAILY_PLAN_CREATE',
 	DAILY_PLAN_READ = 'DAILY_PLAN_READ',
 	DAILY_PLAN_UPDATE = 'DAILY_PLAN_UPDATE',
-	DAILY_PLAN_DELETE = 'DAILY_PLAN_DELETE'
+	DAILY_PLAN_DELETE = 'DAILY_PLAN_DELETE',
+
+	/** Project Module */
+	PROJECT_MODULE_CREATE = 'PROJECT_MODULE_CREATE',
+	PROJECT_MODULE_READ = 'PROJECT_MODULE_READ',
+	PROJECT_MODULE_UPDATE = 'PROJECT_MODULE_UPDATE',
+	PROJECT_MODULE_DELETE = 'PROJECT_MODULE_DELETE'
 }
 
 export const PermissionGroups = {
@@ -287,6 +293,13 @@ export const PermissionGroups = {
 		PermissionsEnum.DAILY_PLAN_UPDATE,
 		PermissionsEnum.DAILY_PLAN_DELETE,
 		/** Daily Plan Permissions End */
+
+		/** Project Module Permissions start */
+		PermissionsEnum.PROJECT_MODULE_CREATE,
+		PermissionsEnum.PROJECT_MODULE_READ,
+		PermissionsEnum.PROJECT_MODULE_UPDATE,
+		PermissionsEnum.PROJECT_MODULE_DELETE,
+		/** Project Module Permissions start */
 
 		/** Organization Team Permissions Start */
 		PermissionsEnum.ORG_TEAM_ADD,

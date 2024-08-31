@@ -157,7 +157,12 @@
 		"PASTE": "لصق",
 		"FORWARD_PORTS": "إعادة توجيه المنافذ",
 		"REPORT": "التقرير",
-		"IGNORE": "تجاهل"
+		"IGNORE": "تجاهل",
+		"INSTALL": "تثبيت",
+		"UNINSTALL": "إلغاء التثبيت",
+		"DEACTIVATE": "تعطيل",
+		"ACTIVATE": "تفعيل",
+		"ADD_PLUGIN": "إضافة ملحق"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "السابق",
 				"SAVE": "حفظ",
 				"CREATE_CRITERIONS": "إنشاء معايير",
+				"CLOSE_CRITERIONS": "إغلاق المعايير",
 				"EMAIL_NOTIFICATION": "إشعار بالبريد الإلكتروني",
 				"DELETE_INTERVIEW": "حذف المقابلة",
 				"DELETE_FEEDBACK": "حذف التعليقات",
@@ -2073,6 +2079,10 @@
 			"ORG_PROJECT_DELETE": "حذف المشاريع",
 			"ORG_CONTACT_EDIT": "إنشاء/تعديل جهات الاتصال",
 			"ORG_CONTACT_VIEW": "عرض جهات الاتصال",
+			"PROJECT_MODULE_CREATE": "إنشاء وحدات المشروع",
+			"PROJECT_MODULE_READ": "عرض وحدات المشروع",
+			"PROJECT_MODULE_UPDATE": "تحديث وحدات المشروع",
+			"PROJECT_MODULE_DELETE": "حذف وحدات المشروع",
 			"ORG_TEAM_ADD": "إضافة فِرَق",
 			"ORG_TEAM_VIEW": "عرض الفرق",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "تحرير المهام النشطة",

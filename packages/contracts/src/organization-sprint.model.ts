@@ -1,9 +1,9 @@
+import { IOrganizationProjectModule } from './organization-project-module.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { ITask } from './task.model';
 
-export interface IOrganizationSprint
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationSprint extends IBasePerTenantAndOrganizationEntityModel {
 	name: string;
 	projectId: string;
 	goal?: string;
@@ -13,6 +13,7 @@ export interface IOrganizationSprint
 	dayStart?: number; // Enum ((Sunday-Saturday) => (0-7))
 	project?: IOrganizationProject;
 	tasks?: ITask[];
+	modules?: IOrganizationProjectModule[];
 }
 
 export enum SprintStartDayEnum {

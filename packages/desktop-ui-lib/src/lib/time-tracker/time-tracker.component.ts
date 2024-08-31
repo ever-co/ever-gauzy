@@ -596,6 +596,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								  });
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
+						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
 						this._loggerService.error(error);
 					}
 				}

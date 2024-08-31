@@ -157,7 +157,12 @@
 		"PASTE": "Incolla",
 		"FORWARD_PORTS": "Inoltrare le porte",
 		"REPORT": "Report",
-		"IGNORE": "Ignora"
+		"IGNORE": "Ignora",
+		"INSTALL": "Installa",
+		"UNINSTALL": "Disinstalla",
+		"DEACTIVATE": "Disattiva",
+		"ACTIVATE": "Attiva",
+		"ADD_PLUGIN": "Aggiungi plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "Precedente",
 				"SAVE": "Salva",
 				"CREATE_CRITERIONS": "Creare criteri",
+				"CLOSE_CRITERIONS": "Chiudi criteri",
 				"EMAIL_NOTIFICATION": "Notifica via email",
 				"DELETE_INTERVIEW": "Eliminare l'intervista",
 				"DELETE_FEEDBACK": "Elimina feedback",
@@ -2074,6 +2080,10 @@
 			"ORG_PROJECT_DELETE": "Elimina progetti",
 			"ORG_CONTACT_EDIT": "Crea/Modifica Contatti",
 			"ORG_CONTACT_VIEW": "Visualizza contatti",
+			"PROJECT_MODULE_CREATE": "Crea moduli di progetto",
+			"PROJECT_MODULE_READ": "Visualizza moduli di progetto",
+			"PROJECT_MODULE_UPDATE": "Aggiorna moduli di progetto",
+			"PROJECT_MODULE_DELETE": "Elimina moduli di progetto",
 			"ORG_TEAM_ADD": "Aggiungi Teams",
 			"ORG_TEAM_VIEW": "Visualizza squadre",
 			"ORG_TEAM_EDIT_ACTIVE_TASK": "Modifica attività attive",
