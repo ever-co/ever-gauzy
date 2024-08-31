@@ -11,6 +11,7 @@ import {
 	IInvoiceItem,
 	IOrganizationContact,
 	IOrganizationProject,
+	IOrganizationProjectModule,
 	IOrganizationSprint,
 	IOrganizationTeam,
 	IPayment,
@@ -35,6 +36,7 @@ import {
 	ImageAsset,
 	InvoiceItem,
 	OrganizationContact,
+	OrganizationProjectModule,
 	OrganizationSprint,
 	OrganizationTeam,
 	Payment,
@@ -295,6 +297,12 @@ export class OrganizationProject
 	 */
 	@MultiORMOneToMany(() => TaskVersion, (it) => it.project)
 	versions?: ITaskVersion[];
+
+	/**
+	 * Organization modules Relationship
+	 */
+	@MultiORMOneToMany(() => OrganizationProjectModule, (it) => it.project)
+	modules?: IOrganizationProjectModule[];
 
 	/*
 	|--------------------------------------------------------------------------
