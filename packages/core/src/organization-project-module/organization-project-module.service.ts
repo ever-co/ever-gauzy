@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Brackets, FindManyOptions, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
@@ -37,7 +37,7 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 		try {
 			const { where } = options;
 			const { status, organizationId, projectId, members } = where;
-			const tenantId = RequestContext.currentTenantId() || options.where?.tenantId;
+			const tenantId = RequestContext.currentTenantId() || options.where.tenantId;
 
 			// Create query builder
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
@@ -115,8 +115,8 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 	): Promise<IPagination<IOrganizationProjectModule>> {
 		try {
 			const { where } = options;
-			const tenantId = RequestContext.currentTenantId() || where?.tenantId;
-			const { status, name, teams = [], organizationId, projectId, members } = where;
+			const { status, teams = [], organizationId, projectId, members } = where;
+			const tenantId = RequestContext.currentTenantId() || where.tenantId;
 
 			const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
