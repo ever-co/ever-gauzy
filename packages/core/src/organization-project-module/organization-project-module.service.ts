@@ -248,12 +248,12 @@ export class OrganizationProjectModuleService extends TenantAwareCrudService<Org
 			query.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					const tenantId = RequestContext.currentTenantId();
-					const { organizationId, organizationProjectId, organizationSprintId, organizationTeamId } = options;
+					const { organizationId, projectId, organizationSprintId, organizationTeamId } = options;
 
 					qb.andWhere(p('member.id = :employeeId'), { employeeId });
 					qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 					qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
-					qb.andWhere(p(`"${query.alias}"."projectId" = :organizationProjectId`), { organizationProjectId });
+					qb.andWhere(p(`"${query.alias}"."projectId" = :projectId`), { projectId });
 
 					if (isNotEmpty(organizationSprintId)) {
 						qb.andWhere(`sprint.id = :organizationSprintId`, {
