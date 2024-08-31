@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
 import { IOrganizationContact, OrganizationContactBudgetTypeEnum } from './organization-contact.model';
 import {
 	IOrganizationProject,
@@ -17,9 +17,9 @@ import { TimeFormatEnum } from './organization.model';
 
 export interface ITimesheet extends IBasePerTenantAndOrganizationEntityModel {
 	employee: IEmployee;
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 	approvedBy?: IUser;
-	approvedById?: IUser['id'];
+	approvedById?: ID;
 	timeLogs?: ITimeLog[];
 	duration?: number;
 	keyboard?: number;
@@ -100,16 +100,16 @@ export interface ITimeLog
 		IRelationalOrganizationProject,
 		IRelationalOrganizationTeam {
 	employee: IEmployee;
-	employeeId: IEmployee['id'];
+	employeeId: ID;
 	timesheet?: ITimesheet;
-	timesheetId?: ITimesheet['id'];
+	timesheetId?: ID;
 	task?: ITask;
-	taskId?: ITask['id'];
+	taskId?: ID;
 	timeSlots?: ITimeSlot[];
 	project?: IOrganizationProject;
-	projectId?: IOrganizationProject['id'];
+	projectId?: ID;
 	organizationContact?: IOrganizationContact;
-	organizationContactId?: IOrganizationContact['id'];
+	organizationContactId?: ID;
 	source?: TimeLogSourceEnum;
 	startedAt?: Date;
 	stoppedAt?: Date;

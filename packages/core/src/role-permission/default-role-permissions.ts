@@ -105,6 +105,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DAILY_PLAN_DELETE,
 			/** Daily CRUD Permissions End */
 
+			/** Project Module Permissions start */
+			PermissionsEnum.PROJECT_MODULE_CREATE,
+			PermissionsEnum.PROJECT_MODULE_READ,
+			PermissionsEnum.PROJECT_MODULE_UPDATE,
+			PermissionsEnum.PROJECT_MODULE_DELETE,
+			/** Project Module Permissions start */
+
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -269,6 +276,13 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DAILY_PLAN_DELETE,
 			/** Daily CRUD Permissions End */
 
+			/** Project Module Permissions start */
+			PermissionsEnum.PROJECT_MODULE_CREATE,
+			PermissionsEnum.PROJECT_MODULE_READ,
+			PermissionsEnum.PROJECT_MODULE_UPDATE,
+			PermissionsEnum.PROJECT_MODULE_DELETE,
+			/** Project Module Permissions start */
+
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -352,6 +366,10 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
+			PermissionsEnum.PROJECT_MODULE_CREATE,
+			PermissionsEnum.PROJECT_MODULE_READ,
+			PermissionsEnum.PROJECT_MODULE_UPDATE,
+			PermissionsEnum.PROJECT_MODULE_DELETE,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_INTERVIEW_VIEW,
@@ -402,6 +420,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.DAILY_PLAN_READ,
 			PermissionsEnum.DAILY_PLAN_UPDATE,
 			PermissionsEnum.DAILY_PLAN_DELETE,
+			/** Project Module */
+			PermissionsEnum.PROJECT_MODULE_CREATE,
+			PermissionsEnum.PROJECT_MODULE_READ,
+			PermissionsEnum.PROJECT_MODULE_UPDATE,
+			PermissionsEnum.PROJECT_MODULE_DELETE,
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
