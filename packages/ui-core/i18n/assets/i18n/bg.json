@@ -156,7 +156,12 @@
 		"PASTE": "Поставяне",
 		"FORWARD_PORTS": "Препращане на портове",
 		"REPORT": "Доклад",
-		"IGNORE": "Игнориране"
+		"IGNORE": "Игнориране",
+		"INSTALL": "Инсталирай",
+		"UNINSTALL": "Деинсталирай",
+		"DEACTIVATE": "Деактивирай",
+		"ACTIVATE": "Активирай",
+		"ADD_PLUGIN": "Добави плъгин"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

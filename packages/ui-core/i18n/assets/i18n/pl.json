@@ -157,7 +157,12 @@
 		"PASTE": "Wklej",
 		"FORWARD_PORTS": "Przekieruj porty",
 		"REPORT": "Raport",
-		"IGNORE": "Ignoruj"
+		"IGNORE": "Ignoruj",
+		"INSTALL": "Zainstaluj",
+		"UNINSTALL": "Odinstaluj",
+		"DEACTIVATE": "Dezaktywuj",
+		"ACTIVATE": "Aktywuj",
+		"ADD_PLUGIN": "Dodaj wtyczkę"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

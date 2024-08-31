@@ -157,7 +157,12 @@
 		"PASTE": "Colar",
 		"FORWARD_PORTS": "Encaminhar Portas",
 		"REPORT": "Relatório",
-		"IGNORE": "Ignorar"
+		"IGNORE": "Ignorar",
+		"INSTALL": "Instalar",
+		"UNINSTALL": "Desinstalar",
+		"DEACTIVATE": "Desativar",
+		"ACTIVATE": "Ativar",
+		"ADD_PLUGIN": "Adicionar plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

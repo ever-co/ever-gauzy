@@ -166,7 +166,12 @@
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled",
-		"RESYNC": "Resync"
+		"RESYNC": "Resync",
+		"INSTALL": "Install",
+		"UNINSTALL": "Uninstall",
+		"DEACTIVATE": "Deactivate",
+		"ACTIVATE": "Activate",
+		"ADD_PLUGIN": "Add Plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

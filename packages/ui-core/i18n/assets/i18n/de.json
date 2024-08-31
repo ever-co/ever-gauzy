@@ -157,7 +157,12 @@
 		"PASTE": "Einfügen",
 		"FORWARD_PORTS": "Weiterleitung von Ports",
 		"REPORT": "Bericht",
-		"IGNORE": "Ignorieren"
+		"IGNORE": "Ignorieren",
+		"INSTALL": "Installieren",
+		"UNINSTALL": "Deinstallieren",
+		"DEACTIVATE": "Deaktivieren",
+		"ACTIVATE": "Aktivieren",
+		"ADD_PLUGIN": "Plugin hinzufügen"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {

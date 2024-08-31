@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
@@ -37,7 +38,8 @@ import { PluginLoaderService } from './services/plugin-loader.service';
 		NbIconModule,
 		TranslateModule,
 		RouterModule,
-		NbBadgeModule
+		NbBadgeModule,
+		FormsModule
 	],
 	exports: [PluginLayoutComponent],
 	providers: [PluginLoaderService, PluginElectronService]

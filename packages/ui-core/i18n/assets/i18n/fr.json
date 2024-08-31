@@ -157,7 +157,12 @@
 		"PASTE": "Coller",
 		"FORWARD_PORTS": "Transférez les ports",
 		"REPORT": "Rapport",
-		"IGNORE": "Ignorer"
+		"IGNORE": "Ignorer",
+		"INSTALL": "Installer",
+		"UNINSTALL": "Désinstaller",
+		"DEACTIVATE": "Désactiver",
+		"ACTIVATE": "Activer",
+		"ADD_PLUGIN": "Ajouter"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
