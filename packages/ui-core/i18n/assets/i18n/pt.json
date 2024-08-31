@@ -157,7 +157,12 @@
 		"PASTE": "Colar",
 		"FORWARD_PORTS": "Encaminhar Portas",
 		"REPORT": "Relatório",
-		"IGNORE": "Ignorar"
+		"IGNORE": "Ignorar",
+		"INSTALL": "Instalar",
+		"UNINSTALL": "Desinstalar",
+		"DEACTIVATE": "Desativar",
+		"ACTIVATE": "Ativar",
+		"ADD_PLUGIN": "Adicionar plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "Anterior",
 				"SAVE": "Salvar",
 				"CREATE_CRITERIONS": "Criar critérios",
+				"CLOSE_CRITERIONS": "Fechar critérios",
 				"EMAIL_NOTIFICATION": "Notificação por email",
 				"DELETE_INTERVIEW": "Excluir entrevista",
 				"DELETE_FEEDBACK": "Excluir feedback",

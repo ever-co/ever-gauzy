@@ -14,13 +14,9 @@
  */
 export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
 
-// Define sub-page types for 'jobs', 'employees' and 'sales'
-export type JobsSubPageLocationRegistryId = 'job-employee';
-export type SalesSubPageLocationRegistryId = 'proposals';
-
 /**
  * @description
- * Type representing the possible page locations for dynamic routes, tabs, and table columns.
+ * Type representing the possible page locations for dynamic routes.
  *
  * This type is used to identify different sections of the application where dynamic
  * routes and tabs can be registered. Each value corresponds to a specific page or
@@ -32,16 +28,10 @@ export type SalesSubPageLocationRegistryId = 'proposals';
  * - 'pages': The main pages section of the application.
  * - 'dashboard': The main dashboard page of the application.
  * - 'jobs': The jobs or job search section of the application.
- * - 'job-employee': A sub-page under the jobs section.
+ * - 'sales': The sales or proposals section of the application.
+ * - 'proposals': A sub-page under the sales section.
  */
-export type PageLocationRegistryId =
-	| 'auth'
-	| 'pages'
-	| 'dashboard'
-	| 'jobs'
-	| JobsSubPageLocationRegistryId
-	| 'sales'
-	| SalesSubPageLocationRegistryId;
+export type PageRouteRegistryId = 'auth' | 'pages' | 'dashboard' | 'jobs' | 'sales' | 'proposals';
 
 /**
  * @description
@@ -56,21 +46,18 @@ export type PageLocationRegistryId =
  * - 'timesheet': A timesheet tab.
  * - 'time-activity': A time and activity tab.
  */
-export type TabsetRegistryId = 'timesheet' | 'time-activity' | 'dashboard';
+export type PageTabsetRegistryId = 'dashboard' | 'timesheet' | 'time-activity';
 
 /**
- * Enum representing the possible dynamic tabs for pages.
+ * @description
+ * Type representing the possible page data table locations for dynamic table columns.
  *
- * This enum is used to identify different types of tabs that can be registered
- * for dynamic pages. Each value corresponds to a specific
- * tab type in the application. This allows for flexible and dynamic registration
- * based on the context and requirements of the application.
+ * This type is used to identify different sections of the application where dynamic
+ * columns can be registered. Each value corresponds to a specific page or
+ * section in the application. This allows for flexible and dynamic routing based
+ * on the context and requirements of the application.
  *
- * @readonly
- * @enum {string}
+ * Possible values:
+ * - 'job-employee': A sub-page under the jobs section.
  */
-export enum TabsetRegistryIdEnum {
-	Timesheet = 'timesheet', // The identifier for the timesheet tabset
-	TimeActivity = 'time-activity', // The identifier for the time and activity tabset
-	Dashboard = 'dashboard' // The identifier for the dashboard tabset
-}
+export type PageDataTableRegistryId = 'job-employee';

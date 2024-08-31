@@ -157,7 +157,12 @@
 		"PASTE": "Coller",
 		"FORWARD_PORTS": "Transférez les ports",
 		"REPORT": "Rapport",
-		"IGNORE": "Ignorer"
+		"IGNORE": "Ignorer",
+		"INSTALL": "Installer",
+		"UNINSTALL": "Désinstaller",
+		"DEACTIVATE": "Désactiver",
+		"ACTIVATE": "Activer",
+		"ADD_PLUGIN": "Ajouter"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1697,6 +1702,7 @@
 				"PREVIOUS": "Précédent",
 				"SAVE": "Sauvegarder",
 				"CREATE_CRITERIONS": "Créer des critères",
+				"CLOSE_CRITERIONS": "Fermer les critères",
 				"EMAIL_NOTIFICATION": "Notification par email",
 				"DELETE_INTERVIEW": "Supprimer l'interview",
 				"DELETE_FEEDBACK": "Supprimer les commentaires.",

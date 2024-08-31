@@ -1,0 +1,94 @@
+@import 'gauzy/_gauzy-dialogs';
+
+.add-criterion {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  &-card {
+    padding: 1rem;
+  }
+}
+
+.qualities {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+
+  &-card {
+    width: 49%;
+  }
+}
+
+.quality {
+  margin: 0.2rem 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background-color: nb-theme(gauzy-card-1);
+  border-radius: nb-theme(border-radius);
+
+  &-text {
+    font-weight: 500;
+    margin: 0;
+  }
+
+  &-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    &-icons {
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+  }
+}
+
+.existedNames {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+
+  &-card {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .existedName {
+    border: 1px #ff3d70 solid;
+    margin: 0.2rem 0;
+    padding: 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 49%;
+    font-weight: 500;
+  }
+}
+:host {
+  nb-card {
+    background-color: var(--gauzy-card-2);
+  }
+  @include dialog(var(--gauzy-card-2), var(--gauzy-card-1));
+}
+h6 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 17px;
+  letter-spacing: -0.01em;
+}

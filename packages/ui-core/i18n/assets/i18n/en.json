@@ -166,7 +166,12 @@
 		"IGNORE": "Ignore",
 		"ENABLED": "Enabled",
 		"DISABLED": "Disabled",
-		"RESYNC": "Resync"
+		"RESYNC": "Resync",
+		"INSTALL": "Install",
+		"UNINSTALL": "Uninstall",
+		"DEACTIVATE": "Deactivate",
+		"ACTIVATE": "Activate",
+		"ADD_PLUGIN": "Add Plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1787,6 +1792,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "Save",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "Close criterions",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",

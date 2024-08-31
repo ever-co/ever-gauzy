@@ -157,7 +157,12 @@
 		"PASTE": "粘贴",
 		"FORWARD_PORTS": "转发端口",
 		"REPORT": "报告",
-		"IGNORE": "忽略"
+		"IGNORE": "忽略",
+		"INSTALL": "安装",
+		"UNINSTALL": "卸载",
+		"DEACTIVATE": "停用",
+		"ACTIVATE": "启用",
+		"ADD_PLUGIN": "添加插件"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "以前",
 				"SAVE": "保存",
 				"CREATE_CRITERIONS": "创建标准",
+				"CLOSE_CRITERIONS": "关闭标准",
 				"EMAIL_NOTIFICATION": "电子邮件通知",
 				"DELETE_INTERVIEW": "删除采访",
 				"DELETE_FEEDBACK": "删除反馈",

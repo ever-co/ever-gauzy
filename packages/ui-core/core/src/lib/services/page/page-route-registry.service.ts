@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Route } from '@angular/router';
-import { PageLocationRegistryId } from '../../common/component-registry.types';
+import { PageRouteRegistryId } from '../../common/component-registry.types';
 import { IPageRouteRegistry, PageRouteRegistryConfig } from './page-route-registry.types';
 
 @Injectable({
@@ -10,9 +10,25 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	/**
 	 * Registry for storing page route configurations.
 	 *
-	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageLocationRegistryId.
+	 * This Map stores arrays of PageRouteRegistryConfig objects, keyed by PageRouteRegistryId.
 	 */
-	private readonly registry = new Map<PageLocationRegistryId, PageRouteRegistryConfig[]>();
+	private readonly registry = new Map<PageRouteRegistryId, PageRouteRegistryConfig[]>();
+
+	/**
+	 * Retrieves a read-only snapshot of the page route registry.
+	 *
+	 * This method returns a new `Map` instance based on the current state of the `registry`.
+	 * This approach ensures that the original `registry` remains unchanged and protected
+	 * from direct modifications, preserving encapsulation and immutability.
+	 *
+	 * @returns A `ReadonlyMap` containing the current page route registry. This map
+	 *          provides a snapshot of the registry's state and cannot be modified,
+	 *          ensuring that internal data integrity is maintained.
+	 */
+	public getRegistry(): ReadonlyMap<PageRouteRegistryId, PageRouteRegistryConfig[]> {
+		// Create and return a new Map to provide an immutable view of the current registry state
+		return new Map(this.registry);
+	}
 
 	/**
 	 * Register a single page route configuration.
@@ -78,7 +94,7 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	 * @param location The page location identifier.
 	 * @returns The array of registered routes for the specified location.
 	 */
-	getPageLocationRoutes(location: PageLocationRegistryId): Route[] {
+	getPageLocationRoutes(location: PageRouteRegistryId): Route[] {
 		// Get all registered routes for the specified location
 		let configs = this.registry.get(location) || [];
 

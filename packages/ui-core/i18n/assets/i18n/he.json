@@ -156,7 +156,12 @@
 		"PASTE": "הדבקה",
 		"FORWARD_PORTS": "העברת פורטים",
 		"REPORT": "דוח",
-		"IGNORE": "התעלם"
+		"IGNORE": "התעלם",
+		"INSTALL": "התקן",
+		"UNINSTALL": "הסר התקנה",
+		"DEACTIVATE": "השבת",
+		"ACTIVATE": "הפעל",
+		"ADD_PLUGIN": "הוסף תוסף"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1738,6 +1743,7 @@
 				"PREVIOUS": "Previous",
 				"SAVE": "לשמור",
 				"CREATE_CRITERIONS": "Create criterions",
+				"CLOSE_CRITERIONS": "סגור קריטריונים",
 				"EMAIL_NOTIFICATION": "Email notification",
 				"DELETE_INTERVIEW": "Delete interview",
 				"DELETE_FEEDBACK": "Delete feedback",

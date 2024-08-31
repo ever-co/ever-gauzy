@@ -1,18 +1,21 @@
 <div class="button-container mb-3">
 	<div class="button-add">
-		<button (click)="addPlugin()" status="primary" nbButton> <nb-icon icon="plus-outline"></nb-icon>New
-			Plugin</button>
+		<button (click)="addPlugin()" status="success" size="small" nbButton>
+			<nb-icon icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD_PLUGIN' | translate }}
+		</button>
 	</div>
 	<div *ngIf="plugin" class="button-hide">
-		<button *ngIf="plugin.renderer" class="button-view" status="basic" (click)="view()" nbButton><nb-icon
-				icon="eye-outline"></nb-icon>View</button>
-		<button *gauzySpinnerButton="processing" [status]="plugin?.isActivate ? 'warning': 'success'"
+		<button *ngIf="plugin.renderer" class="action secondary" status="basic" size="small" (click)="view()"
+			nbButton><nb-icon icon="eye-outline"></nb-icon>{{ 'BUTTONS.VIEW' | translate }}</button>
+		<button *gauzySpinnerButton="processing" size="small" [status]="plugin?.isActivate ? 'warning': 'primary'"
 			class="button-install" (click)="changeStatus()" nbButton><nb-icon
-				[icon]="plugin?.isActivate ? 'close-circle-outline': 'checkmark-circle-outline'"></nb-icon>{{
-			plugin?.isActivate ? 'Deactivate':
-			'Activate' }}</button>
-		<button *gauzySpinnerButton="processing" class="button-remove" status="danger" (click)="uninstall()"
-			nbButton><nb-icon icon="trash-outline"></nb-icon>Uninstall</button>
+				[icon]="plugin?.isActivate ? 'close-circle-outline': 'checkmark-circle-outline'"></nb-icon>{{(plugin?.isActivate?
+			'BUTTONS.DEACTIVATE' : 'BUTTONS.ACTIVATE') | translate }}</button>
+		<button *gauzySpinnerButton="processing" size="small" class="action danger" status="basic" (click)="uninstall()"
+			nbButton><nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+			{{'BUTTONS.UNINSTALL' | translate}}
+		</button>
 	</div>
 </div>
 <div *ngIf="(plugins$ | async)?.length > 0; else noPlugin" class="col-12 custom-table">

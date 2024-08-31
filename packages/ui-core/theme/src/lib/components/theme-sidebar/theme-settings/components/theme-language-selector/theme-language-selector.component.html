@@ -1,6 +1,6 @@
 <div class="theme-container">
 	{{ 'SETTINGS_MENU.LANGUAGE' | translate }}
-  	<div>
+	<div>
 		<ng-container *ngIf="languages.length">
 			<nb-select
 				[(selected)]="preferredLanguage"
@@ -12,11 +12,8 @@
 				outline
 				optionsListClass="fit-content"
 			>
-				<nb-option
-					*ngFor="let lang of languages"
-					[value]="lang.value"
-				>
-					{{ lang.name | translate }}
+				<nb-option *ngFor="let lang of languages" [value]="lang.value">
+					{{ lang.value | uppercase }} ({{ lang.name | translate }})
 				</nb-option>
 			</nb-select>
 		</ng-container>

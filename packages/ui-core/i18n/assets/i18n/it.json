@@ -157,7 +157,12 @@
 		"PASTE": "Incolla",
 		"FORWARD_PORTS": "Inoltrare le porte",
 		"REPORT": "Report",
-		"IGNORE": "Ignora"
+		"IGNORE": "Ignora",
+		"INSTALL": "Installa",
+		"UNINSTALL": "Disinstalla",
+		"DEACTIVATE": "Disattiva",
+		"ACTIVATE": "Attiva",
+		"ADD_PLUGIN": "Aggiungi plugin"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1696,6 +1701,7 @@
 				"PREVIOUS": "Precedente",
 				"SAVE": "Salva",
 				"CREATE_CRITERIONS": "Creare criteri",
+				"CLOSE_CRITERIONS": "Chiudi criteri",
 				"EMAIL_NOTIFICATION": "Notifica via email",
 				"DELETE_INTERVIEW": "Eliminare l'intervista",
 				"DELETE_FEEDBACK": "Elimina feedback",

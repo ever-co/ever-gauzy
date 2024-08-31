@@ -156,7 +156,12 @@
 		"PASTE": "Вставить",
 		"FORWARD_PORTS": "Переадресация портов",
 		"REPORT": "Отчет",
-		"IGNORE": "Игнорировать"
+		"IGNORE": "Игнорировать",
+		"INSTALL": "Установить",
+		"UNINSTALL": "Удалить",
+		"DEACTIVATE": "Отключить",
+		"ACTIVATE": "Активировать",
+		"ADD_PLUGIN": "Добавить плагин"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -1745,6 +1750,7 @@
 				"PREVIOUS": "Предыдущий",
 				"SAVE": "Сохранить",
 				"CREATE_CRITERIONS": "Создать критерии",
+				"CLOSE_CRITERIONS": "Закрыть критерии",
 				"EMAIL_NOTIFICATION": "Уведомление по e-mail",
 				"DELETE_INTERVIEW": "Удалить интервью",
 				"DELETE_FEEDBACK": "Удалить отзыв",

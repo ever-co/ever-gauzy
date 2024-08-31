@@ -1,16 +1,19 @@
 <nb-card>
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"><i (click)="close()" class="fas fa-times"></i></span>
-		<h4>Plugin</h4>
+		<h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<label>Add new plugin</label>
-		<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
-			placeholder="https://cdn.server.tld/public/plugin.zip">
-		<div class="error" *ngIf="error">
-			{{error}}
-		</div>
-		<button nbButton status="primary" (click)="installPlugin(input.value)">Install<nb-icon
-				*gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon></button>
+		<form class="form" (ngSubmit)="installPlugin(input.value)">
+			<label>{{ 'BUTTONS.ADD_PLUGIN' | translate }}</label>
+			<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
+				placeholder="https://cdn.server.tld/public/plugin.zip">
+			<div class="error" *ngIf="error">
+				{{error}}
+			</div>
+			<button nbButton [disabled]="!input.value || installing" status="primary" type="submit"
+				(click)="installPlugin(input.value)">{{ 'BUTTONS.INSTALL' | translate }}<nb-icon
+					*gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon></button>
+		</form>
 	</nb-card-body>
 </nb-card>
