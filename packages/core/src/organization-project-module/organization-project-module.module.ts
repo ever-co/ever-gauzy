@@ -20,8 +20,7 @@ import { RoleModule } from '../role/role.module';
 		TypeOrmModule.forFeature([OrganizationProjectModule]),
 		MikroOrmModule.forFeature([OrganizationProjectModule]),
 		MikroOrmModule,
-		RolePermissionModule,
-		RoleModule
+		RolePermissionModule
 	],
 	controllers: [OrganizationProjectModuleController],
 	providers: [OrganizationProjectModuleService, TypeOrmOrganizationProjectModuleRepository],
