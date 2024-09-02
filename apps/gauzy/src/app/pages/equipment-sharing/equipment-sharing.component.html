@@ -9,7 +9,9 @@
 					</ngx-header-title>
 				</h4>
 			</div>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW">
+			<ng-template
+				[ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW]"
+			>
 				<div class="card-header-title">
 					<div>
 						<button

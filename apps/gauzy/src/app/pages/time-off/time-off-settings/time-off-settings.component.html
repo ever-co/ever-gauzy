@@ -67,7 +67,7 @@
 <!-- Action Buttons -->
 <ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_EDIT']">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_EDIT]">
 			<button
 				nbButton
 				type="button"
@@ -98,7 +98,7 @@
 
 <!-- Visible Buttons -->
 <ng-template #visibleButton>
-	<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_ADD']">
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_ADD]">
 		<button nbButton status="success" size="small" (click)="openAddPolicyDialog()">
 			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}

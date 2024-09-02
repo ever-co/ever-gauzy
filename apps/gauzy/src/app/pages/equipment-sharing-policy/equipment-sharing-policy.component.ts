@@ -199,7 +199,7 @@ export class EquipmentSharingPolicyComponent extends PaginationFilterBaseCompone
 		this.loading = true;
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/equipment-sharing-policy/pagination`,
-			relations: ['organization'],
+			relations: [],
 			where: {
 				...{ organizationId, tenantId },
 				...this.filters.where

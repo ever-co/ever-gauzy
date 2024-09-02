@@ -137,14 +137,19 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		}
 	}
 
+	/**
+	 * Load equipment sharing policies for the selected organization.
+	 */
 	async loadEquipmentSharingPolicy() {
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.selectedOrganization;
+		const { id: organizationId, tenantId } = this.selectedOrganization;
 		this.equipmentSharingPolicies = (
-			await this.equipmentSharingPolicyService.getAll([], {
-				organizationId,
-				tenantId
-			})
+			await this.equipmentSharingPolicyService.getAll(
+				{
+					organizationId,
+					tenantId
+				},
+				[]
+			)
 		).items;
 	}
 
