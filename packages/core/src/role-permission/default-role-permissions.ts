@@ -26,22 +26,18 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TASK_VIEW,
 			PermissionsEnum.ORG_TASK_EDIT,
 			PermissionsEnum.ORG_TASK_DELETE,
-
 			/** Organization Task Setting Permissions Start */
 			PermissionsEnum.ORG_TASK_SETTING,
 			/** Organization Task Setting Permissions End */
-
 			/** Employee CRUD Permissions Start */
 			PermissionsEnum.ORG_EMPLOYEES_ADD,
 			PermissionsEnum.ORG_EMPLOYEES_VIEW,
 			PermissionsEnum.ORG_EMPLOYEES_EDIT,
 			PermissionsEnum.ORG_EMPLOYEES_DELETE,
 			/** Employee CRUD Permissions End */
-
 			/** Member View Permissions Start */
 			PermissionsEnum.ORG_MEMBERS_VIEW,
 			/** Member View Permissions End */
-
 			PermissionsEnum.ORG_CANDIDATES_VIEW,
 			PermissionsEnum.ORG_CANDIDATES_EDIT,
 			PermissionsEnum.ORG_CANDIDATES_TASK_EDIT,
@@ -57,14 +53,22 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.POLICY_EDIT,
-			PermissionsEnum.POLICY_VIEW,
+			/** Equipment Sharing Policy Permissions Start */
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_ADD,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_EDIT,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_DELETE,
+			/** Equipment Sharing Policy Permissions End */
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			/** Time Off Permissions Start */
+			PermissionsEnum.TIME_OFF_ADD,
+			PermissionsEnum.TIME_OFF_VIEW,
 			PermissionsEnum.TIME_OFF_EDIT,
+			PermissionsEnum.TIME_OFF_DELETE,
+			/** Time Off Permissions End */
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -97,21 +101,18 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_DELETE,
 			PermissionsEnum.ORG_CONTACT_EDIT,
 			PermissionsEnum.ORG_CONTACT_VIEW,
-
 			/** Daily CRUD Permissions Start */
 			PermissionsEnum.DAILY_PLAN_CREATE,
 			PermissionsEnum.DAILY_PLAN_READ,
 			PermissionsEnum.DAILY_PLAN_UPDATE,
 			PermissionsEnum.DAILY_PLAN_DELETE,
 			/** Daily CRUD Permissions End */
-
 			/** Project Module Permissions start */
 			PermissionsEnum.PROJECT_MODULE_CREATE,
 			PermissionsEnum.PROJECT_MODULE_READ,
 			PermissionsEnum.PROJECT_MODULE_UPDATE,
 			PermissionsEnum.PROJECT_MODULE_DELETE,
 			/** Project Module Permissions start */
-
 			/** Organization Team */
 			PermissionsEnum.ORG_TEAM_ADD,
 			PermissionsEnum.ORG_TEAM_VIEW,
@@ -124,14 +125,12 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
-
 			/** Integration CRUD Permissions Start */
 			PermissionsEnum.INTEGRATION_ADD,
 			PermissionsEnum.INTEGRATION_VIEW,
 			PermissionsEnum.INTEGRATION_EDIT,
 			PermissionsEnum.INTEGRATION_DELETE,
 			/** Integration CRUD Permissions End */
-
 			PermissionsEnum.IMPORT_ADD,
 			PermissionsEnum.EXPORT_ADD,
 			PermissionsEnum.FILE_STORAGE_VIEW,
@@ -229,14 +228,22 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_USERS_EDIT,
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.ALL_ORG_EDIT,
-			PermissionsEnum.POLICY_EDIT,
-			PermissionsEnum.POLICY_VIEW,
+			/** Equipment Sharing Policy Permissions Start */
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_ADD,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_EDIT,
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_DELETE,
+			/** Equipment Sharing Policy Permissions End */
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,
 			PermissionsEnum.REQUEST_APPROVAL_VIEW,
-			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			/** Time Off Permissions Start */
+			PermissionsEnum.TIME_OFF_ADD,
+			PermissionsEnum.TIME_OFF_VIEW,
 			PermissionsEnum.TIME_OFF_EDIT,
+			PermissionsEnum.TIME_OFF_DELETE,
+			/** Time Off Permissions End */
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
 			PermissionsEnum.CHANGE_SELECTED_CANDIDATE,
 			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
@@ -391,10 +398,14 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROPOSALS_EDIT,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_VIEW,
 			PermissionsEnum.ORG_PROPOSAL_TEMPLATES_EDIT,
-			PermissionsEnum.ORG_TIME_OFF_VIEW,
+			/** Time Off Permissions Start */
+			PermissionsEnum.TIME_OFF_VIEW,
+			/** Time Off Permissions End */
 			PermissionsEnum.ORG_INVITE_VIEW,
 			PermissionsEnum.ORG_INVITE_EDIT,
-			PermissionsEnum.POLICY_VIEW,
+			/** Equipment Sharing Policy Permissions Start */
+			PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW,
+			/** Equipment Sharing Policy Permissions End */
 			PermissionsEnum.APPROVAL_POLICY_EDIT,
 			PermissionsEnum.APPROVAL_POLICY_VIEW,
 			PermissionsEnum.REQUEST_APPROVAL_EDIT,

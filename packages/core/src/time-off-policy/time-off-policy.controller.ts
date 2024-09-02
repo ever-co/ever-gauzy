@@ -1,22 +1,12 @@
-import {
-	Controller,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	Put,
-	Param,
-	HttpCode,
-	UseGuards
-} from '@nestjs/common';
+import { Controller, HttpStatus, Post, Body, Get, Query, Put, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import {
 	ITimeOffPolicyCreateInput,
 	ITimeOffPolicyUpdateInput,
 	ITimeOffPolicy,
 	PermissionsEnum,
-	IPagination
+	IPagination,
+	ID
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { Permissions } from './../shared/decorators';
@@ -26,8 +16,9 @@ import { TimeOffPolicy } from './time-off-policy.entity';
 import { TimeOffPolicyService } from './time-off-policy.service';
 
 @ApiTags('TimeOffPolicy')
-@UseGuards(TenantPermissionGuard)
-@Controller()
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_EDIT)
+@Controller('/time-off-policy')
 export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	constructor(private readonly timeOffPolicyService: TimeOffPolicyService) {
 		super(timeOffPolicyService);
@@ -38,7 +29,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	 *
 	 */
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() filter: PaginationParams<TimeOffPolicy>): Promise<IPagination<ITimeOffPolicy>> {
@@ -62,7 +53,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 		description: 'Record not found'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ITimeOffPolicy>> {
 		const { relations, findInput } = data;
@@ -88,7 +79,7 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_ADD)
 	@Post()
 	async create(@Body() entity: ITimeOffPolicyCreateInput): Promise<ITimeOffPolicy> {
 		return await this.timeOffPolicyService.create(entity);
@@ -116,10 +107,10 @@ export class TimeOffPolicyController extends CrudController<TimeOffPolicy> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.POLICY_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_POLICY_EDIT)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: ITimeOffPolicy['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: ITimeOffPolicyUpdateInput
 	): Promise<ITimeOffPolicy> {
 		return await this.timeOffPolicyService.update(id, entity);
