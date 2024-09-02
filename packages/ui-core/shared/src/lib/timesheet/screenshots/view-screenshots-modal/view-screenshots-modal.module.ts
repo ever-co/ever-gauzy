@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
 	NbAlertModule,
+	NbBadgeModule,
 	NbButtonModule,
 	NbCardModule,
 	NbDialogModule,
@@ -32,6 +33,7 @@ import { ViewScreenshotsModalComponent } from './view-screenshots-modal.componen
 		NbTooltipModule,
 		MomentModule,
 		SharedModule,
+		NbBadgeModule,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
 		DialogsModule,
