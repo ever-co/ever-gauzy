@@ -6,55 +6,60 @@
 					{{ 'TIME_OFF_PAGE.HEADER' | translate }}
 				</ngx-header-title>
 			</h4>
-			<ng-template ngxPermissionsOnly="POLICY_VIEW">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
 				<button
-					(click)="openTimeOffSettings()"
 					nbButton
+					type="button"
 					status="basic"
 					class="action p-2"
+					routerLink="/pages/employees/time-off/settings"
 				>
 					<i class="fas fa-cog"></i>
 				</button>
 			</ng-template>
 		</div>
 		<div class="align-self-end d-flex align-items-center">
+			<!-- Action Buttons -->
 			<ngx-gauzy-button-action
 				[buttonTemplate]="actionButtons"
 				[buttonTemplateVisible]="visibleButton"
 				[hasLayoutSelector]="false"
-				[isDisable]="!isRecordSelected"
+				[isDisable]="disableButton"
 			></ngx-gauzy-button-action>
-			<nb-toggle
-				[(ngModel)]="displayHolidays"
-				(checkedChange)="changeDisplayHolidays($event)"
-				class="custom-toggle mr-3 ml-3"
-				status="primary"
-				checked
-			>
-				{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
-			</nb-toggle>
-			<ga-layout-selector
-				[componentName]="viewComponentName"
-			></ga-layout-selector>
+
+			<!-- Display Holidays Toggle -->
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW]">
+				<nb-toggle
+					[(ngModel)]="displayHolidays"
+					(checkedChange)="changeDisplayHolidays($event)"
+					class="custom-toggle mr-3 ml-3"
+					status="primary"
+					checked
+				>
+					{{ 'TIME_OFF_PAGE.DISPLAY_HOLIDAYS' | translate }}
+				</nb-toggle>
+			</ng-template>
+
+			<!-- Layout Selector -->
+			<ga-layout-selector [componentName]="viewComponentName"></ga-layout-selector>
 		</div>
 	</nb-card-header>
 	<nb-card-body>
 		<ng-template [ngIf]="showFilter">
 			<div class="row mb-3 justify-content-end">
 				<div class="filter">
+					<!-- Statuses Radio Group -->
 					<nb-radio-group
 						class="align-center radio-group mr-5"
 						[(ngModel)]="selectedStatus"
 						(ngModelChange)="detectStatusChange($event)"
 					>
-						<nb-radio
-							class="d-flex"
-							*ngFor="let status of timeOffStatuses"
-							[value]="status"
-						>
+						<nb-radio class="d-flex" *ngFor="let status of timeOffStatuses" [value]="status">
 							{{ 'TIME_OFF_PAGE.STATUSES.' + status | translate }}
 						</nb-radio>
 					</nb-radio-group>
+
+					<!-- Include Archived Toggle -->
 					<nb-toggle
 						[(ngModel)]="includeArchived"
 						(checkedChange)="changeIncludeArchived($event)"
@@ -66,48 +71,65 @@
 				</div>
 			</div>
 		</ng-template>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container custom-table">
-				<angular2-smart-table
-					class="time-off-table"
-					style="cursor: pointer"
-					[settings]="settingsSmartTable"
-					[source]="sourceSmartTable"
-					(userRowSelect)="selectRecord($event)"
-					#timeOffTable
-				></angular2-smart-table>
-			</div>
-			<ng-container *ngIf="smartTableSource">
-				<ngx-pagination
-					[source]="smartTableSource"
-				></ngx-pagination>
+
+		<!-- Check if the user has the 'TIME_OFF_VIEW' permission -->
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW]">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container custom-table">
+						<angular2-smart-table
+							class="time-off-table"
+							style="cursor: pointer"
+							[settings]="settingsSmartTable"
+							[source]="sourceSmartTable"
+							(userRowSelect)="selectTimeOff($event)"
+							#timeOffTable
+						></angular2-smart-table>
+					</div>
+					<ng-container *ngIf="smartTableSource">
+						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+					</ng-container>
+				</ng-template>
+
+				<!-- Grid Card View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<div class="custom-grid">
+						<ga-card-grid
+							[totalItems]="pagination?.totalItems"
+							(onSelectedItem)="selectTimeOff($event)"
+							(scroll)="onScroll()"
+							[settings]="settingsSmartTable"
+							[source]="timeOffs"
+						></ga-card-grid>
+					</div>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
 			</ng-container>
 		</ng-template>
-		<ng-template #gridLayout>
-			<div class="custom-grid">
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					(onSelectedItem)="selectRecord($event)"
-					(scroll)="onScroll()"
-					[settings]="settingsSmartTable"
-					[source]="timeOffs"
-				></ga-card-grid>
+
+		<!-- If the user does not have the 'TIME_OFF_VIEW' permission -->
+		<ng-template [ngxPermissionsExcept]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW]">
+			<div>
+				<!-- Content to display if the user does not have the 'TIME_OFF_VIEW' permission -->
+				<p>You don't have permission to view this page</p>
 			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
 
+<!-- Action Buttons -->
 <ng-template #actionButtons let-selectedItem="selectedItem">
-	<ng-template ngxPermissionsOnly="TIME_OFF_EDIT">
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'TIME_OFF_EDIT']">
 		<div class="btn-group actions">
 			<ng-container>
 				<button
-					(click)="updateTimeOffRecord()"
 					*ngIf="!selectedTimeOffRecord?.isHoliday"
-					#editButton
+					(click)="updateTimeOffRecord()"
 					nbButton
 					status="basic"
 					size="small"
@@ -118,7 +140,6 @@
 				</button>
 				<button
 					(click)="deleteRequest(selectedItem)"
-					#deleteButton
 					nbButton
 					status="basic"
 					size="small"
@@ -127,102 +148,75 @@
 				>
 					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 				</button>
+
+				<!-- Show Actions Button -->
+				<ng-container *ngIf="!showActions">
+					<button nbButton (click)="showActions = true" status="basic" size="small" class="action">
+						<nb-icon icon="more-horizontal-outline" cursor="pointer"></nb-icon>
+					</button>
+				</ng-container>
+			</ng-container>
+		</div>
+
+		<ng-template [ngIf]="showActions">
+			<div class="btn-group actions ml-2">
 				<button
 					nbButton
-					(click)="showAdditionalActions()"
-					*ngIf="!showActions"
-					status="basic"
+					type="button"
+					(click)="approveDaysOff(selectedItem)"
+					status="success"
 					size="small"
 					class="action"
 				>
-					<nb-icon
-						icon="more-horizontal-outline"
-						cursor="pointer"
-					></nb-icon>
+					<nb-icon class="mr-1" icon="checkmark-circle-outline"></nb-icon>
+					{{ 'BUTTONS.APPROVE' | translate }}
 				</button>
-			</ng-container>
-		</div>
-	</ng-template>
-	<ng-template [ngIf]="showActions">
-		<div class="btn-group actions ml-2">
-			<ng-container *ngTemplateOutlet="additionalActions"> </ng-container>
-		</div>
+				<button
+					nbButton
+					type="button"
+					(click)="denyDaysOff(selectedItem)"
+					status="warning"
+					size="small"
+					class="action"
+				>
+					<nb-icon class="mr-1" icon="close-outline"></nb-icon>
+					{{ 'BUTTONS.DENY' | translate }}
+				</button>
+				<button
+					nbButton
+					type="button"
+					(click)="archive()"
+					status="basic"
+					size="small"
+					class="action secondary"
+					[disabled]="selectedTimeOffRecord ? selectedTimeOffRecord.isArchived : true"
+				>
+					<nb-icon class="mr-1" icon="archive-outline"></nb-icon>
+					{{ 'BUTTONS.ARCHIVE' | translate }}
+				</button>
+				<button nbButton (click)="showActions = false" status="basic" size="small" class="action">
+					<nb-icon icon="close-outline" cursor="pointer"></nb-icon>
+				</button>
+			</div>
+		</ng-template>
 	</ng-template>
 </ng-template>
+
+<!-- Visible Buttons -->
 <ng-template #visibleButton>
-	<button
-		nbButton
-		size="small"
-		class="action"
-		status="success"
-		(click)="requestDaysOff()"
-	>
-		<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
-		{{ 'BUTTONS.ADD' | translate }}
-	</button>
-	<button
-		nbButton
-		size="small"
-		status="basic"
-		class="action info"
-		(click)="addHolidays()"
-	>
-		<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
-		{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
-	</button>
-	<button
-		(click)="showFilter = !showFilter"
-		nbButton
-		status="basic"
-		size="small"
-		class="action primary"
-	>
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'TIME_OFF_ADD']">
+		<button nbButton type="button" size="small" class="action" status="success" (click)="requestDaysOff()">
+			<nb-icon class="mr-1" icon="calendar-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
+		</button>
+		<button nbButton type="button" size="small" status="basic" class="action info" (click)="addHolidays()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'TIME_OFF_PAGE.ADD_HOLIDAYS' | translate }}
+		</button>
+	</ng-template>
+
+	<button (click)="showFilter = !showFilter" nbButton status="basic" size="small" class="action primary">
 		<nb-icon icon="funnel-outline"></nb-icon>
 		{{ 'BUTTONS.FILTER' | translate }}
-	</button>
-</ng-template>
-<ng-template #additionalActions>
-	<button
-		(click)="approveDaysOff(selectedItem)"
-		nbButton
-		status="success"
-		size="small"
-		class="action"
-	>
-		<nb-icon class="mr-1" icon="checkmark-circle-outline"></nb-icon>
-		{{ 'BUTTONS.APPROVE' | translate }}
-	</button>
-	<button
-		(click)="denyDaysOff(selectedItem)"
-		nbButton
-		status="warning"
-		size="small"
-		class="action"
-	>
-		<nb-icon class="mr-1" icon="close-outline"></nb-icon>
-		{{ 'BUTTONS.DENY' | translate }}
-	</button>
-	<button
-		nbButton
-		(click)="archive()"
-		#archiveButton
-		status="basic"
-		size="small"
-		class="action secondary"
-		[disabled]="
-			selectedTimeOffRecord ? selectedTimeOffRecord.isArchived : true
-		"
-	>
-		<nb-icon class="mr-1" icon="archive-outline"></nb-icon
-		>{{ 'BUTTONS.ARCHIVE' | translate }}
-	</button>
-	<button
-		nbButton
-		(click)="showAdditionalActions()"
-		status="basic"
-		size="small"
-		class="action"
-	>
-		<nb-icon icon="close-outline" cursor="pointer"></nb-icon>
 	</button>
 </ng-template>

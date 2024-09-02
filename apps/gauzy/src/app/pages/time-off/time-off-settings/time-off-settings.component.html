@@ -18,7 +18,8 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_VIEW']">
+		<!-- Check if the user has the 'TIME_OFF_POLICY_VIEW' permission -->
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
 			<ng-container [ngSwitch]="dataLayoutStyle">
 				<!-- Table View -->
 				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
@@ -51,6 +52,14 @@
 					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
 				</ng-template>
 			</ng-container>
+		</ng-template>
+
+		<!-- If the user does not have the 'ORG_JOB_EMPLOYEE_VIEW' permission -->
+		<ng-template [ngxPermissionsExcept]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW]">
+			<div>
+				<!-- Content to display if the user does not have the 'TIME_OFF_POLICY_VIEW' permission -->
+				<p>You don't have permission to view this page</p>
+			</div>
 		</ng-template>
 	</nb-card-body>
 </nb-card>

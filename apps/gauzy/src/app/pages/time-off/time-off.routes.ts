@@ -15,7 +15,7 @@ export const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_READ],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW],
 				redirectTo: '/pages/dashboard'
 			},
 			selectors: {

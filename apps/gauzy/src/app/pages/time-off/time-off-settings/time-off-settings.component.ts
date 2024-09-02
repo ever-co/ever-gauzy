@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ComponentLayoutStyleEnum, IOrganization, ITimeOffPolicy } from '@gauzy/contracts';
+import { ComponentLayoutStyleEnum, IOrganization, ITimeOffPolicy, PermissionsEnum } from '@gauzy/contracts';
 import { debounceTime, filter, first, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs/internal/Subject';
 import { Cell } from 'angular2-smart-table';
@@ -20,7 +20,7 @@ import { PaidIcon, RequestApprovalIcon } from '../table-components';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-	selector: 'ga-time-off-settings',
+	selector: 'ga-time-off-policy-list',
 	templateUrl: './time-off-settings.component.html',
 	styleUrls: ['./time-off-settings.component.scss']
 })
@@ -32,6 +32,7 @@ export class TimeOffSettingsComponent extends PaginationFilterBaseComponent impl
 	public timeOffPolicies: ITimeOffPolicy[] = [];
 	public loading: boolean = false;
 	public disableButton: boolean = true;
+	public PermissionsEnum = PermissionsEnum;
 	public viewComponentName: ComponentEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;

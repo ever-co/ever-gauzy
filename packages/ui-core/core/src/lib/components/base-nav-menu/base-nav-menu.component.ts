@@ -27,7 +27,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	}
 
 	ngAfterViewInit() {
-		merge(
+		const merge$ = merge(
 			this._translateService.onLangChange.pipe(tap(() => this.defineBaseNavMenus())),
 			this._store.selectedOrganization$.pipe(
 				filter((organization: IOrganization) => !!organization),
@@ -37,9 +37,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 			this._store.featureOrganizations$.pipe(tap(() => this.defineBaseNavMenus())),
 			this._store.featureTenant$.pipe(tap(() => this.defineBaseNavMenus())),
 			this._store.userRolePermissions$.pipe(tap(() => this.defineBaseNavMenus()))
-		)
-			.pipe(untilDestroyed(this))
-			.subscribe();
+		);
+		merge$.pipe(untilDestroyed(this)).subscribe();
 	}
 
 	/**
@@ -525,11 +524,11 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: '/pages/employees/time-off',
 						data: {
 							translationKey: 'MENU.TIME_OFF',
-							permissionKeys: [PermissionsEnum.ORG_TIME_OFF_VIEW],
+							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
 							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_TIME_OFF_VIEW
+								PermissionsEnum.ALL_ORG_VIEW,
+								PermissionsEnum.TIME_OFF_VIEW
 							) && {
 								add: '/pages/employees/time-off?openAddDialog=true'
 							})
