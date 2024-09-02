@@ -9,6 +9,9 @@ import { NbComponentStatus, NbComponentSize } from '@nebular/theme';
 			:host {
 				display: inline-block;
 				position: relative;
+				nb-badge {
+					right: inherit !important;
+				}
 			}
 		`
 	]
