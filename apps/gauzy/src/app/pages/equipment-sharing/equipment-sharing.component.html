@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title">
 			<div class="card-header-title">
@@ -13,11 +9,12 @@
 					</ngx-header-title>
 				</h4>
 			</div>
-			<ng-template [ngxPermissionsOnly]="PermissionsEnum.POLICY_VIEW">
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW">
 				<div class="card-header-title">
 					<div>
 						<button
 							nbButton
+							type="button"
 							outline
 							class="action"
 							status="primary"
@@ -39,57 +36,59 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW">
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.TABLE">
-				<div class="table-scroll-container">
-					<angular2-smart-table
-						style="cursor: pointer"
-						[settings]="settingsSmartTable"
-						[source]="smartTableSource"
-						(userRowSelect)="selectEquipmentSharing($event)"
-					></angular2-smart-table>
-				</div>
-				<div class="pagination-container">
-					<ng-container *ngIf="smartTableSource">
-						<ngx-pagination
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_EQUIPMENT_SHARING_VIEW]">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container">
+						<angular2-smart-table
+							style="cursor: pointer"
+							[settings]="settingsSmartTable"
 							[source]="smartTableSource"
-						></ngx-pagination>
-					</ng-container>
-				</div>
-			</ng-container>
-			<ng-container *ngIf="dataLayoutStyle === componentLayoutStyleEnum.CARDS_GRID">
-				<ga-card-grid
-					[totalItems]="pagination?.totalItems"
-					[settings]="settingsSmartTable"
-					[source]="equipments"
-					(onSelectedItem)="selectEquipmentSharing($event)"
-					(scroll)="onScroll()"
-				></ga-card-grid>
+							(userRowSelect)="selectEquipmentSharing($event)"
+						></angular2-smart-table>
+					</div>
+					<div class="pagination-container">
+						<ng-container *ngIf="smartTableSource">
+							<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+						</ng-container>
+					</div>
+				</ng-template>
+
+				<!-- Card Grid View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<ga-card-grid
+						[totalItems]="pagination?.totalItems"
+						[settings]="settingsSmartTable"
+						[source]="equipments"
+						(onSelectedItem)="selectEquipmentSharing($event)"
+						(scroll)="onScroll()"
+					></ga-card-grid>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
 			</ng-container>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
+
+<!-- Visible Buttons -->
 <ng-template #visibleButton>
-	<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_MAKE_REQUEST">
-		<button
-			(click)="save(true)"
-			nbButton
-			status="success"
-			class="action"
-			size="small"
-		>
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.EQUIPMENT_MAKE_REQUEST]">
+		<button (click)="save(true)" nbButton status="success" class="action" size="small" type="button">
 			<nb-icon icon="plus-outline"></nb-icon>
 			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+
+<!-- Action Buttons -->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<ng-template [ngxPermissionsOnly]="PermissionsEnum.EQUIPMENT_APPROVE_REQUEST">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.EQUIPMENT_APPROVE_REQUEST]">
 			<ng-container *ngIf="showApprovedButton(selectedEquipmentSharing)">
 				<button
 					nbButton
@@ -98,6 +97,7 @@
 					(click)="approval(selectedEquipmentSharing)"
 					class="action"
 					size="small"
+					type="button"
 				>
 					{{ 'EQUIPMENT_SHARING_PAGE.APPROVE' | translate }}
 				</button>
@@ -110,31 +110,34 @@
 					(click)="refuse(selectedEquipmentSharing)"
 					size="small"
 					class="action"
+					type="button"
 				>
 					{{ 'EQUIPMENT_SHARING_PAGE.REFUSE' | translate }}
 				</button>
 			</ng-container>
 		</ng-template>
-		<ng-template [ngxPermissionsOnly]="PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT]">
 			<button
 				(click)="save(false, selectedItem)"
 				nbButton
 				status="basic"
 				class="action primary"
 				size="small"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
+				type="button"
 			>
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				size="small"
 				(click)="delete(selectedItem)"
 				status="basic"
 				class="action"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
+				type="button"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
 			</button>

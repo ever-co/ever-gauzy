@@ -11,7 +11,7 @@ const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.POLICY_VIEW],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EQUIPMENT_SHARING_POLICY_VIEW],
 				redirectTo: '/pages/dashboard'
 			}
 		}
