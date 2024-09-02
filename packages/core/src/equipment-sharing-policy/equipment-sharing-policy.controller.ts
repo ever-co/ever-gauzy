@@ -1,5 +1,5 @@
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Controller, HttpStatus, Get, UseGuards, Put, Param, Body, Query, Post, HttpException } from '@nestjs/common';
+import { Controller, HttpStatus, Get, UseGuards, Put, Param, Body, Query, Post } from '@nestjs/common';
 import { UpdateResult } from 'typeorm';
 import { ID, IEquipmentSharingPolicy, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';

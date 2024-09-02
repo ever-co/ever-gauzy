@@ -59,7 +59,6 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	public viewComponentName: ComponentEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
-	public timeOffStatusesselectedStatus = StatusTypesEnum.ALL;
 	public timeOffStatuses = Object.keys(StatusTypesEnum);
 	public loading: boolean;
 	public disableButton: boolean = true;

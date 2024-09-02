@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID, ITimeOffPolicyCreateInput, ITimeOffPolicyUpdateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';

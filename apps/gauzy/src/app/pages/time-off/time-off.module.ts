@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { ROUTES, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import {
 	NbBadgeModule,
 	NbButtonModule,
