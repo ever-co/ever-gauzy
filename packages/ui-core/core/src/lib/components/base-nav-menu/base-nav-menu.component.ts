@@ -527,8 +527,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							permissionKeys: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW],
 							featureKey: FeatureEnum.FEATURE_EMPLOYEE_TIMEOFF,
 							...(this._store.hasAnyPermission(
-								PermissionsEnum.ALL_ORG_VIEW,
-								PermissionsEnum.TIME_OFF_VIEW
+								PermissionsEnum.ALL_ORG_EDIT,
+								PermissionsEnum.TIME_OFF_ADD
 							) && {
 								add: '/pages/employees/time-off?openAddDialog=true'
 							})
