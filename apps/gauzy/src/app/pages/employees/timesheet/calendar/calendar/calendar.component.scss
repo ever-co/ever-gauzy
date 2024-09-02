@@ -1,4 +1,4 @@
-@import '../../../../payments/payments.component.scss';
+@import '@shared/_pg-card';
 
 :host nb-card {
   background-color: var(--gauzy-card-2);

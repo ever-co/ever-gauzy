@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -23,38 +24,45 @@ import {
 	CardGridModule,
 	SharedModule,
 	TimeOffMutationModule,
-	UserFormsModule
+	UserFormsModule,
+	TableComponentsModule
 } from '@gauzy/ui-core/shared';
+import { routes } from './time-off.routes';
 import { TimeOffComponent } from './time-off.component';
-import { TimeOffRoutingModule } from './time-off-routing.module';
+import { PaidIcon, RequestApprovalIcon } from './table-components';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
-import { RequestApprovalIcon } from './table-components/request-approval-icon';
-import { PaidIcon } from './table-components/paid-icon';
+
+// Nebular Modules
+const NB_MODULES = [
+	NbBadgeModule,
+	NbButtonModule,
+	NbCardModule,
+	NbCheckboxModule,
+	NbDialogModule.forChild(),
+	NbIconModule,
+	NbInputModule,
+	NbRouteTabsetModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTooltipModule,
+	NbRadioModule,
+	NbToggleModule
+];
+
+// Third Party Modules
+const THIRD_PARTY_MODULES = [NgSelectModule, NgxPermissionsModule.forChild(), TranslateModule.forChild()];
 
 @NgModule({
 	imports: [
+		RouterModule.forChild(routes),
+		...NB_MODULES,
+		...THIRD_PARTY_MODULES,
 		SharedModule,
-		TimeOffRoutingModule,
 		UserFormsModule,
-		NbCardModule,
-		NbButtonModule,
-		NbInputModule,
-		NbIconModule,
-		NbDialogModule.forChild(),
-		NbTooltipModule,
-		NgSelectModule,
-		NbRadioModule,
-		NbSelectModule,
-		NbBadgeModule,
-		CardGridModule,
-		NbRouteTabsetModule,
-		NbCheckboxModule,
-		TranslateModule.forChild(),
-		NbSpinnerModule,
 		TimeOffMutationModule,
-		NgxPermissionsModule.forChild(),
+		CardGridModule,
 		SmartDataViewLayoutModule,
-		NbToggleModule
+		TableComponentsModule
 	],
 	declarations: [TimeOffComponent, TimeOffSettingsComponent, RequestApprovalIcon, PaidIcon],
 	providers: [OrganizationsService, TimeOffService]

@@ -438,8 +438,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 		this.loading = true;
 
 		// Destructure properties for clarity
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
 
 		// Prepare request object with organization and tenant details
 		const request: any = { organizationId, tenantId };

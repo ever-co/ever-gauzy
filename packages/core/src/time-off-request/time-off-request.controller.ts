@@ -1,17 +1,4 @@
-import {
-	Controller,
-	UseGuards,
-	HttpStatus,
-	Post,
-	Body,
-	Get,
-	Query,
-	Put,
-	Param,
-	HttpCode,
-	ValidationPipe,
-	UsePipes
-} from '@nestjs/common';
+import { Controller, UseGuards, HttpStatus, Post, Body, Get, Query, Put, Param, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -21,7 +8,8 @@ import {
 	ITimeOffUpdateInput,
 	PermissionsEnum,
 	RolesEnum,
-	StatusTypesEnum
+	StatusTypesEnum,
+	ID
 } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TimeOffRequest } from './time-off-request.entity';
@@ -32,7 +20,8 @@ import { Permissions, Roles } from './../shared/decorators';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 
 @ApiTags('TimeOffRequest')
-@UseGuards(TenantPermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
 @Controller()
 export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	constructor(
@@ -42,8 +31,7 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		super(timeOffRequestService);
 	}
 
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW)
 	@Get('pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: PaginationParams<TimeOffRequest>): Promise<IPagination<ITimeOffRequest>> {
@@ -67,11 +55,11 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard, PermissionGuard)
+	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
 	@Put('approval/:id')
-	async timeOffRequestApproved(@Param('id', UUIDValidationPipe) id: string): Promise<ITimeOffRequest> {
+	async timeOffRequestApproved(@Param('id', UUIDValidationPipe) id: ID): Promise<ITimeOffRequest> {
 		return this.commandBus.execute(new TimeOffStatusCommand(id, StatusTypesEnum.APPROVED));
 	}
 
@@ -92,11 +80,11 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(RoleGuard, PermissionGuard)
+	@UseGuards(RoleGuard)
 	@Roles(RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_EDIT)
 	@Put('denied/:id')
-	async timeOffRequestDenied(@Param('id', UUIDValidationPipe) id: string): Promise<ITimeOffRequest> {
+	async timeOffRequestDenied(@Param('id', UUIDValidationPipe) id: ID): Promise<ITimeOffRequest> {
 		return this.commandBus.execute(new TimeOffStatusCommand(id, StatusTypesEnum.DENIED));
 	}
 
@@ -116,12 +104,11 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_TIME_OFF_VIEW)
+	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_VIEW)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<ITimeOffRequest>> {
 		const { relations, findInput } = data;
-		return this.timeOffRequestService.getAllTimeOffRequests(relations, findInput);
+		return await this.timeOffRequestService.getAllTimeOffRequests(relations, findInput);
 	}
 
 	/**
@@ -138,10 +125,10 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_ADD)
 	@Post()
 	async create(@Body() entity: ITimeOffCreateInput): Promise<ITimeOffRequest> {
-		return this.timeOffRequestService.create(entity);
+		return await this.timeOffRequestService.create(entity);
 	}
 
 	/**
@@ -162,13 +149,12 @@ export class TimeOffRequestController extends CrudController<TimeOffRequest> {
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.TIME_OFF_EDIT)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.TIME_OFF_DELETE)
 	@Put(':id')
 	async update(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: ITimeOffUpdateInput
 	): Promise<ITimeOffRequest> {
-		return this.timeOffRequestService.updateTimeOffByAdmin(id, entity);
+		return await this.timeOffRequestService.updateTimeOffByAdmin(id, entity);
 	}
 }

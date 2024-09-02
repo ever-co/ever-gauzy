@@ -1,24 +1,21 @@
-import {
-	IEmployee,
-	ITimeOff as ITimeOffRequest,
-	ITimeOffPolicy
-} from '@gauzy/contracts';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IEmployee, ITimeOff as ITimeOffRequest, ITimeOffPolicy } from '@gauzy/contracts';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
+import { Employee, TenantOrganizationBaseEntity, TimeOffRequest } from '../core/entities/internal';
 import {
-	Employee,
-	TenantOrganizationBaseEntity,
-	TimeOffRequest
-} from '../core/entities/internal';
-import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToMany, MultiORMOneToMany } from './../core/decorators/entity';
+	ColumnIndex,
+	MultiORMColumn,
+	MultiORMEntity,
+	MultiORMManyToMany,
+	MultiORMOneToMany
+} from './../core/decorators/entity';
 import { MikroOrmTimeOffPolicyRepository } from './repository/mikro-orm-time-off-policy.repository';
 
 @MultiORMEntity('time_off_policy', { mikroOrmRepository: () => MikroOrmTimeOffPolicyRepository })
 export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITimeOffPolicy {
-
 	@ApiProperty({ type: () => String })
-	@IsString()
 	@IsNotEmpty()
+	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -36,7 +33,6 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	/**
 	 * TimeOffRequest
 	 */
-	@ApiPropertyOptional({ type: () => TimeOffRequest, isArray: true })
 	@MultiORMOneToMany(() => TimeOffRequest, (it) => it.policy, {
 		onDelete: 'SET NULL'
 	})
@@ -47,9 +43,10 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-	@ApiProperty({ type: () => Employee })
 	@MultiORMManyToMany(() => Employee, (employee) => employee.timeOffPolicies, {
+		// Defines the database action to perform on update.
 		onUpdate: 'CASCADE',
+		// Defines the database cascade action on delete.
 		onDelete: 'CASCADE'
 	})
 	employees?: IEmployee[];
