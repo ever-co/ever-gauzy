@@ -1,8 +1,4 @@
-<nb-card
-	[nbSpinner]="loading"
-	nbSpinnerStatus="primary"
-	nbSpinnerSize="large"
->
+<nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large">
 	<nb-card-header class="d-flex flex-column pb-0">
 		<div class="card-header-title d-flex justify-content-start">
 			<ngx-back-navigation></ngx-back-navigation>
@@ -22,60 +18,67 @@
 		</div>
 	</nb-card-header>
 	<nb-card-body>
-		<ng-template
-			[ngIf]="dataLayoutStyle === componentLayoutStyleEnum.TABLE"
-			[ngIfElse]="gridLayout"
-		>
-			<div class="table-scroll-container custom-table">
-				<angular2-smart-table
-					style="cursor: pointer"
-					[settings]="smartTableSettings"
-					[source]="smartTableSource"
-					(userRowSelect)="selectTimeOffPolicy($event)"
-				></angular2-smart-table>
-			</div>
-			<ng-container *ngIf="smartTableSource">
-				<ngx-pagination
-					[source]="smartTableSource"
-				></ngx-pagination>
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_VIEW']">
+			<ng-container [ngSwitch]="dataLayoutStyle">
+				<!-- Table View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.TABLE">
+					<div class="table-scroll-container custom-table">
+						<angular2-smart-table
+							style="cursor: pointer"
+							[settings]="smartTableSettings"
+							[source]="smartTableSource"
+							(userRowSelect)="selectTimeOffPolicy($event)"
+						></angular2-smart-table>
+					</div>
+					<ng-container *ngIf="smartTableSource">
+						<ngx-pagination [source]="smartTableSource"></ngx-pagination>
+					</ng-container>
+				</ng-template>
+
+				<!-- Card Grid View -->
+				<ng-template [ngSwitchCase]="componentLayoutStyleEnum.CARDS_GRID">
+					<ga-card-grid
+						[totalItems]="pagination?.totalItems"
+						[settings]="smartTableSettings"
+						[source]="timeOffPolicies"
+						(onSelectedItem)="selectTimeOffPolicy($event)"
+						(scroll)="onScroll()"
+					></ga-card-grid>
+				</ng-template>
+
+				<!-- Optional: Default case if no specific layout matches -->
+				<ng-template *ngSwitchDefault>
+					<p>{{ 'SETTINGS_MENU.NO_LAYOUT' | translate }}</p>
+				</ng-template>
 			</ng-container>
-		</ng-template>
-		<ng-template #gridLayout>
-			<ga-card-grid
-				[totalItems]="pagination?.totalItems"
-				[settings]="smartTableSettings"
-				[source]="timeOffPolicies"
-				(onSelectedItem)="selectTimeOffPolicy($event)"
-				(scroll)="onScroll()"
-			></ga-card-grid>
 		</ng-template>
 	</nb-card-body>
 </nb-card>
-<ng-template
-	#actionButtons
-	let-buttonSize="buttonSize"
-	let-selectedItem="selectedItem"
->
+
+<!-- Action Buttons -->
+<ng-template #actionButtons let-buttonSize="buttonSize" let-selectedItem="selectedItem">
 	<div class="btn-group actions">
-		<ng-template ngxPermissionsOnly="POLICY_EDIT">
+		<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_EDIT']">
 			<button
 				nbButton
+				type="button"
 				status="basic"
 				class="action primary"
-				[disabled]="!selectedItem && disableButton"
+				[disabled]="disableButton"
 				(click)="openEditPolicyDialog(selectedItem)"
 				size="small"
 			>
-				<nb-icon class="mr-1" icon="edit-outline"></nb-icon
-				>{{ 'BUTTONS.EDIT' | translate }}
+				<nb-icon class="mr-1" icon="edit-outline"></nb-icon>
+				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
 			<button
 				nbButton
+				type="button"
 				status="basic"
 				class="action"
-				[disabled]="!selectedItem && disableButton"
-				(click)="openDeletePolicyDialog(selectedItem)"
 				size="small"
+				[disabled]="disableButton"
+				(click)="openDeletePolicyDialog(selectedItem)"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
 			>
 				<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
@@ -83,16 +86,13 @@
 		</ng-template>
 	</div>
 </ng-template>
+
+<!-- Visible Buttons -->
 <ng-template #visibleButton>
-	<ng-template ngxPermissionsOnly="POLICY_EDIT">
-		<button
-			nbButton
-			status="success"
-			size="small"
-			(click)="openAddPolicyDialog()"
-		>
-			<nb-icon class="mr-1" icon="plus-outline"></nb-icon
-			>{{ 'BUTTONS.ADD' | translate }}
+	<ng-template [ngxPermissionsOnly]="['ALL_ORG_VIEW', 'TIME_OFF_POLICY_ADD']">
+		<button nbButton status="success" size="small" (click)="openAddPolicyDialog()">
+			<nb-icon class="mr-1" icon="plus-outline"></nb-icon>
+			{{ 'BUTTONS.ADD' | translate }}
 		</button>
 	</ng-template>
 </ng-template>

@@ -15,7 +15,14 @@ import {
 	TimeOffService,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { StatusTypesEnum, ITimeOff, ComponentLayoutStyleEnum, IOrganization, IDateRangePicker } from '@gauzy/contracts';
+import {
+	StatusTypesEnum,
+	ITimeOff,
+	ComponentLayoutStyleEnum,
+	IOrganization,
+	IDateRangePicker,
+	ID
+} from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
@@ -39,7 +46,7 @@ import { ApprovalPolicyComponent } from '../approvals/table-components';
 })
 export class TimeOffComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
 	settingsSmartTable: object;
-	selectedEmployeeId: string | null;
+	selectedEmployeeId: ID;
 	selectedDateRange: IDateRangePicker;
 	sourceSmartTable: ServerDataSource;
 	timeOffs: ITimeOff[] = [];
@@ -396,7 +403,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 					renderComponent: ApprovalPolicyComponent,
 					componentInitFunction: (instance: ApprovalPolicyComponent, cell: Cell) => {
 						instance.rowData = cell.getRow().getData();
-						instance.value = cell.getValue();
+						instance.value = cell.getRawValue();
 					},
 					isFilterable: {
 						type: 'custom',

@@ -1,19 +1,21 @@
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { Routes } from '@angular/router';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionsGuard } from '@gauzy/ui-core/core';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
 import { TimeOffComponent } from './time-off.component';
 import { TimeOffSettingsComponent } from './time-off-settings/time-off-settings.component';
 
-const routes: Routes = [
+/**
+ * Routes for the TimeOffModule
+ */
+export const routes: Routes = [
 	{
 		path: '',
 		component: TimeOffComponent,
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.ORG_TIME_OFF_VIEW],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_READ],
 				redirectTo: '/pages/dashboard'
 			},
 			selectors: {
@@ -31,7 +33,7 @@ const routes: Routes = [
 		canActivate: [PermissionsGuard],
 		data: {
 			permissions: {
-				only: [PermissionsEnum.POLICY_VIEW],
+				only: [PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.TIME_OFF_POLICY_VIEW],
 				redirectTo: '/pages/dashboard'
 			},
 			selectors: {
@@ -42,9 +44,3 @@ const routes: Routes = [
 		}
 	}
 ];
-
-@NgModule({
-	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule]
-})
-export class TimeOffRoutingModule {}

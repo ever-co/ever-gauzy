@@ -1,0 +1,31 @@
+@import 'gauzy/_gauzy-table.scss';
+@import 'gauzy/_gauzy-cards.scss';
+
+$card-height: calc($default-card-height + 3.75rem);
+
+:host {
+  nb-card,
+  nb-card-body {
+    background-color: var(--gauzy-card-2);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+
+    .table-scroll-container {
+      flex-grow: 10;
+      max-height: unset;
+    }
+  }
+
+  nb-card-body {
+    border-radius: 0 0 $default-radius $default-radius;
+    @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
+    @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);
+  }
+
+  nb-card,
+  nb-card-header {
+    border-radius: var(--border-radius);
+  }
+  @include nb-card-overrides(unset, $card-height, $default-radius);
+}
