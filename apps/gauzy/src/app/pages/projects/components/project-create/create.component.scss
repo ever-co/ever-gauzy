@@ -1,14 +1,15 @@
-@import './../../../payments/payments.component.scss';
+@import '@shared/_pg-card';
+
 :host {
-    h4 {
-        font-size: 24px;
-        font-weight: 600;
-        line-height: 30px;
-        letter-spacing: 0em;
-    }
-    .custom-body-content {
-        background-color: unset;
-        padding-bottom: 0;
-        height: calc(100vh - 15.25rem) !important;
-    }
+  h4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+    letter-spacing: 0em;
+  }
+  .custom-body-content {
+    background-color: unset;
+    padding-bottom: 0;
+    height: calc(100vh - 15.25rem) !important;
+  }
 }

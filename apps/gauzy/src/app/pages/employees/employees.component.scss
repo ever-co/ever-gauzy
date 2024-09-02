@@ -1,5 +1,5 @@
 @import 'gauzy/_gauzy-overrides';
-@import '../payments/payments.component.scss';
+@import '@shared/_pg-card';
 
 nb-card {
   background-color: var(--gauzy-card-2);
