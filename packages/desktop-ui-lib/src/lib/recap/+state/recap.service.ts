@@ -8,7 +8,7 @@ import {
 	IGetTimeSlotInput
 } from '@gauzy/contracts';
 import { reduce } from 'underscore';
-import { Store, ToastrNotificationService } from '../../services';
+import { Store, TimeTrackerDateManager, ToastrNotificationService } from '../../services';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from '../services/timesheet';
 import { RecapQuery } from './recap.query';
 import { RecapStore } from './recap.store';
@@ -88,7 +88,9 @@ export class RecapService {
 				organizationId,
 				onlyMe: true,
 				employeeIds,
-				tenantId
+				tenantId,
+				todayStart: TimeTrackerDateManager.startToday,
+				todayEnd: TimeTrackerDateManager.endToday
 			};
 			const tasks = await this.timesheetStatisticsService.getTasksStatistics(request);
 			this.recapStore.update({ tasks });
@@ -111,7 +113,9 @@ export class RecapService {
 				organizationId,
 				employeeIds,
 				onlyMe: true,
-				tenantId
+				tenantId,
+				todayStart: TimeTrackerDateManager.startToday,
+				todayEnd: TimeTrackerDateManager.endToday
 			};
 			const timeSlots = await this.timesheetService.getTimeSlots(request);
 			this.recapStore.update({ timeSlots });
@@ -134,7 +138,9 @@ export class RecapService {
 				organizationId,
 				employeeIds,
 				onlyMe: true,
-				tenantId
+				tenantId,
+				todayStart: TimeTrackerDateManager.startToday,
+				todayEnd: TimeTrackerDateManager.endToday
 			};
 			const count = await this.timesheetStatisticsService.getCounts(request);
 			this.recapStore.update({ count });

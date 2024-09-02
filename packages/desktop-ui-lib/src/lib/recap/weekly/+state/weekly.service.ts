@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ICountsStatistics, IGetCountsStatistics, IGetTimeLogInput, ReportDayData } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
 import { RequestQuery } from '../../+state/request/request.query';
-import { Store, ToastrNotificationService } from '../../../services';
+import { Store, TimeTrackerDateManager, ToastrNotificationService } from '../../../services';
 import { TimesheetService, TimesheetStatisticsService } from '../../services/timesheet';
 import { IDateRangePicker } from '../../shared/features/date-range-picker/date-picker.interface';
 import { WeeklyRecapQuery } from './weekly.query';
@@ -84,7 +84,9 @@ export class WeeklyRecapService {
 				organizationId,
 				employeeIds,
 				onlyMe: true,
-				tenantId
+				tenantId,
+				todayStart: TimeTrackerDateManager.startToday,
+				todayEnd: TimeTrackerDateManager.endToday
 			};
 			const count = await this.timesheetStatisticsService.getCounts(request);
 			this.weeklyStore.update({ count: { ...count, reWeeklyLimit: user.employee.reWeeklyLimit } });
