@@ -1,5 +1,4 @@
-@import '../payments/payments.component.scss';
-
+@import '@shared/_pg-card';
 
 .action {
   box-shadow: var(--gauzy-shadow);
@@ -12,10 +11,10 @@
   &.secondary {
     color: #7e7e8f;
   }
-  &.success{
+  &.success {
     color: rgba(37, 184, 105, 1);
   }
-  &.warning{
+  &.warning {
     color: rgba(245, 109, 88, 1);
   }
   &.primary {
@@ -23,7 +22,7 @@
     .appearance-filled.status-basic[nbButtonToggle] {
       color: nb-theme(text-primary-color);
     }
-    &.soft{
+    &.soft {
       &[nbButton].appearance-filled.status-basic {
         background-color: rgba(110, 73, 232, 0.1);
       }
@@ -49,21 +48,21 @@ button {
   margin-right: 20px;
 }
 
-.gauzy-button-container{
+.gauzy-button-container {
   display: flex;
   justify-content: flex-end;
   width: 100%;
   padding-bottom: 0;
 }
 
-.card-custom-header{
- display: flex;
- flex-direction: column;
- width: 100%;
- padding-bottom: 0;
+.card-custom-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-bottom: 0;
 }
 
-:host nb-card-body{
+:host nb-card-body {
   overflow: unset;
   height: calc(100vh - 17.5rem) !important;
 }

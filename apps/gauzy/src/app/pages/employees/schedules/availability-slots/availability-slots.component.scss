@@ -1,5 +1,5 @@
 @import 'gauzy/_gauzy-overrides';
-@import '../../../payments/payments.component.scss';
+@import '@shared/_pg-card';
 
 .custom-header {
   display: flex;
@@ -35,11 +35,7 @@
   }
   .time-range ::ng-deep ga-timer-picker {
     text-transform: lowercase;
-    @include ng-select-overrides(
-      2rem,
-      $default-button-radius,
-      $default-box-shadow
-    );
+    @include ng-select-overrides(2rem, $default-button-radius, $default-box-shadow);
   }
 }
 :host .custom-calendar {
