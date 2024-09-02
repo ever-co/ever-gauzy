@@ -2158,6 +2158,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return;
 		}
 
+		if (!arg) {
+			this._loggerService.info('No data available to send from sendActivities');
+			return;
+		}
+
 		// screenshot process
 		let screenshotImg = [];
 
