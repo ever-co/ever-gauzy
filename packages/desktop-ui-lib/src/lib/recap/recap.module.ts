@@ -34,6 +34,10 @@ import { ProjectsComponent } from './features/projects/projects.component';
 import { RecapComponent } from './features/recap/recap.component';
 import { TasksComponent } from './features/tasks/tasks.component';
 import { TimeTrackingChartsComponent } from './features/time-tracking-charts/time-tracking-charts.component';
+import { MonthlyCalendarComponent } from './monthly/features/monthly-calendar/monthly-calendar.component';
+import { MonthlyProgressComponent } from './monthly/features/monthly-progress/monthly-progress.component';
+import { MonthlyRecapComponent } from './monthly/features/monthly-recap/monthly-recap.component';
+import { MonthlyStatisticComponent } from './monthly/features/monthly-statistic/monthly-statistic.component';
 import { ActivityService, TimesheetService, TimesheetStatisticsService } from './services/timesheet';
 import { ActivityReportComponent } from './shared/features/activity-report/activity-report.component';
 import { DateRangePickerModule } from './shared/features/date-range-picker/date-range-picker.module';
@@ -63,7 +67,11 @@ import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/wee
 		WeeklyRecapComponent,
 		WeeklyCalendarComponent,
 		WeeklyProgressComponent,
-		WeeklyStatisticComponent
+		WeeklyStatisticComponent,
+		MonthlyRecapComponent,
+		MonthlyCalendarComponent,
+		MonthlyProgressComponent,
+		MonthlyStatisticComponent
 	],
 	imports: [
 		CommonModule,
@@ -103,6 +111,6 @@ import { WeeklyStatisticComponent } from './weekly/features/weekly-statistic/wee
 		RequestQuery,
 		RequestStore
 	],
-	exports: [RecapComponent, WeeklyRecapComponent]
+	exports: [RecapComponent, WeeklyRecapComponent, MonthlyRecapComponent]
 })
 export class RecapModule {}
