@@ -13,6 +13,8 @@
 	justify-content: space-between;
 	border-top: 0.5px solid var(--select-filled-control-disabled-text-color);
 	padding-top: 1rem;
+	color: var(--gauzy-text-color-1);
+    font-weight: 500;
 
 	.day,
 	.hours {
@@ -21,7 +23,11 @@
 }
 
 .week-range {
-	font-weight: 500;
+	font-size: 16px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: -0.009em;
+    color: var(--gauzy-text-color-2);
 }
 
 .week-wrapper {

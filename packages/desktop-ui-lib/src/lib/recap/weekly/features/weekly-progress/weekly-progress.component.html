@@ -1,7 +1,7 @@
 <div class="week-wrapper">
 	<div>
 		<div class="week-range">
-			{{(range$ | async).startDate | dateTime : 'll'}} - {{(range$ | async).endDate | dateTime : 'll'}}
+			{{(range$ | async).startDate | dateTime : 'MMM D'}} - {{(range$ | async).endDate | dateTime : 'MMM D'}}
 		</div>
 	</div>
 	<ng-container *ngIf="(weeklyActivities$ | async)?.sum; else noWeeklyData">
