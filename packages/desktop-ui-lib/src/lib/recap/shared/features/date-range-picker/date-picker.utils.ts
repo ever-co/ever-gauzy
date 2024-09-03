@@ -83,3 +83,33 @@ export function updateWeekDays(input: IDateRangePicker) {
 
 	return { range, weekDays };
 }
+
+export function updateMonthWeeks(input: IDateRangePicker) {
+	const { range } = updateWeekDays(input);
+	const monthWeeks = range.map((date) => ({
+		day: date.format('YYYY-MM-DD'),
+		week: moment(date).week()
+	}));
+	const monthWeekdays = monthWeeks.reduce((acc, curr) => {
+		const weekNumber = curr.week;
+
+		let weekObj = acc.find((item) => item.week === weekNumber);
+
+		if (!weekObj) {
+			weekObj = { week: weekNumber, days: [] };
+			acc.push(weekObj);
+		}
+
+		weekObj.days.push(curr.day);
+
+		return acc;
+	}, []);
+	return { monthWeekdays };
+}
+
+export function weekDateRange(weekNumber: number): string {
+	const startOfWeek = moment().week(weekNumber).startOf('week');
+	const endOfWeek = moment().week(weekNumber).endOf('week');
+
+	return `${startOfWeek.format('MMM Do')} - ${endOfWeek.format('MMM Do')}`;
+}

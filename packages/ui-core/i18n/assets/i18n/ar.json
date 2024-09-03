@@ -4017,11 +4017,16 @@
 			"HELP": "مساعدة",
 			"LEARN_MORE": "تعلم المزيد",
 			"OPEN_MAIN_WINDOW": "افتح النافذة الرئيسية",
-			"DAILY_RECAP": "ملخص يومي"
+			"DAILY_RECAP": "ملخص يومي",
+			"WEEKLY_RECAP": "ملخص أسبوعي",
+			"MONTHLY_RECAP": "ملخص شهري"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "تتبع الوقت بالساعة",
-			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة"
+			"HOURLY_TIME_TRACKING_DATA": "بيانات تتبع الوقت بالساعة",
+			"NO_MONTHLY_ACTIVITY": "لم تقم بتتبع أي وقت أو نشاط لهذا الشهر.",
+			"WORKED_FOR_MONTH": "عملت هذا الشهر",
+			"ACTIVITY_FOR_MONTH": "النشاط الشهري"
 		}
 	},
 	"SERVER": "خادم",

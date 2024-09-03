@@ -4020,11 +4020,16 @@
 			"HELP": "Aidez-moi",
 			"LEARN_MORE": "En savoir plus",
 			"OPEN_MAIN_WINDOW": "Ouvrir la fenêtre principale",
-			"DAILY_RECAP": "Récapitulatif"
+			"DAILY_RECAP": "Récapitulatif journalier",
+			"WEEKLY_RECAP": "Récapitulatif Hebdomadaire",
+			"MONTHLY_RECAP": "Récapitulatif Mensuel"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Suivi du temps horaire",
-			"HOURLY_TIME_TRACKING_DATA": "Données de suivi du temps horaire"
+			"HOURLY_TIME_TRACKING_DATA": "Données de suivi du temps horaire",
+			"NO_MONTHLY_ACTIVITY": "Vous n'avez aucune heure ou activité enregistrée pour ce mois.",
+			"WORKED_FOR_MONTH": "Travail de ce mois-ci",
+			"ACTIVITY_FOR_MONTH": "Activité Mensuelle"
 		}
 	},
 	"SERVER": "Serveur",
