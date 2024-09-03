@@ -1,0 +1,36 @@
+<nb-card>
+	<nb-card-body class="card-wrapper">
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">{{ 'TIMESHEET.WORKED_TODAY' | translate }}</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ todayDuration$ | async | durationFormat : 'h[h] m[m] s[s]':{trim: 'both'} }}</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">{{ 'TIMESHEET.TODAY_ACTIVITY' | translate }}</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ todayActivity$ | async | percent:'1.0-2' }}</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">{{ 'TIMER_TRACKER.RECAP.WORKED_FOR_MONTH' | translate }}</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ monthlyDuration$ | async | durationFormat : 'h[h] m[m] s[s]':{trim: 'both'} }}</div>
+			</nb-card-body>
+		</nb-card>
+		<nb-card>
+			<nb-card-header>
+				<div class="h2">{{ 'TIMER_TRACKER.RECAP.ACTIVITY_FOR_MONTH' | translate }}</div>
+			</nb-card-header>
+			<nb-card-body>
+				<div class="h1">{{ monthlyActivity$ | async | percent:'1.0-2' }}</div>
+			</nb-card-body>
+		</nb-card>
+	</nb-card-body>
+</nb-card>

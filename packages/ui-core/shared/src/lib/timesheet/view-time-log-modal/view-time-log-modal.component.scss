@@ -107,3 +107,13 @@
 .actions {
   width: fit-content;
 }
+.avatar-log {
+  display: flex;
+  justify-content: space-between;
+}
+.row {
+  .source-version {
+    display: flex;
+    gap: 10%;
+  }
+}
