@@ -171,7 +171,9 @@
 		"UNINSTALL": "Uninstall",
 		"DEACTIVATE": "Deactivate",
 		"ACTIVATE": "Activate",
-		"ADD_PLUGIN": "Add Plugin"
+		"ADD_PLUGIN": "Add Plugin",
+		"LOAD_PLUGIN": "Load Plugin",
+		"FROM_CDN": "From CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -219,9 +221,7 @@
 			"EVENT_TYPE": "You have not created any event types.",
 			"PRODUCT_TYPE_NO_DATA": "You have not created any product types.",
 			"TEAM_DASHBOARD": "You don't have any teams.",
-			"PLUGIN": "You haven't install any plugin.",
-			"LOAD_PLUGIN": "Load Plugin",
-			"FROM_CDN": "From CDN"
+			"PLUGIN": "You haven't install any plugin."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Amount",

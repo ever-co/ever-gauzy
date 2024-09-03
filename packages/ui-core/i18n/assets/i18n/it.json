@@ -162,7 +162,9 @@
 		"UNINSTALL": "Disinstalla",
 		"DEACTIVATE": "Disattiva",
 		"ACTIVATE": "Attiva",
-		"ADD_PLUGIN": "Aggiungi plugin"
+		"ADD_PLUGIN": "Aggiungi plugin",
+		"LOAD_PLUGIN": "Carica Plugin",
+		"FROM_CDN": "Da CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -209,9 +211,7 @@
 			"EVENT_TYPE": "Non hai creato alcun tipo di evento",
 			"PRODUCT_TYPE_NO_DATA": "Non hai creato alcun tipo di prodotto",
 			"TEAM_DASHBOARD": "Non hai nessuna squadra",
-			"PLUGIN": "Non hai installato alcun plugin.",
-			"LOAD_PLUGIN": "Carica Plugin",
-			"FROM_CDN": "Da CDN"
+			"PLUGIN": "Non hai installato alcun plugin."
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Importo",

@@ -161,7 +161,9 @@
 		"UNINSTALL": "הסר התקנה",
 		"DEACTIVATE": "השבת",
 		"ACTIVATE": "הפעל",
-		"ADD_PLUGIN": "הוסף תוסף"
+		"ADD_PLUGIN": "הוסף תוסף",
+		"LOAD_PLUGIN": "טען תוסף",
+		"FROM_CDN": "מ-CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -209,9 +211,7 @@
 			"EVENT_TYPE": "לא יצרתם סוגי אירועים.",
 			"PRODUCT_TYPE_NO_DATA": "לא יצרתם סוגי מוצרים.",
 			"TEAM_DASHBOARD": "אין לך שום צוותים.",
-			"PLUGIN": "לא התקנת שום תוסף.",
-			"LOAD_PLUGIN": "טען תוסף",
-			"FROM_CDN": "מ-CDN"
+			"PLUGIN": "לא התקנת שום תוסף."
 		},
 		"TRANSACTION_TYPE": "סוג",
 		"AMOUNT": "כמות",

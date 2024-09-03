@@ -162,7 +162,9 @@
 		"UNINSTALL": "Désinstaller",
 		"DEACTIVATE": "Désactiver",
 		"ACTIVATE": "Activer",
-		"ADD_PLUGIN": "Ajouter"
+		"ADD_PLUGIN": "Ajouter",
+		"LOAD_PLUGIN": "Charger Plugin",
+		"FROM_CDN": "Depuis CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -209,9 +211,7 @@
 			"EVENT_TYPE": "Vous n'avez créé aucun type d'événement.",
 			"PRODUCT_TYPE_NO_DATA": "Vous n'avez créé aucun type de produit.",
 			"TEAM_DASHBOARD": "Vous n'avez aucune équipe.",
-			"PLUGIN": "Vous n'avez installé aucun plugin.",
-			"LOAD_PLUGIN": "Charger le plugin",
-			"FROM_CDN": "Depuis le CDN"
+			"PLUGIN": "Vous n'avez installé aucun plugin."
 		},
 		"TRANSACTION_TYPE": "Taper",
 		"AMOUNT": "Montant",

@@ -162,7 +162,9 @@
 		"UNINSTALL": "إلغاء التثبيت",
 		"DEACTIVATE": "تعطيل",
 		"ACTIVATE": "تفعيل",
-		"ADD_PLUGIN": "إضافة ملحق"
+		"ADD_PLUGIN": "إضافة ملحق",
+		"LOAD_PLUGIN": "تحميل المكون الإضافي",
+		"FROM_CDN": "من CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -208,9 +210,7 @@
 			"EVENT_TYPE": "لم تقم بإنشاء أي نوع فعالية.",
 			"PRODUCT_TYPE_NO_DATA": "لم تقم بإنشاء أي نوع منتج.",
 			"TEAM_DASHBOARD": "ليس لديك أي فرق",
-			"PLUGIN": "لم تقم بتثبيت أي ملحق.",
-			"LOAD_PLUGIN": "تحميل المكون الإضافي",
-			"FROM_CDN": "من CDN"
+			"PLUGIN": "لم تقم بتثبيت أي ملحق."
 		},
 		"TRANSACTION_TYPE": "النوع",
 		"AMOUNT": "المبلغ",

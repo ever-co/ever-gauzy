@@ -162,7 +162,9 @@
 		"UNINSTALL": "Deïnstalleren",
 		"DEACTIVATE": "Deactiveren",
 		"ACTIVATE": "Activeren",
-		"ADD_PLUGIN": "Plugin toevoegen"
+		"ADD_PLUGIN": "Plugin toevoegen",
+		"LOAD_PLUGIN": "Plugin laden",
+		"FROM_CDN": "Van CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -209,9 +211,7 @@
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
-			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
-			"LOAD_PLUGIN": "Plugin Laden",
-			"FROM_CDN": "Van CDN"
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",
