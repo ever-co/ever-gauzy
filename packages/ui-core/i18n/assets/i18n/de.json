@@ -4015,11 +4015,16 @@
 			"HELP": "Hilfe",
 			"LEARN_MORE": "Erfahren Sie mehr",
 			"OPEN_MAIN_WINDOW": "Öffne das Hauptfenster",
-			"DAILY_RECAP": "Tägliche Zusammenfassung"
+			"DAILY_RECAP": "Tägliche Zusammenfassung",
+			"WEEKLY_RECAP": "Wöchentliche Zusammenfassung",
+			"MONTHLY_RECAP": "Monatliche Zusammenfassung"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Stündliche Zeiterfassung",
-			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung"
+			"HOURLY_TIME_TRACKING_DATA": "Daten zur stündlichen Zeiterfassung",
+			"NO_MONTHLY_ACTIVITY": "Sie haben in diesem Monat keine Zeit oder Aktivität verfolgt.",
+			"WORKED_FOR_MONTH": "In diesem Monat gearbeitet",
+			"ACTIVITY_FOR_MONTH": "Monatliche Aktivität"
 		}
 	},
 	"SERVER": "Server",

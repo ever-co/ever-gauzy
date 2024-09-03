@@ -7,16 +7,16 @@
 	gap: 1rem;
 }
 
-.week-days {
+.weeks {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	border-top: 0.5px solid var(--select-filled-control-disabled-text-color);
 	padding-top: 1rem;
 	color: var(--gauzy-text-color-1);
-    font-weight: 500;
+	font-weight: 500;
 
-	.day,
+	.week,
 	.hours {
 		text-wrap: nowrap;
 	}

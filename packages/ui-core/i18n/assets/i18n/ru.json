@@ -4037,11 +4037,16 @@
 			"HELP": "Помощь",
 			"LEARN_MORE": "Узнать больше",
 			"OPEN_MAIN_WINDOW": "Открыть главное окно",
-			"DAILY_RECAP": "Ежедневный обзор"
+			"DAILY_RECAP": "Ежедневный обзор",
+			"WEEKLY_RECAP": "Еженедельный Обзор",
+			"MONTHLY_RECAP": "Ежемесячный Обзор"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Часовой учет времени",
-			"HOURLY_TIME_TRACKING_DATA": "Данные часового учета времени"
+			"HOURLY_TIME_TRACKING_DATA": "Данные часового учета времени",
+			"NO_MONTHLY_ACTIVITY": "У вас нет отслеженного времени и активности за этот месяц.",
+			"WORKED_FOR_MONTH": "Работал в этом месяце",
+			"ACTIVITY_FOR_MONTH": "Ежемесячная Активность"
 		}
 	},
 	"SERVER": "Сервер",
