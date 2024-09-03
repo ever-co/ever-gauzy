@@ -6,16 +6,15 @@
 	<nb-card-body>
 		<ng-container *ngIf="context !== 'cdn'; else web">
 			<div class="full-width mb-3 description">
-				Install plugins from local files or CDN. Local for custom/private plugins, CDN for public ones. Choose
-				based on your needs.
+				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
 			</div>
 			<div class="load-button">
 				<button nbButton [disabled]="installing" class="full-width" status="primary" type="submit"
 					(click)="localPluginInstall()"><nb-icon *gauzySpinnerButton="installing"
-						icon="monitor-outline"></nb-icon>Load Plugin</button>
+						icon="monitor-outline"></nb-icon>{{ 'BUTTONS.LOAD_PLUGIN' | translate }}</button>
 				<button *ngIf="!context" nbButton [disabled]="installing" class="full-width" status="primary"
 					type="submit" (click)="context = 'cdn'"><nb-icon *gauzySpinnerButton="installing"
-						icon="globe-outline"></nb-icon>From CDN</button>
+						icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}</button>
 			</div>
 		</ng-container>
 	</nb-card-body>
@@ -28,7 +27,7 @@
 			'BUTTONS.ADD_PLUGIN' |
 			translate }}</label>
 		<div class="description">
-			CDN installation allows for easy access to publicly available plugins.
+			{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
 		</div>
 		<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
 			placeholder="https://cdn.server.tld/public/plugin.zip">

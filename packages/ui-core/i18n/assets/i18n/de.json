@@ -209,7 +209,9 @@
 			"EVENT_TYPE": "Sie haben keine Veranstaltungsart erstellt.",
 			"PRODUCT_TYPE_NO_DATA": "Sie haben keine Produktart erstellt.",
 			"TEAM_DASHBOARD": "Du hast keine Teams.",
-			"PLUGIN": "Sie haben kein Plugin installiert."
+			"PLUGIN": "Sie haben kein Plugin installiert.",
+			"LOAD_PLUGIN": "Plugin laden",
+			"FROM_CDN": "Von CDN"
 		},
 		"TRANSACTION_TYPE": "Art\n",
 		"AMOUNT": "Menge",

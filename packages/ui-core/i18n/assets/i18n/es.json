@@ -209,7 +209,9 @@
 			"EVENT_TYPE": "No has creado ningún tipo de evento.",
 			"PRODUCT_TYPE_NO_DATA": "No has creado ningún tipo de producto.",
 			"TEAM_DASHBOARD": "No tienes ningún equipo.",
-			"PLUGIN": "No has instalado ningún complemento."
+			"PLUGIN": "No has instalado ningún complemento.",
+			"LOAD_PLUGIN": "Cargar Plugin",
+			"FROM_CDN": "Desde CDN"
 		},
 		"TRANSACTION_TYPE": "Tipo",
 		"AMOUNT": "Cantidad",

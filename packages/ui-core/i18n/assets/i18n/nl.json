@@ -209,7 +209,9 @@
 			"EVENT_TYPE": "U heeft geen evenementtype aangemaakt.",
 			"PRODUCT_TYPE_NO_DATA": "U heeft geen producttype gemaakt.",
 			"TEAM_DASHBOARD": "Je hebt geen teams.",
-			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd."
+			"PLUGIN": "Je hebt geen enkele plugin geïnstalleerd.",
+			"LOAD_PLUGIN": "Plugin Laden",
+			"FROM_CDN": "Van CDN"
 		},
 		"TRANSACTION_TYPE": "Type",
 		"AMOUNT": "Bedrag",

@@ -209,7 +209,9 @@
 			"EVENT_TYPE": "Nie utworzyłeś żadnego typu wydarzenia",
 			"PRODUCT_TYPE_NO_DATA": "Nie utworzyłeś żadnego typu produktu",
 			"TEAM_DASHBOARD": "Nie masz żadnych zespołów",
-			"PLUGIN": "Nie zainstalowano żadnych wtyczek."
+			"PLUGIN": "Nie zainstalowano żadnych wtyczek.",
+			"LOAD_PLUGIN": "Załaduj wtyczkę",
+			"FROM_CDN": "Z CDN"
 		},
 		"TRANSACTION_TYPE": "Rodzaj",
 		"AMOUNT": "Kwota",
