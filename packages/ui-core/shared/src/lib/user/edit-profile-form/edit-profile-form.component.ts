@@ -4,7 +4,7 @@ import { IUser, ITag, IRole, IUserUpdateInput, RolesEnum, IImageAsset, DEFAULT_T
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Subject, firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { Store } from '@gauzy/ui-core/core';
+import { EmailValidator, Store } from '@gauzy/ui-core/core';
 import {
 	AuthService,
 	ErrorHandlingService,
@@ -14,6 +14,7 @@ import {
 	UsersService
 } from '@gauzy/ui-core/core';
 import { FormHelpers } from '../../forms/helpers';
+import { patterns } from '../../regex';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -62,7 +63,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			{
 				firstName: [],
 				lastName: [],
-				email: [null, Validators.required],
+				email: [null, [Validators.required, Validators.email]],
 				imageUrl: [{ value: null, disabled: true }],
 				imageId: [],
 				password: [],
@@ -183,6 +184,10 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 		const { timeFormat, timeZone } = this.form.value;
 		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
 
+		if (!EmailValidator.isValid(email, patterns.email)) {
+			this.toastrService.error('TOASTR.MESSAGE.EMAIL_SHOULD_BE_REAL');
+			return;
+		}
 		let request: IUserUpdateInput = {
 			email,
 			firstName,
