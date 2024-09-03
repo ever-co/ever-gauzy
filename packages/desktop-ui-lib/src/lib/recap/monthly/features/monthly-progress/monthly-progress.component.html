@@ -4,7 +4,7 @@
 			{{(range$ | async).startDate | dateTime : 'MMMM'}}
 		</div>
 	</div>
-	<ng-container *ngIf="(monthlyActivities$ | async)?.sum; else noWeeklyData">
+	<ng-container *ngIf="(monthlyActivities$ | async)?.sum; else noMonthlyData">
 		<div class="weeks row" *ngFor="let month of monthWeekdays">
 			<div class="week col">{{ getWeekRange(month.week) }}</div>
 			<ngx-progress-status class="report-progress col-6"
@@ -17,6 +17,6 @@
 	</ng-container>
 </div>
 
-<ng-template #noWeeklyData>
-	<ngx-no-data-message [message]="'TIMESHEET.NO_DATA.MONTHLY_TIMESHEET' | translate"></ngx-no-data-message>
+<ng-template #noMonthlyData>
+	<ngx-no-data-message [message]="'TIMER_TRACKER.RECAP.NO_MONTHLY_ACTIVITY' | translate"></ngx-no-data-message>
 </ng-template>

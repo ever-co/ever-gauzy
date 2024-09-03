@@ -18,7 +18,7 @@
 		</nb-card>
 		<nb-card>
 			<nb-card-header>
-				<div class="h2">{{ 'TIMESHEET.WORKED_FOR_MONTH' | translate }}</div>
+				<div class="h2">{{ 'TIMER_TRACKER.RECAP.WORKED_FOR_MONTH' | translate }}</div>
 			</nb-card-header>
 			<nb-card-body>
 				<div class="h1">{{ monthlyDuration$ | async | durationFormat : 'h[h] m[m] s[s]':{trim: 'both'} }}</div>
@@ -26,7 +26,7 @@
 		</nb-card>
 		<nb-card>
 			<nb-card-header>
-				<div class="h2">{{ 'TIMESHEET.ACTIVITY_FOR_MONTH' | translate }}</div>
+				<div class="h2">{{ 'TIMER_TRACKER.RECAP.ACTIVITY_FOR_MONTH' | translate }}</div>
 			</nb-card-header>
 			<nb-card-body>
 				<div class="h1">{{ monthlyActivity$ | async | percent:'1.0-2' }}</div>

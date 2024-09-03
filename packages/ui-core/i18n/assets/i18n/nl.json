@@ -4019,11 +4019,16 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Meer informatie leren",
 			"OPEN_MAIN_WINDOW": "Open hoofdvenster",
-			"DAILY_RECAP": "Dagelijkse Samenvatting"
+			"DAILY_RECAP": "Dagelijkse Samenvatting",
+			"WEEKLY_RECAP": "Wekelijks Overzicht",
+			"MONTHLY_RECAP": "Maandelijks Overzicht"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Uurlijkse tijdregistratie",
-			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens"
+			"HOURLY_TIME_TRACKING_DATA": "Uurlijkse tijdregistratiegegevens",
+			"NO_MONTHLY_ACTIVITY": "Je hebt deze maand geen tijd of activiteit bijgehouden.",
+			"WORKED_FOR_MONTH": "Gewerkt deze maand",
+			"ACTIVITY_FOR_MONTH": "Maandelijkse Activiteit"
 		}
 	},
 	"SERVER": "Server",

@@ -4032,10 +4032,15 @@
 			"LEARN_MORE": "למד עוד",
 			"OPEN_MAIN_WINDOW": "פתח חלון ראשי",
 			"DAILY_RECAP": "סיכום יומי",
-			"RECAP": {
-				"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",
-				"HOURLY_TIME_TRACKING_DATA": "נתוני מעקב זמן לפי שעות"
-			}
+			"WEEKLY_RECAP": "סיכום שבועי",
+			"MONTHLY_RECAP": "סיכום חודשי"
+		},
+		"RECAP": {
+			"HOURLY_TIME_TRACKING": "מעקב זמן לפי שעות",
+			"HOURLY_TIME_TRACKING_DATA": "נתוני מעקב זמן לפי שעות",
+			"NO_MONTHLY_ACTIVITY": "לא עקבת אחרי זמן ופעילות החודש.",
+			"WORKED_FOR_MONTH": "עבדת החודש",
+			"ACTIVITY_FOR_MONTH": "פעילות חודשית"
 		}
 	},
 	"SERVER": "שרת",

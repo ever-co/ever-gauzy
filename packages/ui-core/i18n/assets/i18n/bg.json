@@ -4040,11 +4040,16 @@
 			"HELP": "Помощ",
 			"LEARN_MORE": "Научете повече",
 			"OPEN_MAIN_WINDOW": "Отвори главния прозорец",
-			"DAILY_RECAP": "Дневен преглед"
+			"DAILY_RECAP": "Дневен преглед",
+			"WEEKLY_RECAP": "Седмичен обзор",
+			"MONTHLY_RECAP": "Месечен обзор"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Проследяване на времето по часове",
-			"HOURLY_TIME_TRACKING_DATA": "Данни за проследяване на времето по часове"
+			"HOURLY_TIME_TRACKING_DATA": "Данни за проследяване на времето по часове",
+			"NO_MONTHLY_ACTIVITY": "Нямате проследено време и дейност за този месец.",
+			"WORKED_FOR_MONTH": "Работил този месец",
+			"ACTIVITY_FOR_MONTH": "Месечна активност"
 		}
 	},
 	"SERVER": "Сървър",
