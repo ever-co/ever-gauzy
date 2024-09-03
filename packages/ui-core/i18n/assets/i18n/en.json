@@ -4062,7 +4062,9 @@
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
 			"PLUGIN": "Plugin",
-			"VERSION": "Version"
+			"VERSION": "Version",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Install plugins from local files or CDN. Local for custom/private plugins, CDN for public ones. Choose based on your needs.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN installation allows for easy access to publicly available plugins."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "Weekly limit exceeded",
 		"OF_HRS": "Of {{ limit }} hrs",

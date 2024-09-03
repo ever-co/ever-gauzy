@@ -3924,6 +3924,8 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installeer plugins van lokale bestanden of CDN. Lokaal voor aangepaste/prive-plugins, CDN voor openbare. Kies op basis van uw behoeften.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Installatie vanaf CDN biedt gemakkelijk toegang tot publiek beschikbare plugins.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dit venster weerspiegelt de status van de timer en geeft aan of deze actief is of gestopt en functioneert als een knop.",
 			"SSL": {
