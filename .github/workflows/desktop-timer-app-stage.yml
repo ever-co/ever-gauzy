@@ -190,6 +190,20 @@ jobs:
           echo "Environment Variable Names:"
           printenv | cut -d= -f1
 
+      - name: Print environment variables that are large
+        shell: powershell
+        run: |
+          # List all environment variables
+          foreach ($envVar in [System.Environment]::GetEnvironmentVariables().Keys) {
+              # Get the value of the environment variable
+              $value = [System.Environment]::GetEnvironmentVariable($envVar)
+
+              # Check if the value length is greater than 100 bytes
+              if ([Text.Encoding]::UTF8.GetByteCount($value) -gt 100) {
+                  Write-Output $envVar
+              }
+          }
+
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:windows:release:gh'
         env:
@@ -282,7 +296,7 @@ jobs:
           GOROOT_1_22_X64: ''
           GRADLE_HOME: ''
           # HOMEDRIVE: ''
-          # HOMEPATH: ''
+          HOMEPATH: ''
           IEWebDriver: ''
           ImageOS: ''
           ImageVersion: ''
@@ -300,7 +314,7 @@ jobs:
           # npm_config_prefix: ''
           NUMBER_OF_PROCESSORS: ''
           OS: ''
-          # PATHEXT: ''
+          PATHEXT: ''
           PERFLOG_LOCATION_SETTING: ''
           PGBIN: ''
           PGDATA: ''
