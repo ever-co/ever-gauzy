@@ -52,7 +52,7 @@ export class PluginListComponent implements OnInit {
 		return this._pluginTable;
 	}
 
-	public readonly smartTableSettings = {
+	public smartTableSettings = {
 		columns: {
 			name: {
 				title: this.translateService.instant('SM_TABLE.NAME')
@@ -90,6 +90,7 @@ export class PluginListComponent implements OnInit {
 	ngOnInit(): void {
 		this.observePlugins();
 		this.loadPlugins();
+		this.onLanguageChange();
 	}
 
 	private observePlugins(): void {
@@ -204,5 +205,16 @@ export class PluginListComponent implements OnInit {
 
 	private set plugins(plugins: IPlugin[]) {
 		this.plugins$.next(plugins);
+	}
+
+	private onLanguageChange() {
+		this.translateService.onLangChange
+			.pipe(
+				tap(() => {
+					this.smartTableSettings = Object.assign({}, this.smartTableSettings);
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 }

@@ -3926,6 +3926,7 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Wtyczki",
 			"PLUGIN_DESCRIPTION": "Wtyczki",
+			"VERSION": "Wersja",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Zainstaluj wtyczki z lokalnych plików lub CDN. Lokalne dla niestandardowych/prywatnych wtyczek, CDN dla publicznych. Wybierz zgodnie z potrzebami.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "Instalacja z CDN umożliwia łatwy dostęp do publicznie dostępnych wtyczek.",
 			"PLUGIN": "Wtyczka",

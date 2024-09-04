@@ -3927,6 +3927,7 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Version",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installez des plugins à partir de fichiers locaux ou de CDN. Local pour les plugins personnalisés/privés, CDN pour les publics. Choisissez en fonction de vos besoins.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "L'installation via CDN permet un accès facile aux plugins disponibles publiquement.",
 			"PLUGIN": "Plugin",

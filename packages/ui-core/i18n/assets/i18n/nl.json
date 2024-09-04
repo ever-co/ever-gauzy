@@ -3926,6 +3926,7 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Versie",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installeer plugins van lokale bestanden of CDN. Lokaal voor aangepaste/prive-plugins, CDN voor openbare. Kies op basis van uw behoeften.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "Installatie vanaf CDN biedt gemakkelijk toegang tot publiek beschikbare plugins.",
 			"PLUGIN": "Plugin",

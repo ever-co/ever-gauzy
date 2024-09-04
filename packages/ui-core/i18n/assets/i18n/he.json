@@ -3937,6 +3937,7 @@
 			"WIDGET": "ווידג'ט",
 			"PLUGINS": "תוספים",
 			"PLUGIN_DESCRIPTION": "תוספים",
+			"VERSION": "גרסה",
 			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "התקן תוספים מקבצים מקומיים או CDN. מקומי עבור תוספים מותאמים אישית/פרטיים, CDN עבור ציבוריים. בחר לפי הצרכים שלך.",
 			"ADD_PLUGIN_CDN_DESCRIPTION": "התקנה מ-CDN מאפשרת גישה קלה לתוספים זמינים לציבור.",
 			"PLUGIN": "תוסף",
