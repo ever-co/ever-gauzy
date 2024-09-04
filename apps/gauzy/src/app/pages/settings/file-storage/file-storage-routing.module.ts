@@ -14,12 +14,7 @@ const routes: Routes = [
 				only: [PermissionsEnum.FILE_STORAGE_VIEW],
 				redirectTo: '/pages/settings'
 			},
-			selectors: {
-				project: false,
-				employee: false,
-				organization: false,
-				date: false
-			}
+			selectors: false
 		}
 	}
 ];
