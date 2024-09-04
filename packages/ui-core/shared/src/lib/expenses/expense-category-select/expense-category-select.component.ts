@@ -130,7 +130,7 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 			tenantId
 		});
 		// Remove duplicates based on the 'name' property
-		const uniqueItems = Array.from(new Map(items.map((item) => [item.name, item])).values());
+		const uniqueItems = Array.from(new Map(items.map((item) => [item.name.toLowerCase(), item])).values());
 
 		this.categories = uniqueItems;
 	}
