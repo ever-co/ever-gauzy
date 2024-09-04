@@ -19,7 +19,8 @@ import {
 	IInviteViewModel,
 	InvitationExpirationEnum,
 	IInvite,
-	InviteStatusEnum
+	InviteStatusEnum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import {
@@ -59,6 +60,7 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 	public settingsSmartTable: object;
 	public smartTableSource: ServerDataSource;
 	public selectedInvite: IInviteViewModel;
+	public PermissionsEnum = PermissionsEnum;
 	public viewComponentName: ComponentEnum;
 	public dataLayoutStyle = ComponentLayoutStyleEnum.TABLE;
 	public componentLayoutStyleEnum = ComponentLayoutStyleEnum;
@@ -175,34 +177,48 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			.subscribe();
 	}
 
-	async copyToClipboard(selectedItem?: IInviteViewModel) {
+	/**
+	 * Copies the invite URL to the clipboard.
+	 * If a specific invite item is provided, it sets it as the selected invite
+	 * before generating the URL.
+	 *
+	 * @param selectedItem - An optional invite item to select before copying the URL.
+	 */
+	async copyToClipboard(selectedItem?: IInviteViewModel): Promise<void> {
+		// If a selected item is passed, set it as the current invite
 		if (selectedItem) {
 			this.selectInvite({
 				isSelected: true,
 				data: selectedItem
 			});
 		}
-		if (this.selectedInvite) {
-			const { email, token } = this.selectedInvite;
-			// The call to Location.prepareExternalUrl is the key thing here.
-			let tree = this.router.createUrlTree([`auth/accept-invite`], {
-				queryParams: {
-					email: email,
-					token: token
-				}
-			});
-			this.clipboardService.copy(
-				[location.origin, this._location.prepareExternalUrl(this._urlSerializer.serialize(tree))].join('/')
-			);
+
+		if (!this.selectedInvite) {
+			return;
 		}
+
+		const { email, token } = this.selectedInvite;
+
+		// Create a URL tree with the invite route and query parameters
+		const tree = this.router.createUrlTree(['auth/accept-invite'], { queryParams: { email, token } });
+
+		// Prepare the external URL
+		const externalUrl = this._location.prepareExternalUrl(this._urlSerializer.serialize(tree));
+
+		// Prepare the full URL and copy it to the clipboard
+		const inviteUrl = [location.origin, externalUrl].join('/');
+
+		// Copy the URL to the clipboard
+		this.clipboardService.copy(inviteUrl);
 	}
 
 	/**
-	 * Copy Success
+	 * Handles the success event after copying text to the clipboard.
+	 * Displays a success toast message and clears the selected item.
 	 *
-	 * @param clipboard
+	 * @param clipboard - The clipboard response object containing details of the copy action.
 	 */
-	onCopySuccess(clipboard: IClipboardResponse) {
+	onCopySuccess(clipboard: IClipboardResponse): void {
 		try {
 			this.toastrService.success('TOASTR.MESSAGE.COPIED');
 		} finally {
@@ -211,11 +227,12 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 	}
 
 	/**
-	 * Copy Failure
+	 * Handles the failure event when copying text to the clipboard.
+	 * Displays an error toast message and clears the selected item.
 	 *
-	 * @param clipboard
+	 * @param clipboard - The clipboard response object containing details of the failed copy action.
 	 */
-	onCopyFailure(clipboard: IClipboardResponse) {}
+	onCopyFailure(clipboard: IClipboardResponse): void {}
 
 	/*
 	 * Register Smart Table Source Config
@@ -225,8 +242,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			return;
 		}
 		// this.loading = true;
-		const { tenantId } = this.store.user;
-		const { id: organizationId } = this.organization;
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Create a new server data source with the specified endpoint and relations
 		this.smartTableSource = new ServerDataSource(this.httpClient, {
 			endPoint: `${API_PREFIX}/invite`,
 			relations: ['projects', 'invitedBy', 'role', 'organizationContacts', 'departments'],

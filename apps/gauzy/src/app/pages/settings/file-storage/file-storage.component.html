@@ -1,55 +1,52 @@
-<ng-template [ngxPermissionsOnly]="PermissionsEnum.FILE_STORAGE_VIEW">
+<ng-template [ngxPermissionsOnly]="[PermissionsEnum.FILE_STORAGE_VIEW]">
 	<form
 		#ngForm="ngForm"
 		aria-labelledby="title"
 		[formGroup]="form"
 		(ngSubmit)="submit()"
-		[nbSpinner]="loading" nbSpinnerStatus="primary"
+		[nbSpinner]="loading"
+		nbSpinnerStatus="primary"
 	>
 		<nb-card class="card-scroll">
 			<nb-card-header class="d-flex justify-content-between">
 				<h4>
-					<span class="menu-setting">
-						{{ 'MENU.SETTINGS' | translate }}/
-					</span>
+					<span class="menu-setting"> {{ 'MENU.SETTINGS' | translate }}/ </span>
 					{{ 'MENU.FILE_STORAGE' | translate }}
 				</h4>
 			</nb-card-header>
 			<nb-card-body>
+				<!-- File Storage Provider Selector -->
 				<file-provider-selector
 					formControlName="fileStorageProvider"
 					(onSelectionChanged)="setFileStorageProvider($event)"
 				></file-provider-selector>
+
+				<!-- File Storage Provider Configuration -->
 				<ng-container [ngSwitch]="fileStorageProvider">
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.S3">
 						<ng-container
-							*ngTemplateOutlet="s3StorageFormTemplate; context: { group: form }">
-						</ng-container>
+							*ngTemplateOutlet="s3StorageFormTemplate; context: { group: form }"
+						></ng-container>
 					</ng-container>
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.WASABI">
 						<ng-container
-							*ngTemplateOutlet="wasabiStorageFormTemplate; context: { group: form }">
-						</ng-container>
+							*ngTemplateOutlet="wasabiStorageFormTemplate; context: { group: form }"
+						></ng-container>
 					</ng-container>
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.CLOUDINARY">
 						<ng-container
-							*ngTemplateOutlet="cloudinaryStorageFormTemplate; context: { group: form }">
-						</ng-container>
+							*ngTemplateOutlet="cloudinaryStorageFormTemplate; context: { group: form }"
+						></ng-container>
 					</ng-container>
 					<ng-container *ngSwitchCase="FileStorageProviderEnum.DIGITALOCEAN">
 						<ng-container
-							*ngTemplateOutlet="digitalOceanStorageFormTemplate; context: { group: form }">
-						</ng-container>
+							*ngTemplateOutlet="digitalOceanStorageFormTemplate; context: { group: form }"
+						></ng-container>
 					</ng-container>
 				</ng-container>
 			</nb-card-body>
 			<nb-card-footer>
-				<button
-					type="submit"
-					class="mr-2"
-					nbButton
-					status="success"
-				>
+				<button type="submit" class="mr-2" nbButton status="success">
 					{{ 'BUTTONS.SAVE' | translate }}
 				</button>
 			</nb-card-footer>
@@ -78,10 +75,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
 					/>
 				</div>
 			</div>
@@ -97,10 +91,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
 					/>
 				</div>
 			</div>
@@ -116,10 +107,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.REGION' | translate"
 					/>
 				</div>
 			</div>
@@ -135,10 +123,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.S3.PLACEHOLDERS.BUCKET' | translate"
 					/>
 				</div>
 			</div>
@@ -166,10 +151,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.ACCESS_KEY_ID' | translate"
 					/>
 				</div>
 			</div>
@@ -185,10 +167,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SECRET_ACCESS_KEY' | translate"
 					/>
 				</div>
 			</div>
@@ -204,10 +183,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.REGION' | translate"
 					/>
 				</div>
 			</div>
@@ -223,10 +199,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.SERVICE_URL' | translate"
 					/>
 				</div>
 			</div>
@@ -242,10 +215,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.WASABI.PLACEHOLDERS.BUCKET' | translate"
 					/>
 				</div>
 			</div>
@@ -254,10 +224,7 @@
 					{{ 'SETTINGS_FILE_STORAGE.WASABI.LABELS.FORCE_PATH_STYLE' | translate }}
 				</label>
 				<div class="col-9 col-xl-4">
-					<nb-toggle
-						formControlName="wasabi_aws_force_path_style"
-						status="primary"
-					></nb-toggle >
+					<nb-toggle formControlName="wasabi_aws_force_path_style" status="primary"></nb-toggle>
 				</div>
 			</div>
 		</nb-card-body>
@@ -301,10 +268,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_KEY' | translate"
 					/>
 				</div>
 			</div>
@@ -320,10 +284,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.ACCESS_API_SECRET' | translate"
 					/>
 				</div>
 			</div>
@@ -339,10 +300,7 @@
 						nbInput
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.DELIVERY_URL' | translate"
 					/>
 				</div>
 			</div>
@@ -357,15 +315,9 @@
 						formControlName="cloudinary_api_secure"
 						fullWidth
 						class="w-100"
-						[placeholder]="
-							'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE'
-								| translate
-						"
+						[placeholder]="'SETTINGS_FILE_STORAGE.CLOUDINARY.PLACEHOLDERS.SECURE' | translate"
 					>
-						<nb-option
-							*ngFor="let secure of secureOptions"
-							[value]="secure.value"
-						>
+						<nb-option *ngFor="let secure of secureOptions" [value]="secure.value">
 							{{ secure.label | titlecase }}
 						</nb-option>
 					</nb-select>
@@ -482,10 +434,7 @@
 					{{ 'SETTINGS_FILE_STORAGE.DIGITALOCEAN.LABELS.FORCE_PATH_STYLE' | translate }}
 				</label>
 				<div class="col-9 col-xl-4">
-					<nb-toggle
-						formControlName="digitalocean_s3_force_path_style"
-						status="primary"
-					></nb-toggle >
+					<nb-toggle formControlName="digitalocean_s3_force_path_style" status="primary"></nb-toggle>
 				</div>
 			</div>
 		</nb-card-body>
