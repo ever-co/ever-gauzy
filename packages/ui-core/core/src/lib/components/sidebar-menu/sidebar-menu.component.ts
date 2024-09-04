@@ -1,11 +1,19 @@
-import { AfterContentChecked, AfterViewInit, ChangeDetectorRef, Component, Input } from '@angular/core';
+import {
+	AfterContentChecked,
+	AfterViewInit,
+	ChangeDetectionStrategy,
+	ChangeDetectorRef,
+	Component,
+	Input
+} from '@angular/core';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
 import { SidebarMenuService } from '../../services';
 
 @Component({
 	selector: 'ga-sidebar-menu',
 	templateUrl: './sidebar-menu.component.html',
-	styleUrls: ['./sidebar-menu.component.scss']
+	styleUrls: ['./sidebar-menu.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit {
 	@Input() items: IMenuItem[] = [];
