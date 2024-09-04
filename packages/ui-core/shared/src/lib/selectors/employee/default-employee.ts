@@ -9,7 +9,7 @@ export const ALL_EMPLOYEES_SELECTED: ISelectedEmployee = {
 	firstName: 'All Employees',
 	lastName: '',
 	fullName: '',
-	imageUrl: 'https://i.imgur.com/XwA2T62.jpg',
+	imageUrl: '',
 	defaultType: DEFAULT_TYPE.ALL_EMPLOYEE,
 	tags: [],
 	skills: []
