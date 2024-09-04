@@ -4150,11 +4150,16 @@
 			"HELP": "Help",
 			"LEARN_MORE": "Learn More",
 			"OPEN_MAIN_WINDOW": "Open Main Window",
-			"DAILY_RECAP": "Daily Recap"
+			"DAILY_RECAP": "Daily Recap",
+			"WEEKLY_RECAP": "Weekly Recap",
+			"MONTHLY_RECAP": "Monthly Recap"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Hourly Time Tracking",
-			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data"
+			"HOURLY_TIME_TRACKING_DATA": "Hourly Time Tracking Data",
+			"WORKED_FOR_MONTH": "Worked this month",
+			"ACTIVITY_FOR_MONTH": "Monthly Activity",
+			"NO_MONTHLY_ACTIVITY": "You have not any tracked time and activity for this month."
 		}
 	},
 	"SERVER": "Server",

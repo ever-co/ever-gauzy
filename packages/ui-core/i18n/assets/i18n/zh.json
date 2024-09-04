@@ -4024,11 +4024,16 @@
 			"HELP": "帮助",
 			"LEARN_MORE": "了解更多",
 			"OPEN_MAIN_WINDOW": "打开主窗口",
-			"DAILY_RECAP": "每日总结"
+			"DAILY_RECAP": "每日总结",
+			"WEEKLY_RECAP": "每周回顾",
+			"MONTHLY_RECAP": "每月回顾"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "按小时跟踪时间",
-			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据"
+			"HOURLY_TIME_TRACKING_DATA": "按小时跟踪时间数据",
+			"NO_MONTHLY_ACTIVITY": "您本月没有跟踪的时间和活动。",
+			"WORKED_FOR_MONTH": "本月工作",
+			"ACTIVITY_FOR_MONTH": "每月活动"
 		}
 	},
 	"SERVER": "服务器",

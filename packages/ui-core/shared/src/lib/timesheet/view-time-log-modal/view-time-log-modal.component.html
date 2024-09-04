@@ -6,7 +6,7 @@
 		<h5 class="title">
 			{{ 'TIMESHEET.VIEW_LOG' | translate }}
 		</h5>
-		<div class="row mt-5">
+		<div class="row mt-5 avatar-log">
 			<div class="col-6">
 				<ngx-avatar
 					[id]="timeLog?.employee?.id"
@@ -21,15 +21,8 @@
 					[text]="TimeLogsLabel[timeLog?.logType].text"
 				></ngx-badge-label>
 			</div>
-			<div class="col-3">
-				<ngx-badge-label [text]="timeLog?.source | replace : '_' : ' ' | titlecase"></ngx-badge-label>
-			</div>
 		</div>
-		<div *ngIf="timeLog?.version" class="row">
-			<div class="col-12">
-				<ngx-badge-label [text]="timeLog?.version" status="info"></ngx-badge-label>
-			</div>
-		</div>
+
 		<div class="row date">
 			<div class="d-flex flex-column col-12">
 				<small>{{ timeLog?.startedAt | dateFormat }}</small>
@@ -43,6 +36,21 @@
 						(timeLog?.duration | durationFormat) +
 						')'
 				}}</small>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-3 source-version">
+				<ngx-badge-label
+					[text]="timeLog?.source | replace : '_' : ' ' | titlecase"
+					class="badge-item"
+				></ngx-badge-label>
+
+				<ngx-badge-label
+					*ngIf="timeLog?.version"
+					[text]="timeLog?.version"
+					status="info"
+					class="badge-item"
+				></ngx-badge-label>
 			</div>
 		</div>
 	</nb-card-header>

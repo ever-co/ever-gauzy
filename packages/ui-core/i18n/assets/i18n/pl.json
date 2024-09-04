@@ -4024,11 +4024,16 @@
 			"HELP": "Pomoc",
 			"LEARN_MORE": "Dowiedz się więcej",
 			"OPEN_MAIN_WINDOW": "Otwórz główne okno",
-			"DAILY_RECAP": "Podsumowanie Dziennie"
+			"DAILY_RECAP": "Podsumowanie Dziennie",
+			"WEEKLY_RECAP": "Cotygodniowe Podsumowanie",
+			"MONTHLY_RECAP": "Miesięczne Podsumowanie"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Śledzenie czasu według godzin",
-			"HOURLY_TIME_TRACKING_DATA": "Dane dotyczące śledzenia czasu według godzin"
+			"HOURLY_TIME_TRACKING_DATA": "Dane dotyczące śledzenia czasu według godzin",
+			"NO_MONTHLY_ACTIVITY": "Nie masz śledzonego czasu i aktywności na ten miesiąc.",
+			"WORKED_FOR_MONTH": "Pracowano w tym miesiącu",
+			"ACTIVITY_FOR_MONTH": "Miesięczna Aktywność"
 		}
 	},
 	"SERVER": "Serwer",

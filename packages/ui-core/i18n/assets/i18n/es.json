@@ -4026,11 +4026,16 @@
 			"HELP": "Ayuda",
 			"LEARN_MORE": "Aprende más.",
 			"OPEN_MAIN_WINDOW": "Abrir ventana principal",
-			"DAILY_RECAP": "Resumen Diario"
+			"DAILY_RECAP": "Resumen Diario",
+			"WEEKLY_RECAP": "Resumen Semanal",
+			"MONTHLY_RECAP": "Resumen Mensual"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Seguimiento del tiempo por hora",
-			"HOURLY_TIME_TRACKING_DATA": "Datos del seguimiento del tiempo por hora"
+			"HOURLY_TIME_TRACKING_DATA": "Datos del seguimiento del tiempo por hora",
+			"NO_MONTHLY_ACTIVITY": "No has registrado tiempo o actividad para este mes.",
+			"WORKED_FOR_MONTH": "Trabajado este mes",
+			"ACTIVITY_FOR_MONTH": "Actividad Mensual"
 		}
 	},
 	"SERVER": "Servidor",

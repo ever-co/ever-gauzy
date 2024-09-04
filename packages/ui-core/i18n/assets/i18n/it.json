@@ -4024,11 +4024,16 @@
 			"HELP": "Aiuto",
 			"LEARN_MORE": "Scopri di più",
 			"OPEN_MAIN_WINDOW": "Apri la finestra principale",
-			"DAILY_RECAP": "Riepilogo Giornaliero"
+			"DAILY_RECAP": "Riepilogo Giornaliero",
+			"WEEKLY_RECAP": "Riepilogo Settimanale",
+			"MONTHLY_RECAP": "Riepilogo Mensile"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Tracciamento del tempo orario",
-			"HOURLY_TIME_TRACKING_DATA": "Dati di tracciamento del tempo orario"
+			"HOURLY_TIME_TRACKING_DATA": "Dati di tracciamento del tempo orario",
+			"NO_MONTHLY_ACTIVITY": "Non hai tracciato alcun tempo o attività per questo mese.",
+			"WORKED_FOR_MONTH": "Lavorato questo mese",
+			"ACTIVITY_FOR_MONTH": "Attività Mensile"
 		}
 	},
 	"SERVER": "Server",

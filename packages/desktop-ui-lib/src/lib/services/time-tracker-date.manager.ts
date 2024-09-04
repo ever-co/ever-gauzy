@@ -97,4 +97,12 @@ export class TimeTrackerDateManager {
 	public static get endCurrentWeek(): string {
 		return moment().endOf('week').format('YYYY-MM-DD HH:mm:ss');
 	}
+
+	public static get startCurrentMonth(): string {
+		return moment().startOf('month').format('YYYY-MM-DD HH:mm:ss');
+	}
+
+	public static get endCurrentMonth(): string {
+		return moment().endOf('month').format('YYYY-MM-DD HH:mm:ss');
+	}
 }

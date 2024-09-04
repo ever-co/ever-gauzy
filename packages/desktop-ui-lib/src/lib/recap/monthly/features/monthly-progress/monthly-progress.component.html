@@ -1,0 +1,22 @@
+<div class="week-wrapper">
+	<div>
+		<div class="week-range">
+			{{(range$ | async).startDate | dateTime : 'MMMM'}}
+		</div>
+	</div>
+	<ng-container *ngIf="(monthlyActivities$ | async)?.sum; else noMonthlyData">
+		<div class="weeks row" *ngFor="let month of monthWeekdays">
+			<div class="week col">{{ getWeekRange(month.week) }}</div>
+			<ngx-progress-status class="report-progress col-6"
+				[percentage]="((sumPerWeek(month, monthlyActivities$ | async) * 100)) / ((monthlyActivities$ | async)?.sum ?? 1)"></ngx-progress-status>
+			<div class="col hours text-end">{{ sumPerWeek(month, monthlyActivities$ | async) | durationFormat : 'h[h]
+				m[m]
+				s[s]':{trim:'both'} }}
+			</div>
+		</div>
+	</ng-container>
+</div>
+
+<ng-template #noMonthlyData>
+	<ngx-no-data-message [message]="'TIMER_TRACKER.RECAP.NO_MONTHLY_ACTIVITY' | translate"></ngx-no-data-message>
+</ng-template>

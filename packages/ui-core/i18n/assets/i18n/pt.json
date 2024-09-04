@@ -4024,11 +4024,16 @@
 			"HELP": "Ajuda",
 			"LEARN_MORE": "Saiba mais",
 			"OPEN_MAIN_WINDOW": "Abrir janela principal",
-			"DAILY_RECAP": "Resumo Diário"
+			"DAILY_RECAP": "Resumo Diário",
+			"WEEKLY_RECAP": "Recapitulação Semanal",
+			"MONTHLY_RECAP": "Recapitulação Mensal"
 		},
 		"RECAP": {
 			"HOURLY_TIME_TRACKING": "Rastreamento de Tempo Horário",
-			"HOURLY_TIME_TRACKING_DATA": "Dados de Rastreamento de Tempo Horário"
+			"HOURLY_TIME_TRACKING_DATA": "Dados de Rastreamento de Tempo Horário",
+			"NO_MONTHLY_ACTIVITY": "Você não tem nenhum tempo ou atividade rastreada para este mês.",
+			"WORKED_FOR_MONTH": "Trabalhado neste mês",
+			"ACTIVITY_FOR_MONTH": "Atividade Mensal"
 		}
 	},
 	"SERVER": "Servidor",
