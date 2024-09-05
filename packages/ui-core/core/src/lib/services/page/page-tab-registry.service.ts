@@ -219,7 +219,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 		}
 
 		// If requireAllPermissions is true, check if the user has all the permissions
-		if (tab?.requireAllPermissions) {
+		if (tab.requireAllPermissions) {
 			return Array.isArray(tab.permissions)
 				? this._store.hasAllPermissions(...tab.permissions)
 				: this._store.hasPermission(tab.permissions);
