@@ -304,7 +304,7 @@ export class AuthController {
 	@UseGuards(AuthRefreshGuard)
 	@Post('/refresh-token')
 	@UseValidationPipe()
-	async refreshToken(@Body() input: RefreshTokenDto) {
+	async refreshToken(@Body() input: RefreshTokenDto): Promise<{ token: string } | null> {
 		return await this.authService.getAccessTokenFromRefreshToken();
 	}
 }
