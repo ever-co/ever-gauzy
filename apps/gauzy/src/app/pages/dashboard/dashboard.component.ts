@@ -13,8 +13,7 @@ import { DynamicTabsComponent } from '@gauzy/ui-core/shared';
 @Component({
 	selector: 'ga-dashboard-layout',
 	templateUrl: './dashboard.component.html',
-	styleUrls: ['./dashboard.component.scss'],
-	changeDetection: ChangeDetectionStrategy.OnPush
+	styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	public tabs: NbRouteTab[] = [];
