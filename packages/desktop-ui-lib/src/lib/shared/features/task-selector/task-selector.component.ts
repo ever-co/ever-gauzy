@@ -42,4 +42,8 @@ export class TaskSelectorComponent {
 	public change(taskId: ITask['id']) {
 		this.taskSelectorStore.updateSelected(taskId);
 	}
+
+	public isLoading$(): Observable<boolean> {
+		return this.taskSelectorQuery.selectLoading();
+	}
 }

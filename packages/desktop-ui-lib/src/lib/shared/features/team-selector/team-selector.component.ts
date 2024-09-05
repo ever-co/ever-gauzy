@@ -36,4 +36,8 @@ export class TeamSelectorComponent {
 	public change(teamId: IOrganizationTeam['id']) {
 		this.teamSelectorStore.updateSelected(teamId);
 	}
+
+	public isLoading$(): Observable<boolean> {
+		return this.teamSelectorQuery.selectLoading();
+	}
 }

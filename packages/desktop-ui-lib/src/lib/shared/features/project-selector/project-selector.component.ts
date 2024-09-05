@@ -42,4 +42,8 @@ export class ProjectSelectorComponent {
 	public change(projectId: IOrganizationProject['id']) {
 		this.projectSelectorStore.updateSelected(projectId);
 	}
+
+	public isLoading$(): Observable<boolean> {
+		return this.projectSelectorQuery.selectLoading();
+	}
 }

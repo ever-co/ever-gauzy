@@ -13,6 +13,7 @@ export class SelectComponent {
 	@Input() bindValue!: string;
 	@Input() hasError: boolean = false;
 	@Input() canAddTag: boolean = false;
+	@Input() isLoading: boolean = false;
 	@Input() addTagText!: string;
 	@Input() addTag!: Function;
 	@Input() disabled!: boolean;

@@ -1,6 +1,6 @@
 <div class="gauzy-select-container">
 	<label>{{ label | translate }}</label>
-	<ng-select (clear)="onClear()" (ngModelChange)="onModelChange($event)" [(ngModel)]="selectedItem"
+	<ng-select (clear)="onClear()" [loading]="isLoading" (ngModelChange)="onModelChange($event)" [(ngModel)]="selectedItem"
 		[addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
 		[class]="hasError ? 'error-border' : ''" [clearable]="true" [disabled]="disabled" [items]="items"
 		[nbTooltipDisabled]="!disabled" [nbTooltip]="tooltipText | translate" [placeholder]="placeholder | translate"

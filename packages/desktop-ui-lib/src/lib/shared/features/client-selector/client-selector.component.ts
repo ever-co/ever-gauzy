@@ -42,4 +42,8 @@ export class ClientSelectorComponent {
 	public change(clientId: IOrganizationContact['id']) {
 		this.clientSelectorStore.updateSelected(clientId);
 	}
+
+	public isLoading$(): Observable<boolean> {
+		return this.clientSelectorQuery.selectLoading();
+	}
 }
