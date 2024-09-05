@@ -10,8 +10,8 @@
 			</div>
 			<div class="card-header-title">
 				<div class="mr-2">
-					<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
-						<ng-template ngxPermissionsOnly="ORG_INVITE_VIEW">
+					<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_VIEW]">
+						<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_VIEW]">
 							<ng-template [ngIf]="organizationInvitesAllowed">
 								<button nbButton status="primary" [routerLink]="'/pages/employees/invites'">
 									{{ 'BUTTONS.MANAGE_INVITES' | translate }}
@@ -59,7 +59,7 @@
 
 <ng-template #actionButtons let-selectedItem>
 	<div class="btn-group actions">
-		<ng-template [ngxPermissionsOnly]="['ORG_EMPLOYEES_EDIT', 'ORG_EMPLOYEES_VIEW']">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.ORG_EMPLOYEES_VIEW]">
 			<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_VIEW">
 				<button status="basic" class="action secondary" size="small" nbButton underConstruction>
 					<nb-icon icon="eye-outline" pack="eva"></nb-icon>
@@ -147,9 +147,10 @@
 	</div>
 </ng-template>
 
+<!-- Visible Buttons -->
 <ng-template #visibleButtons>
-	<ng-template ngxPermissionsOnly="ORG_EMPLOYEES_EDIT">
-		<ng-template ngxPermissionsOnly="ORG_INVITE_EDIT">
+	<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EMPLOYEES_EDIT]">
+		<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_INVITE_EDIT]">
 			<ng-template [ngIf]="organizationInvitesAllowed">
 				<button nbButton status="info" class="action" (click)="invite()" size="small">
 					<nb-icon class="mr-1" icon="email-outline"></nb-icon>{{ 'BUTTONS.INVITE' | translate }}
@@ -192,6 +193,7 @@
 	</div>
 </ng-template>
 
+<!-- Start Work Button -->
 <ng-template #startWork>
 	<button (click)="startEmployeeWork()" class="action text-info" nbButton size="small" status="basic">
 		<nb-icon icon="person-done-outline"></nb-icon>
