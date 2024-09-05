@@ -161,7 +161,9 @@
 		"UNINSTALL": "הסר התקנה",
 		"DEACTIVATE": "השבת",
 		"ACTIVATE": "הפעל",
-		"ADD_PLUGIN": "הוסף תוסף"
+		"ADD_PLUGIN": "הוסף תוסף",
+		"LOAD_PLUGIN": "טען תוסף",
+		"FROM_CDN": "מ-CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3935,6 +3937,9 @@
 			"WIDGET": "ווידג'ט",
 			"PLUGINS": "תוספים",
 			"PLUGIN_DESCRIPTION": "תוספים",
+			"VERSION": "גרסה",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "התקן תוספים מקבצים מקומיים או CDN. מקומי עבור תוספים מותאמים אישית/פרטיים, CDN עבור ציבוריים. בחר לפי הצרכים שלך.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "התקנה מ-CDN מאפשרת גישה קלה לתוספים זמינים לציבור.",
 			"PLUGIN": "תוסף",
 			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור.",
 			"SSL": {

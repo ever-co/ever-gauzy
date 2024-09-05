@@ -162,7 +162,9 @@
 		"UNINSTALL": "Desinstalar",
 		"DEACTIVATE": "Desativar",
 		"ACTIVATE": "Ativar",
-		"ADD_PLUGIN": "Adicionar plugin"
+		"ADD_PLUGIN": "Adicionar plugin",
+		"LOAD_PLUGIN": "Carregar Plugin",
+		"FROM_CDN": "Do CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3924,6 +3926,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Versão",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Instale plugins a partir de arquivos locais ou CDN. Local para plugins personalizados/privados, CDN para públicos. Escolha com base nas suas necessidades.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "A instalação via CDN permite fácil acesso a plugins disponíveis publicamente.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Esta janela reflete o estado do temporizador, indicando se está em execução ou parado, e funciona como um botão.",
 			"SSL": {

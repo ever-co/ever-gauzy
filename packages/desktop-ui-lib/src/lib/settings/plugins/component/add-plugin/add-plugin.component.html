@@ -4,16 +4,38 @@
 		<h4>{{ 'TIMER_TRACKER.SETTINGS.PLUGIN' | translate }}</h4>
 	</nb-card-header>
 	<nb-card-body>
-		<form class="form" (ngSubmit)="installPlugin(input.value)">
-			<label>{{ 'BUTTONS.ADD_PLUGIN' | translate }}</label>
-			<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
-				placeholder="https://cdn.server.tld/public/plugin.zip">
-			<div class="error" *ngIf="error">
-				{{error}}
+		<ng-container *ngIf="context !== 'cdn'; else web">
+			<div class="full-width mb-3 description">
+				{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_INSTALLATION_DESCRIPTION' | translate }}
 			</div>
-			<button nbButton [disabled]="!input.value || installing" status="primary" type="submit"
-				(click)="installPlugin(input.value)">{{ 'BUTTONS.INSTALL' | translate }}<nb-icon
-					*gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon></button>
-		</form>
+			<div class="load-button">
+				<button nbButton [disabled]="installing" class="full-width" status="primary" type="submit"
+					(click)="localPluginInstall()"><nb-icon *gauzySpinnerButton="installing"
+						icon="monitor-outline"></nb-icon>{{ 'BUTTONS.LOAD_PLUGIN' | translate }}</button>
+				<button *ngIf="!context" nbButton [disabled]="installing" class="full-width" status="primary"
+					type="submit" (click)="context = 'cdn'"><nb-icon *gauzySpinnerButton="installing"
+						icon="globe-outline"></nb-icon>{{ 'BUTTONS.FROM_CDN' | translate }}</button>
+			</div>
+		</ng-container>
 	</nb-card-body>
 </nb-card>
+
+<ng-template #web>
+	<form class="form" (ngSubmit)="installPlugin(input.value)">
+		<label><button (click)="reset()" class="return" status="primary" size="small" outline nbButton><nb-icon
+					icon="arrow-back-outline"></nb-icon></button> {{
+			'BUTTONS.ADD_PLUGIN' |
+			translate }}</label>
+		<div class="description">
+			{{ 'TIMER_TRACKER.SETTINGS.ADD_PLUGIN_CDN_DESCRIPTION' | translate }}
+		</div>
+		<input nbInput #input type="url" [status]="error ? 'danger': 'basic'"
+			placeholder="https://cdn.server.tld/public/plugin.zip">
+		<div class="error" *ngIf="error">
+			{{error}}
+		</div>
+		<button nbButton [disabled]="!input.value || installing" status="primary" type="submit"
+			(click)="installPlugin(input.value)">{{ 'BUTTONS.INSTALL' | translate }}<nb-icon
+				*gauzySpinnerButton="installing" icon="cloud-download-outline"></nb-icon></button>
+	</form>
+</ng-template>

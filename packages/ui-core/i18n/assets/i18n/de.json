@@ -162,7 +162,9 @@
 		"UNINSTALL": "Deinstallieren",
 		"DEACTIVATE": "Deaktivieren",
 		"ACTIVATE": "Aktivieren",
-		"ADD_PLUGIN": "Plugin hinzufügen"
+		"ADD_PLUGIN": "Plugin hinzufügen",
+		"LOAD_PLUGIN": "Plugin laden",
+		"FROM_CDN": "Von CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3920,6 +3922,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Version",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Installieren Sie Plugins aus lokalen Dateien oder dem CDN. Lokal für benutzerdefinierte/private Plugins, CDN für öffentliche. Wählen Sie je nach Bedarf.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Die CDN-Installation ermöglicht einen einfachen Zugang zu öffentlich verfügbaren Plugins.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Dieses Fenster spiegelt den Status des Timers wider, indem es anzeigt, ob er läuft oder angehalten ist, und dient als Schaltfläche.",
 			"SSL": {

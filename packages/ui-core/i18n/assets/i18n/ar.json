@@ -162,7 +162,9 @@
 		"UNINSTALL": "إلغاء التثبيت",
 		"DEACTIVATE": "تعطيل",
 		"ACTIVATE": "تفعيل",
-		"ADD_PLUGIN": "إضافة ملحق"
+		"ADD_PLUGIN": "إضافة ملحق",
+		"LOAD_PLUGIN": "تحميل المكون الإضافي",
+		"FROM_CDN": "من CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3934,7 +3936,10 @@
 				"SSL_CERT_FILE_INFO": "مسار ملف شهادة العميل لـ SSL.",
 				"SECURE": "آمن",
 				"SECURE_INFO": "صحيح إذا كنت ترغب في التحقق من شهادات SSL."
-			}
+			},
+			"VERSION": "الإصدار",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "قم بتثبيت المكونات الإضافية من الملفات المحلية أو CDN. محلي للمكونات الإضافية المخصصة/الخاصة، وCDN للمكونات العامة. اختر بناءً على احتياجاتك.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "تتيح لك التثبيت من CDN الوصول بسهولة إلى المكونات الإضافية المتاحة علنًا."
 		},
 		"WEEKLY_LIMIT_EXCEEDED": "تجاوز الحد الأسبوعي",
 		"OF_HRS": "من {{ limit }} ساعة",

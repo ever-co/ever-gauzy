@@ -162,7 +162,9 @@
 		"UNINSTALL": "卸载",
 		"DEACTIVATE": "停用",
 		"ACTIVATE": "启用",
-		"ADD_PLUGIN": "添加插件"
+		"ADD_PLUGIN": "添加插件",
+		"LOAD_PLUGIN": "加载插件",
+		"FROM_CDN": "来自CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3924,6 +3926,9 @@
 			"WIDGET": "小部件",
 			"PLUGINS": "插件",
 			"PLUGIN_DESCRIPTION": "插件",
+			"VERSION": "版本",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "从本地文件或CDN安装插件。 本地适用于自定义/私有插件，CDN适用于公共插件。 根据您的需求选择。",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "CDN安装可以轻松访问公开可用的插件。",
 			"PLUGIN": "插件",
 			"WIDGET_LABEL": "此窗口反映计时器的状态，指示计时器是运行还是停止，并兼做按钮。",
 			"SSL": {
