@@ -1,17 +1,22 @@
-import { Injectable, TemplateRef, Type } from '@angular/core';
+import { Inject, Injectable, TemplateRef, Type } from '@angular/core';
 import { PageTabsetRegistryId } from '../../common/component-registry.types';
 import { IPageTabRegistry, PageTabRegistryConfig } from './page-tab-registry.types';
+import { Store } from '../store/store.service';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class PageTabRegistryService implements IPageTabRegistry {
+	private logging: boolean = false;
+
 	/**
 	 * Registry for storing page tab configurations.
 	 *
 	 * This Map stores arrays of PageTabRegistryConfig objects, keyed by PageTabsetRegistryId.
 	 */
 	private readonly registry = new Map<PageTabsetRegistryId, PageTabRegistryConfig[]>();
+
+	constructor(@Inject(Store) private readonly _store: Store) {}
 
 	/**
 	 * Retrieves the current tab registry.
@@ -71,6 +76,7 @@ export class PageTabRegistryService implements IPageTabRegistry {
 		// Find the index of an existing tab with the same tabId in the specified tab set
 		const existing = tabs.findIndex((tab) => tab.tabId === config.tabId);
 
+		// If the tab exists, replace it with the new configuration
 		if (existing !== -1) {
 			// If the tab exists, replace it with the new configuration
 			tabs[existing] = config;
@@ -160,8 +166,8 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	 * @returns An array of unique page tabs for the specified tabset.
 	 */
 	public getPageTabset(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
-		// Get all registered tabs for the specified tabset, ordered as required
-		const tabs = this.getPageTabsByOrder(tabsetId);
+		// Get all permitted registered tabs for the specified tabset, ordered as required
+		const tabs = this.getPermittedPageTabset(tabsetId);
 
 		// Create a map to track unique tabs based on tabId
 		const uniqueTabsMap = new Map<string, PageTabRegistryConfig>();
@@ -177,6 +183,55 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	}
 
 	/**
+	 * Get all permitted registered tabs for a specified tabset.
+	 *
+	 * This method retrieves all tabs registered for the given `tabsetId` and filters them
+	 * based on the current user's permissions. Only tabs that the user is allowed to view
+	 * are included in the returned array.
+	 *
+	 * @param tabsetId The identifier for the tabset whose permitted tabs are to be retrieved.
+	 * @returns An array of `PageTabRegistryConfig` objects representing the permitted tabs for the specified tabset.
+	 */
+	public getPermittedPageTabset(tabsetId: PageTabsetRegistryId): PageTabRegistryConfig[] {
+		// Retrieve all registered tabs for the specified tabset
+		const tabs = this.getPageTabsByOrder(tabsetId);
+
+		// Filter the tabs based on permissions
+		return tabs.filter((tab) => this.verifyPermissions(tab));
+	}
+
+	/**
+	 * Verify if the current user has the required permissions to view the tab.
+	 *
+	 * This method checks whether the current user has the necessary permissions to access a given tab.
+	 * If the tab specifies permissions, the method will validate if the user meets the criteria.
+	 * If no permissions are specified, the tab is accessible by default.
+	 * If `requireAllPermissions` is `true`, the user must have all specified permissions.
+	 * If `requireAllPermissions` is `false` or not specified, the user must have at least one of the permissions.
+	 *
+	 * @param tab The tab configuration object containing the permissions and other settings.
+	 * @returns `true` if the user has the required permissions to view the tab, `false` otherwise.
+	 */
+	private verifyPermissions(tab: PageTabRegistryConfig): boolean {
+		// If the tab has no permissions specified, allow it by default
+		if (!tab.permissions) {
+			return true;
+		}
+
+		// If requireAllPermissions is true, check if the user has all the permissions
+		if (tab?.requireAllPermissions) {
+			return Array.isArray(tab.permissions)
+				? this._store.hasAllPermissions(...tab.permissions)
+				: this._store.hasPermission(tab.permissions);
+		}
+
+		// Otherwise, check if the user has at least one of the permissions
+		return Array.isArray(tab.permissions)
+			? this._store.hasAnyPermission(...tab.permissions)
+			: this._store.hasPermission(tab.permissions);
+	}
+
+	/**
 	 * @description
 	 * Deletes a tabset from the registry.
 	 *
@@ -189,14 +244,21 @@ export class PageTabRegistryService implements IPageTabRegistry {
 	public deleteTabset(tabsetId: PageTabsetRegistryId): void {
 		// Check if the tabset exists in the registry
 		if (!this.registry.has(tabsetId)) {
-			console.warn(`Tabset with id "${tabsetId}" does not exist in the registry.`);
+			// Log the warning if logging is enabled
+			if (this.logging) {
+				console.warn(`Tabset with id "${tabsetId}" does not exist in the registry.`);
+			}
 			return;
 		}
 
 		try {
 			// Remove the tabset from the registry
 			this.registry.delete(tabsetId);
-			console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+
+			// Log the warning if logging is enabled
+			if (this.logging) {
+				console.log(`Tabset with id "${tabsetId}" has been successfully removed from the registry.`);
+			}
 		} catch (error) {
 			console.error(`Failed to remove tabset with id "${tabsetId}": ${error.message}`);
 		}
