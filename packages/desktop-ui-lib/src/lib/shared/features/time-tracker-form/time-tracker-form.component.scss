@@ -1,0 +1,14 @@
+.selector-container {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	gap: .5rem;
+	flex-direction: column;
+
+	.selector {
+		width: 100%;
+	}
+
+	max-width: 400px;
+}
