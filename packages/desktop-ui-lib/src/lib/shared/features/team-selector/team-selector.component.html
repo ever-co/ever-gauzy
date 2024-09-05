@@ -1,0 +1,3 @@
+<gauzy-select class="w-100" label="CONTEXT_MENU.TEAM" [selectedItem]="selectedId$ | async" [items]="data$ | async"
+	bindLabel="name" bindValue="id" [hasError]="error$ | async" tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TEAM"
+	placeholder="FORM.LABELS.SELECT_TEAM" (clear)="refresh()" (modelChange)="change($event)"></gauzy-select>

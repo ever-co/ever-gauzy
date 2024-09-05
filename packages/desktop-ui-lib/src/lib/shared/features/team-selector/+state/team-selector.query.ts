@@ -1,0 +1,20 @@
+import { Injectable } from '@angular/core';
+import { IOrganizationTeam } from '@gauzy/contracts';
+import { map, Observable } from 'rxjs';
+import { SelectorQuery } from '../../../+state/selector.query';
+import { TeamSelectorStore } from './team-selector.store';
+
+@Injectable({ providedIn: 'root' })
+export class TeamSelectorQuery extends SelectorQuery<IOrganizationTeam> {
+	constructor(protected store: TeamSelectorStore) {
+		super(store);
+	}
+
+	public get selectedId(): IOrganizationTeam['id'] {
+		return this.selected.id;
+	}
+
+	public get selectedId$(): Observable<IOrganizationTeam['id']> {
+		return this.selected$.pipe(map(({ id }) => id));
+	}
+}
