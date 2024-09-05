@@ -1,0 +1,23 @@
+<div class="gauzy-select-container">
+	<label>{{ label | translate }}</label>
+	<ng-select (clear)="onClear()" (ngModelChange)="onModelChange($event)" [(ngModel)]="selectedItem"
+		[addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
+		[class]="hasError ? 'error-border' : ''" [clearable]="true" [disabled]="disabled" [items]="items"
+		[nbTooltipDisabled]="!disabled" [nbTooltip]="tooltipText | translate" [placeholder]="placeholder | translate"
+		[bindLabel]="bindLabel" [bindValue]="bindValue" nbTooltipStatus="warning">
+		<ng-template let-index="index" let-item="item" ng-option-tmp>
+			<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
+			<span class="text-container">
+				{{ item?.name }}
+			</span>
+		</ng-template>
+		<ng-template let-item="item" ng-label-tmp>
+			<div class="selector-template">
+				<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
+				<span class="black-bold-text text-container">
+					{{ item?.name }}
+				</span>
+			</div>
+		</ng-template>
+	</ng-select>
+</div>
