@@ -10,7 +10,8 @@ import {
 	IImportRecord,
 	IRolePermissionMigrateInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	IRolePermissions
 } from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { TenantAwareCrudService } from './../core/crud';
@@ -21,15 +22,14 @@ import { RolePermission } from './role-permission.entity';
 import { Role } from '../role/role.entity';
 import { RoleService } from './../role/role.service';
 import { DEFAULT_ROLE_PERMISSIONS } from './default-role-permissions';
-import { MikroOrmRolePermissionRepository } from './repository/mikro-orm-role-permission.repository';
-import { TypeOrmRolePermissionRepository } from './repository/type-orm-role-permission.repository';
+import { MikroOrmRolePermissionRepository, TypeOrmRolePermissionRepository } from './repository';
 
 @Injectable()
 export class RolePermissionService extends TenantAwareCrudService<RolePermission> {
 	constructor(
 		readonly typeOrmRolePermissionRepository: TypeOrmRolePermissionRepository,
 		readonly mikroOrmRolePermissionRepository: MikroOrmRolePermissionRepository,
-		private readonly roleService: RoleService,
+		private readonly _roleService: RoleService,
 		private readonly _commandBus: CommandBus
 	) {
 		super(typeOrmRolePermissionRepository, mikroOrmRolePermissionRepository);
@@ -40,11 +40,11 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	 *
 	 * @return {Promise<IPagination<RolePermission>>} A promise that resolves to a paginated list of RolePermission objects.
 	 */
-	async findMePermissions(): Promise<IPagination<IRolePermission>> {
+	async findMePermissions(): Promise<IRolePermissions> {
 		const tenantId = RequestContext.currentTenantId();
 		const roleId = RequestContext.currentRoleId();
 
-		return await this.findAll({
+		return await this.find({
 			where: {
 				role: { id: roleId, tenantId },
 				tenant: { id: tenantId },
@@ -70,7 +70,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		/**
 		 * Find current user role
 		 */
-		const role = await this.roleService.findOneByWhereOptions({
+		const role = await this._roleService.findOneByWhereOptions({
 			id: roleId,
 			tenantId
 		});
@@ -91,7 +91,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			 * Retrieve all role-permissions except "SUPER_ADMIN" role
 			 */
 			const roles = (
-				await this.roleService.findAll({
+				await this._roleService.findAll({
 					select: ['id'],
 					where: {
 						name: Not(RolesEnum.SUPER_ADMIN),
@@ -148,7 +148,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * Find current user role
 			 */
-			const role = await this.roleService.findOneByWhereOptions({
+			const role = await this._roleService.findOneByWhereOptions({
 				id: currentRoleId,
 				tenantId: currentTenantId
 			});
@@ -160,7 +160,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * User try to create permission for below role
 			 */
-			const wantToCreatePermissionForRole = await this.roleService.findOneByIdString(roleId);
+			const wantToCreatePermissionForRole = await this._roleService.findOneByIdString(roleId);
 			/**
 			 * If current user has SUPER_ADMIN
 			 */
@@ -214,7 +214,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * Find current user role
 			 */
-			const role = await this.roleService.findOneByWhereOptions({
+			const role = await this._roleService.findOneByWhereOptions({
 				id: currentRoleId,
 				tenantId: currentTenantId
 			});
@@ -226,7 +226,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * User try to update permission for below role
 			 */
-			const wantToUpdatePermissionForRole = await this.roleService.findOneByIdString(roleId);
+			const wantToUpdatePermissionForRole = await this._roleService.findOneByIdString(roleId);
 			if (role.name === RolesEnum.SUPER_ADMIN) {
 				/**
 				 * Reject request, if SUPER ADMIN try to update permissions for SUPER ADMIN role.
@@ -280,7 +280,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 			/**
 			 * Find current user role
 			 */
-			const role = await this.roleService.findOneByWhereOptions({
+			const role = await this._roleService.findOneByWhereOptions({
 				id: currentRoleId,
 				tenantId: currentTenantId
 			});
@@ -354,7 +354,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		const rolesPermissions: IRolePermission[] = [];
 		for await (const tenant of tenants) {
 			const roles = (
-				await this.roleService.findAll({
+				await this._roleService.findAll({
 					where: {
 						tenantId: tenant.id
 					}
@@ -415,7 +415,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 	public async migrateImportRecord(permissions: IRolePermissionMigrateInput[]) {
 		let records: IImportRecord[] = [];
 		const roles: IRole[] = (
-			await this.roleService.findAll({
+			await this._roleService.findAll({
 				where: {
 					tenantId: RequestContext.currentTenantId()
 				}
