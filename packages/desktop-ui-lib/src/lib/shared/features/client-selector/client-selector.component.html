@@ -1,4 +1,4 @@
 <gauzy-select class="w-100" label="CONTEXT_MENU.CLIENT" [selectedItem]="selectedId$ | async" [items]="data$ | async"
 	bindLabel="name" bindValue="id" [hasError]="error$ | async" tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_CLIENT"
-	placeholder="TIMER_TRACKER.SELECT_CLIENT" (clear)="refresh()" (modelChange)="change($event)"
-	[addTag]="addContact"></gauzy-select>
+	placeholder="TIMER_TRACKER.SELECT_CLIENT" [canAddTag]="true" (clear)="refresh()" (modelChange)="change($event)"
+	[addTag]="addContact" addTagText="TIMER_TRACKER.ADD_CONTACT"></gauzy-select>

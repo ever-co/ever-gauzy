@@ -11,7 +11,7 @@ export class TaskSelectorQuery extends SelectorQuery<ITask> {
 	}
 
 	public get selectedId(): ITask['id'] {
-		return this.selected.id;
+		return this.selected?.id ?? null;
 	}
 
 	public get selectedId$(): Observable<ITask['id']> {

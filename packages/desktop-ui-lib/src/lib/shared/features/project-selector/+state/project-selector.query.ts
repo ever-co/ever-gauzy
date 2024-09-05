@@ -11,7 +11,7 @@ export class ProjectSelectorQuery extends SelectorQuery<IOrganizationProject> {
 	}
 
 	public get selectedId(): IOrganizationProject['id'] {
-		return this.selected.id;
+		return this.selected?.id ?? null;
 	}
 
 	public get selectedId$(): Observable<IOrganizationProject['id']> {

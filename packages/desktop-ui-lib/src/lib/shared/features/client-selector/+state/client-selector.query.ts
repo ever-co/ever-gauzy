@@ -11,7 +11,7 @@ export class ClientSelectorQuery extends SelectorQuery<IOrganizationContact> {
 	}
 
 	public get selectedId(): IOrganizationContact['id'] {
-		return this.selected.id;
+		return this.selected?.id ?? null;
 	}
 
 	public get selectedId$(): Observable<IOrganizationContact['id']> {

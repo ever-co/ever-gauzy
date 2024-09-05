@@ -11,7 +11,7 @@ export class TeamSelectorQuery extends SelectorQuery<IOrganizationTeam> {
 	}
 
 	public get selectedId(): IOrganizationTeam['id'] {
-		return this.selected.id;
+		return this.selected?.id ?? null;
 	}
 
 	public get selectedId$(): Observable<IOrganizationTeam['id']> {
