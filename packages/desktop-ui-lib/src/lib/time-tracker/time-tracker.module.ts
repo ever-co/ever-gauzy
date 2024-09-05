@@ -79,7 +79,8 @@ import { TimeTrackerService } from './time-tracker.service';
 		NoDataMessageModule,
 		PipeModule,
 		NbTabsetModule,
-		RecapModule
+		RecapModule,
+		TimeTrackerModule
 	],
 	providers: [
 		NbSidebarService,
