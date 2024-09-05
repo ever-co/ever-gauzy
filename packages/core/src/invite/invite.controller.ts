@@ -7,7 +7,8 @@ import {
 	IOrganizationContact,
 	IPagination,
 	IInvite,
-	InviteActionEnum
+	InviteActionEnum,
+	ID
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -47,7 +48,7 @@ import { CreateInviteDTO, ResendInviteDTO, ValidateInviteByCodeQueryDTO, Validat
 import { FindInviteByEmailCodeQuery, FindInviteByEmailTokenQuery } from './queries';
 
 @ApiTags('Invite')
-@Controller()
+@Controller('/invite')
 export class InviteController {
 	constructor(
 		private readonly inviteService: InviteService,
@@ -133,7 +134,7 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
-	@Get('validate')
+	@Get('/validate')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByToken(@Query() options: ValidateInviteQueryDTO) {
 		return await this.queryBus.execute(
@@ -161,7 +162,7 @@ export class InviteController {
 		description: 'Record not found'
 	})
 	@Public()
-	@Post('validate-by-code')
+	@Post('/validate-by-code')
 	@UseValidationPipe({ whitelist: true })
 	async validateInviteByCode(@Body() body: ValidateInviteByCodeQueryDTO) {
 		return await this.queryBus.execute(
@@ -253,7 +254,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('/organization-contact/:id')
 	async inviteOrganizationContact(
-		@Param('id', UUIDValidationPipe) id: string,
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum
 	): Promise<IOrganizationContact> {
@@ -307,7 +308,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_VIEW)
 	@UseValidationPipe()
-	@Get()
+	@Get('/')
 	async findAll(@Query() options: PaginationParams<Invite>): Promise<IPagination<IInvite>> {
 		return await this.inviteService.findAllInvites(options);
 	}
@@ -331,7 +332,7 @@ export class InviteController {
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Delete('/:id')
-	async delete(@Param('id', UUIDValidationPipe) id: IInvite['id']): Promise<DeleteResult> {
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this.inviteService.delete(id);
 	}
 
@@ -353,7 +354,7 @@ export class InviteController {
 	@Permissions(PermissionsEnum.ORG_INVITE_EDIT)
 	@Put('/:id/:action')
 	async handleInvitationResponse(
-		@Param('id', UUIDValidationPipe) id: IInvite['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Param('action') action: InviteActionEnum,
 		@Req() request: Request,
 		@I18nLang() languageCode: LanguagesEnum

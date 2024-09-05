@@ -7,7 +7,7 @@ import { NbComponentStatus, NbComponentSize } from '@nebular/theme';
 	styles: [
 		`
 			:host {
-				nb-badge {
+				:is(nb-badge) {
 					position: relative;
 				}
 			}

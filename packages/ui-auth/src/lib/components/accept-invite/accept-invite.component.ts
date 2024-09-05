@@ -18,18 +18,18 @@ export class AcceptInviteComponent extends TranslationBaseComponent implements O
 	public inviteLoadErrorMessage: string;
 
 	constructor(
-		private readonly router: Router,
-		private readonly toastrService: ToastrService,
-		private readonly inviteService: InviteService,
-		private readonly route: ActivatedRoute,
 		public readonly translateService: TranslateService,
-		private readonly store: Store
+		private readonly _router: Router,
+		private readonly _toastrService: ToastrService,
+		private readonly _inviteService: InviteService,
+		private readonly _route: ActivatedRoute,
+		private readonly _store: Store
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
-		this.route.queryParams
+		this._route.queryParams
 			.pipe(
 				tap(({ email, token }) => this.loadInvite({ email, token })),
 				untilDestroyed(this)
@@ -38,63 +38,72 @@ export class AcceptInviteComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
-	 * Validate invite by token & email
+	 * Sets the loading state.
 	 *
-	 * @param param0
+	 * @param isLoading - Boolean indicating whether to set the loading state to true or false.
 	 */
-	loadInvite = async ({ email, token }: IUserEmailInput & IUserTokenInput) => {
-		this.loading = true;
+	private setLoading(isLoading: boolean): void {
+		this.loading = isLoading;
+	}
+
+	/**
+	 * Validates the invite using the provided email and token.
+	 * Loads the invitation details if successful, or sets an error message if not.
+	 *
+	 * @param param0 - Object containing the email and token for validation.
+	 */
+	loadInvite = async ({ email, token }: IUserEmailInput & IUserTokenInput): Promise<void> => {
+		this.setLoading(true);
 
 		try {
-			this.invitation = await this.inviteService.validateInvite([], {
-				email,
-				token
-			});
-		} catch (error) {
+			this.invitation = await this._inviteService.validateInvite([], { email, token });
+		} catch {
 			this.inviteLoadErrorMessage = this.getTranslation('ACCEPT_INVITE.INVITATION_NO_LONGER_VALID');
+		} finally {
+			this.setLoading(false);
 		}
-
-		this.loading = false;
 	};
 
 	/**
-	 *
-	 * @param input
+	 * Submit the user registration form and accept the invite if present.
+	 * @param input IUserRegistrationInput - The user registration input data
 	 */
-	submitForm = async (input: IUserRegistrationInput) => {
+	submitForm = async (input: IUserRegistrationInput): Promise<void> => {
 		try {
 			const { user, password } = input;
-			/**
-			 * Validate email & token when accept invite
-			 */
-			const token = this.route.snapshot.queryParamMap.get('token');
-			const email = this.route.snapshot.queryParamMap.get('email');
-			/**
-			 * If invite has successfully accepted, then login user automatically
-			 */
+
+			// Get token and email from query parameters if they exist
+			const token = this._route.snapshot.queryParamMap.get('token');
+			const email = this._route.snapshot.queryParamMap.get('email');
+
+			// If invite is being accepted, attempt the authentication process
 			try {
-				/**
-				 * Accept Invite
-				 */
-				const auth: IAuthResponse = await this.inviteService.acceptInvite({
+				const auth: IAuthResponse = await this._inviteService.acceptInvite({
 					user,
 					password,
 					token,
 					email
 				});
-				if ('user' in auth && 'token' in auth) {
-					const { user, token, refresh_token } = auth;
-					this.store.userId = user.id;
-					this.store.token = token;
-					this.store.refresh_token = refresh_token;
 
-					this.router.navigate(['/']);
+				// If authentication is successful, store user and token info
+				if (auth?.user && auth?.token) {
+					const { user, token, refresh_token } = auth;
+
+					// Store user details and tokens in the app's state
+					this._store.userId = user.id;
+					this._store.token = token;
+					this._store.refresh_token = refresh_token;
+
+					// Redirect to the home page
+					await this._router.navigate(['/']);
 				}
 			} catch (error) {
-				this.router.navigate(['/auth/login']);
+				// In case of failure, redirect to the login page
+				this._router.navigate(['/auth/login']);
 			}
 		} catch (error) {
-			this.toastrService.danger(error, null, 'Could not create your account');
+			// Show error message if something goes wrong during form submission
+			this._toastrService.danger(error, null, 'Could not create your account');
 		}
 	};
 
