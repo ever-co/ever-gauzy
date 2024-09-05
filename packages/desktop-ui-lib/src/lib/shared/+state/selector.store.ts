@@ -11,13 +11,22 @@ export abstract class SelectorStore<T> extends Store<ISelector<T>> {
 	}
 
 	public updateSelected(selected: T | string): void {
+		if (!selected) {
+			this.update({ selected: null });
+			return;
+		}
+
 		if (typeof selected === 'string') {
 			selected = this.getValue().data.find((value: any) => selected === value.id);
 		}
+
 		this.update({ selected });
 	}
 
 	public appendData(selected: T): void {
+		if (!selected) {
+			return;
+		}
 		const data = this.getValue().data;
 		data.push(selected);
 		this.updateData(data);

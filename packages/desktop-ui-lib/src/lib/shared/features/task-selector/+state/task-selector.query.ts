@@ -15,6 +15,6 @@ export class TaskSelectorQuery extends SelectorQuery<ITask> {
 	}
 
 	public get selectedId$(): Observable<ITask['id']> {
-		return this.selected$.pipe(map(({ id }) => id));
+		return this.selected$.pipe(map((selected) => selected?.id ?? null));
 	}
 }

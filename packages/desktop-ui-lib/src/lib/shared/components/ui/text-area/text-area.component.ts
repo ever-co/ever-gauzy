@@ -13,7 +13,7 @@ export class TextAreaComponent {
 	@Input() placeholder!: string;
 	@Output() modelChange = new EventEmitter<string>();
 
-	onModelChange(event: string) {
+	public onModelChange(event: string) {
 		this.modelChange.emit(event);
 	}
 }

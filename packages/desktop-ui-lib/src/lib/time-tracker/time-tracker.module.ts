@@ -32,6 +32,7 @@ import { LanguageModule } from '../language/language.module';
 import { TimeSlotQueueService } from '../offline-sync';
 import { RecapModule } from '../recap/recap.module';
 import { ErrorHandlerService, NativeNotificationService, Store, ToastrNotificationService } from '../services';
+import { TimeTrackerFormModule } from '../shared/features/time-tracker-form/time-tracker-form.module';
 import { TasksModule } from '../tasks/tasks.module';
 import { CustomRenderComponent } from './custom-render-cell.component';
 import { NoDataMessageModule } from './no-data-message/no-data-message.module';
@@ -80,7 +81,7 @@ import { TimeTrackerService } from './time-tracker.service';
 		PipeModule,
 		NbTabsetModule,
 		RecapModule,
-		TimeTrackerModule
+		TimeTrackerFormModule
 	],
 	providers: [
 		NbSidebarService,

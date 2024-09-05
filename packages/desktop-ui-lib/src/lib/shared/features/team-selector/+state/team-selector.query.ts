@@ -15,6 +15,6 @@ export class TeamSelectorQuery extends SelectorQuery<IOrganizationTeam> {
 	}
 
 	public get selectedId$(): Observable<IOrganizationTeam['id']> {
-		return this.selected$.pipe(map(({ id }) => id));
+		return this.selected$.pipe(map((selected) => selected?.id ?? null));
 	}
 }
