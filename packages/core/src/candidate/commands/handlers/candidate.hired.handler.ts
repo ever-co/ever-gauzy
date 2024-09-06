@@ -27,7 +27,10 @@ export class CandidateHiredHandler implements ICommandHandler<CandidateHiredComm
 	public async execute({ id }: CandidateHiredCommand): Promise<ICandidate> {
 		// Fetch the candidate with the necessary relations
 		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
-			relations: { user: true, tags: true }
+			relations: {
+				user: true,
+				tags: true
+			}
 		});
 
 		// Check if the candidate is already hired

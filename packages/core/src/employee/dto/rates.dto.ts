@@ -1,17 +1,13 @@
-import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { CurrenciesEnum, PayPeriodEnum } from '@gauzy/contracts';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IsEnum, IsNumber, IsOptional } from 'class-validator';
-import { PayPeriodEnum } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from './../../core/dto';
-import { Employee } from '../employee.entity';
 
 /**
  * Update Employee/Candidate Rates DTO
  */
-export class RatesDTO extends IntersectionType(
-	TenantOrganizationBaseDTO,
-	PickType(Employee, ['billRateCurrency'] as const)
-) {
+export class RatesDTO extends TenantOrganizationBaseDTO {
 	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum })
 	@IsOptional()
 	@IsEnum(PayPeriodEnum)
@@ -34,4 +30,9 @@ export class RatesDTO extends IntersectionType(
 	@IsNumber()
 	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
 	readonly reWeeklyLimit?: number;
+
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
+	readonly billRateCurrency?: string;
 }

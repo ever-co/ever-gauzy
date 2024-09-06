@@ -6,8 +6,7 @@ import {
 	ICandidateInterviewers,
 	ICandidateTechnologies,
 	ICandidatePersonalQualities,
-	ICandidate,
-	ID
+	ICandidate
 } from '@gauzy/contracts';
 import {
 	Candidate,
@@ -99,15 +98,15 @@ export class CandidateInterview extends TenantOrganizationBaseEntity implements 
 	/**
 	 * Candidate
 	 */
+	@ApiProperty({ type: () => Candidate })
 	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.interview, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	candidate?: ICandidate;
 
 	@ApiProperty({ type: () => String })
 	@RelationId((it: CandidateInterview) => it.candidate)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	candidateId?: ID;
+	candidateId?: ICandidate['id'];
 }

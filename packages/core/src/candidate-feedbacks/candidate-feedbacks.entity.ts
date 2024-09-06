@@ -1,4 +1,7 @@
-import { JoinColumn, RelationId } from 'typeorm';
+import {
+	JoinColumn,
+	RelationId
+} from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
 	ICandidateFeedback,
@@ -16,18 +19,13 @@ import {
 	CandidateInterviewers,
 	TenantOrganizationBaseEntity
 } from '../core/entities/internal';
-import {
-	ColumnIndex,
-	MultiORMColumn,
-	MultiORMEntity,
-	MultiORMManyToOne,
-	MultiORMOneToMany,
-	MultiORMOneToOne
-} from './../core/decorators/entity';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne, MultiORMOneToMany, MultiORMOneToOne } from './../core/decorators/entity';
 import { MikroOrmCandidateFeedbackRepository } from './repository/mikro-orm-candidate-feedback.repository';
 
 @MultiORMEntity('candidate_feedback', { mikroOrmRepository: () => MikroOrmCandidateFeedbackRepository })
-export class CandidateFeedback extends TenantOrganizationBaseEntity implements ICandidateFeedback {
+export class CandidateFeedback extends TenantOrganizationBaseEntity
+	implements ICandidateFeedback {
+
 	@ApiProperty({ type: () => String })
 	@MultiORMColumn({ nullable: true })
 	description: string;
@@ -61,7 +59,6 @@ export class CandidateFeedback extends TenantOrganizationBaseEntity implements I
 	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.feedbacks, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	candidate?: ICandidate;
 
 	@ApiProperty({ type: () => String })

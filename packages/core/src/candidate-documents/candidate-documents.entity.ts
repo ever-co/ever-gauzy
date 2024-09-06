@@ -1,8 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { JoinColumn, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
+import { ICandidateDocument, ICandidate } from '@gauzy/contracts';
 import { IsString } from 'class-validator';
-import { ICandidateDocument, ICandidate, ID } from '@gauzy/contracts';
-import { Candidate, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import {
+	Candidate,
+	TenantOrganizationBaseEntity
+} from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmCandidateDocumentRepository } from './repository/mikro-orm-candidate-document.repository';
 
@@ -21,10 +24,10 @@ export class CandidateDocument extends TenantOrganizationBaseEntity implements I
 	| @ManyToOne
 	|--------------------------------------------------------------------------
 	*/
+	@ApiPropertyOptional({ type: () => Candidate })
 	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.documents, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	candidate?: ICandidate;
 
 	@ApiProperty({ type: () => String })
@@ -32,5 +35,5 @@ export class CandidateDocument extends TenantOrganizationBaseEntity implements I
 	@IsString()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	candidateId?: ID;
+	candidateId?: string;
 }

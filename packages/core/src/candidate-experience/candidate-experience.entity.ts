@@ -1,4 +1,4 @@
-import { JoinColumn, RelationId } from 'typeorm';
+import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICandidateExperience, ICandidate, ID } from '@gauzy/contracts';
 import { Candidate, TenantOrganizationBaseEntity } from '../core/entities/internal';
@@ -29,7 +29,6 @@ export class CandidateExperience extends TenantOrganizationBaseEntity implements
 	@MultiORMManyToOne(() => Candidate, (candidate) => candidate.experience, {
 		onDelete: 'CASCADE'
 	})
-	@JoinColumn()
 	candidate?: ICandidate;
 
 	@ApiProperty({ type: () => String })
