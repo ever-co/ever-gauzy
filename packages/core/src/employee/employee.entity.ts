@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -121,9 +121,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
 	@MultiORMColumn({ nullable: true })
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn({ nullable: true })
@@ -284,7 +286,7 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		nullable: true,
 		default: false
 	})
-	isTrackingEnabled: boolean;
+	isTrackingEnabled?: boolean;
 
 	/**
 	 * Employee status (Online/Offline)
