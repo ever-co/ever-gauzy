@@ -65,6 +65,7 @@ import { initSentry } from './sentry';
 import * as remoteMain from '@electron/remote/main';
 import { autoUpdater } from 'electron-updater';
 import * as Sentry from '@sentry/electron';
+import { setupTitlebar } from 'custom-electron-titlebar/main';
 
 remoteMain.initialize();
 
@@ -94,6 +95,8 @@ let tray: Tray;
 let isServerRun: boolean;
 let willQuit = false;
 
+setupTitlebar();
+
 const updater = new DesktopUpdater({
 	repository: process.env.REPO_NAME,
 	owner: process.env.REPO_OWNER,
@@ -114,8 +117,14 @@ const pathWindow: IPathWindow = {
 	ui: uiPath,
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
-	gauzyUi: ''
+	gauzyUi: '',
+	preloadPath: path.join(__dirname, 'preload.js')
 };
+
+ipcMain.handle('SAVED_THEME', () => {
+	return LocalStore.getStore('appSetting').theme;
+});
+
 
 
 
@@ -256,7 +265,7 @@ const appState = async () => {
 };
 
 const runMainWindow = async () => {
-	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui);
+	serverWindow = await createServerWindow(serverWindow, null, pathWindow.ui, pathWindow.preloadPath);
 
 	serverWindow.show();
 
@@ -464,7 +473,7 @@ app.on('ready', async () => {
 		};
 
 		if (!settingsWindow) {
-			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui);
+			settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.ui, pathWindow.preloadPath);
 		}
 
 		await appState();
@@ -800,3 +809,5 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 		console.error(error);
 	}
 });
+
+ipcMain.handle('get-app-path', () => app.getAppPath());

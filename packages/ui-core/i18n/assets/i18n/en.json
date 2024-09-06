@@ -3957,7 +3957,9 @@
 			"DB_PORT": "Database Port",
 			"USER": "User",
 			"PASSWORD": "Password",
-			"UI_HOSTNAME": "UI Hostname / IP Address"
+			"UI_HOSTNAME": "UI Hostname / IP Address",
+			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App provides the full functionality of the Gauzy Platform available directly on your desktop computer or a laptop. In addition, it allows tracking work time, activity recording, and the ability to receive tracking reminders/notifications."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Screen Capture",
