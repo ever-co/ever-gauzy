@@ -28,9 +28,8 @@ export abstract class SelectorStore<T> extends Store<ISelector<T>> {
 			return;
 		}
 		const data = this.getValue().data;
-		data.push(selected);
-		this.updateData(data);
 		this.updateSelected(selected);
+		this.updateData(data.concat([selected]));
 	}
 
 	public resetToInitialState(): void {
