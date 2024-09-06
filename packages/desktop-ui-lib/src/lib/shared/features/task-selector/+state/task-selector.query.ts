@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ITask } from '@gauzy/contracts';
-import { map, Observable } from 'rxjs';
+import { filter, map, Observable, startWith } from 'rxjs';
 import { SelectorQuery } from '../../../+state/selector.query';
 import { TaskSelectorStore } from './task-selector.store';
 
@@ -15,6 +15,10 @@ export class TaskSelectorQuery extends SelectorQuery<ITask> {
 	}
 
 	public get selectedId$(): Observable<ITask['id']> {
-		return this.selected$.pipe(map((selected) => selected?.id ?? null));
+		return this.selected$.pipe(
+			filter(Boolean),
+			map(({ id }) => id),
+			startWith(null)
+		);
 	}
 }

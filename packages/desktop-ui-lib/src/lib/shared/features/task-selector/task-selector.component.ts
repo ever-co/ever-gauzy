@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ITask } from 'packages/contracts/dist';
-import { Observable } from 'rxjs';
+import { filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
@@ -11,13 +11,23 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 	templateUrl: './task-selector.component.html',
 	styleUrls: ['./task-selector.component.scss']
 })
-export class TaskSelectorComponent {
+export class TaskSelectorComponent implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
 		private readonly taskSelectorService: TaskSelectorService
 	) {}
+
+	public ngOnInit() {
+		this.taskSelectorService
+			.getAll$()
+			.pipe(
+				filter((data) => !data.some((value) => value.id === this.taskSelectorService.selectedId)),
+				tap(() => (this.taskSelectorService.selected = null))
+			)
+			.subscribe();
+	}
 
 	public refresh(): void {
 		this.electronService.ipcRenderer.send('refresh-timer');

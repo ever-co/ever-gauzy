@@ -12,16 +12,13 @@ import {
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import {
-	ContactType,
 	IOrganization,
-	IOrganizationContact,
 	IOrganizationTeam,
 	ITask,
 	ITasksStatistics,
 	ITaskStatus,
 	ITaskUpdateInput,
 	PermissionsEnum,
-	ProjectOwnerEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import { compressImage, distinctUntilChange } from '@gauzy/ui-core/common';
@@ -70,6 +67,11 @@ import {
 	ToastrNotificationService,
 	ZoneEnum
 } from '../services';
+import { ClientSelectorService } from '../shared/features/client-selector/+state/client-selector.service';
+import { NoteService } from '../shared/features/note/+state/note.service';
+import { ProjectSelectorService } from '../shared/features/project-selector/+state/project-selector.service';
+import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
+import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TasksComponent } from '../tasks/tasks.component';
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
@@ -115,9 +117,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	userData: any;
 	organization: any = {};
-	projectSelect = null;
-	taskSelect = null;
-	teamSelect = null;
 	errors: any = {};
 	note: String = null;
 	public todayDuration$: BehaviorSubject<any> = new BehaviorSubject('--h --m');
@@ -126,7 +125,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public lastScreenCapture$: BehaviorSubject<any> = new BehaviorSubject({});
 	userPermission: any = [];
 	quitApp = false;
-	organizationContactId = null;
 	employeeId = null;
 	argFromMain = null;
 	token = null;
@@ -187,7 +185,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		@Inject(GAUZY_ENV)
 		private readonly _environment: any,
 		private readonly _activityWatchViewService: ActivityWatchViewService,
-		private readonly _languageElectronService: LanguageElectronService
+		private readonly _languageElectronService: LanguageElectronService,
+		private readonly clientSelectorService: ClientSelectorService,
+		private readonly teamSelectorService: TeamSelectorService,
+		private readonly projectSelectorService: ProjectSelectorService,
+		private readonly taskSelectorService: TaskSelectorService,
+		private readonly noteService: NoteService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -234,28 +237,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this._lastTotalWorkedWeek$.getValue();
 	}
 
-	private _teams$: BehaviorSubject<IOrganizationTeam[]> = new BehaviorSubject([]);
-
-	public get teams$(): Observable<IOrganizationTeam[]> {
-		return this._teams$.asObservable();
-	}
-
-	public get teams(): IOrganizationTeam[] {
-		return this._teams$.getValue();
-	}
-
 	public get selectedTeam(): IOrganizationTeam {
-		const [selected] = this.teams.filter((team: IOrganizationTeam) => team.id === this.teamSelect);
-		return selected;
-	}
-
-	public get tasks(): ITask[] {
-		return this._tasks$.getValue();
+		return this.teamSelectorService.selected;
 	}
 
 	public get selectedTask(): ITask {
-		const [selected] = this.tasks.filter((task: ITask) => task.id === this.taskSelect);
-		return selected;
+		return this.taskSelectorService.selected;
 	}
 
 	private _taskTable: Angular2SmartTableComponent;
@@ -271,24 +258,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get timeRun$(): Observable<string> {
 		return this._timeRun$.asObservable();
-	}
-
-	private _projects$: BehaviorSubject<any> = new BehaviorSubject([]);
-
-	public get projects$(): Observable<any> {
-		return this._projects$.asObservable();
-	}
-
-	private _tasks$: BehaviorSubject<any> = new BehaviorSubject([]);
-
-	public get tasks$(): Observable<any> {
-		return this._tasks$.asObservable();
-	}
-
-	private _organizationContacts$: BehaviorSubject<any> = new BehaviorSubject([]);
-
-	public get organizationContacts$(): Observable<any> {
-		return this._organizationContacts$.asObservable();
 	}
 
 	private _sourceData$: BehaviorSubject<LocalDataSource>;
@@ -357,15 +326,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public get inQueue(): ViewQueueStateUpdater {
 		return this._inQueue$.getValue();
-	}
-
-	/**
-	 * It returns the project that matches the projectSelect value
-	 * @returns The project that matches the projectSelect id.
-	 */
-	public get selectedProject() {
-		const projects = this._projects$.getValue();
-		return projects.filter((project) => project.id === this.projectSelect)[0];
 	}
 
 	public get _weeklyLimit(): number {
@@ -493,9 +453,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				tap(() => this._clearItem()),
 				tap(() => {
-					if (this.taskSelect) {
+					if (this.selectedTask) {
 						this._taskTable.grid.dataSet.getRows().map((row) => {
-							if (row.getData().id === this.taskSelect) {
+							if (row.getData().id === this.taskSelectorService.selectedId) {
 								return this._taskTable.grid.dataSet.selectRow(row);
 							}
 						});
@@ -555,12 +515,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			const params = {
 				token: this.token,
-				note: this.note,
-				projectId: this.projectSelect,
-				taskId: this.taskSelect,
+				note: this.noteService.note,
+				projectId: this.projectSelectorService.selectedId,
+				taskId: this.taskSelectorService.selectedId,
 				organizationId: this._store.organizationId,
 				tenantId: this._store.tenantId,
-				organizationContactId: this.organizationContactId,
+				organizationContactId: this.clientSelectorService.selectedId,
 				apiHost: this.apiHost
 			};
 
@@ -732,9 +692,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._store.statuses = await this.timeTrackerService.statuses({
 			tenantId,
 			organizationId,
-			...(this.projectSelect
+			...(this.projectSelectorService.selectedId
 				? {
-						projectId: this.projectSelect
+						projectId: this.projectSelectorService.selectedId
 				  }
 				: {})
 		});
@@ -745,15 +705,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this._sourceData.setSort([{ field: 'updatedAt', direction: 'desc' }]);
 
-		this.tasks$
+		this.taskSelectorService
+			.getAll$()
 			.pipe(
 				tap(async (tasks) => {
-					if (tasks.length > 0) {
-						tasks = tasks.map((row) => ({ ...row, isSelected: row.id === this.taskSelect }));
-					} else {
-						tasks = [];
-						this.taskSelect = null;
-					}
 					this.tableData = tasks;
 					await this._sourceData.load(this.tableData);
 				}),
@@ -822,11 +777,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this.inQueue.size === 0
 				),
 				tap(async (remoteTimer: IRemoteTimer) => {
-					this.projectSelect = remoteTimer.lastLog.projectId;
-					this.taskSelect = remoteTimer.lastLog.taskId;
-					this.note = remoteTimer.lastLog.description;
-					this.teamSelect = remoteTimer.lastLog.organizationTeamId;
-					this.organizationContactId = remoteTimer.lastLog.organizationContactId;
+					this.projectSelectorService.selected = remoteTimer.lastLog.projectId;
+					this.taskSelectorService.selected = remoteTimer.lastLog.taskId;
+					this.noteService.note = remoteTimer.lastLog.description;
+					this.teamSelectorService.selected = remoteTimer.lastLog.organizationTeamId;
+					this.clientSelectorService.selected = remoteTimer.lastLog.organizationContactId;
 					if (!this.isProcessingEnabled) {
 						await this.toggleStart(remoteTimer.running, false);
 					}
@@ -891,12 +846,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;
 				this.argFromMain = arg;
-				this.taskSelect = arg.taskId;
-				this.projectSelect = arg.projectId;
-				this.organizationContactId = arg.organizationContactId;
-				this.teamSelect = arg.organizationTeamId;
 				this.token = arg.token;
-				this.note = arg.note;
 				this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 				this.appSetting$.next(arg.settings);
 				this._timeZoneManager.changeZone(this.appSetting?.zone || ZoneEnum.LOCAL);
@@ -905,10 +855,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
-					this.getTeams(arg),
-					this.getClient(arg),
-					this.getProjects(arg),
-					this.getTask(arg),
+					this.clientSelectorService.load(),
+					this.projectSelectorService.load(),
+					this.teamSelectorService.load(),
+					this.taskSelectorService.load(),
 					this.getTodayTime(arg),
 					this.setTimerDetails()
 				];
@@ -926,10 +876,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('start_from_tray', async (event, arg) =>
 			this._ngZone.run(async () => {
-				this.taskSelect = arg.taskId;
-				this.projectSelect = arg.projectId;
-				this.teamSelect = arg.organizationTeamId;
-				this.note = arg.note;
 				this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
 				await this.setTimerDetails();
 				await this.toggleStart(true);
@@ -963,9 +909,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('set_project_task_reply', (event, arg) =>
 			this._ngZone.run(async () => {
-				await this.setProject(arg.projectId);
-				this.setTask(arg.taskId);
-				this.note = arg.note;
 				this._activityWatchViewService.aw$.next(arg.aw && arg.aw.isAw ? arg.aw.isAw : false);
 			})
 		);
@@ -1263,12 +1206,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					if (isReadyForDeletion) {
 						const apiParams = {
 							token: this.token,
-							note: this.note,
-							projectId: this.projectSelect,
-							taskId: this.taskSelect,
+							note: this.noteService.note,
+							projectId: this.projectSelectorService.selectedId,
+							taskId: this.taskSelectorService.selectedId,
+							organizationContactId: this.clientSelectorService.selectedId,
 							organizationId,
 							tenantId,
-							organizationContactId: this.organizationContactId,
 							apiHost: this.apiHost
 						};
 
@@ -1556,17 +1499,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			}
 
 			const timer = await this.electronService.ipcRenderer.invoke('START_TIMER', {
-				projectId: this.projectSelect,
-				taskId: this.taskSelect,
-				note: this.note,
-				organizationContactId: this.organizationContactId,
+				projectId: this.projectSelectorService.selectedId,
+				taskId: this.taskSelectorService.selectedId,
+				organizationContactId: this.clientSelectorService.selectedId,
+				note: this.noteService.note,
 				aw: {
 					host: this._environment?.AWHost,
 					isAw: this._activityWatchViewService.aw
 				},
 				timeLog: null,
 				isRemoteTimer: this.isRemoteTimer,
-				organizationTeamId: this.teamSelect
+				organizationTeamId: this.teamSelectorService.selectedId
 			});
 
 			this.start$.next(true);
@@ -1680,56 +1623,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	async getTask(arg) {
-		try {
-			const tasks = await this.timeTrackerService.getTasks(arg);
-			if (tasks.length) {
-				const statistics = await this.timeTrackerService.getTasksStatistics({
-					...arg,
-					taskIds: tasks.map((task) => task.id)
-				});
-				this._tasks$.next(this.merge(tasks, statistics));
-				if (!this._tasks$.getValue().some((task) => task.id === this.taskSelect)) {
-					this.taskSelect = null;
-				}
-			} else {
-				this._tasks$.next([]);
-			}
-		} catch (error) {
-			this._tasks$.next([]);
-			console.log('ERROR', error);
-		}
-	}
-
-	async getProjects(arg) {
-		try {
-			const projects = await this.timeTrackerService.getProjects(arg);
-
-			// Check if the selected project is not in the response
-			if (projects && !projects.some((project) => project.id === this.projectSelect)) {
-				this.projectSelect = null;
-				this.argFromMain.projectId = null;
-			}
-
-			// Update the projects observable with the response (or an empty array if it's falsy)
-			this._projects$.next(projects || []);
-		} catch (error) {
-			// Handle errors by logging them and updating the projects observable with an empty array
-			this._loggerService.error('ERROR', error);
-			this._projects$.next([]);
-		}
-	}
-
-	async getClient(arg) {
-		try {
-			const res = await this.timeTrackerService.getClient(arg);
-			this._organizationContacts$.next(res || []);
-		} catch (error) {
-			this._organizationContacts$.next([]);
-			console.log('ERROR', error);
-		}
-	}
-
 	/*
 	 * Get last running/completed timer status
 	 * Get last running/completed timer status
@@ -1745,82 +1638,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	async setClient(item, dialog) {
-		if (this.start) {
-			this.open(dialog, {
-				type: this.dialogType.changeClient.name,
-				val: item
-			});
-		} else {
-			try {
-				await this.selectClient(item);
-			} catch (error) {
-				console.log('ERROR', error);
-			}
-		}
-	}
-
-	public async selectClient(item: string): Promise<void> {
-		this.organizationContactId = item;
-		this.argFromMain.organizationContactId = item;
-		this.electronService.ipcRenderer.send('update_project_on', {
-			organizationContactId: this.organizationContactId
-		});
-		if (item) {
-			await this.getProjects({
-				...this.argFromMain,
-				organizationContactId: this.organizationContactId
-			});
-			this._tasks$.next([]);
-			this.teamSelect = null;
-			this.errors.client = false;
-		} else {
-			await this.getProjects(this.argFromMain);
-		}
-	}
-
-	public async setProject(item: string): Promise<void> {
-		try {
-			const parallelizedTasks: Promise<void>[] = [
-				this.getTeams({
-					...this.argFromMain,
-					projectId: item
-				}),
-				this.getTask({
-					...this.argFromMain,
-					projectId: item
-				})
-			];
-			this.projectSelect = item;
-			this.argFromMain.projectId = item;
-			this.electronService.ipcRenderer.send('update_project_on', {
-				projectId: this.projectSelect
-			});
-			if (item) {
-				this.errors.project = false;
-			} else {
-				this.errorBind();
-			}
-			await Promise.allSettled(parallelizedTasks);
-		} catch (error) {
-			console.log('ERROR', error);
-		}
-	}
-
-	public setTask(item: string): void {
-		this.taskSelect = item;
-		this.electronService.ipcRenderer.send('update_project_on', {
-			taskId: this.taskSelect
-		});
-		if (item) this.errors.task = false;
-	}
-
 	public descriptionChange(e): void {
 		if (e) this.errors.note = false;
 		this.clearSelectedTaskAndRefresh();
 		this._clearItem();
 		this.electronService.ipcRenderer.send('update_project_on', {
-			note: this.note
+			note: this.noteService.note
 		});
 	}
 
@@ -1840,10 +1663,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public errorBind(): void {
-		if (!this.projectSelect && this.userOrganization.requireProject) this.errors.project = true;
-		if (!this.taskSelect && this.userOrganization.requireTask) this.errors.task = true;
-		if (!this.organizationContactId && this.userOrganization.requireClient) this.errors.client = true;
-		if (!this.note && this.userOrganization.requireDescription) this.errors.note = true;
+		if (!this.projectSelectorService.selected && this.userOrganization.requireProject) this.errors.project = true;
+		if (!this.selectedTask && this.userOrganization.requireTask) this.errors.task = true;
+		if (!this.clientSelectorService.selected && this.userOrganization.requireClient) this.errors.client = true;
+		if (!this.noteService.note && this.userOrganization.requireDescription) this.errors.note = true;
 	}
 
 	public doShoot(): void {
@@ -2000,9 +1823,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._dialog.onClose.subscribe(async (selectedOption) => {
 				if (selectedOption) {
 					switch (option.type) {
-						case this.dialogType.changeClient.name:
-							await this.selectClient(option.val);
-							break;
 						case this.dialogType.deleteLog.name:
 							await this.deleteTimeSlot();
 							break;
@@ -2051,30 +1871,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public handleRowSelection(selectionEvent): void {
+		console.log(selectionEvent);
 		if (this.isNoRowSelected(selectionEvent)) {
 			this.clearSelectedTaskAndRefresh();
 		} else {
-			const selectedRow = selectionEvent.selected[0];
+			const selectedRow = selectionEvent.data;
 			this.handleSelectedTaskChange(selectedRow.id);
 		}
 	}
 
-	private isNoRowSelected(selectionEvent): boolean {
-		return !selectionEvent.selected.length;
+	private isNoRowSelected({ isSelected }): boolean {
+		return !isSelected;
 	}
 
 	private clearSelectedTaskAndRefresh(): void {
-		this.setTask(null);
+		this.taskSelectorService.selected = null;
 	}
 
 	private handleSelectedTaskChange(selectedTaskId): void {
 		if (this.isDifferentTask(selectedTaskId)) {
-			this.setTask(selectedTaskId);
+			this.taskSelectorService.selected = selectedTaskId;
 		}
 	}
 
 	private isDifferentTask(selectedTaskId): boolean {
-		return this.taskSelect !== selectedTaskId;
+		return this.taskSelectorService.selectedId !== selectedTaskId;
 	}
 
 	public onSearch(query: string = ''): void {
@@ -2370,9 +2191,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					employee: this.userData,
 					hasProjectPermission: this.hasProjectPermission$.getValue(),
 					selected: {
-						projectId: this.projectSelect,
-						teamId: this.teamSelect,
-						contactId: this.organizationContactId
+						teamId: this.teamSelectorService.selectedId,
+						projectId: this.projectSelectorService.selectedId,
+						contactId: this.clientSelectorService.selectedId
 					},
 					userData: this.argFromMain
 				},
@@ -2424,99 +2245,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public humanize(date: Date): string {
 		return moment(date).fromNow();
 	}
-
-	/* Adding a new project to the list of projects. */
-	public addProject = async (name: string) => {
-		try {
-			const { tenantId } = this._store;
-			const organizationId = this._store.organizationId;
-			const request = {
-				name,
-				organizationId,
-				tenantId,
-				owner: ProjectOwnerEnum.CLIENT,
-				...(this.organizationContactId ? { organizationContactId: this.organizationContactId } : {})
-			};
-
-			request['members'] = [{ ...this.userData.employee }];
-
-			console.log('Request', request);
-			const project = await this.timeTrackerService.createNewProject(request, {
-				...this.userData,
-				token: this.token,
-				apiHost: this.apiHost
-			});
-			const projects = this._projects$.getValue();
-			this._projects$.next(projects.concat([project]));
-			this.projectSelect = project.id;
-			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.PROJECT_ADDED'));
-		} catch (error) {
-			console.log(error);
-		}
-	};
-
-	/* Adding a new task to the list of tasks. */
-	public addNewTask = async (title: ITask['title']) => {
-		if (!title) {
-			return;
-		}
-		const { tenantId, organizationId } = this._store;
-		const data = {
-			tenantId,
-			organizationId,
-			token: this.token,
-			apiHost: this.apiHost,
-			projectId: this.projectSelect
-		};
-		try {
-			const member: any = { ...this.userData.employee };
-			const task: any = await this.timeTrackerService.saveNewTask(data, {
-				title,
-				organizationId,
-				tenantId,
-				status: TaskStatusEnum.IN_PROGRESS,
-				dueDate: moment().add(1, 'day').utc().toDate(),
-				estimate: 3600,
-				...(member.id && { members: [member] }),
-				...(this.projectSelect && {
-					projectId: this.projectSelect,
-					project: this.selectedProject
-				})
-			});
-			const tasks = this._tasks$.getValue();
-			this._tasks$.next(tasks.concat(task));
-			this.taskSelect = task.id;
-			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.TASK_ADDED'));
-		} catch (error) {
-			console.log('ERROR', error);
-		}
-	};
-
-	/* Creating a new contact for the organization. */
-	public addContact = async (name: IOrganizationContact['name']) => {
-		try {
-			const { tenantId, organizationId } = this._store;
-			const member: any = { ...this.userData.employee };
-			const payload = {
-				name,
-				organizationId,
-				tenantId,
-				contactType: ContactType.CLIENT,
-				...(member.id && { members: [member] })
-			};
-			const contact = await this.timeTrackerService.createNewContact(payload, {
-				...this.userData,
-				token: this.token,
-				apiHost: this.apiHost
-			});
-			const contacts = this._organizationContacts$.getValue();
-			this._organizationContacts$.next(contacts.concat([contact]));
-			this.organizationContactId = contact.id;
-			this._toastrNotifier.success(this._translateService.instant('TIMER_TRACKER.TOASTR.CLIENT_ADDED'));
-		} catch (error) {
-			console.log('ERROR', error);
-		}
-	};
 
 	public selectOrganization(organization: IOrganization) {
 		console.log('Organization', organization);
@@ -2573,13 +2301,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {
 		try {
-			if (!this.taskSelect || !this.teamSelect) {
+			if (!this.selectedTask || !this.selectedTeam) {
 				return;
 			}
-			const organizationTeamId = this.teamSelect;
-			const { tenantId, organizationId } = this._store;
-			const { employeeId } = this._store.user;
-			const activeTaskId = this.taskSelect;
+			const organizationTeamId = this.teamSelectorService.selectedId;
+			const { tenantId, organizationId, user } = this._store;
+			const { id: employeeId } = user.employee;
+			const activeTaskId = this.taskSelectorService.selectedId;
 			const payload = {
 				activeTaskId,
 				tenantId,
@@ -2592,56 +2320,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 	}
 
-	public async getTeams(arg?: any): Promise<void> {
-		try {
-			const teams = await this.timeTrackerService.getTeams(arg);
-			// Check if the selected team is not in the response
-			if (!teams.some((team) => team.id === this.teamSelect)) {
-				this.teamSelect = null;
-				this.argFromMain.organizationTeamId = null;
-			}
-			this._teams$.next(teams);
-		} catch (error) {
-			this._teams$.next([]);
-			this._errorHandlerService.handleError(error);
-		}
-	}
-
-	public async setTeams(organizationTeamId: string): Promise<void> {
-		try {
-			const parallelizedTasks: Promise<void>[] = [
-				this.getProjects({
-					...this.argFromMain,
-					organizationTeamId
-				}),
-				this.getTask({
-					...this.argFromMain,
-					organizationTeamId
-				})
-			];
-			this.teamSelect = organizationTeamId;
-			this.electronService.ipcRenderer.send('update_project_on', {
-				organizationTeamId
-			});
-			this.argFromMain.organizationTeamId = organizationTeamId;
-			if (organizationTeamId) {
-				this.errors.teams = false;
-			} else {
-				this.errorBind();
-			}
-			await Promise.allSettled(parallelizedTasks);
-		} catch (error) {
-			this._loggerService.error('ERROR', error);
-		}
-	}
-
 	private async updateTaskStatus() {
 		try {
 			const { tenantId, organizationId } = this._store;
-			if (!this.taskSelect || this.selectedTask.status === TaskStatusEnum.IN_PROGRESS) {
+			if (!this.selectedTask || this.selectedTask.status === TaskStatusEnum.IN_PROGRESS) {
 				return;
 			}
-			const id = this.selectedTask.id;
+			const id = this.taskSelectorService.selectedId;
 			const title = this.selectedTask.title;
 			const status = TaskStatusEnum.IN_PROGRESS;
 			const taskStatus = this._store.statuses.find((taskStatus) => taskStatus.name === status);

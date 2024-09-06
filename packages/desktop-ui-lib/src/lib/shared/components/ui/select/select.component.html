@@ -1,8 +1,8 @@
 <div class="gauzy-select-container">
-	<label>{{ label | translate }}</label>
+	<label *ngIf="label">{{ label | translate }}</label>
 	<ng-select (clear)="onClear()" [loading]="isLoading" (ngModelChange)="onModelChange($event)"
 		[(ngModel)]="selectedItem" [addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
-		[class.error-border]="hasError" [clearable]="true" [disabled]="disabled" [items]="items"
+		[class.error-border]="hasError" [clearable]="clearable" [disabled]="disabled" [items]="items"
 		[nbTooltipDisabled]="!disabled" [nbTooltip]="tooltipText | translate" [placeholder]="placeholder | translate"
 		[bindLabel]="bindLabel" [bindValue]="bindValue" nbTooltipStatus="warning">
 
@@ -43,6 +43,6 @@
 <ng-template #commonTemplate let-item="item" let-label="label">
 	<div class="common-template">
 		<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
-		<span class="text-container">{{ label }}</span>
+		<span class="black-bold-text">{{ label }}</span>
 	</div>
 </ng-template>

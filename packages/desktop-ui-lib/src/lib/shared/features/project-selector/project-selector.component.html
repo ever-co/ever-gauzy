@@ -1,4 +1,18 @@
-<gauzy-select class="w-100" label="CONTEXT_MENU.PROJECT" [selectedItem]="selectedId$ | async"
-	[items]="data$ | async" bindLabel="name" bindValue="id" [hasError]="error$ | async"
-	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT" addTagText="FORM.PLACEHOLDERS.ADD_PROJECT" placeholder="TIMER_TRACKER.SELECT_PROJECT" (clear)="refresh()"
-	(modelChange)="change($event)" [isLoading]="isLoading$ | async" [canAddTag]="true" [addTag]="addProject"></gauzy-select>
+<gauzy-select
+	class="w-100"
+	label="CONTEXT_MENU.PROJECT"
+	*ngIf="selectedId$ as selected"
+	[selectedItem]="selected | async"
+	[items]="data$ | async"
+	bindLabel="name"
+	bindValue="id"
+	[hasError]="error$ | async"
+	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT"
+	addTagText="FORM.PLACEHOLDERS.ADD_PROJECT"
+	placeholder="TIMER_TRACKER.SELECT_PROJECT"
+	(clear)="refresh()"
+	(modelChange)="change($event)"
+	[isLoading]="isLoading$ | async"
+	[canAddTag]="true"
+	[addTag]="addProject"
+></gauzy-select>

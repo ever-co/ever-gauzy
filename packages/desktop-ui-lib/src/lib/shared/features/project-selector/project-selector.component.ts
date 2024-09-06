@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IOrganizationProject } from 'packages/contracts/dist';
-import { Observable } from 'rxjs';
+import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
+import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ProjectSelectorQuery } from './+state/project-selector.query';
 import { ProjectSelectorService } from './+state/project-selector.service';
 import { ProjectSelectorStore } from './+state/project-selector.store';
@@ -11,13 +13,31 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 	templateUrl: './project-selector.component.html',
 	styleUrls: ['./project-selector.component.scss']
 })
-export class ProjectSelectorComponent {
+export class ProjectSelectorComponent implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
-		public readonly projectSelectorStore: ProjectSelectorStore,
-		public readonly projectSelectorQuery: ProjectSelectorQuery,
-		private readonly projectSelectorService: ProjectSelectorService
+		private readonly projectSelectorStore: ProjectSelectorStore,
+		private readonly projectSelectorQuery: ProjectSelectorQuery,
+		private readonly projectSelectorService: ProjectSelectorService,
+		private readonly taskSelectorService: TaskSelectorService,
+		private readonly teamSelectorService: TeamSelectorService
 	) {}
+
+	public ngOnInit(): void {
+		this.projectSelectorQuery.selected$
+			.pipe(
+				filter((project) => !!project),
+				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()]))
+			)
+			.subscribe();
+		this.projectSelectorService
+			.getAll$()
+			.pipe(
+				filter((data) => !data.some((value) => value.id === this.projectSelectorService.selectedId)),
+				tap(() => (this.projectSelectorService.selected = null))
+			)
+			.subscribe();
+	}
 
 	public refresh(): void {
 		this.electronService.ipcRenderer.send('refresh-timer');

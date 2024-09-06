@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IOrganizationTeam } from 'packages/contracts/dist';
-import { Observable } from 'rxjs';
+import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
+import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorQuery } from './+state/team-selector.query';
+import { TeamSelectorService } from './+state/team-selector.service';
 import { TeamSelectorStore } from './+state/team-selector.store';
 
 @Component({
@@ -10,12 +13,31 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 	templateUrl: './team-selector.component.html',
 	styleUrls: ['./team-selector.component.scss']
 })
-export class TeamSelectorComponent {
+export class TeamSelectorComponent implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		private readonly teamSelectorStore: TeamSelectorStore,
-		private readonly teamSelectorQuery: TeamSelectorQuery
+		private readonly teamSelectorQuery: TeamSelectorQuery,
+		private readonly projectSelectorService: ProjectSelectorService,
+		private readonly taskSelectorService: TaskSelectorService,
+		private readonly teamSelectorService: TeamSelectorService
 	) {}
+	public ngOnInit(): void {
+		this.teamSelectorService
+			.getAll$()
+			.pipe(
+				filter((data) => !data.some((value) => value.id === this.teamSelectorService.selectedId)),
+				tap(() => (this.teamSelectorService.selected = null))
+			)
+			.subscribe();
+		this.teamSelectorQuery.selected$
+			.pipe(
+				filter((team) => !!team),
+				concatMap(() => this.projectSelectorService.load()),
+				concatMap(() => this.taskSelectorService.load())
+			)
+			.subscribe();
+	}
 
 	public refresh(): void {
 		this.electronService.ipcRenderer.send('refresh-timer');

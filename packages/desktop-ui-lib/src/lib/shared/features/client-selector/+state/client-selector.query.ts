@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { IOrganizationContact } from '@gauzy/contracts';
-import { map, Observable } from 'rxjs';
+import { map, Observable, startWith } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { SelectorQuery } from '../../../+state/selector.query';
 import { ClientSelectorStore } from './client-selector.store';
 
@@ -15,6 +16,10 @@ export class ClientSelectorQuery extends SelectorQuery<IOrganizationContact> {
 	}
 
 	public get selectedId$(): Observable<IOrganizationContact['id']> {
-		return this.selected$.pipe(map((selected) => selected?.id ?? null));
+		return this.selected$.pipe(
+			filter(Boolean),
+			map(({ id }) => id),
+			startWith(null)
+		);
 	}
 }

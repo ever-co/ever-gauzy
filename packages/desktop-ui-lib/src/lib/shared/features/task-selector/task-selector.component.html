@@ -1,4 +1,18 @@
-<gauzy-select class="w-100" label="CONTEXT_MENU.TASK" [selectedItem]="selectedId$ | async" [items]="data$ | async"
-	bindLabel="title" bindValue="id" [hasError]="error$ | async" tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TASK"
-	placeholder="TIMER_TRACKER.SELECT_TASK" (clear)="refresh()" (modelChange)="change($event)" [canAddTag]="true"
-	[addTag]="addNewTask" [isLoading]="isLoading$ | async" addTagText="TIMER_TRACKER.ADD_TASK"></gauzy-select>
+<gauzy-select
+	class="w-100"
+	label="CONTEXT_MENU.TASK"
+	*ngIf="selectedId$ as selected"
+	[selectedItem]="selected | async"
+	[items]="data$ | async"
+	bindLabel="title"
+	bindValue="id"
+	[hasError]="error$ | async"
+	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TASK"
+	placeholder="TIMER_TRACKER.SELECT_TASK"
+	(clear)="refresh()"
+	(modelChange)="change($event)"
+	[canAddTag]="true"
+	[addTag]="addNewTask"
+	[isLoading]="isLoading$ | async"
+	addTagText="TIMER_TRACKER.ADD_TASK"
+></gauzy-select>
