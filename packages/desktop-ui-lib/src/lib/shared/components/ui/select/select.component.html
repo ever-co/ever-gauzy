@@ -1,23 +1,48 @@
 <div class="gauzy-select-container">
 	<label>{{ label | translate }}</label>
-	<ng-select (clear)="onClear()" [loading]="isLoading" (ngModelChange)="onModelChange($event)" [(ngModel)]="selectedItem"
-		[addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
-		[class]="hasError ? 'error-border' : ''" [clearable]="true" [disabled]="disabled" [items]="items"
+	<ng-select (clear)="onClear()" [loading]="isLoading" (ngModelChange)="onModelChange($event)"
+		[(ngModel)]="selectedItem" [addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
+		[class.error-border]="hasError" [clearable]="true" [disabled]="disabled" [items]="items"
 		[nbTooltipDisabled]="!disabled" [nbTooltip]="tooltipText | translate" [placeholder]="placeholder | translate"
 		[bindLabel]="bindLabel" [bindValue]="bindValue" nbTooltipStatus="warning">
-		<ng-template let-index="index" let-item="item" ng-option-tmp>
-			<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
-			<span class="text-container">
-				{{ item?.name }}
-			</span>
+
+		<!-- Option Template -->
+		<ng-template ng-option-tmp let-item="item">
+			<ng-container [ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate: defaultTemplate"
+				[ngTemplateOutletContext]="{ item }">
+			</ng-container>
 		</ng-template>
-		<ng-template let-item="item" ng-label-tmp>
+
+		<!-- Label Template -->
+		<ng-template ng-label-tmp let-item="item">
 			<div class="selector-template">
-				<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
-				<span class="black-bold-text text-container">
-					{{ item?.name }}
-				</span>
+				<ng-container [ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate: defaultTemplate"
+					[ngTemplateOutletContext]="{ item }">
+				</ng-container>
 			</div>
 		</ng-template>
 	</ng-select>
 </div>
+
+<!-- Default Template -->
+<ng-template #defaultTemplate let-item="item">
+	<ng-container *ngTemplateOutlet="commonTemplate; context: { item: item, label: item[bindLabel] }"></ng-container>
+</ng-template>
+
+<!-- Title Template -->
+<ng-template #titleTemplate let-item="item">
+	<span class="text-container">
+		<span *ngIf="item?.taskNumber || (item?.number && item?.prefix)" class="gray-bold-text">
+			#{{ (item?.taskNumber || (item?.prefix + '-' + item?.number)) | uppercase }}
+		</span>
+		<span class="black-bold-text">{{ item?.title }}</span>
+	</span>
+</ng-template>
+
+<!-- Common Template (for both option and label) -->
+<ng-template #commonTemplate let-item="item" let-label="label">
+	<div class="common-template">
+		<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
+		<span class="text-container">{{ label }}</span>
+	</div>
+</ng-template>

@@ -8,6 +8,11 @@
 	font-weight: 600;
 }
 
+.gray-bold-text {
+	color: var(--gauzy-text-color-2);
+	font-weight: 600;
+}
+
 $input-background-color: var(--gauzy-card-1);
 $height: 42px;
 
@@ -46,15 +51,6 @@ $height: 42px;
 		input {
 			background-color: unset !important;
 		}
-	}
-
-	::ng-deep angular2-smart-table tbody tr.selected,
-	angular2-smart-table tbody tr:hover {
-		background: var(--smart-table-bg-active) !important;
-	}
-
-	::ng-deep angular2-smart-table tbody tr.selected {
-		box-shadow: 12.5px 0 0 -5px rgba(126, 126, 143, 0.05) inset !important;
 	}
 
 	.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-value {
