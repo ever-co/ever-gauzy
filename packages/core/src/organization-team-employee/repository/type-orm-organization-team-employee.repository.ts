@@ -5,7 +5,7 @@ import { OrganizationTeamEmployee } from '../organization-team-employee.entity';
 
 @Injectable()
 export class TypeOrmOrganizationTeamEmployeeRepository extends Repository<OrganizationTeamEmployee> {
-    constructor(@InjectRepository(OrganizationTeamEmployee) readonly repository: Repository<OrganizationTeamEmployee>) {
-        super(repository.target, repository.manager, repository.queryRunner);
-    }
+	constructor(@InjectRepository(OrganizationTeamEmployee) readonly repository: Repository<OrganizationTeamEmployee>) {
+		super(repository.target, repository.manager, repository.queryRunner);
+	}
 }
