@@ -19,6 +19,6 @@
 	],
 	"include": [
 		"src/index.ts",
-		"src/preload.ts"
+		"src/preload"
 	]
 }

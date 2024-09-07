@@ -124,7 +124,7 @@ const pathWindow: IPathWindow = {
 	ui: uiPath,
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
-	preloadPath: path.join(__dirname, 'preload.js')
+	preloadPath: path.join(__dirname, 'preload/preload.js')
 };
 
 

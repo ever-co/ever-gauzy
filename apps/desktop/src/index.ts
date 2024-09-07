@@ -107,7 +107,7 @@ const pathWindow = {
 	gauzyWindow: path.join(__dirname, './index.html'),
 	timeTrackerUi: path.join(__dirname, './ui/index.html'),
 	screenshotWindow: path.join(__dirname, './ui/index.html'),
-	preloadPath: path.join(__dirname, 'preload.js')
+	preloadPath: path.join(__dirname, 'preload/preload.js')
 };
 
 const updater = new DesktopUpdater({

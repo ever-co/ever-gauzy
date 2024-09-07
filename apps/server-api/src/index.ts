@@ -118,7 +118,7 @@ const pathWindow: IPathWindow = {
 	dir: dirPath,
 	timeTrackerUi: timeTrackerUIPath,
 	gauzyUi: '',
-	preloadPath: path.join(__dirname, 'preload.js')
+	preloadPath: path.join(__dirname, 'preload/preload.js')
 };
 
 ipcMain.handle('SAVED_THEME', () => {
