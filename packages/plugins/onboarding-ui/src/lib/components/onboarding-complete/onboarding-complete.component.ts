@@ -39,7 +39,7 @@ export class OnboardingCompleteComponent extends TranslationBaseComponent implem
 			const permissions = await this._permissionsService.getPermissions();
 
 			// Only enabled permissions assign to logged in user
-			await this.initializeUiPermissions(permissions.items);
+			await this.initializeUiPermissions(permissions);
 		} catch (error) {
 			console.log('Error while initializing UI permissions', error);
 			this._errorHandlingService.handleError(error);

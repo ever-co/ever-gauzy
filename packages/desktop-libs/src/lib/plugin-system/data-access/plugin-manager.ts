@@ -27,10 +27,10 @@ export class PluginManager implements IPluginManager {
 		return this.instance;
 	}
 
-	public async downloadPlugin<U>(config: U, contextType?: PluginDownloadContextType): Promise<void> {
+	public async downloadPlugin<U extends { contextType: PluginDownloadContextType }>(config: U): Promise<void> {
 		logger.info(`Downloading plugin...`);
 		process.noAsar = true;
-		const context = this.factory.getContext(contextType);
+		const context = this.factory.getContext(config.contextType);
 		const { metadata, pathDirname } = await context.execute({ ...config, pluginPath: this.pluginPath });
 		const plugin = this.plugins.get(metadata.name);
 		if (plugin) {

@@ -1,56 +1,71 @@
 import { DataSource } from 'typeorm';
 import { faker } from '@faker-js/faker';
-import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { IEmployee, IOrganization, ITenant } from '@gauzy/contracts';
+import { OrganizationTeamEmployee } from './organization-team-employee.entity';
 import { OrganizationTeam, Role } from './../core/entities/internal';
 
+/**
+ * Create random OrganizationTeamEmployee entries for each tenant, organization, and employee.
+ *
+ * @param dataSource - The data source instance for managing database operations
+ * @param tenants - List of tenants to create OrganizationTeamEmployees for
+ * @param tenantOrganizationsMap - A map linking each tenant to its organizations
+ * @param organizationEmployeesMap - A map linking each organization to its employees
+ * @returns void
+ */
 export const createRandomOrganizationTeamEmployee = async (
 	dataSource: DataSource,
 	tenants: ITenant[],
 	tenantOrganizationsMap: Map<ITenant, IOrganization[]>,
 	organizationEmployeesMap: Map<IOrganization, IEmployee[]>
-) => {
-	if (!tenantOrganizationsMap) {
-		console.warn(
-			'Warning: tenantOrganizationsMap not found, Random Organization Team Employee will not be created'
-		);
-		return;
-	}
-	if (!organizationEmployeesMap) {
-		console.warn(
-			'Warning: organizationEmployeesMap not found, Random Organization Team Employee will not be created'
-		);
+): Promise<void> => {
+	if (!tenantOrganizationsMap || !organizationEmployeesMap) {
+		console.warn('Warning: Required maps not found, Random Organization Team Employee creation skipped.');
 		return;
 	}
 
 	const orgTeamEmployees: OrganizationTeamEmployee[] = [];
-	for (const tenant of tenants) {
-		const { id: tenantId } = tenant;
-		const organizations = tenantOrganizationsMap.get(tenant);
 
-		for (const organization of organizations) {
-			const tenantEmployees = organizationEmployeesMap.get(organization);
+	// Iterate over each tenant
+	for await (const tenant of tenants) {
+		const organizations = tenantOrganizationsMap.get(tenant) || [];
+		const { id: tenantId } = tenant;
+
+		// Fetch employees in parallel
+		const roles = await dataSource.manager.find(Role, { where: { tenantId } }); // Fetch roles once for reuse
+
+		// Iterate over each organization
+		for await (const organization of organizations) {
+			const tenantEmployees = organizationEmployeesMap.get(organization) || [];
 			const { id: organizationId } = organization;
+
+			// Fetch organization teams in parallel
 			const organizationTeams = await dataSource.manager.findBy(OrganizationTeam, {
 				organizationId,
 				tenantId
 			});
-			const roles = await dataSource.manager.find(Role, {});
-			const team = faker.helpers.arrayElement(organizationTeams);
-			const employee = faker.helpers.arrayElement(tenantEmployees);
 
-			const orgTeamEmployee = new OrganizationTeamEmployee();
+			// Randomly select a team and employee if available
+			if (organizationTeams.length && tenantEmployees.length) {
+				const team = faker.helpers.arrayElement(organizationTeams);
+				const employee = faker.helpers.arrayElement(tenantEmployees);
 
-			orgTeamEmployee.organizationTeamId = team.id;
-			orgTeamEmployee.employeeId = employee.id;
-			orgTeamEmployee.organizationTeam = team;
-			orgTeamEmployee.employee = employee;
-			orgTeamEmployee.organizationId = organizationId;
-			orgTeamEmployee.tenantId = tenantId;
-			orgTeamEmployee.role = faker.helpers.arrayElement(roles);
-
-			orgTeamEmployees.push(orgTeamEmployee);
+				// Create a new OrganizationTeamEmployee instance
+				orgTeamEmployees.push(
+					new OrganizationTeamEmployee({
+						organizationTeamId: team.id,
+						employeeId: employee.id,
+						organizationTeam: team,
+						employee: employee,
+						organizationId,
+						tenantId,
+						role: faker.helpers.arrayElement(roles)
+					})
+				);
+			}
 		}
 	}
+
+	// Save the organization team employees to the database
 	await dataSource.manager.save(orgTeamEmployees);
 };

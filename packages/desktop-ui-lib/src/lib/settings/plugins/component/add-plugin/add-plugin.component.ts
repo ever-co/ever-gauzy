@@ -17,6 +17,7 @@ export class AddPluginComponent implements OnInit {
 	private readonly ngZone = inject(NgZone);
 	public installing = false;
 	public error = '';
+	public context = '';
 
 	ngOnInit(): void {
 		this.pluginElectronService.status
@@ -36,10 +37,12 @@ export class AddPluginComponent implements OnInit {
 		switch (notification.status) {
 			case 'success':
 				this.installing = false;
+				this.context = '';
 				this.close();
 				break;
 			case 'error':
 				this.installing = false;
+				this.context = '';
 				this.error = notification.message;
 				break;
 			case 'inProgress':
@@ -57,10 +60,22 @@ export class AddPluginComponent implements OnInit {
 			return;
 		}
 		this.installing = true;
-		this.pluginElectronService.downloadAndInstall({ url: value.trim() });
+		this.context = 'cdn';
+		this.pluginElectronService.downloadAndInstall({ url: value.trim(), contextType: 'cdn' });
+	}
+
+	public localPluginInstall() {
+		this.installing = true;
+		this.context = 'local';
+		this.pluginElectronService.downloadAndInstall({ contextType: 'local' });
 	}
 
 	public close() {
 		this.dialogRef.close();
+	}
+
+	public reset() {
+		this.context = '';
+		this.error = '';
 	}
 }

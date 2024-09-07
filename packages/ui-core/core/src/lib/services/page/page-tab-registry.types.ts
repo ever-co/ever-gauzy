@@ -1,6 +1,7 @@
 import { TemplateRef, Type } from '@angular/core';
 import { NbRouteTab } from '@nebular/theme';
 import { I18nService } from '@gauzy/ui-core/i18n';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { PageTabsetRegistryId } from '../../common/component-registry.types';
 
 /**
@@ -73,6 +74,19 @@ export interface PageTabRegistryConfig extends CustomNbRouteTab {
 	 * Specifies if the tab is hidden for any reason.
 	 */
 	hide?: boolean;
+
+	/**
+	 * @description
+	 * Permissions required to display this tab. Can be a single permission or an array of permissions.
+	 */
+	permissions?: PermissionsEnum[] | PermissionsEnum;
+
+	/**
+	 * @description
+	 * If true, the tab is shown only if the user has all permissions.
+	 * If false, the tab is shown if the user has at least one of the specified permissions.
+	 */
+	requireAllPermissions?: boolean;
 }
 
 /**

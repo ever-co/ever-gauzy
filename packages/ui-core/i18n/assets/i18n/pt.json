@@ -162,7 +162,9 @@
 		"UNINSTALL": "Desinstalar",
 		"DEACTIVATE": "Desativar",
 		"ACTIVATE": "Ativar",
-		"ADD_PLUGIN": "Adicionar plugin"
+		"ADD_PLUGIN": "Adicionar plugin",
+		"LOAD_PLUGIN": "Carregar Plugin",
+		"FROM_CDN": "Do CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3830,7 +3832,9 @@
 			"DB_PORT": "Porta do banco de dados",
 			"USER": "Usuário",
 			"PASSWORD": "Senha",
-			"UI_HOSTNAME": "Nome do Host da Interface do Usuário / Endereço IP"
+			"UI_HOSTNAME": "Nome do Host da Interface do Usuário / Endereço IP",
+			"TITLE_SERVER_API": "Ever Gauzy API Server Instalation Wizard",
+			"LABEL_SERVER_API": "A aplicação Gauzy API Server Desktop fornece a funcionalidade completa da plataforma Gauzy disponível diretamente no seu computador de secretária ou portátil. Além disso, permite o tempo de trabalho de rastreio, o registo de atividades e a capacidade de receber lembretes/notificações de rastreio."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de tela",
@@ -3924,6 +3928,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Plugins",
 			"PLUGIN_DESCRIPTION": "Plugins",
+			"VERSION": "Versão",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Instale plugins a partir de arquivos locais ou CDN. Local para plugins personalizados/privados, CDN para públicos. Escolha com base nas suas necessidades.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "A instalação via CDN permite fácil acesso a plugins disponíveis publicamente.",
 			"PLUGIN": "Plugin",
 			"WIDGET_LABEL": "Esta janela reflete o estado do temporizador, indicando se está em execução ou parado, e funciona como um botão.",
 			"SSL": {

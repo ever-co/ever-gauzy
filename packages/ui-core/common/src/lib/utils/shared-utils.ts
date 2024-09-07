@@ -526,3 +526,15 @@ export const parseToBoolean = (value: any): boolean => {
 export function replaceAll(value: string, search: string, replace: string): string {
 	return value.split(search).join(replace);
 }
+
+/**
+ * Remove duplicates from an array of objects based on a specified property.
+ * @param items The array of objects to process.
+ * @param property The property to check for duplicates (case-insensitive).
+ * @returns A new array with duplicates removed, keeping the last occurrence.
+ */
+export function removeDuplicatesByProperty<T>(items: T[], property: keyof T): T[] {
+	return Array.from(
+		new Map(items.map((item) => [(item[property] as unknown as string).toLowerCase(), item])).values()
+	);
+}

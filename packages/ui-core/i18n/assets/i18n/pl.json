@@ -162,7 +162,9 @@
 		"UNINSTALL": "Odinstaluj",
 		"DEACTIVATE": "Dezaktywuj",
 		"ACTIVATE": "Aktywuj",
-		"ADD_PLUGIN": "Dodaj wtyczkę"
+		"ADD_PLUGIN": "Dodaj wtyczkę",
+		"LOAD_PLUGIN": "Załaduj wtyczkę",
+		"FROM_CDN": "Z CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3830,7 +3832,9 @@
 			"DB_PORT": "Port bazy danych",
 			"USER": "Użytkownik",
 			"PASSWORD": "Hasło",
-			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP"
+			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP",
+			"TITLE_SERVER_API": "Kreator instalacji serwera API Ever Gauzy",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Zrzut ekranu",
@@ -3924,6 +3928,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Wtyczki",
 			"PLUGIN_DESCRIPTION": "Wtyczki",
+			"VERSION": "Wersja",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Zainstaluj wtyczki z lokalnych plików lub CDN. Lokalne dla niestandardowych/prywatnych wtyczek, CDN dla publicznych. Wybierz zgodnie z potrzebami.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "Instalacja z CDN umożliwia łatwy dostęp do publicznie dostępnych wtyczek.",
 			"PLUGIN": "Wtyczka",
 			"WIDGET_LABEL": "To okno odzwierciedla stan timera, wskazując, czy jest uruchomiony czy zatrzymany, i działa jako przycisk.",
 			"SSL": {

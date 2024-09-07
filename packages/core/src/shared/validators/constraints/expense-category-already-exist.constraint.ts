@@ -1,13 +1,12 @@
-import { Injectable } from "@nestjs/common";
-import { Not } from "typeorm";
+import { Injectable } from '@nestjs/common';
+import { ILike, Not } from 'typeorm';
+import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { RequestContext } from '../../../core/context';
+import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
 import {
-	ValidationArguments,
-	ValidatorConstraint,
-	ValidatorConstraintInterface
-} from "class-validator";
-import { RequestContext } from "../../../core/context";
-import { MultiORM, MultiORMEnum, getORMType } from "../../../core/utils";
-import { MikroOrmExpenseCategoryRepository, TypeOrmExpenseCategoryRepository } from "../../../expense-categories/repository";
+	MikroOrmExpenseCategoryRepository,
+	TypeOrmExpenseCategoryRepository
+} from '../../../expense-categories/repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -18,14 +17,13 @@ const ormType: MultiORM = getORMType();
  * @param validationOptions
  * @returns
  */
-@ValidatorConstraint({ name: "IsExpenseCategoryAlreadyExist", async: true })
+@ValidatorConstraint({ name: 'IsExpenseCategoryAlreadyExist', async: true })
 @Injectable()
 export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstraintInterface {
-
 	constructor(
 		readonly typeOrmExpenseCategoryRepository: TypeOrmExpenseCategoryRepository,
 		readonly mikroOrmExpenseCategoryRepository: MikroOrmExpenseCategoryRepository
-	) { }
+	) {}
 
 	/**
 	 * Validates if a given name for an expense category is unique within the specified organization.
@@ -35,14 +33,18 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 	 * @returns True if the name is unique (or in the case of an update, not matching any other than itself), otherwise false.
 	 */
 	async validate(name: string, args: ValidationArguments): Promise<boolean> {
-		const object = args.object as { organizationId?: string, organization?: { id: string }, id?: string };
+		const object = args.object as { organizationId?: string; organization?: { id: string }; id?: string };
 		const organizationId = object.organizationId || object.organization?.id;
 
 		if (!organizationId) return true; // Validation passes if there's no organization context
 
 		try {
 			const tenantId = RequestContext.currentTenantId();
-			const queryConditions = { name, organizationId, tenantId };
+
+			// Convert the name to lowercase for case-insensitive comparison
+			const normalizedName = name.toLowerCase();
+
+			const queryConditions = { name: normalizedName, organizationId, tenantId };
 
 			if (args.targetName === 'UpdateExpenseCategoryDTO' && object.id) {
 				queryConditions['id'] = Not(object.id); // Exclude current category from the check
@@ -50,9 +52,15 @@ export class ExpenseCategoryAlreadyExistConstraint implements ValidatorConstrain
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
-					return !await this.mikroOrmExpenseCategoryRepository.findOneOrFail(queryConditions);
+					return !(await this.mikroOrmExpenseCategoryRepository.findOneOrFail({
+						...queryConditions,
+						name: { $ilike: normalizedName }
+					}));
 				case MultiORMEnum.TypeORM:
-					return !await this.typeOrmExpenseCategoryRepository.findOneByOrFail(queryConditions);
+					return !(await this.typeOrmExpenseCategoryRepository.findOneByOrFail({
+						...queryConditions,
+						name: ILike(normalizedName)
+					}));
 				default:
 					throw new Error(`Not implemented for ${ormType}`);
 			}

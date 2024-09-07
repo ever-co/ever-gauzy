@@ -361,7 +361,7 @@ export class Store {
 	 */
 	hasPermission(permission: PermissionsEnum): boolean {
 		const { userRolePermissions } = this.appQuery.getValue();
-		return !!(userRolePermissions || []).find((p) => p.permission === permission && p.enabled);
+		return (userRolePermissions || []).some((p) => p.permission === permission && p.enabled);
 	}
 
 	/**
@@ -371,9 +371,7 @@ export class Store {
 	 * @return {boolean} Returns true if the user has all the permissions, false otherwise.
 	 */
 	hasAllPermissions(...permissions: PermissionsEnum[]): boolean {
-		return permissions.reduce((acc, permission) => {
-			return this.hasPermission(permission) && acc;
-		}, true);
+		return permissions.every((permission) => this.hasPermission(permission));
 	}
 
 	/**
@@ -383,9 +381,15 @@ export class Store {
 	 * @return {boolean} Returns true if the user has any of the permissions, false otherwise.
 	 */
 	hasAnyPermission(...permissions: PermissionsEnum[]): boolean {
+		// Early return if no permissions are provided
+		if (permissions.length === 0) return false;
+
 		const { userRolePermissions } = this.appQuery.getValue();
-		return !!(userRolePermissions || []).find(
-			(p: IRolePermission) => permissions.includes(p.permission as PermissionsEnum) && p.enabled
+		const set = new Set(permissions);
+
+		// Check if any user role permission matches the required permissions
+		return (userRolePermissions || []).some(
+			(p: IRolePermission) => set.has(p.permission as PermissionsEnum) && p.enabled
 		);
 	}
 

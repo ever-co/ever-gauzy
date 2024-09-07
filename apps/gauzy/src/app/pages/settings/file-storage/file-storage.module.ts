@@ -14,17 +14,15 @@ import { SharedModule } from '@gauzy/ui-core/shared';
 import { FileStorageRoutingModule } from './file-storage-routing.module';
 import { FileStorageComponent } from './file-storage.component';
 
+// Nebular Modules
+const NB_MODULES = [NbButtonModule, NbCardModule, NbInputModule, NbSelectModule, NbSpinnerModule, NbToggleModule];
+
 @NgModule({
 	imports: [
-		FileStorageRoutingModule,
-		NbButtonModule,
-		NbCardModule,
-		NbInputModule,
-		NbSelectModule,
-		NbSpinnerModule,
-		NbToggleModule,
+		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
+		FileStorageRoutingModule,
 		SharedModule,
 		FileProviderSelectorModule
 	],
