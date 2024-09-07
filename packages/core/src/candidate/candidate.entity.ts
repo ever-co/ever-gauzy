@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsDateString, IsEnum, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	ICandidate,
 	ICandidateInterview,
@@ -67,16 +68,19 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	appliedDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	hiredDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()
+	@IsDateString()
 	@MultiORMColumn({ nullable: true })
 	rejectDate?: Date;
 
@@ -89,12 +93,14 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
 	@IsOptional()
 	@IsString()
+	@MaxLength(500)
 	@MultiORMColumn({ nullable: true, length: 500 })
 	candidateLevel?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
 	@MultiORMColumn({ nullable: true })
 	reWeeklyLimit?: number; // Recurring Weekly Limit (hours)
 
@@ -107,12 +113,14 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
 	@MultiORMColumn({ nullable: true })
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
 	@IsOptional()
 	@IsNumber()
+	@Transform((params: TransformFnParams) => parseInt(params.value || 0, 10))
 	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
@@ -191,8 +199,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	| @OneToOne
 	|--------------------------------------------------------------------------
 	*/
-
-	@ApiProperty({ type: () => CandidateSource })
 	@MultiORMOneToOne(() => CandidateSource, (candidateSource) => candidateSource.candidate, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -218,7 +224,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * User
 	 */
-	@ApiProperty({ type: () => User })
 	@MultiORMOneToOne(() => User, {
 		/** If set to true then it means that related object can be allowed to be inserted or updated in the database. */
 		cascade: true,
@@ -241,7 +246,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	/**
 	 * Employee
 	 */
-	@ApiProperty({ type: () => Employee })
 	@MultiORMOneToOne(() => Employee, (employee) => employee.candidate, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
@@ -334,8 +338,6 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	| @ManyToMany
 	|--------------------------------------------------------------------------
 	*/
-
-	@ApiProperty({ type: () => Tag, isArray: true })
 	@MultiORMManyToMany(() => Tag, (tag) => tag.candidates, {
 		onUpdate: 'CASCADE',
 		onDelete: 'CASCADE',

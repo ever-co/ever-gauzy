@@ -2,10 +2,7 @@ import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { IsObject, IsOptional } from 'class-validator';
 import { IntersectionType } from '@nestjs/mapped-types';
 import { IContact, IEmployeeUpdateInput } from '@gauzy/contracts';
-import { SocialNetworksDTO } from './network.dto';
 import { EmploymentDTO } from './employment.dto';
-import { HiringDTO } from './hiring.dto';
-import { RatesDTO } from './rates.dto';
 import { RelationalTagDTO } from './../../tags/dto';
 import { Employee } from './../employee.entity';
 
@@ -15,11 +12,26 @@ import { Employee } from './../employee.entity';
  */
 export class UpdateProfileDTO
 	extends IntersectionType(
-		SocialNetworksDTO,
-		EmploymentDTO,
-		HiringDTO,
-		RatesDTO,
 		RelationalTagDTO,
+		EmploymentDTO,
+		PickType(Employee, [
+			'linkedInUrl',
+			'facebookUrl',
+			'instagramUrl',
+			'twitterUrl',
+			'githubUrl',
+			'gitlabUrl',
+			'upworkUrl',
+			'stackoverflowUrl'
+		] as const), // Networks DTO
+		PickType(Employee, [
+			'billRateValue',
+			'billRateCurrency',
+			'minimumBillingRate',
+			'payPeriod',
+			'reWeeklyLimit'
+		] as const),
+		PickType(Employee, ['offerDate', 'acceptDate', 'rejectDate'] as const), // Hiring DTO
 		PickType(Employee, ['upworkId', 'linkedInId', 'profile_link', 'isAway'] as const)
 	)
 	implements IEmployeeUpdateInput
