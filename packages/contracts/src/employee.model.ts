@@ -12,7 +12,7 @@ import { IOrganizationPosition } from './organization-positions.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IRequestApprovalEmployee } from './request-approval-employee.model';
 import { ISkill } from './skill-entity.model';
-import { ITag } from './tag.model';
+import { ITaggable } from './tag.model';
 import { IUser, IUserFindInput } from './user.model';
 import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
@@ -40,17 +40,17 @@ export interface IRelationalEmployee {
 	readonly employeeId?: ID;
 }
 
-export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	[x: string]: any;
 	endWork?: Date;
 	startedWorkOn?: Date;
 	user: IUser;
-	userId: string;
+	userId: ID;
 	valueDate?: Date;
 	short_description?: string;
 	description?: string;
 	teams?: IOrganizationTeam[];
-	payPeriod?: string;
+	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
 	billRateCurrency?: CurrenciesEnum;
 	minimumBillingRate?: number;
@@ -59,7 +59,6 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	organizationContacts?: IOrganizationContact[];
 	projects?: IOrganizationProject[];
 	organizationPosition?: IOrganizationPosition;
-	tags?: ITag[];
 	skills?: ISkill[];
 	awards?: IEmployeeAward[];
 	offerDate?: Date;
@@ -123,16 +122,14 @@ export interface UpdateEmployeeJobsStatistics extends IBasePerTenantAndOrganizat
 	isJobSearchActive?: boolean;
 }
 
-export interface IEmployeeFindInput {
-	id?: string;
+export interface IEmployeeFindInput extends ITaggable {
+	id?: ID;
 	organization?: IOrganizationFindInput;
 	user?: IUserFindInput;
-	userId?: IUser['id'];
+	userId?: ID;
 	valueDate?: Date;
-	organizationId?: string;
-	tenantId?: string;
-	tags?: ITag[];
-	skills?: ISkill[];
+	organizationId?: ID;
+	tenantId?: ID;
 	profile_link?: string;
 	/** Employee status (Online/Offline) */
 	isOnline?: boolean;
@@ -142,8 +139,8 @@ export interface IEmployeeFindInput {
 	isAway?: boolean;
 }
 
-export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	payPeriod?: string;
+export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
+	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	billRateCurrency?: CurrenciesEnum;
@@ -182,15 +179,14 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	isAway?: boolean;
 }
 
-export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput {
+export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntityMutationInput, ITaggable {
 	user?: IUser;
-	userId?: IUser['id'];
+	userId?: ID;
 	password?: string;
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;
 	members?: IEmployee[];
-	tags?: ITag[];
 	skills?: ISkill[];
 	startedWorkOn?: Date;
 	short_description?: string;
@@ -209,8 +205,8 @@ export interface IEmployeeCreateInput extends IBasePerTenantAndOrganizationEntit
 	isAway?: boolean;
 }
 
-export interface ISelectedEmployee {
-	id: string;
+export interface ISelectedEmployee extends ITaggable {
+	id: ID;
 	firstName: string;
 	lastName: string;
 	fullName?: string;
@@ -221,7 +217,6 @@ export interface ISelectedEmployee {
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	defaultType?: DEFAULT_TYPE;
-	tags?: ITag[];
 	skills?: ISkill[];
 	timeZone?: string;
 	timeFormat?: TimeFormatEnum;
@@ -239,23 +234,21 @@ export enum PayPeriodEnum {
 	TWICE_PER_MONTH = 'TWICE_PER_MONTH',
 	MONTHLY = 'MONTHLY'
 }
-export interface IEmployeeLevel extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevel extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	level: string;
-	tag?: ITag[];
 	skills?: ISkill[];
 }
 
-export interface IEmployeeLevelInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IEmployeeLevelInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	level: string;
-	tags?: ITag[];
 	skills?: ISkill[];
 }
 
 export interface IEmployeeLevelFindInput {
-	organizationId?: string;
-	tenantId: string;
+	organizationId?: ID;
+	tenantId: ID;
 }
-export interface EmployeeViewModel {
+export interface EmployeeViewModel extends ITaggable {
 	fullName: string;
 	email: string;
 	bonus?: number;
@@ -270,7 +263,6 @@ export interface EmployeeViewModel {
 	isActive?: boolean;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
-	tags?: ITag[];
 }
 
 export interface IEmployeeStoreState {

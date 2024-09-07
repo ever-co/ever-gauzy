@@ -116,7 +116,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
-	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum })
+	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum, example: PayPeriodEnum.WEEKLY })
 	@IsOptional()
 	@IsEnum(PayPeriodEnum)
 	@MultiORMColumn({ nullable: true })

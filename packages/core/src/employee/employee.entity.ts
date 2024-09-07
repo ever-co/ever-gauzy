@@ -109,9 +109,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMColumn({ nullable: true })
 	endWork?: Date;
 
-	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
+	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum, example: PayPeriodEnum.WEEKLY })
+	@IsOptional()
+	@IsEnum(PayPeriodEnum)
 	@MultiORMColumn({ nullable: true })
-	payPeriod?: string;
+	payPeriod?: PayPeriodEnum;
 
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn({ nullable: true })
