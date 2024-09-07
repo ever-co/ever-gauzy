@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IEmployee,
@@ -121,9 +121,11 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
-	@ApiProperty({ type: () => String, enum: CurrenciesEnum })
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
 	@MultiORMColumn({ nullable: true })
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 
 	@ApiProperty({ type: () => Number })
 	@MultiORMColumn({ nullable: true })
@@ -150,36 +152,19 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	anonymousBonus?: boolean;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ nullable: true, type: 'numeric', transformer: new ColumnNumericTransformerPipe() })
 	averageIncome?: number;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ nullable: true, type: 'numeric', transformer: new ColumnNumericTransformerPipe() })
 	averageBonus?: number;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		default: 0,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ nullable: true, type: 'numeric', default: 0, transformer: new ColumnNumericTransformerPipe() })
 	totalWorkHours?: number;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		type: 'numeric',
-		nullable: true,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ type: 'numeric', nullable: true, transformer: new ColumnNumericTransformerPipe() })
 	averageExpenses?: number;
 
 	@ApiProperty({ type: () => Boolean })
@@ -255,22 +240,17 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	isVetted?: boolean;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		type: 'numeric',
-		nullable: true,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ type: 'numeric', nullable: true, transformer: new ColumnNumericTransformerPipe() })
 	totalJobs?: number;
 
 	@ApiProperty({ type: () => Number })
-	@MultiORMColumn({
-		type: 'numeric',
-		nullable: true,
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@MultiORMColumn({ type: 'numeric', nullable: true, transformer: new ColumnNumericTransformerPipe() })
 	jobSuccess?: number;
 
-	@ApiProperty({ type: () => String, minLength: 3, maxLength: 100 })
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ length: 100, nullable: true })
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	profile_link?: string;
@@ -279,41 +259,27 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	 * Enabled/Disabled Time Tracking Feature
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@MultiORMColumn({
-		type: Boolean,
-		nullable: true,
-		default: false
-	})
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isTrackingEnabled: boolean;
 
 	/**
 	 * Employee status (Online/Offline)
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@MultiORMColumn({
-		type: Boolean,
-		nullable: true,
-		default: false
-	})
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isOnline?: boolean;
 
-	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@MultiORMColumn({
-		type: Boolean,
-		nullable: true,
-		default: false
-	})
+	@ApiPropertyOptional({ type: () => String, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isAway?: boolean;
 
 	/**
 	 * Employee time tracking status
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
-	@MultiORMColumn({
-		type: Boolean,
-		nullable: true,
-		default: false
-	})
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isTrackingTime?: boolean;
 
 	/**

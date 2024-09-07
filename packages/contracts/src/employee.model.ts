@@ -23,6 +23,7 @@ import { ITask } from './task.model';
 import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { CurrenciesEnum } from './currency.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
@@ -51,7 +52,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	teams?: IOrganizationTeam[];
 	payPeriod?: string;
 	billRateValue?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	minimumBillingRate?: number;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
@@ -145,7 +146,7 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	payPeriod?: string;
 	billRateValue?: number;
 	minimumBillingRate?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
 	organizationPosition?: IOrganizationPosition;
@@ -216,7 +217,7 @@ export interface ISelectedEmployee {
 	imageUrl: string;
 	shortDescription?: string;
 	employeeLevel?: string;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	defaultType?: DEFAULT_TYPE;

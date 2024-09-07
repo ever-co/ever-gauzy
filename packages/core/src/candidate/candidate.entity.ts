@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { IsOptional } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import {
 	ICandidate,
 	ICandidateInterview,
@@ -19,7 +19,8 @@ import {
 	ITag,
 	IUser,
 	IEmployee,
-	ID
+	ID,
+	CurrenciesEnum
 } from '@gauzy/contracts';
 import {
 	CandidateDocument,
@@ -54,58 +55,76 @@ import { MikroOrmCandidateRepository } from './repository/mikro-orm-candidate.re
 @MultiORMEntity('candidate', { mikroOrmRepository: () => MikroOrmCandidateRepository })
 export class Candidate extends TenantOrganizationBaseEntity implements ICandidate {
 	@ApiPropertyOptional({ type: () => Number })
-	@MultiORMColumn({
-		nullable: true,
-		type: 'numeric',
-		transformer: new ColumnNumericTransformerPipe()
-	})
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ nullable: true, type: 'numeric', transformer: new ColumnNumericTransformerPipe() })
 	rating?: number;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	valueDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	appliedDate?: Date;
 
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	hiredDate?: Date;
 
-	@ApiProperty({ type: () => String, enum: CandidateStatusEnum })
-	@MultiORMColumn({ nullable: true, default: CandidateStatusEnum.APPLIED })
-	status?: CandidateStatusEnum;
-
 	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
 	@MultiORMColumn({ nullable: true })
 	rejectDate?: Date;
 
+	@ApiPropertyOptional({ type: () => String, enum: CandidateStatusEnum })
+	@IsOptional()
+	@IsEnum(CandidateStatusEnum)
+	@MultiORMColumn({ nullable: true, default: CandidateStatusEnum.APPLIED })
+	status?: CandidateStatusEnum;
+
 	@ApiPropertyOptional({ type: () => String, maxLength: 500 })
-	@MultiORMColumn({ length: 500, nullable: true })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ nullable: true, length: 500 })
 	candidateLevel?: string;
 
 	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	reWeeklyLimit?: number; // Recurring Weekly Limit (hours)
 
-	@ApiPropertyOptional({ type: () => String, maxLength: 255 })
+	@ApiPropertyOptional({ type: () => String, enum: CurrenciesEnum, example: CurrenciesEnum.USD })
+	@IsOptional()
+	@IsEnum(CurrenciesEnum)
 	@MultiORMColumn({ length: 255, nullable: true })
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 
 	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	billRateValue?: number;
 
 	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	minimumBillingRate?: number;
 
-	@ApiProperty({ type: () => String, enum: PayPeriodEnum })
+	@ApiPropertyOptional({ type: () => String, enum: PayPeriodEnum })
+	@IsOptional()
+	@IsEnum(PayPeriodEnum)
 	@MultiORMColumn({ nullable: true })
 	payPeriod?: PayPeriodEnum;
 
 	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
 	@MultiORMColumn({ nullable: true })
 	cvUrl?: string;
 
@@ -328,7 +347,7 @@ export class Candidate extends TenantOrganizationBaseEntity implements ICandidat
 	@JoinTable({
 		name: 'tag_candidate'
 	})
-	tags: ITag[];
+	tags?: ITag[];
 
 	/**
 	 * Organization Departments
