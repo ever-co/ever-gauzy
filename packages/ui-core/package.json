@@ -78,7 +78,7 @@
 		"@ngx-translate/http-loader": "^8.0.0",
 		"@sentry/angular-ivy": "^7.101.1",
 		"angular2-smart-table": "^3.2.0",
-		"bootstrap": "^4.3.1",
+		"bootstrap": "^5.0.0",
 		"camelcase": "^6.3.0",
 		"chart.js": "^4.4.1",
 		"ckeditor4": "4.22.1",
