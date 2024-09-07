@@ -6,7 +6,9 @@ import { UpdateOrganizationTeamActiveTaskDTO } from './update-organization-team-
 /**
  * Update team member entity DTO
  */
-export class UpdateTeamMemberDTO extends IntersectionType(
-	UpdateOrganizationTeamActiveTaskDTO,
-	PickType(OrganizationTeamEmployee, ['isTrackingEnabled', 'organizationTeamId'])
-) implements IOrganizationTeamEmployeeUpdateInput { }
+export class UpdateTeamMemberDTO
+	extends IntersectionType(
+		UpdateOrganizationTeamActiveTaskDTO,
+		PickType(OrganizationTeamEmployee, ['isTrackingEnabled', 'order', 'organizationTeamId'])
+	)
+	implements IOrganizationTeamEmployeeUpdateInput {}
