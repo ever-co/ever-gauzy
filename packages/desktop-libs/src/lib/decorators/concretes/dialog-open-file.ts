@@ -1,13 +1,13 @@
-import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
-import { IDesktopSaveDialog } from '../../interfaces';
 import { BrowserWindow, dialog, OpenDialogSyncOptions } from 'electron';
-import { DesktopDialog } from '../../desktop-dialog';
-import { TranslateService } from '../../translation';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import { DesktopDialog } from '../../desktop-dialog';
+import { IDesktopSaveDialog } from '../../interfaces';
+import { TranslateService } from '../../translation';
+import { BaseDesktopDialogDecorator } from '../abstracts/base-desktop-dialog-decorator';
 
 export class DialogOpenFile extends BaseDesktopDialogDecorator implements IDesktopSaveDialog {
-	private readonly _options: OpenDialogSyncOptions;
+	protected _options: OpenDialogSyncOptions;
 
 	constructor(private readonly window: BrowserWindow, private readonly fileDestination = '') {
 		super(

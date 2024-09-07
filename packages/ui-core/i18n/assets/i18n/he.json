@@ -161,7 +161,9 @@
 		"UNINSTALL": "הסר התקנה",
 		"DEACTIVATE": "השבת",
 		"ACTIVATE": "הפעל",
-		"ADD_PLUGIN": "הוסף תוסף"
+		"ADD_PLUGIN": "הוסף תוסף",
+		"LOAD_PLUGIN": "טען תוסף",
+		"FROM_CDN": "מ-CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3842,7 +3844,9 @@
 			"DB_PORT": "פורט מסד נתונים",
 			"USER": "משתמש",
 			"PASSWORD": "סיסמה",
-			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP"
+			"UI_HOSTNAME": "שם מארח יישום ממשק משתמש / כתובת IP",
+			"TITLE_SERVER_API": "אשף התקנת שרת API של Ever Gauzy",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App מספקת את הפונקציונליות המלאה של פלטפורמת Gauzy הזמינה ישירות במחשב השולחני או במחשב הנייד שלך. בנוסף, הוא מאפשר מעקב אחר זמן עבודה, רישום פעילות ויכולת לקבל תזכורות/הודעות מעקב."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "לכידת מסך",
@@ -3935,6 +3939,9 @@
 			"WIDGET": "ווידג'ט",
 			"PLUGINS": "תוספים",
 			"PLUGIN_DESCRIPTION": "תוספים",
+			"VERSION": "גרסה",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "התקן תוספים מקבצים מקומיים או CDN. מקומי עבור תוספים מותאמים אישית/פרטיים, CDN עבור ציבוריים. בחר לפי הצרכים שלך.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "התקנה מ-CDN מאפשרת גישה קלה לתוספים זמינים לציבור.",
 			"PLUGIN": "תוסף",
 			"WIDGET_LABEL": "החלון משקף את מצב הטיימר, מציין האם הוא פועל או עצור, ופועל ככפתור.",
 			"SSL": {

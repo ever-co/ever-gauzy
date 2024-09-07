@@ -377,9 +377,6 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 
 		if (!id) return;
 
-		//Load permissions
-		this._permissionsService.loadPermissions();
-
 		const relations = ['role', 'tenant', 'tenant.featureOrganizations', 'tenant.featureOrganizations.feature'];
 		this.user = await this.usersService.getMe(relations, true);
 
@@ -396,6 +393,9 @@ export class PagesComponent extends TranslationBaseComponent implements AfterVie
 		}
 
 		this.store.user = this.user;
+
+		//Load permissions
+		this._permissionsService.loadPermissions();
 
 		//tenant enabled/disabled features for relatives organizations
 		const { tenant } = this.user;

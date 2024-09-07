@@ -30,9 +30,7 @@ export class AppInitService {
 				];
 				this.user = await this._usersService.getMe(relations, true);
 
-				//Load permissions
-				this._permissionsService.loadPermissions();
-
+				// Electron authentication
 				this._authStrategy.electronAuthentication({
 					user: this.user,
 					token: this._store.token
@@ -46,6 +44,9 @@ export class AppInitService {
 				}
 
 				this._store.user = this.user;
+
+				//Load permissions
+				this._permissionsService.loadPermissions();
 
 				//tenant enabled/disabled features for relatives organizations
 				const { tenant } = this.user;

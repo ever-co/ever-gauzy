@@ -220,7 +220,10 @@ export class SetupComponent implements OnInit {
 				this.welcomeTitle = 'TIMER_TRACKER.SETUP.TITLE_SERVER';
 				this.welcomeLabel = 'TIMER_TRACKER.SETUP.LABEL_SERVER';
 				break;
-
+			case this._environment.DESKTOP_API_SERVER_APP_NAME:
+				this.welcomeTitle = 'TIMER_TRACKER.SETUP.TITLE_SERVER_API';
+				this.welcomeLabel = 'TIMER_TRACKER.SETUP.LABEL_SERVER_API';
+				break;
 			default:
 				break;
 		}
@@ -420,7 +423,7 @@ export class SetupComponent implements OnInit {
 			return resp;
 		} catch (error) {
 			if (!retry) {
-				url.protocol = url.protocol === 'http:' ?  'https' : 'http';
+				url.protocol = url.protocol === 'http:' ? 'https' : 'http';
 				return this.serverProtocolCheck(url.origin, true);
 			}
 			throw error;

@@ -162,7 +162,9 @@
 		"UNINSTALL": "Desinstalar",
 		"DEACTIVATE": "Desactivar",
 		"ACTIVATE": "Activar",
-		"ADD_PLUGIN": "Añadir plugin"
+		"ADD_PLUGIN": "Añadir plugin",
+		"LOAD_PLUGIN": "Cargar Plugin",
+		"FROM_CDN": "Desde CDN"
 	},
 	"SM_TABLE": {
 		"NO_DATA": {
@@ -3832,7 +3834,9 @@
 			"DB_PORT": "Puerto de la base de datos",
 			"USER": "Usuario",
 			"PASSWORD": "Contraseña",
-			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP"
+			"UI_HOSTNAME": "Nombre de host de IU / Dirección IP",
+			"TITLE_SERVER_API": "Asistente de instalación del servidor API de Ever Gauzy",
+			"LABEL_SERVER_API": "La aplicación de escritorio Ever Gauzy API Server proporciona la funcionalidad completa de la plataforma Gauzy disponible directamente en su computadora de escritorio o portátil. Además, permite realizar un seguimiento del tiempo de trabajo, registrar actividades y recibir recordatorios/notificaciones de seguimiento."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Captura de pantalla",
@@ -3926,6 +3930,9 @@
 			"WIDGET": "Widget",
 			"PLUGINS": "Complementos",
 			"PLUGIN_DESCRIPTION": "Complementos",
+			"VERSION": "Versión",
+			"ADD_PLUGIN_INSTALLATION_DESCRIPTION": "Instala plugins desde archivos locales o CDN. Local para plugins personalizados/privados, CDN para públicos. Elige según tus necesidades.",
+			"ADD_PLUGIN_CDN_DESCRIPTION": "La instalación desde CDN permite un fácil acceso a los plugins disponibles públicamente.",
 			"PLUGIN": "Complemento",
 			"WIDGET_LABEL": "Esta ventana refleja el estado del temporizador, indicando si está en funcionamiento o detenido, y funciona como un botón.",
 			"SSL": {

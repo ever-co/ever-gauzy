@@ -3,4 +3,5 @@ export interface IPathWindow {
 	ui: string;
 	dir: string;
 	timeTrackerUi: string;
+	preloadPath?: string;
 }

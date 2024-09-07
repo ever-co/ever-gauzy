@@ -15,10 +15,10 @@ const NB_MODULES = [NbMenuModule, NbToastrModule.forRoot(), NbSpinnerModule, NbI
 		CommonModule,
 		...NB_MODULES,
 		NgxFeatureToggleModule,
-		ThemeModule,
 		PagesRoutingModule,
-		MiscellaneousModule,
-		CommonNavModule
+		ThemeModule,
+		CommonNavModule,
+		MiscellaneousModule
 	],
 	declarations: [PagesComponent],
 	providers: [AuthService, RoleGuard]
