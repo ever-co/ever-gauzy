@@ -10,8 +10,15 @@
 		"esModuleInterop": true,
 		"module": "commonjs",
 		"target": "ES2022",
-		"types": ["pino-pretty"]
+		"types": [
+			"pino-pretty"
+		]
 	},
-	"files": ["global.d.ts"],
-	"include": ["src/index.ts", "src/preload"]
+	"files": [
+		"global.d.ts"
+	],
+	"include": [
+		"src/index.ts",
+		"src/preload"
+	]
 }
