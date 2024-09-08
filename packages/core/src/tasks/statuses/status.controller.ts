@@ -1,7 +1,8 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { Body, Controller, Get, HttpStatus, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
+	ID,
 	IPagination,
 	IPaginationParam,
 	ITaskStatus,
@@ -81,5 +82,23 @@ export class TaskStatusController extends CrudFactory<
 	@UseValidationPipe({ whitelist: true })
 	async findTaskStatuses(@Query() params: StatusQueryDTO): Promise<IPagination<ITaskStatus>> {
 		return await this.queryBus.execute(new FindStatusesQuery(params));
+	}
+
+	/**
+	 *
+	 * @param id
+	 * @param input
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Make task status default.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Task status marked as default'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Put(':id/default')
+	@UseValidationPipe({ whitelist: true })
+	async markAsDefault(@Param('id') id: ID, @Body() input: UpdatesStatusDTO): Promise<ITaskStatus[]> {
+		return await this.taskStatusService.markAsDefault(id, input);
 	}
 }
