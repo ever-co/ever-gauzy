@@ -70,7 +70,7 @@ export class ClientSelectorComponent implements OnInit {
 		this.clientSelectorStore.updateSelected(clientId);
 	}
 
-	public isLoading$(): Observable<boolean> {
+	public get isLoading$(): Observable<boolean> {
 		return this.clientSelectorQuery.selectLoading();
 	}
 

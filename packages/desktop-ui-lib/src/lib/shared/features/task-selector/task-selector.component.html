@@ -12,4 +12,7 @@
 	(modelChange)="change($event)"
 	[addTag]="addNewTask"
 	addTagText="TIMER_TRACKER.ADD_TASK"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
 ></gauzy-select>

@@ -56,11 +56,11 @@ export class TaskSelectorComponent implements OnInit {
 		this.taskSelectorStore.updateSelected(taskId);
 	}
 
-	public isLoading$(): Observable<boolean> {
+	public get isLoading$(): Observable<boolean> {
 		return this.taskSelectorQuery.selectLoading();
 	}
 
-	public disabled$(): Observable<boolean> {
+	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
 	}
 }

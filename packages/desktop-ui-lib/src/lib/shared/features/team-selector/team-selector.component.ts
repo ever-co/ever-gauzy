@@ -62,11 +62,11 @@ export class TeamSelectorComponent implements OnInit {
 		this.teamSelectorStore.updateSelected(teamId);
 	}
 
-	public isLoading$(): Observable<boolean> {
+	public get isLoading$(): Observable<boolean> {
 		return this.teamSelectorQuery.selectLoading();
 	}
 
-	public disabled$(): Observable<boolean> {
+	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
 	}
 }

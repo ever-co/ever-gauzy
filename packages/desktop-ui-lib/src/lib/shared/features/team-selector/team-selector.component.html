@@ -9,4 +9,7 @@
 	placeholder="FORM.LABELS.SELECT_TEAM"
 	(clear)="refresh()"
 	(modelChange)="change($event)"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
 ></gauzy-select>

@@ -12,4 +12,7 @@
 	(modelChange)="change($event)"
 	[addTag]="addProject"
 	addTagText="FORM.PLACEHOLDERS.ADD_PROJECT"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
 ></gauzy-select>

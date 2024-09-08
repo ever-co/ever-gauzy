@@ -66,11 +66,11 @@ export class ProjectSelectorComponent implements OnInit {
 		this.projectSelectorStore.updateSelected(projectId);
 	}
 
-	public isLoading$(): Observable<boolean> {
+	public get isLoading$(): Observable<boolean> {
 		return this.projectSelectorQuery.selectLoading();
 	}
 
-	public disabled$(): Observable<boolean> {
+	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
 	}
 }
