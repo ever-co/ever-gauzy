@@ -1,4 +1,4 @@
-<nb-card>
+<nb-card [ngClass]="{ large: expanded$ | async }">
 	<nb-card-header class="d-flex flex-column">
 		<span class="cancel"><i class="fas fa-times" (click)="dismiss()"></i></span>
 		<h5 class="title">{{ 'Update' | translate }}</h5>

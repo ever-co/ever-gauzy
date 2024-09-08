@@ -40,6 +40,10 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 		);
 	}
 
+	public get expanded$(): Observable<boolean> {
+		return this.timeTrackerQuery.isExpanded$;
+	}
+
 	public dismiss() {
 		this.timeTrackerStore.update({ isEditing: false });
 		this.dialogRef.close();

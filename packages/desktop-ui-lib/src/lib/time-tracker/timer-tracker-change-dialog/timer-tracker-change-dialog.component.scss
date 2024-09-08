@@ -4,6 +4,10 @@ nb-card {
 	width: 320px;
 	background-color: nb-theme(gauzy-card-1);
 
+	&.large {
+		width: 420px;
+	}
+
 	nb-card-header {
 		padding: 1rem;
 

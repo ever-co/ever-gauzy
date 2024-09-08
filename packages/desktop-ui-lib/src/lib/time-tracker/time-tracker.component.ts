@@ -869,7 +869,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						// Send the updated session data
 						this.electronService.ipcRenderer.send('update_session', {
 							...status.lastLog,
-							startedAt: newStartedAt
+							startedAt: newStartedAt.toISOString()
 						});
 					}
 					// Update store state directly after restarting
