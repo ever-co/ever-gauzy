@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
-import { isUUID } from 'class-validator';
+import { isBoolean, isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -357,7 +357,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 			if ('isDraft' in where) {
 				const { isDraft } = where;
-				options.where.isDraft = isDraft;
+				if (!isBoolean(isDraft)) {
+					options.where.isDraft = IsNull();
+				}
 			}
 			if ('organizationSprintId' in where) {
 				const { organizationSprintId } = where;
