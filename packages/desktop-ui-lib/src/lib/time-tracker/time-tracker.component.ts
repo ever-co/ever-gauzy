@@ -73,12 +73,15 @@ import { ProjectSelectorService } from '../shared/features/project-selector/+sta
 import { TaskSelectorService } from '../shared/features/task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TasksComponent } from '../tasks/tasks.component';
+import { TimeTrackerQuery } from './+state/time-tracker.query';
+import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
 import { TaskDurationComponent, TaskProgressComponent } from './task-render';
 import { TaskRenderCellComponent } from './task-render/task-render-cell/task-render-cell.component';
 import { TaskStatusComponent } from './task-render/task-status/task-status.component';
 import { IRemoteTimer } from './time-tracker-status/interfaces';
 import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-status.service';
 import { TimeTrackerService } from './time-tracker.service';
+import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -190,7 +193,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly teamSelectorService: TeamSelectorService,
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly taskSelectorService: TaskSelectorService,
-		private readonly noteService: NoteService
+		private readonly noteService: NoteService,
+		private readonly timeTrackerQuery: TimeTrackerQuery,
+		private readonly timeTrackerStore: TimeTrackerStore
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -551,8 +556,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
 								: await this.timeTrackerService.toggleApiStop({
-										...lastTimer,
-										...params
+										...params,
+										...lastTimer
 								  });
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
@@ -821,6 +826,45 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter((state: AlwaysOnStateEnum) => state === AlwaysOnStateEnum.LOADING),
 				concatMap(() => this.toggleStart(!this.start, true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this._isRefresh$
+			.asObservable()
+			.pipe(
+				tap((isRefreshing) => this.timeTrackerStore.update({ isRefreshing })),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.isExpand$
+			.asObservable()
+			.pipe(
+				tap((isExpanded) => this.timeTrackerStore.update({ isExpanded })),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.timeTrackerQuery.ignition$
+			.pipe(
+				filter(({ state }) => state === IgnitionState.RESTARTING),
+				concatMap(() => this.restart(() => this._timeTrackerStatus.status())),
+				tap((status) => {
+					// Use optional chaining to ensure status is available before accessing properties
+					status?.lastLog && this.electronService.ipcRenderer.send('update_session', { ...status.lastLog });
+					// Update store state directly after restarting
+					this.timeTrackerStore.update({ ignition: { state: IgnitionState.RESTARTED } });
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
+		this.timeTrackerQuery.isEditing$
+			.pipe(
+				filter(Boolean),
+				tap(() =>
+					this.dialogService.open(TimerTrackerChangeDialogComponent, { backdropClass: 'backdrop-blur' })
+				),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -1424,11 +1468,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} else {
 			this.isProcessingEnabled = true;
 		}
-
 		this.loading = true;
 
 		if (!val) {
 			console.log('Stop tracking');
+
+			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPING } });
 
 			await this.stopTimer(onClick);
 
@@ -1439,6 +1484,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			return;
 		} else {
 			console.log('Start tracking');
+
+			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTING } });
 
 			// check that required inputs are set before we can start timer
 			if (this.validationField()) {
@@ -1536,7 +1583,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					quitApp: this.quitApp
 				});
 
-				console.log('Sending activities');
+				console.log('Sending activities', activities);
 
 				await this.sendActivities(activities);
 			}
@@ -1550,9 +1597,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.electronService.ipcRenderer.send('request_permission');
 
 			this.electronService.ipcRenderer.send('start-capture-screen');
+
+			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED, mode: this._startMode } });
 		} catch (error) {
 			this._startMode = TimerStartMode.STOP;
 			this.start$.next(false);
+			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPED, mode: this._startMode } });
 			this._errorHandlerService.handleError(error);
 		} finally {
 			this.loading = false;
@@ -1620,6 +1670,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} finally {
 			this.loading = false;
 			this.isProcessingEnabled = false;
+			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPED, mode: this._startMode } });
 		}
 	}
 
@@ -1871,7 +1922,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public handleRowSelection(selectionEvent): void {
-		console.log(selectionEvent);
 		if (this.isNoRowSelected(selectionEvent)) {
 			this.clearSelectedTaskAndRefresh();
 		} else {
@@ -2266,37 +2316,41 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}, 3000);
 	}
 
-	public async restart(): Promise<void> {
-		// if timer's running as viewer we no need to restart
+	public async restart(callback?: Function): Promise<any> {
+		// If the timer is running as a viewer, no need to restart
 		if (this.isRemoteTimer) {
 			return;
 		}
 
-		// wait 3 sec and then restart
-		asyncScheduler.schedule(async () => {
+		// Lock restart process
+		this._isLockSyncProcess = true;
+
+		try {
+			// Resolve promise and debounce to avoid rapid calls
+			return await lastValueFrom(
+				from(this.toggleStart(false)).pipe(
+					debounceTime(200),
+					concatMap(() => (callback ? from(callback()) : of(null))), // Safely execute callback
+					concatMap(async (callbackResult) => {
+						await this.toggleStart(true); // Restart process
+						return callbackResult; // Return the callback result
+					}),
+					untilDestroyed(this)
+				)
+			);
+		} catch (error) {
+			// Force stop timer on error
 			try {
-				// lock restart process
-				this._isLockSyncProcess = true;
-				// resolve promise and add debounce time to avoid riding
-				await lastValueFrom(
-					from(this.toggleStart(false)).pipe(
-						debounceTime(200),
-						concatMap(() => this.toggleStart(true)),
-						untilDestroyed(this)
-					)
-				);
-			} catch (error) {
-				// force stop timer
-				try {
+				if (this.stopTimer) {
 					await this.stopTimer(false, true);
-				} catch (e) {
-					this._loggerService.error('Error in force stop timer', e);
 				}
-			} finally {
-				// unlock restart process
-				this._isLockSyncProcess = false;
+			} catch (stopError) {
+				this._loggerService?.error('Error in force stopping the timer', stopError);
 			}
-		}, 3000);
+		} finally {
+			// Unlock restart process
+			this._isLockSyncProcess = false;
+		}
 	}
 
 	public async updateOrganizationTeamEmployee(): Promise<void> {

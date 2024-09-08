@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { IOrganizationProject } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
 import { ProjectSelectorQuery } from './+state/project-selector.query';
@@ -11,7 +12,8 @@ import { ProjectSelectorStore } from './+state/project-selector.store';
 @Component({
 	selector: 'gauzy-project-selector',
 	templateUrl: './project-selector.component.html',
-	styleUrls: ['./project-selector.component.scss']
+	styleUrls: ['./project-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectSelectorComponent implements OnInit {
 	constructor(
@@ -20,7 +22,8 @@ export class ProjectSelectorComponent implements OnInit {
 		private readonly projectSelectorQuery: ProjectSelectorQuery,
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly taskSelectorService: TaskSelectorService,
-		private readonly teamSelectorService: TeamSelectorService
+		private readonly teamSelectorService: TeamSelectorService,
+		private readonly timeTrackerQuery: TimeTrackerQuery
 	) {}
 
 	public ngOnInit(): void {
@@ -51,8 +54,8 @@ export class ProjectSelectorComponent implements OnInit {
 		return this.projectSelectorQuery.selectError();
 	}
 
-	public get selectedId$(): Observable<string> {
-		return this.projectSelectorQuery.selectedId$;
+	public get selected$(): Observable<IOrganizationProject> {
+		return this.projectSelectorQuery.selected$;
 	}
 
 	public get data$(): Observable<IOrganizationProject[]> {
@@ -65,5 +68,9 @@ export class ProjectSelectorComponent implements OnInit {
 
 	public isLoading$(): Observable<boolean> {
 		return this.projectSelectorQuery.selectLoading();
+	}
+
+	public disabled$(): Observable<boolean> {
+		return this.timeTrackerQuery.disabled$;
 	}
 }

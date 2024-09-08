@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { IOrganizationContact } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorService } from '../team-selector/+state/team-selector.service';
@@ -12,7 +13,8 @@ import { ClientSelectorStore } from './+state/client-selector.store';
 @Component({
 	selector: 'gauzy-client-selector',
 	templateUrl: './client-selector.component.html',
-	styleUrls: ['./client-selector.component.scss']
+	styleUrls: ['./client-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClientSelectorComponent implements OnInit {
 	constructor(
@@ -22,7 +24,8 @@ export class ClientSelectorComponent implements OnInit {
 		private readonly clientSelectorService: ClientSelectorService,
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly taskSelectorService: TaskSelectorService,
-		private readonly teamSelectorService: TeamSelectorService
+		private readonly teamSelectorService: TeamSelectorService,
+		private readonly timeTrackerQuery: TimeTrackerQuery
 	) {}
 
 	public ngOnInit(): void {
@@ -55,8 +58,8 @@ export class ClientSelectorComponent implements OnInit {
 		return this.clientSelectorQuery.selectError();
 	}
 
-	public get selectedId$(): Observable<string> {
-		return this.clientSelectorQuery.selectedId$;
+	public get selected$(): Observable<IOrganizationContact> {
+		return this.clientSelectorQuery.selected$;
 	}
 
 	public get data$(): Observable<IOrganizationContact[]> {
@@ -69,5 +72,9 @@ export class ClientSelectorComponent implements OnInit {
 
 	public isLoading$(): Observable<boolean> {
 		return this.clientSelectorQuery.selectLoading();
+	}
+
+	public get disabled$(): Observable<boolean> {
+		return this.timeTrackerQuery.disabled$;
 	}
 }

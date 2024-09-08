@@ -1,24 +1,38 @@
 <div class="gauzy-select-container">
 	<label *ngIf="label">{{ label | translate }}</label>
-	<ng-select (clear)="onClear()" [loading]="isLoading" (ngModelChange)="onModelChange($event)"
-		[(ngModel)]="selectedItem" [addTagText]="addTagText | translate" [addTag]="canAddTag ? addTag : null"
-		[class.error-border]="hasError" [clearable]="clearable" [disabled]="disabled" [items]="items"
-		[nbTooltipDisabled]="!disabled" [nbTooltip]="tooltipText | translate" [placeholder]="placeholder | translate"
-		[bindLabel]="bindLabel" [bindValue]="bindValue" nbTooltipStatus="warning">
-
+	<ng-select
+		(clear)="onClear()"
+		[loading]="isLoading"
+		(ngModelChange)="onModelChange($event)"
+		[ngModel]="selectedItem"
+		[addTagText]="addTagText | translate"
+		[addTag]="canAddTag ? addTag : null"
+		[class.error-border]="hasError"
+		[clearable]="clearable"
+		[disabled]="disabled"
+		[items]="items"
+		[nbTooltipDisabled]="!disabled"
+		[nbTooltip]="tooltipText | translate"
+		[placeholder]="placeholder | translate"
+		[bindLabel]="bindLabel"
+		[bindValue]="bindValue"
+		nbTooltipStatus="warning"
+	>
 		<!-- Option Template -->
 		<ng-template ng-option-tmp let-item="item">
-			<ng-container [ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate: defaultTemplate"
-				[ngTemplateOutletContext]="{ item }">
-			</ng-container>
+			<ng-container
+				[ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate : defaultTemplate"
+				[ngTemplateOutletContext]="{ item: item }"
+			></ng-container>
 		</ng-template>
 
 		<!-- Label Template -->
 		<ng-template ng-label-tmp let-item="item">
 			<div class="selector-template">
-				<ng-container [ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate: defaultTemplate"
-					[ngTemplateOutletContext]="{ item }">
-				</ng-container>
+				<ng-container
+					[ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate : defaultTemplate"
+					[ngTemplateOutletContext]="{ item: item }"
+				></ng-container>
 			</div>
 		</ng-template>
 	</ng-select>
@@ -32,8 +46,8 @@
 <!-- Title Template -->
 <ng-template #titleTemplate let-item="item">
 	<span class="text-container">
-		<span *ngIf="item?.taskNumber || (item?.number && item?.prefix)" class="gray-bold-text">
-			#{{ (item?.taskNumber || (item?.prefix + '-' + item?.number)) | uppercase }}
+		<span *ngIf="item?.number" class="gray-bold-text">
+			#{{ item?.prefix ? (item?.prefix + '-' + item?.number | uppercase) : item?.number }}
 		</span>
 		<span class="black-bold-text">{{ item?.title }}</span>
 	</span>

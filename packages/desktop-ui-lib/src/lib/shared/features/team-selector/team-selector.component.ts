@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { IOrganizationTeam } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { ProjectSelectorService } from '../project-selector/+state/project-selector.service';
 import { TaskSelectorService } from '../task-selector/+state/task-selector.service';
 import { TeamSelectorQuery } from './+state/team-selector.query';
@@ -11,7 +12,8 @@ import { TeamSelectorStore } from './+state/team-selector.store';
 @Component({
 	selector: 'gauzy-team-selector',
 	templateUrl: './team-selector.component.html',
-	styleUrls: ['./team-selector.component.scss']
+	styleUrls: ['./team-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TeamSelectorComponent implements OnInit {
 	constructor(
@@ -20,6 +22,7 @@ export class TeamSelectorComponent implements OnInit {
 		private readonly teamSelectorQuery: TeamSelectorQuery,
 		private readonly projectSelectorService: ProjectSelectorService,
 		private readonly taskSelectorService: TaskSelectorService,
+		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly teamSelectorService: TeamSelectorService
 	) {}
 	public ngOnInit(): void {
@@ -47,8 +50,8 @@ export class TeamSelectorComponent implements OnInit {
 		return this.teamSelectorQuery.selectError();
 	}
 
-	public get selectedId$(): Observable<string> {
-		return this.teamSelectorQuery.selectedId$;
+	public get selected$(): Observable<IOrganizationTeam> {
+		return this.teamSelectorQuery.selected$;
 	}
 
 	public get data$(): Observable<IOrganizationTeam[]> {
@@ -61,5 +64,9 @@ export class TeamSelectorComponent implements OnInit {
 
 	public isLoading$(): Observable<boolean> {
 		return this.teamSelectorQuery.selectLoading();
+	}
+
+	public disabled$(): Observable<boolean> {
+		return this.timeTrackerQuery.disabled$;
 	}
 }

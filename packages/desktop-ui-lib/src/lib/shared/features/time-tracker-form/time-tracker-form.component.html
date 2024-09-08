@@ -1,4 +1,4 @@
-<div class="selector-container">
+<div (click)="onChange()" class="selector-container">
 	<!-- Client selector -->
 	<gauzy-client-selector class="selector"></gauzy-client-selector>
 
@@ -6,10 +6,10 @@
 	<gauzy-project-selector class="selector"></gauzy-project-selector>
 
 	<!-- Team selector -->
-	<gauzy-team-selector class="selector"></gauzy-team-selector>
+	<gauzy-team-selector *ngIf="isHideTeamSelector$ | async" class="selector"></gauzy-team-selector>
 
 	<!-- Task selector -->
-	<gauzy-task-selector class="selector"></gauzy-task-selector>
+	<gauzy-task-selector *ngIf="isHideTaskSelector$ | async" class="selector"></gauzy-task-selector>
 
 	<!-- Note -->
 	<gauzy-note class="selector"></gauzy-note>

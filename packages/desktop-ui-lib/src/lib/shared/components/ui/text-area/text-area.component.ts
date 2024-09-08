@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
 	selector: 'gauzy-text-area',
 	templateUrl: './text-area.component.html',
-	styleUrls: ['./text-area.component.scss']
+	styleUrls: ['./text-area.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TextAreaComponent {
 	private _text: string = '';

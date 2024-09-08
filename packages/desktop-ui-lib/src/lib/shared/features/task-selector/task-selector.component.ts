@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ITask } from 'packages/contracts/dist';
 import { filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
+import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
@@ -9,13 +10,15 @@ import { TaskSelectorStore } from './+state/task-selector.store';
 @Component({
 	selector: 'gauzy-task-selector',
 	templateUrl: './task-selector.component.html',
-	styleUrls: ['./task-selector.component.scss']
+	styleUrls: ['./task-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TaskSelectorComponent implements OnInit {
 	constructor(
 		private readonly electronService: ElectronService,
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
+		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly taskSelectorService: TaskSelectorService
 	) {}
 
@@ -41,8 +44,8 @@ export class TaskSelectorComponent implements OnInit {
 		return this.taskSelectorQuery.selectError();
 	}
 
-	public get selectedId$(): Observable<string> {
-		return this.taskSelectorQuery.selectedId$;
+	public get selected$(): Observable<ITask> {
+		return this.taskSelectorQuery.selected$;
 	}
 
 	public get data$(): Observable<ITask[]> {
@@ -55,5 +58,9 @@ export class TaskSelectorComponent implements OnInit {
 
 	public isLoading$(): Observable<boolean> {
 		return this.taskSelectorQuery.selectLoading();
+	}
+
+	public disabled$(): Observable<boolean> {
+		return this.timeTrackerQuery.disabled$;
 	}
 }
