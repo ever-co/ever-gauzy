@@ -58,6 +58,10 @@ export class TimeTrackerQuery extends Query<ITimeTrackerState> {
 			this.isStateChanging$.pipe(startWith(false)),
 			this.isEditing$.pipe(startWith(false)),
 			this.isStarted$.pipe(startWith(false))
-		]).pipe(map(([isStateChanging, isEditing, isStarted]) => isStateChanging || isEditing !== isStarted));
+		]).pipe(
+			map(([isStateChanging, isEditing, isStarted]) => {
+				return !!(isStateChanging || isEditing !== isStarted);
+			})
+		);
 	}
 }

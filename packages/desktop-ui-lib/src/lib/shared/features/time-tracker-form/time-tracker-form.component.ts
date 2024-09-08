@@ -27,13 +27,13 @@ export class TimeTrackerFormComponent {
 
 	public get isHideTaskSelector$(): Observable<boolean> {
 		return combineLatest([this.timeTrackerQuery.isExpanded$, this.timeTrackerQuery.isEditing$]).pipe(
-			map(([isExpanded, isEditing]) => isExpanded || isEditing)
+			map(([expanded, editing]) => !expanded || editing)
 		);
 	}
 
 	public get isHideTeamSelector$(): Observable<boolean> {
 		return this.teamSelectorService.getAll$().pipe(
-			map((teams) => teams && teams.length === 0),
+			map((teams) => (teams?.length ?? 0) > 0),
 			startWith(true)
 		);
 	}

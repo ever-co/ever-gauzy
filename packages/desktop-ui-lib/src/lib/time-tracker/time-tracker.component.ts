@@ -853,7 +853,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					// Use optional chaining to ensure status is available before accessing properties
 					status?.lastLog && this.electronService.ipcRenderer.send('update_session', { ...status.lastLog });
 					// Update store state directly after restarting
-					this.timeTrackerStore.update({ ignition: { state: IgnitionState.RESTARTED } });
+					this.timeTrackerStore.ignition({ state: IgnitionState.RESTARTED });
 				}),
 				untilDestroyed(this)
 			)
@@ -1473,7 +1473,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		if (!val) {
 			console.log('Stop tracking');
 
-			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPING } });
+			this.timeTrackerStore.ignition({ state: IgnitionState.STOPPING });
 
 			await this.stopTimer(onClick);
 
@@ -1485,7 +1485,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} else {
 			console.log('Start tracking');
 
-			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTING } });
+			this.timeTrackerStore.ignition({ state: IgnitionState.STARTING });
 
 			// check that required inputs are set before we can start timer
 			if (this.validationField()) {
@@ -1598,11 +1598,11 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			this.electronService.ipcRenderer.send('start-capture-screen');
 
-			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED, mode: this._startMode } });
+			this.timeTrackerStore.ignition({ state: IgnitionState.STARTED, mode: this._startMode });
 		} catch (error) {
 			this._startMode = TimerStartMode.STOP;
 			this.start$.next(false);
-			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPED, mode: this._startMode } });
+			this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED, mode: this._startMode });
 			this._errorHandlerService.handleError(error);
 		} finally {
 			this.loading = false;
@@ -1670,7 +1670,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} finally {
 			this.loading = false;
 			this.isProcessingEnabled = false;
-			this.timeTrackerStore.update({ ignition: { state: IgnitionState.STOPPED, mode: this._startMode } });
+			this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED, mode: this._startMode });
 		}
 	}
 

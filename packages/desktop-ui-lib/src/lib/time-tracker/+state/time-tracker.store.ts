@@ -46,4 +46,13 @@ export class TimeTrackerStore extends Store<ITimeTrackerState> {
 	constructor() {
 		super(createInitialState());
 	}
+
+	public ignition(ignition: ITimerIgnition) {
+		this.update({
+			ignition: {
+				...this.getValue().ignition,
+				...ignition
+			}
+		});
+	}
 }
