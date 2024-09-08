@@ -78,7 +78,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const { tags = [], members = [], managers = [], ...entity } = input;
 		const { organizationId } = entity;
 		try {
-			// Retrive members and managers IDs
+			// Retrieve members and managers IDs
 			const managerIds = managers.map((manager) => manager.id);
 			const memberIds = members.map((member) => member.id);
 
@@ -173,7 +173,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		}
 
 		try {
-			// Retrive members and managers IDs
+			// Retrieve members and managers IDs
 			const managerIds = managers.map((manager) => manager.id);
 			const memberIds = members.map((member) => member.id);
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
