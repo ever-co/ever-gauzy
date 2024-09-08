@@ -247,29 +247,6 @@ export class OrganizationProject
 	imageId?: ID;
 
 	/**
-	 * Project Manager
-	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
-	@MultiORMManyToOne(() => Employee, (it) => it.managedProjects, {
-		/** Indicates if the relation column value can be nullable or not. */
-		nullable: true,
-
-		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
-	})
-	manager?: IEmployee;
-
-	@ApiPropertyOptional({ type: () => String })
-	@IsOptional()
-	@IsUUID()
-	@RelationId((it: OrganizationProject) => it.manager)
-	@ColumnIndex()
-	@MultiORMColumn({ nullable: true, relationId: true })
-	managerId?: ID;
-
-	/**
 	 * Project default member assignee
 	 */
 	@ApiPropertyOptional({ type: () => Object })

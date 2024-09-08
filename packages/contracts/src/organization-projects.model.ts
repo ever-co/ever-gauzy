@@ -1,4 +1,4 @@
-import { IEmployee } from './employee.model';
+import { IEmployee, IRelationalEmployee } from './employee.model';
 import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { ITag } from './tag.model';
@@ -13,6 +13,7 @@ import { IOrganizationTeam } from './organization-team.model';
 import { CustomFieldsObject } from './shared-types';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { TaskStatusEnum } from './task-status.model';
+import { IRelationalRole } from './role.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
@@ -65,9 +66,6 @@ export interface IOrganizationProject
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
-	// Project manager
-	manager?: IEmployee;
-	managerId?: ID;
 	// Default project assignee
 	defaultAssignee?: IEmployee;
 	defaultAssigneeId?: ID;
@@ -107,6 +105,7 @@ export interface IOrganizationProjectCreateInput
 	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
 	members?: IEmployee[];
+	managers?: IOrganizationProjectEmployee[];
 	public?: boolean;
 	icon?: string;
 	tags?: ITag[];
@@ -121,8 +120,6 @@ export interface IOrganizationProjectCreateInput
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
 	taskListType?: TaskListTypeEnum;
-	manager?: IEmployee;
-	managerId?: ID;
 	defaultAssignee?: IEmployee;
 	defaultAssigneeId?: ID;
 	archiveTasksIn?: number;
@@ -137,3 +134,9 @@ export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
 	action: CrudActionEnum;
 }
+
+export interface IOrganizationProjectEmployee
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalOrganizationProject,
+		IRelationalEmployee,
+		IRelationalRole {}

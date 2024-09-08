@@ -57,7 +57,6 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel {
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationContacts?: IOrganizationContact[];
 	projects?: IOrganizationProject[];
-	managedProjects?: IOrganizationProject[];
 	projectDefaultAssignments?: IOrganizationProject[];
 	organizationPosition?: IOrganizationPosition;
 	tags?: ITag[];

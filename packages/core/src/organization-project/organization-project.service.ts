@@ -1,28 +1,131 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
-	IEmployee,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
+	IOrganizationProjectCreateInput,
 	IOrganizationProjectsFindInput,
-	IPagination
+	IPagination,
+	RolesEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { Employee, OrganizationProjectEmployee } from '../core/entities/internal';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
+import { RoleService } from '../role/role.service';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
-import { MikroOrmOrganizationProjectRepository, TypeOrmOrganizationProjectRepository } from './repository';
+import { TypeOrmEmployeeRepository } from '../employee/repository';
+import {
+	MikroOrmOrganizationProjectEmployeeRepository,
+	MikroOrmOrganizationProjectRepository,
+	TypeOrmOrganizationProjectEmployeeRepository,
+	TypeOrmOrganizationProjectRepository
+} from './repository';
 
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(
-		typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository
+		readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
+		readonly mikroOrmOrganizationProjectRepository: MikroOrmOrganizationProjectRepository,
+		readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
+		readonly mikroOrmOrganizationProjectEmployeeRepository: MikroOrmOrganizationProjectEmployeeRepository,
+		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
+		private readonly roleService: RoleService
 	) {
 		super(typeOrmOrganizationProjectRepository, mikroOrmOrganizationProjectRepository);
+	}
+
+	/**
+	 * Retrieves a collection of employees based on specified criteria.
+	 * @param memberIds - Array of member IDs to include in the query.
+	 * @param managerIds - Array of manager IDs to include in the query.
+	 * @param organizationId - The organization ID for filtering.
+	 * @param tenantId - The tenant ID for filtering.
+	 * @returns A Promise resolving to an array of Employee entities with associated user information.
+	 */
+	async retrieveEmployees(memberIds: ID[], managerIds: ID[], organizationId: ID, tenantId: ID): Promise<Employee[]> {
+		try {
+			// Filter out falsy values (e.g., null or undefined) from the union of memberIds and managerIds
+			const filteredIds = [...memberIds, ...managerIds].filter(Boolean);
+
+			// Retrieve employees based on specified criteria
+			const employees = await this.typeOrmEmployeeRepository.findBy({
+				id: In(filteredIds), // Filtering by employee IDs (union of memberIds and managerIds)
+				organizationId, // Filtering by organizationId
+				tenantId // Filtering by tenantId
+			});
+
+			return employees;
+		} catch (error) {
+			// Handle any potential errors during the retrieval process
+			throw new Error(`Failed to retrieve employees: ${error}`);
+		}
+	}
+
+	/**
+	 * Creates an organization project based on the provided input.
+	 * @param input - Input data for creating the organization project.
+	 * @returns A Promise resolving to the created organization project.
+	 * @throws BadRequestException if there is an error in the creation process.
+	 */
+	async create(input: IOrganizationProjectCreateInput): Promise<IOrganizationProject> {
+		const { tags = [], members = [], managers = [], ...entity } = input;
+		const { organizationId } = entity;
+		try {
+			// Retrive members and managers IDs
+			const managerIds = managers.map((manager) => manager.id);
+			const memberIds = members.map((member) => member.id);
+
+			const tenantId = RequestContext.currentTenantId();
+			const employeeId = RequestContext.currentEmployeeId();
+			const currentRoleId = RequestContext.currentRoleId();
+
+			// If, employee create project, default add as a manager
+			try {
+				// Check if the current role is EMPLOYEE
+				await this.roleService.findOneByIdString(currentRoleId, {
+					where: { name: RolesEnum.EMPLOYEE }
+				});
+				// Check if the employeeId is not already included in the managerIds array
+				if (!managerIds.includes(employeeId)) {
+					// If not included, add the employeeId to the managerIds array
+					managerIds.push(employeeId);
+				}
+			} catch (error) {}
+			// Retrieves a collection of employees based on specified criteria.
+			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+
+			// Find the manager role
+			const managerRole = await this.roleService.findOneByWhereOptions({ name: RolesEnum.MANAGER });
+
+			// Create a Set for faster membership checks
+			const managerIdsSet = new Set(managerIds);
+
+			// Use destructuring to directly extract 'id' from 'employee'
+			const projectMembers = employees.map(
+				({ id: employeeId }) =>
+					new OrganizationProjectEmployee({
+						employee: { id: employeeId },
+						organization: { id: organizationId },
+						tenant: { id: tenantId },
+						role: managerIdsSet.has(employeeId) ? managerRole : null
+					})
+			);
+
+			// Create the organization team with the prepared members
+			return await super.create({
+				...entity,
+				organization: { id: organizationId },
+				tenant: { id: tenantId },
+				tags,
+				members: projectMembers
+			});
+		} catch (error) {
+			throw new BadRequestException(`Failed to create project: ${error}`);
+		}
 	}
 
 	/**
@@ -32,10 +135,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	 * @param options
 	 * @returns
 	 */
-	async findByEmployee(
-		employeeId: IEmployee['id'],
-		options: IOrganizationProjectsFindInput
-	): Promise<IOrganizationProject[]> {
+	async findByEmployee(employeeId: ID, options: IOrganizationProjectsFindInput): Promise<IOrganizationProject[]> {
 		const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
 		query.setFindOptions({
 			select: {
