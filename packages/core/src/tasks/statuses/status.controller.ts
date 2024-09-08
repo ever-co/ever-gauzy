@@ -93,7 +93,7 @@ export class TaskStatusController extends CrudFactory<
 	@ApiOperation({ summary: 'Make task status default.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: 'Task status maked as default'
+		description: 'Task status marked as default'
 	})
 	@HttpCode(HttpStatus.OK)
 	@Put(':id/default')
