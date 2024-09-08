@@ -10,6 +10,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#FFCC00',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: true,
 		isInProgress: false,
 		isDone: false
@@ -23,6 +24,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#D6E4F9',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: true,
 		isInProgress: false,
 		isDone: false
@@ -36,6 +38,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#ECE8FC',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: true,
 		isDone: false
@@ -49,6 +52,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#F5F1CB',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: true,
 		isDone: false
@@ -62,6 +66,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#F3D8B0',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: true,
 		isDone: false
@@ -75,6 +80,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#F5B8B8',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: true,
 		isDone: false
@@ -88,6 +94,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#4CAF50',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: false,
 		isDone: true
@@ -101,6 +108,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#D4EFDF',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: false,
 		isDone: true
@@ -114,6 +122,7 @@ export const DEFAULT_GLOBAL_STATUSES: ITaskStatus[] = [
 		color: '#D4EFDF',
 		isSystem: true,
 		isCollapsed: false,
+		isDefault: false,
 		isTodo: false,
 		isInProgress: false,
 		isDone: false
