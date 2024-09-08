@@ -18,6 +18,7 @@ import {
 	ITasksStatistics,
 	ITaskStatus,
 	ITaskUpdateInput,
+	ITimerStatus,
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -849,9 +850,28 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTING),
 				concatMap(() => this.restart(() => this._timeTrackerStatus.status())),
-				tap((status) => {
-					// Use optional chaining to ensure status is available before accessing properties
-					status?.lastLog && this.electronService.ipcRenderer.send('update_session', { ...status.lastLog });
+				tap((status: ITimerStatus) => {
+					if (status?.lastLog) {
+						const { stoppedAt, startedAt } = status.lastLog;
+
+						// Use moment to parse the stoppedAt time
+						const stoppedMoment = moment(stoppedAt);
+
+						// Cache the current time
+						const now = moment();
+
+						// Calculate the idle time in seconds since the last stop
+						const restartIdle = now.diff(stoppedMoment, 'seconds');
+
+						// Calculate the new start time by adding the idle time
+						const newStartedAt = moment(startedAt).add(restartIdle, 'seconds');
+
+						// Send the updated session data
+						this.electronService.ipcRenderer.send('update_session', {
+							...status.lastLog,
+							startedAt: newStartedAt
+						});
+					}
 					// Update store state directly after restarting
 					this.timeTrackerStore.ignition({ state: IgnitionState.RESTARTED });
 				}),
