@@ -108,6 +108,7 @@ export interface IOrganizationProjectCreateInput
 	currency?: CurrenciesEnum;
 	members?: IEmployee[];
 	public?: boolean;
+	icon?: string;
 	tags?: ITag[];
 	owner?: ProjectOwnerEnum;
 	code?: string;
@@ -115,11 +116,17 @@ export interface IOrganizationProjectCreateInput
 	color?: string;
 	billable?: boolean;
 	billingFlat?: boolean;
-	status?: string;
+	status?: TaskStatusEnum;
 	openSource?: boolean;
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
 	taskListType?: TaskListTypeEnum;
+	manager?: IEmployee;
+	managerId?: ID;
+	defaultAssignee?: IEmployee;
+	defaultAssigneeId?: ID;
+	archiveTasksIn?: number;
+	closeTasksIn?: number;
 }
 
 export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
