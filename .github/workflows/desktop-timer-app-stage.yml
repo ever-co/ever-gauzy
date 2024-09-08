@@ -207,6 +207,13 @@ jobs:
             }
           }
 
+      - name: Print PATH var value
+        shell: powershell
+        run: |
+          $path = [System.Environment]::GetEnvironmentVariable('PATH')
+          Write-Output "PATH environment variable is:"
+          Write-Output $path
+
       - name: Build Desktop Timer App
         run: 'yarn build:desktop-timer:windows:release:gh'
         env:
@@ -335,7 +342,7 @@ jobs:
           PROCESSOR_REVISION: ''
           PSModuleAnalysisCachePath: ''
           PSModulePath: ''
-          Path: ''
+          # Path: ''
           DOTNET_MULTILEVEL_LOOKUP: ''
           DOTNET_NOLOGO: ''
           DOTNET_SKIP_FIRST_TIME_EXPERIENCE: ''
