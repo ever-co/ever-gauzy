@@ -1,6 +1,6 @@
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsBoolean, IsEnum, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -26,7 +26,8 @@ import {
 	OrganizationProjectBudgetTypeEnum,
 	ProjectBillingEnum,
 	ProjectOwnerEnum,
-	TaskListTypeEnum
+	TaskListTypeEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
 import {
@@ -160,6 +161,31 @@ export class OrganizationProject
 	@MultiORMColumn({ nullable: true })
 	syncTag?: string;
 
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsEnum(TaskStatusEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	status?: TaskStatusEnum;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MultiORMColumn({ nullable: true })
+	icon?: string;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ nullable: true, type: 'decimal' })
+	archiveTasksIn?: number;
+
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ nullable: true, type: 'decimal' })
+	closeTasksIn?: number;
+
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
@@ -219,6 +245,52 @@ export class OrganizationProject
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: ID;
+
+	/**
+	 * Project Manager
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => Employee, (it) => it.managedProjects, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	manager?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationProject) => it.manager)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	managerId?: ID;
+
+	/**
+	 * Project default member assignee
+	 */
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	@MultiORMManyToOne(() => Employee, (it) => it.projectDefaultAssignments, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	defaultAssignee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: OrganizationProject) => it.defaultAssignee)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	defaultAssigneeId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

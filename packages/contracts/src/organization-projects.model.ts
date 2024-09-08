@@ -12,6 +12,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { CustomFieldsObject } from './shared-types';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { TaskStatusEnum } from './task-status.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
@@ -36,6 +37,7 @@ export interface IOrganizationProject
 	currency: CurrenciesEnum;
 	members?: IEmployee[];
 	public: boolean;
+	status?: TaskStatusEnum; // Defines the project stage / progession / step
 	tags: ITag[];
 	owner: ProjectOwnerEnum;
 	tasks?: ITask[];
@@ -50,6 +52,8 @@ export interface IOrganizationProject
 	description?: string;
 	// the color of project which is used in UI
 	color?: string;
+	// The project icon used on UI
+	icon?: string;
 	// is project billable?
 	billable?: boolean;
 	// true if the project is flat rate, false if the project is time / materials billable
@@ -61,6 +65,15 @@ export interface IOrganizationProject
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
+	// Project manager
+	manager?: IEmployee;
+	managerId?: ID;
+	// Default project assignee
+	defaultAssignee?: IEmployee;
+	defaultAssigneeId?: ID;
+	// automations
+	archiveTasksIn?: number; // Expressed in months, all completed (done) and canceled tasks related to the project will be auto-archived after the period reached
+	closeTasksIn?: number; // Expressed in months, all completed (done) and canceled tasks related to the project will be auto-closed after the period reached
 }
 
 export enum TaskListTypeEnum {

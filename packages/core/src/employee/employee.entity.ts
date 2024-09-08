@@ -517,11 +517,32 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMOneToMany(() => EmployeePhone, (it) => it.employee)
 	phoneNumbers?: IEmployeePhone[];
 
+	/**
+	 * Daily Plans
+	 */
 	@ApiPropertyOptional({ type: () => DailyPlan, isArray: true })
 	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
 		cascade: true
 	})
 	dailyPlans?: IDailyPlan[];
+
+	/**
+	 * Managed projects
+	 */
+	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
+	@MultiORMOneToMany(() => OrganizationProject, (project) => project.manager, {
+		cascade: true
+	})
+	managedProjects?: IOrganizationProject[];
+
+	/**
+	 * Projects for whom employee is default assigned
+	 */
+	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
+	@MultiORMOneToMany(() => OrganizationProject, (project) => project.defaultAssignee, {
+		cascade: true
+	})
+	projectDefaultAssignments?: IOrganizationProject[];
 
 	/*
 	|--------------------------------------------------------------------------
