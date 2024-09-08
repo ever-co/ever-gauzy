@@ -56,8 +56,16 @@ export class TaskStatus extends TenantOrganizationBaseEntity implements ITaskSta
 	isSystem?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ default: false })
 	isCollapsed?: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	isDefault?: boolean;
 
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()

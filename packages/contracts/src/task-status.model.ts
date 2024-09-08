@@ -15,6 +15,7 @@ export interface ITaskStatus
 	order?: number;
 	isSystem?: boolean;
 	isCollapsed?: boolean;
+	isDefault?: boolean;
 	fullIconUrl?: string;
 	template?: TaskStatusEnum;
 }
