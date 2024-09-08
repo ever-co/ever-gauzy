@@ -149,6 +149,12 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@MultiORMColumn({ nullable: true })
 	version?: string;
 
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: true })
+	isDraft?: boolean;
+
 	/** Additional virtual columns */
 	@VirtualMultiOrmColumn()
 	taskNumber?: string;
