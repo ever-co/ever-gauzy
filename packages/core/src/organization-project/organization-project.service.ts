@@ -1,17 +1,20 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
 	ID,
+	IEmployee,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
 	IOrganizationProjectCreateInput,
 	IOrganizationProjectsFindInput,
+	IOrganizationProjectUpdateInput,
 	IPagination,
+	PermissionsEnum,
 	RolesEnum
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
-import { Employee, OrganizationProjectEmployee } from '../core/entities/internal';
+import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -125,6 +128,165 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			});
 		} catch (error) {
 			throw new BadRequestException(`Failed to create project: ${error}`);
+		}
+	}
+
+	/**
+	 * Update an organization project.
+	 *
+	 * @param id - The ID of the organization project to be updated.
+	 * @param input - The updated information for the organization project.
+	 * @returns A Promise resolving to the updated organization project.
+	 * @throws ForbiddenException if the user lacks permission or if certain conditions are not met.
+	 * @throws BadRequestException if there's an error during the update process.
+	 */
+	async update(id: ID, input: IOrganizationProjectUpdateInput): Promise<IOrganizationProject> {
+		const tenantId = RequestContext.currentTenantId() || input.tenantId;
+		const { managers, members, organizationId } = input;
+
+		let organizationProject = await super.findOneByIdString(id, {
+			where: { organizationId, tenantId }
+		});
+
+		// Check permission for CHANGE_SELECTED_EMPLOYEE
+		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			try {
+				const employeeId = RequestContext.currentEmployeeId();
+				// If employee ID is present, restrict update to manager role
+				if (employeeId) {
+					organizationProject = await super.findOneByIdString(id, {
+						where: {
+							organizationId,
+							tenantId,
+							members: {
+								employeeId,
+								tenantId,
+								organizationId,
+								role: { name: RolesEnum.MANAGER }
+							}
+						}
+					});
+				}
+			} catch (error) {
+				throw new ForbiddenException();
+			}
+		}
+
+		try {
+			// Retrive members and managers IDs
+			const managerIds = managers.map((manager) => manager.id);
+			const memberIds = members.map((member) => member.id);
+			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
+				// Find the manager role
+				const role = await this.roleService.findOneByWhereOptions({
+					name: RolesEnum.MANAGER
+				});
+
+				// Retrieves a collection of employees based on specified criteria.
+				const projectMembers = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
+
+				// Update nested entity
+				await this.updateOrganizationProject(id, organizationId, projectMembers, role, managerIds, memberIds);
+			}
+
+			const { id: organizationProjectId } = organizationProject;
+
+			// Update the organization project with the prepared members
+			return await super.create({
+				...input,
+				organizationId,
+				tenantId,
+				id: organizationProjectId
+			});
+		} catch (error) {
+			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Delete project members by IDs.
+	 *
+	 * @param memberIds - Array of member IDs to delete
+	 * @returns A promise that resolves when all deletions are complete
+	 */
+	async deleteMemberByIds(memberIds: ID[]): Promise<void> {
+		// Map member IDs to deletion promises
+		const deletePromises = memberIds.map((memberId: string) =>
+			this.typeOrmOrganizationProjectEmployeeRepository.delete(memberId)
+		);
+
+		// Wait for all deletions to complete
+		await Promise.all(deletePromises);
+	}
+
+	/**
+	 * Update organization project by managing its members and their roles.
+	 *
+	 * @param organizationTeamId - ID of the organization project
+	 * @param organizationId - ID of the organization
+	 * @param employees - Array of employees to be assigned to the project
+	 * @param role - The role to assign to managers in the project
+	 * @param managerIds - Array of employee IDs to be assigned as managers
+	 * @param memberIds - Array of employee IDs to be assigned as members
+	 * @returns Promise<void>
+	 */
+	async updateOrganizationProject(
+		organizationProjectId: ID,
+		organizationId: ID,
+		employees: IEmployee[],
+		role: Role,
+		managerIds: string[],
+		memberIds: string[]
+	): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const membersToUpdate = [...managerIds, ...memberIds];
+
+		// Fetch existing team members with their roles
+		const projectMembers = await this.typeOrmOrganizationProjectEmployeeRepository.find({
+			where: { tenantId, organizationId, organizationProjectId },
+			relations: { role: true }
+		});
+
+		// Create a map for fast lookup of current project members
+		const existingMemberMap = new Map(projectMembers.map((member) => [member.employeeId, member]));
+
+		// Separate members to remove and to update
+		const removedMembers = projectMembers.filter((member) => !membersToUpdate.includes(member.employeeId));
+		const updatedMembers = projectMembers.filter((member) => membersToUpdate.includes(member.employeeId));
+
+		// 1. Remove members who are no longer in the team
+		if (removedMembers.length > 0) {
+			const removedMemberIds = removedMembers.map((member) => member.id);
+			await this.deleteMemberByIds(removedMemberIds);
+		}
+
+		// 2. Update role for existing members
+		for (const member of updatedMembers) {
+			const isManager = managerIds.includes(member.employeeId);
+			const newRole = isManager ? role : member.role?.id === role.id ? member.role : null;
+
+			// Only update if the role is different
+			if (newRole && newRole.id !== member.roleId) {
+				await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, { role: newRole });
+			}
+		}
+
+		// 3. Add new members to the project
+		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
+
+		if (newMembers.length > 0) {
+			const newTeamMembers = newMembers.map(
+				(employee) =>
+					new OrganizationProjectEmployee({
+						organizationProjectId,
+						employeeId: employee.id,
+						tenantId,
+						organizationId,
+						roleId: managerIds.includes(employee.id) ? role.id : null
+					})
+			);
+
+			await this.typeOrmRepository.save(newTeamMembers);
 		}
 	}
 
