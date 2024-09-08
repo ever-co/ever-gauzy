@@ -37,7 +37,7 @@ export interface IOrganizationProject
 	currency: CurrenciesEnum;
 	members?: IEmployee[];
 	public: boolean;
-	status?: TaskStatusEnum; // Defines the project stage / progession / step
+	status?: TaskStatusEnum; // Defines the project stage / progression / step
 	tags: ITag[];
 	owner: ProjectOwnerEnum;
 	tasks?: ITask[];
@@ -71,7 +71,7 @@ export interface IOrganizationProject
 	// Default project assignee
 	defaultAssignee?: IEmployee;
 	defaultAssigneeId?: ID;
-	// automations
+	// automation
 	archiveTasksIn?: number; // Expressed in months, all completed (done) and canceled tasks related to the project will be auto-archived after the period reached
 	closeTasksIn?: number; // Expressed in months, all completed (done) and canceled tasks related to the project will be auto-closed after the period reached
 }
