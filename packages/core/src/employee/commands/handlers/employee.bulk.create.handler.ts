@@ -1,6 +1,6 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
-import { IEmployee, IEmployeeCreateInput } from '@gauzy/contracts';
+import { IEmployee } from '@gauzy/contracts';
 import { EmployeeBulkCreateCommand } from '../employee.bulk.create.command';
 import { EmployeeCreateCommand } from '../employee.create.command';
 
@@ -14,18 +14,26 @@ export class EmployeeBulkCreateHandler implements ICommandHandler<EmployeeBulkCr
 	 * @returns A promise that resolves to an array of created employees.
 	 */
 	public async execute(command: EmployeeBulkCreateCommand): Promise<IEmployee[]> {
-		const { input, languageCode, originUrl } = command;
-		const results = [];
 		try {
+			const { input, languageCode, originUrl } = command;
+
+			// Initialize an empty array to store the results
+			const results: IEmployee[] = [];
+
+			// Sequentially process each entity and execute the respective command
 			for (const entity of input) {
+				// Execute the create command for the current entity
 				const result = await this.commandBus.execute(
 					new EmployeeCreateCommand(entity, languageCode, originUrl)
 				);
+
 				results.push(result);
 			}
+
 			return results;
 		} catch (error) {
-			throw new BadRequestException(error);
+			// Return a more descriptive error message for bulk create failure
+			throw new BadRequestException(error.message || 'Failed to create multiple employees');
 		}
 	}
 }
