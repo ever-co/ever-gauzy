@@ -17,6 +17,7 @@
 }
 
 .timer-window-container {
+  margin-top: 20px;
   display: flex;
   flex-direction: row;
   align-items: flex-start;
@@ -48,7 +49,7 @@
 }
 
 .search {
-	padding: 0.5rem 0;
+  padding: 0.5rem 0;
 }
 
 .timer-box {
@@ -176,6 +177,7 @@
 }
 
 :host {
+
   .work-today-duration,
   .work-weekly-duration {
     font-size: 14px;
@@ -193,7 +195,8 @@
   }
 }
 
-.over > {
+.over> {
+
   .work-weekly-duration,
   .work-weekly {
     color: var(--color-danger-default) !important;
@@ -215,7 +218,7 @@
   display: none;
   padding: 0 15px;
 
-  > div.row {
+  >div.row {
     height: 100%;
     display: flex;
     justify-content: center;
@@ -227,7 +230,7 @@
   height: 160px;
 }
 
-.screen-capture-img:hover + .overlay-img,
+.screen-capture-img:hover+.overlay-img,
 .overlay-img:hover {
   display: block;
   margin: auto;
@@ -358,7 +361,7 @@ nb-card-body {
     }
 
     nb-toggle {
-      div.checked + span.text {
+      div.checked+span.text {
         color: var(--text-primary-color) !important;
       }
 
@@ -425,6 +428,7 @@ $input-background-color: var(--gauzy-card-1);
 $height: 42px;
 
 :host {
+
   ::ng-deep input,
   ::ng-deep nb-select.appearance-outline.status-basic .select-button,
   ::ng-deep .ng-select .ng-select-container {
@@ -475,6 +479,7 @@ $height: 42px;
   }
 
   .ng-select .ng-select-focused .ng-select-container {
+
     &:hover,
     &:focus,
     &:active,
@@ -652,7 +657,7 @@ img {
     min-height: 100px;
     align-items: flex-end;
 
-    > div {
+    >div {
       height: 100%;
 
       nb-card {
@@ -663,8 +668,8 @@ img {
 }
 
 .no-data {
-	height: 490px;
-	width: 100%;
+  height: 490px;
+  width: 100%;
 }
 
 .disabled-table {
@@ -693,26 +698,26 @@ img {
 }
 
 ::ng-deep nb-tabset {
-	nb-tab.content-active {
-		background-color: var(--gauzy-card-2);
-		border-radius: 0 var(--border-radius) var(--border-radius);
-		height: calc(100vh - 6rem);
-		padding: 1rem;
-		width: 900px;
+  nb-tab.content-active {
+    background-color: var(--gauzy-card-2);
+    border-radius: 0 var(--border-radius) var(--border-radius);
+    height: calc(100vh - 6rem);
+    padding: 1rem;
+    width: 900px;
 
-		nb-card {
-			margin-bottom: 1rem;
-		}
-	}
+    nb-card {
+      margin-bottom: 1rem;
+    }
+  }
 
-	nb-tabset nb-tab.content-active nb-card {
-		margin-bottom: 0;
-	}
+  nb-tabset nb-tab.content-active nb-card {
+    margin-bottom: 0;
+  }
 
-	.nb-tab-card,
-	.nb-tab-body {
-		background-color: unset;
-		padding: 0;
-		margin: 0;
-	}
+  .nb-tab-card,
+  .nb-tab-body {
+    background-color: unset;
+    padding: 0;
+    margin: 0;
+  }
 }
