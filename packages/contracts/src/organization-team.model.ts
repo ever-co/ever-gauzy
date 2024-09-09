@@ -1,4 +1,4 @@
-import { IRelationalEmployee } from './employee.model';
+import { IEmployeeEntityInput } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag.model';
@@ -28,7 +28,7 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	tasks?: ITask[];
 }
 
-export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	name?: string;
 	prefix?: string;
 	public?: boolean;

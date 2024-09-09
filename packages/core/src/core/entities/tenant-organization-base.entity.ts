@@ -11,8 +11,6 @@ export abstract class TenantOrganizationBaseEntity
 	extends TenantBaseEntity
 	implements IBasePerTenantAndOrganizationEntityModel
 {
-	@ApiPropertyOptional({ type: () => Organization })
-	@IsOptional()
 	@MultiORMManyToOne(() => Organization, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,

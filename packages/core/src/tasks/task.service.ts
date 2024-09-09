@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
 import { IsNull, SelectQueryBuilder, Brackets, WhereExpressionBuilder, Raw, In } from 'typeorm';
-import { isUUID } from 'class-validator';
+import { isBoolean, isUUID } from 'class-validator';
 import { IEmployee, IGetTaskOptions, IPagination, ITask, PermissionsEnum } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
@@ -83,7 +83,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async getEmployeeTasks(options: PaginationParams<Task>) {
 		try {
 			const { where } = options;
-			const { status, title, prefix, organizationSprintId = null } = where;
+			const { status, title, prefix, isDraft, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
@@ -137,6 +137,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					if (isNotEmpty(status)) {
 						qb.andWhere(p(`"${query.alias}"."status" = :status`), {
 							status
+						});
+					}
+					if (isNotEmpty(isDraft)) {
+						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
+							isDraft
 						});
 					}
 					if (isNotEmpty(title)) {
@@ -234,7 +239,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		try {
 			const { where } = options;
 
-			const { status, teams = [], title, prefix, organizationSprintId = null } = where;
+			const { status, teams = [], title, prefix, isDraft, organizationSprintId = null } = where;
 			const { organizationId, projectId, members } = where;
 			const likeOperator = isPostgres() ? 'ILIKE' : 'LIKE';
 
@@ -305,6 +310,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 							status
 						});
 					}
+					if (isNotEmpty(isDraft)) {
+						qb.andWhere(p(`"${query.alias}"."isDraft" = :isDraft`), {
+							isDraft
+						});
+					}
 					if (isNotEmpty(title)) {
 						qb.andWhere(p(`"${query.alias}"."title" ${likeOperator} :title`), {
 							title: `%${title}%`
@@ -344,6 +354,12 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			if ('prefix' in where) {
 				const { prefix } = where;
 				options['where']['prefix'] = Raw((alias) => `${alias} ${likeOperator} '%${prefix}%'`);
+			}
+			if ('isDraft' in where) {
+				const { isDraft } = where;
+				if (!isBoolean(isDraft)) {
+					options.where.isDraft = IsNull();
+				}
 			}
 			if ('organizationSprintId' in where) {
 				const { organizationSprintId } = where;

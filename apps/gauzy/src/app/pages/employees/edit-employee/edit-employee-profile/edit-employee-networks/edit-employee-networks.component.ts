@@ -1,13 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { combineLatest } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { UrlPatternValidator } from '@gauzy/ui-core/core';
+import { IEmployee, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
-import { Store } from '@gauzy/ui-core/core';
-import { EmployeeStore } from '@gauzy/ui-core/core';
+import { EmployeeStore, Store, UrlPatternValidator } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -22,33 +20,30 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	organization: IOrganization;
 
-	public form: UntypedFormGroup = EditEmployeeNetworksComponent.buildForm(this.fb);
-	static buildForm(fb: UntypedFormBuilder): UntypedFormGroup {
-		const form = fb.group(
-			{
-				linkedInUrl: [],
-				facebookUrl: [],
-				instagramUrl: [],
-				twitterUrl: [],
-				githubUrl: [],
-				gitlabUrl: [],
-				upworkUrl: [],
-				stackoverflowUrl: []
-			},
-			{
-				validators: [
-					UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
-					UrlPatternValidator.websiteUrlValidator('facebookUrl'),
-					UrlPatternValidator.websiteUrlValidator('instagramUrl'),
-					UrlPatternValidator.websiteUrlValidator('twitterUrl'),
-					UrlPatternValidator.websiteUrlValidator('githubUrl'),
-					UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
-					UrlPatternValidator.websiteUrlValidator('upworkUrl')
-				]
-			}
-		);
-		return form;
-	}
+	// Mutation Form
+	public form: UntypedFormGroup = this.fb.group(
+		{
+			linkedInUrl: [],
+			facebookUrl: [],
+			instagramUrl: [],
+			twitterUrl: [],
+			githubUrl: [],
+			gitlabUrl: [],
+			upworkUrl: [],
+			stackoverflowUrl: []
+		},
+		{
+			validators: [
+				UrlPatternValidator.websiteUrlValidator('linkedInUrl'),
+				UrlPatternValidator.websiteUrlValidator('facebookUrl'),
+				UrlPatternValidator.websiteUrlValidator('instagramUrl'),
+				UrlPatternValidator.websiteUrlValidator('twitterUrl'),
+				UrlPatternValidator.websiteUrlValidator('githubUrl'),
+				UrlPatternValidator.websiteUrlValidator('gitlabUrl'),
+				UrlPatternValidator.websiteUrlValidator('upworkUrl')
+			]
+		}
+	);
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
@@ -72,21 +67,28 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 	}
-
-	protected _patchForm(employee: IEmployee) {
+	/**
+	 * Patches the form with employee's URL values.
+	 * @param employee - The employee object containing URL properties to patch the form.
+	 */
+	private _patchForm(employee: IEmployee): void {
 		if (!employee) {
 			return;
 		}
+
+		// Extract and prepare URL fields with default empty string if undefined
 		const {
-			linkedInUrl,
-			facebookUrl,
-			instagramUrl,
-			twitterUrl,
-			githubUrl,
-			gitlabUrl,
-			upworkUrl,
-			stackoverflowUrl
+			linkedInUrl = '',
+			facebookUrl = '',
+			instagramUrl = '',
+			twitterUrl = '',
+			githubUrl = '',
+			gitlabUrl = '',
+			upworkUrl = '',
+			stackoverflowUrl = ''
 		} = employee;
+
+		// Patch form with extracted values
 		this.form.patchValue({
 			linkedInUrl,
 			facebookUrl,
@@ -99,16 +101,32 @@ export class EditEmployeeNetworksComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	submitForm() {
-		if (this.form.invalid) {
-			return;
+	/**
+	 * Submits the form by setting the employee form values in the employee store.
+	 * If the form is invalid, it stops execution.
+	 */
+	public submitForm(): void {
+		try {
+			// Check if the form is valid
+			if (this.form.invalid) {
+				// Optionally, you might want to add some user feedback or logging here
+				return;
+			}
+
+			// Extract organization ID from the selected organization in the store
+			const { id: organizationId, tenantId } = this.store.selectedOrganization;
+
+			// Update the employee form in the employee store with form values and organization ID
+			this.employeeStore.employeeForm = {
+				...this.form.value,
+				organizationId,
+				tenantId
+			};
+		} catch (error) {
+			// Optionally, you might want to add some user feedback or logging here
+			console.error('Error while submitting form:', error);
 		}
-		const { id: organizationId } = this.store.selectedOrganization;
-		this.employeeStore.employeeForm = {
-			...this.form.getRawValue(),
-			organizationId
-		};
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy(): void {}
 }

@@ -39,10 +39,9 @@ export interface IBasePerTenantEntityModel extends IBaseEntityModel {
 }
 
 // Mutation input properties for entities associated with a tenant
-export interface IBasePerTenantEntityMutationInput
-	extends Pick<IBasePerTenantEntityModel, 'tenantId'>,
-		IBaseEntityModel {
-	tenant?: Pick<ITenant, 'id'> & Partial<ITenant>; // Optional fields from ITenant
+export interface IBasePerTenantEntityMutationInput extends IBaseEntityModel {
+	tenantId?: ID; // Identifier of the associated tenantCAL
+	tenant?: Partial<ITenant>; // Optional fields from ITenant
 }
 
 // Common properties for entities associated with both tenant and organization
@@ -52,8 +51,7 @@ export interface IBasePerTenantAndOrganizationEntityModel extends IBasePerTenant
 }
 
 // Mutation input properties for entities associated with both tenant and organization
-export interface IBasePerTenantAndOrganizationEntityMutationInput
-	extends Pick<IBasePerTenantAndOrganizationEntityModel, 'organizationId'>,
-		Partial<IBasePerTenantEntityMutationInput> {
-	organization?: Pick<IOrganization, 'id'> & Partial<IOrganization>; // Allow additional fields from IOrganization
+export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partial<IBasePerTenantEntityMutationInput> {
+	organizationId?: ID; // Identifier of the associated organization
+	organization?: Partial<IOrganization>; // Allow additional fields from IOrganization
 }

@@ -15,7 +15,7 @@ import {
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
-import { PermissionsEnum, LanguagesEnum, ICandidate, IPagination } from '@gauzy/contracts';
+import { CandidateStatusType, PermissionsEnum, LanguagesEnum, ICandidate, IPagination, ID } from '@gauzy/contracts';
 import { FindOptionsWhere } from 'typeorm';
 import { CrudController, OptionParams, PaginationParams } from './../core/crud';
 import { CandidateService } from './candidate.service';
@@ -35,7 +35,7 @@ import { CreateCandidateDTO, UpdateCandidateDTO, CandidateBulkInputDTO } from '.
 @ApiTags('Candidate')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_CANDIDATES_EDIT)
-@Controller()
+@Controller('/candidate')
 export class CandidateController extends CrudController<Candidate> {
 	constructor(private readonly candidateService: CandidateService, private readonly commandBus: CommandBus) {
 		super(candidateService);
@@ -87,7 +87,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Found candidates count'
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
-	@Get('count')
+	@Get('/count')
 	async getCount(@Query() options: FindOptionsWhere<Candidate>): Promise<number> {
 		return await this.candidateService.countBy(options);
 	}
@@ -109,7 +109,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
-	@Get('pagination')
+	@Get('/pagination')
 	@UseValidationPipe({ transform: true })
 	async pagination(@Query() options: PaginationParams<Candidate>): Promise<IPagination<ICandidate>> {
 		return await this.candidateService.pagination(options);
@@ -132,7 +132,7 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
-	@Get()
+	@Get('/')
 	@UseValidationPipe({ transform: true })
 	async findAll(@Query() options: PaginationParams<Candidate>): Promise<IPagination<ICandidate>> {
 		return await this.candidateService.findAll(options);
@@ -155,10 +155,10 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Record not found'
 	})
 	@Permissions(PermissionsEnum.ORG_CANDIDATES_VIEW)
-	@Get(':id')
+	@Get('/:id')
 	@UseValidationPipe({ transform: true })
 	async findById(
-		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
+		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: OptionParams<Candidate>
 	): Promise<ICandidate> {
 		return await this.candidateService.findOneByIdString(id, params);
@@ -179,7 +179,7 @@ export class CandidateController extends CrudController<Candidate> {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
-	@Post()
+	@Post('/')
 	@UseValidationPipe({ transform: true })
 	async create(
 		@Body() entity: CreateCandidateDTO,
@@ -210,23 +210,21 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id')
+	@Put('/:id')
 	@UseValidationPipe({ transform: true })
-	async update(
-		@Param('id', UUIDValidationPipe) id: ICandidate['id'],
-		@Body() entity: UpdateCandidateDTO
-	): Promise<ICandidate> {
+	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateCandidateDTO): Promise<ICandidate> {
 		return await this.commandBus.execute(new CandidateUpdateCommand({ id, ...entity }));
 	}
 
 	/**
-	 * Hired candidate user and migrate to employee user
+	 * Update candidate status (Hired/Rejected) by Id
 	 * UPDATE Candidate By Id
 	 *
 	 * @param id
+	 * @param status
 	 * @returns
 	 */
-	@ApiOperation({ summary: 'Update an existing record and migrate candidate to employee user' })
+	@ApiOperation({ summary: 'Update candidate status (Hired/Rejected)' })
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'The record has been successfully edited.'
@@ -240,34 +238,16 @@ export class CandidateController extends CrudController<Candidate> {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id/hired')
-	async updateHiredStatus(@Param('id', UUIDValidationPipe) id: ICandidate['id']): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateHiredCommand(id));
-	}
-
-	/**
-	 * Rejected candidate user
-	 * UPDATE Candidate By Id
-	 *
-	 * @param id
-	 * @returns
-	 */
-	@ApiOperation({ summary: 'Update candidate status as Rejected' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'The record has been successfully edited.'
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@ApiResponse({
-		status: HttpStatus.BAD_REQUEST,
-		description: 'Invalid input, The response body may contain clues as to what went wrong'
-	})
-	@HttpCode(HttpStatus.ACCEPTED)
-	@Put(':id/rejected')
-	async updateRejectedStatus(@Param('id', UUIDValidationPipe) id: ICandidate['id']): Promise<ICandidate> {
-		return await this.commandBus.execute(new CandidateRejectedCommand(id));
+	@Put('/:id/:status')
+	async updateCandidateStatus(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('status') status: CandidateStatusType
+	): Promise<ICandidate> {
+		switch (status) {
+			case 'hired':
+				return await this.commandBus.execute(new CandidateHiredCommand(id));
+			case 'rejected':
+				return await this.commandBus.execute(new CandidateRejectedCommand(id));
+		}
 	}
 }

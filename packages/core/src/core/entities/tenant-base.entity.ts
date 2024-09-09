@@ -8,8 +8,6 @@ import { MultiORMColumn } from '../decorators';
 import { ColumnIndex } from '../decorators/entity/column-index.decorator';
 
 export abstract class TenantBaseEntity extends BaseEntity implements IBasePerTenantEntityModel {
-	@ApiPropertyOptional({ type: () => Tenant })
-	@IsOptional()
 	@MultiORMManyToOne(() => Tenant, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
