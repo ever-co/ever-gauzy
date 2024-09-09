@@ -1,4 +1,4 @@
-import { IRelationalRole } from 'role.model';
+import { IRelationalRole } from './role.model';
 import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
