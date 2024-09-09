@@ -373,22 +373,6 @@ export class AlterBaseEntityAddArchivedAtField1725879899378 implements Migration
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_a841eabc6b656c965d8846223e"`);
 		await queryRunner.query(`DROP INDEX "IDX_968c1c9a131a61a3720b3a72f6"`);
 		await queryRunner.query(`DROP INDEX "IDX_e66511b175393255c6c4e7b007"`);
@@ -4155,22 +4139,6 @@ export class AlterBaseEntityAddArchivedAtField1725879899378 implements Migration
 		await queryRunner.query(`CREATE INDEX "IDX_586e6b1273ba2732ec0ee41a80" ON "product_review" ("tenantId") `);
 		await queryRunner.query(`CREATE INDEX "IDX_9cb4931c7348b6c171f13b6216" ON "product_review" ("isArchived") `);
 		await queryRunner.query(`CREATE INDEX "IDX_6248458c7e237cef4adac4761d" ON "product_review" ("isActive") `);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(
-			`CREATE TABLE "temporary_employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "temporary_employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "employee_job_preset"`);
-		await queryRunner.query(`ALTER TABLE "temporary_employee_job_preset" RENAME TO "employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
 	}
 
 	/**
@@ -4179,22 +4147,6 @@ export class AlterBaseEntityAddArchivedAtField1725879899378 implements Migration
 	 * @param queryRunner
 	 */
 	public async sqliteDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
-		);
 		await queryRunner.query(`DROP INDEX "IDX_6248458c7e237cef4adac4761d"`);
 		await queryRunner.query(`DROP INDEX "IDX_9cb4931c7348b6c171f13b6216"`);
 		await queryRunner.query(`DROP INDEX "IDX_586e6b1273ba2732ec0ee41a80"`);
@@ -7960,22 +7912,6 @@ export class AlterBaseEntityAddArchivedAtField1725879899378 implements Migration
 		await queryRunner.query(`CREATE INDEX "IDX_968c1c9a131a61a3720b3a72f6" ON "accounting_template" ("name") `);
 		await queryRunner.query(
 			`CREATE INDEX "IDX_a841eabc6b656c965d8846223e" ON "accounting_template" ("languageCode") `
-		);
-		await queryRunner.query(`DROP INDEX "IDX_68e75e49f06409fd385b4f8774"`);
-		await queryRunner.query(`DROP INDEX "IDX_7ae5b4d4bdec77971dab319f2e"`);
-		await queryRunner.query(`ALTER TABLE "employee_job_preset" RENAME TO "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE TABLE "employee_job_preset" ("jobPresetId" varchar NOT NULL, "employeeId" varchar NOT NULL, CONSTRAINT "FK_7ae5b4d4bdec77971dab319f2e2" FOREIGN KEY ("jobPresetId") REFERENCES "job_preset" ("id") ON DELETE NO ACTION ON UPDATE NO ACTION, CONSTRAINT "FK_68e75e49f06409fd385b4f87746" FOREIGN KEY ("employeeId") REFERENCES "employee" ("id") ON DELETE CASCADE ON UPDATE CASCADE, PRIMARY KEY ("jobPresetId", "employeeId"))`
-		);
-		await queryRunner.query(
-			`INSERT INTO "employee_job_preset"("jobPresetId", "employeeId") SELECT "jobPresetId", "employeeId" FROM "temporary_employee_job_preset"`
-		);
-		await queryRunner.query(`DROP TABLE "temporary_employee_job_preset"`);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_68e75e49f06409fd385b4f8774" ON "employee_job_preset" ("employeeId") `
-		);
-		await queryRunner.query(
-			`CREATE INDEX "IDX_7ae5b4d4bdec77971dab319f2e" ON "employee_job_preset" ("jobPresetId") `
 		);
 	}
 
