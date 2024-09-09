@@ -2,8 +2,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 import { yellow } from 'chalk';
 import { DatabaseTypeEnum } from '@gauzy/config';
 
-export class AlterBaseEntityAddArchivedAtDate1725879899378 implements MigrationInterface {
-	name = 'AlterBaseEntityAddArchivedAtDate1725879899378';
+export class AlterBaseEntityAddArchivedAtField1725879899378 implements MigrationInterface {
+	name = 'AlterBaseEntityAddArchivedAtField1725879899378';
 
 	/**
 	 * Up Migration
