@@ -3833,7 +3833,9 @@
 			"DB_PORT": "Port de base de données",
 			"USER": "Utilisateur",
 			"PASSWORD": "Mot de passe",
-			"UI_HOSTNAME": "Nom d'hôte de l'interface utilisateur / Adresse IP"
+			"UI_HOSTNAME": "Nom d'hôte de l'interface utilisateur / Adresse IP",
+			"TITLE_SERVER_API": "Assistant d'installation du serveur API Ever Gauzy",
+			"LABEL_SERVER_API": "L'application de bureau Ever Gauzy API Server fournit toutes les fonctionnalités de la plateforme Gauzy disponibles directement sur votre ordinateur de bureau ou votre ordinateur portable. De plus, elle permet de suivre le temps de travail, d'enregistrer les activités et de recevoir des rappels/notifications de suivi."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Capture d'écran",

@@ -14,18 +14,17 @@ export class EmployeeBulkCreateHandler implements ICommandHandler<EmployeeBulkCr
 	 * @returns A promise that resolves to an array of created employees.
 	 */
 	public async execute(command: EmployeeBulkCreateCommand): Promise<IEmployee[]> {
+		const { input, languageCode, originUrl } = command;
+		const results = [];
 		try {
-			const { input, languageCode, originUrl } = command;
-			// Use Promise.all to execute each creation command asynchronously
-			const results = await Promise.all(
-				input.map(async (entity: IEmployeeCreateInput) => {
-					return await this.commandBus.execute(new EmployeeCreateCommand(entity, languageCode, originUrl));
-				})
-			);
-			// Return the results array containing created employees
+			for (const entity of input) {
+				const result = await this.commandBus.execute(
+					new EmployeeCreateCommand(entity, languageCode, originUrl)
+				);
+				results.push(result);
+			}
 			return results;
 		} catch (error) {
-			// If an error occurs, throw a BadRequestException with the error message
 			throw new BadRequestException(error);
 		}
 	}

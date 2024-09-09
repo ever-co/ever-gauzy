@@ -33,6 +33,7 @@ export interface ITask
 	organizationSprintId?: ID;
 	creator?: IUser;
 	creatorId?: ID;
+	isDraft?: boolean; // Define if task is still draft (E.g : Task description not completed yet)
 
 	parent?: ITask;
 	parentId?: ID; // Optional field for specifying the parent task ID

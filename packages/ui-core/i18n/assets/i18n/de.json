@@ -3828,7 +3828,9 @@
 			"DB_PORT": "Datenbankport",
 			"USER": "Benutzer",
 			"PASSWORD": "Passwort",
-			"UI_HOSTNAME": "UI Hostname / IP-Adresse"
+			"UI_HOSTNAME": "UI Hostname / IP-Adresse",
+			"TITLE_SERVER_API": "Ever Gauzy API Server Installation Wizard",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App giver den fulde funktionalitet af Gauzy Platform tilgængelig direkte på din stationære computer eller en bærbar computer. Derudover tillader det sporing af arbejdstid, aktivitetsregistrering og mulighed for at modtage sporingspåmindelser/notifikationer."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Bildschirmaufnahme",

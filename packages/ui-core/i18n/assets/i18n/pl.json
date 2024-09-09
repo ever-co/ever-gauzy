@@ -3832,7 +3832,9 @@
 			"DB_PORT": "Port bazy danych",
 			"USER": "Użytkownik",
 			"PASSWORD": "Hasło",
-			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP"
+			"UI_HOSTNAME": "Nazwa hosta interfejsu użytkownika / Adres IP",
+			"TITLE_SERVER_API": "Kreator instalacji serwera API Ever Gauzy",
+			"LABEL_SERVER_API": "Ever Gauzy API Server Desktop App zapewnia pełną funkcjonalność platformy Gauzy dostępną bezpośrednio na komputerze stacjonarnym lub laptopie. Ponadto umożliwia śledzenie czasu pracy, rejestrowanie aktywności i możliwość otrzymywania przypomnień/powiadomień o śledzeniu."
 		},
 		"SETTINGS": {
 			"SCREEN_CAPTURE": "Zrzut ekranu",
