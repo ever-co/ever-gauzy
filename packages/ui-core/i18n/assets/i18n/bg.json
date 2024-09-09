@@ -4192,7 +4192,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Разширение за браузър",
-			"TEAMS": "Екипи"
+			"TEAMS": "Екипи",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Последно работеше:",
 		"TIME_ZONE": "Часова зона",
