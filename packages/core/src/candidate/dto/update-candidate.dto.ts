@@ -1,25 +1,11 @@
-import { ICandidateUpdateInput } from "@gauzy/contracts";
-import { ApiProperty } from "@nestjs/swagger";
-import { IsOptional, IsString } from "class-validator";
-import { UpdateProfileDTO } from "./../../employee/dto";
+import { IntersectionType, PickType } from '@nestjs/swagger';
+import { ICandidateUpdateInput } from '@gauzy/contracts';
+import { UpdateProfileDTO } from './../../employee/dto';
+import { Candidate } from '../candidate.entity';
 
-export class UpdateCandidateDTO extends UpdateProfileDTO implements ICandidateUpdateInput { 
-
-    @ApiProperty({ type: () => Date })
-    @IsOptional()
-    readonly appliedDate?: Date;
-
-    @ApiProperty({ type: () => Date })
-    @IsOptional()
-    readonly hiredDate?: Date;
-
-    @ApiProperty({ type: () => String })
-    @IsString()
-    @IsOptional()
-    readonly cvUrl?: string;
-
-    @ApiProperty({ type: () => String })
-    @IsString()
-    @IsOptional()
-    readonly candidateLevel?: string;
-}
+export class UpdateCandidateDTO
+	extends IntersectionType(
+		UpdateProfileDTO,
+		PickType(Candidate, ['appliedDate', 'hiredDate', 'cvUrl', 'candidateLevel'] as const)
+	)
+	implements ICandidateUpdateInput {}

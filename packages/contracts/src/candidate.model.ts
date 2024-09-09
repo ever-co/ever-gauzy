@@ -1,7 +1,7 @@
 import { ICandidateInterview } from './candidate-interview.model';
 import { ICandidateFeedback } from './candidate-feedback.model';
 import { ICandidateSource } from './candidate-source.model';
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IUserFindInput, IUser } from './user.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { IOrganizationEmploymentType } from './organization-employment-type.model';
@@ -12,23 +12,23 @@ import { ICandidateDocument } from './candidate-document.model';
 import { IOrganizationDepartment } from './organization-department.model';
 import { IOrganizationPosition } from './organization-positions.model';
 import { IContact } from './contact.model';
-import { ITag } from './tag.model';
+import { ITaggable } from './tag.model';
 import { IEmployee, PayPeriodEnum } from './employee.model';
+import { CurrenciesEnum } from './currency.model';
 
 export interface IRelationalCandidate {
 	candidate?: ICandidate;
-	candidateId?: ICandidate['id'];
+	candidateId?: ID;
 }
 
-export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	user: IUser;
-	userId: IUser['id'];
+	userId: ID;
 	status?: CandidateStatusEnum;
 	teams?: IOrganizationTeam[];
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationPosition?: IOrganizationPosition;
 	organizationPositionId?: string;
-	tags: ITag[];
 	appliedDate?: Date;
 	hiredDate?: Date;
 	rejectDate?: Date;
@@ -38,7 +38,7 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	skills?: ICandidateSkill[];
 	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	reWeeklyLimit?: number;
 	minimumBillingRate?: number;
 	documents?: ICandidateDocument[];
@@ -49,12 +49,15 @@ export interface ICandidate extends IBasePerTenantAndOrganizationEntityModel {
 	rating?: number;
 	interview?: ICandidateInterview[];
 	contact?: IContact;
-	contactId?: IContact['id'];
+	contactId?: ID;
 	employee?: IEmployee;
-	employeeId?: IEmployee['id'];
+	employeeId?: ID;
 	ratings?: number;
 	alreadyHired?: boolean;
 }
+
+// Candidate Status Type
+export type CandidateStatusType = 'hired' | 'rejected';
 
 export enum CandidateStatusEnum {
 	APPLIED = 'APPLIED',
@@ -63,21 +66,18 @@ export enum CandidateStatusEnum {
 }
 
 export interface ICandidateFindInput extends IBasePerTenantAndOrganizationEntityModel {
-	id?: string;
 	user?: IUserFindInput;
 	status?: CandidateStatusEnum;
 }
 
-export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
-	id?: ICandidate['id'];
+export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
-	billRateCurrency?: string;
+	billRateCurrency?: CurrenciesEnum;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
 	organizationPosition?: IOrganizationPosition;
 	organizationEmploymentTypes?: IOrganizationEmploymentType[];
-	tags?: ITag[];
 	contact?: IContact;
 	appliedDate?: Date;
 	hiredDate?: Date;
@@ -87,7 +87,7 @@ export interface ICandidateUpdateInput extends IBasePerTenantAndOrganizationEnti
 	minimumBillingRate?: number;
 }
 
-export interface ICandidateCreateInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface ICandidateCreateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	user: IUser;
 	password?: string;
 	appliedDate?: Date;
@@ -96,24 +96,20 @@ export interface ICandidateCreateInput extends IBasePerTenantAndOrganizationEnti
 	rejectDate?: Date;
 	cvUrl?: string;
 	members?: ICandidate[];
-	tags?: ITag[];
 	documents: ICandidateDocument[];
 }
+
 export interface ICandidateLevel extends IBasePerTenantAndOrganizationEntityModel {
-	id: string;
 	level: string;
 }
-export interface ICandidateLevelInput extends IBasePerTenantAndOrganizationEntityModel {
-	level: string;
-}
+
+export interface ICandidateLevelInput extends ICandidateLevel {}
 
 export interface ICandidateViewModel extends IBasePerTenantAndOrganizationEntityModel {
 	fullName: string;
 	email: string;
-	id: string;
 	imageUrl: string;
 	source?: ICandidateSource;
 	rating?: number;
-	isArchived?: boolean;
 	status?: CandidateStatusEnum;
 }
