@@ -25,15 +25,23 @@ window.addEventListener('DOMContentLoaded', async () => {
         clearInterval(contentInterval);
         const headerIcon = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[1]/div/div/div';
         const headerCompany = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/div/nb-sidebar[2]/div/div/div/div[1]/div';
+        const header = '/html/body/div[2]/ga-app/ngx-pages/ngx-one-column-layout/nb-layout/div[1]/div/nb-layout-header/nav/ngx-header/div/div[2]'
+
         contentInterval = setInterval(() => {
             const elHeaderIcon: any = getElementByXpath(headerIcon);
             const elHeaderCompany: any = getElementByXpath(headerCompany);
+            const elHeader: any = getElementByXpath(header);
             if (elHeaderIcon) {
                 elHeaderIcon.style.marginTop = '30px';
                 clearInterval(contentInterval);
             }
             if (elHeaderCompany) {
                 elHeaderCompany.style.marginTop = '30px';
+                clearInterval(contentInterval);
+            }
+
+            if (elHeader) {
+                elHeader.style.marginTop = '20px';
                 clearInterval(contentInterval);
             }
         }, 1000)
