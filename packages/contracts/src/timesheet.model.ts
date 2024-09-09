@@ -168,7 +168,8 @@ export enum TimeLogSourceEnum {
 	BROWSER_EXTENSION = 'BROWSER_EXTENSION',
 	HUBSTAFF = 'HUBSTAFF',
 	UPWORK = 'UPWORK',
-	TEAMS = 'TEAMS'
+	TEAMS = 'TEAMS',
+	CLOC = 'CLOC'
 }
 
 export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {
