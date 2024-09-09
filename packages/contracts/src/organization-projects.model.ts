@@ -1,4 +1,4 @@
-import { IEmployee, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
 import { ITag } from './tag.model';
@@ -138,5 +138,5 @@ export interface IOrganizationProjectStoreState {
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationProject,
-		IRelationalEmployee,
+		IEmployeeEntityInput,
 		IRelationalRole {}
