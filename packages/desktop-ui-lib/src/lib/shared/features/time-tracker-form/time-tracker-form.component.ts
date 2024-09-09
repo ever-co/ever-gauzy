@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { combineLatest, map, Observable, startWith } from 'rxjs';
+import { Store } from '../../../services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from '../../../time-tracker/+state/time-tracker.store';
 import { TeamSelectorService } from './../team-selector/+state/team-selector.service';
@@ -14,15 +15,20 @@ export class TimeTrackerFormComponent {
 	constructor(
 		private readonly timeTrackerQuery: TimeTrackerQuery,
 		private readonly teamSelectorService: TeamSelectorService,
-		private readonly timeTrackerStore: TimeTrackerStore
+		private readonly timeTrackerStore: TimeTrackerStore,
+		private readonly store: Store
 	) {}
-	public onChange() {
+	public onChange(event: Event) {
+		if (this.store.isOffline) {
+			return;
+		}
 		const ignition = this.timeTrackerQuery.ignition;
 		const isEditing = this.timeTrackerQuery.isEditing;
 		const isStarted = ignition.state === IgnitionState.STARTED;
 		if (isStarted && !isEditing) {
 			this.timeTrackerStore.update({ isEditing: true });
 		}
+		event.preventDefault();
 	}
 
 	public get isHideTaskSelector$(): Observable<boolean> {

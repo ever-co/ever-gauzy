@@ -11,7 +11,7 @@
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button [disabled]="isRestarting$ | async" status="success" size="small" (click)="applyChanges()" nbButton>
-			{{ 'Apply Changes' | translate }}
+			{{ 'BUTTONS.APPLY' | translate }}
 			<nb-icon [ngStyle]="{ display: 'none' }" *gauzySpinnerButton="isRestarting$ | async"></nb-icon>
 		</button>
 	</nb-card-footer>

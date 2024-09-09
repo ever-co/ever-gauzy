@@ -117,6 +117,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private _timeZoneManager = TimeZoneManager;
 	private _remoteSleepLock = false;
 	private _isReady = false;
+	private _session: moment.Moment = null;
 	@ViewChild('dialogOpenBtn') btnDialogOpen: ElementRef<HTMLElement>;
 	public start$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 	userData: any;
@@ -849,27 +850,39 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.timeTrackerQuery.ignition$
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTING),
-				concatMap(() => this.restart(() => this._timeTrackerStatus.status())),
-				tap((status: ITimerStatus) => {
-					if (status?.lastLog) {
+				concatMap(async () => {
+					const session: moment.Moment = this._session?.clone();
+					const status: ITimerStatus = await this.restart(() => this._timeTrackerStatus.status());
+					return { status, session };
+				}),
+				tap(async ({ session, status }) => {
+					if (status.lastLog) {
+						const sessionStatus = await this._timeTrackerStatus.status();
+						const sessionStartedAt = moment(sessionStatus.lastLog.startedAt);
 						const { stoppedAt, startedAt } = status.lastLog;
 
-						// Use moment to parse the stoppedAt time
-						const stoppedMoment = moment(stoppedAt);
+						// Calculate idle time since last stop
+						const idle = sessionStartedAt.diff(moment(stoppedAt), 'seconds');
+						console.log('[RESTART IDLE]', idle);
 
-						// Cache the current time
-						const now = moment();
+						if (session) {
+							// Update the session start time by adding idle time
+							this._session = session.add(idle, 'seconds');
+						} else {
+							// Initialize the session start time based on idle time
+							this._session = moment(startedAt).add(idle, 'seconds');
+						}
 
-						// Calculate the idle time in seconds since the last stop
-						const restartIdle = now.diff(stoppedMoment, 'seconds');
+						const sessionIdle = sessionStartedAt.diff(this._session, 'seconds');
+						console.log('[SESSION IDLE]', sessionIdle);
 
-						// Calculate the new start time by adding the idle time
-						const newStartedAt = moment(startedAt).add(restartIdle, 'seconds');
+						this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - sessionIdle);
+						this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - sessionIdle);
 
-						// Send the updated session data
+						// Send updated session data via Electron IPC
 						this.electronService.ipcRenderer.send('update_session', {
 							...status.lastLog,
-							startedAt: newStartedAt.toISOString()
+							startedAt: this._session.toISOString()
 						});
 					}
 					// Update store state directly after restarting
@@ -881,7 +894,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.timeTrackerQuery.isEditing$
 			.pipe(
-				filter(Boolean),
+				filter((editing) => editing && !this._isOffline),
 				tap(() =>
 					this.dialogService.open(TimerTrackerChangeDialogComponent, { backdropClass: 'backdrop-blur' })
 				),
@@ -1688,6 +1701,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		} catch (error) {
 			console.log('[ERROR_STOP_TIMER]', error);
 		} finally {
+			this._session = null;
 			this.loading = false;
 			this.isProcessingEnabled = false;
 			this.timeTrackerStore.ignition({ state: IgnitionState.STOPPED, mode: this._startMode });
