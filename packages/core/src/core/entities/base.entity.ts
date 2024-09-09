@@ -105,16 +105,4 @@ export abstract class BaseEntity extends SoftDeletableBaseEntity implements IBas
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, default: false }) // TypeORM and Mikro-ORM compatibility
 	isArchived?: boolean;
-
-	// Indicates the date when record was archived
-	// @ApiPropertyOptional({
-	// 	type: 'string',
-	// 	format: 'date-time',
-	// 	example: '2018-11-21T06:20:32.232Z'
-	// })
-	// @IsOptional()
-	// @IsDateString()
-	// @ColumnIndex()
-	// @MultiORMColumn({ nullable: true })
-	// archivedAt?: Date;
 }
