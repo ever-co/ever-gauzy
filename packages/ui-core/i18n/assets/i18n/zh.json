@@ -4170,7 +4170,8 @@
 			"UPWORK": "优才网",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "浏览器插件",
-			"TEAMS": "团队"
+			"TEAMS": "团队",
+			"CLOC": "克洛克"
 		},
 		"LAST_WORKED": "上一次工作：",
 		"TIME_ZONE": "Time Zone",

@@ -4189,7 +4189,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
-			"TEAMS": "Команды"
+			"TEAMS": "Команды",
+			"CLOC": "Клок"
 		},
 		"LAST_WORKED": "Последнее сработало:",
 		"TIME_ZONE": "Часовой пояс",

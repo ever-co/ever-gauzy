@@ -4182,7 +4182,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "הרחבת דפדפן",
-			"TEAMS": "קבוצות"
+			"TEAMS": "קבוצות",
+			"CLOC": "קלוק"
 		},
 		"LAST_WORKED": "עבד לאחרונה:",
 		"TIME_ZONE": "אזור זמן",

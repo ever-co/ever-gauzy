@@ -4168,7 +4168,8 @@
 			"UPWORK": "أبورك",
 			"HUBSTAFF": "هب ستاف",
 			"BROWSER_EXTENSION": "امتداد المتصفح",
-			"TEAMS": "الفِرَق"
+			"TEAMS": "الفِرَق",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "آخر عملت:",
 		"TIME_ZONE": "Time Zone",

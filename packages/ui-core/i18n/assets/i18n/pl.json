@@ -4170,7 +4170,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Rozszerzenie przeglądarki",
-			"TEAMS": "Zespoły"
+			"TEAMS": "Zespoły",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Ostatnia praca:",
 		"TIME_ZONE": "Time Zone",

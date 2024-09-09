@@ -29,6 +29,7 @@ export interface IBaseEntityModel extends IBaseSoftDeleteEntityModel {
 
 	isActive?: boolean; // Indicates if the record is currently active
 	isArchived?: boolean; // Indicates if the record is archived
+	archivedAt?: Date; // Date when the record was archived
 }
 
 // Common properties for entities associated with a tenant

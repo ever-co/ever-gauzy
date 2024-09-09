@@ -214,6 +214,10 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 			{
 				label: this.getTranslation('TIMESHEET.SOURCES.TEAMS'),
 				value: TimeLogSourceEnum.TEAMS
+			},
+			{
+				label: this.getTranslation('TIMESHEET.SOURCES.CLOC'),
+				value: TimeLogSourceEnum.CLOC
 			}
 		];
 	}
