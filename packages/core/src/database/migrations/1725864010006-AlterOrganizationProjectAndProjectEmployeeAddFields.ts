@@ -724,12 +724,220 @@ export class AlterOrganizationProjectAndProjectEmployeeAddFields1725864010006 im
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_2ba868f42c2301075b7c141359e\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_6b5b0c3d994f59d9c800922257f\``
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` ADD \`status\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` ADD \`icon\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` ADD \`archiveTasksIn\` decimal NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` ADD \`closeTasksIn\` decimal NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` ADD \`defaultAssigneeId\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`deletedAt\` datetime(6) NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`id\` varchar(36) NOT NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`, \`id\`)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`createdAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`updatedAt\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`isActive\` tinyint NULL DEFAULT 1`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`isArchived\` tinyint NULL DEFAULT 0`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`tenantId\` varchar(255) NULL`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationId\` varchar(255) NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD \`roleId\` varchar(255) NULL`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`id\`)`
+		);
+		await queryRunner.query(`DROP INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationProjectId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationProjectId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`id\`)`);
+		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`employeeId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`employeeId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`employeeId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`employeeId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`id\`, \`employeeId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationProjectId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationProjectId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`id\`, \`employeeId\`, \`organizationProjectId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_16c34de330ae8d59d9b31cce14\` ON \`organization_project\` (\`status\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_489012234f53089d4b508f4aa1\` ON \`organization_project\` (\`defaultAssigneeId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_f3d1102a8aa6442cdfce5d57c3\` ON \`organization_project_employee\` (\`isActive\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_abbe29504bb642647a69959cc0\` ON \`organization_project_employee\` (\`isArchived\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_a9abd98013154ec1edfa1ec18c\` ON \`organization_project_employee\` (\`tenantId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_a77a507b7402f0adb6a6b41e41\` ON \`organization_project_employee\` (\`organizationId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_1c5e006185395a6193ede3456c\` ON \`organization_project_employee\` (\`roleId\`)`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project\` ADD CONSTRAINT \`FK_489012234f53089d4b508f4aa12\` FOREIGN KEY (\`defaultAssigneeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_a9abd98013154ec1edfa1ec18cd\` FOREIGN KEY (\`tenantId\`) REFERENCES \`tenant\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_a77a507b7402f0adb6a6b41e412\` FOREIGN KEY (\`organizationId\`) REFERENCES \`organization\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_1c5e006185395a6193ede3456c6\` FOREIGN KEY (\`roleId\`) REFERENCES \`role\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
+		);
+	}
 
 	/**
 	 * MySQL Down Migration
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {}
+	public async mysqlDownQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_1c5e006185395a6193ede3456c6\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_6b5b0c3d994f59d9c800922257f\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_2ba868f42c2301075b7c141359e\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_a77a507b7402f0adb6a6b41e412\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` DROP FOREIGN KEY \`FK_a9abd98013154ec1edfa1ec18cd\``
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project\` DROP FOREIGN KEY \`FK_489012234f53089d4b508f4aa12\``
+		);
+		await queryRunner.query(`DROP INDEX \`IDX_1c5e006185395a6193ede3456c\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a77a507b7402f0adb6a6b41e41\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_a9abd98013154ec1edfa1ec18c\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_abbe29504bb642647a69959cc0\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_f3d1102a8aa6442cdfce5d57c3\` ON \`organization_project_employee\``);
+		await queryRunner.query(`DROP INDEX \`IDX_489012234f53089d4b508f4aa1\` ON \`organization_project\``);
+		await queryRunner.query(`DROP INDEX \`IDX_16c34de330ae8d59d9b31cce14\` ON \`organization_project\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`id\`, \`employeeId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationProjectId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationProjectId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`id\`)`);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`employeeId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`employeeId\` varchar(255) NOT NULL`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`employeeId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`employeeId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_6b5b0c3d994f59d9c800922257\` ON \`organization_project_employee\` (\`employeeId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`id\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationProjectId\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD \`organizationProjectId\` varchar(36) NOT NULL`
+		);
+		await queryRunner.query(
+			`CREATE INDEX \`IDX_2ba868f42c2301075b7c141359\` ON \`organization_project_employee\` (\`organizationProjectId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`, \`id\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`, \`id\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`roleId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`organizationId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`tenantId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isArchived\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`isActive\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`updatedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`createdAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP PRIMARY KEY`);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD PRIMARY KEY (\`employeeId\`, \`organizationProjectId\`)`
+		);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`id\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project_employee\` DROP COLUMN \`deletedAt\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` DROP COLUMN \`defaultAssigneeId\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` DROP COLUMN \`closeTasksIn\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` DROP COLUMN \`archiveTasksIn\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` DROP COLUMN \`icon\``);
+		await queryRunner.query(`ALTER TABLE \`organization_project\` DROP COLUMN \`status\``);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_6b5b0c3d994f59d9c800922257f\` FOREIGN KEY (\`employeeId\`) REFERENCES \`employee\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+		await queryRunner.query(
+			`ALTER TABLE \`organization_project_employee\` ADD CONSTRAINT \`FK_2ba868f42c2301075b7c141359e\` FOREIGN KEY (\`organizationProjectId\`) REFERENCES \`organization_project\`(\`id\`) ON DELETE CASCADE ON UPDATE CASCADE`
+		);
+	}
 }
