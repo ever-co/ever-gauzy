@@ -31,16 +31,22 @@ export class TimeTrackerFormComponent {
 		event.preventDefault();
 	}
 
-	public get isHideTaskSelector$(): Observable<boolean> {
+	public get isShowTaskSelector$(): Observable<boolean> {
 		return combineLatest([this.timeTrackerQuery.isExpanded$, this.timeTrackerQuery.isEditing$]).pipe(
 			map(([expanded, editing]) => !expanded || editing)
 		);
 	}
 
-	public get isHideTeamSelector$(): Observable<boolean> {
+	public get isShowTeamSelector$(): Observable<boolean> {
 		return this.teamSelectorService.getAll$().pipe(
 			map((teams) => (teams?.length ?? 0) > 0),
 			startWith(true)
+		);
+	}
+
+	public get isShowEdit$(): Observable<boolean> {
+		return combineLatest([this.timeTrackerQuery.disabled$, this.timeTrackerQuery.isStarted$]).pipe(
+			map(([started, disabled]) => started && disabled)
 		);
 	}
 }

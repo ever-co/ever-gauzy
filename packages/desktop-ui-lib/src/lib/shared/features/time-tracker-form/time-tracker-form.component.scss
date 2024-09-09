@@ -5,6 +5,14 @@
 	width: 100%;
 	gap: .5rem;
 	flex-direction: column;
+	position: relative;
+
+	.edit {
+		position: absolute;
+		cursor: pointer;
+		right: 0;
+		top: 0;
+	}
 
 	.selector {
 		width: 100%;

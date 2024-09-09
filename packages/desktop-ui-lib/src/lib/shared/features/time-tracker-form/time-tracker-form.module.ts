@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { NbIconModule } from '@nebular/theme';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
 import { TimeTrackerStore } from '../../../time-tracker/+state/time-tracker.store';
 import { ClientSelectorModule } from '../client-selector/client-selector.module';
@@ -19,7 +20,8 @@ import { TimeTrackerFormComponent } from './time-tracker-form.component';
 		TaskSelectorModule,
 		ProjectSelectorModule,
 		ClientSelectorModule,
-		NoteModule
+		NoteModule,
+		NbIconModule
 	],
 	providers: [TimeTrackerStore, TimeTrackerQuery, TeamSelectorService]
 })
