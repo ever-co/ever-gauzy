@@ -1,5 +1,5 @@
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IEmployee, IEmployeeEntityMutationInput } from './employee.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IEmployeeEntityInput, IEmployeeEntityMutationInput } from './employee.model';
 
 export interface IEmployeeProposalTemplateBaseInput extends IBasePerTenantAndOrganizationEntityModel {
 	name?: string;
@@ -7,10 +7,7 @@ export interface IEmployeeProposalTemplateBaseInput extends IBasePerTenantAndOrg
 	isDefault?: boolean;
 }
 
-export interface IEmployeeProposalTemplate extends IEmployeeProposalTemplateBaseInput {
-	employeeId?: ID;
-	employee?: IEmployee;
-}
+export interface IEmployeeProposalTemplate extends IEmployeeProposalTemplateBaseInput, IEmployeeEntityInput {}
 
 /**
  * Input for creating a proposal template

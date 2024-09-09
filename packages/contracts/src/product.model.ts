@@ -1,7 +1,7 @@
 import { IBasePerTenantAndOrganizationEntityModel, IBasePerTenantEntityModel } from './base-entity.model';
 import { ITranslation, ITranslatable } from './translation.model';
 import { ITag } from './tag.model';
-import { IContact, IRelationalContact } from './contact.model';
+import { IContact, IContactEntityInput } from './contact.model';
 import { IInvoiceItem } from './invoice-item.model';
 import { CurrenciesEnum } from './currency.model';
 import { IImageAsset, IRelationalImageAsset } from './image-asset.model';
@@ -219,7 +219,7 @@ export interface IProductOptionGroupTranslation extends IBasePerTenantAndOrganiz
 	languageCode: string;
 }
 
-export interface IWarehouse extends IBasePerTenantAndOrganizationEntityModel, IRelationalContact {
+export interface IWarehouse extends IBasePerTenantAndOrganizationEntityModel, IContactEntityInput {
 	name: string;
 	email: string;
 	description: string;
@@ -236,7 +236,7 @@ export interface IWarehouseFindInput extends IBasePerTenantAndOrganizationEntity
 	email?: IWarehouse['email'];
 }
 
-export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel, IRelationalContact {
+export interface IMerchant extends IBasePerTenantAndOrganizationEntityModel, IContactEntityInput {
 	name: string;
 	email: string;
 	phone: string;

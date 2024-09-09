@@ -1,67 +1,44 @@
-import {
-    IOrganizationDepartment,
-    IOrganizationEmploymentType,
-    IOrganizationPosition,
-    ISkill
-} from "@gauzy/contracts";
-import { ApiPropertyOptional } from "@nestjs/swagger";
-import { IsArray, IsBoolean, IsDateString, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IOrganizationDepartment, IOrganizationEmploymentType, IOrganizationPosition, ISkill } from '@gauzy/contracts';
+import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { IsArray, IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CreateOrganizationEmploymentTypeDTO } from "./../../organization-employment-type/dto";
-import { CreateOrganizationDepartmentDTO } from "./../../organization-department/dto";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { CreateOrganizationEmploymentTypeDTO } from './../../organization-employment-type/dto';
+import { CreateOrganizationDepartmentDTO } from './../../organization-department/dto';
+import { Employee } from '../employee.entity';
 
-export class EmploymentDTO extends TenantOrganizationBaseDTO {
+export class EmploymentDTO extends IntersectionType(
+	TenantOrganizationBaseDTO,
+	PickType(Employee, [
+		'startedWorkOn',
+		'endWork',
+		'short_description',
+		'description',
+		'anonymousBonus',
+		'employeeLevel'
+	] as const)
+) {
+	@ApiPropertyOptional({ type: () => [CreateOrganizationEmploymentTypeDTO] })
+	@IsOptional()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => CreateOrganizationEmploymentTypeDTO)
+	readonly organizationEmploymentTypes?: IOrganizationEmploymentType[];
 
-    @ApiPropertyOptional({ type: () => Date })
-    @IsOptional()
-    @IsDateString()
-    readonly startedWorkOn?: Date;
+	@ApiPropertyOptional({ type: () => [CreateOrganizationDepartmentDTO] })
+	@IsOptional()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => CreateOrganizationDepartmentDTO)
+	readonly organizationDepartments?: IOrganizationDepartment[];
 
-    @ApiPropertyOptional({ type: () => Date })
-    @IsOptional()
-    @IsDateString()
-    readonly endWork?: Date;
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@IsObject()
+	readonly organizationPosition?: IOrganizationPosition;
 
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly short_description?: string;
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    @IsString()
-    readonly description?: string;
-
-    @ApiPropertyOptional({ type: () => Boolean })
-    @IsOptional()
-    @IsBoolean()
-    readonly anonymousBonus?: boolean;
-
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateOrganizationEmploymentTypeDTO)
-    readonly organizationEmploymentTypes?: IOrganizationEmploymentType[];
-
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => CreateOrganizationDepartmentDTO)
-    readonly organizationDepartments?: IOrganizationDepartment[];
-
-    @ApiPropertyOptional({ type: () => String })
-    @IsOptional()
-    readonly employeeLevel?: string;
-
-    @ApiPropertyOptional({ type: () => Object })
-    @IsOptional()
-    readonly organizationPosition?: IOrganizationPosition;
-
-    @ApiPropertyOptional({ type: () => Array, isArray: true })
-    @IsOptional()
-    @IsArray()
-    readonly skills?: ISkill[];
+	@ApiPropertyOptional({ type: () => [String] })
+	@IsOptional()
+	@IsArray()
+	readonly skills?: ISkill[];
 }
