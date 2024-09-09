@@ -6,11 +6,14 @@
       overflow: unset;
     }
   }
-  ::ng-deep .route-tabset .route-tab a.tab-link {
-    border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
-    span.tab-text {
-      text-transform: lowercase;
-      display: block;
+  ::ng-deep nb-route-tabset .route-tab .tab-link {
+    border-radius: 0.5rem 0.5rem 0 0;
+    svg {
+      fill: nb-theme(text-primary-color);
+    }
+    span {
+      display: inline-block;
+      text-transform: initial;
       &:first-letter {
         text-transform: uppercase;
       }

@@ -5,11 +5,11 @@ import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui
 import { GauzyFiltersComponent } from '@gauzy/ui-core/shared';
 
 @Component({
-	selector: 'gauzy-time-and-activities',
-	templateUrl: './time-and-activities.component.html',
-	styleUrls: ['./time-and-activities.component.scss']
+	selector: 'gauzy-time-activities',
+	templateUrl: './time-activities.component.html',
+	styleUrls: ['./time-activities.component.scss']
 })
-export class TimeAndActivitiesComponent implements OnInit {
+export class TimeActivitiesComponent implements OnInit {
 	filters: ITimeLogFilters;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
 

@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TimeAndActivitiesComponent } from './time-and-activities.component';
+import { TimeActivitiesComponent } from './time-activities.component';
 
-describe('TimeAndActivitiesComponent', () => {
-	let component: TimeAndActivitiesComponent;
-	let fixture: ComponentFixture<TimeAndActivitiesComponent>;
+describe('TimeActivitiesComponent', () => {
+	let component: TimeActivitiesComponent;
+	let fixture: ComponentFixture<TimeActivitiesComponent>;
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [TimeAndActivitiesComponent],
+			declarations: [TimeActivitiesComponent],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 
 	beforeEach(() => {
-		fixture = TestBed.createComponent(TimeAndActivitiesComponent);
+		fixture = TestBed.createComponent(TimeActivitiesComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 	});

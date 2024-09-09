@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { AppUrlActivityRoutingModule } from './app-url-activity-routing.module';
@@ -9,10 +8,9 @@ import { ActivityItemModule, GauzyFiltersModule, NoDataMessageModule, SharedModu
 @NgModule({
 	declarations: [AppUrlActivityComponent],
 	imports: [
-		CommonModule,
-		AppUrlActivityRoutingModule,
 		NbSpinnerModule,
 		TranslateModule.forChild(),
+		AppUrlActivityRoutingModule,
 		SharedModule,
 		ActivityItemModule,
 		GauzyFiltersModule,
