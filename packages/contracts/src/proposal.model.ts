@@ -1,6 +1,6 @@
 import { IOrganizationContactEntityMutationInput, IRelationalOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee, IEmployeeEntityMutationInput, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityMutationInput, IEmployeeEntityInput } from './employee.model';
 import { ITaggable } from './tag.model';
 
 /**
@@ -20,7 +20,7 @@ export interface IProposalBase extends IBasePerTenantAndOrganizationEntityModel,
 	status?: ProposalStatusEnum;
 }
 
-export interface IProposal extends IProposalBase, IRelationalEmployee, IRelationalOrganizationContact {
+export interface IProposal extends IProposalBase, IEmployeeEntityInput, IRelationalOrganizationContact {
 	author?: IEmployee;
 }
 

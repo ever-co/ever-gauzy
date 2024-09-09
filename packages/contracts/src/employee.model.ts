@@ -30,14 +30,17 @@ export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityMo
 	organizationProjectId: ID;
 }
 
+/**
+ * Interface for inputs related to employee mutations, such as creating, updating, or partially updating an employee.
+ */
 export interface IEmployeeEntityMutationInput {
-	employeeId?: ID;
-	employee?: Pick<IEmployee, 'id'>;
+	employeeId?: ID; // ID of the employee to be mutated.
+	employee?: Partial<IEmployee>; // Employee object with partial details for mutation.
 }
 
-export interface IRelationalEmployee {
-	readonly employee?: IEmployee;
-	readonly employeeId?: ID;
+export interface IEmployeeEntityInput {
+	employeeId?: ID; // ID of the employee, if available.
+	employee?: IEmployee;
 }
 
 export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITaggable {

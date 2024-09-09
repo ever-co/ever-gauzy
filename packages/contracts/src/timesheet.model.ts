@@ -5,7 +5,7 @@ import {
 	IRelationalOrganizationProject,
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeFindInput, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
@@ -300,7 +300,7 @@ export interface IURLMetaData {
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
 		IBaseRelationsEntityModel,
-		IRelationalEmployee,
+		IEmployeeEntityInput,
 		IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 	employeeIds?: string[];
