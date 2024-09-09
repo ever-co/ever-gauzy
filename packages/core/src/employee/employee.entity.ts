@@ -1,17 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
-import {
-	IsBoolean,
-	IsDate,
-	IsDateString,
-	IsEnum,
-	IsNumber,
-	IsOptional,
-	IsString,
-	IsUrl,
-	MaxLength
-} from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	CurrenciesEnum,
