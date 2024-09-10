@@ -1,7 +1,7 @@
 import { IEmployee } from './employee.model';
-import { IOrganizationContact, IRelationalOrganizationContact } from './organization-contact.model';
+import { IRelationalOrganizationContact } from './organization-contact.model';
 import { CrudActionEnum, ProjectBillingEnum, ProjectOwnerEnum } from './organization.model';
-import { ITag } from './tag.model';
+import { ITaggable } from './tag.model';
 import { ITask } from './task.model';
 import { IOrganizationSprint } from './organization-sprint.model';
 import { IPayment } from './payment.model';
@@ -12,6 +12,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { IOrganizationTeam } from './organization-team.model';
 import { CustomFieldsObject } from './shared-types';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { TaskStatusEnum } from './task-status.model';
 
 export interface IRelationalOrganizationProject {
 	project?: IOrganizationProject;
@@ -28,7 +29,8 @@ export interface IOrganizationProjectSetting extends IBasePerTenantAndOrganizati
 export interface IOrganizationProject
 	extends IRelationalImageAsset,
 		IRelationalOrganizationContact,
-		IOrganizationProjectSetting {
+		IOrganizationProjectSetting,
+		ITaggable {
 	name: string;
 	startDate?: Date;
 	endDate?: Date;
@@ -36,7 +38,6 @@ export interface IOrganizationProject
 	currency: CurrenciesEnum;
 	members?: IEmployee[];
 	public: boolean;
-	tags: ITag[];
 	owner: ProjectOwnerEnum;
 	tasks?: ITask[];
 	teams?: IOrganizationTeam[];
@@ -61,6 +62,12 @@ export interface IOrganizationProject
 	budgetType?: OrganizationProjectBudgetTypeEnum;
 	membersCount?: number;
 	imageUrl?: string;
+	status?: TaskStatusEnum;
+	icon?: string;
+	archiveTasksIn?: number;
+	closeTasksIn?: number;
+	defaultAssigneeId?: ID;
+	defaultAssignee?: IEmployee;
 }
 
 export enum TaskListTypeEnum {
@@ -73,45 +80,47 @@ export enum OrganizationProjectBudgetTypeEnum {
 	COST = 'cost'
 }
 
-export interface IOrganizationProjectsFindInput extends IBasePerTenantAndOrganizationEntityModel {
+export interface IOrganizationProjectsFindInput
+	extends IBasePerTenantAndOrganizationEntityModel,
+		IRelationalOrganizationContact {
 	name?: string;
-	organizationTeamId?: ID;
-	organizationContactId?: ID;
-	organizationContact?: IOrganizationContact;
 	public?: boolean;
 	billable?: boolean;
 	billingFlat?: boolean;
+	organizationTeamId?: ID;
 }
 
 export interface IOrganizationProjectCreateInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalImageAsset {
+		IRelationalImageAsset,
+		IRelationalOrganizationContact,
+		ITaggable {
 	name?: string;
-	organizationContact?: IOrganizationContact;
-	organizationContactId?: ID;
 	startDate?: Date;
 	endDate?: Date;
 	billing?: ProjectBillingEnum;
 	currency?: CurrenciesEnum;
 	members?: IEmployee[];
 	public?: boolean;
-	tags?: ITag[];
 	owner?: ProjectOwnerEnum;
 	code?: string;
 	description?: string;
 	color?: string;
 	billable?: boolean;
 	billingFlat?: boolean;
-	status?: string;
 	openSource?: boolean;
 	projectUrl?: string;
 	openSourceProjectUrl?: string;
 	taskListType?: TaskListTypeEnum;
+	status?: TaskStatusEnum;
+	icon?: string;
+	archiveTasksIn?: number;
+	closeTasksIn?: number;
+	defaultAssigneeId?: ID;
+	defaultAssignee?: IEmployee;
 }
 
-export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
-	id?: ID;
-}
+export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {}
 
 export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
