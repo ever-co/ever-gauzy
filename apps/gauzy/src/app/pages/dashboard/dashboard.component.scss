@@ -144,7 +144,7 @@
 }
 
 ::ng-deep nb-route-tabset .route-tab .tab-link {
-  border-radius: 0.5rem 0.5rem 0 0;
+  border-radius: nb-theme(border-radius) nb-theme(border-radius) 0 0;
   svg {
     fill: nb-theme(text-primary-color);
   }
