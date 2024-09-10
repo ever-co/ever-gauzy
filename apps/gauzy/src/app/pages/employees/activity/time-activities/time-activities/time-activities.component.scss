@@ -1,8 +1,7 @@
 @import 'themes';
 
 :host .custom-card {
-  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius)
-    nb-theme(border-radius);
+  border-radius: 0 nb-theme(border-radius) nb-theme(border-radius) nb-theme(border-radius);
   background-color: nb-theme(gauzy-card-2);
   @include nb-ltr(padding, 1rem 0.5rem 1rem 18px);
   @include nb-rtl(padding, 1rem 18px 1rem 0.5rem);

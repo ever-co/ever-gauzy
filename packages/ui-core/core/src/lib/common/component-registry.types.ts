@@ -30,8 +30,9 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'jobs': The jobs or job search section of the application.
  * - 'sales': The sales or proposals section of the application.
  * - 'proposals': A sub-page under the sales section.
+ * - 'time-activity': A sub-page under the employees section.
  */
-export type PageRouteRegistryId = 'auth' | 'pages' | 'dashboard' | 'jobs' | 'sales' | 'proposals';
+export type PageRouteRegistryId = 'auth' | 'pages' | 'dashboard' | 'jobs' | 'sales' | 'proposals' | 'time-activity';
 
 /**
  * @description

@@ -5,8 +5,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { NoDataMessageComponent } from './no-data-message.component';
 
 @NgModule({
+	imports: [CommonModule, NbCardModule, NbIconModule, TranslateModule.forChild()],
 	declarations: [NoDataMessageComponent],
-	imports: [CommonModule, NbCardModule, NbIconModule, TranslateModule],
 	exports: [NoDataMessageComponent]
 })
 export class NoDataMessageModule {}
