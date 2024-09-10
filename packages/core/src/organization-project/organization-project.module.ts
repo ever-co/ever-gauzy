@@ -1,6 +1,5 @@
 import { CqrsModule } from '@nestjs/cqrs';
-import { forwardRef, Module } from '@nestjs/common';
-import { RouterModule } from '@nestjs/core';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { OrganizationProject } from './organization-project.entity';
@@ -12,12 +11,6 @@ import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-orga
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{
-				path: '/organization-projects',
-				module: OrganizationProjectModule
-			}
-		]),
 		TypeOrmModule.forFeature([OrganizationProject]),
 		MikroOrmModule.forFeature([OrganizationProject]),
 		RolePermissionModule,
