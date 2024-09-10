@@ -568,15 +568,6 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	})
 	dailyPlans?: IDailyPlan[];
 
-	/**
-	 * Projects for whom employee is default assigned
-	 */
-	@ApiPropertyOptional({ type: () => OrganizationProject, isArray: true })
-	@MultiORMOneToMany(() => OrganizationProject, (project) => project.defaultAssignee, {
-		cascade: true
-	})
-	projectDefaultAssignments?: IOrganizationProject[];
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToMany
