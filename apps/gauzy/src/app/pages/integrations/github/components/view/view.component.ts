@@ -463,8 +463,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						const row = cell.getRow().getData();
 						// Get repository object
 						const repository: IOrganizationGithubRepository = row.customFields?.repository;
-						// Transform the column data using 'this.statusMapper'
-						instance.value = this.statusMapper(repository);
+						// Transform the column data using 'this.statusMapper' only if repository is not null
+						instance.value = repository ? this.statusMapper(repository) : null;
 					}
 				}
 			}
