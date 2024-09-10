@@ -21,15 +21,6 @@ export const createActivityRoutes = (_pageRouteRegistryService: PageRouteRegistr
 				redirectTo: 'time-activities',
 				pathMatch: 'full'
 			},
-			{
-				path: 'screenshots',
-				loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
-			},
-			{
-				path: '',
-				loadChildren: () =>
-					import('./app-url-activity/app-url-activity.module').then((m) => m.AppUrlActivityModule)
-			},
 			..._pageRouteRegistryService.getPageLocationRoutes('time-activity')
 		]
 	}

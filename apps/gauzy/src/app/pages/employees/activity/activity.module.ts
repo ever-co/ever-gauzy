@@ -51,6 +51,26 @@ export class ActivityModule {
 				import('./time-activities/time-activities.module').then((m) => m.TimeAndActivitiesModule)
 		});
 
+		// Register Screenshot Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			// Register the location 'time-activity'
+			location: 'time-activity',
+			// Register the path 'search'
+			path: 'screenshots',
+			// Register the loadChildren function to load the ActivityModule lazy module
+			loadChildren: () => import('./screenshot/screenshot.module').then((m) => m.ScreenshotModule)
+		});
+
+		// Register App/URL Activity Page Routes
+		this._pageRouteRegistryService.registerPageRoute({
+			// Register the location 'time-activity'
+			location: 'time-activity',
+			// Register the path 'search'
+			path: '',
+			// Register the loadChildren function to load the ActivityModule lazy module
+			loadChildren: () => import('./app-url-activity/app-url-activity.module').then((m) => m.AppUrlActivityModule)
+		});
+
 		// Set the flag to true
 		ActivityModule.hasRegisteredPageRoutes = true;
 	}
