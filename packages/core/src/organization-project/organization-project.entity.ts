@@ -1,6 +1,6 @@
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEnum, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
 	IActivity,
@@ -74,6 +74,8 @@ export class OrganizationProject
 	extends TenantOrganizationBaseEntity
 	implements IOrganizationProject, Taggable, HasCustomFields
 {
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
 	@ColumnIndex()
 	@MultiORMColumn()
 	name: string;
@@ -84,6 +86,9 @@ export class OrganizationProject
 	@MultiORMColumn({ nullable: true })
 	endDate?: Date;
 
+	@ApiPropertyOptional({ enum: ProjectBillingEnum, example: ProjectBillingEnum.FLAT_FEE })
+	@IsOptional()
+	@IsEnum(ProjectBillingEnum)
 	@MultiORMColumn({ nullable: true })
 	billing: ProjectBillingEnum;
 
@@ -97,6 +102,8 @@ export class OrganizationProject
 	@MultiORMColumn({ nullable: true })
 	owner: ProjectOwnerEnum;
 
+	@ApiProperty({ type: () => String, enum: TaskListTypeEnum, example: TaskListTypeEnum.GRID })
+	@IsEnum(TaskListTypeEnum)
 	@MultiORMColumn({ default: TaskListTypeEnum.GRID })
 	taskListType: TaskListTypeEnum;
 
@@ -127,6 +134,13 @@ export class OrganizationProject
 	@MultiORMColumn({ nullable: true })
 	budget?: number;
 
+	@ApiPropertyOptional({
+		type: () => String,
+		enum: OrganizationProjectBudgetTypeEnum,
+		example: OrganizationProjectBudgetTypeEnum.COST
+	})
+	@IsOptional()
+	@IsEnum(OrganizationProjectBudgetTypeEnum)
 	@MultiORMColumn({
 		nullable: true,
 		default: OrganizationProjectBudgetTypeEnum.COST,
@@ -140,6 +154,7 @@ export class OrganizationProject
 	@MultiORMColumn({ length: 500, nullable: true })
 	imageUrl?: string;
 
+	// Auto-sync tasks property
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -147,6 +162,7 @@ export class OrganizationProject
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSync?: boolean;
 
+	// Auto-sync on label property
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
@@ -154,6 +170,7 @@ export class OrganizationProject
 	@MultiORMColumn({ default: true, nullable: true })
 	isTasksAutoSyncOnLabel?: boolean;
 
+	// Auto-sync tasks label property
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsString()
@@ -249,9 +266,6 @@ export class OrganizationProject
 	/**
 	 * Project default member assignee
 	 */
-	@ApiPropertyOptional({ type: () => Object })
-	@IsOptional()
-	@IsObject()
 	@MultiORMManyToOne(() => Employee, (it) => it.projectDefaultAssignments, {
 		/** Indicates if the relation column value can be nullable or not. */
 		nullable: true,

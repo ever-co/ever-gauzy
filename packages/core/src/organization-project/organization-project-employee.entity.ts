@@ -1,7 +1,7 @@
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
-import { ID, IEmployee, IOrganizationProjectEmployee, IRole } from '@gauzy/contracts';
+import { ID, IEmployee, IOrganizationProject, IOrganizationProjectEmployee, IRole } from '@gauzy/contracts';
 import { Employee, OrganizationProject, Role, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { MikroOrmOrganizationProjectEmployeeRepository } from './repository/mikro-orm-organization-project-employee.repository';
@@ -23,7 +23,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	organizationProject!: IOrganizationProjectEmployee;
+	organizationProject!: IOrganizationProject;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -40,7 +40,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	employee: IEmployee;
+	employee!: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -48,7 +48,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@RelationId((it: OrganizationProjectEmployee) => it.employee)
 	@ColumnIndex()
 	@MultiORMColumn({ relationId: true })
-	employeeId: ID;
+	employeeId?: ID;
 
 	/**
 	 * Role
@@ -60,7 +60,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	role?: IRole;
+	role!: IRole;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

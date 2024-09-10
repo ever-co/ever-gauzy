@@ -126,9 +126,7 @@ export interface IOrganizationProjectCreateInput
 	closeTasksIn?: number;
 }
 
-export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {
-	id?: ID;
-}
+export interface IOrganizationProjectUpdateInput extends IOrganizationProjectCreateInput, IOrganizationProjectSetting {}
 
 export interface IOrganizationProjectStoreState {
 	project: IOrganizationProject;
@@ -137,6 +135,8 @@ export interface IOrganizationProjectStoreState {
 
 export interface IOrganizationProjectEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationProject,
 		IEmployeeEntityInput,
-		IRelationalRole {}
+		IRelationalRole {
+	organizationProject: IOrganizationProject;
+	organizationProjectId: ID;
+}
