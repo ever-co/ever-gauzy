@@ -46,6 +46,7 @@ export * from './event-type.model';
 export * from './expense-category.model';
 export * from './expense-category.model';
 export * from './expense.model';
+export * from './favorite.model';
 export * from './feature.model';
 export * from './file-provider';
 export * from './geo-location.model';

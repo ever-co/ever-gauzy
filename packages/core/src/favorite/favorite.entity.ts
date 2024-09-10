@@ -1,0 +1,54 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EntityRepositoryType } from '@mikro-orm/core';
+import { JoinColumn, RelationId } from 'typeorm';
+import { FavoriteTypeEnum, ID, IEmployee, IFavorite } from '@gauzy/contracts';
+import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
+import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repository';
+import { IsEnum, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
+
+@MultiORMEntity('favorite', { mikroOrmRepository: () => MikroOrmFavoriteRepository })
+export class Favorite extends TenantOrganizationBaseEntity implements IFavorite {
+	[EntityRepositoryType]?: MikroOrmFavoriteRepository;
+
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsEnum(FavoriteTypeEnum)
+	@ColumnIndex()
+	@MultiORMColumn()
+	favoritableType: FavoriteTypeEnum;
+
+	// Indicate the ID of entity record marked as favorite
+	@ApiProperty({ type: () => String })
+	@IsNotEmpty()
+	@IsUUID()
+	@ColumnIndex()
+	@MultiORMColumn()
+	relatedEntityId: ID;
+
+	/*
+	|--------------------------------------------------------------------------
+	| @ManyToOne
+	|--------------------------------------------------------------------------
+	*/
+	/**
+	 * Employee
+	 */
+	@MultiORMManyToOne(() => Employee, {
+		/** Indicates if relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	@JoinColumn()
+	employee?: IEmployee;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsUUID()
+	@RelationId((it: Favorite) => it.employee)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true, relationId: true })
+	employeeId?: ID;
+}
