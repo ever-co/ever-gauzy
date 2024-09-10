@@ -84,14 +84,13 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	 */
 	async getFavoriteDetails(favoritableType: FavoriteTypeEnum) {
 		try {
-			const service = this.favoriteDiscoveryService.getService(favoritableType);
+			const serviceWithMethods = this.favoriteDiscoveryService.getService(favoritableType);
 
-			console.log({ service });
-
-			if (!service) {
+			if (!serviceWithMethods) {
 				throw new BadRequestException(`Service for entity of type ${favoritableType} not found.`);
 			}
-			const items = service.getAll();
+
+			const items = this.favoriteDiscoveryService.callMethod(favoritableType, 'findAll');
 			console.log(items);
 			return items;
 		} catch (error) {
