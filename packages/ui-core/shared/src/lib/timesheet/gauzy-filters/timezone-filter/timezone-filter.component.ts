@@ -45,7 +45,7 @@ export class TimezoneFilterComponent extends TranslationBaseComponent implements
 	selectedTimeZone: TimeZoneEnum = TimeZoneEnum.UTC_TIMEZONE;
 
 	@Input() isTimezone: boolean = true;
-	@Input() isTimeformat: boolean = true;
+	@Input() isTimeFormat: boolean = true;
 
 	@Output() timeZoneChange = new EventEmitter<string>();
 	@Output() timeFormatChange = new EventEmitter<TimeFormatEnum>();
@@ -76,7 +76,7 @@ export class TimezoneFilterComponent extends TranslationBaseComponent implements
 		combineLatest([queryParams$, storeOrganization$])
 			.pipe(
 				tap(([queryParams, organization]) => {
-					if (this.isTimeformat) this.applyTimeFormat(queryParams, organization.timeFormat);
+					if (this.isTimeFormat) this.applyTimeFormat(queryParams, organization.timeFormat);
 					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.ORG_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
@@ -99,7 +99,7 @@ export class TimezoneFilterComponent extends TranslationBaseComponent implements
 			.pipe(
 				distinctUntilChange(),
 				tap(([queryParams, user]) => {
-					if (this.isTimeformat) this.applyTimeFormat(queryParams, user.timeFormat);
+					if (this.isTimeFormat) this.applyTimeFormat(queryParams, user.timeFormat);
 					if (this.isTimezone) this.applyTimeZone(queryParams, TimeZoneEnum.MINE_TIMEZONE);
 				}),
 				// Handle component lifecycle to avoid memory leaks
