@@ -6,7 +6,7 @@ import { PrimaryGeneratedColumn, UpdateDateColumn, CreateDateColumn, DeleteDateC
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsOptional } from 'class-validator';
 import { SoftDeletable } from 'mikro-orm-soft-delete';
-import { BaseEntityModel as IBaseEntityModel } from '@gauzy/contracts';
+import { BaseEntityModel as IBaseEntityModel, ID } from '@gauzy/contracts';
 import { PrimaryKey, Property } from '@mikro-orm/core';
 import { MultiORMColumn } from '../decorators/entity';
 import { ColumnIndex } from '../decorators/entity/column-index.decorator';
@@ -54,7 +54,7 @@ export abstract class BaseEntity extends SoftDeletableBaseEntity implements IBas
 	@ApiPropertyOptional({ type: () => String })
 	@PrimaryKey({ type: 'uuid', defaultRaw: 'gen_random_uuid()' }) // For Mikro-ORM compatibility
 	@PrimaryGeneratedColumn('uuid')
-	id?: string;
+	id?: ID;
 
 	// Date when the record was created
 	@ApiPropertyOptional({
