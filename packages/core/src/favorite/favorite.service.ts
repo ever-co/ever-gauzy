@@ -14,10 +14,10 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	constructor(
 		private readonly favoriteDiscoveryService: GlobalFavoriteDiscoveryService,
 		readonly typeOrmFavoriteRepository: TypeOrmFavoriteRepository,
-		readonly mikroOrmFavoriterepository: MikroOrmFavoriteRepository,
+		readonly mikroOrmFavoriteRepository: MikroOrmFavoriteRepository,
 		private readonly employeeService: EmployeeService
 	) {
-		super(typeOrmFavoriteRepository, mikroOrmFavoriterepository);
+		super(typeOrmFavoriteRepository, mikroOrmFavoriteRepository);
 	}
 
 	/**
