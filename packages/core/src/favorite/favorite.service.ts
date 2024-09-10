@@ -46,14 +46,15 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 				relatedEntityId
 			};
 
-			let favorite = await this.findOneByWhereOptions(findOptions);
+			let favorite = await this.typeOrmRepository.findOneBy(findOptions);
 			if (!favorite) {
 				favorite = new Favorite(entity);
 			}
 
 			// If favorite element not exists, create and return new one
-			return this.save(favorite);
+			return await this.save(favorite);
 		} catch (error) {
+			console.log(error);
 			throw new BadRequestException('Favorite creation failed', error);
 		}
 	}
@@ -84,8 +85,11 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 	async getFavoriteDetails(favoritableType: FavoriteTypeEnum) {
 		try {
 			const service = this.favoriteDiscoveryService.getService(favoritableType);
+
+			console.log({ service });
+
 			if (!service) {
-				throw new Error(`Service pour l'entité de type ${favoritableType} non trouvé.`);
+				throw new BadRequestException(`Service for entity of type ${favoritableType} not found.`);
 			}
 			const items = service.getAll();
 			console.log(items);

@@ -1,6 +1,6 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { IFavorite, PermissionsEnum } from '@gauzy/contracts';
+import { FavoriteTypeEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
 import { UseValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
@@ -11,7 +11,7 @@ import { CreateFavoriteDTO } from './dto';
 
 @ApiTags('Favorites')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_ADD)
 @Controller()
 export class FavoriteController extends CrudController<Favorite> {
 	constructor(private readonly favoriteService: FavoriteService) {
@@ -32,5 +32,21 @@ export class FavoriteController extends CrudController<Favorite> {
 	@UseValidationPipe({ whitelist: true })
 	async create(@Body() entity: CreateFavoriteDTO): Promise<IFavorite> {
 		return await this.favoriteService.create(entity);
+	}
+
+	@ApiOperation({ summary: 'Find favorite entity records.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Found favorite records',
+		type: Favorite
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Records not found'
+	})
+	@Get('/type')
+	@UseValidationPipe({ transform: true })
+	async getEmployeeProjectModules(@Query('type') favoritableType: FavoriteTypeEnum) {
+		return await this.favoriteService.getFavoriteDetails(favoritableType);
 	}
 }
