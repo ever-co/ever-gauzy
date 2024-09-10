@@ -1,12 +1,12 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { DateRangePickerResolver } from '@gauzy/ui-core/shared';
-import { TimeAndActivitiesComponent } from './time-and-activities/time-and-activities.component';
+import { TimeActivitiesComponent } from './time-activities/time-activities.component';
 
 const routes: Routes = [
 	{
 		path: '',
-		component: TimeAndActivitiesComponent,
+		component: TimeActivitiesComponent,
 		data: {
 			title: 'ACTIVITY.TIME_AND_ACTIVITIES',
 			datePicker: {
@@ -24,4 +24,4 @@ const routes: Routes = [
 	imports: [RouterModule.forChild(routes)],
 	exports: [RouterModule]
 })
-export class TimeAndActivitiesRoutingModule {}
+export class TimeActivitiesRoutingModule {}
