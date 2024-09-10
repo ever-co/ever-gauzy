@@ -165,7 +165,7 @@ export class GauzyFiltersComponent extends TranslationBaseComponent implements A
 	/**
 	 * Handles the event when the time format is changed.
 	 *
-	 * @param timeformat The new time format.
+	 * @param timeFormat The new time format.
 	 */
 	timeFormatChanged(timeFormat: TimeFormatEnum): void {
 		this.filters.timeFormat = timeFormat;
