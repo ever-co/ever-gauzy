@@ -29,7 +29,7 @@
 						<div class="row grid-container">
 							<div *ngFor="let timeSlot of hourSlot.timeSlots">
 								<ngx-screenshots-item
-									[timeformat]="filters?.timeFormat"
+									[timeFormat]="filters?.timeFormat"
 									[timezone]="filters?.timeZone"
 									[employees]="timeSlot?.employees"
 									[timeSlot]="timeSlot"
