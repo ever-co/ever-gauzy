@@ -38,6 +38,50 @@ export class AppMenu {
 						}
 					},
 					{
+						type: 'separator'
+					},
+					{
+						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
+						click() {
+							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
+						}
+					},
+					{
+						type: 'separator'
+					},
+					{
+						id: 'devtools-setting',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
+						enabled: true,
+						async click() {
+							if (!settingsWindow) {
+								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
+							}
+							settingsWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						id: 'devtools-time-tracker',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
+						enabled: true,
+						visible: timeTrackerWindow ? true : false,
+						click() {
+							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						id: 'devtools-server',
+						label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
+						enabled: true,
+						visible: serverWindow ? true : false,
+						click() {
+							if (serverWindow) serverWindow.webContents.toggleDevTools();
+						}
+					},
+					{
+						type: 'separator'
+					},
+					{
 						role: 'quit',
 						label: TranslateService.instant('BUTTONS.EXIT')
 					}
@@ -117,47 +161,7 @@ export class AppMenu {
 					}
 				]
 			},
-			this.pluginMenu,
-			{
-				label: TranslateService.instant('TIMER_TRACKER.MENU.HELP'),
-				submenu: [
-					{
-						label: TranslateService.instant('TIMER_TRACKER.MENU.LEARN_MORE'),
-						click() {
-							shell.openExternal(process.env.COMPANY_SITE_LINK || 'https://gauzy.co/');
-						}
-					},
-					{
-						id: 'devtools-setting',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SETTING_DEV_MODE'),
-						enabled: true,
-						async click() {
-							if (!settingsWindow) {
-								settingsWindow = await createSettingsWindow(settingsWindow, windowPath.timeTrackerUi);
-							}
-							settingsWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-time-tracker',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.TIMER_DEV_MODE'),
-						enabled: true,
-						visible: timeTrackerWindow ? true : false,
-						click() {
-							if (timeTrackerWindow) timeTrackerWindow.webContents.toggleDevTools();
-						}
-					},
-					{
-						id: 'devtools-server',
-						label: TranslateService.instant('TIMER_TRACKER.MENU.SERVER_DEV_MODE'),
-						enabled: true,
-						visible: serverWindow ? true : false,
-						click() {
-							if (serverWindow) serverWindow.webContents.toggleDevTools();
-						}
-					}
-				]
-			}
+			this.pluginMenu
 		];
 		this.build();
 		if (timeTrackerWindow) {

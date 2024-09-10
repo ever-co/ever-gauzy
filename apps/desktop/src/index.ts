@@ -148,15 +148,15 @@ ipcMain.setMaxListeners(0);
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 ipcMain.handle('PREFERRED_THEME', () => {
-	const applicationSetting = LocalStore.getStore('appSetting');
-	let theme: string;
-	if (!applicationSetting || !applicationSetting.theme) {
-		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+	const setting = LocalStore.getStore('appSetting');
+	if (!setting) {
+		LocalStore.setDefaultApplicationSetting();
+		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 		LocalStore.updateApplicationSetting({ theme });
+		return theme;
 	} else {
-		theme = applicationSetting.theme;
+		return setting.theme;
 	}
-	return theme;
 });
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
@@ -469,7 +469,11 @@ app.on('ready', async () => {
 
 	try {
 		/* create window */
-		timeTrackerWindow = await createTimeTrackerWindow(timeTrackerWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		timeTrackerWindow = await createTimeTrackerWindow(
+			timeTrackerWindow,
+			pathWindow.timeTrackerUi,
+			pathWindow.preloadPath
+		);
 		settingsWindow = await createSettingsWindow(settingsWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		updaterWindow = await createUpdaterWindow(updaterWindow, pathWindow.timeTrackerUi, pathWindow.preloadPath);
 		imageView = await createImageViewerWindow(imageView, pathWindow.timeTrackerUi, pathWindow.preloadPath);
@@ -539,7 +543,7 @@ app.on('ready', async () => {
 		gauzyWindow,
 		splashScreenWindow: splashScreen.browserWindow,
 		alwaysOnWindow: alwaysOn.browserWindow
-	}).listen()
+	}).listen();
 });
 
 app.on('window-all-closed', () => {
@@ -713,7 +717,13 @@ app.on('activate', async () => {
 	} else if (!onWaitingServer && LocalStore.getStore('configs') && LocalStore.getStore('configs').isSetup) {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		await createGauzyWindow(gauzyWindow, serve, { ...environment }, pathWindow.timeTrackerUi, pathWindow.preloadPath);
+		await createGauzyWindow(
+			gauzyWindow,
+			serve,
+			{ ...environment },
+			pathWindow.timeTrackerUi,
+			pathWindow.preloadPath
+		);
 	} else {
 		if (setupWindow) {
 			setupWindow.show();

@@ -18,9 +18,11 @@
 	align-items: center;
 	justify-content: center;
 	width: 100%;
+
 	button {
+		color: var(--gauzy-text-color-1);
 		font-size: 11px;
-        font-weight: 500;
+		font-weight: 500;
 		background-color: var(--gauzy-card-2) !important;
 		border-radius: var(--border-radius) !important;
 		border: unset !important;
