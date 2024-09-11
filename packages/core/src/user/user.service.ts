@@ -58,10 +58,9 @@ export class UserService extends TenantAwareCrudService<User> {
 		try {
 			// Calculate the date 30 days ago
 			const lastLoginAt = moment().subtract(30, 'days').toDate();
-			console.log('Last login at: ', lastLoginAt);
 
 			// Use the count method to fetch the count of users with lastLoginAt within the last 30 days
-			return await this.count({
+			return await super.count({
 				where: {
 					lastLoginAt: MoreThan(lastLoginAt)
 				}
