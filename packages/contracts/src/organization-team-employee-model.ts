@@ -1,34 +1,41 @@
-import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IEmployeeEntityInput } from './employee.model';
 import { IRelationalRole } from './role.model';
 import { ITimerStatus } from './timesheet.model';
 import { ITask } from './task.model';
 
-export interface IOrganizationTeamEmployee
+// Base interface with common properties
+export interface IBaseOrganizationTeamEmployee
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam,
+		IRelationalOrganizationTeam {
+	order?: number; // Organization Team Employee Order
+	isTrackingEnabled?: boolean; // Enabled/Disabled Time Tracking of the team member
+	isManager?: boolean; // Manager of the organization team
+	assignedAt?: Date; // Assigned At Manager of the organization team
+}
+
+// Interface for Organization Team Employee
+export interface IOrganizationTeamEmployee
+	extends IBaseOrganizationTeamEmployee,
 		IEmployeeEntityInput,
 		IRelationalRole,
 		ITimerStatus {
-	isTrackingEnabled?: boolean;
-	activeTaskId?: ITask['id'];
+	activeTaskId?: ID; // Active Task of the team member
 	activeTask?: ITask;
-	order?: number;
 }
-
+// Interface for Organization Team Employee Find Input
 export interface IOrganizationTeamEmployeeFindInput
 	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam {}
+		IRelationalOrganizationTeam,
+		Pick<IBaseOrganizationTeamEmployee, 'isManager' | 'isTrackingEnabled'> {}
 
-export interface IOrganizationTeamEmployeeUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel,
-		IRelationalOrganizationTeam {
-	isTrackingEnabled?: boolean;
-}
+// Interface for Organization Team Employee Update Input
+export interface IOrganizationTeamEmployeeUpdateInput extends IBaseOrganizationTeamEmployee {}
 
+// Interface for Organization Team Employee Active Task Update Input
 export interface IOrganizationTeamEmployeeActiveTaskUpdateInput
 	extends IBasePerTenantAndOrganizationEntityModel,
 		IRelationalOrganizationTeam {
-	activeTaskId?: ITask['id'];
+	activeTaskId?: ID;
 }

@@ -14,11 +14,11 @@ import {
 	IOrganizationTeamUpdateInput,
 	PermissionsEnum,
 	IBasePerTenantAndOrganizationEntityModel,
-	IUser,
 	IDateRangePicker,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
-	ITimerStatus
+	ITimerStatus,
+	ID
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
@@ -99,7 +99,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A promise resolving to an array of organization team members with updated statistics.
 	 */
 	private async syncLastWorkedTask(
-		organizationTeamId: IOrganizationTeam['id'],
+		organizationTeamId: ID,
 		members: IOrganizationTeamEmployee[],
 		input: IDateRangePicker & IOrganizationTeamStatisticInput
 	): Promise<IOrganizationTeamEmployee[]> {
@@ -268,7 +268,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @throws ForbiddenException if the user lacks permission or if certain conditions are not met.
 	 * @throws BadRequestException if there's an error during the update process.
 	 */
-	async update(id: IOrganizationTeam['id'], input: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
+	async update(id: ID, input: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 		const { managerIds, memberIds, organizationId } = input;
 
@@ -422,7 +422,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						(entry: OrganizationTeamEmployee) => entry.organizationTeamId
 					);
 
-					// Convert to string for the subquery
+					// Convert to string for the sub-query
 					return organizationTeamIds || [];
 				};
 
@@ -465,8 +465,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				const typeOrmQueryBuilder = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 				/**
-				 * Generates a subquery for selecting organization team IDs based on specified conditions.
-				 * @param cb - The SelectQueryBuilder instance for constructing the subquery.
+				 * Generates a sub-query for selecting organization team IDs based on specified conditions.
+				 * @param cb - The SelectQueryBuilder instance for constructing the sub-query.
 				 * @param employeeId - The employee ID for filtering the teams.
 				 * @returns A SQL condition string to be used in the main query's WHERE clause.
 				 */
@@ -551,7 +551,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @throws ForbiddenException if the current context lacks the necessary permission.
 	 */
 	async deleteTeam(
-		teamId: IOrganizationTeam['id'],
+		teamId: ID,
 		options: IBasePerTenantAndOrganizationEntityModel
 	): Promise<DeleteResult | IOrganizationTeam> {
 		try {
@@ -594,7 +594,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @returns A Promise resolving to the result of the operation.
 	 * @throws ForbiddenException if the current context lacks the necessary permission or if the user is not found or not associated with an employee.
 	 */
-	public async existTeamsAsMember(userId: IUser['id']): Promise<DeleteResult> {
+	public async existTeamsAsMember(userId: ID): Promise<DeleteResult> {
 		const currentUserId = RequestContext.currentUserId();
 
 		// If user don't have enough permission (CHANGE_SELECTED_EMPLOYEE).

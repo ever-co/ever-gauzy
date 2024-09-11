@@ -1,7 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
-import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from './../role/role.module';
@@ -21,9 +20,6 @@ import { TypeOrmOrganizationTeamRepository } from './repository';
 
 @Module({
 	imports: [
-		RouterModule.register([
-			{ path: '/organization-team', module: OrganizationTeamModule }
-		]),
 		TypeOrmModule.forFeature([OrganizationTeam]),
 		MikroOrmModule.forFeature([OrganizationTeam]),
 		OrganizationTeamEmployeeModule,
@@ -41,4 +37,4 @@ import { TypeOrmOrganizationTeamRepository } from './repository';
 	providers: [...QueryHandlers, ...CommandHandlers, OrganizationTeamService, TypeOrmOrganizationTeamRepository],
 	exports: [TypeOrmModule, MikroOrmModule, OrganizationTeamService, TypeOrmOrganizationTeamRepository]
 })
-export class OrganizationTeamModule { }
+export class OrganizationTeamModule {}

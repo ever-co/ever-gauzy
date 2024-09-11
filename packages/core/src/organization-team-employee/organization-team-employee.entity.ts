@@ -1,6 +1,6 @@
 import { RelationId } from 'typeorm';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
 import { ID, IEmployee, IOrganizationTeam, IOrganizationTeamEmployee, IRole, ITask } from '@gauzy/contracts';
 import { Employee, OrganizationTeam, Role, Task, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
@@ -8,23 +8,35 @@ import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-o
 
 @MultiORMEntity('organization_team_employee', { mikroOrmRepository: () => MikroOrmOrganizationTeamEmployeeRepository })
 export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity implements IOrganizationTeamEmployee {
-	/**
-	 * Enabled / Disabled Time Tracking Feature
-	 */
+	// Organization Team Employee Order
+	@ApiPropertyOptional({ type: () => Number })
+	@IsOptional()
+	@IsNumber()
+	@MultiORMColumn({ nullable: true })
+	order?: number;
+
+	// Enabled / Disabled Time Tracking For The Team Member
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()
 	@IsBoolean()
 	@MultiORMColumn({ type: Boolean, nullable: true, default: true })
 	isTrackingEnabled?: boolean;
 
-	/**
-	 * Organization Team Employee Order
-	 */
-	@ApiPropertyOptional({ type: () => Number })
+	// Manager of the organization team
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()
-	@IsNumber()
+	@IsBoolean()
+	@ColumnIndex()
+	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
+	isManager?: boolean;
+
+	// Assigned At Manager of the organization team
+	@ApiPropertyOptional({ type: () => Date })
+	@IsOptional()
+	@IsDateString()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	order: number;
+	assignedAt?: Date;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -76,7 +88,7 @@ export class OrganizationTeamEmployee extends TenantOrganizationBaseEntity imple
 		/** Database cascade action on delete. */
 		onDelete: 'CASCADE'
 	})
-	employee: IEmployee;
+	employee!: IEmployee;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
