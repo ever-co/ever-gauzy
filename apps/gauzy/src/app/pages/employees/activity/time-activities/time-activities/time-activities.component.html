@@ -4,10 +4,7 @@
 			[saveFilters]="(datePickerConfig$ | async).isSaveDatePicker"
 			(filtersChange)="filtersChange($event)"
 		></ngx-gauzy-filters>
-		<ga-daily-statistics
-			class="mt-3"
-			[filters]="filters"
-		></ga-daily-statistics>
+		<ga-daily-statistics class="mt-3" [filters]="filters"></ga-daily-statistics>
 	</div>
 	<div class="custom-card-body">
 		<div class="grid-container">

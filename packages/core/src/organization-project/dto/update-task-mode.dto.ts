@@ -1,14 +1,11 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsEnum } from "class-validator";
-import { IOrganizationProjectUpdateInput, TaskListTypeEnum } from "@gauzy/contracts";
-import { TenantOrganizationBaseDTO } from "./../../core/dto";
+import { IntersectionType, PickType } from '@nestjs/swagger';
+import { IOrganizationProjectUpdateInput } from '@gauzy/contracts';
+import { TenantOrganizationBaseDTO } from './../../core/dto';
+import { OrganizationProject } from '../organization-project.entity';
 
 /**
  * Update task list view mode DTO validation
  */
-export class UpdateTaskModeDTO extends TenantOrganizationBaseDTO implements IOrganizationProjectUpdateInput {
-
-	@ApiProperty({ enum: TaskListTypeEnum, example: TaskListTypeEnum.GRID })
-	@IsEnum(TaskListTypeEnum)
-	readonly taskListType: TaskListTypeEnum;
-}
+export class UpdateTaskModeDTO
+	extends IntersectionType(TenantOrganizationBaseDTO, PickType(OrganizationProject, ['taskListType'] as const))
+	implements IOrganizationProjectUpdateInput {}

@@ -105,7 +105,7 @@ export class ScreenshotsItemComponent implements OnInit, OnDestroy {
 	}
 
 	@Input() timezone: string = this.timeZoneService.currentTimeZone;
-	@Input() timeformat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
+	@Input() timeFormat: TimeFormatEnum = TimeFormatEnum.FORMAT_12_HOURS;
 
 	constructor(
 		private readonly nbDialogService: NbDialogService,

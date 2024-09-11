@@ -4,7 +4,7 @@
 			<ng-container *ngIf="hasTimeZoneFilter">
 				<div class="col-auto single-filter-wrapper">
 					<ga-timezone-filter
-						[isTimeformat]="isTimeformat"
+						[isTimeFormat]="isTimeFormat"
 						(timeFormatChange)="timeFormatChanged($event)"
 						(timeZoneChange)="timeZoneChanged($event)"
 					></ga-timezone-filter>
