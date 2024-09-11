@@ -1,9 +1,16 @@
+import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { IsOptional } from 'class-validator';
 import { IOrganizationProjectSetting } from '@gauzy/contracts';
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '../../core/dto';
+import { OrganizationProject } from '../organization-project.entity';
 
-export class UpdateProjectSettingDTO extends TenantOrganizationBaseDTO implements IOrganizationProjectSetting {
+export class UpdateProjectSettingDTO
+	extends IntersectionType(
+		TenantOrganizationBaseDTO,
+		PickType(OrganizationProject, ['isTasksAutoSync', 'isTasksAutoSyncOnLabel', 'syncTag'] as const)
+	)
+	implements IOrganizationProjectSetting
+{
 	/*
 	|--------------------------------------------------------------------------
 	| Embeddable Columns
@@ -12,22 +19,4 @@ export class UpdateProjectSettingDTO extends TenantOrganizationBaseDTO implement
 	@ApiPropertyOptional({ type: 'object' })
 	@IsOptional()
 	readonly customFields?: Record<string, any>;
-
-	// Auto-sync tasks property
-	@ApiPropertyOptional({ type: Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly isTasksAutoSync: boolean;
-
-	// Auto-sync on label property
-	@ApiPropertyOptional({ type: Boolean })
-	@IsOptional()
-	@IsBoolean()
-	readonly isTasksAutoSyncOnLabel: boolean;
-
-	// Auto-sync tasks label property
-	@ApiPropertyOptional({ type: String })
-	@IsOptional()
-	@IsString()
-	readonly syncTag: string;
 }
