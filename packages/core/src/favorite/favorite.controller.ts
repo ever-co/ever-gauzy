@@ -1,10 +1,11 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FavoriteTypeEnum, IFavorite, PermissionsEnum } from '@gauzy/contracts';
-import { UseValidationPipe } from './../shared/pipes';
+import { DeleteResult } from 'typeorm';
+import { ID, IFavorite, PermissionsEnum } from '@gauzy/contracts';
+import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
 import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { Permissions } from '../shared/decorators';
-import { CrudController } from '../core/crud';
+import { CrudController, PaginationParams } from '../core/crud';
 import { Favorite } from './favorite.entity';
 import { FavoriteService } from './favorite.service';
 import { CreateFavoriteDTO } from './dto';
@@ -18,6 +19,12 @@ export class FavoriteController extends CrudController<Favorite> {
 		super(favoriteService);
 	}
 
+	/**
+	 * @description Mark entity element as favorite
+	 * @param {IFavoriteCreateInput} entity - Data to create favorite element
+	 * @returns A promise that resolves to the created or found favorite element
+	 * @memberof FavoriteService
+	 */
 	@ApiOperation({ summary: 'Create element favorite' })
 	@ApiResponse({
 		status: HttpStatus.CREATED,
@@ -34,6 +41,12 @@ export class FavoriteController extends CrudController<Favorite> {
 		return await this.favoriteService.create(entity);
 	}
 
+	/**
+	 * @description Get favorites elements details
+	 * @param params - Favorite query params
+	 * @returns A promise resolved at favorites elements records
+	 * @memberof FavoriteController
+	 */
 	@ApiOperation({ summary: 'Find favorite entity records.' })
 	@ApiResponse({
 		status: HttpStatus.OK,
@@ -46,7 +59,28 @@ export class FavoriteController extends CrudController<Favorite> {
 	})
 	@Get('/type')
 	@UseValidationPipe({ transform: true })
-	async getEmployeeProjectModules(@Query('type') favoritableType: FavoriteTypeEnum) {
-		return await this.favoriteService.getFavoriteDetails(favoritableType);
+	async getEmployeeProjectModules(@Query() params: PaginationParams<Favorite>) {
+		return await this.favoriteService.getFavoriteDetails(params);
+	}
+
+	/**
+	 * @description Delete element from favorites for current employee
+	 * @param {ID} id - The favorite ID to be deleted
+	 * @returns  A promise that resolved at the deleteResult
+	 * @memberof FavoriteController
+	 */
+	@ApiOperation({ summary: 'Delete Favorite' })
+	@ApiResponse({
+		status: HttpStatus.NO_CONTENT,
+		description: 'The record has been successfully deleted'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Delete('/:id')
+	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
+		return await this.favoriteService.delete(id);
 	}
 }

@@ -11,12 +11,12 @@ import {
 } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
+import { FavoriteService } from '../core/decorators';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmOrganizationProjectRepository, TypeOrmOrganizationProjectRepository } from './repository';
-import { FavoriteService } from '../core/decorators';
 
 @FavoriteService(FavoriteTypeEnum.PROJECT)
 @Injectable()

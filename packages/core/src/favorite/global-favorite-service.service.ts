@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { FavoriteTypeEnum } from '@gauzy/contracts';
@@ -18,21 +18,6 @@ export class GlobalFavoriteDiscoveryService implements OnModuleInit {
 	onModuleInit() {
 		const providers = this.discoveryService.getProviders();
 		this.scanProviders(providers);
-		// providers.forEach((wrapper: InstanceWrapper) => {
-		// 	const { instance, metatype } = wrapper;
-		// 	if (!instance || !metatype) {
-		// 		return;
-		// 	}
-
-		// 	// Add service to "Favoritable" services map if has specified favorite decorator
-		// 	const isFavoriteService = this.reflector.get(FAVORITABLE_TYPE, metatype);
-		// 	if (isFavoriteService) {
-		// 		const type = this.extractTypeFromProvider(metatype);
-		// 		if (type) {
-		// 			this.serviceMap.set(type, instance);
-		// 		}
-		// 	}
-		// });
 	}
 
 	private scanProviders(providers: InstanceWrapper[]) {
@@ -46,12 +31,7 @@ export class GlobalFavoriteDiscoveryService implements OnModuleInit {
 			if (isFavoriteService) {
 				const type = this.extractTypeFromProvider(metatype);
 				if (type) {
-					// TODO : Change this and use getAllMethodNames method instead of scanFromPrototype
-					const methods = this.metadataScanner.scanFromPrototype(
-						instance,
-						Object.getPrototypeOf(instance),
-						(method) => method
-					);
+					const methods = this.metadataScanner.getAllMethodNames(Object.getPrototypeOf(instance));
 					this.serviceMap.set(type, { instance, methods });
 				}
 			}
@@ -71,11 +51,11 @@ export class GlobalFavoriteDiscoveryService implements OnModuleInit {
 	callMethod(type: FavoriteTypeEnum, methodName: string, ...args: any[]): any {
 		const serviceWithMethods = this.serviceMap.get(type);
 		if (!serviceWithMethods) {
-			throw new Error(`Service for type ${type} not found`);
+			throw new BadRequestException(`Service for type ${type} not found`);
 		}
 		const { instance, methods } = serviceWithMethods;
 		if (!methods.includes(methodName)) {
-			throw new Error(`Method ${methodName} not found in service for type ${type}`);
+			throw new InternalServerErrorException(`Method ${methodName} not found in service for type ${type}`);
 		}
 		return instance[methodName](...args);
 	}

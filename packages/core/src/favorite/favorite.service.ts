@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere } from 'typeorm';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { DeleteResult, FindOptionsWhere, In } from 'typeorm';
 import { FavoriteTypeEnum, ID, IFavorite, IFavoriteCreateInput } from '@gauzy/contracts';
-import { TenantAwareCrudService } from './../core/crud';
+import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { Favorite } from './favorite.entity';
 import { TypeOrmFavoriteRepository } from './repository/type-orm-favorite.repository';
@@ -78,23 +78,42 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 
 	/**
 	 * @description Get favorites elements details
-	 * @param {FavoriteTypeEnum} favoritableType - Favoritable service identifier
+	 * @param options - Favorite query params
 	 * @returns A promise resolved at favorites elements records
 	 * @memberof FavoriteService
 	 */
-	async getFavoriteDetails(favoritableType: FavoriteTypeEnum) {
+	async getFavoriteDetails(options?: PaginationParams<Favorite>) {
 		try {
-			const serviceWithMethods = this.favoriteDiscoveryService.getService(favoritableType);
+			const { where } = options;
+			const { favoritableType } = where;
+			const favoriteType: FavoriteTypeEnum = favoritableType as FavoriteTypeEnum;
+
+			// Find favorite elements with filtered params
+			const favorites = await this.findAll(options);
+
+			// Get related entity IDs
+			const relatedEntityIds: ID[] = favorites.items.map((favorite) => favorite.relatedEntityId);
+
+			// Get current requested service
+			const serviceWithMethods = this.favoriteDiscoveryService.getService(favoriteType);
 
 			if (!serviceWithMethods) {
 				throw new BadRequestException(`Service for entity of type ${favoritableType} not found.`);
 			}
 
-			const items = this.favoriteDiscoveryService.callMethod(favoritableType, 'findAll');
-			console.log(items);
+			// related entity where condition (Filtered records with passed IDs)
+			const whereCondition = { id: In(relatedEntityIds) };
+
+			// Get related favorite records using findAll method and passing query params
+			const items = await this.favoriteDiscoveryService.callMethod(favoriteType, 'findAll', {
+				where: whereCondition
+			});
+
+			// return founded records for specific service
 			return items;
 		} catch (error) {
-			throw new InternalServerErrorException(error);
+			console.log(error); // Debug Logging
+			throw new BadRequestException(error);
 		}
 	}
 }

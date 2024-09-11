@@ -18,9 +18,11 @@ import {
 	IDateRangePicker,
 	IOrganizationTeamEmployee,
 	IOrganizationTeamStatisticInput,
-	ITimerStatus
+	ITimerStatus,
+	FavoriteTypeEnum
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/common';
+import { FavoriteService } from '../core/decorators';
 import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
 import { MultiORMEnum, enhanceWhereWithTenantId, parseTypeORMFindToMikroOrm } from '../core/utils';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
@@ -39,6 +41,7 @@ import { MikroOrmOrganizationTeamRepository, TypeOrmOrganizationTeamRepository }
 import { OrganizationTeam } from './organization-team.entity';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
+@FavoriteService(FavoriteTypeEnum.TEAM)
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
 	constructor(
