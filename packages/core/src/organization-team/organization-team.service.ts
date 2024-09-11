@@ -422,7 +422,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						(entry: OrganizationTeamEmployee) => entry.organizationTeamId
 					);
 
-					// Convert to string for the subquery
+					// Convert to string for the sub-query
 					return organizationTeamIds || [];
 				};
 
@@ -465,8 +465,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				const typeOrmQueryBuilder = this.typeOrmRepository.createQueryBuilder(this.tableName);
 
 				/**
-				 * Generates a subquery for selecting organization team IDs based on specified conditions.
-				 * @param cb - The SelectQueryBuilder instance for constructing the subquery.
+				 * Generates a sub-query for selecting organization team IDs based on specified conditions.
+				 * @param cb - The SelectQueryBuilder instance for constructing the sub-query.
 				 * @param employeeId - The employee ID for filtering the teams.
 				 * @returns A SQL condition string to be used in the main query's WHERE clause.
 				 */
