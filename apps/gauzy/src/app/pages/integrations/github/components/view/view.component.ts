@@ -393,7 +393,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					valuePrepareFunction: (_: any, cell: Cell) => {
 						// Get the data of the entire row
 						const row = cell.getRow().getData();
-						const count = row.customFields.repository.issuesCount; // Get repository synced issues count
+						const count = row.customFields?.repository?.issuesCount; // Get repository synced issues count
 						// Prepare the value for the cell by using translation and the 'issuesCount' property from the row
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', { count });
 					}
@@ -461,10 +461,10 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 					componentInitFunction: (instance: StatusBadgeComponent, cell: Cell) => {
 						// Get the data of the entire row
 						const row = cell.getRow().getData();
-						const repository: IOrganizationGithubRepository = row.customFields.repository;
-
-						// Transform the column data using 'this.statusMapper'
-						instance.value = this.statusMapper(repository);
+						// Get repository object
+						const repository: IOrganizationGithubRepository = row.customFields?.repository;
+						// Transform the column data using 'this.statusMapper' only if repository is not null
+						instance.value = repository ? this.statusMapper(repository) : null;
 					}
 				}
 			}
@@ -477,7 +477,9 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	 * @param hasSyncEnabled - A boolean indicating whether sync is enabled.
 	 */
 	private updateGithubRepository(project: IOrganizationProject, hasSyncEnabled: boolean) {
-		const repository = project.customFields['repository'];
+		// Get the repository object from the project
+		const repository = project.customFields?.repository;
+		// Check if the repository object exists
 		if (!repository) {
 			return;
 		}
