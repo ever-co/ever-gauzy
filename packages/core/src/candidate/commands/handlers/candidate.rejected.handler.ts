@@ -1,12 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { CandidateStatusEnum, ICandidate } from '@gauzy/contracts';
+import { CandidateStatusEnum, ICandidate, LanguagesEnum } from '@gauzy/contracts';
 import { CandidateService } from '../../candidate.service';
 import { CandidateRejectedCommand } from '../candidate.rejected.command';
+import { EmailService } from './../../../email-send/email.service';
+import { environment } from '@gauzy/config';
 
 @CommandHandler(CandidateRejectedCommand)
 export class CandidateRejectedHandler implements ICommandHandler<CandidateRejectedCommand> {
-	constructor(private readonly candidateService: CandidateService) {}
+	constructor(private readonly candidateService: CandidateService, private readonly _emailService: EmailService) {}
 
 	/**
 	 * Executes the candidate rejection process.
@@ -35,6 +37,21 @@ export class CandidateRejectedHandler implements ICommandHandler<CandidateReject
 
 			// Update the candidate in the database
 			await this.candidateService.update(id, updatedCandidate);
+
+			// 4. Send rejection email to candidate user
+			const languageCode = candidate.user.preferredLanguage as LanguagesEnum;
+			const { email, name } = candidate.user;
+			const organization = candidate.organization;
+			const originUrl = environment.clientBaseUrl;
+
+			// Call the email service to send the rejection email
+			this._emailService.sendRejectionEmail(
+				languageCode || LanguagesEnum.ENGLISH,
+				email,
+				name,
+				organization,
+				originUrl
+			);
 
 			// Return the merged candidate object with the updated data
 			return { ...candidate, ...updatedCandidate } as ICandidate;
