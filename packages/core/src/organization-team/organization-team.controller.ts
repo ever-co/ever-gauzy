@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
-import { PermissionsEnum, IPagination, IOrganizationTeam, IUser, ID } from '@gauzy/contracts';
+import { PermissionsEnum, IPagination, IOrganizationTeam, ID } from '@gauzy/contracts';
 import { CrudController, PaginationParams } from './../core/crud';
 import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
