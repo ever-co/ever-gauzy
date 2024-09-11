@@ -1,18 +1,16 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
-import { ID, IFavorite, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IFavorite } from '@gauzy/contracts';
 import { UseValidationPipe, UUIDValidationPipe } from './../shared/pipes';
-import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
-import { Permissions } from '../shared/decorators';
+import { TenantPermissionGuard } from '../shared/guards';
 import { CrudController, PaginationParams } from '../core/crud';
 import { Favorite } from './favorite.entity';
 import { FavoriteService } from './favorite.service';
 import { CreateFavoriteDTO } from './dto';
 
 @ApiTags('Favorites')
-@UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_VIEW)
+@UseGuards(TenantPermissionGuard)
 @Controller()
 export class FavoriteController extends CrudController<Favorite> {
 	constructor(private readonly favoriteService: FavoriteService) {

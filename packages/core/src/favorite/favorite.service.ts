@@ -92,7 +92,7 @@ export class FavoriteService extends TenantAwareCrudService<Favorite> {
 			const favorites = await this.findAll(options);
 
 			// Get related entity IDs
-			const entityIds: ID[] = favorites.items.map((favorite) => favorite.entity);
+			const entityIds: ID[] = favorites.items.map((favorite) => favorite.entityId);
 
 			// Get current requested service
 			const serviceWithMethods = this.favoriteDiscoveryService.getService(favoriteType);
