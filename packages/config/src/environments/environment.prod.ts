@@ -331,5 +331,5 @@ export const gauzyToggleFeatures: IGauzyFeatures = {
 	FEATURE_SMTP: isFeatureEnabled('FEATURE_SMTP'),
 	FEATURE_ROLES_PERMISSION: isFeatureEnabled('FEATURE_ROLES_PERMISSION'),
 	FEATURE_EMAIL_VERIFICATION: isFeatureEnabled('FEATURE_EMAIL_VERIFICATION'),
-	FEATURE_OPEN_STATS: isFeatureEnabled('FEATURE_OPEN_STATS') // Enable/Disable Global Open Stats Endpoint Configuration
+	FEATURE_OPEN_STATS: process.env.FEATURE_OPEN_STATS === 'true' ?? false // enable/disable global open stats endpoint configuration
 };

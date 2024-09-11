@@ -9,6 +9,6 @@ dotenv.config();
  * @param defaultEnable - Default value to return if the feature is not enabled
  * @returns
  */
-export const isFeatureEnabled = (featureKey: string, defaultEnable: boolean = true): boolean => {
-	return process.env[featureKey] === 'false' ? false : defaultEnable;
+export const isFeatureEnabled = (featureKey: string): boolean => {
+	return process.env[featureKey] === 'false' ? false : true;
 };
