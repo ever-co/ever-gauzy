@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
-	FavoriteTypeEnum,
+	FavoriteEntityEnum,
 	ID,
 	IEmployee,
 	IOrganizationGithubRepository,
@@ -18,7 +18,7 @@ import { OrganizationProject } from './organization-project.entity';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmOrganizationProjectRepository, TypeOrmOrganizationProjectRepository } from './repository';
 
-@FavoriteService(FavoriteTypeEnum.PROJECT)
+@FavoriteService(FavoriteEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(

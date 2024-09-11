@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, RelationId } from 'typeorm';
-import { FavoriteTypeEnum, ID, IEmployee, IFavorite } from '@gauzy/contracts';
+import { FavoriteEntityEnum, ID, IEmployee, IFavorite } from '@gauzy/contracts';
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from '../core/decorators/entity';
 import { MikroOrmFavoriteRepository } from './repository/mikro-orm-favorite.repository';
@@ -13,10 +13,10 @@ export class Favorite extends TenantOrganizationBaseEntity implements IFavorite 
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
-	@IsEnum(FavoriteTypeEnum)
+	@IsEnum(FavoriteEntityEnum)
 	@ColumnIndex()
 	@MultiORMColumn()
-	favoritableType: FavoriteTypeEnum;
+	entity: FavoriteEntityEnum;
 
 	// Indicate the ID of entity record marked as favorite
 	@ApiProperty({ type: () => String })
@@ -24,7 +24,7 @@ export class Favorite extends TenantOrganizationBaseEntity implements IFavorite 
 	@IsUUID()
 	@ColumnIndex()
 	@MultiORMColumn()
-	relatedEntityId: ID;
+	entityId: ID;
 
 	/*
 	|--------------------------------------------------------------------------

@@ -2,19 +2,19 @@ import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.mode
 import { IEmployeeEntityInput } from './employee.model';
 
 export interface IFavorite extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
-	favoritableType: FavoriteTypeEnum;
-	relatedEntityId: ID; // Indicate the ID of entity record marked as favorite
+	entity: FavoriteEntityEnum;
+	entityId: ID; // Indicate the ID of entity record marked as favorite
 }
 
-export enum FavoriteTypeEnum {
-	CURRENCY = 'currency',
-	LANGUAGE = 'language',
-	ORGANIZATION = 'organization',
-	PROJECT = 'project',
-	PROJECT_MODULE = 'project-module',
-	TEAM = 'team',
-	SPRINT = 'sprint',
-	VENDOR = 'vendor'
+export enum FavoriteEntityEnum {
+	Organization = 'Organization',
+	OrganizationProject = 'OrganizationProject',
+	OrganizationTeam = 'OrganizationTeam',
+	OrganizationProjectModule = 'OrganizationProjectModule',
+	Currency = 'Currency',
+	Language = 'Language',
+	OrganizationVendor = 'OrganizationVendor',
+	OrganizationSprint = 'OrganizationSprint'
 }
 
 export interface IFavoriteCreateInput extends IFavorite {}
