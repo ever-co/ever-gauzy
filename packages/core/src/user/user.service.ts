@@ -10,10 +10,12 @@ import {
 	WhereExpressionBuilder,
 	In,
 	UpdateResult,
-	DeleteResult
+	DeleteResult,
+	MoreThan
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { JwtPayload } from 'jsonwebtoken';
+import * as moment from 'moment';
 import {
 	ComponentLayoutStyleEnum,
 	ID,
@@ -45,6 +47,30 @@ export class UserService extends TenantAwareCrudService<User> {
 		private readonly _taskService: TaskService
 	) {
 		super(typeOrmUserRepository, mikroOrmUserRepository);
+	}
+
+	/**
+	 * Get the count of users who logged in during the last 30 days.
+	 *
+	 * @returns {Promise<number>} - The count of active users
+	 */
+	async getMonthlyActiveUsers(): Promise<number> {
+		try {
+			// Calculate the date 30 days ago
+			const lastLoginAt = moment().subtract(30, 'days').toDate();
+			console.log('Last login at: ', lastLoginAt);
+
+			// Use the count method to fetch the count of users with lastLoginAt within the last 30 days
+			return await this.count({
+				where: {
+					lastLoginAt: MoreThan(lastLoginAt)
+				}
+			});
+		} catch (error) {
+			// Handle error, log it, or throw a custom exception
+			console.error('Error fetching monthly active users:', error);
+			throw new Error('Unable to retrieve monthly active users count.');
+		}
 	}
 
 	/**
