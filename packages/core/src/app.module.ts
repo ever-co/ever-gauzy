@@ -144,6 +144,7 @@ import { SocialAccountModule } from './auth/social-account/social-account.module
 import { OrganizationProjectModuleModule } from './organization-project-module/organization-project-module.module';
 import { FavoriteModule } from './favorite/favorite.module';
 import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
+import { CommentModule } from './comment/comment.module';
 
 const { unleashConfig } = environment;
 
@@ -437,7 +438,8 @@ if (environment.THROTTLE_ENABLED) {
 		OrganizationTaskSettingModule,
 		TaskEstimationModule,
 		FavoriteModule,
-		GlobalFavoriteModule
+		GlobalFavoriteModule,
+		CommentModule
 	],
 	controllers: [AppController],
 	providers: [
