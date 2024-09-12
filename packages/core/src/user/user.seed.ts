@@ -4,8 +4,9 @@
 
 import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { environment as env } from '@gauzy/config';
 import { faker } from '@faker-js/faker';
+import * as moment from 'moment';
+import { environment as env } from '@gauzy/config';
 import {
 	IDefaultUser,
 	RolesEnum,
@@ -35,18 +36,12 @@ export const createDefaultAdminUsers = async (
 	// Admin Users
 	const _defaultAdminUsers: Promise<IUser[]> = seedAdminUsers(dataSource, tenant);
 
-	const [
-		defaultSuperAdminUsers,
-		defaultAdminUsers
-	] = await Promise.all([
+	const [defaultSuperAdminUsers, defaultAdminUsers] = await Promise.all([
 		_defaultSuperAdminUsers,
 		_defaultAdminUsers
 	]);
 
-	await insertUsers(dataSource, [
-		...defaultSuperAdminUsers,
-		...defaultAdminUsers
-	]);
+	await insertUsers(dataSource, [...defaultSuperAdminUsers, ...defaultAdminUsers]);
 
 	return {
 		defaultSuperAdminUsers,
@@ -56,8 +51,8 @@ export const createDefaultAdminUsers = async (
 
 export const createDefaultEmployeesUsers = async (
 	dataSource: DataSource,
-	tenant: ITenant,
-): Promise<{ defaultEmployeeUsers: IUser[]; }> => {
+	tenant: ITenant
+): Promise<{ defaultEmployeeUsers: IUser[] }> => {
 	// Employee Users
 	const _defaultEmployeeUsers: Promise<IUser[]> = seedDefaultEmployeeUsers(dataSource, tenant, DEFAULT_EMPLOYEES);
 	const [defaultEmployeeUsers] = await Promise.all([_defaultEmployeeUsers]);
@@ -74,7 +69,6 @@ export const createRandomSuperAdminUsers = async (
 	tenants: ITenant[],
 	noOfSuperAdmins: number
 ): Promise<Map<ITenant, IUser[]>> => {
-
 	const tenantSuperAdminsMap: Map<ITenant, IUser[]> = new Map();
 	const superAdmins: IUser[] = [];
 
@@ -87,10 +81,7 @@ export const createRandomSuperAdminUsers = async (
 		const tenantSuperAdmins = [];
 		// Generate random super admins
 		for (let i = 0; i < noOfSuperAdmins; i++) {
-			const superAdminUser = await generateRandomUser(
-				superAdminRole,
-				tenant
-			);
+			const superAdminUser = await generateRandomUser(superAdminRole, tenant);
 			tenantSuperAdmins.push(superAdminUser);
 			superAdmins.push(superAdminUser);
 			console.log(superAdminUser);
@@ -115,23 +106,14 @@ export const createDefaultUsers = async (
 		DEFAULT_EVER_EMPLOYEES
 	);
 
-	const _defaultCandidateUsers: Promise<IUser[]> = seedDefaultCandidateUsers(
-		dataSource,
-		tenant
-	);
+	const _defaultCandidateUsers: Promise<IUser[]> = seedDefaultCandidateUsers(dataSource, tenant);
 
-	const [
-		defaultEverEmployeeUsers,
-		defaultCandidateUsers
-	] = await Promise.all([
+	const [defaultEverEmployeeUsers, defaultCandidateUsers] = await Promise.all([
 		_defaultEverEmployeeUsers,
 		_defaultCandidateUsers
 	]);
 
-	await insertUsers(dataSource, [
-		...defaultEverEmployeeUsers,
-		...defaultCandidateUsers
-	]);
+	await insertUsers(dataSource, [...defaultEverEmployeeUsers, ...defaultCandidateUsers]);
 
 	return {
 		defaultEverEmployeeUsers,
@@ -211,21 +193,11 @@ export const createRandomUsers = async (
 			_viewerUsers
 		]);
 
-		const adminUsers = await insertUsers(dataSource, [
-			...promiseAdminUsers
-		]);
-		const employeeUsers = await insertUsers(dataSource, [
-			...promiseEmployeeUsers
-		]);
-		const candidateUsers = await insertUsers(dataSource, [
-			...promiseCandidateUsers
-		]);
+		const adminUsers = await insertUsers(dataSource, [...promiseAdminUsers]);
+		const employeeUsers = await insertUsers(dataSource, [...promiseEmployeeUsers]);
+		const candidateUsers = await insertUsers(dataSource, [...promiseCandidateUsers]);
 
-		await insertUsers(dataSource, [
-			...promiseManagerUsers,
-			...promiseDataEntryUsers,
-			...promiseViewerUsers
-		]);
+		await insertUsers(dataSource, [...promiseManagerUsers, ...promiseDataEntryUsers, ...promiseViewerUsers]);
 
 		randomTenantUsers.set(tenant, {
 			adminUsers,
@@ -237,10 +209,7 @@ export const createRandomUsers = async (
 	return randomTenantUsers;
 };
 
-const seedSuperAdminUsers = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IUser[]> => {
+const seedSuperAdminUsers = async (dataSource: DataSource, tenant: ITenant): Promise<IUser[]> => {
 	const superAdmins: Promise<IUser>[] = [];
 
 	const { id: tenantId } = tenant;
@@ -251,20 +220,13 @@ const seedSuperAdminUsers = async (
 
 	// Generate default super admins
 	for (const superAdmin of DEFAULT_SUPER_ADMINS) {
-		const superAdminUser: Promise<IUser> = generateDefaultUser(
-			superAdmin,
-			superAdminRole,
-			tenant
-		);
+		const superAdminUser: Promise<IUser> = generateDefaultUser(superAdmin, superAdminRole, tenant);
 		superAdmins.push(superAdminUser);
 	}
 	return Promise.all(superAdmins);
 };
 
-const seedAdminUsers = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IUser[]> => {
+const seedAdminUsers = async (dataSource: DataSource, tenant: ITenant): Promise<IUser[]> => {
 	const admins: Promise<IUser>[] = [];
 
 	const { id: tenantId } = tenant;
@@ -275,11 +237,7 @@ const seedAdminUsers = async (
 
 	// Generate default admins
 	for (const admin of DEFAULT_ADMINS) {
-		const adminUser: Promise<IUser> = generateDefaultUser(
-			admin,
-			adminRole,
-			tenant
-		);
+		const adminUser: Promise<IUser> = generateDefaultUser(admin, adminRole, tenant);
 		admins.push(adminUser);
 	}
 	return Promise.all(admins);
@@ -328,10 +286,7 @@ const seedRandomUsers = async (
 	return Promise.all(randomUsers);
 };
 
-const seedDefaultCandidateUsers = async (
-	dataSource: DataSource,
-	tenant: ITenant
-): Promise<IUser[]> => {
+const seedDefaultCandidateUsers = async (dataSource: DataSource, tenant: ITenant): Promise<IUser[]> => {
 	const { id: tenantId } = tenant;
 	const candidateRole = await dataSource.manager.findOneBy(Role, {
 		tenantId,
@@ -350,11 +305,7 @@ const seedDefaultCandidateUsers = async (
 	return Promise.all(defaultCandidateUsers);
 };
 
-const generateDefaultUser = async (
-	defaultUser: IDefaultUser,
-	role: IRole,
-	tenant: ITenant
-): Promise<IUser> => {
+const generateDefaultUser = async (defaultUser: IDefaultUser, role: IRole, tenant: ITenant): Promise<IUser> => {
 	const user = new User();
 	const {
 		firstName,
@@ -375,19 +326,13 @@ const generateDefaultUser = async (
 	user.preferredLanguage = preferredLanguage;
 	user.preferredComponentLayout = preferredComponentLayout;
 	user.emailVerifiedAt = new Date();
-
-	user.hash = await bcrypt.hash(
-		defaultUser.password,
-		env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
-	);
+	user.lastLoginAt = getRandomDateWithinLast3Months();
+	user.hash = await bcrypt.hash(defaultUser.password, env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 
 	return user;
 };
 
-const generateRandomUser = async (
-	role: IRole,
-	tenant: ITenant
-): Promise<IUser> => {
+const generateRandomUser = async (role: IRole, tenant: ITenant): Promise<IUser> => {
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
 	const username = faker.internet.userName(firstName, lastName);
@@ -404,11 +349,8 @@ const generateRandomUser = async (
 	user.tenant = tenant;
 	user.preferredLanguage = getRandomLanguage();
 	user.emailVerifiedAt = new Date();
-
-	user.hash = await bcrypt.hash(
-		'123456',
-		env.USER_PASSWORD_BCRYPT_SALT_ROUNDS
-	);
+	user.lastLoginAt = getRandomDateWithinLast3Months();
+	user.hash = await bcrypt.hash('123456', env.USER_PASSWORD_BCRYPT_SALT_ROUNDS);
 
 	return user;
 };
@@ -423,9 +365,16 @@ function getRandomLanguage(): LanguagesEnum {
 	return languages[index];
 }
 
-const insertUsers = async (
-	dataSource: DataSource,
-	users: IUser[]
-): Promise<IUser[]> => {
+/**
+ * Get a random date within the last 3 months.
+ */
+function getRandomDateWithinLast3Months(): Date {
+	const now = moment();
+	const threeMonthsAgo = moment().subtract(3, 'months');
+	const randomDate = moment(threeMonthsAgo).add(Math.random() * now.diff(threeMonthsAgo), 'milliseconds');
+	return randomDate.toDate();
+}
+
+const insertUsers = async (dataSource: DataSource, users: IUser[]): Promise<IUser[]> => {
 	return await dataSource.manager.save(users);
 };
