@@ -142,6 +142,8 @@ import { TaskEstimationModule } from './tasks/estimation/task-estimation.module'
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 import { SocialAccountModule } from './auth/social-account/social-account.module';
 import { OrganizationProjectModuleModule } from './organization-project-module/organization-project-module.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
 
 const { unleashConfig } = environment;
 
@@ -433,7 +435,9 @@ if (environment.THROTTLE_ENABLED) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule
+		TaskEstimationModule,
+		FavoriteModule,
+		GlobalFavoriteModule
 	],
 	controllers: [AppController],
 	providers: [
