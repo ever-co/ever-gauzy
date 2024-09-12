@@ -4,6 +4,7 @@ import { TenantService } from '../tenant/tenant.service';
 import { UserService } from '../user/user.service';
 import { EmployeeService } from '../employee/employee.service';
 import { OrganizationService } from '../organization/organization.service';
+import { StatisticService } from '../time-tracking/statistic/statistic.service';
 
 @Injectable()
 export class StatsService {
@@ -11,7 +12,8 @@ export class StatsService {
 		readonly _tenantService: TenantService,
 		readonly _userService: UserService,
 		readonly _employeeService: EmployeeService,
-		readonly _organizationService: OrganizationService
+		readonly _organizationService: OrganizationService,
+		readonly _statisticService: StatisticService
 	) {}
 
 	/**
@@ -29,13 +31,15 @@ export class StatsService {
 			const users = await this._userService.getMonthlyActiveUsers(); // Get the count of monthly active users
 			const employees = await this._employeeService.count(); // Count the number of employees
 			const organizations = await this._organizationService.count(); // Count the number of organizations
+			const trackedHours = await this._statisticService.getOverallTrackedTime(); // Fetch the overall tracked time
 
 			// Return the global stats as an object
 			return {
 				tenants,
 				users,
 				employees,
-				organizations
+				organizations,
+				trackedHours
 				// Add more properties here as needed
 			};
 		} catch (error) {

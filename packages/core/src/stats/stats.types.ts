@@ -6,4 +6,5 @@ export interface GlobalStats {
 	users: number;
 	employees: number;
 	organizations: number;
+	trackedHours: number;
 }
