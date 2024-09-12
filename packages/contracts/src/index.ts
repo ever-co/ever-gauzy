@@ -18,6 +18,7 @@ export * from './candidate-technologies.model';
 export * from './candidate.model';
 export * from './changelog.model';
 export * from './chart.model';
+export * from './comment.model';
 export * from './contact.model';
 export * from './core.model';
 export * from './country.model';

@@ -34,7 +34,8 @@ import {
 	IDailyPlan,
 	IOrganizationProjectModule,
 	ID,
-	IFavorite
+	IFavorite,
+	IComment
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -49,6 +50,7 @@ import {
 } from '../core/decorators/entity';
 import {
 	Candidate,
+	Comment,
 	Contact,
 	DailyPlan,
 	EmployeeAward,
@@ -711,6 +713,17 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		onDelete: 'CASCADE'
 	})
 	equipmentSharings?: IEquipmentSharing[];
+
+	/**
+	 * Comments
+	 */
+	@MultiORMManyToMany(() => Comment, (it) => it.members, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	assignedComments?: IComment[];
 
 	/*
 	|--------------------------------------------------------------------------

@@ -1,11 +1,13 @@
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
-import { IEmployee, IEmployeeEntityInput } from './employee.model';
+import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 
-export interface IComment extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
+export interface IComment extends IBasePerTenantAndOrganizationEntityModel {
 	entity: CommentEntityEnum;
 	entityId: ID; // Indicate the ID of entity record comment related to
 	comment: string;
+	creator: IEmployee;
+	creatorId: ID; // The comment's employee author ID
 	resolved?: boolean;
 	resolvedAt?: Date;
 	resolvedBy?: IEmployee;
