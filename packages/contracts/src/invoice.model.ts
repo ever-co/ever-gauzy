@@ -6,6 +6,14 @@ import { ITag } from './tag.model';
 import { IPayment } from './payment.model';
 import { IInvoiceEstimateHistory } from './invoice-estimate-history.model';
 
+/**
+ * Interface representing invoice statistics.
+ */
+export interface InvoiceStats {
+	count: number; // The count of invoices
+	amount: number; // The total amount of all invoices
+}
+
 export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate: Date;
 	invoiceNumber: number;
@@ -40,8 +48,7 @@ export interface IInvoice extends IBasePerTenantAndOrganizationEntityModel {
 	token?: string;
 }
 
-export interface IInvoiceCreateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IInvoiceCreateInput extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceDate?: Date;
 	invoiceNumber?: number;
 	dueDate?: Date;

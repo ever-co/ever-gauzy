@@ -1,10 +1,9 @@
 import { PaginationParams, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In } from 'typeorm';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
-import { IInvoice, IOrganization, LanguagesEnum } from '@gauzy/contracts';
+import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
 import { sign } from 'jsonwebtoken';
 import { environment } from '@gauzy/config';
 import { I18nService } from 'nestjs-i18n';
@@ -20,11 +19,8 @@ import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.reposi
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
-		@InjectRepository(Invoice)
-		typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
-
-		mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
-
+		readonly typeOrmInvoiceRepository: TypeOrmInvoiceRepository,
+		readonly mikroOrmInvoiceRepository: MikroOrmInvoiceRepository,
 		private readonly emailService: EmailService,
 		private readonly estimateEmailService: EstimateEmailService,
 		private readonly pdfmakerService: PdfmakerService,
@@ -32,6 +28,25 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		private readonly organizationService: OrganizationService
 	) {
 		super(typeOrmInvoiceRepository, mikroOrmInvoiceRepository);
+	}
+
+	/**
+	 * Retrieves the count and total amount of invoices where `isEstimate` is false.
+	 *
+	 * @returns {Promise<InvoiceStats>} An object containing the count of invoices and the total amount.
+	 */
+	async getInvoiceStats(): Promise<InvoiceStats> {
+		const result = await this.typeOrmInvoiceRepository
+			.createQueryBuilder('invoice')
+			.select('COUNT(invoice.id)', 'count')
+			.addSelect('SUM(invoice.totalValue)', 'amount')
+			.where('invoice.isEstimate = :isEstimate', { isEstimate: false })
+			.getRawOne();
+
+		return {
+			count: parseInt(result.count, 10),
+			amount: parseFloat(result.amount) || 0
+		};
 	}
 
 	/**

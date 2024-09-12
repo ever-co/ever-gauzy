@@ -23,8 +23,21 @@ import {
 	ITimeLog
 } from '@gauzy/contracts';
 import { ArraySum, isNotEmpty } from '@gauzy/common';
-import { ConfigService, DatabaseTypeEnum, MultiORM, isBetterSqlite3, isMySQL, isPostgres, isSqlite } from '@gauzy/config';
-import { concateUserNameExpression, getActivityDurationQueryString, getDurationQueryString, getTotalDurationQueryString } from './statistic.helper';
+import {
+	ConfigService,
+	DatabaseTypeEnum,
+	MultiORM,
+	isBetterSqlite3,
+	isMySQL,
+	isPostgres,
+	isSqlite
+} from '@gauzy/config';
+import {
+	concateUserNameExpression,
+	getActivityDurationQueryString,
+	getDurationQueryString,
+	getTotalDurationQueryString
+} from './statistic.helper';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
@@ -48,7 +61,42 @@ export class StatisticService {
 		private readonly typeOrmTimeLogRepository: TypeOrmTimeLogRepository,
 		private readonly mikroOrmTimeLogRepository: MikroOrmTimeLogRepository,
 		private readonly configService: ConfigService
-	) { }
+	) {}
+
+	/**
+	 * Fetches the overall tracked time for time slots, aggregating data from related time logs.
+	 *
+	 * This function constructs a database query to join the `time_slot` and `time_log` entities,
+	 * calculating the overall duration. It returns the total aggregated duration in hours.
+	 *
+	 * @returns {Promise<number>} The overall tracked time as a summed duration value in hours.
+	 */
+	async getOverallTrackedTime(): Promise<number> {
+		// Retrieve the database type from the configuration service
+		const dbType = this.configService.dbConnectionOptions.type;
+
+		// Create a query builder for the TimeSlot entity
+		const query = this.typeOrmTimeSlotRepository.createQueryBuilder('time_slot');
+
+		// Join with the time_log table
+		query.innerJoin('time_slot.timeLogs', 'time_log');
+
+		// Select the sum of the overall duration, dynamically based on the DB type
+		query.select(getTotalDurationQueryString(dbType, 'time_log'), 'overall_duration');
+
+		// Execute the query and fetch the raw result from the database
+		const overallDuration = await query.getRawOne();
+
+		// Extract the overall duration in seconds
+		const overallDurationInSeconds = overallDuration?.overall_duration ?? 0;
+		console.log('Overall Tracked Time Duration (seconds):', overallDurationInSeconds);
+
+		// Convert the overall duration in seconds to hours
+		const overallDurationInHours = overallDurationInSeconds / 3600;
+		console.log('Overall Tracked Time Duration (hours):', overallDurationInHours);
+
+		return overallDurationInHours;
+	}
 
 	/**
 	 * GET Time Tracking Dashboard Counts Statistics
@@ -121,7 +169,10 @@ export class StatisticService {
 			.andWhere(`timeLogs.organizationId = :organizationId`, { organizationId });
 
 		weekQuery
-			.andWhere(p(`"${weekQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), { startDate: start, endDate: end })
+			.andWhere(p(`"${weekQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+				startDate: start,
+				endDate: end
+			})
 			.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), { startDate: start, endDate: end });
 
 		if (isNotEmpty(employeeIds)) {
@@ -142,7 +193,10 @@ export class StatisticService {
 			const startLevel = activityLevel.start * 6;
 			const endLevel = activityLevel.end * 6;
 
-			weekQuery.andWhere(p(`"${weekQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), { startLevel, endLevel });
+			weekQuery.andWhere(p(`"${weekQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
+				startLevel,
+				endLevel
+			});
 		}
 
 		if (isNotEmpty(request.logType)) {
@@ -163,7 +217,9 @@ export class StatisticService {
 		const weekTimeStatistics = await weekQuery.getRawMany();
 
 		const weekDuration = reduce(pluck(weekTimeStatistics, 'week_duration'), ArraySum, 0);
-		const weekPercentage = (reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) / reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
+		const weekPercentage =
+			(reduce(pluck(weekTimeStatistics, 'overall'), ArraySum, 0) * 100) /
+			reduce(pluck(weekTimeStatistics, 'duration'), ArraySum, 0);
 
 		weekActivities['duration'] = weekDuration;
 		weekActivities['overall'] = weekPercentage;
@@ -196,8 +252,14 @@ export class StatisticService {
 			.andWhere(`timeLogs.organizationId = :organizationId`, { organizationId });
 
 		todayQuery
-			.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), { startDate: startToday, endDate: endToday })
-			.andWhere(p(`"${todayQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), { startDate: startToday, endDate: endToday });
+			.andWhere(p(`"timeLogs"."startedAt" BETWEEN :startDate AND :endDate`), {
+				startDate: startToday,
+				endDate: endToday
+			})
+			.andWhere(p(`"${todayQuery.alias}"."startedAt" BETWEEN :startDate AND :endDate`), {
+				startDate: startToday,
+				endDate: endToday
+			});
 
 		if (isNotEmpty(employeeIds)) {
 			todayQuery.andWhere(p(`"timeLogs"."employeeId" IN (:...employeeIds)`), { employeeIds });
@@ -217,7 +279,10 @@ export class StatisticService {
 			const startLevel = activityLevel.start * 6;
 			const endLevel = activityLevel.end * 6;
 
-			todayQuery.andWhere(p(`"${todayQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), { startLevel, endLevel });
+			todayQuery.andWhere(p(`"${todayQuery.alias}"."overall" BETWEEN :startLevel AND :endLevel`), {
+				startLevel,
+				endLevel
+			});
 		}
 
 		if (isNotEmpty(request.logType)) {
@@ -238,7 +303,9 @@ export class StatisticService {
 		const todayTimeStatistics = await todayQuery.getRawMany();
 
 		const todayDuration = reduce(pluck(todayTimeStatistics, 'today_duration'), ArraySum, 0);
-		const todayPercentage = (reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) / reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
+		const todayPercentage =
+			(reduce(pluck(todayTimeStatistics, 'overall'), ArraySum, 0) * 100) /
+			reduce(pluck(todayTimeStatistics, 'duration'), ArraySum, 0);
 
 		todayActivities['duration'] = todayDuration;
 		todayActivities['overall'] = todayPercentage;
@@ -541,10 +608,10 @@ export class StatisticService {
 						isSqlite() || isBetterSqlite3()
 							? `(strftime('%w', timeLogs.startedAt))`
 							: isPostgres()
-								? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-								: isMySQL()
-									? p('DayOfWeek("timeLogs"."startedAt") - 1')
-									: '0',
+							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+							: isMySQL()
+							? p('DayOfWeek("timeLogs"."startedAt") - 1')
+							: '0',
 						'day'
 					)
 					.andWhere(p(`"${weekHoursQuery.alias}"."id" = :memberId`), { memberId: member.id })
@@ -591,10 +658,10 @@ export class StatisticService {
 						isSqlite() || isBetterSqlite3()
 							? `(strftime('%w', timeLogs.startedAt))`
 							: isPostgres()
-								? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
-								: isMySQL()
-									? p('DayOfWeek("timeLogs"."startedAt") - 1')
-									: '0'
+							? 'EXTRACT(DOW FROM "timeLogs"."startedAt")'
+							: isMySQL()
+							? p('DayOfWeek("timeLogs"."startedAt") - 1')
+							: '0'
 					);
 
 				member.weekHours = await weekHoursQuery.getRawMany();
@@ -656,9 +723,7 @@ export class StatisticService {
 				);
 				break;
 			default:
-				throw Error(
-					`cannot create statistic query due to unsupported database type: ${dbType}`
-				);
+				throw Error(`cannot create statistic query due to unsupported database type: ${dbType}`);
 		}
 
 		query
@@ -744,7 +809,9 @@ export class StatisticService {
 				totalDurationQueryString = `COALESCE(ROUND(SUM(extract(epoch from (COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW()) - "${totalDurationQuery.alias}"."startedAt")))), 0)`;
 				break;
 			case DatabaseTypeEnum.mysql:
-				totalDurationQueryString = p(`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`);
+				totalDurationQueryString = p(
+					`COALESCE(ROUND(SUM(TIMESTAMPDIFF(SECOND, "${totalDurationQuery.alias}"."startedAt", COALESCE("${totalDurationQuery.alias}"."stoppedAt", NOW())))), 0)`
+				);
 				break;
 			default:
 				throw Error(`cannot create statistic query due to unsupported database type: ${dbType}`);
@@ -785,7 +852,9 @@ export class StatisticService {
 						});
 					}
 					if (isNotEmpty(teamIds)) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationTeamId" IN (:...teamIds)`), { teamIds });
+						qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationTeamId" IN (:...teamIds)`), {
+							teamIds
+						});
 					}
 				})
 			);
@@ -817,18 +886,12 @@ export class StatisticService {
 		let end: string | Date;
 
 		if (startDate && endDate) {
-			const range = getDateRangeFormat(
-				moment.utc(startDate),
-				moment.utc(endDate)
-			);
+			const range = getDateRangeFormat(moment.utc(startDate), moment.utc(endDate));
 			start = range.start;
 			end = range.end;
 		} else if (defaultRange) {
 			const unit = unitOfTime || 'week';
-			const range = getDateRangeFormat(
-				moment().startOf(unit).utc(),
-				moment().endOf(unit).utc()
-			);
+			const range = getDateRangeFormat(moment().startOf(unit).utc(), moment().endOf(unit).utc());
 			start = range.start;
 			end = range.end;
 		}
@@ -836,8 +899,15 @@ export class StatisticService {
 		/*
 		 *  Get employees id of the organization or get current employee id
 		 */
-		if (user && user.employeeId && (onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))) {
-			if (isNotEmpty(organizationTeamId) || RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)) {
+		if (
+			user &&
+			user.employeeId &&
+			(onlyMe || !RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE))
+		) {
+			if (
+				isNotEmpty(organizationTeamId) ||
+				RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW)
+			) {
 				employeeIds = [...employeeIds];
 			} else {
 				employeeIds = [user.employeeId];
@@ -845,18 +915,12 @@ export class StatisticService {
 		}
 
 		if (todayStart && todayEnd) {
-			const range = getDateRangeFormat(
-				moment.utc(todayStart),
-				moment.utc(todayEnd)
-			);
+			const range = getDateRangeFormat(moment.utc(todayStart), moment.utc(todayEnd));
 			todayStart = range.start;
 			todayEnd = range.end;
 		} else if (defaultRange) {
 			const unit = unitOfTime || 'day';
-			const range = getDateRangeFormat(
-				moment().startOf(unit).utc(),
-				moment().endOf(unit).utc()
-			);
+			const range = getDateRangeFormat(moment().startOf(unit).utc(), moment().endOf(unit).utc());
 			todayStart = range.start;
 			todayEnd = range.end;
 		}
@@ -870,115 +934,133 @@ export class StatisticService {
 		 * Get Today's Task Statistics
 		 */
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				// Start building the MikroORM query
-				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
-				const knex = this.mikroOrmTimeLogRepository.getKnex();
+			case MultiORMEnum.MikroORM:
+				{
+					// Start building the MikroORM query
+					const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+					const knex = this.mikroOrmTimeLogRepository.getKnex();
 
-				// Add the raw SQL snippet to the select
-				const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
+					// Add the raw SQL snippet to the select
+					const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
 
-				// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
-				let sq = knex(qb.alias).select([
-					`task.title AS title`,
-					`task.id AS taskId`,
-					`${qb.alias}.updatedAt AS updatedAt`,
-					knex.raw(`${raw} AS today_duration`),
-				]);
+					// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
+					let sq = knex(qb.alias).select([
+						`task.title AS title`,
+						`task.id AS taskId`,
+						`${qb.alias}.updatedAt AS updatedAt`,
+						knex.raw(`${raw} AS today_duration`)
+					]);
 
-				// Add join clauses
-				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
-				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
-				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+					// Add join clauses
+					sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+					sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+					sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
 
-				// Add where clauses
-				sq.andWhere({
-					[`${qb.alias}.tenantId`]: tenantId,
-					[`${qb.alias}.organizationId`]: organizationId,
-					[`time_slot.tenantId`]: tenantId,
-					[`time_slot.organizationId`]: organizationId
-				});
-
-				if (todayStart && todayEnd) {
-					sq.whereBetween(`${qb.alias}.startedAt`, [todayStart, todayEnd]);
-					sq.whereBetween(`time_slot.startedAt`, [todayStart, todayEnd]);
-				}
-				if (isNotEmpty(employeeIds)) {
-					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
-					sq.whereIn(`time_slot.employeeId`, employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					sq.whereIn(`${qb.alias}.projectId`, projectIds);
-				}
-				if (isNotEmpty(taskIds)) {
-					sq.whereIn(`${qb.alias}.taskId`, taskIds);
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(function () {
-						if (isNotEmpty(organizationTeamId)) {
-							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
-						}
-						if (isNotEmpty(teamIds)) {
-							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
-						}
+					// Add where clauses
+					sq.andWhere({
+						[`${qb.alias}.tenantId`]: tenantId,
+						[`${qb.alias}.organizationId`]: organizationId,
+						[`time_slot.tenantId`]: tenantId,
+						[`time_slot.organizationId`]: organizationId
 					});
+
+					if (todayStart && todayEnd) {
+						sq.whereBetween(`${qb.alias}.startedAt`, [todayStart, todayEnd]);
+						sq.whereBetween(`time_slot.startedAt`, [todayStart, todayEnd]);
+					}
+					if (isNotEmpty(employeeIds)) {
+						sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+						sq.whereIn(`time_slot.employeeId`, employeeIds);
+					}
+					if (isNotEmpty(projectIds)) {
+						sq.whereIn(`${qb.alias}.projectId`, projectIds);
+					}
+					if (isNotEmpty(taskIds)) {
+						sq.whereIn(`${qb.alias}.taskId`, taskIds);
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						sq.andWhere(function () {
+							if (isNotEmpty(organizationTeamId)) {
+								this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							}
+							if (isNotEmpty(teamIds)) {
+								this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							}
+						});
+					}
+					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
+					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
+					console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
+					// Execute the raw SQL query and get the results
+					todayStatistics = (await knex.raw(sq.toString())).rows || [];
 				}
-				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
-				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-				console.log(chalk.green(sq.toString() + ' || Get Today Statistics Query MikroORM!'));
-				// Execute the raw SQL query and get the results
-				todayStatistics = (await knex.raw(sq.toString())).rows || [];
-			}
 				break;
 
-			case MultiORMEnum.TypeORM: {
-				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+			case MultiORMEnum.TypeORM:
+				{
+					const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
 
-				qb.select(p(`"task"."title"`), 'title')
-				qb.addSelect(p(`"task"."id"`), 'taskId')
-				qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt')
-				qb.addSelect(getDurationQueryString(dbType, qb.alias, 'time_slot'), `today_duration`)
+					qb.select(p(`"task"."title"`), 'title');
+					qb.addSelect(p(`"task"."id"`), 'taskId');
+					qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt');
+					qb.addSelect(getDurationQueryString(dbType, qb.alias, 'time_slot'), `today_duration`);
 
-				// Add join clauses
-				qb.innerJoin(`${qb.alias}.task`, 'task');
-				qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
+					// Add join clauses
+					qb.innerJoin(`${qb.alias}.task`, 'task');
+					qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
 
-				// Combine tenant and organization ID conditions
-				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`), { tenantId, organizationId });
-				qb.andWhere(p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`), { tenantId, organizationId });
+					// Combine tenant and organization ID conditions
+					qb.andWhere(
+						p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`),
+						{ tenantId, organizationId }
+					);
+					qb.andWhere(
+						p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`),
+						{ tenantId, organizationId }
+					);
 
-				// Add conditions based on today's start and end time
-				if (todayStart && todayEnd) {
-					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`), { todayStart, todayEnd });
-					qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`), { todayStart, todayEnd });
+					// Add conditions based on today's start and end time
+					if (todayStart && todayEnd) {
+						qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
+							todayStart,
+							todayEnd
+						});
+						qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :todayStart AND :todayEnd`), {
+							todayStart,
+							todayEnd
+						});
+					}
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+						qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+					}
+					if (isNotEmpty(taskIds)) {
+						qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						qb.andWhere(
+							new Brackets((web) => {
+								if (isNotEmpty(organizationTeamId)) {
+									web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, {
+										organizationTeamId
+									});
+								}
+								if (isNotEmpty(teamIds)) {
+									web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
+								}
+							})
+						);
+					}
+					qb.groupBy(p(`"${qb.alias}"."id"`));
+					qb.addGroupBy(p(`"task"."id"`));
+					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
+					console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
+					// Execute the SQL query and get the results
+					todayStatistics = await qb.getRawMany();
 				}
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-					qb.andWhere(p(`"time_slot"."employeeId" IN (:...employeeIds)`), { employeeIds });
-				}
-				if (isNotEmpty(projectIds)) {
-					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
-				}
-				if (isNotEmpty(taskIds)) {
-					qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					qb.andWhere(new Brackets(web => {
-						if (isNotEmpty(organizationTeamId)) {
-							web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, { organizationTeamId });
-						}
-						if (isNotEmpty(teamIds)) {
-							web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
-						}
-					}));
-				}
-				qb.groupBy(p(`"${qb.alias}"."id"`))
-				qb.addGroupBy(p(`"task"."id"`))
-				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-				console.log(qb.getQuery(), ' || Get Today Statistics Query TypeORM');
-				// Execute the SQL query and get the results
-				todayStatistics = await qb.getRawMany();
-			}
 				break;
 			default:
 				throw new Error(`Cannot create statistic query due to unsupported database type: ${dbType}`);
@@ -990,119 +1072,136 @@ export class StatisticService {
 		 * Get Given Time Frame Task Statistics
 		 */
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				// Start building the MikroORM query
-				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
-				const knex = this.mikroOrmTimeLogRepository.getKnex();
+			case MultiORMEnum.MikroORM:
+				{
+					// Start building the MikroORM query
+					const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+					const knex = this.mikroOrmTimeLogRepository.getKnex();
 
-				// Add the raw SQL snippet to the select
-				const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
+					// Add the raw SQL snippet to the select
+					const raw = getDurationQueryString(dbType, qb.alias, 'time_slot');
 
-				// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
-				let sq = knex(qb.alias).select([
-					`task.title AS title`,
-					`task.id AS taskId`,
-					`${qb.alias}.updatedAt AS updatedAt`,
-					knex.raw(`${raw} AS duration`),
-				]);
+					// Constructs SQL query to fetch task title, ID, last updated timestamp, and today's duration.
+					let sq = knex(qb.alias).select([
+						`task.title AS title`,
+						`task.id AS taskId`,
+						`${qb.alias}.updatedAt AS updatedAt`,
+						knex.raw(`${raw} AS duration`)
+					]);
 
-				// Add join clauses
-				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
-				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
-				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+					// Add join clauses
+					sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+					sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+					sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
 
-				// Add where clauses
-				sq.andWhere({
-					[`${qb.alias}.tenantId`]: tenantId,
-					[`${qb.alias}.organizationId`]: organizationId,
-					[`time_slot.tenantId`]: tenantId,
-					[`time_slot.organizationId`]: organizationId
-				});
-
-				if (start && end) {
-					sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
-					sq.whereBetween(`time_slot.startedAt`, [start, end]);
-				}
-				if (isNotEmpty(employeeIds)) {
-					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
-					sq.whereIn(`time_slot.employeeId`, employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					sq.whereIn(`${qb.alias}.projectId`, projectIds);
-				}
-				if (isNotEmpty(taskIds)) {
-					sq.whereIn(`${qb.alias}.taskId`, taskIds);
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(function () {
-						if (isNotEmpty(organizationTeamId)) {
-							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
-						}
-						if (isNotEmpty(teamIds)) {
-							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
-						}
+					// Add where clauses
+					sq.andWhere({
+						[`${qb.alias}.tenantId`]: tenantId,
+						[`${qb.alias}.organizationId`]: organizationId,
+						[`time_slot.tenantId`]: tenantId,
+						[`time_slot.organizationId`]: organizationId
 					});
+
+					if (start && end) {
+						sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
+						sq.whereBetween(`time_slot.startedAt`, [start, end]);
+					}
+					if (isNotEmpty(employeeIds)) {
+						sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+						sq.whereIn(`time_slot.employeeId`, employeeIds);
+					}
+					if (isNotEmpty(projectIds)) {
+						sq.whereIn(`${qb.alias}.projectId`, projectIds);
+					}
+					if (isNotEmpty(taskIds)) {
+						sq.whereIn(`${qb.alias}.taskId`, taskIds);
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						sq.andWhere(function () {
+							if (isNotEmpty(organizationTeamId)) {
+								this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							}
+							if (isNotEmpty(teamIds)) {
+								this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							}
+						});
+					}
+					sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
+					sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
+					console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
+					// Execute the raw SQL query and get the results
+					statistics = (await knex.raw(sq.toString())).rows || [];
 				}
-				sq.groupBy([`${qb.alias}.id`, 'task.id']); // Apply multiple group by clauses in a single statement
-				sq.orderBy(`${qb.alias}.updatedAt`, 'desc'); // Apply order by clause
-				console.log(chalk.green(sq.toString() + ' || Get Statistics Query MikroORM!'));
-				// Execute the raw SQL query and get the results
-				statistics = (await knex.raw(sq.toString())).rows || [];
-			}
 				break;
 
-			case MultiORMEnum.TypeORM: {
-				/**
-				 * Get Time Range Statistics
-				 */
-				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-				qb.select(p(`"task"."title"`), 'title')
-				qb.addSelect(p(`"task"."id"`), 'taskId')
-				qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt')
-				qb.addSelect(getDurationQueryString(dbType, qb.alias, 'time_slot'), `duration`)
+			case MultiORMEnum.TypeORM:
+				{
+					/**
+					 * Get Time Range Statistics
+					 */
+					const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+					qb.select(p(`"task"."title"`), 'title');
+					qb.addSelect(p(`"task"."id"`), 'taskId');
+					qb.addSelect(p(`"${qb.alias}"."updatedAt"`), 'updatedAt');
+					qb.addSelect(getDurationQueryString(dbType, qb.alias, 'time_slot'), `duration`);
 
-				// Add join clauses
-				qb.innerJoin(`${qb.alias}.task`, 'task');
-				qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
+					// Add join clauses
+					qb.innerJoin(`${qb.alias}.task`, 'task');
+					qb.innerJoin(`${qb.alias}.timeSlots`, 'time_slot');
 
-				// Add join clauses
-				// Combine tenant and organization ID conditions for qb.alias
-				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`), { tenantId, organizationId });
-				// Combine tenant and organization ID conditions for time_slot
-				qb.andWhere(p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`), { tenantId, organizationId });
+					// Add join clauses
+					// Combine tenant and organization ID conditions for qb.alias
+					qb.andWhere(
+						p(`"${qb.alias}"."tenantId" = :tenantId AND "${qb.alias}"."organizationId" = :organizationId`),
+						{ tenantId, organizationId }
+					);
+					// Combine tenant and organization ID conditions for time_slot
+					qb.andWhere(
+						p(`"time_slot"."tenantId" = :tenantId AND "time_slot"."organizationId" = :organizationId`),
+						{ tenantId, organizationId }
+					);
 
-				// Add conditions based on start and end time
-				if (start && end) {
-					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
-					qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), { start, end });
-				}
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds) AND "time_slot"."employeeId" IN (:...employeeIds)`), { employeeIds });
-				}
-				if (isNotEmpty(projectIds)) {
-					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
-				}
-				if (isNotEmpty(taskIds)) {
-					qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					qb.andWhere(new Brackets(web => {
-						if (isNotEmpty(organizationTeamId)) {
-							web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, { organizationTeamId });
-						}
-						if (isNotEmpty(teamIds)) {
-							web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
-						}
-					}));
-				}
+					// Add conditions based on start and end time
+					if (start && end) {
+						qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
+						qb.andWhere(p(`"time_slot"."startedAt" BETWEEN :start AND :end`), { start, end });
+					}
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(
+							p(
+								`"${qb.alias}"."employeeId" IN (:...employeeIds) AND "time_slot"."employeeId" IN (:...employeeIds)`
+							),
+							{ employeeIds }
+						);
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+					}
+					if (isNotEmpty(taskIds)) {
+						qb.andWhere(p(`"${qb.alias}"."taskId" IN (:...taskIds)`), { taskIds });
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						qb.andWhere(
+							new Brackets((web) => {
+								if (isNotEmpty(organizationTeamId)) {
+									web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, {
+										organizationTeamId
+									});
+								}
+								if (isNotEmpty(teamIds)) {
+									web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
+								}
+							})
+						);
+					}
 
-				qb.groupBy(p(`"${qb.alias}"."id"`));
-				qb.addGroupBy(p(`"task"."id"`));
-				qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
-				console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
-				// Execute the raw SQL query and get the results
-				statistics = await qb.getRawMany();
-			}
+					qb.groupBy(p(`"${qb.alias}"."id"`));
+					qb.addGroupBy(p(`"task"."id"`));
+					qb.orderBy(p(`"${qb.alias}"."updatedAt"`), 'DESC');
+					console.log(qb.getQueryAndParameters(), 'Get Statistics Query TypeORM');
+					// Execute the raw SQL query and get the results
+					statistics = await qb.getRawMany();
+				}
 				break;
 			default:
 				throw new Error(`Cannot create statistic query due to unsupported database type: ${dbType}`);
@@ -1114,88 +1213,92 @@ export class StatisticService {
 		 * Get Total Task Statistics
 		 */
 		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
-				const knex = this.mikroOrmTimeLogRepository.getKnex();
+			case MultiORMEnum.MikroORM:
+				{
+					const qb = this.mikroOrmTimeLogRepository.createQueryBuilder('time_log');
+					const knex = this.mikroOrmTimeLogRepository.getKnex();
 
-				// Add the raw SQL snippet to the select
-				const raw = getTotalDurationQueryString(dbType, qb.alias);
-				// Construct your SQL query using knex
-				let sq = knex(qb.alias).select([
-					knex.raw(`${raw} AS duration`)
-				]);
+					// Add the raw SQL snippet to the select
+					const raw = getTotalDurationQueryString(dbType, qb.alias);
+					// Construct your SQL query using knex
+					let sq = knex(qb.alias).select([knex.raw(`${raw} AS duration`)]);
 
-				// Add join clauses
-				sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
-				sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
-				sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
+					// Add join clauses
+					sq.innerJoin('task', `${qb.alias}.taskId`, 'task.id');
+					sq.innerJoin('time_slot_time_logs', `${qb.alias}.id`, 'time_slot_time_logs.timeLogId');
+					sq.innerJoin('time_slot', 'time_slot_time_logs.timeSlotId', 'time_slot.id');
 
-				// Add where clauses
-				sq.andWhere({
-					[`${qb.alias}.tenantId`]: tenantId,
-					[`${qb.alias}.organizationId`]: organizationId
-				});
-
-				if (start && end) {
-					sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
-				}
-				if (isNotEmpty(employeeIds)) {
-					sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
-				}
-				if (isNotEmpty(projectIds)) {
-					sq.whereIn(`${qb.alias}.projectId`, projectIds);
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					sq.andWhere(function () {
-						if (isNotEmpty(organizationTeamId)) {
-							this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
-						}
-						if (isNotEmpty(teamIds)) {
-							this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
-						}
+					// Add where clauses
+					sq.andWhere({
+						[`${qb.alias}.tenantId`]: tenantId,
+						[`${qb.alias}.organizationId`]: organizationId
 					});
+
+					if (start && end) {
+						sq.whereBetween(`${qb.alias}.startedAt`, [start, end]);
+					}
+					if (isNotEmpty(employeeIds)) {
+						sq.whereIn(`${qb.alias}.employeeId`, employeeIds);
+					}
+					if (isNotEmpty(projectIds)) {
+						sq.whereIn(`${qb.alias}.projectId`, projectIds);
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						sq.andWhere(function () {
+							if (isNotEmpty(organizationTeamId)) {
+								this.orWhere(`${qb.alias}.organizationTeamId`, '=', organizationTeamId);
+							}
+							if (isNotEmpty(teamIds)) {
+								this.orWhereIn(`${qb.alias}.organizationTeamId`, teamIds);
+							}
+						});
+					}
+					console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
+					// Execute the raw SQL query and get the results
+					[totalDuration] = (await knex.raw(sq.toString())).rows || [];
 				}
-				console.log(chalk.green(sq.toString() + ' || Get Total Duration Query MikroORM!'));
-				// Execute the raw SQL query and get the results
-				[totalDuration] = (await knex.raw(sq.toString())).rows || [];
-			}
 
 				break;
 
-			case MultiORMEnum.TypeORM: {
-				const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
-				qb.select(getTotalDurationQueryString(dbType, qb.alias), 'duration');
+			case MultiORMEnum.TypeORM:
+				{
+					const qb = this.typeOrmTimeLogRepository.createQueryBuilder('time_log');
+					qb.select(getTotalDurationQueryString(dbType, qb.alias), 'duration');
 
-				// Add join clauses
-				qb.innerJoin(`${qb.alias}.task`, 'task');
+					// Add join clauses
+					qb.innerJoin(`${qb.alias}.task`, 'task');
 
-				// Add where clauses
-				qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
-				qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
+					// Add where clauses
+					qb.andWhere(p(`"${qb.alias}"."tenantId" = :tenantId`), { tenantId });
+					qb.andWhere(p(`"${qb.alias}"."organizationId" = :organizationId`), { organizationId });
 
-				if (start && end) {
-					qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
+					if (start && end) {
+						qb.andWhere(p(`"${qb.alias}"."startedAt" BETWEEN :start AND :end`), { start, end });
+					}
+					if (isNotEmpty(employeeIds)) {
+						qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+					}
+					if (isNotEmpty(projectIds)) {
+						qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
+					}
+					if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
+						qb.andWhere(
+							new Brackets((web) => {
+								if (isNotEmpty(organizationTeamId)) {
+									web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, {
+										organizationTeamId
+									});
+								}
+								if (isNotEmpty(teamIds)) {
+									web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
+								}
+							})
+						);
+					}
+					console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
+					// Execute the raw SQL query and get the results
+					totalDuration = await qb.getRawOne();
 				}
-				if (isNotEmpty(employeeIds)) {
-					qb.andWhere(p(`"${qb.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
-				}
-				if (isNotEmpty(projectIds)) {
-					qb.andWhere(p(`"${qb.alias}"."projectId" IN (:...projectIds)`), { projectIds });
-				}
-				if (isNotEmpty(organizationTeamId) || isNotEmpty(teamIds)) {
-					qb.andWhere(new Brackets(web => {
-						if (isNotEmpty(organizationTeamId)) {
-							web.orWhere(`${qb.alias}.organizationTeamId = :organizationTeamId`, { organizationTeamId });
-						}
-						if (isNotEmpty(teamIds)) {
-							web.orWhere(`${qb.alias}.organizationTeamId IN (:...teamIds)`, { teamIds });
-						}
-					}));
-				}
-				console.log(qb.getQuery(), 'Get Total Duration Query TypeORM!');
-				// Execute the raw SQL query and get the results
-				totalDuration = await qb.getRawOne();
-			}
 				break;
 
 			default:
@@ -1553,7 +1656,9 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					qb.andWhere(p(`"${totalDurationQuery.alias}"."tenantId" = :tenantId`), { tenantId });
-					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), { organizationId });
+					qb.andWhere(p(`"${totalDurationQuery.alias}"."organizationId" = :organizationId`), {
+						organizationId
+					});
 				})
 			)
 			.andWhere(
@@ -1565,7 +1670,9 @@ export class StatisticService {
 			.andWhere(
 				new Brackets((qb: WhereExpressionBuilder) => {
 					if (isNotEmpty(employeeIds)) {
-						qb.andWhere(p(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`), { employeeIds });
+						qb.andWhere(p(`"${totalDurationQuery.alias}"."employeeId" IN (:...employeeIds)`), {
+							employeeIds
+						});
 					}
 					if (isNotEmpty(projectIds)) {
 						qb.andWhere(p(`"${totalDurationQuery.alias}"."projectId" IN (:...projectIds)`), { projectIds });
@@ -1784,7 +1891,10 @@ export class StatisticService {
 
 		if (isNotEmpty(request.activityLevel)) {
 			const { start: startLevel, end: endLevel } = request.activityLevel;
-			qb.andWhere(`time_slot.overall BETWEEN :startLevel AND :endLevel`, { startLevel: startLevel * 6, endLevel: endLevel * 6 });
+			qb.andWhere(`time_slot.overall BETWEEN :startLevel AND :endLevel`, {
+				startLevel: startLevel * 6,
+				endLevel: endLevel * 6
+			});
 		}
 
 		if (isNotEmpty(request.logType)) {
@@ -1796,8 +1906,10 @@ export class StatisticService {
 		}
 
 		if (isNotEmpty(employeeIds)) {
-			qb.andWhere(`${query.alias}.employeeId IN (:...employeeIds)`, { employeeIds })
-				.andWhere(`time_slot.employeeId IN (:...employeeIds)`, { employeeIds });
+			qb.andWhere(`${query.alias}.employeeId IN (:...employeeIds)`, { employeeIds }).andWhere(
+				`time_slot.employeeId IN (:...employeeIds)`,
+				{ employeeIds }
+			);
 		}
 
 		if (isNotEmpty(projectIds)) {
