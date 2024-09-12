@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { RouterModule } from '@nestjs/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import * as moment from 'moment';
 import { InvoiceController } from './invoice.controller';
 import { InvoiceService } from './invoice.service';
 import { Invoice } from './invoice.entity';
@@ -13,6 +12,7 @@ import { EstimateEmailModule } from '../estimate-email/estimate-email.module';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { PdfmakerService } from './pdfmaker.service';
+import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 
 @Module({
 	imports: [
@@ -26,15 +26,7 @@ import { PdfmakerService } from './pdfmaker.service';
 		CqrsModule
 	],
 	controllers: [InvoiceController],
-	providers: [
-		InvoiceService,
-		PdfmakerService,
-		...CommandHandlers,
-		{
-			provide: 'MomentWrapper',
-			useValue: moment
-		}
-	],
-	exports: [TypeOrmModule, MikroOrmModule, InvoiceService, PdfmakerService]
+	providers: [InvoiceService, PdfmakerService, TypeOrmInvoiceRepository, ...CommandHandlers],
+	exports: [TypeOrmModule, MikroOrmModule, InvoiceService, PdfmakerService, TypeOrmInvoiceRepository]
 })
-export class InvoiceModule { }
+export class InvoiceModule {}
