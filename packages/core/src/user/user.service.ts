@@ -24,7 +24,8 @@ import {
 	IUser,
 	LanguagesEnum,
 	PermissionsEnum,
-	RolesEnum
+	RolesEnum,
+	UserStats
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { ConfigService, environment as env } from '@gauzy/config';
@@ -50,6 +51,28 @@ export class UserService extends TenantAwareCrudService<User> {
 	}
 
 	/**
+	 * Get the count of users and the number of users who logged in during the last 30 days.
+	 *
+	 * @returns {Promise<UserStats>} - A promise that resolves to an object containing user statistics.
+	 */
+	async getUserStats(): Promise<UserStats> {
+		try {
+			const [count, lastMonthActiveUsers] = await Promise.all([
+				this.count(), // Get the total number of users
+				this.getMonthlyActiveUsers() // Get the number of users active in the last 30 days
+			]);
+
+			return {
+				count, // The total number of users
+				lastMonthActiveUsers // The number of active users in the last month
+			};
+		} catch (error) {
+			console.error('Error fetching user stats:', error);
+			throw new Error(`Failed to retrieve user statistics: ${error.message}`);
+		}
+	}
+
+	/**
 	 * Get the count of users who logged in during the last 30 days.
 	 *
 	 * @returns {Promise<number>} - The count of active users
@@ -61,9 +84,7 @@ export class UserService extends TenantAwareCrudService<User> {
 
 			// Use the count method to fetch the count of users with lastLoginAt within the last 30 days
 			return await super.count({
-				where: {
-					lastLoginAt: MoreThan(lastLoginAt)
-				}
+				where: { lastLoginAt: MoreThan(lastLoginAt) }
 			});
 		} catch (error) {
 			// Handle error, log it, or throw a custom exception

@@ -44,8 +44,8 @@ export class StatsService {
 				tenantCount,
 				invoiceStats,
 				paymentStats,
-				totalTrackedTime,
-				monthlyActiveUsers
+				userStats,
+				totalTrackedTime
 			] = await Promise.all([
 				this._employeeService.count(), // Count the number of employees
 				this._taskService.count(), // Count the number of tasks
@@ -54,8 +54,8 @@ export class StatsService {
 				this._tenantService.count(), // Count the number of tenants
 				this._invoiceService.getInvoiceStats(), // Get invoice stats
 				this._paymentService.getPaymentStats(), // Get payment stats
-				this._statisticService.getOverallTrackedTime(), // Fetch the overall tracked time
-				this._userService.getMonthlyActiveUsers() // Get the count of monthly active users
+				this._userService.getUserStats(), // Total users and last month’s active users
+				this._statisticService.getOverallTrackedTime() // Fetch the overall tracked time
 			]);
 
 			// Return the global stats as an object
@@ -67,8 +67,8 @@ export class StatsService {
 				tenants: tenantCount,
 				invoices: invoiceStats,
 				payments: paymentStats,
-				hours: totalTrackedTime,
-				users: monthlyActiveUsers
+				users: userStats,
+				hours: totalTrackedTime
 			};
 		} catch (error) {
 			// Log the error and throw a custom error message
