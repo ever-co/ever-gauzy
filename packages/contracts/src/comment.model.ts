@@ -41,7 +41,7 @@ export interface ICommentCreateInput {
 	comment: string;
 	entity: CommentEntityEnum;
 	entityId: ID;
-	employeeId: ID;
+	creatorId: ID;
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];
