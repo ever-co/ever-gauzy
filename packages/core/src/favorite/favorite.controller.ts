@@ -57,7 +57,7 @@ export class FavoriteController extends CrudController<Favorite> {
 	})
 	@Get('/type')
 	@UseValidationPipe({ transform: true })
-	async getEmployeeProjectModules(@Query() params: PaginationParams<Favorite>) {
+	async getFavoriteDetails(@Query() params: PaginationParams<Favorite>) {
 		return await this.favoriteService.getFavoriteDetails(params);
 	}
 
