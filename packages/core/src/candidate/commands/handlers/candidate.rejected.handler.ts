@@ -5,15 +5,10 @@ import { CandidateService } from '../../candidate.service';
 import { CandidateRejectedCommand } from '../candidate.rejected.command';
 import { EmailService } from './../../../email-send/email.service';
 import { environment } from '@gauzy/config';
-import { UserOrganizationService } from 'user-organization/user-organization.services';
 
 @CommandHandler(CandidateRejectedCommand)
 export class CandidateRejectedHandler implements ICommandHandler<CandidateRejectedCommand> {
-	constructor(
-		private readonly candidateService: CandidateService,
-		private readonly _emailService: EmailService,
-		private readonly _userOrganizationService: UserOrganizationService
-	) {}
+	constructor(private readonly candidateService: CandidateService, private readonly _emailService: EmailService) {}
 
 	/**
 	 * Executes the candidate rejection process.
