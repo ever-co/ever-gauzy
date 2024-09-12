@@ -145,6 +145,7 @@ import { OrganizationProjectModuleModule } from './organization-project-module/o
 import { FavoriteModule } from './favorite/favorite.module';
 import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
 import { CommentModule } from './comment/comment.module';
+import { StatsModule } from './stats/stats.module'; // Global Stats Module
 
 const { unleashConfig } = environment;
 
@@ -439,7 +440,8 @@ if (environment.THROTTLE_ENABLED) {
 		TaskEstimationModule,
 		FavoriteModule,
 		GlobalFavoriteModule,
-		CommentModule
+		CommentModule,
+		StatsModule // Global Stats Module
 	],
 	controllers: [AppController],
 	providers: [
@@ -463,9 +465,7 @@ export class AppModule implements OnModuleInit {
 	constructor(private readonly clsService: ClsService) {
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: {
-				dow: 1
-			}
+			week: { dow: 1 }
 		});
 	}
 
