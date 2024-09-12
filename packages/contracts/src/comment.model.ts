@@ -47,6 +47,6 @@ export interface ICommentCreateInput {
 	teams?: IOrganizationTeam[];
 }
 
-export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'employeeId'>> {}
+export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId'>> {}
 
 export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}

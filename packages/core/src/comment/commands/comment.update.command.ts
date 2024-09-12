@@ -1,8 +1,8 @@
 import { ICommand } from '@nestjs/cqrs';
-import { ICommentUpdateInput } from '@gauzy/contracts';
+import { ICommentUpdateInput, ID } from '@gauzy/contracts';
 
 export class CommentUpdateCommand implements ICommand {
 	static readonly type = '[Comment] Update';
 
-	constructor(public readonly input: ICommentUpdateInput) {}
+	constructor(public readonly id: ID, public readonly input: ICommentUpdateInput) {}
 }

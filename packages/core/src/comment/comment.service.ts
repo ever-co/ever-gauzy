@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
-import { IComment, ICommentCreateInput } from '@gauzy/contracts';
+import { IComment, ICommentCreateInput, ICommentUpdateInput, ID } from '@gauzy/contracts';
 import { EmployeeService } from '../employee/employee.service';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
@@ -42,7 +43,37 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			});
 		} catch (error) {
 			console.log(error); // Debug Logging
-			throw new BadRequestException('Comment post error', error);
+			throw new BadRequestException('Comment post failed', error);
+		}
+	}
+
+	/**
+	 * @description Update comment - Note
+	 * @param {ICommentUpdateInput} input - Data to update comment
+	 * @returns A promise that resolves to the updated comment OR Update result
+	 * @memberof CommentService
+	 */
+	async update(id: ID, input: ICommentUpdateInput): Promise<IComment | UpdateResult> {
+		try {
+			const employeeId = RequestContext.currentEmployeeId();
+			const comment = await this.findOneByOptions({
+				where: {
+					id,
+					creatorId: employeeId
+				}
+			});
+
+			if (!comment) {
+				throw new BadRequestException('Comment not found');
+			}
+
+			return await super.create({
+				...input,
+				id
+			});
+		} catch (error) {
+			console.log(error); // Debug Logging
+			throw new BadRequestException('Comment update failed', error);
 		}
 	}
 }
