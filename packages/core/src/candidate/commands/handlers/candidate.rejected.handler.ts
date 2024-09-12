@@ -5,10 +5,15 @@ import { CandidateService } from '../../candidate.service';
 import { CandidateRejectedCommand } from '../candidate.rejected.command';
 import { EmailService } from './../../../email-send/email.service';
 import { environment } from '@gauzy/config';
+import { UserOrganizationService } from 'user-organization/user-organization.services';
 
 @CommandHandler(CandidateRejectedCommand)
 export class CandidateRejectedHandler implements ICommandHandler<CandidateRejectedCommand> {
-	constructor(private readonly candidateService: CandidateService, private readonly _emailService: EmailService) {}
+	constructor(
+		private readonly candidateService: CandidateService,
+		private readonly _emailService: EmailService,
+		private readonly _userOrganizationService: UserOrganizationService
+	) {}
 
 	/**
 	 * Executes the candidate rejection process.
@@ -20,7 +25,9 @@ export class CandidateRejectedHandler implements ICommandHandler<CandidateReject
 	 */
 	public async execute({ id }: CandidateRejectedCommand): Promise<ICandidate> {
 		// Fetch the candidate by ID
-		const candidate: ICandidate = await this.candidateService.findOneByIdString(id);
+		const candidate: ICandidate = await this.candidateService.findOneByIdString(id, {
+			relations: { user: true, organization: true }
+		});
 
 		// Check if the candidate is already hired
 		if (candidate.alreadyHired) {
