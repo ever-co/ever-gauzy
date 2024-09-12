@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { Brackets, In, IsNull, SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import {
+	FavoriteEntityEnum,
 	ID,
 	IEmployee,
 	IOrganizationGithubRepository,
@@ -15,6 +16,7 @@ import {
 import { getConfig } from '@gauzy/config';
 import { CustomEmbeddedFieldConfig, isNotEmpty } from '@gauzy/common';
 import { Employee, OrganizationProjectEmployee, Role } from '../core/entities/internal';
+import { FavoriteService } from '../core/decorators';
 import { PaginationParams, TenantAwareCrudService } from '../core/crud';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -28,6 +30,7 @@ import {
 	TypeOrmOrganizationProjectRepository
 } from './repository';
 
+@FavoriteService(FavoriteEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
 	constructor(

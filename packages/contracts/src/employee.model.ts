@@ -24,6 +24,7 @@ import { ICandidate } from './candidate.model';
 import { IEmployeeAward } from './employee-award.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
 import { CurrenciesEnum } from './currency.model';
+import { IFavorite } from './favorite.model';
 
 export interface IFindMembersInput extends IBasePerTenantAndOrganizationEntityModel {
 	organizationTeamId: ID;
@@ -64,6 +65,7 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	organizationPosition?: IOrganizationPosition;
 	skills?: ISkill[];
 	awards?: IEmployeeAward[];
+	favorites?: IFavorite[];
 	offerDate?: Date;
 	acceptDate?: Date;
 	rejectDate?: Date;

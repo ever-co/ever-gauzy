@@ -46,6 +46,7 @@ export * from '../../expense-categories/expense-category.entity';
 export * from '../../expense/expense.entity';
 export * from '../../export-import/import-history/import-history.entity';
 export * from '../../export-import/import-record/import-record.entity';
+export * from '../../favorite/favorite.entity';
 export * from '../../feature/feature-organization.entity';
 export * from '../../feature/feature.entity';
 export * from '../../goal-general-setting/goal-general-setting.entity';
