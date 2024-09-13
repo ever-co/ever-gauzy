@@ -22,7 +22,7 @@ export class Proposal extends TenantOrganizationBaseEntity implements IProposal,
 	@IsOptional()
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
-	jobPostUrl: string;
+	jobPostUrl?: string;
 
 	@ApiPropertyOptional({ type: () => Date })
 	@IsOptional()

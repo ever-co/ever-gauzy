@@ -13,7 +13,7 @@ export enum ProposalStatusEnum {
 
 // Base interface for common proposal fields
 export interface IProposalBase extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
-	jobPostUrl: string;
+	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
@@ -43,11 +43,11 @@ export interface IProposalFindInput
 /**
  * Proposal View Model
  */
-export interface IProposalViewModel extends IRelationalOrganizationContact, Partial<IProposalBase> {
-	valueDate: Date;
-	id: string;
-	employeeId?: string;
-	employee?: IEmployee;
+export interface IProposalViewModel
+	extends IRelationalOrganizationContact,
+		IEmployeeEntityInput,
+		Partial<IProposalBase> {
+	valueDate?: Date;
 	jobPostLink?: string;
 	author?: IEmployee;
 }
