@@ -1108,6 +1108,14 @@ export function ipcTimer(
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
 		await markLastTimerAsStoppedOffline();
 	});
+
+	ipcMain.handle('CURRENT_TIMER', () => {
+		return timerService.findLastOne();
+	});
+
+	ipcMain.handle('LAST_SYNCED_INTERVAL', () => {
+		return intervalService.findLastInterval();
+	});
 }
 
 export function removeMainListener() {
@@ -1167,7 +1175,15 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT', 'MARK_AS_STOPPED_OFFLINE'];
+	const channels = [
+		'START_TIMER',
+		'STOP_TIMER',
+		'LOGOUT_STOP',
+		'DELETE_TIME_SLOT',
+		'MARK_AS_STOPPED_OFFLINE',
+		'CURRENT_TIMER',
+		'LAST_SYNCED_INTERVAL'
+	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});
