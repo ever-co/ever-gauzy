@@ -96,6 +96,7 @@ export * from './pipeline.model';
 export * from './product.model';
 export * from './project.model';
 export * from './proposal.model';
+export * from './reaction.model';
 export * from './recurring-expense.model';
 export * from './report.model';
 export * from './request-approval-employee.model';
