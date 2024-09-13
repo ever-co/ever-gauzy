@@ -86,11 +86,14 @@ export class DesktopOsInactivityHandler {
 		});
 
 		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', () => {
+			const { suspendDetected, isOnBattery, window } = this._powerManager;
+
 			this._powerManager.sleepTracking = new SleepInactivityTracking(
-				this._powerManager.suspendDetected && this.isTrackingOnSleep
-					? new AlwaysSleepTracking(this._powerManager.window)
-					: new NeverSleepTracking(this._powerManager.window)
+				suspendDetected && this.isTrackingOnSleep && !isOnBattery
+					? new AlwaysSleepTracking(window)
+					: new NeverSleepTracking(window)
 			);
+
 			this._powerManager.pauseTracking();
 		});
 
