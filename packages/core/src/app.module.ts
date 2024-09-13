@@ -145,6 +145,7 @@ import { OrganizationProjectModuleModule } from './organization-project-module/o
 import { FavoriteModule } from './favorite/favorite.module';
 import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
 import { StatsModule } from './stats/stats.module'; // Global Stats Module
+import { ReactionModule } from './reaction/reaction.module';
 
 const { unleashConfig } = environment;
 
@@ -439,7 +440,8 @@ if (environment.THROTTLE_ENABLED) {
 		TaskEstimationModule,
 		FavoriteModule,
 		GlobalFavoriteModule,
-		StatsModule // Global Stats Module
+		StatsModule,
+		ReactionModule // Global Stats Module
 	],
 	controllers: [AppController],
 	providers: [
