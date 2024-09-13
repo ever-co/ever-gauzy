@@ -4322,7 +4322,8 @@
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
-			"payment-receipt": "קבלת תשלום"
+			"payment-receipt": "קבלת תשלום",
+			"reject-candidate": "לדחות את המועמד"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

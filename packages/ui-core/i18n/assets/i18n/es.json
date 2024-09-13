@@ -4315,7 +4315,8 @@
 			"employee-join": "Empleado Unirse",
 			"email-reset": "Restablecimiento de correo electrónico.",
 			"organization-team-join-request": "Solicitud de unión al equipo de la organización",
-			"payment-receipt": "Recibo de pago"
+			"payment-receipt": "Recibo de pago",
+			"reject-candidate": "Rechazar Candidato"
 		},
 		"HTML_EDITOR": "Editor HTML"
 	},
