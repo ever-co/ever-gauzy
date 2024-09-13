@@ -4309,7 +4309,8 @@
 			"employee-join": "Mitarbeiter beitreten",
 			"email-reset": "E-Mail zurücksetzen.",
 			"organization-team-join-request": "Organisationsteam beitreten Anfrage",
-			"payment-receipt": "Zahlungseingang"
+			"payment-receipt": "Zahlungseingang",
+			"reject-candidate": "Kandidat ablehnen"
 		},
 		"HTML_EDITOR": "HTML-Editor"
 	},

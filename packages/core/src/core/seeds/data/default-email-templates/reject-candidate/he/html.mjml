@@ -8,7 +8,7 @@
 				<mj-text font-size="16px" font-family="helvetica" direction="rtl">
 					<p>{{candidateName}} היקר/ה,</p>
 					<p>
-						תודה על הגשת המועמדות לתפקיד {{jobTitle}} ב{{companyName}}. לאחר בחינה מעמיקה, לצערנו אנו
+						תודה על הגשת המועמדות לתפקיד {{jobTitle}} ב{{organizationName}}. לאחר בחינה מעמיקה, לצערנו אנו
 						מודיעים לך כי החלטנו להמשיך עם מועמדים אחרים שעונים טוב יותר על הצרכים הנוכחיים שלנו.
 					</p>
 					<p>
@@ -18,12 +18,12 @@
 				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica" direction="rtl">
 					<p>בברכה,</p>
-					<p>צוות {{companyName}}</p>
+					<p>צוות {{organizationName}}</p>
 				</mj-text>
 				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica" direction="rtl">
 					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a> על ידי
-					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a> כל הזכויות שמורות.
+					<a href="{{companyLink}}" style="color: #598bff">{{organizationName}}</a> כל הזכויות שמורות.
 				</mj-text>
 			</mj-column>
 		</mj-section>

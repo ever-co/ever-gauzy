@@ -4332,7 +4332,8 @@
 			"employee-join": "Присъединяване на служител",
 			"email-reset": "Възстановяване на имейл",
 			"organization-team-join-request": "Заявка за присъединяване към екипа на организацията",
-			"payment-receipt": "Касова бележка"
+			"payment-receipt": "Касова бележка",
+			"reject-candidate": "Отхвърли кандидат"
 		},
 		"HTML_EDITOR": "HTML редактор"
 	},
