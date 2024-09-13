@@ -3,8 +3,8 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam } from '@gauzy/contracts';
-import { Employee, OrganizationTeam, TenantOrganizationBaseEntity } from '../core/entities/internal';
+import { CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { Employee, OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
 	MultiORMColumn,
@@ -32,7 +32,7 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@IsUUID()
 	@ColumnIndex()
 	@MultiORMColumn()
-	entityId: string;
+	entityId: ID;
 
 	@ApiProperty({ type: () => String })
 	@IsNotEmpty()
@@ -50,8 +50,15 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@Type(() => Date)
 	@IsOptional()
 	@IsDate()
-	@MultiORMColumn()
+	@MultiORMColumn({ nullable: true })
 	resolvedAt?: Date;
+
+	@ApiPropertyOptional({ type: () => Date })
+	@Type(() => Date)
+	@IsOptional()
+	@IsDate()
+	@MultiORMColumn({ nullable: true })
+	editedAt?: Date;
 
 	/*
 	|--------------------------------------------------------------------------
@@ -60,9 +67,11 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	*/
 
 	/**
-	 * Employee comment author
+	 * User comment author
 	 */
-	@MultiORMManyToOne(() => Employee, {
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -70,20 +79,22 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	creator: IEmployee;
+	creator?: IUser;
 
 	@ApiPropertyOptional({ type: () => String })
-	@IsNotEmpty()
+	@IsOptional()
 	@IsUUID()
 	@RelationId((it: Comment) => it.creator)
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
-	creatorId: ID;
+	creatorId?: ID;
 
 	/**
-	 * Employee marked comment as resolved
+	 * User marked comment as resolved
 	 */
-	@MultiORMManyToOne(() => Employee, {
+	@ApiPropertyOptional({ type: () => Object })
+	@IsOptional()
+	@MultiORMManyToOne(() => User, {
 		/** Indicates if relation column value can be nullable or not. */
 		nullable: true,
 
@@ -91,7 +102,7 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 		onDelete: 'CASCADE'
 	})
 	@JoinColumn()
-	resolvedBy?: IEmployee;
+	resolvedBy?: IUser;
 
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()

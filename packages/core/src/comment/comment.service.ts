@@ -3,7 +3,7 @@ import { UpdateResult } from 'typeorm';
 import { TenantAwareCrudService } from './../core/crud';
 import { RequestContext } from '../core/context';
 import { IComment, ICommentCreateInput, ICommentUpdateInput, ID } from '@gauzy/contracts';
-import { EmployeeService } from '../employee/employee.service';
+import { UserService } from '../user/user.service';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm.comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
@@ -13,7 +13,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	constructor(
 		readonly typeOrmCommentRepository: TypeOrmCommentRepository,
 		readonly mikroOrmCommentRepository: MikroOrmCommentRepository,
-		private readonly employeeService: EmployeeService
+		private readonly userService: UserService
 	) {
 		super(typeOrmCommentRepository, mikroOrmCommentRepository);
 	}
@@ -26,20 +26,21 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 */
 	async create(input: ICommentCreateInput): Promise<IComment> {
 		try {
+			const userId = RequestContext.currentUserId();
 			const tenantId = RequestContext.currentTenantId();
-			const { creatorId, ...entity } = input;
+			const { ...entity } = input;
 
 			// Employee existence validation
-			const employee = await this.employeeService.findOneByIdString(creatorId);
-			if (!employee) {
-				throw new NotFoundException('Employee not found');
+			const user = await this.userService.findOneByIdString(userId);
+			if (!user) {
+				throw new NotFoundException('User not found');
 			}
 
 			// return created comment
-			return await this.save({
+			return await super.create({
 				...entity,
 				tenantId,
-				creatorId: employee.id
+				creatorId: user.id
 			});
 		} catch (error) {
 			console.log(error); // Debug Logging
@@ -55,11 +56,11 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 */
 	async update(id: ID, input: ICommentUpdateInput): Promise<IComment | UpdateResult> {
 		try {
-			const employeeId = RequestContext.currentEmployeeId();
+			const userId = RequestContext.currentUserId();
 			const comment = await this.findOneByOptions({
 				where: {
 					id,
-					creatorId: employeeId
+					creatorId: userId
 				}
 			});
 

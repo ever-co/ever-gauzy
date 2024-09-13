@@ -1,3 +1,4 @@
+import { IUser } from 'user.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
@@ -6,12 +7,13 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel {
 	entity: CommentEntityEnum;
 	entityId: ID; // Indicate the ID of entity record comment related to
 	comment: string;
-	creator: IEmployee;
-	creatorId: ID; // The comment's employee author ID
+	creator?: IUser;
+	creatorId?: ID; // The comment's employee author ID
 	resolved?: boolean;
 	resolvedAt?: Date;
-	resolvedBy?: IEmployee;
+	resolvedBy?: IUser;
 	resolvedById?: ID;
+	editedAt?: Date;
 	members?: IEmployee[]; // Indicates members assigned to comment
 	teams?: IOrganizationTeam[]; // Indicates teams assigned to comment
 	parent?: IComment;
@@ -41,7 +43,6 @@ export interface ICommentCreateInput {
 	comment: string;
 	entity: CommentEntityEnum;
 	entityId: ID;
-	creatorId: ID;
 	parentId?: ID;
 	members?: IEmployee[];
 	teams?: IOrganizationTeam[];

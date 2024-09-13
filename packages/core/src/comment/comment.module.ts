@@ -4,7 +4,7 @@ import { RouterModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { EmployeeModule } from '../employee/employee.module';
+import { UserModule } from '../user/user.module';
 import { CommandHandlers } from './commands/handlers';
 import { CommentService } from './comment.service';
 import { CommentController } from './comment.controller';
@@ -17,7 +17,7 @@ import { TypeOrmCommentRepository } from './repository/type-orm.comment.reposito
 		TypeOrmModule.forFeature([Comment]),
 		MikroOrmModule.forFeature([Comment]),
 		RolePermissionModule,
-		EmployeeModule,
+		UserModule,
 		CqrsModule
 	],
 	providers: [CommentService, TypeOrmCommentRepository, ...CommandHandlers],
