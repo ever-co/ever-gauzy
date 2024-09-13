@@ -420,7 +420,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async _deleteSyncedTimeslot() {
 		try {
 			await this.getTimerStatus(this.argFromMain);
-			if (this.timerStatus.running) {
+			if (this.timerStatus.running && this.start) {
 				await this.toggleStart(false);
 			}
 			const res = await this.timeTrackerService.deleteTimeSlot({
@@ -1055,30 +1055,27 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('device_sleep', () =>
 			this._ngZone.run(async () => {
-				if (this.start) await this.toggleStart(false);
+				if (this.start) {
+					await this.toggleStart(false);
+					this.electronService.ipcRenderer.send('pause-tracking');
+				}
 			})
 		);
 
 		this.electronService.ipcRenderer.on('activity-proof-request', () => {
 			this._ngZone.run(() => {
-				this._dialog?.close();
-				this._isOpenDialog = false;
-			});
-		});
-
-		this.electronService.ipcRenderer.on('inactivity-result-not-accepted', (event, arg) =>
-			this._ngZone.run(async () => {
 				if (this.start) {
-					await this.toggleStart(false);
 					this._dialog?.close();
 					this._isOpenDialog = false;
 				}
-			})
-		);
+			});
+		});
 
 		this.electronService.ipcRenderer.on('stop_from_inactivity_handler', () => {
 			this._ngZone.run(async () => {
-				if (this.start) await this.toggleStart(false);
+				if (this.start) {
+					await this.toggleStart(false);
+				}
 			});
 		});
 
@@ -1272,14 +1269,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							apiHost: this.apiHost
 						};
 
-						let timeLog = null;
+						this._isLockSyncProcess = true;
 
 						if (arg.isWorking) {
 							if (this.start) {
 								await this.timeTrackerService.toggleApiStop({
 									...apiParams,
-									...arg.timer,
-									stoppedAt: new Date()
+									...arg.timer
 								});
 							}
 
@@ -1291,25 +1287,29 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								console.warn('WARN: Unexpected error appears.');
 							}
 
-							timeLog = await this.timeTrackerService.toggleApiStart({
+							await this.timeTrackerService.toggleApiStart({
 								...apiParams,
 								startedAt: new Date()
 							});
 
 							await this.getTodayTime({ ...timeSlotPayload, employeeId }, true);
 						} else {
-							const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', {
-								quitApp: this.quitApp
-							});
-
-							timeLog = await this.timeTrackerService.toggleApiStop({
-								...apiParams,
-								...timer,
-								stoppedAt: new Date()
-							});
-
+							if (this.start) {
+								try {
+									await this.electronService.ipcRenderer.invoke('STOP_TIMER', {
+										quitApp: this.quitApp
+									});
+									this.start$.next(false);
+									await this.timeTrackerService.toggleApiStop({
+										...apiParams,
+										...arg.timer
+									});
+									this._startMode = TimerStartMode.STOP;
+								} catch (error) {
+									await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
+								}
+							}
 							const isDeleted = await this.timeTrackerService.deleteTimeSlots(timeSlotPayload);
-
 							if (isDeleted) {
 								console.log('SUCCESS: Deleted');
 							} else {
@@ -1317,16 +1317,22 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							}
 						}
 
+						this._isLockSyncProcess = false;
+
 						asapScheduler.schedule(async () => {
-							event.sender.send('update_session', { ...timeLog });
+							const { lastLog: lastTimer } = await this._timeTrackerStatus.status();
+
+							if (this.start && lastTimer) {
+								event.sender.send('update_session', lastTimer);
+							}
 
 							try {
 								const timeSlotId = arg.timer?.timeslotId;
 
 								await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
-									lastTimer: timeLog,
 									...arg.timer,
-									...(timeSlotId && { timeSlotId })
+									...(timeSlotId && { timeSlotId }),
+									...(lastTimer && { lastTimer })
 								});
 							} catch (error) {
 								this._errorHandlerService.handleError(error);
@@ -1618,6 +1624,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	public async stopTimer(onClick = true, isEmergency = false): Promise<void> {
+		if (!this.start && !isEmergency) {
+			console.log('This timer is already stopped');
+			return;
+		}
 		try {
 			this.loading = true;
 
@@ -2015,7 +2025,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					}
 				} else if (this.start && option.type === this.dialogType.timeTrackingOption.name) {
 					this._isOpenDialog = false;
-					await this.stopTimer();
+					if (this.start) {
+						await this.toggleStart(false);
+					}
 				}
 			});
 		} catch (error) {
