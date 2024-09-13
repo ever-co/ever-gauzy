@@ -4313,7 +4313,8 @@
 			"employee-join": "Funcionário ingressar",
 			"email-reset": "Reiniciar o Email.",
 			"organization-team-join-request": "Pedido de adesão à equipe da organização",
-			"payment-receipt": "Recibo de pagamento"
+			"payment-receipt": "Recibo de pagamento",
+			"reject-candidate": "Rejeitar Candidato"
 		},
 		"HTML_EDITOR": "Editor HTML"
 	},

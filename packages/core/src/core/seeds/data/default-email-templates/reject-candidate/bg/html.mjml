@@ -8,9 +8,9 @@
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>Уважаеми/а {{candidateName}},</p>
 					<p>
-						Благодарим ви, че кандидатствахте за позицията {{jobTitle}} в {{companyName}}. След внимателно
-						разглеждане, съжаляваме да ви информираме, че сме решили да продължим с други кандидати, които
-						по-добре отговарят на настоящите ни нужди.
+						Благодарим ви, че кандидатствахте за позицията {{jobTitle}} в {{organizationName}}. След
+						внимателно разглеждане, съжаляваме да ви информираме, че сме решили да продължим с други
+						кандидати, които по-добре отговарят на настоящите ни нужди.
 					</p>
 					<p>
 						Насърчаваме ви да кандидатствате за бъдещи отворени позиции, които съответстват на вашите умения
@@ -19,12 +19,12 @@
 				</mj-text>
 				<mj-text font-size="16px" font-family="helvetica">
 					<p>С най-добри пожелания,</p>
-					<p>Екипът на {{companyName}}</p>
+					<p>Екипът на {{organizationName}}</p>
 				</mj-text>
 				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
 				<mj-text align="center" font-size="12px" font-family="helvetica">
 					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a> от
-					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a> Всички права запазени.
+					<a href="{{companyLink}}" style="color: #598bff">{{organizationName}}</a> Всички права запазени.
 				</mj-text>
 			</mj-column>
 		</mj-section>
