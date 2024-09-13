@@ -21,7 +21,7 @@ export const IntegrationResolver: ResolveFn<Observable<IIntegrationTenant | bool
 	try {
 		// Get Integration name and relations from route data
 		const name = route.data.integration;
-		const relations = route.data?.relations || [];
+		const relations = route.data.relations || [];
 
 		// Extract organization ID and tenant ID from store
 		const { id: organizationId, tenantId } = _store.selectedOrganization;
