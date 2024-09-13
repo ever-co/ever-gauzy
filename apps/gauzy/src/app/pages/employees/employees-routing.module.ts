@@ -16,7 +16,7 @@ import {
 	EditEmployeeProjectsComponent,
 	EditEmployeeRatesComponent
 } from './edit-employee/edit-employee-profile';
-import { EditEmployeeResolver } from './edit-employee';
+import { EmployeeResolver } from './employee.resolver';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -51,7 +51,7 @@ const routes: Routes = [
 			}
 		},
 		resolve: {
-			employee: EditEmployeeResolver
+			employee: EmployeeResolver
 		},
 		children: [
 			{
