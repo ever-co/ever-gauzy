@@ -73,6 +73,6 @@ import { DealResolver } from './routes/deal.resolver';
 		SmartDataViewLayoutModule,
 		NbTabsetModule
 	],
-	providers: [PipelinesService, DealsService, PipelineResolver, DealResolver]
+	providers: [PipelinesService, DealsService]
 })
 export class PipelinesModule {}

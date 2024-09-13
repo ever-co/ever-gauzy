@@ -1,44 +1,36 @@
-import { Injectable } from '@angular/core';
-import { Resolve, ActivatedRouteSnapshot, Router } from '@angular/router';
-import { Observable, EMPTY, map } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
+import { catchError, EMPTY, map, Observable } from 'rxjs';
+import { inject } from '@angular/core';
 import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
 import { IntegrationsService } from '@gauzy/ui-core/core';
 
-@Injectable({
-	providedIn: 'root'
-})
-export class IntegrationSettingResolver implements Resolve<Observable<IIntegrationSetting[] | boolean>> {
-	constructor(private readonly _router: Router, private readonly _integrationsService: IntegrationsService) {}
+/**
+ * Resolver function to fetch integration settings before activating the route.
+ *
+ * @param route - The activated route snapshot.
+ * @returns An observable that emits integration settings or an empty observable on error.
+ */
+export const IntegrationSettingResolver: ResolveFn<Observable<IIntegrationSetting[]> | boolean> = (
+	route: ActivatedRouteSnapshot
+): Observable<IIntegrationSetting[]> | boolean => {
+	// Inject necessary services
+	const _router = inject(Router);
+	const _integrationsService = inject(IntegrationsService);
 
-	/**
-	 * Resolves integration settings before activating the route.
-	 *
-	 * @param route - The activated route snapshot.
-	 * @returns An observable that emits integration settings or a boolean value.
-	 */
-	resolve(route: ActivatedRouteSnapshot): Observable<IIntegrationSetting[] | boolean> {
-		try {
-			const integrationId = route.paramMap.get('id');
+	// Extract integration ID from route parameters
+	const integrationId = route.paramMap.get('id');
 
-			return this._integrationsService.getIntegrationTenant(integrationId, { relations: ['settings'] }).pipe(
-				map(({ settings }: IIntegrationTenant) => settings),
-				catchError((error: any) => {
-					// Navigate to the new integration page in case of an error
-					this._router.navigate(['/pages/integrations/new']);
-					// Log the error for debugging purposes
-					console.error('Error while fetching integration settings:', error);
-					// Returning EMPTY as a placeholder; adjust this based on your needs
-					return EMPTY;
-				})
-			);
-		} catch (error) {
-			// Handle synchronous errors (if any)
-			console.error('Error in IntegrationSettingsResolver:', error);
-			// Navigate to the new integration page in case of an error
-			this._router.navigate(['/pages/integrations/new']);
-			// Returning EMPTY as a placeholder; adjust this based on your needs
+	// Attempt to fetch integration settings
+	return _integrationsService.getIntegrationTenant(integrationId, { relations: ['settings'] }).pipe(
+		// Map integration settings to settings array
+		map(({ settings }: IIntegrationTenant) => settings),
+		// Handle errors
+		catchError((error: any) => {
+			// Log the error and navigate to the new integrations page
+			console.error('Error while fetching integration settings:', error);
+			_router.navigate(['/pages/integrations/new']);
+			// Return EMPTY observable
 			return EMPTY;
-		}
-	}
-}
+		})
+	);
+};
