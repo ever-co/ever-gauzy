@@ -18,7 +18,7 @@ import {
 	ITasksStatistics,
 	ITaskStatus,
 	ITaskUpdateInput,
-	ITimerStatus,
+	ITimeLog,
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
@@ -402,10 +402,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				);
 				this.selectedTimeSlot.id = timeSlotId;
 				// Refresh screen
-				await Promise.allSettled([
-					this.getTodayTime(this.argFromMain, true),
-					this.getLastTimeSlotImage({ timeSlotId })
-				]);
+				await Promise.allSettled([this.getTodayTime(true), this.getLastTimeSlotImage({ timeSlotId })]);
 			}
 		} catch (e) {
 			console.log('error on delete', e);
@@ -853,15 +850,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTING),
 				concatMap(async () => {
+					this.isProcessingEnabled = true;
 					const session: moment.Moment = this._session?.clone();
-					const status: ITimerStatus = await this.restart(() => this._timeTrackerStatus.status());
-					return { status, session };
+					const sessionLog = await this.silentRestart();
+					console.log(sessionLog);
+					return { sessionLog, session };
 				}),
-				tap(async ({ session, status }) => {
-					if (status.lastLog) {
-						const sessionStatus = await this._timeTrackerStatus.status();
-						const sessionStartedAt = moment(sessionStatus.lastLog.startedAt);
-						const { stoppedAt, startedAt } = status.lastLog;
+				tap(async ({ session, sessionLog }) => {
+					if (sessionLog.previous) {
+						const { current, previous, params } = sessionLog;
+						const sessionStartedAt = moment(current.startedAt);
+						const { stoppedAt, startedAt } = previous;
 
 						// Calculate idle time since last stop
 						const idle = sessionStartedAt.diff(moment(stoppedAt), 'seconds');
@@ -881,10 +880,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - sessionIdle);
 						this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - sessionIdle);
 
-						// Send updated session data via Electron IPC
-						this.electronService.ipcRenderer.send('update_session', {
-							...status.lastLog,
-							startedAt: this._session.toISOString()
+						this.isProcessingEnabled = false;
+
+						asapScheduler.schedule(async () => {
+							const lastTimer = {
+								...current,
+								startedAt: this._session.toISOString()
+							};
+							// Send updated session data via Electron IPC
+							this.electronService.ipcRenderer.send('update_session', lastTimer);
+
+							try {
+								await this.electronService.ipcRenderer.invoke('UPDATE_SYNCED_TIMER', {
+									lastTimer,
+									...(params as any)
+								});
+							} catch (error) {
+								this._errorHandlerService.handleError(error);
+							}
 						});
 					}
 					// Update store state directly after restarting
@@ -938,7 +951,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.projectSelectorService.load(),
 					this.teamSelectorService.load(),
 					this.taskSelectorService.load(),
-					this.getTodayTime(arg),
+					this.getTodayTime(),
 					this.setTimerDetails()
 				];
 				if (arg.timeSlotId) {
@@ -1032,7 +1045,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('refresh_time_log', (event, arg) =>
 			this._ngZone.run(async () => {
-				await this.getTodayTime(arg);
+				await this.getTodayTime();
 			})
 		);
 
@@ -1179,7 +1192,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('refresh_today_worked_time', (event, arg) =>
 			this._ngZone.run(async () => {
-				await this.getTodayTime(arg);
+				await this.getTodayTime();
 			})
 		);
 
@@ -1320,7 +1333,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								(payload) => this.timeTrackerService.toggleApiStart(payload)
 							);
 
-							await this.getTodayTime({ ...timeSlotPayload, employeeId }, true);
+							await this.getTodayTime(true);
 						} else {
 							if (this.start) {
 								try {
@@ -1583,7 +1596,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this.loading = true;
 
 			if (onClick) {
-				await this.getTodayTime(this.argFromMain);
+				await this.getTodayTime();
 				this._startMode = TimerStartMode.MANUAL;
 			} else {
 				this._startMode = TimerStartMode.REMOTE;
@@ -1789,10 +1802,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		};
 	}
 
-	public async getTodayTime(arg, isForcedSync?: boolean): Promise<void> {
+	public async getTodayTime(isForcedSync = false): Promise<void> {
 		if (this._isOffline) return;
 		try {
-			const res = await this.timeTrackerService.getTimeLogs(arg);
+			const res = await this.timeTrackerService.getTimeLogs();
 			if (res) {
 				this.countDuration(res, isForcedSync);
 			}
@@ -2468,5 +2481,57 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 	private async preventDuplicateApiRequest<T, U>(payload: T, callback: (payload: T) => Promise<U>): Promise<U> {
 		return lastValueFrom(of(payload).pipe(distinctUntilChange(), concatMap(callback), untilDestroyed(this)));
+	}
+
+	private async silentRestart<S, T, U>(session?: {
+		callback?: (options?: T) => Promise<U>;
+		params?: S;
+	}): Promise<{ result: U | void; params: S; current: ITimeLog; previous: ITimeLog }> {
+		const timer = await this.electronService.ipcRenderer.invoke('CURRENT_TIMER');
+		const interval = await this.electronService.ipcRenderer.invoke('LAST_SYNCED_INTERVAL');
+		const params = {
+			organizationId: interval.organizationId,
+			tenantId: interval.tenantId,
+			organizationContactId: interval.organizationContactId,
+			projectId: interval.projectId,
+			taskId: timer.taskId,
+			organizationTeamId: timer.organizationTeamId,
+			description: timer.description,
+			startedAt: timer.startedAt,
+			stoppedAt: new Date(),
+			...(session?.params && { ...session.params })
+		};
+
+		let previous = null;
+		let result: U | void;
+
+		if (this.start) {
+			previous = await this.preventDuplicateApiRequest(params, (payload) =>
+				this.timeTrackerService.toggleApiStop(payload)
+			);
+		}
+
+		// Check if the callback is provided and call it
+		if (session?.callback) {
+			result = await session?.callback();
+		}
+
+		const current = (await this.preventDuplicateApiRequest(
+			{
+				...params,
+				description: this.noteService.note,
+				taskId: this.taskSelectorService.selectedId,
+				projectId: this.projectSelectorService.selectedId,
+				organizationTeamId: this.teamSelectorService.selectedId,
+				organizationContactId: this.clientSelectorService.selectedId,
+				startedAt: new Date()
+			},
+			(payload) => this.timeTrackerService.toggleApiStart(payload)
+		)) as ITimeLog;
+
+		await this.getTodayTime(true);
+
+		// Return the result of the callback (or void if no callback was provided)
+		return { current, previous, result, params };
 	}
 }
