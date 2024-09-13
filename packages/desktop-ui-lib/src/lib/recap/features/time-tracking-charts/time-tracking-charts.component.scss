@@ -6,6 +6,10 @@ nb-card {
 	nb-card-body {
 		padding: 0 !important;
 	}
+
+	.charts-bar-vertical {
+		fill: var(--gauzy-text-color-2)
+	}
 }
 
 .today {

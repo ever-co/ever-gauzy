@@ -5,7 +5,7 @@
 			}}</span> &#183;
 		<span class="today">{{dailyActivities$ | async | percent:'1.0-2' }}</span></nb-card-header>
 	<nb-card-body *ngIf="(chartData$ | async).length; else noDataChart">
-		<ngx-charts-bar-vertical [animations]="animations" [results]="(chartData$ | async)" [gradient]="gradient"
+		<ngx-charts-bar-vertical class="charts-bar-vertical" [animations]="animations" [results]="(chartData$ | async)" [gradient]="gradient"
 			[xAxis]="showXAxis" [yAxis]="showYAxis" [legend]="showLegend" [showXAxisLabel]="showXAxisLabel"
 			[showYAxisLabel]="showYAxisLabel" [xAxisLabel]="xAxisLabel" [yAxisLabel]="yAxisLabel"
 			[barPadding]="barPadding" [roundEdges]="roundEdges" [rotateXAxisTicks]="rotateXAxisTicks"
