@@ -573,10 +573,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					try {
 						timelog = isRemote
 							? this._timeTrackerStatus.remoteTimer.lastLog
-							: await this.timeTrackerService.toggleApiStart({
-									...lastTimer,
-									...params
-							  });
+							: await this.preventDuplicateApiRequest({ ...lastTimer, ...params }, (payload) =>
+									this.timeTrackerService.toggleApiStart(payload)
+							  );
 					} catch (error) {
 						lastTimer.isStartedOffline = true;
 						this._loggerService.error(error);
@@ -590,10 +589,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							this._remoteSleepLock ||
 							(this.isRemoteTimer && (this._isSpecialLogout || this.quitApp))
 								? this._timeTrackerStatus.remoteTimer.lastLog
-								: await this.timeTrackerService.toggleApiStop({
-										...lastTimer,
-										...params
-								  });
+								: await this.preventDuplicateApiRequest(
+										{
+											...params,
+											...lastTimer
+										},
+										(payload) => this.timeTrackerService.toggleApiStop(payload)
+								  );
 					} catch (error) {
 						lastTimer.isStoppedOffline = true;
 						await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
@@ -1273,10 +1275,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 						if (arg.isWorking) {
 							if (this.start) {
-								await this.timeTrackerService.toggleApiStop({
-									...apiParams,
-									...arg.timer
-								});
+								await this.preventDuplicateApiRequest(
+									{
+										...apiParams,
+										...arg.timer
+									},
+									(payload) => this.timeTrackerService.toggleApiStop(payload)
+								);
 							}
 
 							const isDeleted = await this.timeTrackerService.deleteTimeSlots(timeSlotPayload);
@@ -1287,10 +1292,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								console.warn('WARN: Unexpected error appears.');
 							}
 
-							await this.timeTrackerService.toggleApiStart({
-								...apiParams,
-								startedAt: new Date()
-							});
+							await this.preventDuplicateApiRequest(
+								{
+									...apiParams,
+									startedAt: new Date()
+								},
+								(payload) => this.timeTrackerService.toggleApiStart(payload)
+							);
 
 							await this.getTodayTime({ ...timeSlotPayload, employeeId }, true);
 						} else {
@@ -1300,10 +1308,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 										quitApp: this.quitApp
 									});
 									this.start$.next(false);
-									await this.timeTrackerService.toggleApiStop({
-										...apiParams,
-										...arg.timer
-									});
+									await this.preventDuplicateApiRequest(
+										{
+											...apiParams,
+											...arg.timer
+										},
+										(payload) => this.timeTrackerService.toggleApiStop(payload)
+									);
 									this._startMode = TimerStartMode.STOP;
 								} catch (error) {
 									await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
@@ -2046,7 +2057,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			await this.getTimerStatus(arg);
 			console.log('this is time status', this.timerStatus);
 			if (this.timerStatus.running) {
-				await this.timeTrackerService.toggleApiStop(arg);
+				await this.preventDuplicateApiRequest(arg, (payload) => this.timeTrackerService.toggleApiStop(payload));
 			}
 		} catch (error) {
 			console.log('error get last status timer');
@@ -2680,5 +2691,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		}
 
 		return { state: false, message: '' };
+	}
+
+	private async preventDuplicateApiRequest<T, U>(payload: T, callback: (payload: T) => Promise<U>): Promise<U> {
+		return lastValueFrom(of(payload).pipe(distinctUntilChange(), concatMap(callback), untilDestroyed(this)));
 	}
 }
