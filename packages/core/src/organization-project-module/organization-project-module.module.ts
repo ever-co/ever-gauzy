@@ -7,7 +7,6 @@ import { OrganizationProjectModuleController } from './organization-project-modu
 import { OrganizationProjectModule } from './organization-project-module.entity';
 import { TypeOrmOrganizationProjectModuleRepository } from './repository/type-orm-organization-project-module.repository';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { RoleModule } from '../role/role.module';
 
 @Module({
 	imports: [

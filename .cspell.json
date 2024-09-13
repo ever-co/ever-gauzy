@@ -116,6 +116,7 @@
 		"typeORM",
 		"Fargate",
 		"fastify",
+		"favoritable",
 		"fbstate",
 		"fieldname",
 		"filepond",
@@ -515,7 +516,8 @@
 		"nbinput",
 		"nbbutton",
 		"xaxis",
-		"wdth"
+		"wdth",
+		"concate"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -4440,7 +4440,8 @@
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
-			"payment-receipt": "Payment Receipt"
+			"payment-receipt": "Payment Receipt",
+			"reject-candidate": "Reject Candidate"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

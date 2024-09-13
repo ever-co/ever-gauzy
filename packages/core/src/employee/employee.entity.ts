@@ -33,7 +33,8 @@ import {
 	IEmployeePhone,
 	IDailyPlan,
 	IOrganizationProjectModule,
-	ID
+	ID,
+	IFavorite
 } from '@gauzy/contracts';
 import {
 	ColumnIndex,
@@ -55,6 +56,7 @@ import {
 	EmployeeSetting,
 	EquipmentSharing,
 	Expense,
+	Favorite,
 	Goal,
 	InvoiceItem,
 	OrganizationContact,
@@ -560,10 +562,21 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@MultiORMOneToMany(() => EmployeePhone, (it) => it.employee)
 	phoneNumbers?: IEmployeePhone[];
 
+	/**
+	 * Daily Plans
+	 */
 	@MultiORMOneToMany(() => DailyPlan, (dailyPlan) => dailyPlan.employee, {
 		cascade: true
 	})
 	dailyPlans?: IDailyPlan[];
+
+	/**
+	 * Favorites entity records
+	 */
+	@MultiORMOneToMany(() => Favorite, (favorite) => favorite.employee, {
+		cascade: true
+	})
+	favorites?: IFavorite[];
 
 	/*
 	|--------------------------------------------------------------------------

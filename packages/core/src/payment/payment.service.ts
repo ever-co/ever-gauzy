@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Between, In, Brackets, WhereExpressionBuilder, Raw, SelectQueryBuilder } from 'typeorm';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { IDateRangePicker, IGetPaymentInput, IInvoice, IPayment, LanguagesEnum } from '@gauzy/contracts';
+import { IDateRangePicker, IGetPaymentInput, IInvoice, IPayment, LanguagesEnum, PaymentStats } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/common';
 import { isPostgres } from '@gauzy/config';
 import { Payment } from './payment.entity';
@@ -22,6 +22,24 @@ export class PaymentService extends TenantAwareCrudService<Payment> {
 		private readonly emailService: EmailService
 	) {
 		super(typeOrmPaymentRepository, mikroOrmPaymentRepository);
+	}
+
+	/**
+	 * Retrieves the count and total amount of payments where `isProcessed` is true.
+	 *
+	 * @returns {Promise<PaymentStats>} An object containing the count of payments and the total amount.
+	 */
+	async getPaymentStats(): Promise<PaymentStats> {
+		const result = await this.typeOrmPaymentRepository
+			.createQueryBuilder('payment')
+			.select('COUNT(payment.id)', 'count')
+			.addSelect('SUM(payment.amount)', 'amount')
+			.getRawOne();
+
+		return {
+			count: parseInt(result.count, 10),
+			amount: parseFloat(result.amount) || 0
+		};
 	}
 
 	/**

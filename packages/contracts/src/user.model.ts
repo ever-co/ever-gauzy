@@ -15,6 +15,12 @@ import { IOrganization, TimeFormatEnum } from './organization.model';
 import { ISocialAccount } from './social-account.model';
 import { IOrganizationTeam } from './organization-team.model';
 
+// Define the UserStats type
+export interface UserStats {
+	count: number; // Total number of users
+	lastMonthActiveUsers: number; // Number of users who were active in the last 30 days
+}
+
 // Interface for options to be passed to the findMeUser method.
 export interface IFindMeUser extends IBaseRelationsEntityModel {
 	readonly includeEmployee?: boolean;
