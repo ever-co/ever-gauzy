@@ -1,0 +1,10 @@
+$input-background-color: var(--gauzy-card-1);
+
+::ng-deep textarea {
+	height: 72px;
+}
+
+::ng-deep textarea {
+	background-color: $input-background-color !important;
+	border: none;
+}

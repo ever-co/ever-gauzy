@@ -1,6 +1,6 @@
 import { IOrganizationContactEntityMutationInput, IRelationalOrganizationContact } from './organization-contact.model';
 import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
-import { IEmployee, IEmployeeEntityMutationInput, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityMutationInput, IEmployeeEntityInput } from './employee.model';
 import { ITaggable } from './tag.model';
 
 /**
@@ -13,14 +13,14 @@ export enum ProposalStatusEnum {
 
 // Base interface for common proposal fields
 export interface IProposalBase extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
-	jobPostUrl: string;
+	jobPostUrl?: string;
 	valueDate?: Date;
 	jobPostContent?: string;
 	proposalContent?: string;
 	status?: ProposalStatusEnum;
 }
 
-export interface IProposal extends IProposalBase, IRelationalEmployee, IRelationalOrganizationContact {
+export interface IProposal extends IProposalBase, IEmployeeEntityInput, IRelationalOrganizationContact {
 	author?: IEmployee;
 }
 
@@ -43,11 +43,11 @@ export interface IProposalFindInput
 /**
  * Proposal View Model
  */
-export interface IProposalViewModel extends IRelationalOrganizationContact, Partial<IProposalBase> {
-	valueDate: Date;
-	id: string;
-	employeeId?: string;
-	employee?: IEmployee;
+export interface IProposalViewModel
+	extends IRelationalOrganizationContact,
+		IEmployeeEntityInput,
+		Partial<IProposalBase> {
+	valueDate?: Date;
 	jobPostLink?: string;
 	author?: IEmployee;
 }

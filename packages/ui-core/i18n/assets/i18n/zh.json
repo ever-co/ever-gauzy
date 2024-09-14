@@ -4170,7 +4170,8 @@
 			"UPWORK": "优才网",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "浏览器插件",
-			"TEAMS": "团队"
+			"TEAMS": "团队",
+			"CLOC": "克洛克"
 		},
 		"LAST_WORKED": "上一次工作：",
 		"TIME_ZONE": "Time Zone",
@@ -4312,7 +4313,8 @@
 			"employee-join": "员工加入",
 			"email-reset": "电子邮件重置",
 			"organization-team-join-request": "组织团队加入请求",
-			"payment-receipt": "付款收据"
+			"payment-receipt": "付款收据",
+			"reject-candidate": "拒绝候选人"
 		},
 		"HTML_EDITOR": "HTML编辑器"
 	},

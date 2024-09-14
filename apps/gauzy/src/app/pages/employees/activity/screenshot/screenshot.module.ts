@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbSpinnerModule, NbButtonModule, NbDialogModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
+import { NbButtonModule, NbCheckboxModule, NbDialogModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
 import { MomentModule } from 'ngx-moment';
 import {
@@ -14,24 +14,23 @@ import {
 import { ScreenshotRoutingModule } from './screenshot-routing.module';
 import { ScreenshotComponent } from './screenshot/screenshot.component';
 
+// Nebular Modules
+const NB_MODULES = [NbButtonModule, NbCheckboxModule, NbDialogModule.forChild(), NbIconModule, NbSpinnerModule];
+
 @NgModule({
 	declarations: [ScreenshotComponent],
 	imports: [
-		ScreenshotRoutingModule,
-		SharedModule,
-		NbSpinnerModule,
+		...NB_MODULES,
 		MomentModule,
 		TranslateModule.forChild(),
-		NbButtonModule,
-		NbDialogModule.forChild(),
-		ViewTimeLogModalModule,
-		NbIconModule,
-		NbCheckboxModule,
-		ScreenshotsItemModule,
+		ScreenshotRoutingModule,
+		DailyStatisticsModule,
 		GalleryModule,
 		GauzyFiltersModule,
-		DailyStatisticsModule,
-		NoDataMessageModule
+		NoDataMessageModule,
+		ScreenshotsItemModule,
+		SharedModule,
+		ViewTimeLogModalModule
 	]
 })
 export class ScreenshotModule {}

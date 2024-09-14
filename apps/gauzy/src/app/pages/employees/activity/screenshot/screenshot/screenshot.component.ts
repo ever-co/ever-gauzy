@@ -298,7 +298,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 
 				return timeSlot;
 			})
-			.groupBy((timeSlot) => toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('HH'))
+			.groupBy((timeSlot) => toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('HH'))
 			.mapObject((hourTimeSlots: ITimeSlot[], hour): IScreenshotMap => {
 				const groupByMinutes = chain(hourTimeSlots)
 					.groupBy((timeSlot) => toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('mm'))
@@ -308,7 +308,7 @@ export class ScreenshotComponent extends BaseSelectorFilterComponent implements 
 				 * So, we can display screenshots in UI
 				 */
 				const byMinutes = indexBy(sortBy(hourTimeSlots, 'screenshots'), (timeSlot) =>
-					toTimezone(timeSlot.startedAt, this.filters?.timeZone).format('mm')
+					toTimezone(timeSlot?.startedAt, this.filters?.timeZone).format('mm')
 				);
 				timeSlots = ['00', '10', '20', '30', '40', '50'].map((key) => {
 					/**

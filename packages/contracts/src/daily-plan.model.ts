@@ -1,6 +1,6 @@
 import { IRelationalOrganizationTeam } from './organization-team.model';
 import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel, ID } from './base-entity.model';
-import { IRelationalEmployee } from './employee.model';
+import { IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 
 export enum DailyPlanStatusEnum {
@@ -15,11 +15,11 @@ export interface IDailyPlanBase extends IBasePerTenantAndOrganizationEntityModel
 	status: DailyPlanStatusEnum;
 }
 
-export interface IDailyPlan extends IDailyPlanBase, IRelationalEmployee, IRelationalOrganizationTeam {
+export interface IDailyPlan extends IDailyPlanBase, IEmployeeEntityInput, IRelationalOrganizationTeam {
 	tasks?: ITask[];
 }
 
-export interface IDailyPlanCreateInput extends IDailyPlanBase, IRelationalEmployee, IRelationalOrganizationTeam {
+export interface IDailyPlanCreateInput extends IDailyPlanBase, IEmployeeEntityInput, IRelationalOrganizationTeam {
 	taskId?: ID;
 }
 

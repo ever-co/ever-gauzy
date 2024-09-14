@@ -1,0 +1,32 @@
+<mjml>
+	<mj-body background-color="#fff">
+		<mj-section>
+			<mj-column>
+				<mj-image width="100px" src="{{appLogo}}"></mj-image>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text font-size="20px" font-family="helvetica">Application Update</mj-text>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>Dear {{candidateName}},</p>
+					<p>
+						Thank you for applying for the {{jobTitle}} position at {{organizationName}}. After careful
+						consideration, we regret to inform you that we have decided to move forward with other
+						candidates who better meet our current needs.
+					</p>
+					<p>
+						We encourage you to apply for future openings that match your skills and experience. We
+						appreciate your interest in our company and wish you success in your job search.
+					</p>
+				</mj-text>
+				<mj-text font-size="16px" font-family="helvetica">
+					<p>Best regards,</p>
+					<p>{{organizationName}} Team</p>
+				</mj-text>
+				<mj-divider border-color="#1B005D" border-width="1px"></mj-divider>
+				<mj-text align="center" font-size="12px" font-family="helvetica">
+					© 2019, <a href="{{appLink}}" style="color: #598bff">{{appName}}</a> by
+					<a href="{{companyLink}}" style="color: #598bff">{{organizationName}}</a> All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+	</mj-body>
+</mjml>

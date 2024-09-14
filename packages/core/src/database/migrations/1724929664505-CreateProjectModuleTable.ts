@@ -655,7 +655,6 @@ export class CreateProjectModuleTable1724929664505 implements MigrationInterface
 		await queryRunner.query(
 			`CREATE TABLE \`project_module_employee\` (\`organizationProjectModuleId\` varchar(36) NOT NULL, \`employeeId\` varchar(36) NOT NULL, INDEX \`IDX_e9fd7310fc93849b1d55e64d28\` (\`organizationProjectModuleId\`), INDEX \`IDX_18e428e909e48a4b7df43d7e01\` (\`employeeId\`), PRIMARY KEY (\`organizationProjectModuleId\`, \`employeeId\`)) ENGINE=InnoDB`
 		);
-		await queryRunner.query(`ALTER TABLE \`issue_type\` ADD \`isDefault\` tinyint NOT NULL DEFAULT 0`);
 		await queryRunner.query(`ALTER TABLE \`task\` ADD \`projectModuleId\` varchar(255) NULL`);
 		await queryRunner.query(`CREATE INDEX \`IDX_579534d8e12f22d308d6bd5f42\` ON \`task\` (\`projectModuleId\`)`);
 		await queryRunner.query(
@@ -744,7 +743,6 @@ export class CreateProjectModuleTable1724929664505 implements MigrationInterface
 		);
 		await queryRunner.query(`DROP INDEX \`IDX_579534d8e12f22d308d6bd5f42\` ON \`task\``);
 		await queryRunner.query(`ALTER TABLE \`task\` DROP COLUMN \`projectModuleId\``);
-		await queryRunner.query(`ALTER TABLE \`issue_type\` DROP COLUMN \`isDefault\``);
 		await queryRunner.query(`DROP INDEX \`IDX_18e428e909e48a4b7df43d7e01\` ON \`project_module_employee\``);
 		await queryRunner.query(`DROP INDEX \`IDX_e9fd7310fc93849b1d55e64d28\` ON \`project_module_employee\``);
 		await queryRunner.query(`DROP TABLE \`project_module_employee\``);

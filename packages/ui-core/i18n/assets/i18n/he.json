@@ -4182,7 +4182,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "הרחבת דפדפן",
-			"TEAMS": "קבוצות"
+			"TEAMS": "קבוצות",
+			"CLOC": "קלוק"
 		},
 		"LAST_WORKED": "עבד לאחרונה:",
 		"TIME_ZONE": "אזור זמן",
@@ -4321,7 +4322,8 @@
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
-			"payment-receipt": "קבלת תשלום"
+			"payment-receipt": "קבלת תשלום",
+			"reject-candidate": "לדחות את המועמד"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

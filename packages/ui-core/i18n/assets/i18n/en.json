@@ -4297,7 +4297,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
-			"TEAMS": "Teams"
+			"TEAMS": "Teams",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Last worked:",
 		"TIME_ZONE": "Time Zone",
@@ -4439,7 +4440,8 @@
 			"employee-join": "Employee Join",
 			"email-reset": "Email Reset",
 			"organization-team-join-request": "Organization team join request",
-			"payment-receipt": "Payment Receipt"
+			"payment-receipt": "Payment Receipt",
+			"reject-candidate": "Reject Candidate"
 		},
 		"HTML_EDITOR": "HTML Editor"
 	},

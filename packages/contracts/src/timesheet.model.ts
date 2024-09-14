@@ -5,7 +5,7 @@ import {
 	IRelationalOrganizationProject,
 	OrganizationProjectBudgetTypeEnum
 } from './organization-projects.model';
-import { IEmployee, IEmployeeFindInput, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeFindInput, IEmployeeEntityInput } from './employee.model';
 import { ITask } from './task.model';
 import { ITag } from './tag.model';
 import { IPaginationInput } from './core.model';
@@ -168,7 +168,8 @@ export enum TimeLogSourceEnum {
 	BROWSER_EXTENSION = 'BROWSER_EXTENSION',
 	HUBSTAFF = 'HUBSTAFF',
 	UPWORK = 'UPWORK',
-	TEAMS = 'TEAMS'
+	TEAMS = 'TEAMS',
+	CLOC = 'CLOC'
 }
 
 export interface ITimeLogFilters extends IBasePerTenantAndOrganizationEntityModel {
@@ -300,7 +301,7 @@ export interface IURLMetaData {
 export interface ITimerStatusInput
 	extends ITimeLogTodayFilters,
 		IBaseRelationsEntityModel,
-		IRelationalEmployee,
+		IEmployeeEntityInput,
 		IRelationalOrganizationTeam {
 	source?: TimeLogSourceEnum;
 	employeeIds?: string[];

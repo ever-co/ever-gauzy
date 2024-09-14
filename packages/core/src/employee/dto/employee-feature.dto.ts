@@ -1,10 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsString, ValidateIf } from 'class-validator';
-import { ID, IEmployee, IRelationalEmployee } from '@gauzy/contracts';
+import { ID, IEmployee, IEmployeeEntityInput } from '@gauzy/contracts';
 import { Employee } from './../employee.entity';
 import { IsEmployeeBelongsToOrganization } from './../../shared/validators';
 
-export class EmployeeFeatureDTO implements IRelationalEmployee {
+export class EmployeeFeatureDTO implements IEmployeeEntityInput {
 	@ApiPropertyOptional({ type: () => Employee })
 	@ValidateIf((it) => !it.employeeId || it.employee)
 	@IsObject()

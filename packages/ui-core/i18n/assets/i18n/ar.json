@@ -4168,7 +4168,8 @@
 			"UPWORK": "أبورك",
 			"HUBSTAFF": "هب ستاف",
 			"BROWSER_EXTENSION": "امتداد المتصفح",
-			"TEAMS": "الفِرَق"
+			"TEAMS": "الفِرَق",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "آخر عملت:",
 		"TIME_ZONE": "Time Zone",
@@ -4310,7 +4311,8 @@
 			"employee-join": "انضمام الموظف",
 			"email-reset": "إعادة تعيين البريد الإلكتروني",
 			"organization-team-join-request": "طلب انضمام فريق المنظمة",
-			"payment-receipt": "إيصال الدفع"
+			"payment-receipt": "إيصال الدفع",
+			"reject-candidate": "رفض المرشح"
 		},
 		"HTML_EDITOR": "محرر HTML"
 	},

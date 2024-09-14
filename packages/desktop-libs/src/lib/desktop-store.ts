@@ -100,7 +100,8 @@ export const LocalStore = {
 					preferredLanguage: 'en',
 					zone: 'local',
 					alwaysOn: true,
-					enforced: false
+					enforced: false,
+					theme: 'light'
 				};
 				store.set({
 					appSetting: defaultAppSetting
