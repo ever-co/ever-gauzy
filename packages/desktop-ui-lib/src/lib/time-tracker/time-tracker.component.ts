@@ -859,7 +859,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						const { stoppedAt, startedAt } = previous;
 
 						// Calculate idle time since last stop
-						const idle = sessionStartedAt.diff(moment(stoppedAt), 'seconds');
+						const idle = sessionStartedAt.diff(moment(stoppedAt), 'seconds', true);
 						console.log('[RESTART IDLE]', idle);
 
 						if (session) {
