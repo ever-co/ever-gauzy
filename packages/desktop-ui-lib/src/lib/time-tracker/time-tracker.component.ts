@@ -2511,20 +2511,24 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			result = await session?.callback();
 		}
 
-		const current = (await this.preventDuplicateApiRequest(
-			{
-				...params,
-				description: this.noteService.note,
-				taskId: this.taskSelectorService.selectedId,
-				projectId: this.projectSelectorService.selectedId,
-				organizationTeamId: this.teamSelectorService.selectedId,
-				organizationContactId: this.clientSelectorService.selectedId,
-				startedAt: new Date()
-			},
-			(payload) => this.timeTrackerService.toggleApiStart(payload)
+		const newParams = {
+			...params,
+			description: this.noteService.note,
+			taskId: this.taskSelectorService.selectedId,
+			projectId: this.projectSelectorService.selectedId,
+			organizationTeamId: this.teamSelectorService.selectedId,
+			organizationContactId: this.clientSelectorService.selectedId,
+			startedAt: new Date(),
+			timerId: timer.id
+		};
+
+		const current = (await this.preventDuplicateApiRequest(newParams, (payload) =>
+			this.timeTrackerService.toggleApiStart(payload)
 		)) as ITimeLog;
 
 		await this.getTodayTime(true);
+
+		await this.electronService.ipcRenderer.invoke('UPDATE_SELECTOR', newParams);
 
 		// Return the result of the callback (or void if no callback was provided)
 		return { current, previous, result, params };

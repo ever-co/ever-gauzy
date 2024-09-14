@@ -27,12 +27,6 @@ export class TaskSelectorComponent implements OnInit {
 	) {}
 
 	public ngOnInit() {
-		this.taskSelectorQuery.selected$
-			.pipe(
-				tap(() => (this.noteService.note = null)),
-				untilDestroyed(this)
-			)
-			.subscribe();
 		this.taskSelectorService
 			.getAll$()
 			.pipe(
