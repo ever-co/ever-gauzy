@@ -1134,6 +1134,9 @@ export function ipcTimer(
 			// Update the local store configuration
 			LocalStore.updateConfigProject(config);
 
+			// Update last timeslot moment
+			timerHandler.timeSlotStart = moment(startedAt);
+
 			// Update timer with new config
 			await timerService.update(new Timer({ id: timerId, description, startedAt, ...config }));
 

@@ -763,6 +763,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				}),
 				filter((isStart: boolean) => !isStart),
 				tap(() => {
+					this.timeTrackerStore.update({ isEditing: false });
 					this._timeRun$.next('00:00:00');
 					this._lastTime = 0;
 				}),
@@ -1677,8 +1678,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			const config = { quitApp: this.quitApp, isEmergency };
 
 			this.electronService.ipcRenderer.send('stop-capture-screen');
-
-			this.timeTrackerStore.update({ isEditing: false });
 
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Stopping timer');
