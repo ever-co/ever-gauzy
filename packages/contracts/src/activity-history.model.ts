@@ -13,7 +13,7 @@ export interface IActivityHistory extends IBasePerTenantAndOrganizationEntityMod
 	updatedEntities: IActivityHistoryUpdatedValues[]; // Stores updated IDs, or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']},
 	creator?: IUser;
 	creatorId?: ID;
-	details: ActivityHistoryDeails;
+	details: ActivityHistoryDetails;
 }
 
 export type ActivityHistoryAction = 'creation' | 'modification' | 'deletion'; // User, Organization,... action
@@ -22,7 +22,7 @@ export interface IActivityHistoryUpdatedValues {
 	[x: string]: any;
 }
 
-export type ActivityHistoryDeails = IActivityHistoryUpdatedValues;
+export type ActivityHistoryDetails = IActivityHistoryUpdatedValues;
 
 export enum ActivityEntityEnum {
 	Candidate = 'Candidate',
