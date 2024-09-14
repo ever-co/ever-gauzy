@@ -257,7 +257,7 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		log.info('Update Synced Timer');
 		try {
 			if (!arg.id) {
-				const lastCapture = await timerService.findLastCapture();
+				const lastCapture = await timerService.findLastOne();
 
 				if (lastCapture && lastCapture.id) {
 					const { id } = lastCapture;
@@ -1108,6 +1108,43 @@ export function ipcTimer(
 	ipcMain.handle('MARK_AS_STOPPED_OFFLINE', async () => {
 		await markLastTimerAsStoppedOffline();
 	});
+
+	ipcMain.handle('CURRENT_TIMER', () => {
+		return timerService.findLastOne();
+	});
+
+	ipcMain.handle('LAST_SYNCED_INTERVAL', () => {
+		return intervalService.findLastInterval();
+	});
+
+	ipcMain.handle('UPDATE_SELECTOR', async (_, args) => {
+		try {
+			// Destructure args for cleaner access
+			const { taskId, timerId, projectId, description, organizationTeamId, organizationContactId, startedAt } =
+				args;
+
+			const config = {
+				taskId,
+				projectId,
+				note: description,
+				organizationTeamId,
+				organizationContactId
+			};
+
+			// Update the local store configuration
+			LocalStore.updateConfigProject(config);
+
+			// Update last timeslot moment
+			timerHandler.timeSlotStart = moment(startedAt);
+
+			// Update timer with new config
+			await timerService.update(new Timer({ id: timerId, description, startedAt, ...config }));
+
+			console.log('update selector', '✔️ Done');
+		} catch (error) {
+			console.error('Failed to update selector:', error);
+		}
+	});
 }
 
 export function removeMainListener() {
@@ -1167,7 +1204,16 @@ export function removeAllHandlers() {
 }
 
 export function removeTimerHandlers() {
-	const channels = ['START_TIMER', 'STOP_TIMER', 'LOGOUT_STOP', 'DELETE_TIME_SLOT', 'MARK_AS_STOPPED_OFFLINE'];
+	const channels = [
+		'START_TIMER',
+		'STOP_TIMER',
+		'LOGOUT_STOP',
+		'DELETE_TIME_SLOT',
+		'MARK_AS_STOPPED_OFFLINE',
+		'CURRENT_TIMER',
+		'LAST_SYNCED_INTERVAL',
+		'UPDATE_SELECTOR'
+	];
 	channels.forEach((channel: string) => {
 		ipcMain.removeHandler(channel);
 	});

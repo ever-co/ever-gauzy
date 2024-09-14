@@ -1,9 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import * as moment from 'moment';
-import { catchError, map, shareReplay, tap } from 'rxjs/operators';
-import { firstValueFrom, throwError } from 'rxjs';
-import { toParams } from '@gauzy/ui-core/common';
+import { Injectable } from '@angular/core';
 import {
 	IGetTasksStatistics,
 	IOrganizationContact,
@@ -23,6 +19,12 @@ import {
 	TimeLogSourceEnum,
 	TimeLogType
 } from '@gauzy/contracts';
+import { toParams } from '@gauzy/ui-core/common';
+import * as moment from 'moment';
+import { firstValueFrom, throwError } from 'rxjs';
+import { catchError, map, shareReplay, tap } from 'rxjs/operators';
+import { API_PREFIX } from '../constants';
+import { LoggerService } from '../electron/services';
 import {
 	ClientCacheService,
 	EmployeeCacheService,
@@ -38,8 +40,6 @@ import {
 	TimeTrackerDateManager
 } from '../services';
 import { UserOrganizationService } from './organization-selector/user-organization.service';
-import { LoggerService } from '../electron/services';
-import { API_PREFIX } from '../constants';
 
 @Injectable({
 	providedIn: 'root'
@@ -241,16 +241,23 @@ export class TimeTrackerService {
 		return this._userOrganizationService.detail();
 	}
 
-	async getTimeLogs(values) {
-		console.log('TimeLogs', values);
+	async getTimeLogs() {
+		const {
+			organizationId,
+			tenantId,
+			user: {
+				employee: { id: employeeId }
+			}
+		} = this._store;
+
 		let timeLogs$ = this._timeLogService.getValue('counts');
 		if (!timeLogs$) {
 			timeLogs$ = this.http
 				.get(`${API_PREFIX}/timesheet/statistics/counts`, {
 					params: toParams({
-						tenantId: values.tenantId,
-						organizationId: values.organizationId,
-						employeeIds: [values.employeeId],
+						tenantId,
+						organizationId,
+						employeeIds: [employeeId],
 						todayStart: TimeTrackerDateManager.startToday,
 						todayEnd: TimeTrackerDateManager.endToday,
 						startDate: TimeTrackerDateManager.startWeek,
