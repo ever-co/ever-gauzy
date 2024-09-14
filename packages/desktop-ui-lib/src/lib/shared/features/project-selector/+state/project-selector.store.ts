@@ -8,6 +8,7 @@ export type IProjectSelectorState = ISelector<IOrganizationProject>;
 
 export function createInitialState(): IProjectSelectorState {
 	return {
+		hasPermission: false,
 		selected: null,
 		data: []
 	};

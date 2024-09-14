@@ -7,7 +7,7 @@
 	bindValue="id"
 	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT"
 	placeholder="TIMER_TRACKER.SELECT_PROJECT"
-	[canAddTag]="true"
+	[canAddTag]="hasPermission$ | async"
 	(clear)="refresh()"
 	(modelChange)="change($event)"
 	[addTag]="addProject"

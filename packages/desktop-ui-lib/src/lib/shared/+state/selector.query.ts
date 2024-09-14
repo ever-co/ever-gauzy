@@ -27,4 +27,8 @@ export abstract class SelectorQuery<T> extends Query<ISelector<T>> {
 	public get selected(): T {
 		return this.getValue().selected;
 	}
+
+	public get hasPermission$(): Observable<boolean> {
+		return this.select((state) => state.hasPermission);
+	}
 }

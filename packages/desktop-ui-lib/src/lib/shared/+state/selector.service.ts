@@ -29,4 +29,16 @@ export abstract class SelectorService<T> {
 	public set selected(selected: T | string) {
 		this.selectorStore.updateSelected(selected);
 	}
+
+	public set hasPermission(hasPermission: boolean) {
+		this.selectorStore.update({ hasPermission: hasPermission });
+	}
+
+	public get hasPermission(): boolean {
+		return this.selectorStore.getValue().hasPermission;
+	}
+
+	public get hasPermission$(): Observable<boolean> {
+		return this.selectorQuery.hasPermission$;
+	}
 }

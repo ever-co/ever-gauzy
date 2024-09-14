@@ -73,4 +73,8 @@ export class ProjectSelectorComponent implements OnInit {
 	public get disabled$(): Observable<boolean> {
 		return this.timeTrackerQuery.disabled$;
 	}
+
+	public get hasPermission$(): Observable<boolean> {
+		return this.projectSelectorService.hasPermission$;
+	}
 }

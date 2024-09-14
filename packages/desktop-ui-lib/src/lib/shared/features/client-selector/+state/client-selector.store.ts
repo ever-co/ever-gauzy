@@ -8,6 +8,7 @@ export type IClientSelectorState = ISelector<IOrganizationContact>;
 
 export function createInitialState(): IClientSelectorState {
 	return {
+		hasPermission: false,
 		selected: null,
 		data: []
 	};

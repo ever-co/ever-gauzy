@@ -33,8 +33,10 @@ import {
 	asapScheduler,
 	asyncScheduler,
 	BehaviorSubject,
+	catchError,
 	concatMap,
 	debounceTime,
+	EMPTY,
 	filter,
 	firstValueFrom,
 	from,
@@ -42,6 +44,7 @@ import {
 	Observable,
 	of,
 	Subject,
+	switchMap,
 	tap
 } from 'rxjs';
 import * as _ from 'underscore';
@@ -164,9 +167,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	isTrackingEnabled = true;
 	isAddTask = false;
 	sound: any = null;
-	public hasTaskPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	public hasProjectPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
-	public hasContactPermission$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
 	constructor(
 		private electronService: ElectronService,
@@ -207,9 +207,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter((permissions: any[]) => permissions.length > 0),
 				tap((permissions: any[]) => {
-					this.hasTaskPermission$.next(permissions.includes(PermissionsEnum.ORG_TASK_ADD));
-					this.hasProjectPermission$.next(permissions.includes(PermissionsEnum.ORG_PROJECT_ADD));
-					this.hasContactPermission$.next(permissions.includes(PermissionsEnum.ORG_CONTACT_EDIT));
+					this.taskSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_TASK_ADD);
+					this.clientSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_CONTACT_EDIT);
+					this.projectSelectorService.hasPermission = permissions.includes(PermissionsEnum.ORG_PROJECT_ADD);
 				}),
 				untilDestroyed(this)
 			)
@@ -229,7 +229,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	}
 
 	private get _hasTaskPermission(): boolean {
-		return this.hasTaskPermission$.getValue();
+		return this.taskSelectorService.hasPermission;
 	}
 
 	private get _isOffline(): boolean {
@@ -1685,6 +1685,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 			this.electronService.ipcRenderer.send('stop-capture-screen');
 
+			this.timeTrackerStore.update({ isEditing: false });
+
 			if (this._startMode === TimerStartMode.MANUAL) {
 				console.log('Stopping timer');
 				const timer = await this.electronService.ipcRenderer.invoke('STOP_TIMER', config);
@@ -2309,7 +2311,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.open(TasksComponent, {
 				context: {
 					employee: this.userData,
-					hasProjectPermission: this.hasProjectPermission$.getValue(),
+					hasProjectPermission: this.projectSelectorService.hasPermission,
 					selected: {
 						teamId: this.teamSelectorService.selectedId,
 						projectId: this.projectSelectorService.selectedId,

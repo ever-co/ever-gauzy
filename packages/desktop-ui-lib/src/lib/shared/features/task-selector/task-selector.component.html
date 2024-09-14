@@ -7,7 +7,7 @@
 	bindValue="id"
 	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TASK"
 	placeholder="TIMER_TRACKER.SELECT_TASK"
-	[canAddTag]="true"
+	[canAddTag]="hasPermission$ | async"
 	(clear)="refresh()"
 	(modelChange)="change($event)"
 	[addTag]="addNewTask"

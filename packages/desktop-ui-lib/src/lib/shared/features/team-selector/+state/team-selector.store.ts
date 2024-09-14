@@ -8,6 +8,7 @@ export type ITeamSelectorState = ISelector<IOrganizationTeam>;
 
 export function createInitialState(): ITeamSelectorState {
 	return {
+		hasPermission: false,
 		selected: null,
 		data: []
 	};

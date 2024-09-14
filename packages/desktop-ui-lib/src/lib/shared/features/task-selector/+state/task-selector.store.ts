@@ -8,6 +8,7 @@ export type ITaskSelectorState = ISelector<ITask>;
 
 export function createInitialState(): ITaskSelectorState {
 	return {
+		hasPermission: false,
 		selected: null,
 		data: []
 	};
