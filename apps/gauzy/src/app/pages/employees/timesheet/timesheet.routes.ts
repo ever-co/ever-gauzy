@@ -1,8 +1,14 @@
-import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { Route } from '@angular/router';
 import { TimesheetLayoutComponent } from './layout/layout.component';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 
-const routes: Routes = [
+/**
+ * Create and configures routes for the timesheet module.
+ *
+ * @param _pageRouteRegistryService
+ * @returns
+ */
+export const createTimesheetRoutes = (_pageRouteRegistryService: PageRouteRegistryService): Route[] => [
 	{
 		path: '',
 		component: TimesheetLayoutComponent,
@@ -28,7 +34,8 @@ const routes: Routes = [
 			{
 				path: 'approvals',
 				loadChildren: () => import('./approvals/approvals.module').then((m) => m.ApprovalsModule)
-			}
+			},
+			..._pageRouteRegistryService.getPageLocationRoutes('timesheet')
 		]
 	},
 	{
@@ -36,9 +43,3 @@ const routes: Routes = [
 		loadChildren: () => import('./view/view.module').then((m) => m.ViewModule)
 	}
 ];
-
-@NgModule({
-	imports: [RouterModule.forChild(routes)],
-	exports: [RouterModule]
-})
-export class TimesheetRoutingModule {}

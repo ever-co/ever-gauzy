@@ -26,18 +26,10 @@
 					{{ dayLogs.key | date }}
 				</h5>
 				<div class="row custom-header m-0 align-items-center">
-					<ng-template
-						[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
-					>
-						<ng-template 
-							ngxTimeTrackingAuthorized
-							[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
-						>
+					<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+						<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
 							<div class="col-auto">
-								<nb-checkbox 
-									status="basic" 
-									style="visibility: hidden"
-								></nb-checkbox>
+								<nb-checkbox status="basic" style="visibility: hidden"></nb-checkbox>
 							</div>
 						</ng-template>
 					</ng-template>
@@ -45,12 +37,7 @@
 						{{ 'TIMESHEET.PROJECT' | translate }} /
 						{{ 'TIMESHEET.TODO' | translate }}
 					</div>
-					<div
-						class="col employee-name"
-						*ngxPermissionsOnly="[
-							PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-						]"
-					>
+					<div class="col employee-name" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
 						{{ 'TIMESHEET.EMPLOYEE' | translate }}
 					</div>
 					<div class="col-1">
@@ -63,10 +50,7 @@
 						{{ 'TIMESHEET.TIME_SPAN' | translate }}
 					</div>
 				</div>
-				<ng-template
-					[ngIf]="dayLogs.value?.length > 0"
-					[ngIfElse]="notFound"
-				>
+				<ng-template [ngIf]="dayLogs.value?.length > 0" [ngIfElse]="notFound">
 					<div class="custom-body">
 						<div
 							[class]="
@@ -76,13 +60,8 @@
 							"
 							*ngFor="let log of dayLogs.value"
 						>
-							<ng-template
-								[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
-							>
-								<ng-template 
-									ngxTimeTrackingAuthorized
-									[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
-								>
+							<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+								<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
 									<div class="col-auto">
 										<nb-checkbox
 											[checked]="log.checked"
@@ -98,9 +77,7 @@
 									{{ log?.project?.name }}
 								</span>
 								<ng-template #noProject>
-									<span>{{
-										'TIMESHEET.NO_PROJECT' | translate
-									}}</span>
+									<span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
 								</ng-template>
 								<div class="mt-2 small">
 									<span *ngIf="log?.task; else noToDo">
@@ -111,17 +88,13 @@
 										{{ log?.task?.title }}
 									</span>
 									<ng-template #noToDo>
-										<span>{{
-											'TIMESHEET.NO_TODO' | translate
-										}}</span>
+										<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
 									</ng-template>
 								</div>
 							</div>
 							<div
 								class="col employee-name"
-								*ngxPermissionsOnly="[
-									PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-								]"
+								*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
 							>
 								<div class="name-container">
 									<ngx-avatar
@@ -139,22 +112,11 @@
 							</div>
 							<div class="col">
 								<span class="start-timer">
-									{{
-										log.startedAt
-											| utcToLocal
-											| timeFormat: true
-									}}
+									{{ log.startedAt | utcToLocal | timeFormat : true }}
 								</span>
 								-
-								<span
-									class="end-timer"
-									*ngIf="!log.isRunning; else runningTimer"
-								>
-									{{
-										log.stoppedAt
-											| utcToLocal
-											| timeFormat: true
-									}}
+								<span class="end-timer" *ngIf="!log.isRunning; else runningTimer">
+									{{ log.stoppedAt | utcToLocal | timeFormat : true }}
 								</span>
 								<ng-template #runningTimer>
 									<span class="running-timer">
@@ -178,20 +140,9 @@
 </ng-template>
 <ng-template #actionButtons>
 	<div class="actions">
-		<div
-			class="action-button"
-			*ngIf="
-				selectedLog.data?.status != TimesheetStatus.APPROVED;
-				else noEditAction
-			"
-		>
-			<ng-template 
-				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME"
-			>
-				<ng-template 
-					ngxTimeTrackingAuthorized
-					[permission]="PermissionsEnum.ALLOW_MODIFY_TIME"
-				>
+		<div class="action-button" *ngIf="selectedLog.data?.status != TimesheetStatus.APPROVED; else noEditAction">
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
+				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
 					<button
 						[disabled]="selectedLog?.data?.isRunning"
 						class="action primary"
@@ -205,36 +156,25 @@
 					</button>
 				</ng-template>
 			</ng-template>
-			<ng-template 
-				[ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME"
-			>
-				<ng-template 
-					ngxTimeTrackingAuthorized
-					[permission]="PermissionsEnum.ALLOW_DELETE_TIME"
-				>
-				<button
-					[disabled]="selectedLog?.data?.isRunning"
-					class="action"
-					nbButton
-					status="basic"
-					size="small"
-					ngxConfirmDialog
-					[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-					(confirm)="deleteTimeLog(selectedLog?.data)"
-				>
-					<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-				</button>
+			<ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+				<ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
+					<button
+						[disabled]="selectedLog?.data?.isRunning"
+						class="action"
+						nbButton
+						status="basic"
+						size="small"
+						ngxConfirmDialog
+						[message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+						(confirm)="deleteTimeLog(selectedLog?.data)"
+					>
+						<nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+					</button>
 				</ng-template>
 			</ng-template>
 		</div>
 		<ng-template #noEditAction>
-			<button
-				[disabled]="true"
-				class="m-1"
-				nbButton
-				status="default"
-				size="small"
-			>
+			<button [disabled]="true" class="m-1" nbButton status="default" size="small">
 				{{ 'TIMESHEET.IMMUTABLE_TIME' | translate }}
 			</button>
 		</ng-template>
