@@ -1269,7 +1269,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(async () => {
 				try {
 					const { tenantId, organizationId } = this._store;
-					const { employeeId } = this.userData;
 
 					const timeSlotPayload = {
 						timeslotIds: [...new Set(arg.timeslotIds)],
