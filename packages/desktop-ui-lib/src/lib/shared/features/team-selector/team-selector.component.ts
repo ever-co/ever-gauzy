@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationTeam } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
@@ -9,6 +10,7 @@ import { TeamSelectorQuery } from './+state/team-selector.query';
 import { TeamSelectorService } from './+state/team-selector.service';
 import { TeamSelectorStore } from './+state/team-selector.store';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-team-selector',
 	templateUrl: './team-selector.component.html',
@@ -30,14 +32,16 @@ export class TeamSelectorComponent implements OnInit {
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.teamSelectorService.selectedId)),
-				tap(() => (this.teamSelectorService.selected = null))
+				tap(() => (this.teamSelectorService.selected = null)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.teamSelectorQuery.selected$
 			.pipe(
-				filter((team) => !!team),
+				filter(Boolean),
 				concatMap(() => this.projectSelectorService.load()),
-				concatMap(() => this.taskSelectorService.load())
+				concatMap(() => this.taskSelectorService.load()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

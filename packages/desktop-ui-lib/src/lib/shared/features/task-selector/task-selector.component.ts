@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ITask } from 'packages/contracts/dist';
 import { filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
+import { NoteService } from '../note/+state/note.service';
 import { TaskSelectorQuery } from './+state/task-selector.query';
 import { TaskSelectorService } from './+state/task-selector.service';
 import { TaskSelectorStore } from './+state/task-selector.store';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-task-selector',
 	templateUrl: './task-selector.component.html',
@@ -19,15 +22,23 @@ export class TaskSelectorComponent implements OnInit {
 		public readonly taskSelectorStore: TaskSelectorStore,
 		public readonly taskSelectorQuery: TaskSelectorQuery,
 		private readonly timeTrackerQuery: TimeTrackerQuery,
-		private readonly taskSelectorService: TaskSelectorService
+		private readonly taskSelectorService: TaskSelectorService,
+		private readonly noteService: NoteService
 	) {}
 
 	public ngOnInit() {
+		this.taskSelectorQuery.selected$
+			.pipe(
+				tap(() => (this.noteService.note = null)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this.taskSelectorService
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.taskSelectorService.selectedId)),
-				tap(() => (this.taskSelectorService.selected = null))
+				tap(() => (this.taskSelectorService.selected = null)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

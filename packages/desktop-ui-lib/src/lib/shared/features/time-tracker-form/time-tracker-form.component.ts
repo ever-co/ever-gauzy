@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { combineLatest, map, Observable, startWith } from 'rxjs';
 import { Store } from '../../../services';
 import { TimeTrackerQuery } from '../../../time-tracker/+state/time-tracker.query';
-import { IgnitionState, TimeTrackerStore } from '../../../time-tracker/+state/time-tracker.store';
+import { IgnitionState, TimerStartMode, TimeTrackerStore } from '../../../time-tracker/+state/time-tracker.store';
 import { TeamSelectorService } from './../team-selector/+state/team-selector.service';
 
 @Component({
@@ -25,7 +25,9 @@ export class TimeTrackerFormComponent {
 		const ignition = this.timeTrackerQuery.ignition;
 		const isEditing = this.timeTrackerQuery.isEditing;
 		const isStarted = ignition.state === IgnitionState.STARTED;
-		if (isStarted && !isEditing) {
+		const isRemote = ignition.mode === TimerStartMode.REMOTE;
+
+		if (isStarted && !isEditing && !isRemote) {
 			this.timeTrackerStore.update({ isEditing: true });
 		}
 		event.preventDefault();
@@ -45,8 +47,10 @@ export class TimeTrackerFormComponent {
 	}
 
 	public get isShowEdit$(): Observable<boolean> {
-		return combineLatest([this.timeTrackerQuery.disabled$, this.timeTrackerQuery.isStarted$]).pipe(
-			map(([started, disabled]) => started && disabled)
-		);
+		return combineLatest([
+			this.timeTrackerQuery.disabled$,
+			this.timeTrackerQuery.isStarted$,
+			this.timeTrackerQuery.isRemote$
+		]).pipe(map(([started, disabled, remote]) => started && disabled && !remote));
 	}
 }

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationContact } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
@@ -10,6 +11,7 @@ import { ClientSelectorQuery } from './+state/client-selector.query';
 import { ClientSelectorService } from './+state/client-selector.service';
 import { ClientSelectorStore } from './+state/client-selector.store';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-client-selector',
 	templateUrl: './client-selector.component.html',
@@ -33,15 +35,17 @@ export class ClientSelectorComponent implements OnInit {
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.clientSelectorService.selectedId)),
-				tap(() => (this.clientSelectorService.selected = null))
+				tap(() => (this.clientSelectorService.selected = null)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.clientSelectorQuery.selected$
 			.pipe(
-				filter((client) => !!client),
+				filter(Boolean),
 				concatMap(() => this.projectSelectorService.load()),
 				concatMap(() => this.taskSelectorService.load()),
-				concatMap(() => this.teamSelectorService.load())
+				concatMap(() => this.teamSelectorService.load()),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

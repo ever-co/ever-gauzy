@@ -33,10 +33,8 @@ import {
 	asapScheduler,
 	asyncScheduler,
 	BehaviorSubject,
-	catchError,
 	concatMap,
 	debounceTime,
-	EMPTY,
 	filter,
 	firstValueFrom,
 	from,
@@ -44,7 +42,6 @@ import {
 	Observable,
 	of,
 	Subject,
-	switchMap,
 	tap
 } from 'rxjs';
 import * as _ from 'underscore';
@@ -853,7 +850,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.isProcessingEnabled = true;
 					const session: moment.Moment = this._session?.clone();
 					const sessionLog = await this.silentRestart();
-					console.log(sessionLog);
 					return { sessionLog, session };
 				}),
 				tap(async ({ session, sessionLog }) => {
@@ -873,12 +869,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							// Initialize the session start time based on idle time
 							this._session = moment(startedAt).add(idle, 'seconds');
 						}
-
-						const sessionIdle = sessionStartedAt.diff(this._session, 'seconds');
-						console.log('[SESSION IDLE]', sessionIdle);
-
-						this._lastTotalWorkedToday$.next(this._lastTotalWorkedToday - sessionIdle);
-						this._lastTotalWorkedWeek$.next(this._lastTotalWorkedWeek - sessionIdle);
 
 						this.isProcessingEnabled = false;
 
@@ -911,7 +901,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			.pipe(
 				filter((editing) => editing && !this._isOffline),
 				tap(() =>
-					this.dialogService.open(TimerTrackerChangeDialogComponent, { backdropClass: 'backdrop-blur' })
+					this.dialogService.open(TimerTrackerChangeDialogComponent, {
+						backdropClass: 'backdrop-blur',
+						closeOnBackdropClick: false
+					})
 				),
 				untilDestroyed(this)
 			)

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganizationProject } from 'packages/contracts/dist';
 import { concatMap, filter, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../../electron/services';
@@ -9,6 +10,7 @@ import { ProjectSelectorQuery } from './+state/project-selector.query';
 import { ProjectSelectorService } from './+state/project-selector.service';
 import { ProjectSelectorStore } from './+state/project-selector.store';
 
+@UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'gauzy-project-selector',
 	templateUrl: './project-selector.component.html',
@@ -29,15 +31,17 @@ export class ProjectSelectorComponent implements OnInit {
 	public ngOnInit(): void {
 		this.projectSelectorQuery.selected$
 			.pipe(
-				filter((project) => !!project),
-				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()]))
+				filter(Boolean),
+				concatMap(() => Promise.allSettled([this.teamSelectorService.load(), this.taskSelectorService.load()])),
+				untilDestroyed(this)
 			)
 			.subscribe();
 		this.projectSelectorService
 			.getAll$()
 			.pipe(
 				filter((data) => !data.some((value) => value.id === this.projectSelectorService.selectedId)),
-				tap(() => (this.projectSelectorService.selected = null))
+				tap(() => (this.projectSelectorService.selected = null)),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}

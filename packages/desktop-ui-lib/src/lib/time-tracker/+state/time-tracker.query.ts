@@ -38,15 +38,15 @@ export class TimeTrackerQuery extends Query<ITimeTrackerState> {
 	public get isStateChanging$(): Observable<boolean> {
 		return this.ignition$.pipe(
 			map((ignition) => {
-				const { state, mode } = ignition;
-				// Check if the mode is remote
-				if (mode === TimerStartMode.REMOTE) {
-					return true;
-				}
+				const { state } = ignition;
 				// Check if the state is one of the states that should disable the selector
 				return [IgnitionState.STOPPING, IgnitionState.STARTING, IgnitionState.RESTARTING].includes(state);
 			})
 		);
+	}
+
+	public get isRemote$(): Observable<boolean> {
+		return this.ignition$.pipe(map(({ mode }) => mode === TimerStartMode.REMOTE));
 	}
 
 	public get isStarted$(): Observable<boolean> {
@@ -57,7 +57,8 @@ export class TimeTrackerQuery extends Query<ITimeTrackerState> {
 		return combineLatest([
 			this.isStateChanging$.pipe(startWith(false)),
 			this.isEditing$.pipe(startWith(false)),
-			this.isStarted$.pipe(startWith(false))
+			this.isStarted$.pipe(startWith(false)),
+			this.isRemote$.pipe(startWith(false))
 		]).pipe(
 			map(([isStateChanging, isEditing, isStarted]) => {
 				return !!(isStateChanging || isEditing !== isStarted);

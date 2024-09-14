@@ -24,6 +24,13 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	public ngOnInit(): void {
 		this.timeTrackerQuery.ignition$
 			.pipe(
+				filter(({ state }) => state === IgnitionState.STOPPED),
+				tap(() => this.dismiss()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.timeTrackerQuery.ignition$
+			.pipe(
 				filter(({ state }) => state === IgnitionState.RESTARTED),
 				tap(() => this.timeTrackerStore.update({ ignition: { state: IgnitionState.STARTED } })),
 				tap(() => this.setCurrentState()),
