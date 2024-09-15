@@ -1,12 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { IntegrationEnum, PermissionsEnum } from '@gauzy/contracts';
-import { IntegrationResolver, PermissionsGuard } from '@gauzy/ui-core/core';
+import { IntegrationEntitySettingResolver, IntegrationResolver, IntegrationSettingResolver, PermissionsGuard } from '@gauzy/ui-core/core';
 import { GauzyAIAuthorizationComponent } from './components/authorization/authorization.component';
 import { GauzyAILayoutComponent } from './gauzy-ai.layout.component';
 import { GauzyAIViewComponent } from './components/view/view.component';
-import { IntegrationSettingResolver } from '../integration-setting.resolver';
-import { IntegrationEntitySettingResolver } from '../integration-entity-setting.resolver';
 
 const routes: Routes = [
 	{
