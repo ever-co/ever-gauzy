@@ -1,0 +1,29 @@
+@import 'gauzy/_gauzy-dialogs';
+
+nb-card {
+	width: 320px;
+	background-color: nb-theme(gauzy-card-1);
+
+	&.large {
+		width: 420px;
+	}
+
+	nb-card-header {
+		padding: 1rem;
+
+		nb-icon.close {
+			cursor: pointer;
+		}
+	}
+
+	nb-card-body {
+		padding: 1rem;
+	}
+
+	nb-card-footer {
+		padding: 1rem;
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+	}
+}

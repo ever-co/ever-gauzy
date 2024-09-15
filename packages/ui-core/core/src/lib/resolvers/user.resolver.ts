@@ -1,43 +1,39 @@
-import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
-import { catchError, debounceTime, from, of, tap } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { inject } from '@angular/core';
+import { ResolveFn, Router } from '@angular/router';
+import { Observable, catchError, debounceTime, from, of, tap } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
 import { ErrorHandlingService, UsersService } from '../services';
 
-@Injectable({
-	providedIn: 'root'
-})
-export class UserResolver implements Resolve<Observable<number | Observable<never>>> {
-	constructor(
-		private readonly _router: Router,
-		private readonly _usersService: UsersService,
-		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+/**
+ * Resolves the current user data and handles navigation based on the user's tenant status.
+ *
+ * @returns An observable of the user ID or an observable of error in case of failure.
+ */
+export const UserResolver: ResolveFn<Observable<IUser | null>> = (): Observable<IUser | null> => {
+	const _router = inject(Router);
+	const _usersService = inject(UsersService);
+	const _errorHandlingService = inject(ErrorHandlingService);
 
-	// Get the observable for fetching user data from the service
-	resolve(): Observable<number> {
-		// Get the observable for fetching user data from the service
-		const user$ = this._usersService.getMe();
+	// Fetch user data
+	const user$ = from(_usersService.getMe());
 
-		// Pipe operators to process the observable stream
-		return from(user$).pipe(
-			debounceTime(100), // Add a debounceTime to wait for a specified time before emitting the latest value
-			tap((user: IUser) => {
-				//When a new user registers & logs in for the first time, he/she does not have tenantId.
-				//In this case, we have to redirect the user to the onboarding page to create their first organization, tenant, role.
-				if (!user.tenantId) {
-					this._router.navigate(['/onboarding/tenant']);
-					return;
-				}
-			}),
-			// Catch and handle errors
-			catchError((error) => {
-				// Handle and log errors using the _errorHandlingService
-				this._errorHandlingService.handleError(error);
-				// Return an empty observable to continue the stream
-				return of(error);
-			})
-		);
-	}
-}
+	// Fetch user data from the service
+	return user$.pipe(
+		// Debounce the request to avoid excessive API calls
+		debounceTime(100),
+		// Check if the user has a tenant ID
+		tap((user: IUser) => {
+			if (!user.tenantId) {
+				_router.navigate(['/onboarding/tenant']);
+				return;
+			}
+		}),
+		// Handle errors
+		catchError((error) => {
+			// Handle and log errors using the _errorHandlingService
+			_errorHandlingService.handleError(error);
+			// Return null to indicate an error
+			return of(null);
+		})
+	);
+};

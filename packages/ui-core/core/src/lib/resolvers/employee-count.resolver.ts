@@ -1,36 +1,39 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { catchError, debounceTime, map, of } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { ActivatedRouteSnapshot, ResolveFn } from '@angular/router';
+import { Observable, catchError, map, of } from 'rxjs';
+import { inject } from '@angular/core';
 import { IOrganization } from '@gauzy/contracts';
 import { OrganizationsService } from '../services';
 
-@Injectable({
-	providedIn: 'root'
-})
-export class EmployeeCountResolver implements Resolve<Observable<number | Observable<never>>> {
-	constructor(private readonly _organizationsService: OrganizationsService) {}
+/**
+ * Resolver function to fetch the employee count for the given organization.
+ *
+ * @param route - The activated route snapshot.
+ * @returns An observable of the employee count or 0 in case of an error or missing organization ID.
+ */
+export const EmployeeCountResolver: ResolveFn<Observable<number>> = (
+	route: ActivatedRouteSnapshot
+): Observable<number> => {
+	// Inject the OrganizationsService
+	const _organizationsService = inject(OrganizationsService);
 
-	/**
-	 * Resolves the employee count for the given route.
-	 * @param route The activated route snapshot.
-	 * @returns An observable of the employee count or 0 in case of an error or missing organization ID.
-	 */
-	resolve(route: ActivatedRouteSnapshot): Observable<number> {
-		const organizationId = route.params['id'];
-		if (!organizationId) {
-			return of(0);
-		}
+	// Extract the organization ID from route parameters
+	const organizationId = route.params['id'];
 
-		return this._organizationsService
-			.getById(organizationId, [], {
-				id: true,
-				totalEmployees: true
-			})
-			.pipe(
-				debounceTime(100),
-				map((organization: IOrganization) => organization?.totalEmployees ?? 0),
-				catchError(() => of(0)) // Return 0 on error
-			);
+	// Return 0 if organization ID is missing
+	if (!organizationId) {
+		// Return 0 if organization ID is missing
+		return of(0);
 	}
-}
+
+	// Fetch organization details from the API
+	const organization$ = _organizationsService.getById(organizationId, [], {
+		id: true,
+		totalEmployees: true
+	});
+
+	// Fetch organization details and map to employee count
+	return organization$.pipe(
+		map((organization: IOrganization) => organization?.totalEmployees ?? 0),
+		catchError(() => of(0)) // Return 0 on error
+	);
+};

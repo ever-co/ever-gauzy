@@ -7,6 +7,9 @@ export abstract class BasePowerManagerDecorator implements IPowerManager {
 	protected constructor(powerManager: IPowerManager) {
 		this._decorator = powerManager;
 	}
+	public get isOnBattery(): boolean {
+		return this._decorator.isOnBattery;
+	}
 	public pauseTracking(): void {
 		this._decorator.pauseTracking();
 	}

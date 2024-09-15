@@ -1,10 +1,10 @@
-import { TimerService } from './timer.service';
 import { AppError } from '../../error-handler';
 import { IIntervalService, IOfflineMode } from '../../interfaces';
 import { IntervalDAO } from '../dao';
 import { DesktopOfflineModeHandler } from '../desktop-offline-mode-handler';
 import { IntervalTO } from '../dto';
 import { Interval } from '../models';
+import { TimerService } from './timer.service';
 import { UserService } from './user.service';
 
 export class IntervalService implements IIntervalService<IntervalTO> {
@@ -151,10 +151,10 @@ export class IntervalService implements IIntervalService<IntervalTO> {
 		}
 	}
 
-	public async findLastInterval(): Promise<IntervalTO> {
+	public async findLastInterval(excludeIds = []): Promise<IntervalTO> {
 		try {
 			const { employeeId } = await this._userService.retrieve();
-			return await this._intervalDAO.lastSyncedInterval(employeeId);
+			return await this._intervalDAO.lastSyncedInterval(employeeId, excludeIds);
 		} catch (error) {
 			console.error(error);
 			return null;

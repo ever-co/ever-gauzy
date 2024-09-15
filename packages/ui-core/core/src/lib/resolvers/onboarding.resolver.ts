@@ -1,38 +1,39 @@
-import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
-import { catchError, from, map, of } from 'rxjs';
-import { Observable } from 'rxjs/internal/Observable';
+import { inject } from '@angular/core';
+import { ResolveFn, Router } from '@angular/router';
+import { Observable, from, map, catchError, of } from 'rxjs';
 import { IUser } from '@gauzy/contracts';
-import { ErrorHandlingService, UsersService } from '../services';
+import { UsersService, ErrorHandlingService } from '../services';
 
-@Injectable({
-	providedIn: 'root'
-})
-export class OnboardingResolver implements Resolve<Observable<IUser | Observable<never>>> {
-	constructor(
-		private readonly _router: Router,
-		private readonly _usersService: UsersService,
-		private readonly _errorHandlingService: ErrorHandlingService
-	) {}
+/**
+ * Retrieves the user data and performs onboarding-related navigation.
+ *
+ * @returns Observable<IUser | null> - An observable that emits the user data or null in case of an error.
+ */
+export const OnboardingResolver: ResolveFn<Observable<IUser | null>> = (): Observable<IUser | null> => {
+	// Inject the necessary services
+	const _router = inject(Router);
+	const _usersService = inject(UsersService);
+	const _errorHandlingService = inject(ErrorHandlingService);
 
-	// Get the observable for fetching user data from the service
-	resolve(): Observable<IUser> {
-		// Pipe operators to process the observable stream
-		return from(this._usersService.getMe()).pipe(
-			map((user: IUser) => {
-				if (user.tenantId) {
-					this._router.navigate(['/onboarding/complete']);
-					return user; // User has a tenantId
-				}
-				return user; // Return the user object
-			}),
-			// Catch and handle errors
-			catchError((error) => {
-				// Handle and log errors using the _errorHandlingService
-				this._errorHandlingService.handleError(error);
-				// Error occurred, return false or handle as needed
-				return of(null);
-			})
-		);
-	}
-}
+	// Fetch the user data
+	const user$ = _usersService.getMe();
+
+	// Fetch the user data from the service
+	return from(user$).pipe(
+		// Map the user object to the user data
+		map((user: IUser) => {
+			if (user.tenantId) {
+				_router.navigate(['/onboarding/complete']);
+				return user; // User has a tenantId
+			}
+			return user; // Return the user object if no tenantId
+		}),
+		// Handle any errors
+		catchError((error) => {
+			// Handle and log any errors
+			_errorHandlingService.handleError(error);
+			// Return null to indicate an error
+			return of(null);
+		})
+	);
+};
