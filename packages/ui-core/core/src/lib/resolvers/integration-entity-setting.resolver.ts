@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, Router, ResolveFn } from '@angular/router';
 import { Observable, EMPTY, map } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { IIntegrationEntitySetting, IPagination } from '@gauzy/contracts';
-import { IntegrationEntitySettingService } from '@gauzy/ui-core/core';
+import { IntegrationEntitySettingService } from '../services/integration/integration-entity-setting.service';
 
 /**
  * Resolver function to fetch integration entity settings before activating a route.

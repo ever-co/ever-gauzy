@@ -1,12 +1,11 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import {
-	NbCardModule,
-	NbSelectModule,
-	NbInputModule,
-	NbSpinnerModule,
 	NbButtonModule,
+	NbCardModule,
 	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
+	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -17,20 +16,23 @@ import { IntegrationsComponent } from './integrations.component';
 import { IntegrationLayoutComponent } from './layout/layout.component';
 import { IntegrationListComponent } from './components/integration-list/list.component';
 
+const NB_MODULES = [
+	NbButtonModule,
+	NbCardModule,
+	NbIconModule,
+	NbInputModule,
+	NbSelectModule,
+	NbSpinnerModule,
+	NbTooltipModule
+];
+
 @NgModule({
 	imports: [
-		CommonModule,
-		NbButtonModule,
-		NbCardModule,
-		NbInputModule,
-		NbSelectModule,
-		NbSpinnerModule,
-		NbTooltipModule,
-		IntegrationsRoutingModule,
-		SharedModule,
-		NbIconModule,
+		...NB_MODULES,
 		NgxPermissionsModule.forChild(),
 		TranslateModule.forChild(),
+		IntegrationsRoutingModule,
+		SharedModule,
 		SmartDataViewLayoutModule,
 		TableComponentsModule
 	],
