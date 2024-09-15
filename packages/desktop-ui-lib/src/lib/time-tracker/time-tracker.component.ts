@@ -1086,7 +1086,6 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			this._ngZone.run(async () => {
 				if (this.start) {
 					await this.toggleStart(false);
-					this.electronService.ipcRenderer.send('pause-tracking');
 				}
 			})
 		);
@@ -1283,6 +1282,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						title: this._environment.DESCRIPTION
 					};
 
+					console.log('remove_idle_time', arg);
+
 					const isReadyForDeletion = !this._isOffline && timeSlotPayload.timeslotIds.length > 0;
 
 					if (isReadyForDeletion) {
@@ -1341,9 +1342,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 										},
 										(payload) => this.timeTrackerService.toggleApiStop(payload)
 									);
-									this._startMode = TimerStartMode.STOP;
 								} catch (error) {
 									await this.electronService.ipcRenderer.invoke('MARK_AS_STOPPED_OFFLINE');
+								} finally {
+									this._startMode = TimerStartMode.STOP;
+									this.timeTrackerStore.ignition({
+										state: IgnitionState.STOPPED,
+										mode: this._startMode
+									});
 								}
 							}
 							const isDeleted = await this.timeTrackerService.deleteTimeSlots(timeSlotPayload);
@@ -1375,6 +1381,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 								this._errorHandlerService.handleError(error);
 							}
 						});
+					} else {
+						if (this.start && !arg.isWorking) await this.toggleStart(false);
 					}
 
 					if (this._isOffline || isReadyForDeletion) {
