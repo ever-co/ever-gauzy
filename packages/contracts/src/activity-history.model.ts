@@ -9,11 +9,11 @@ export interface IActivityHistory extends IBasePerTenantAndOrganizationEntityMod
 	updatedProperties?: string[]; // In case of update actions, which entity properties was modified simultaneously. Avoid multiple records. E.g For task : ['name', 'members', 'projectId']
 	previousValues?: IActivityHistoryUpdatedValues[]; // E.g For task : {title: ' First Task', members: ['Member1Name', 'Member2Name'], projectId: 'project1UUId'}
 	updatedValues?: IActivityHistoryUpdatedValues[]; // E.g For task : {title: ' First Task Updated', members: ['Member4Name', 'Member3Name'], projectId: 'project2UUId'}
-	previousEntities: IActivityHistoryUpdatedValues[]; // Stores previous IDs or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']}
-	updatedEntities: IActivityHistoryUpdatedValues[]; // Stores updated IDs, or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']},
+	previousEntities?: IActivityHistoryUpdatedValues[]; // Stores previous IDs or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']}
+	updatedEntities?: IActivityHistoryUpdatedValues[]; // Stores updated IDs, or other values for related entities. Eg : {members: ['member_1_ID', 'member_2_ID']},
 	creator?: IUser;
 	creatorId?: ID;
-	details: ActivityHistoryDetails;
+	details?: ActivityHistoryDetails;
 }
 
 export type ActivityHistoryAction = 'creation' | 'modification' | 'deletion'; // User, Organization,... action
