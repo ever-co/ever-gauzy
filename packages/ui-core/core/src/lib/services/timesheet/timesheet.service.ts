@@ -21,8 +21,8 @@ import {
 	ReportDayData,
 	IUpdateTimesheetStatusInput,
 	ISubmitTimesheetInput,
-	IScreenshot,
-	IBasePerTenantAndOrganizationEntityModel
+	IBasePerTenantAndOrganizationEntityModel,
+	ID
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
@@ -45,7 +45,7 @@ export class TimesheetService {
 		return firstValueFrom(this.http.post<ITimeLog>(`${API_PREFIX}/timesheet/time-log`, request));
 	}
 
-	updateTime(id: string, request: ITimeLog | Partial<ITimeLog>): Promise<ITimeLog> {
+	updateTime(id: ID, request: ITimeLog | Partial<ITimeLog>): Promise<ITimeLog> {
 		return firstValueFrom(this.http.put<ITimeLog>(`${API_PREFIX}/timesheet/time-log/` + id, request));
 	}
 
@@ -57,8 +57,14 @@ export class TimesheetService {
 		);
 	}
 
-	getTimeSheet(id: string) {
-		return this.http.get(`${API_PREFIX}/timesheet/${id}`);
+	/**
+	 * Fetches a timesheet by its ID.
+	 *
+	 * @param id - The ID of the timesheet to retrieve.
+	 * @returns An observable of the timesheet data.
+	 */
+	getTimeSheetById(id: string): Observable<ITimesheet> {
+		return this.http.get<ITimesheet>(`${API_PREFIX}/timesheet/${id}`);
 	}
 
 	getTimeSheets(request?: IGetTimesheetInput) {
@@ -110,6 +116,7 @@ export class TimesheetService {
 	async getDailyReport(request: IGetTimeLogInput): Promise<IReportDayData[]> {
 		// Convert the request parameters to URL query parameters
 		const params = toParams(request);
+		// Fetch the daily report data
 		return firstValueFrom(
 			this.http.get<IReportDayData[]>(`${API_PREFIX}/timesheet/time-log/report/daily`, { params })
 		);
@@ -252,7 +259,7 @@ export class TimesheetService {
 		);
 	}
 
-	deleteScreenshot(id: IScreenshot['id'], params: IBasePerTenantAndOrganizationEntityModel) {
+	deleteScreenshot(id: ID, params: IBasePerTenantAndOrganizationEntityModel) {
 		return firstValueFrom(
 			this.http.delete(`${API_PREFIX}/timesheet/screenshot/${id}`, {
 				params: toParams(params)
