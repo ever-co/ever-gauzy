@@ -1,0 +1,62 @@
+<div class="gauzy-select-container">
+	<label *ngIf="label">{{ label | translate }}</label>
+	<ng-select
+		(clear)="onClear()"
+		[loading]="isLoading"
+		(ngModelChange)="onModelChange($event)"
+		[ngModel]="selectedItem"
+		[addTagText]="addTagText | translate"
+		[addTag]="canAddTag ? addTag : null"
+		[class.error-border]="hasError"
+		[clearable]="clearable"
+		[disabled]="disabled"
+		[items]="items"
+		[nbTooltipDisabled]="!disabled"
+		[nbTooltip]="tooltipText | translate"
+		[placeholder]="placeholder | translate"
+		[bindLabel]="bindLabel"
+		[bindValue]="bindValue"
+		nbTooltipStatus="warning"
+	>
+		<!-- Option Template -->
+		<ng-template ng-option-tmp let-item="item">
+			<ng-container
+				[ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate : defaultTemplate"
+				[ngTemplateOutletContext]="{ item: item }"
+			></ng-container>
+		</ng-template>
+
+		<!-- Label Template -->
+		<ng-template ng-label-tmp let-item="item">
+			<div class="selector-template">
+				<ng-container
+					[ngTemplateOutlet]="bindLabel === 'title' ? titleTemplate : defaultTemplate"
+					[ngTemplateOutletContext]="{ item: item }"
+				></ng-container>
+			</div>
+		</ng-template>
+	</ng-select>
+</div>
+
+<!-- Default Template -->
+<ng-template #defaultTemplate let-item="item">
+	<ng-container *ngTemplateOutlet="commonTemplate; context: { item: item, label: item[bindLabel] }"></ng-container>
+</ng-template>
+
+<!-- Title Template -->
+<ng-template #titleTemplate let-item="item">
+	<span class="text-container">
+		<span *ngIf="item?.number" class="gray-bold-text">
+			#{{ item?.prefix ? (item?.prefix + '-' + item?.number | uppercase) : item?.number }}
+		</span>
+		<span class="black-bold-text">{{ item?.title }}</span>
+	</span>
+</ng-template>
+
+<!-- Common Template (for both option and label) -->
+<ng-template #commonTemplate let-item="item" let-label="label">
+	<div class="common-template">
+		<img *ngIf="item?.imageUrl" [src]="item?.imageUrl" height="20px" width="20px" />
+		<span class="black-bold-text">{{ label }}</span>
+	</div>
+</ng-template>

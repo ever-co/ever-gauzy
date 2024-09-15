@@ -1,6 +1,6 @@
 import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../databases';
-import { IntervalTO, TABLE_NAME_INTERVALS, TimerTO, UserTO } from '../dto';
+import { IntervalTO, TABLE_NAME_INTERVALS, UserTO } from '../dto';
 import { IntervalTransaction } from '../transactions';
 
 export class IntervalDAO implements DAO<IntervalTO> {
@@ -162,10 +162,9 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.select('remoteId')
 				.distinct('remoteId')
 				.where('employeeId', user.employeeId)
-				.where((qb) =>
-					qb.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)]).andWhere('synced', true)
-				);
-			await this.deleteLocallyIdlesTime(startedAt, stoppedAt, user);
+				.where('isDeleted', false)
+				.where((qb) => qb.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)]));
+			await this.deleteByRemoteId(...remotesIds.map(({ remoteId }) => remoteId));
 			return remotesIds;
 		} catch (error) {
 			console.log('[dao]: ', error);
@@ -184,27 +183,28 @@ export class IntervalDAO implements DAO<IntervalTO> {
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.where('employeeId', user.employeeId)
 				.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)])
-				.update({ isDeleted: true });
+				.update({ isDeleted: true, synced: true });
 		} catch (error) {
 			console.log('[dao]: ', error);
 		}
 	}
 
-	public async deleteByRemoteId(remoteId: string): Promise<void> {
+	public async deleteByRemoteId(...remoteIds: string[]): Promise<void> {
 		try {
 			return await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
-				.where('remoteId', remoteId)
-				.update({ isDeleted: true });
+				.whereIn('remoteId', remoteIds)
+				.update({ isDeleted: true, synced: true });
 		} catch (error) {
 			console.log('[dao]: ', 'interval deleted fails : ', error);
 		}
 	}
 
-	public async lastSyncedInterval(employeeId: string): Promise<IntervalTO> {
+	public async lastSyncedInterval(employeeId: string, excludeIds: string[]): Promise<IntervalTO> {
 		return this._provider
-			.connection<TimerTO>(TABLE_NAME_INTERVALS)
+			.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 			.where('employeeId', employeeId)
+			.whereNotIn('remoteId', excludeIds)
 			.where((builder) => {
 				builder.whereNotNull('remoteId').andWhere('synced', true).andWhere('isDeleted', false);
 			})

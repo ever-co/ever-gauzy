@@ -2,7 +2,7 @@ import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
 import { catchError, EMPTY, map, Observable } from 'rxjs';
 import { inject } from '@angular/core';
 import { IIntegrationSetting, IIntegrationTenant } from '@gauzy/contracts';
-import { IntegrationsService } from '@gauzy/ui-core/core';
+import { IntegrationsService } from '../services/integration/integrations.service';
 
 /**
  * Resolver function to fetch integration settings before activating the route.

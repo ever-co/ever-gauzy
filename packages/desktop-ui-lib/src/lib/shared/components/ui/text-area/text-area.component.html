@@ -1,0 +1,6 @@
+<div class="text-area-container">
+	<label *ngIf="label">{{ label | translate }}</label>
+	<textarea (ngModelChange)="onModelChange($event)" [(ngModel)]="text" [disabled]="disabled"
+		[placeholder]="placeholder | translate" [status]="hasError ? 'danger' : 'basic'" fullWidth nbInput
+		status="basic"></textarea>
+</div>

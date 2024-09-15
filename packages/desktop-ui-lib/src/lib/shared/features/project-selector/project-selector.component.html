@@ -1,0 +1,18 @@
+<gauzy-select
+	class="w-100"
+	label="CONTEXT_MENU.PROJECT"
+	[selectedItem]="(selected$ | async)?.id"
+	[items]="data$ | async"
+	bindLabel="name"
+	bindValue="id"
+	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_PROJECT"
+	placeholder="TIMER_TRACKER.SELECT_PROJECT"
+	[canAddTag]="hasPermission$ | async"
+	(clear)="refresh()"
+	(modelChange)="change($event)"
+	[addTag]="addProject"
+	addTagText="FORM.PLACEHOLDERS.ADD_PROJECT"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
+></gauzy-select>
