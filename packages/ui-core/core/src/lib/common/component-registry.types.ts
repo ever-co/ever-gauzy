@@ -33,6 +33,7 @@ export type ComponentRegistryLocationId = 'table' | 'tab' | 'route';
  * - 'time-activity': A sub-page under the employees section.
  * - 'timesheet': A sub-page under the employees section.
  * - 'timesheet-details': A sub-page under the timesheet section.
+ * - 'integrations': The integrations section of the application.
  */
 export type PageRouteRegistryId =
 	| 'auth'
@@ -43,7 +44,8 @@ export type PageRouteRegistryId =
 	| 'proposals'
 	| 'time-activity'
 	| 'timesheet'
-	| 'timesheet-details';
+	| 'timesheet-details'
+	| 'integrations';
 
 /**
  * @description
