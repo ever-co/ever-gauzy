@@ -55,3 +55,9 @@ export interface IBasePerTenantAndOrganizationEntityMutationInput extends Partia
 	organizationId?: ID; // Identifier of the associated organization
 	organization?: Partial<IOrganization>; // Allow additional fields from IOrganization
 }
+
+// Actor type defines if it's User or system performed some action
+export enum ActorTypeEnum {
+	SYSTEM = 'SYSTEM',
+	USER = 'USER'
+}
