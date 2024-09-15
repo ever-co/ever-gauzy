@@ -1382,7 +1382,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 							}
 						});
 					} else {
-						if (this.start && !arg.isWorking) this.toggleStart(false);
+						if (this.start && !arg.isWorking) await this.toggleStart(false);
 					}
 
 					if (this._isOffline || isReadyForDeletion) {
