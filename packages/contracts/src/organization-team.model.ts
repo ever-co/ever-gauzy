@@ -8,6 +8,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { IComment } from './comment.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
@@ -24,6 +25,7 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	managers?: IOrganizationTeamEmployee[];
 	projects?: IOrganizationProject[];
 	modules?: IOrganizationProjectModule[];
+	assignedComments?: IComment[];
 	tags?: ITag[];
 	tasks?: ITask[];
 }

@@ -1,5 +1,6 @@
 import { JoinTable, JoinColumn, RelationId } from 'typeorm';
 import {
+	IComment,
 	ID,
 	IDailyPlan,
 	IEquipmentSharing,
@@ -23,6 +24,7 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
+	Comment,
 	DailyPlan,
 	EquipmentSharing,
 	Goal,
@@ -338,4 +340,15 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		onDelete: 'CASCADE'
 	})
 	projects?: IOrganizationProject[];
+
+	/**
+	 * Comments
+	 */
+	@MultiORMManyToMany(() => Comment, (it) => it.teams, {
+		/** Defines the database action to perform on update. */
+		onUpdate: 'CASCADE',
+		/** Defines the database cascade action on delete. */
+		onDelete: 'CASCADE'
+	})
+	assignedComments?: IComment[];
 }
