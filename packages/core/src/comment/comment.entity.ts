@@ -3,7 +3,7 @@ import { EntityRepositoryType } from '@mikro-orm/core';
 import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { IsArray, IsBoolean, IsDate, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
+import { ActorTypeEnum, CommentEntityEnum, IComment, ID, IEmployee, IOrganizationTeam, IUser } from '@gauzy/contracts';
 import { Employee, OrganizationTeam, TenantOrganizationBaseEntity, User } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -39,6 +39,13 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@IsString()
 	@MultiORMColumn()
 	comment: string;
+
+	@ApiPropertyOptional({ type: () => String, enum: ActorTypeEnum })
+	@IsNotEmpty()
+	@IsEnum(ActorTypeEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ nullable: true })
+	actorType?: ActorTypeEnum;
 
 	@ApiPropertyOptional({ type: Boolean })
 	@IsOptional()
@@ -125,6 +132,7 @@ export class Comment extends TenantOrganizationBaseEntity implements IComment {
 	@ApiPropertyOptional({ type: () => String })
 	@IsOptional()
 	@IsUUID()
+	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	parentId?: ID;
 

@@ -1,5 +1,5 @@
 import { IUser } from 'user.model';
-import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 
@@ -8,7 +8,8 @@ export interface IComment extends IBasePerTenantAndOrganizationEntityModel {
 	entityId: ID; // Indicate the ID of entity record comment related to
 	comment: string;
 	creator?: IUser;
-	creatorId?: ID; // The comment's employee author ID
+	creatorId?: ID; // The comment's user author ID
+	actorType?: ActorTypeEnum;
 	resolved?: boolean;
 	resolvedAt?: Date;
 	resolvedBy?: IUser;
