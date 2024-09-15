@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow } from 'electron';
 import moment from 'moment';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
 import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
@@ -52,19 +52,13 @@ export class DesktopOsInactivityHandler {
 			}
 		});
 
-		this._powerManager.detectInactivity.on('activity-proof-result', async ({ accepted, proof }) => {
+		this._powerManager.detectInactivity.on('activity-proof-result', async () => {
 			this._inactivityResultAccepted = true;
 
 			if (!this._dialog) return;
 
 			this._dialog.close();
 			delete this._dialog;
-
-			ipcMain.on('pause-tracking', async () => {
-				if (this._isRemoveIdleTime) {
-					await this._removeIdleTime(accepted);
-				}
-			});
 		});
 
 		this._powerManager.detectInactivity.on('activity-proof-not-accepted', async () => {
@@ -75,9 +69,8 @@ export class DesktopOsInactivityHandler {
 					powerManager.window
 				)
 			);
-			if (this._isRemoveIdleTime) {
-				await this._removeIdleTime(false);
-			}
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+			await this._removeIdleTime(false);
 			await dialog.show();
 			this._notify.customNotification(
 				TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
@@ -85,7 +78,7 @@ export class DesktopOsInactivityHandler {
 			);
 		});
 
-		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', () => {
+		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', async () => {
 			const { suspendDetected, isOnBattery, window } = this._powerManager;
 
 			this._powerManager.sleepTracking = new SleepInactivityTracking(
@@ -94,14 +87,17 @@ export class DesktopOsInactivityHandler {
 					: new NeverSleepTracking(window)
 			);
 
-			this._powerManager.pauseTracking();
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Not Accepted');
+
+			await this._removeIdleTime(false);
 		});
 
 		this._powerManager.detectInactivity.on('activity-proof-result-accepted', async () => {
 			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
-			if (this._isRemoveIdleTime) {
-				await this._removeIdleTime(true);
-			}
+			console.log('[OS_INACTIVITY_HANDLER] Activity Proof Result Accepted');
+			await this._removeIdleTime(true);
+			this._powerManager.clearIntervals();
+			this._powerManager.startInactivityDetection();
 		});
 	}
 
@@ -130,6 +126,12 @@ export class DesktopOsInactivityHandler {
 	}
 
 	private async _removeIdleTime(isWorking: boolean): Promise<void> {
+		if (!this._isRemoveIdleTime) {
+			if (!isWorking) {
+				this._powerManager.pauseTracking();
+			}
+			return;
+		}
 		const auth = LocalStore.getStore('auth');
 		const inactivityTimeLimit = auth ? auth.inactivityTimeLimit : 10;
 		const now = moment().clone();

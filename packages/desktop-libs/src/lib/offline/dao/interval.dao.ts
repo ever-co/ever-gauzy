@@ -160,7 +160,6 @@ export class IntervalDAO implements DAO<IntervalTO> {
 			const remotesIds = await this._provider
 				.connection<IntervalTO>(TABLE_NAME_INTERVALS)
 				.select('remoteId')
-				.distinct('remoteId')
 				.where('employeeId', user.employeeId)
 				.where('isDeleted', false)
 				.where((qb) => qb.whereBetween('stoppedAt', [new Date(startedAt), new Date(stoppedAt)]));
