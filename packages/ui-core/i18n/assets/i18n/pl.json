@@ -4170,7 +4170,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Rozszerzenie przeglądarki",
-			"TEAMS": "Zespoły"
+			"TEAMS": "Zespoły",
+			"CLOC": "Cloc"
 		},
 		"LAST_WORKED": "Ostatnia praca:",
 		"TIME_ZONE": "Time Zone",
@@ -4312,7 +4313,8 @@
 			"employee-join": "Dołącz jako pracownik",
 			"email-reset": "Resetuj Email",
 			"organization-team-join-request": "Wniosek o dołączenie do zespołu organizacji",
-			"payment-receipt": "Wysłać potwierdzenie płatności"
+			"payment-receipt": "Wysłać potwierdzenie płatności",
+			"reject-candidate": "Odrzuć Kandydata"
 		},
 		"HTML_EDITOR": "Edytor HTML"
 	},

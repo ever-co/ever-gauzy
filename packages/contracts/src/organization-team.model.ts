@@ -1,4 +1,4 @@
-import { IRelationalEmployee } from './employee.model';
+import { IEmployeeEntityInput } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { IOrganizationTeamEmployee } from './organization-team-employee-model';
 import { ITag } from './tag.model';
@@ -8,6 +8,7 @@ import { IRelationalImageAsset } from './image-asset.model';
 import { CrudActionEnum } from './organization.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IOrganizationProjectModule } from './organization-project-module.model';
+import { IComment } from './comment.model';
 
 export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityModel, IRelationalImageAsset {
 	name: string;
@@ -24,11 +25,12 @@ export interface IOrganizationTeam extends IBasePerTenantAndOrganizationEntityMo
 	managers?: IOrganizationTeamEmployee[];
 	projects?: IOrganizationProject[];
 	modules?: IOrganizationProjectModule[];
+	assignedComments?: IComment[];
 	tags?: ITag[];
 	tasks?: ITask[];
 }
 
-export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IOrganizationTeamFindInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	name?: string;
 	prefix?: string;
 	public?: boolean;

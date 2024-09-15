@@ -19,6 +19,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const overStyle = document.createElement('style');
     overStyle.innerHTML = `
+        .cet-container {
+            top:0px !important;
+        }
         .cet-menubar-menu-container {
             position: absolute;
             display: block;

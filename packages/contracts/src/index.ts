@@ -18,6 +18,7 @@ export * from './candidate-technologies.model';
 export * from './candidate.model';
 export * from './changelog.model';
 export * from './chart.model';
+export * from './comment.model';
 export * from './contact.model';
 export * from './core.model';
 export * from './country.model';
@@ -46,6 +47,7 @@ export * from './event-type.model';
 export * from './expense-category.model';
 export * from './expense-category.model';
 export * from './expense.model';
+export * from './favorite.model';
 export * from './feature.model';
 export * from './file-provider';
 export * from './geo-location.model';
@@ -95,6 +97,7 @@ export * from './pipeline.model';
 export * from './product.model';
 export * from './project.model';
 export * from './proposal.model';
+export * from './reaction.model';
 export * from './recurring-expense.model';
 export * from './report.model';
 export * from './request-approval-employee.model';
@@ -135,7 +138,8 @@ export {
 	IBasePerTenantAndOrganizationEntityModel,
 	IBasePerTenantEntityModel,
 	IBaseSoftDeleteEntityModel,
-	IBaseRelationsEntityModel
+	IBaseRelationsEntityModel,
+	ActorTypeEnum
 } from './base-entity.model';
 
 export * from './proxy.model';

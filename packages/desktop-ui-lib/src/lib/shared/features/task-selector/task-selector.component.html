@@ -1,0 +1,18 @@
+<gauzy-select
+	class="w-100"
+	label="CONTEXT_MENU.TASK"
+	[selectedItem]="(selected$ | async)?.id"
+	[items]="data$ | async"
+	bindLabel="title"
+	bindValue="id"
+	tooltipText="TIMER_TRACKER.STOP_TIMER_CHANGE_TASK"
+	placeholder="TIMER_TRACKER.SELECT_TASK"
+	[canAddTag]="hasPermission$ | async"
+	(clear)="refresh()"
+	(modelChange)="change($event)"
+	[addTag]="addNewTask"
+	addTagText="TIMER_TRACKER.ADD_TASK"
+	[isLoading]="isLoading$ | async"
+	[disabled]="disabled$ | async"
+	[hasError]="error$ | async"
+></gauzy-select>

@@ -1,4 +1,4 @@
-import { IEmployee, IRelationalEmployee } from './employee.model';
+import { IEmployee, IEmployeeEntityInput } from './employee.model';
 import { IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
 import { ITag } from './tag.model';
 import { IExpenseCategory } from './expense-category.model';
@@ -7,7 +7,7 @@ import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IOrganizationContact } from './organization-contact.model';
 
-export interface IExpense extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IExpense extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	amount: number;
 	vendor: IOrganizationVendor;
 	vendorId: ID;
@@ -31,7 +31,7 @@ export interface IExpense extends IBasePerTenantAndOrganizationEntityModel, IRel
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	amount: number;
 	typeOfExpense?: string;
 	category: IExpenseCategory;
@@ -54,7 +54,7 @@ export interface IExpenseCreateInput extends IBasePerTenantAndOrganizationEntity
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	vendorName?: string;
 	vendorId?: string;
 	typeOfExpense?: string;
@@ -78,7 +78,7 @@ export interface IExpenseFindInput extends IBasePerTenantAndOrganizationEntityMo
 	status?: ExpenseStatusesEnum;
 }
 
-export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IRelationalEmployee {
+export interface IExpenseUpdateInput extends IBasePerTenantAndOrganizationEntityModel, IEmployeeEntityInput {
 	amount?: number;
 	vendorName?: string;
 	vendorId?: string;

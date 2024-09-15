@@ -46,7 +46,7 @@ import {
 @ApiTags('OrganizationProject')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
-@Controller()
+@Controller('/organization-projects')
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
 	constructor(
 		private readonly organizationProjectService: OrganizationProjectService,

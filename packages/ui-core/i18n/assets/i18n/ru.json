@@ -4189,7 +4189,8 @@
 			"UPWORK": "Upwork",
 			"HUBSTAFF": "HubStaff",
 			"BROWSER_EXTENSION": "Browser Extension",
-			"TEAMS": "Команды"
+			"TEAMS": "Команды",
+			"CLOC": "Клок"
 		},
 		"LAST_WORKED": "Последнее сработало:",
 		"TIME_ZONE": "Часовой пояс",
@@ -4328,7 +4329,8 @@
 			"employee-join": "Прием сотрудников",
 			"email-reset": "Сброс электронной почты",
 			"organization-team-join-request": "Запрос на вступление в команду организации",
-			"payment-receipt": "Квитанция об оплате"
+			"payment-receipt": "Квитанция об оплате",
+			"reject-candidate": "Отклонить кандидата"
 		},
 		"HTML_EDITOR": "HTML-редактор"
 	},

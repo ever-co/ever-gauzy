@@ -1,2 +1,2 @@
 export { EditOrganizationComponent } from './edit-organization.component';
-export { EditOrganizationResolver } from './edit-organization.resolver';
+export { OrganizationResolver } from '../organization.resolver';

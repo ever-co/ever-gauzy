@@ -1,12 +1,12 @@
-import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
-import NotificationDesktop from './desktop-notifier';
-import { DesktopDialog } from './desktop-dialog';
-import { BrowserWindow } from 'electron';
-import { LocalStore } from './desktop-store';
-import { DesktopOfflineModeHandler, IntervalService, TimerService } from './offline';
+import { BrowserWindow, ipcMain } from 'electron';
 import moment from 'moment';
-import { AlwaysSleepTracking, NeverSleepTracking } from './strategies';
 import { SleepInactivityTracking, SleepTracking } from './contexts';
+import { DialogAcknowledgeInactivity, PowerManagerDetectInactivity } from './decorators';
+import { DesktopDialog } from './desktop-dialog';
+import NotificationDesktop from './desktop-notifier';
+import { LocalStore } from './desktop-store';
+import { DesktopOfflineModeHandler, IntervalService, Timer, TimerService, TimerTO } from './offline';
+import { AlwaysSleepTracking, NeverSleepTracking } from './strategies';
 import { TranslateService } from './translation';
 
 export class DesktopOsInactivityHandler {
@@ -38,77 +38,70 @@ export class DesktopOsInactivityHandler {
 				TranslateService.instant('TIMER_TRACKER.DIALOG.STILL_WORKING'),
 				powerManager.window
 			);
+
 			const button = await this._dialog.show();
-			if (button?.response === 0) {
-				if (!this._inactivityResultAccepted) {
-					this._inactivityResultAccepted = true;
-					this._powerManager.detectInactivity.emit('activity-proof-result', true);
-				}
-			} else {
-				if (!this._inactivityResultAccepted) {
-					this._inactivityResultAccepted = true;
-					this._powerManager.detectInactivity.emit('activity-proof-result', false);
-				}
+
+			if (!this._inactivityResultAccepted) {
+				const { response } = button || {};
+				const accepted = response === 0;
+
+				this._powerManager.detectInactivity.emit('activity-proof-result', {
+					accepted,
+					proof: true
+				});
 			}
 		});
 
-		this._powerManager.detectInactivity.on('activity-proof-result', async (res) => {
-			if (this._dialog) {
-				this._dialog.close();
-				delete this._dialog;
-				let removeIdleTimePromise = null;
-				let dialogPromise = null;
-				if (this._isRemoveIdleTime) {
-					removeIdleTimePromise = this._removeIdleTime(res);
-				}
-				if (!this._inactivityResultAccepted) {
-					const dialog = new DialogAcknowledgeInactivity(
-						new DesktopDialog(
-							process.env.DESCRIPTION,
-							TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
-							powerManager.window
-						)
-					);
-					dialogPromise = dialog.show();
-					if (powerManager.suspendDetected) {
-						powerManager.window.webContents.send('inactivity-result-not-accepted');
-					}
-				}
-				/* Handle multiple promises in parallel. */
-				try {
-					await Promise.allSettled([
-						...(dialogPromise ? [dialogPromise] : []),
-						...(removeIdleTimePromise ? [removeIdleTimePromise] : [])
-					]);
-				} catch (error) {
-					console.log('Error', error);
-				}
-			}
-
-			if (powerManager.suspendDetected) {
-				powerManager.window.webContents.send('activity-proof-request');
-			}
-
-			if (!res)
-				this._notify.customNotification(
-					TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
-					process.env.DESCRIPTION
-				);
-
+		this._powerManager.detectInactivity.on('activity-proof-result', async ({ accepted, proof }) => {
 			this._inactivityResultAccepted = true;
+
+			if (!this._dialog) return;
+
+			this._dialog.close();
+			delete this._dialog;
+
+			ipcMain.on('pause-tracking', async () => {
+				if (this._isRemoveIdleTime) {
+					await this._removeIdleTime(accepted);
+				}
+			});
+		});
+
+		this._powerManager.detectInactivity.on('activity-proof-not-accepted', async () => {
+			const dialog = new DialogAcknowledgeInactivity(
+				new DesktopDialog(
+					process.env.DESCRIPTION,
+					TranslateService.instant('TIMER_TRACKER.DIALOG.INACTIVITY_HANDLER'),
+					powerManager.window
+				)
+			);
+			if (this._isRemoveIdleTime) {
+				await this._removeIdleTime(false);
+			}
+			await dialog.show();
+			this._notify.customNotification(
+				TranslateService.instant('TIMER_TRACKER.NATIVE_NOTIFICATION.STOPPED_DU_INACTIVITY'),
+				process.env.DESCRIPTION
+			);
 		});
 
 		this._powerManager.detectInactivity.on('activity-proof-result-not-accepted', () => {
+			const { suspendDetected, isOnBattery, window } = this._powerManager;
+
 			this._powerManager.sleepTracking = new SleepInactivityTracking(
-				this._powerManager.suspendDetected && this.isTrackingOnSleep
-					? new AlwaysSleepTracking(this._powerManager.window)
-					: new NeverSleepTracking(this._powerManager.window)
+				suspendDetected && this.isTrackingOnSleep && !isOnBattery
+					? new AlwaysSleepTracking(window)
+					: new NeverSleepTracking(window)
 			);
+
 			this._powerManager.pauseTracking();
 		});
 
-		this._powerManager.detectInactivity.on('activity-proof-result-accepted', () => {
+		this._powerManager.detectInactivity.on('activity-proof-result-accepted', async () => {
 			this._powerManager.sleepTracking = new SleepTracking(this._powerManager.window);
+			if (this._isRemoveIdleTime) {
+				await this._removeIdleTime(true);
+			}
 		});
 	}
 
@@ -142,12 +135,13 @@ export class DesktopOsInactivityHandler {
 		const now = moment().clone();
 		const proofResultDuration = now.diff(this._startedAt, 'minutes');
 		const idleDuration = proofResultDuration + inactivityTimeLimit;
-		this._stoppedAt = new Date();
+		this._stoppedAt = now.toDate();
 		this._startedAt = now.subtract(idleDuration - inactivityTimeLimit / 2, 'minutes').toDate();
 		const timeslotIds = await this._intervalService.removeIdlesTime(this._startedAt, this._stoppedAt);
-		const timer = await this._timerService.findLastOne();
-		const lastInterval = await this._intervalService.findLastInterval();
-		timer.timeslotId = lastInterval?.remoteId;
+		const lastTimer = await this._timerService.findLastOne();
+		const lastInterval = await this._intervalService.findLastInterval(timeslotIds);
+		const timer: TimerTO = { ...lastTimer, timeslotId: lastInterval?.remoteId, stoppedAt: this._startedAt };
+		await this._timerService.update(new Timer(timer));
 
 		await this.updateViewOffline({
 			startedAt: this._startedAt,

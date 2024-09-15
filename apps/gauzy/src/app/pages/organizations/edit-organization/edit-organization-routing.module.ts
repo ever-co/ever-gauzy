@@ -5,9 +5,9 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { EditOrganizationMainComponent } from './edit-organization-settings/edit-organization-main/edit-organization-main.component';
 import { EditOrganizationLocationComponent } from './edit-organization-settings/edit-organization-location/edit-organization-location.component';
 import { EditOrganizationOtherSettingsComponent } from './edit-organization-settings/edit-organization-other-settings/edit-organization-other-settings.component';
-import { EditOrganizationResolver } from './edit-organization.resolver';
 import { EditOrganizationComponent } from './edit-organization.component';
 import { EditOrganizationTaskSettingResolver } from './edit-organization-task-setting.resolver';
+import { OrganizationResolver } from '../organization.resolver';
 
 export function redirectTo() {
 	return '/pages/dashboard';
@@ -25,7 +25,7 @@ const routes: Routes = [
 			}
 		},
 		resolve: {
-			organization: EditOrganizationResolver,
+			organization: OrganizationResolver,
 			organizationTaskSetting: EditOrganizationTaskSettingResolver
 		},
 		runGuardsAndResolvers: 'always',

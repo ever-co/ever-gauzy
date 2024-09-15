@@ -86,6 +86,32 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 	}
 
 	/**
+	 * Filters out duplicate route configurations based on location and path combinations.
+	 *
+	 * @param configs The array of route configurations.
+	 * @returns The array of unique route configurations.
+	 */
+	private _filterConfigs(configs: PageRouteRegistryConfig[]): PageRouteRegistryConfig[] {
+		// Use a Set to track unique location combinations
+		const location = new Set<string>();
+
+		// Filter out duplicate configurations based on the location and path
+		return configs.filter((config: PageRouteRegistryConfig) => {
+			// Create a unique identifier for the combination of location and path
+			const identifier = `${config.location}-${config.path}`;
+
+			// Check if the unique identifier is already in the Set
+			if (location.has(identifier)) {
+				return false; // Duplicate found, filter it out
+			}
+
+			// Add the unique identifier to the Set
+			location.add(identifier);
+			return true; // Not a duplicate, keep it
+		});
+	}
+
+	/**
 	 * Get all registered routes for a specific location.
 	 *
 	 * This method retrieves all registered route configurations for a specified location identifier.
@@ -98,23 +124,8 @@ export class PageRouteRegistryService implements IPageRouteRegistry {
 		// Get all registered routes for the specified location
 		let configs = this.registry.get(location) || [];
 
-		// Use a Set to track unique location-path combinations
-		const locationPaths = new Set<string>();
-
-		// Create a unique identifier for the combination of location and path
-		configs = configs.filter((config: PageRouteRegistryConfig) => {
-			// Create a unique identifier for the combination of location and path
-			const identifier = `${config.location}-${config.path}`;
-
-			// Check if the unique identifier is already in the Set
-			if (locationPaths.has(identifier)) {
-				return false; // Duplicate found, filter it out
-			}
-
-			// Add the unique identifier to the Set
-			locationPaths.add(identifier);
-			return true; // Not a duplicate, keep it
-		});
+		// Filter out duplicate route configurations based on location combinations
+		configs = this._filterConfigs(configs);
 
 		// Map each route configuration to a route object
 		return configs.map((config: PageRouteRegistryConfig) => {

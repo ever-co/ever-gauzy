@@ -21,7 +21,7 @@
 				(selectedMenu$ | async) ===
 				'TIMER_TRACKER.SETTINGS.SCREEN_CAPTURE'
 			">
-			<div class="row">
+			<div class="row titlebar-space">
 				<div class="col-12">
 					<h4>{{ 'TIMER_TRACKER.SETTINGS.MONITOR' | translate }}</h4>
 				</div>
@@ -211,7 +211,7 @@
 			</div>
 		</ng-container>
 		<ng-container *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.TIMER'">
-			<div class="row">
+			<div class="row titlebar-space">
 				<div class="col-12">
 					<h4>{{ 'TIMER_TRACKER.TIMER' | translate }}</h4>
 				</div>
@@ -362,7 +362,7 @@
 			</div>
 		</ng-container>
 		<div class="row" *ngIf="(selectedMenu$ | async) === 'TIMER_TRACKER.SETTINGS.UPDATE'">
-			<div class="col-12">
+			<div class="col-12 titlebar-space">
 				<div class="row">
 					<div class="col-12">
 						<h4>
@@ -649,7 +649,7 @@
 				(selectedMenu$ | async) ===
 				'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS'
 			">
-			<div class="col-12">
+			<div class="col-12 titlebar-space">
 				<h4>
 					{{ 'TIMER_TRACKER.SETTINGS.ADVANCED_SETTINGS' | translate }}
 				</h4>
@@ -1134,7 +1134,7 @@
 			<ngx-plugin-layout></ngx-plugin-layout>
 		</ng-container>
 		<ng-container class="row" *ngIf="(selectedMenu$ | async) === 'MENU.ABOUT'">
-			<div class="col-12">
+			<div class="col-12 titlebar-space">
 				<div class="row">
 					<div class="col-12 text-center margin-content">
 						<img [src]="gauzyIcon" class="margin-icon" />

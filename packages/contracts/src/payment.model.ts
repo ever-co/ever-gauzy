@@ -1,4 +1,4 @@
-import { IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel } from './base-entity.model';
+import { IBasePerTenantAndOrganizationEntityModel } from './base-entity.model';
 import { IInvoice } from './invoice.model';
 import { ITag } from './tag.model';
 import { IUser } from './user.model';
@@ -6,8 +6,15 @@ import { IOrganizationContact } from './organization-contact.model';
 import { IOrganizationProject } from './organization-projects.model';
 import { IPaginationInput } from './core.model';
 import { IEmployee } from './employee.model';
-import { ReportGroupByFilter } from './report.model';
 import { IGetTimeLogReportInput } from './timesheet.model';
+
+/**
+ * Interface representing payment statistics.
+ */
+export interface PaymentStats {
+	count: number; // The count of payments
+	amount: number; // The total amount of all payments
+}
 
 export interface IPayment extends IBasePerTenantAndOrganizationEntityModel {
 	invoice?: IInvoice;
@@ -35,8 +42,7 @@ export interface IPaymentUpdateInput extends IBasePerTenantAndOrganizationEntity
 	paymentDate?: Date;
 }
 
-export interface IPaymentFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IPaymentFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	invoiceId?: string;
 }
 

@@ -1,25 +1,24 @@
-import moment from 'moment';
+import { ActivityType, IActivityWatchCollectEventData, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
 import { app, screen } from 'electron';
-import { metaData } from './desktop-wakatime';
-import { LocalStore } from './desktop-store';
+import moment from 'moment';
+import { DesktopActiveWindow } from './desktop-active-window';
+import { DesktopEventCounter } from './desktop-event-counter';
 import NotificationDesktop from './desktop-notifier';
 import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
-import { ActivityType, ITimeLog, TimeLogSourceEnum } from '@gauzy/contracts';
-import { DesktopEventCounter } from './desktop-event-counter';
-import { DesktopActiveWindow } from './desktop-active-window';
-import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
-import { IOfflineMode } from './interfaces';
-import { IActivityWatchCollectEventData } from '@gauzy/contracts';
+import { LocalStore } from './desktop-store';
+import { metaData } from './desktop-wakatime';
 import {
+	ActivityWatchAfkService,
+	ActivityWatchChromeService,
+	ActivityWatchEdgeService,
 	ActivityWatchEventManager,
 	ActivityWatchEventTableList,
-	ActivityWatchService,
 	ActivityWatchFirefoxService,
-	ActivityWatchChromeService,
-	ActivityWatchWindowService,
-	ActivityWatchAfkService,
-	ActivityWatchEdgeService
+	ActivityWatchService,
+	ActivityWatchWindowService
 } from './integrations';
+import { IOfflineMode } from './interfaces';
+import { DesktopOfflineModeHandler, Timer, TimerService, UserService } from './offline';
 
 import log from 'electron-log';
 console.log = log.log;
@@ -219,7 +218,7 @@ export default class TimerHandler {
 		await this._timerService.update(
 			new Timer({
 				id: this.lastTimer ? this.lastTimer.id : null,
-				startedAt: new Date(),
+				startedAt: this.timeSlotStart.utc().toDate(),
 				synced: !this._offlineMode.enabled,
 				isStartedOffline: this._offlineMode.enabled
 			})

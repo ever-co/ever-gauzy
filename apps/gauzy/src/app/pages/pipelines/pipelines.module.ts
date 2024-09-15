@@ -28,8 +28,6 @@ import { PipelineDealProbabilityComponent } from './table-components/pipeline-de
 import { StageComponent } from './stage/stage.component';
 import { PipelinesRouting } from './pipelines.routing';
 import { PipelinesComponent } from './pipelines.component';
-import { PipelineResolver } from './routes/pipeline.resolver';
-import { DealResolver } from './routes/deal.resolver';
 
 @NgModule({
 	declarations: [
@@ -73,6 +71,6 @@ import { DealResolver } from './routes/deal.resolver';
 		SmartDataViewLayoutModule,
 		NbTabsetModule
 	],
-	providers: [PipelinesService, DealsService, PipelineResolver, DealResolver]
+	providers: [PipelinesService, DealsService]
 })
 export class PipelinesModule {}

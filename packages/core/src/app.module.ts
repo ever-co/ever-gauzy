@@ -142,6 +142,11 @@ import { TaskEstimationModule } from './tasks/estimation/task-estimation.module'
 import { DailyPlanModule } from './tasks/daily-plan/daily-plan.module';
 import { SocialAccountModule } from './auth/social-account/social-account.module';
 import { OrganizationProjectModuleModule } from './organization-project-module/organization-project-module.module';
+import { FavoriteModule } from './favorite/favorite.module';
+import { GlobalFavoriteModule } from './favorite/global-favorite-service.module';
+import { CommentModule } from './comment/comment.module';
+import { StatsModule } from './stats/stats.module'; // Global Stats Module
+import { ReactionModule } from './reaction/reaction.module';
 
 const { unleashConfig } = environment;
 
@@ -433,7 +438,12 @@ if (environment.THROTTLE_ENABLED) {
 		IssueTypeModule,
 		TaskLinkedIssueModule,
 		OrganizationTaskSettingModule,
-		TaskEstimationModule
+		TaskEstimationModule,
+		FavoriteModule,
+		GlobalFavoriteModule,
+		StatsModule, // Global Stats Module
+		ReactionModule,
+		CommentModule		
 	],
 	controllers: [AppController],
 	providers: [
@@ -457,9 +467,7 @@ export class AppModule implements OnModuleInit {
 	constructor(private readonly clsService: ClsService) {
 		// Set Monday as start of the week
 		moment.updateLocale(LanguagesEnum.ENGLISH, {
-			week: {
-				dow: 1
-			}
+			week: { dow: 1 }
 		});
 	}
 

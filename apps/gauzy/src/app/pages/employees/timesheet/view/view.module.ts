@@ -1,28 +1,32 @@
-// tslint:disable: nx-enforce-module-boundaries
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ROUTES } from '@angular/router';
 import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule } from '@nebular/theme';
 import { TranslateModule } from '@ngx-translate/core';
-import { MomentModule } from 'ngx-moment';
+import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DialogsModule, EditTimeLogModalModule, GauzyButtonActionModule, SharedModule } from '@gauzy/ui-core/shared';
-import { ViewRoutingModule } from './view-routing.module';
-import { GithubViewComponent } from './view/view.component';
+import { createTimesheetDetailsRoutes } from './view.routes';
+import { TimesheetViewComponent } from './view/view.component';
+
+// Nebular Modules
+const NB_MODULES = [NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule];
 
 @NgModule({
-	declarations: [GithubViewComponent],
+	declarations: [TimesheetViewComponent],
 	imports: [
-		CommonModule,
-		ViewRoutingModule,
-		NbCardModule,
-		NbButtonModule,
-		NbIconModule,
+		...NB_MODULES,
 		TranslateModule.forChild(),
 		SharedModule,
-		MomentModule,
 		DialogsModule,
 		EditTimeLogModalModule,
-		NbCheckboxModule,
 		GauzyButtonActionModule
+	],
+	providers: [
+		{
+			provide: ROUTES,
+			useFactory: (service: PageRouteRegistryService) => createTimesheetDetailsRoutes(service),
+			deps: [PageRouteRegistryService],
+			multi: true
+		}
 	]
 })
 export class ViewModule {}

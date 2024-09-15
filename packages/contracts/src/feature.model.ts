@@ -20,21 +20,18 @@ export interface IFeatureCreateInput extends IFeature {
 	isEnabled: boolean;
 }
 
-export interface IFeatureOrganization
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IFeatureOrganization extends IBasePerTenantAndOrganizationEntityModel {
 	feature: IFeature;
 	featureId?: string;
 	isEnabled: boolean;
 }
 
-export interface IFeatureOrganizationUpdateInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IFeatureOrganizationUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	featureId: string;
 	isEnabled: boolean;
 }
 
-export interface IFeatureOrganizationFindInput
-	extends IBasePerTenantAndOrganizationEntityModel {
+export interface IFeatureOrganizationFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	featureId?: string;
 }
 
@@ -146,6 +143,7 @@ export enum FeatureEnum {
 	FEATURE_SMTP = 'FEATURE_SMTP',
 	FEATURE_ROLES_PERMISSION = 'FEATURE_ROLES_PERMISSION',
 	FEATURE_EMAIL_VERIFICATION = 'FEATURE_EMAIL_VERIFICATION',
+	FEATURE_OPEN_STATS = 'FEATURE_OPEN_STATS', // Enable/Disable Global Open Stats Endpoint Configuration
 
 	/** Defines feature flags and settings related to user authentication methods. */
 	FEATURE_EMAIL_PASSWORD_LOGIN = 'FEATURE_EMAIL_PASSWORD_LOGIN',

@@ -1,7 +1,7 @@
 import { BrowserWindow, powerMonitor } from 'electron';
 import { SleepTracking } from './contexts';
-import { IPowerManager, ISleepTracking } from './interfaces';
 import { LocalStore } from './desktop-store';
+import { IPowerManager, ISleepTracking } from './interfaces';
 
 export class DesktopPowerManager implements IPowerManager {
 	private _suspendDetected: boolean;
@@ -79,5 +79,9 @@ export class DesktopPowerManager implements IPowerManager {
 			this._sleepTracking.strategy.resume();
 			console.log('Tracker resumed.');
 		}
+	}
+
+	public get isOnBattery(): boolean {
+		return powerMonitor.isOnBatteryPower();
 	}
 }

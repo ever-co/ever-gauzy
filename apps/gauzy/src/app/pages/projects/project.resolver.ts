@@ -1,46 +1,41 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
-import { EMPTY, Observable, catchError, of } from 'rxjs';
+import { inject } from '@angular/core';
+import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
+import { EMPTY, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { IOrganizationProject } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
 import { OrganizationProjectsService } from '@gauzy/ui-core/core';
 
-@Injectable({
-	providedIn: 'root'
-})
-export class ProjectResolver implements Resolve<Observable<IOrganizationProject | Observable<never>>> {
-	/**
-	 * Constructs the ProjectResolver.
-	 * @param _organizationProjectsService The organization projects service used to fetch project details.
-	 * @param router The router service for navigation.
-	 */
-	constructor(
-		private readonly _organizationProjectsService: OrganizationProjectsService,
-		private readonly router: Router
-	) {}
+/**
+ * Resolver function to fetch project details before route activation.
+ *
+ * @param route - The activated route snapshot.
+ * @returns An observable containing project details or an empty observable on error.
+ */
+export const ProjectResolver: ResolveFn<Observable<IOrganizationProject | Observable<never>>> = (
+	route: ActivatedRouteSnapshot
+): Observable<IOrganizationProject | Observable<never>> => {
+	// Inject necessary services
+	const _organizationProjectsService = inject(OrganizationProjectsService);
+	const _router = inject(Router);
 
-	/**
-	 * Resolves project details before activating a specific route.
-	 * @param route The activated route snapshot.
-	 * @returns An observable containing project details or an empty observable.
-	 */
-	resolve(route: ActivatedRouteSnapshot): Observable<IOrganizationProject | Observable<never>> {
-		const projectId = route.params.id;
+	// Extract the project ID from the route parameters
+	const projectId = route.params['id'];
 
-		if (isEmpty(projectId)) {
-			return of(EMPTY);
-		}
-
-		try {
-			const relations = route.firstChild.data.relations || [];
-			return this._organizationProjectsService.getById(projectId, relations).pipe(
-				catchError(() => {
-					this.router.navigate(['/pages/organization/projects']);
-					return EMPTY;
-				})
-			);
-		} catch (error) {
-			this.router.navigate(['/pages/organization/projects']);
-		}
+	// If no project ID is provided, return an empty observable
+	if (isEmpty(projectId)) {
+		return of(EMPTY);
 	}
-}
+
+	// Extract relations if available from route data
+	const relations = route.firstChild?.data['relations'] || [];
+
+	// Fetch the project details by ID and handle errors
+	return _organizationProjectsService.getById(projectId, relations).pipe(
+		catchError(() => {
+			// Navigate to projects page in case of an error
+			_router.navigate(['/pages/organization/projects']);
+			return EMPTY;
+		})
+	);
+};

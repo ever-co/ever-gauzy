@@ -5,19 +5,19 @@ import log from 'electron-log';
 console.log = log.log;
 Object.assign(console, log.functions);
 
-import * as path from 'path';
 import {
 	app,
 	BrowserWindow,
 	ipcMain,
-	Tray,
-	nativeImage,
 	Menu,
-	shell,
 	MenuItemConstructorOptions,
+	nativeImage,
+	nativeTheme,
 	screen,
-	nativeTheme
+	shell,
+	Tray
 } from 'electron';
+import * as path from 'path';
 
 import { environment } from './environments/environment';
 
@@ -31,41 +31,41 @@ app.setName(process.env.NAME);
 
 console.log('Node Modules Path', path.join(__dirname, 'node_modules'));
 
+import * as remoteMain from '@electron/remote/main';
 import {
-	LocalStore,
-	DesktopServer,
+	AppError,
 	AppMenu,
-	DesktopUpdater,
-	TranslateLoader,
-	TranslateService,
-	IPathWindow,
-	ServerConfig,
-	IServerConfig,
-	ILocalServer,
-	ReverseProxy,
 	DesktopDialog,
+	DesktopServer,
+	DesktopThemeListener,
+	DesktopUpdater,
+	DialogErrorHandler,
+	DialogOpenFile,
 	DialogStopServerExitConfirmation,
 	ErrorEventManager,
 	ErrorReport,
 	ErrorReportRepository,
-	DialogErrorHandler,
-	AppError,
-	DialogOpenFile,
+	ILocalServer,
+	IPathWindow,
+	IServerConfig,
+	LocalStore,
+	ReverseProxy,
 	ReverseUiProxy,
-	DesktopThemeListener
+	ServerConfig,
+	TranslateLoader,
+	TranslateService
 } from '@gauzy/desktop-libs';
 import {
-	createSetupWindow,
+	createAboutWindow,
 	createServerWindow,
 	createSettingsWindow,
-	SplashScreen,
-	createAboutWindow
+	createSetupWindow,
+	SplashScreen
 } from '@gauzy/desktop-window';
-import { initSentry } from './sentry';
-import * as remoteMain from '@electron/remote/main';
-import { autoUpdater } from 'electron-updater';
 import * as Sentry from '@sentry/electron';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
+import { autoUpdater } from 'electron-updater';
+import { initSentry } from './sentry';
 
 remoteMain.initialize();
 
@@ -162,15 +162,15 @@ ipcMain.setMaxListeners(0);
 ipcMain.removeHandler('PREFERRED_LANGUAGE');
 
 ipcMain.handle('PREFERRED_THEME', () => {
-	const applicationSetting = LocalStore.getStore('appSetting');
-	let theme: string;
-	if (!applicationSetting || !applicationSetting.theme) {
-		theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+	const setting = LocalStore.getStore('appSetting');
+	if (!setting) {
+		LocalStore.setDefaultApplicationSetting();
+		const theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
 		LocalStore.updateApplicationSetting({ theme });
+		return theme;
 	} else {
-		theme = applicationSetting.theme;
+		return setting.theme;
 	}
-	return theme;
 });
 
 // setup logger to catch all unhandled errors and submit as bug reports to our repo

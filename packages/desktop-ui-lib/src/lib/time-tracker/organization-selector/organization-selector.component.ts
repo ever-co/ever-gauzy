@@ -46,7 +46,9 @@ export class OrganizationSelectorComponent implements OnInit, AfterViewInit {
 		this._isDisabled = false;
 	}
 
-	ngOnInit() {}
+	ngOnInit() {
+		this.selectOrganization(this._store.selectedOrganization);
+	}
 
 	/**
 	 * Component lifecycle hook for operations after the view initializes.
