@@ -1,5 +1,5 @@
-import { IUser } from 'user.model';
 import { ActorTypeEnum, IBasePerTenantAndOrganizationEntityModel, ID } from './base-entity.model';
+import { IUser } from './user.model';
 import { IEmployee } from './employee.model';
 import { IOrganizationTeam } from './organization-team.model';
 
@@ -49,6 +49,6 @@ export interface ICommentCreateInput {
 	teams?: IOrganizationTeam[];
 }
 
-export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId'>> {}
+export interface ICommentUpdateInput extends Partial<Omit<IComment, 'entity' | 'entityId' | 'creatorId' | 'creator'>> {}
 
 export interface ICommentFindInput extends Pick<IComment, 'entity' | 'entityId'> {}
